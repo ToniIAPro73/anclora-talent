@@ -1,52 +1,53 @@
 # Architecture
 
-## Frontend
+## Platform
 
-The frontend is a React application organized by feature area:
+The application now targets a server-first platform:
 
-- `app/`: application shell, navigation, global types.
-- `features/upload`: import workflow and source intake.
-- `features/editor`: document editor and block operations.
-- `features/cover`: cover studio.
-- `features/preview`: real preview and export controls.
-- `features/strategy`: delivery and roadmap surfaces.
-- `shared/ui`: reusable layout and interface primitives.
+- `Next.js App Router`
+- `Clerk` for authentication
+- `Neon Postgres` for relational persistence
+- `Vercel Blob` for binary assets
+- `Drizzle ORM` for schema and queries
 
-## Backend direction
+## Route structure
 
-The backend should be introduced once the frontend flow is ready for real data. It will own:
+- `src/app/page.tsx`: public landing
+- `src/app/sign-in/**`: authentication entry
+- `src/app/sign-up/**`: registration entry
+- `src/app/(app)/**`: authenticated application area
+- `src/app/api/**`: route handlers
 
-- document import and parsing
-- asset persistence
-- export jobs
-- document version storage
-- AI-assisted transformations
+## Domain structure
 
-The import/export pipeline should not live only in the browser.
+- `src/lib/projects`: canonical project/document model and server actions
+- `src/lib/db`: schema, lazy Neon client, repository layer
+- `src/lib/blob`: asset upload utilities
+- `src/components/projects`: product UI for dashboard, editor, preview and cover
 
 ## Core architectural rule
 
-There must be one canonical document model used by:
+There must be one canonical project model shared by:
 
-- the import pipeline
-- the editor
-- the preview renderer
-- the export pipeline
+- project creation
+- document editing
+- preview rendering
+- cover persistence
+- future import/export services
 
-No feature may define a competing content representation without an explicit mapping layer.
+No route or feature may define a parallel representation without an explicit mapping layer.
+
+## Security rules
+
+- Middleware protects access, but authorization must also be validated in server actions and server components.
+- Neon clients must be initialized lazily, never at module scope.
+- Blob uploads must be mediated by authenticated server logic.
 
 ## Integration order
 
-1. Frontend shell and feature boundaries.
-2. Canonical document model.
-3. Local mock repository for project state.
-4. Real import adapters.
-5. Real export services.
-6. AI enhancement layer.
-
-## Technical priorities
-
-- Keep each feature isolated.
-- Avoid reintroducing monolithic UI files.
-- Prefer typed contracts over implicit object shapes.
-- Preserve a clean build and typecheck after every phase.
+1. Authenticated Next.js shell
+2. Canonical project and document model
+3. Neon-backed repository layer with local fallback
+4. Blob-backed asset flows
+5. Real import/export adapters
+6. AI enhancement layer

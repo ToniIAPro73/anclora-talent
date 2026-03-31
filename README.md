@@ -1,55 +1,62 @@
 # Anclora Talent
 
-Aplicación editorial construida con React + Vite para evolucionar un manuscrito desde una fuente
-cruda hasta un producto digital listo para revisión, preview y exportación.
+Plataforma editorial construida sobre `Next.js App Router`, `Clerk`, `Neon` y `Vercel Blob`.
 
 ## Estado actual
 
-El repo ya dispone de:
+El repo ya no usa Vite. La nueva base incluye:
 
-- shell modular por features en `src/app`, `src/features` y `src/shared/ui`
-- documento canónico local en `src/domain/document`
-- editor y preview conectados al mismo source of truth
-- base de testing con Vitest + Testing Library
-- documentación SDD en `sdd/` y `sdd/features/`
+- landing pública
+- autenticación con Clerk
+- dashboard protegido
+- creación de proyecto
+- editor de documento canónico
+- preview del mismo contenido
+- estudio de portada
+- capa de persistencia preparada para Neon
+- subida de assets preparada para Blob
+
+Cuando `DATABASE_URL` no está configurada, el repositorio cae a una store en memoria para no
+bloquear el desarrollo local. En producción, el destino es Neon.
 
 ## Scripts
 
-- `npm run dev`: levanta la app en `http://localhost:3000`
-- `npm run lint`: ejecuta `tsc --noEmit`
-- `npm run test`: inicia Vitest en watch
+- `npm run dev`: arranca Next.js en local
+- `npm run build`: compila la app
+- `npm run start`: sirve la build
+- `npm run lint`: ejecuta ESLint
+- `npm run test`: arranca Vitest
 - `npm run test:run`: ejecuta la suite una vez
-- `npm run build`: genera `dist/`
-- `npm run preview`: sirve la build local
-- `npm run clean`: elimina `dist/` de forma portable
+- `npm run clean`: limpia `.next` y `coverage`
+- `npm run db:generate`: genera artefactos Drizzle
+- `npm run db:push`: aplica schema a la base definida en `.env.local`
+- `npm run db:studio`: abre Drizzle Studio
 
-## Arranque local
+## Variables de entorno
 
-1. Instala dependencias con `npm install`
-2. Ejecuta `npm run dev`
-3. Abre `http://localhost:3000`
+Ver [.env.example](c:/Users/antonio.ballesterosa/Desktop/Proyectos/anclora-talent/.env.example).
+
+Claves mínimas:
+
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+- `CLERK_SECRET_KEY`
+- `DATABASE_URL`
+- `BLOB_READ_WRITE_TOKEN`
 
 ## Arquitectura
 
-- `src/domain/document`: contratos del documento editorial y repositorio local
-- `src/app`: shell, navegación y layout global
-- `src/features/upload`: ingestión y estrategia de importación
-- `src/features/editor`: edición semántica sobre el documento canónico
-- `src/features/cover`: estudio de portada
-- `src/features/preview`: render del mismo contenido que edita el usuario
-- `src/features/strategy`: roadmap y criterios de entrega
-- `src/shared/ui`: primitivas visuales reutilizables
+- `src/app`: rutas App Router, layouts, auth y área protegida
+- `src/components`: UI de producto
+- `src/lib/auth`: guards y helpers de auth
+- `src/lib/db`: schema Drizzle, Neon lazy y repositorios
+- `src/lib/projects`: tipos, factories y server actions
+- `src/lib/blob`: utilidades de Blob
+- `sdd/`: especificación del producto y roadmap
 
-## SDD
+## Flujo MVP implementado
 
-- `sdd/product.md`: alcance del producto
-- `sdd/architecture.md`: reglas de arquitectura
-- `sdd/data-model.md`: entidades del dominio editorial
-- `sdd/roadmap.md`: orden recomendado de implementación
-- `sdd/features/`: features activas con objetivo, riesgos, dependencias y criterio de salida
+`login -> dashboard -> crear proyecto -> editor -> preview -> cover`
 
-## Próximo paso recomendado
+## Próximo paso lógico
 
-Cerrar la siguiente historia vertical del MVP:
-
-`txt/docx -> normalización -> edición -> preview -> export inicial`
+Conectar importación real `txt/docx` y exportación PDF sobre este mismo modelo.

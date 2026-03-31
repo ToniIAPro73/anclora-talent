@@ -1,0 +1,61 @@
+import { saveProjectDocumentAction } from '@/lib/projects/actions';
+import type { ProjectRecord } from '@/lib/projects/types';
+
+export function EditorForm({ project }: { project: ProjectRecord }) {
+  const chapter = project.document.chapters[0];
+
+  return (
+    <form action={saveProjectDocumentAction} className="grid gap-6 xl:grid-cols-[0.78fr_1.22fr]">
+      <input type="hidden" name="projectId" value={project.id} />
+
+      <section className="space-y-4 rounded-[28px] border border-black/8 bg-white p-6 shadow-[0_16px_60px_rgba(17,24,39,0.06)]">
+        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Metadatos</p>
+        <label className="block space-y-2">
+          <span className="text-sm font-semibold text-slate-700">Título</span>
+          <input name="title" defaultValue={project.document.title} className="w-full rounded-[18px] border border-black/10 bg-[#f9f6ef] px-4 py-3 outline-none transition focus:border-teal-700" />
+        </label>
+        <label className="block space-y-2">
+          <span className="text-sm font-semibold text-slate-700">Subtítulo</span>
+          <textarea name="subtitle" defaultValue={project.document.subtitle} className="min-h-28 w-full rounded-[18px] border border-black/10 bg-[#f9f6ef] px-4 py-3 outline-none transition focus:border-teal-700" />
+        </label>
+        <label className="block space-y-2">
+          <span className="text-sm font-semibold text-slate-700">Título del capítulo</span>
+          <input name="chapterTitle" defaultValue={chapter.title} className="w-full rounded-[18px] border border-black/10 bg-[#f9f6ef] px-4 py-3 outline-none transition focus:border-teal-700" />
+        </label>
+      </section>
+
+      <section className="space-y-4 rounded-[28px] border border-black/8 bg-white p-6 shadow-[0_16px_60px_rgba(17,24,39,0.06)]">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Documento vivo</p>
+          <h2 className="mt-3 text-3xl font-black tracking-tight">{project.title}</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600">
+            La edición persiste sobre el documento canónico. El preview lee exactamente este mismo contenido.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          {chapter.blocks.map((block) => (
+            <label key={block.id} className="block space-y-2 rounded-[24px] border border-black/8 bg-[#fcfaf5] p-5">
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{block.type}</span>
+              <input type="hidden" name="blockId" value={block.id} />
+              <textarea
+                name="blockContent"
+                defaultValue={block.content}
+                className="min-h-30 w-full rounded-[18px] border border-black/10 bg-white px-4 py-3 outline-none transition focus:border-teal-700"
+              />
+            </label>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          <button type="submit" className="inline-flex rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-700">
+            Guardar cambios
+          </button>
+          <a href={`/projects/${project.id}/preview`} className="inline-flex rounded-full border border-black/10 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:border-slate-950 hover:bg-slate-950 hover:text-white">
+            Abrir preview
+          </a>
+        </div>
+      </section>
+    </form>
+  );
+}

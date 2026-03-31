@@ -2,43 +2,43 @@
 
 ## Phase 0
 
-Goal: establish a clean foundation.
+Goal: establish the clean-cut platform migration.
 
-- create product and architecture documentation
-- define implementation rules
-- modularize the frontend shell
-- remove dependence on monolithic mock UI
+- replace Vite with Next.js App Router
+- integrate Clerk shell and route protection
+- define Neon schema and lazy repository access
+- define Blob asset boundary
 
 ## Phase 1
 
-Goal: deliver the first real editorial loop.
+Goal: deliver the first authenticated editorial loop.
 
-- create local project state
-- implement canonical document model in code
-- create sample project data
-- render document-driven preview
-- implement structure-first editor shell
+- login and registration
+- dashboard and project creation
+- canonical project/document model
+- editor, preview and cover routes
 
 ## Phase 2
 
-Goal: make the workflow useful with real inputs and outputs.
+Goal: connect useful inputs and outputs.
 
 - import `txt`
 - import `docx`
-- add document validation feedback
+- upload real cover assets to Blob
 - export PDF
 
 ## Phase 3
 
-Goal: extend editorial value.
+Goal: extend product depth.
 
-- image library and placement tools
-- cover studio canvas
+- template library
+- image placement tools
 - EPUB export
 - AI editorial assistance
+- collaborative workspaces
 
 ## Delivery principles
 
 - Each sprint must close a vertical slice.
-- No new screen should be added without a defined role in the end-to-end flow.
-- Build and typecheck must remain passing continuously.
+- Auth, project ownership and persistence must be valid on the server, not only in UI.
+- Build, lint and tests must remain passing continuously.

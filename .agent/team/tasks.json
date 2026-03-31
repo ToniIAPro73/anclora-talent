@@ -1,13 +1,23 @@
 {
-  "updatedAt": "2026-03-31T11:59:00Z",
+  "updatedAt": "2026-03-31T15:05:00Z",
   "project": "anclora-talent",
   "director": "anclorabot",
   "tasks": [
     {
+      "id": "feature-nextjs-platform-migration",
+      "title": "Migrar con corte limpio a Next.js + Clerk + Neon + Blob",
+      "status": "completed",
+      "dependsOn": [],
+      "owner": "Director + Agent A + Agent B + Agent C + Agent D",
+      "output": "sdd/features/feature-nextjs-platform-migration/spec.md"
+    },
+    {
       "id": "feature-audit-roadmap",
       "title": "Auditar el repo y fijar el siguiente plan tecnico",
       "status": "completed",
-      "dependsOn": [],
+      "dependsOn": [
+        "feature-nextjs-platform-migration"
+      ],
       "owner": "Director",
       "output": "sdd/features/feature-audit-roadmap/spec.md"
     },
