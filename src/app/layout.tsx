@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Anclora Talent',
+  title: 'Anclora Talent | Crea y publica proyectos editoriales con claridad',
   description:
-    'Plataforma editorial sobre Next.js, Clerk, Neon y Blob para crear proyectos, editar documentos y diseñar portadas.',
+    'Anclora Talent te permite crear tu cuenta, lanzar proyectos editoriales y trabajar sobre documento, preview y portada desde un mismo flujo.',
 };
 
 export default function RootLayout({
