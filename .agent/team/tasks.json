@@ -1,0 +1,46 @@
+{
+  "updatedAt": "2026-03-31T11:59:00Z",
+  "project": "anclora-talent",
+  "director": "anclorabot",
+  "tasks": [
+    {
+      "id": "feature-audit-roadmap",
+      "title": "Auditar el repo y fijar el siguiente plan tecnico",
+      "status": "completed",
+      "dependsOn": [],
+      "owner": "Director",
+      "output": "sdd/features/feature-audit-roadmap/spec.md"
+    },
+    {
+      "id": "feature-canonical-document",
+      "title": "Implementar el nucleo editorial prioritario",
+      "status": "completed",
+      "dependsOn": [
+        "feature-audit-roadmap"
+      ],
+      "owner": "Agent A + Agent B",
+      "output": "sdd/features/feature-canonical-document/spec.md"
+    },
+    {
+      "id": "feature-architecture-hardening",
+      "title": "Revisar deuda, arquitectura y huecos de testing",
+      "status": "completed",
+      "dependsOn": [
+        "feature-canonical-document"
+      ],
+      "owner": "Agent D",
+      "output": "sdd/features/feature-architecture-hardening/spec.md"
+    },
+    {
+      "id": "feature-runtime-validation",
+      "title": "Levantar la app, validar roturas y cerrar evidencias",
+      "status": "completed",
+      "dependsOn": [
+        "feature-canonical-document",
+        "feature-architecture-hardening"
+      ],
+      "owner": "Agent D",
+      "output": "sdd/features/feature-runtime-validation/spec.md"
+    }
+  ]
+}

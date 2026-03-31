@@ -1,4 +1,5 @@
 import { FileDigit, FileText, FileType2, FolderInput, ScanSearch } from 'lucide-react';
+import { useDocumentStore } from '../../domain/document/store';
 import { Panel } from '../../shared/ui/Panel';
 import { SectionHeader } from '../../shared/ui/SectionHeader';
 
@@ -21,6 +22,8 @@ const sources = [
 ];
 
 export function UploadScreen() {
+  const { metrics, project } = useDocumentStore();
+
   return (
     <div className="space-y-8">
       <SectionHeader
@@ -40,6 +43,9 @@ export function UploadScreen() {
               Próxima implementación: carga de archivo, identificación de formato, extracción,
               normalización a bloques y vista previa de incidencias de importación.
             </p>
+            <p className="mx-auto mt-4 max-w-xl rounded-full bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+              {project.title} ya dispone de {metrics.chapterCount} capítulo y {metrics.blockCount} bloques normalizados como muestra viva.
+            </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <button className="rounded-full bg-ink px-5 py-3 text-sm font-bold text-white">
                 Seleccionar documento
@@ -55,6 +61,10 @@ export function UploadScreen() {
           <div className="flex items-center gap-3">
             <ScanSearch className="h-5 w-5 text-brand-coral" />
             <h3 className="font-headline text-xl font-black">Estrategia de parsing</h3>
+          </div>
+          <div className="mt-5 rounded-[22px] border border-panel-border bg-[#f7f3ea] px-4 py-4 text-sm leading-6 text-muted">
+            Estado actual: la ingestión real aún no existe, pero la app ya dispone de un documento
+            canónico local para validar contratos antes de conectar `txt` y `docx`.
           </div>
           <div className="mt-5 space-y-4">
             {sources.map((source) => (

@@ -20,6 +20,10 @@
         "./*"
       ]
     },
+    "types": [
+      "node",
+      "vitest/globals"
+    ],
     "allowImportingTsExtensions": true,
     "noEmit": true
   }

@@ -11,7 +11,7 @@ export function AppTopbar({
   return (
     <header className="fixed left-72 right-0 top-0 z-20 flex h-20 items-center justify-between border-b border-panel-border bg-app/85 px-6 backdrop-blur-xl">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted">Product setup</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted">Estado del producto</p>
         <p className="font-headline text-2xl font-black tracking-tight text-ink">
           Plataforma editorial moderna, ágil y eficaz
         </p>

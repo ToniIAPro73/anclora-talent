@@ -1,17 +1,12 @@
 import { ImagePlus, ListTree, PenSquare, Type } from 'lucide-react';
+import { useDocumentStore } from '../../domain/document/store';
 import { Panel } from '../../shared/ui/Panel';
 import { SectionHeader } from '../../shared/ui/SectionHeader';
 
-const blocks = [
-  'Título y subtítulo',
-  'Capítulo',
-  'Párrafo',
-  'Imagen',
-  'Cita destacada',
-  'Separador editorial',
-];
-
 export function EditorScreen() {
+  const { document, updateBlockContent } = useDocumentStore();
+  const blocks = document.chapters.flatMap((chapter) => chapter.blocks);
+
   return (
     <div className="space-y-8">
       <SectionHeader
@@ -28,8 +23,8 @@ export function EditorScreen() {
           </div>
           <div className="mt-5 space-y-3">
             {blocks.map((block) => (
-              <div key={block} className="rounded-[20px] bg-white px-4 py-3 text-sm font-semibold text-ink">
-                {block}
+              <div key={block.id} className="rounded-[20px] bg-white px-4 py-3 text-sm font-semibold text-ink">
+                {block.type}
               </div>
             ))}
           </div>
@@ -61,17 +56,50 @@ export function EditorScreen() {
           </div>
 
           <div className="mt-6 rounded-[26px] border border-panel-border bg-white px-6 py-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Implementación siguiente</p>
-            <h2 className="mt-2 font-headline text-2xl font-black text-ink">Documento ejemplo del MVP</h2>
-            <div className="mt-5 space-y-4 text-sm leading-7 text-muted">
-              <p>
-                Capítulo 1 con título, dos párrafos, una imagen y una cita destacada. Esa será la
-                primera pieza vertical completa para probar editor, preview y PDF.
-              </p>
-              <p>
-                El objetivo del próximo paso no es construir todas las herramientas de formato,
-                sino cerrar el circuito contenido fuente → edición → previsualización.
-              </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Documento vivo</p>
+            <h2 className="mt-2 font-headline text-2xl font-black text-ink">{document.title}</h2>
+            <div className="mt-5 space-y-5">
+              {document.chapters.map((chapter) => (
+                <div key={chapter.id} className="rounded-[22px] border border-panel-border bg-[#fcfaf5] px-5 py-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+                    {chapter.title}
+                  </p>
+                  <div className="mt-4 space-y-4">
+                    {chapter.blocks.map((block) => {
+                      if (block.type === 'image') {
+                        return (
+                          <div key={block.id} className="rounded-[18px] bg-white px-4 py-4 text-sm leading-6 text-muted">
+                            Imagen vinculada: {block.caption}
+                          </div>
+                        );
+                      }
+
+                      if (block.type === 'divider') {
+                        return (
+                          <div key={block.id} className="rounded-[18px] bg-white px-4 py-4 text-sm font-semibold text-muted">
+                            {block.label}
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <label key={block.id} className="block space-y-2">
+                          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+                            {block.type}
+                          </span>
+                          <textarea
+                            className="min-h-24 w-full rounded-[18px] border border-panel-border bg-white px-4 py-3 text-sm leading-6 text-ink outline-none transition focus:border-brand-teal"
+                            value={block.content}
+                            onChange={(event) =>
+                              updateBlockContent(chapter.id, block.id, event.target.value)
+                            }
+                          />
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </Panel>

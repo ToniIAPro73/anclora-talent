@@ -17,8 +17,8 @@ export function AppSidebar({
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <p className="font-headline text-lg font-black text-ink">Anclora Studio</p>
-            <p className="text-xs uppercase tracking-[0.22em] text-muted">Editorial Lab</p>
+            <p className="font-headline text-lg font-black text-ink">Anclora Talent</p>
+            <p className="text-xs uppercase tracking-[0.22em] text-muted">Editorial Platform</p>
           </div>
         </div>
         <p className="text-sm leading-6 text-muted">
@@ -55,9 +55,9 @@ export function AppSidebar({
 
       <div className="rounded-[28px] bg-ink px-5 py-5 text-white">
         <p className="text-xs uppercase tracking-[0.2em] text-white/55">Siguiente hito</p>
-        <p className="mt-2 font-headline text-lg font-bold">Modelo editorial canónico</p>
+        <p className="mt-2 font-headline text-lg font-bold">Importación TXT y DOCX</p>
         <p className="mt-2 text-sm leading-6 text-white/70">
-          Un solo documento fuente para editor, preview y exportación.
+          Conectar el pipeline de entrada a este mismo documento fuente sin duplicar contratos.
         </p>
       </div>
     </aside>

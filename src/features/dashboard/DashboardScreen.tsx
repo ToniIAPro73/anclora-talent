@@ -1,10 +1,30 @@
 import { ArrowRight, CheckCircle2, FolderKanban, Library, Rows4 } from 'lucide-react';
 import { initiatives, nowCards } from '../../app/data/roadmap';
+import { useDocumentStore } from '../../domain/document/store';
 import { Panel } from '../../shared/ui/Panel';
 import { SectionHeader } from '../../shared/ui/SectionHeader';
 import { StatusBadge } from '../../shared/ui/StatusBadge';
 
 export function DashboardScreen() {
+  const { metrics, project, document } = useDocumentStore();
+  const currentCards = [
+    {
+      title: 'Proyecto',
+      value: project.status === 'active' ? 'Activo' : 'Draft',
+      detail: project.title,
+    },
+    {
+      title: 'Documento',
+      value: `${metrics.chapterCount} capítulo${metrics.chapterCount === 1 ? '' : 's'}`,
+      detail: document.title,
+    },
+    {
+      title: 'Bloques',
+      value: `${metrics.blockCount} nodos`,
+      detail: `${metrics.imageCount} imágenes y ${metrics.quoteCount} citas listas para preview.`,
+    },
+  ];
+
   return (
     <div className="space-y-8">
       <SectionHeader
@@ -29,7 +49,7 @@ export function DashboardScreen() {
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {nowCards.map((card) => (
+            {currentCards.map((card) => (
               <div key={card.title} className="rounded-[24px] bg-white px-5 py-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">{card.title}</p>
                 <p className="mt-3 font-headline text-2xl font-black text-ink">{card.value}</p>
@@ -60,9 +80,9 @@ export function DashboardScreen() {
             <h3 className="font-headline text-xl font-black">Frentes abiertos</h3>
           </div>
           <ul className="mt-5 space-y-4 text-sm leading-6 text-muted">
-            <li>Modelo de datos editorial todavía inexistente.</li>
+            <li>Persistencia del documento aún pendiente; el store actual es local en memoria.</li>
             <li>Importación real pendiente para `docx`, `pdf`, `doc` y `txt`.</li>
-            <li>Portadas y preview aún no trabajan sobre contenido fuente real.</li>
+            <li>Portadas y exportación siguen sin integrarse con el documento canónico.</li>
           </ul>
         </Panel>
 
@@ -85,8 +105,8 @@ export function DashboardScreen() {
           </div>
           <ul className="mt-5 space-y-4 text-sm leading-6 text-muted">
             <li>Proyecto modularizado sobre React + Vite.</li>
-            <li>Build y typecheck deben seguir verdes tras cada fase.</li>
-            <li>La siguiente implementación útil ya puede empezar por features.</li>
+            <li>{document.authors.join(', ')} firma la muestra editorial activa.</li>
+            <li>Editor y preview ya pueden apoyarse en el mismo contrato documental.</li>
           </ul>
         </Panel>
       </div>
