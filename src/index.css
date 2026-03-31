@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-headline: "Plus Jakarta Sans", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Custom Colors from Design System Strategy */
+  --color-primary: #7127e5;
+  --color-primary-container: #b28cff;
+  --color-secondary: #006762;
+  --color-secondary-container: #6ff7ee;
+  --color-tertiary: #b1202d;
+  --color-tertiary-container: #ff9190;
+  --color-surface: #fef3ff;
+  --color-surface-container-low: #faecff;
+  --color-surface-container-high: #f1daff;
+  --color-surface-container-highest: #edd3ff;
+  --color-on-surface: #3a264b;
+  --color-on-surface-variant: #69537b;
+  --color-outline-variant: #bda3d1;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-on-surface font-sans antialiased;
+  }
+}
+
+.glass-panel {
+  @apply bg-white/70 backdrop-blur-xl border border-white/20;
+}
+
+.kinetic-gradient {
+  @apply bg-gradient-to-br from-primary to-primary-container;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
