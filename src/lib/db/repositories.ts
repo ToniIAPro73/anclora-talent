@@ -12,8 +12,8 @@ import {
 import type {
   CoverDesign,
   CreateProjectInput,
-  ProjectBlock,
-  ProjectChapter,
+  DocumentBlock,
+  DocumentChapter,
   ProjectRecord,
   ProjectSummary,
   UpdateCoverInput,
@@ -97,9 +97,9 @@ function mapRowsToProject(
 
 type ProjectGraphWriter = Pick<ReturnType<typeof getDb>, 'insert' | 'update' | 'delete'>;
 
-function toBlockRows(projectDocumentId: string, chapters: ProjectChapter[], timestamp: string) {
+function toBlockRows(projectDocumentId: string, chapters: DocumentChapter[], timestamp: string) {
   return chapters.flatMap((chapter) =>
-    chapter.blocks.map((block: ProjectBlock) => ({
+    chapter.blocks.map((block: DocumentBlock) => ({
       id: block.id,
       projectDocumentId,
       chapterId: chapter.id,
