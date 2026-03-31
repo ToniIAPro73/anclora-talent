@@ -12,6 +12,8 @@ import {
 import type {
   CoverDesign,
   CreateProjectInput,
+  ProjectBlock,
+  ProjectChapter,
   ProjectRecord,
   ProjectSummary,
   UpdateCoverInput,
@@ -93,6 +95,95 @@ function mapRowsToProject(
   };
 }
 
+type ProjectGraphWriter = Pick<ReturnType<typeof getDb>, 'insert' | 'update' | 'delete'>;
+
+function toBlockRows(projectDocumentId: string, chapters: ProjectChapter[], timestamp: string) {
+  return chapters.flatMap((chapter) =>
+    chapter.blocks.map((block: ProjectBlock) => ({
+      id: block.id,
+      projectDocumentId,
+      chapterId: chapter.id,
+      chapterOrder: chapter.order,
+      chapterTitle: chapter.title,
+      blockOrder: block.order,
+      blockType: block.type,
+      content: block.content,
+      createdAt: new Date(timestamp),
+    })),
+  );
+}
+
+export async function persistProjectGraph(db: ProjectGraphWriter, project: ProjectRecord) {
+  await db.insert(projects).values({
+    id: project.id,
+    userId: project.userId,
+    workspaceId: project.workspaceId,
+    slug: project.slug,
+    title: project.title,
+    status: project.status,
+    createdAt: new Date(project.createdAt),
+    updatedAt: new Date(project.updatedAt),
+  });
+
+  await db.insert(projectDocuments).values({
+    id: project.document.id,
+    projectId: project.id,
+    title: project.document.title,
+    subtitle: project.document.subtitle,
+    language: project.document.language,
+    createdAt: new Date(project.createdAt),
+    updatedAt: new Date(project.updatedAt),
+  });
+
+  await db.insert(documentBlocks).values(
+    toBlockRows(project.document.id, project.document.chapters, project.createdAt),
+  );
+
+  await db.insert(coverDesigns).values({
+    id: project.cover.id,
+    projectId: project.id,
+    title: project.cover.title,
+    subtitle: project.cover.subtitle,
+    palette: project.cover.palette,
+    backgroundImageUrl: project.cover.backgroundImageUrl,
+    thumbnailUrl: project.cover.thumbnailUrl,
+    updatedAt: new Date(project.updatedAt),
+  });
+}
+
+export async function persistDocumentUpdate(db: ProjectGraphWriter, nextProject: ProjectRecord) {
+  await db
+    .update(projects)
+    .set({
+      title: nextProject.title,
+      updatedAt: new Date(nextProject.updatedAt),
+    })
+    .where(eq(projects.id, nextProject.id));
+
+  await db
+    .update(projectDocuments)
+    .set({
+      title: nextProject.document.title,
+      subtitle: nextProject.document.subtitle,
+      updatedAt: new Date(nextProject.updatedAt),
+    })
+    .where(eq(projectDocuments.projectId, nextProject.id));
+
+  await db.delete(documentBlocks).where(eq(documentBlocks.projectDocumentId, nextProject.document.id));
+
+  await db
+    .insert(documentBlocks)
+    .values(toBlockRows(nextProject.document.id, nextProject.document.chapters, nextProject.updatedAt));
+
+  await db
+    .update(coverDesigns)
+    .set({
+      title: nextProject.cover.title,
+      updatedAt: new Date(nextProject.updatedAt),
+    })
+    .where(eq(coverDesigns.projectId, nextProject.id));
+}
+
 async function listProjectsFromDb(userId: string) {
   const db = getDb();
   const rows = await db
@@ -154,55 +245,7 @@ async function createProjectInDb(userId: string, input: CreateProjectInput) {
   const db = getDb();
   const project = createProjectRecord(userId, input);
 
-  await db.transaction(async (tx) => {
-    await tx.insert(projects).values({
-      id: project.id,
-      userId: project.userId,
-      workspaceId: project.workspaceId,
-      slug: project.slug,
-      title: project.title,
-      status: project.status,
-      createdAt: new Date(project.createdAt),
-      updatedAt: new Date(project.updatedAt),
-    });
-
-    await tx.insert(projectDocuments).values({
-      id: project.document.id,
-      projectId: project.id,
-      title: project.document.title,
-      subtitle: project.document.subtitle,
-      language: project.document.language,
-      createdAt: new Date(project.createdAt),
-      updatedAt: new Date(project.updatedAt),
-    });
-
-    await tx.insert(documentBlocks).values(
-      project.document.chapters.flatMap((chapter) =>
-        chapter.blocks.map((block) => ({
-          id: block.id,
-          projectDocumentId: project.document.id,
-          chapterId: chapter.id,
-          chapterOrder: chapter.order,
-          chapterTitle: chapter.title,
-          blockOrder: block.order,
-          blockType: block.type,
-          content: block.content,
-          createdAt: new Date(project.createdAt),
-        })),
-      ),
-    );
-
-    await tx.insert(coverDesigns).values({
-      id: project.cover.id,
-      projectId: project.id,
-      title: project.cover.title,
-      subtitle: project.cover.subtitle,
-      palette: project.cover.palette,
-      backgroundImageUrl: project.cover.backgroundImageUrl,
-      thumbnailUrl: project.cover.thumbnailUrl,
-      updatedAt: new Date(project.updatedAt),
-    });
-  });
+  await persistProjectGraph(db, project);
 
   return project;
 }
@@ -217,50 +260,7 @@ async function saveDocumentInDb(userId: string, projectId: string, input: Update
 
   const nextProject = updateProjectDocument(current, input);
 
-  await db.transaction(async (tx) => {
-    await tx
-      .update(projects)
-      .set({
-        title: nextProject.title,
-        updatedAt: new Date(nextProject.updatedAt),
-      })
-      .where(eq(projects.id, projectId));
-
-    await tx
-      .update(projectDocuments)
-      .set({
-        title: nextProject.document.title,
-        subtitle: nextProject.document.subtitle,
-        updatedAt: new Date(nextProject.updatedAt),
-      })
-      .where(eq(projectDocuments.projectId, projectId));
-
-    await tx.delete(documentBlocks).where(eq(documentBlocks.projectDocumentId, nextProject.document.id));
-
-    await tx.insert(documentBlocks).values(
-      nextProject.document.chapters.flatMap((chapter) =>
-        chapter.blocks.map((block) => ({
-          id: block.id,
-          projectDocumentId: nextProject.document.id,
-          chapterId: chapter.id,
-          chapterOrder: chapter.order,
-          chapterTitle: chapter.title,
-          blockOrder: block.order,
-          blockType: block.type,
-          content: block.content,
-          createdAt: new Date(nextProject.updatedAt),
-        })),
-      ),
-    );
-
-    await tx
-      .update(coverDesigns)
-      .set({
-        title: nextProject.cover.title,
-        updatedAt: new Date(nextProject.updatedAt),
-      })
-      .where(eq(coverDesigns.projectId, projectId));
-  });
+  await persistDocumentUpdate(db, nextProject);
 
   return nextProject;
 }
