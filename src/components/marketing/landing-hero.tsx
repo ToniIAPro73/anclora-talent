@@ -40,14 +40,14 @@ export function LandingHero({
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link
               href={primaryCta.href}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
+              className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#8ce9de] px-6 py-3 text-sm font-semibold text-[#07111f] shadow-[0_12px_30px_rgba(12,18,31,0.24)] transition hover:bg-[#79d8cd] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8ce9de] focus-visible:ring-offset-2 focus-visible:ring-offset-[#101827]"
             >
               {primaryCta.label}
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href={secondaryCta.href}
-              className="inline-flex items-center justify-center rounded-full border border-white/14 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/24 hover:bg-white/8"
+              className="inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-full border border-white/18 bg-white/6 px-6 py-3 text-sm font-semibold text-[#f8f4eb] transition hover:border-white/32 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101827]"
             >
               {secondaryCta.label}
             </Link>
