@@ -6,34 +6,24 @@
   --font-headline: "Plus Jakarta Sans", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* Custom Colors from Design System Strategy */
-  --color-primary: #7127e5;
-  --color-primary-container: #b28cff;
-  --color-secondary: #006762;
-  --color-secondary-container: #6ff7ee;
-  --color-tertiary: #b1202d;
-  --color-tertiary-container: #ff9190;
-  --color-surface: #fef3ff;
-  --color-surface-container-low: #faecff;
-  --color-surface-container-high: #f1daff;
-  --color-surface-container-highest: #edd3ff;
-  --color-on-surface: #3a264b;
-  --color-on-surface-variant: #69537b;
-  --color-outline-variant: #bda3d1;
+  --color-app: #f6f4ee;
+  --color-panel: rgba(255, 255, 255, 0.76);
+  --color-panel-border: rgba(66, 71, 60, 0.12);
+  --color-ink: #202623;
+  --color-muted: #66706a;
+  --color-brand-teal: #0cb0a5;
+  --color-brand-coral: #ec6f4e;
+  --color-brand-sand: #f4dcc1;
 }
 
 @layer base {
-  body {
-    @apply bg-surface text-on-surface font-sans antialiased;
+  html {
+    color-scheme: light;
   }
-}
 
-.glass-panel {
-  @apply bg-white/70 backdrop-blur-xl border border-white/20;
-}
-
-.kinetic-gradient {
-  @apply bg-gradient-to-br from-primary to-primary-container;
+  body {
+    @apply bg-app text-ink font-sans antialiased;
+  }
 }
 
 .hide-scrollbar::-webkit-scrollbar {
