@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-31T15:05:00Z",
+  "updatedAt": "2026-03-31T16:15:00Z",
   "project": "anclora-talent",
   "director": "anclorabot",
   "tasks": [
@@ -51,6 +51,18 @@
       ],
       "owner": "Agent D",
       "output": "sdd/features/feature-runtime-validation/spec.md"
+    },
+    {
+      "id": "feature-landing-signup-redesign",
+      "title": "Rediseñar la landing publica con foco en crear cuenta",
+      "status": "planned",
+      "dependsOn": [
+        "feature-nextjs-platform-migration",
+        "feature-canonical-document",
+        "feature-runtime-validation"
+      ],
+      "owner": "Director + Agent A + Agent B + Agent D",
+      "output": "sdd/features/feature-landing-signup-redesign/spec.md"
     }
   ]
 }
