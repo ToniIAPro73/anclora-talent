@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import type { MarketingCta } from './marketing-helpers';
+import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 
 type LandingFinalCtaProps = {
   primaryCta: MarketingCta;
@@ -21,7 +22,7 @@ export function LandingFinalCta({ primaryCta, note }: LandingFinalCtaProps) {
         <div className="mt-8">
           <Link
             href={primaryCta.href}
-            className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#07111f] px-6 py-3 text-sm font-semibold text-[#f8f4eb] shadow-[0_14px_34px_rgba(7,17,31,0.2)] transition hover:bg-[#123148] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#07111f] focus-visible:ring-offset-2 focus-visible:ring-offset-[#ebe4d6]"
+            className={`${premiumPrimaryDarkButton} focus-visible:ring-offset-[#ebe4d6]`}
           >
             {primaryCta.label}
             <ArrowRight className="h-4 w-4" />

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { CreateProjectForm } from '@/components/projects/CreateProjectForm';
 import { ProjectCard } from '@/components/projects/ProjectCard';
+import { premiumPrimaryDarkButton, premiumPrimaryMintButton } from '@/components/ui/button-styles';
 import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
 
@@ -22,7 +23,7 @@ export default async function DashboardPage() {
             tiene que transmitir valor, control y acabado premium.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/projects/new" className="inline-flex min-h-12 items-center rounded-full bg-[#8ce9de] px-5 py-3 text-sm font-semibold text-[#07111f] transition hover:bg-[#79d8cd]">
+            <Link href="/projects/new" className={`${premiumPrimaryMintButton} px-5`}>
               Crear nuevo proyecto
             </Link>
           </div>
@@ -67,7 +68,7 @@ export default async function DashboardPage() {
               La experiencia premium no empieza cuando ya hay contenido. Empieza cuando el sistema
               te invita a crear con claridad desde el minuto uno.
             </p>
-            <Link href="/projects/new" className="mt-6 inline-flex min-h-11 items-center rounded-full bg-[#07111f] px-5 py-3 text-sm font-semibold text-[#f8f4eb] transition hover:bg-[#123148]">
+            <Link href="/projects/new" className={`mt-6 ${premiumPrimaryDarkButton} min-h-11 px-5`}>
               Crear el primer proyecto
             </Link>
           </div>

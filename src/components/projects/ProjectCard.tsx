@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import type { ProjectSummary } from '@/lib/projects/types';
+import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 
 const paletteClassMap: Record<ProjectSummary['coverPalette'], string> = {
   obsidian: 'bg-slate-950 text-white',
@@ -26,11 +27,11 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
       </p>
       <div className="mt-6 h-px bg-black/8" />
       <div className="mt-6 flex flex-wrap gap-3">
-        <Link href={`/projects/${project.id}/editor`} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#07111f] px-4 py-2 text-sm font-semibold text-[#f8f4eb] transition hover:bg-[#123148]">
+        <Link href={`/projects/${project.id}/editor`} className={`${premiumPrimaryDarkButton} min-h-11 px-4 py-2`}>
           Abrir editor
           <ArrowRight className="h-4 w-4" />
         </Link>
-        <Link href={`/projects/${project.id}/preview`} className="inline-flex min-h-11 items-center rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black/20 hover:bg-[#f5ede0]">
+        <Link href={`/projects/${project.id}/preview`} className={`${premiumSecondaryLightButton} min-h-11 px-4 py-2`}>
           Preview
         </Link>
       </div>

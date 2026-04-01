@@ -1,5 +1,6 @@
 import { saveProjectCoverAction } from '@/lib/projects/actions';
 import type { ProjectRecord } from '@/lib/projects/types';
+import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 
 const previewClasses = {
   obsidian: 'from-slate-950 via-slate-800 to-slate-700 text-white',
@@ -36,7 +37,7 @@ export function CoverForm({ project }: { project: ProjectRecord }) {
           <span className="text-sm font-semibold text-slate-700">Imagen de fondo</span>
           <input type="file" name="backgroundImage" accept="image/*" className="block w-full text-sm text-slate-600" />
         </label>
-        <button type="submit" className="inline-flex rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-700">
+        <button type="submit" className={`${premiumPrimaryDarkButton} px-5`}>
           Guardar portada
         </button>
       </section>

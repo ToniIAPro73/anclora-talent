@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { CoverForm } from '@/components/projects/CoverForm';
+import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
 
@@ -25,10 +26,10 @@ export default async function ProjectCoverPage({
           <h2 className="mt-2 text-4xl font-black tracking-tight">Diseña y guarda la portada del proyecto</h2>
         </div>
         <div className="flex gap-3">
-          <Link href={`/projects/${project.id}/editor`} className="inline-flex rounded-full border border-black/10 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:border-slate-950 hover:bg-slate-950 hover:text-white">
+          <Link href={`/projects/${project.id}/editor`} className={`${premiumSecondaryLightButton} px-5`}>
             Editor
           </Link>
-          <Link href={`/projects/${project.id}/preview`} className="inline-flex rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-700">
+          <Link href={`/projects/${project.id}/preview`} className={`${premiumPrimaryDarkButton} px-5`}>
             Preview
           </Link>
         </div>

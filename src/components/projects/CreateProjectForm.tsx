@@ -1,4 +1,5 @@
 import { createProjectAction } from '@/lib/projects/actions';
+import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 
 export function CreateProjectForm() {
   return (
@@ -25,7 +26,7 @@ export function CreateProjectForm() {
         </p>
         <button
           type="submit"
-          className="inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-full bg-[#07111f] px-5 py-3 text-sm font-semibold text-[#f8f4eb] shadow-[0_14px_34px_rgba(7,17,31,0.18)] transition hover:bg-[#123148]"
+          className={premiumPrimaryDarkButton}
         >
           Crear proyecto y abrir editor
         </button>

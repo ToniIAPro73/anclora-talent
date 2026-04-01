@@ -1,5 +1,6 @@
 import { saveProjectDocumentAction } from '@/lib/projects/actions';
 import type { ProjectRecord } from '@/lib/projects/types';
+import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 
 export function EditorForm({ project }: { project: ProjectRecord }) {
   const chapter = project.document.chapters[0];
@@ -48,10 +49,10 @@ export function EditorForm({ project }: { project: ProjectRecord }) {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <button type="submit" className="inline-flex rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-700">
+          <button type="submit" className={`${premiumPrimaryDarkButton} px-5`}>
             Guardar cambios
           </button>
-          <a href={`/projects/${project.id}/preview`} className="inline-flex rounded-full border border-black/10 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:border-slate-950 hover:bg-slate-950 hover:text-white">
+          <a href={`/projects/${project.id}/preview`} className={`${premiumSecondaryLightButton} px-5`}>
             Abrir preview
           </a>
         </div>

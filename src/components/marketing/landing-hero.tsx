@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import type { MarketingCta } from './marketing-helpers';
+import { premiumPrimaryMintButton } from '@/components/ui/button-styles';
 
 type LandingHeroProps = {
   eyebrow: string;
@@ -40,7 +41,7 @@ export function LandingHero({
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link
               href={primaryCta.href}
-              className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#8ce9de] px-6 py-3 text-sm font-semibold text-[#07111f] shadow-[0_12px_30px_rgba(12,18,31,0.24)] transition hover:bg-[#79d8cd] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8ce9de] focus-visible:ring-offset-2 focus-visible:ring-offset-[#101827]"
+              className={`${premiumPrimaryMintButton} focus-visible:ring-offset-[#101827]`}
             >
               {primaryCta.label}
               <ArrowRight className="h-4 w-4" />
