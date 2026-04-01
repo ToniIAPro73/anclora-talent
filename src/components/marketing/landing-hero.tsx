@@ -8,7 +8,7 @@ type LandingHeroProps = {
   headline: string;
   subheadline: string;
   primaryCta: MarketingCta;
-  secondaryCta: MarketingCta;
+  secondaryCta: MarketingCta | null;
 };
 
 export function LandingHero({
@@ -46,12 +46,14 @@ export function LandingHero({
               {primaryCta.label}
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link
-              href={secondaryCta.href}
-              className="inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-full border border-white/18 bg-white/6 px-6 py-3 text-sm font-semibold text-[#f8f4eb] transition hover:border-white/32 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101827]"
-            >
-              {secondaryCta.label}
-            </Link>
+            {secondaryCta ? (
+              <Link
+                href={secondaryCta.href}
+                className="inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-full border border-white/18 bg-white/6 px-6 py-3 text-sm font-semibold text-[#f8f4eb] transition hover:border-white/32 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101827]"
+              >
+                {secondaryCta.label}
+              </Link>
+            ) : null}
           </div>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-3">

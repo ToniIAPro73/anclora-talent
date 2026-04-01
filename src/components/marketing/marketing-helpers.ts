@@ -17,12 +17,9 @@ export function getPrimaryCta(userId: string | null): MarketingCta {
   };
 }
 
-export function getSecondaryCta(userId: string | null): MarketingCta {
+export function getSecondaryCta(userId: string | null): MarketingCta | null {
   if (userId) {
-    return {
-      href: '/dashboard',
-      label: 'Abrir plataforma',
-    };
+    return null;
   }
 
   return {

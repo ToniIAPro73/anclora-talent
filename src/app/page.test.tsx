@@ -51,5 +51,6 @@ describe('HomePage', () => {
       'href',
       '/dashboard',
     );
+    expect(heroScope.queryByRole('link', { name: 'Abrir plataforma' })).not.toBeInTheDocument();
   });
 });
