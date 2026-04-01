@@ -3,11 +3,11 @@ import { CreateProjectForm } from '@/components/projects/CreateProjectForm';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { premiumPrimaryDarkButton, premiumPrimaryMintButton } from '@/components/ui/button-styles';
 import { requireUserId } from '@/lib/auth/guards';
-import { projectRepository } from '@/lib/db/repositories';
+import { loadDashboardData } from './dashboard-data';
 
 export default async function DashboardPage() {
   const userId = await requireUserId();
-  const projects = await projectRepository.listProjectsForUser(userId);
+  const { projects, dataAvailable } = await loadDashboardData(userId);
   const hasProjects = projects.length > 0;
 
   return (
@@ -35,12 +35,18 @@ export default async function DashboardPage() {
             <div className="rounded-[24px] border border-white/10 bg-white/7 p-4">
               <p className="text-xs uppercase tracking-[0.22em] text-white/50">Estado</p>
               <p className="mt-3 text-sm font-semibold text-white/92">
-                {hasProjects ? 'Base activa y persistente' : 'Listo para primer proyecto'}
+                {dataAvailable
+                  ? hasProjects
+                    ? 'Base activa y persistente'
+                    : 'Listo para primer proyecto'
+                  : 'Fallback operativo activo'}
               </p>
             </div>
             <div className="rounded-[24px] border border-white/10 bg-white/7 p-4">
               <p className="text-xs uppercase tracking-[0.22em] text-white/50">Contrato</p>
-              <p className="mt-3 text-sm font-semibold text-white/92">Premium app operativa</p>
+              <p className="mt-3 text-sm font-semibold text-white/92">
+                {dataAvailable ? 'Premium app operativa' : 'Acceso sin caída ante fallo de datos'}
+              </p>
             </div>
           </div>
         </div>
@@ -60,13 +66,18 @@ export default async function DashboardPage() {
           </div>
         ) : (
           <div className="rounded-[32px] border border-dashed border-white/12 bg-[linear-gradient(180deg,_rgba(255,255,255,0.04)_0%,_rgba(255,255,255,0.02)_100%)] p-8 shadow-[0_18px_60px_rgba(17,24,39,0.05)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/45">Estado inicial</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/45">
+              {dataAvailable ? 'Estado inicial' : 'Modo degradado'}
+            </p>
             <h3 className="mt-3 text-2xl font-black tracking-tight text-white">
-              Aún no hay proyectos, pero el workspace ya está listo para abrir el primero.
+              {dataAvailable
+                ? 'Aún no hay proyectos, pero el workspace ya está listo para abrir el primero.'
+                : 'El dashboard sigue accesible aunque la lectura de proyectos haya fallado.'}
             </h3>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-white/68">
-              La experiencia premium no empieza cuando ya hay contenido. Empieza cuando el sistema
-              te invita a crear con claridad desde el minuto uno.
+              {dataAvailable
+                ? 'La experiencia premium no empieza cuando ya hay contenido. Empieza cuando el sistema te invita a crear con claridad desde el minuto uno.'
+                : 'Puedes seguir creando un proyecto nuevo mientras se recupera la capa de datos. Esto evita que la navegación principal termine en error 500.'}
             </p>
             <Link href="/projects/new" className={`mt-6 ${premiumPrimaryDarkButton} min-h-11 px-5`}>
               Crear el primer proyecto
