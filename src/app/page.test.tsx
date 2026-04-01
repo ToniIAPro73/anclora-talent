@@ -31,9 +31,9 @@ describe('HomePage', () => {
       'href',
       '/sign-up',
     );
-    expect(heroScope.getByRole('link', { name: 'Ver como funciona' })).toHaveAttribute(
+    expect(heroScope.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute(
       'href',
-      '#product-showcase',
+      '/sign-in',
     );
   });
 

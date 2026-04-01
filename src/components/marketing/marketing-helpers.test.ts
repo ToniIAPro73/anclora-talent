@@ -11,6 +11,6 @@ describe('marketing helpers', () => {
   });
 
   test('returns the showcase anchor as the secondary CTA for anonymous users', () => {
-    expect(getSecondaryCta(null)).toEqual({ href: '#product-showcase', label: 'Ver como funciona' });
+    expect(getSecondaryCta(null)).toEqual({ href: '/sign-in', label: 'Iniciar sesión' });
   });
 });

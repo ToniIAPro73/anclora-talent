@@ -23,7 +23,7 @@ export function getSecondaryCta(userId: string | null): MarketingCta | null {
   }
 
   return {
-    href: '#product-showcase',
-    label: 'Ver como funciona',
+    href: '/sign-in',
+    label: 'Iniciar sesión',
   };
 }
