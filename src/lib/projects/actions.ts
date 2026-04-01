@@ -6,6 +6,7 @@ import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
 import { uploadProjectBlob } from '@/lib/blob/client';
 import type { CoverDesign, UpdateCoverInput, UpdateDocumentInput } from './types';
+import { extractImportedDocumentSeed } from './import';
 
 function parsePalette(value: FormDataEntryValue | null): CoverDesign['palette'] {
   if (value === 'teal' || value === 'sand') {
@@ -18,12 +19,18 @@ function parsePalette(value: FormDataEntryValue | null): CoverDesign['palette'] 
 export async function createProjectAction(formData: FormData) {
   const userId = await requireUserId();
   const title = String(formData.get('title') ?? '').trim();
+  const sourceDocument = formData.get('sourceDocument');
 
   if (!title) {
     throw new Error('Project title is required');
   }
 
-  const project = await projectRepository.createProject(userId, { title });
+  const importedDocument =
+    sourceDocument instanceof File && sourceDocument.size > 0
+      ? await extractImportedDocumentSeed(sourceDocument)
+      : null;
+
+  const project = await projectRepository.createProject(userId, { title, importedDocument });
 
   redirect(`/projects/${project.id}/editor`);
 }

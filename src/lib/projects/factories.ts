@@ -16,6 +16,32 @@ function slugify(input: string) {
 
 export function createProjectRecord(userId: string, input: CreateProjectInput): ProjectRecord {
   const now = new Date().toISOString();
+  const imported = input.importedDocument;
+  const documentTitle = imported?.title || input.title;
+  const documentSubtitle = imported?.subtitle || 'Documento editorial inicial listo para evolución.';
+  const chapterTitle = imported?.chapterTitle || 'Capítulo 1';
+  const documentBlocks =
+    imported?.blocks ?? [
+      {
+        type: 'heading' as const,
+        content: 'Capítulo 1',
+      },
+      {
+        type: 'paragraph' as const,
+        content:
+          'Esta primera versión del proyecto valida el circuito completo entre autenticación, persistencia y edición semántica.',
+      },
+      {
+        type: 'paragraph' as const,
+        content:
+          'El siguiente paso operativo es sustituir este contenido inicial por material importado por el usuario sin cambiar el modelo editorial.',
+      },
+      {
+        type: 'quote' as const,
+        content:
+          'Una plataforma editorial real no separa el editor del preview; comparte la misma verdad de contenido.',
+      },
+    ];
 
   return {
     id: randomUUID(),
@@ -28,50 +54,27 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
     updatedAt: now,
     document: {
       id: randomUUID(),
-      title: input.title,
-      subtitle: 'Documento editorial inicial listo para evolución.',
+      title: documentTitle,
+      subtitle: documentSubtitle,
       language: 'es',
       chapters: [
         {
           id: randomUUID(),
           order: 1,
-          title: 'Capítulo 1',
-          blocks: [
-            {
-              id: randomUUID(),
-              type: 'heading',
-              order: 1,
-              content: 'Capítulo 1',
-            },
-            {
-              id: randomUUID(),
-              type: 'paragraph',
-              order: 2,
-              content:
-                'Esta primera versión del proyecto valida el circuito completo entre autenticación, persistencia y edición semántica.',
-            },
-            {
-              id: randomUUID(),
-              type: 'paragraph',
-              order: 3,
-              content:
-                'El siguiente paso operativo es sustituir este contenido inicial por material importado por el usuario sin cambiar el modelo editorial.',
-            },
-            {
-              id: randomUUID(),
-              type: 'quote',
-              order: 4,
-              content:
-                'Una plataforma editorial real no separa el editor del preview; comparte la misma verdad de contenido.',
-            },
-          ],
+          title: chapterTitle,
+          blocks: documentBlocks.map((block, index) => ({
+            id: randomUUID(),
+            type: block.type,
+            order: index + 1,
+            content: block.content,
+          })),
         },
       ],
     },
     cover: {
       id: randomUUID(),
-      title: input.title,
-      subtitle: 'Diseño editorial listo para evolucionar',
+      title: documentTitle,
+      subtitle: imported?.subtitle || 'Diseño editorial listo para evolucionar',
       palette: 'obsidian',
       backgroundImageUrl: null,
       thumbnailUrl: null,

@@ -56,8 +56,21 @@ export interface ProjectSummary {
   coverPalette: CoverDesign['palette'];
 }
 
+export interface ImportedDocumentSeed {
+  title: string;
+  subtitle: string;
+  chapterTitle: string;
+  blocks: Array<{
+    type: DocumentBlockType;
+    content: string;
+  }>;
+  sourceFileName: string;
+  sourceMimeType: string;
+}
+
 export interface CreateProjectInput {
   title: string;
+  importedDocument?: ImportedDocumentSeed | null;
 }
 
 export interface UpdateDocumentInput {

@@ -1,5 +1,8 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { createProjectRecord, updateProjectCover, updateProjectDocument } from './factories';
+import { buildImportedDocumentSeed } from './import';
+
+vi.mock('server-only', () => ({}));
 
 describe('project factories', () => {
   test('creates a canonical project with editor, preview, and cover state', () => {
@@ -42,5 +45,23 @@ describe('project factories', () => {
     expect(updated.cover.palette).toBe('teal');
     expect(updated.cover.backgroundImageUrl).toContain('cover.png');
     expect(updated.cover.title).toBe('Nueva portada');
+  });
+
+  test('creates a project seeded from an imported document', () => {
+    const importedDocument = buildImportedDocumentSeed({
+      fileName: 'ebook.md',
+      mimeType: 'text/markdown',
+      text: 'Propuesta editorial\n\nSubtitulo orientado a conversion\n\nPrimer bloque del documento.\n\nSegundo bloque del documento.',
+    });
+
+    const project = createProjectRecord('user_123', {
+      title: 'Ebook base',
+      importedDocument,
+    });
+
+    expect(project.document.title).toBe('Propuesta editorial');
+    expect(project.document.subtitle).toContain('Subtitulo orientado');
+    expect(project.document.chapters[0].blocks.some((block) => block.content.includes('Primer bloque'))).toBe(true);
+    expect(project.cover.title).toBe('Propuesta editorial');
   });
 });

@@ -15,27 +15,27 @@ export function CoverForm({ project }: { project: ProjectRecord }) {
       <input type="hidden" name="currentBackgroundImageUrl" value={project.cover.backgroundImageUrl ?? ''} />
       <input type="hidden" name="currentThumbnailUrl" value={project.cover.thumbnailUrl ?? ''} />
 
-      <section className="space-y-4 rounded-[28px] border border-black/8 bg-white p-6 shadow-[0_16px_60px_rgba(17,24,39,0.06)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Portada persistente</p>
+      <section className="space-y-4 rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,_rgba(19,29,48,0.96)_0%,_rgba(9,16,29,0.98)_100%)] p-6 text-white shadow-[0_16px_60px_rgba(3,7,18,0.3)]">
+        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/45">Portada persistente</p>
         <label className="block space-y-2">
-          <span className="text-sm font-semibold text-slate-700">Título</span>
-          <input name="title" defaultValue={project.cover.title} className="w-full rounded-[18px] border border-black/10 bg-[#f9f6ef] px-4 py-3 outline-none transition focus:border-teal-700" />
+          <span className="text-sm font-semibold text-white/88">Título</span>
+          <input name="title" defaultValue={project.cover.title} className="w-full rounded-[18px] border border-white/10 bg-white/6 px-4 py-3 text-white outline-none transition focus:border-teal-400" />
         </label>
         <label className="block space-y-2">
-          <span className="text-sm font-semibold text-slate-700">Subtítulo</span>
-          <textarea name="subtitle" defaultValue={project.cover.subtitle} className="min-h-28 w-full rounded-[18px] border border-black/10 bg-[#f9f6ef] px-4 py-3 outline-none transition focus:border-teal-700" />
+          <span className="text-sm font-semibold text-white/88">Subtítulo</span>
+          <textarea name="subtitle" defaultValue={project.cover.subtitle} className="min-h-28 w-full rounded-[18px] border border-white/10 bg-white/6 px-4 py-3 text-white outline-none transition focus:border-teal-400" />
         </label>
         <label className="block space-y-2">
-          <span className="text-sm font-semibold text-slate-700">Paleta</span>
-          <select name="palette" defaultValue={project.cover.palette} className="w-full rounded-[18px] border border-black/10 bg-[#f9f6ef] px-4 py-3 outline-none transition focus:border-teal-700">
+          <span className="text-sm font-semibold text-white/88">Paleta</span>
+          <select name="palette" defaultValue={project.cover.palette} className="w-full rounded-[18px] border border-white/10 bg-white/6 px-4 py-3 text-white outline-none transition focus:border-teal-400">
             <option value="obsidian">Obsidian</option>
             <option value="teal">Teal</option>
             <option value="sand">Sand</option>
           </select>
         </label>
         <label className="block space-y-2">
-          <span className="text-sm font-semibold text-slate-700">Imagen de fondo</span>
-          <input type="file" name="backgroundImage" accept="image/*" className="block w-full text-sm text-slate-600" />
+          <span className="text-sm font-semibold text-white/88">Imagen de fondo</span>
+          <input type="file" name="backgroundImage" accept="image/*" className="block w-full text-sm text-white/68 file:mr-4 file:rounded-full file:border-0 file:bg-[#8ce9de] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#07111f]" />
         </label>
         <button type="submit" className={`${premiumPrimaryDarkButton} px-5`}>
           Guardar portada

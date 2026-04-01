@@ -19,9 +19,9 @@ describe('button styles', () => {
     expect(premiumPrimaryDarkButton).toContain('whitespace-nowrap');
   });
 
-  test('defines a readable light secondary CTA for neutral actions', () => {
-    expect(premiumSecondaryLightButton).toContain('bg-white');
-    expect(premiumSecondaryLightButton).toContain('text-slate-950');
+  test('defines a readable dark secondary CTA for neutral actions', () => {
+    expect(premiumSecondaryLightButton).toContain('border-white/16');
+    expect(premiumSecondaryLightButton).toContain('!text-white');
     expect(premiumSecondaryLightButton).toContain('border');
   });
 });

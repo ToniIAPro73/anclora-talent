@@ -13,7 +13,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="overflow-hidden rounded-[34px] border border-black/8 bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.14),_transparent_30%),linear-gradient(180deg,_#101827_0%,_#172236_100%)] p-8 text-white shadow-[0_24px_80px_rgba(15,23,42,0.18)]">
+        <div className="overflow-hidden rounded-[34px] border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.14),_transparent_30%),linear-gradient(180deg,_#111a2b_0%,_#0b1220_100%)] p-8 text-white shadow-[0_24px_80px_rgba(15,23,42,0.34)]">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/55">Dashboard premium</p>
           <h2 className="mt-4 max-w-4xl text-4xl font-black tracking-tight sm:text-5xl">
             Tus proyectos editoriales ya viven dentro de una app que parece producto de verdad.
@@ -49,8 +49,8 @@ export default async function DashboardPage() {
 
       <section className="space-y-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Mis proyectos</p>
-          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Base editorial individual</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/45">Mis proyectos</p>
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-white">Base editorial individual</h2>
         </div>
         {hasProjects ? (
           <div className="grid gap-4 xl:grid-cols-2">
@@ -59,12 +59,12 @@ export default async function DashboardPage() {
             ))}
           </div>
         ) : (
-          <div className="rounded-[32px] border border-dashed border-black/12 bg-[linear-gradient(180deg,_#fffdf8_0%,_#f6efdf_100%)] p-8 shadow-[0_18px_60px_rgba(17,24,39,0.05)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Estado inicial</p>
-            <h3 className="mt-3 text-2xl font-black tracking-tight text-slate-950">
+          <div className="rounded-[32px] border border-dashed border-white/12 bg-[linear-gradient(180deg,_rgba(255,255,255,0.04)_0%,_rgba(255,255,255,0.02)_100%)] p-8 shadow-[0_18px_60px_rgba(17,24,39,0.05)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/45">Estado inicial</p>
+            <h3 className="mt-3 text-2xl font-black tracking-tight text-white">
               Aún no hay proyectos, pero el workspace ya está listo para abrir el primero.
             </h3>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600">
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-white/68">
               La experiencia premium no empieza cuando ya hay contenido. Empieza cuando el sistema
               te invita a crear con claridad desde el minuto uno.
             </p>
