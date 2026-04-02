@@ -9,6 +9,8 @@ describe('button styles', () => {
     expect(premiumPrimaryMintButton).toContain('bg-[var(--button-highlight-bg)]');
     expect(premiumPrimaryMintButton).toContain('text-[var(--button-highlight-fg)]');
     expect(premiumPrimaryMintButton).toContain('font-bold');
+    expect(premiumPrimaryMintButton).toContain('text-base');
+    expect(premiumPrimaryMintButton).toContain('border-[var(--button-highlight-border)]');
     expect(premiumPrimaryMintButton).toContain('min-h-12');
     expect(premiumPrimaryMintButton).toContain('justify-center');
   });
