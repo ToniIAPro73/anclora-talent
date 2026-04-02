@@ -1,6 +1,4 @@
 import 'server-only';
-import { PDFParse } from 'pdf-parse';
-import WordExtractor from 'word-extractor';
 import type { ImportedDocumentSeed } from './types';
 export { supportedImportAccept } from './import-config';
 
@@ -87,6 +85,7 @@ async function extractTextFromBuffer(fileName: string, mimeType: string, buffer:
   }
 
   if (extension === 'pdf' || mimeType === 'application/pdf') {
+    const { PDFParse } = await import('pdf-parse');
     const parser = new PDFParse({ data: buffer });
     const parsed = await parser.getText();
     await parser.destroy();
@@ -94,6 +93,7 @@ async function extractTextFromBuffer(fileName: string, mimeType: string, buffer:
   }
 
   if (extension === 'doc' || extension === 'docx') {
+    const { default: WordExtractor } = await import('word-extractor');
     const extractor = new WordExtractor();
     const document = await extractor.extract(buffer);
     return document.getBody();
