@@ -36,11 +36,11 @@ html[data-theme="dark"] {
     radial-gradient(circle at left, rgba(18, 74, 80, 0.2), transparent 28%),
     linear-gradient(180deg, #07252f 0%, #0b313f 48%, #0b133f 100%);
   --button-highlight-bg: var(--accent-mint);
-  --button-highlight-fg: var(--accent-ink);
+  --button-highlight-fg: #050b12;
   --button-highlight-hover: var(--accent-mint-strong);
   --button-highlight-border: rgba(5, 11, 18, 0.24);
   --button-primary-bg: #07252f;
-  --button-primary-fg: #f2e3b3;
+  --button-primary-fg: #fffdf8;
   --button-primary-hover: #124a50;
   --button-primary-border: rgba(212, 175, 55, 0.16);
   --button-secondary-bg: rgba(7, 37, 47, 0.68);
