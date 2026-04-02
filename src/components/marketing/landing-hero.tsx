@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 import type { MarketingCta } from './marketing-helpers';
 import { premiumPrimaryMintButton } from '@/components/ui/button-styles';
 
@@ -26,7 +27,7 @@ export function LandingHero({
       <div className="relative grid gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.26em] text-[var(--text-secondary)]">
-            <Sparkles className="h-3.5 w-3.5 text-[var(--accent-mint)]" />
+            <BrandLogo size={16} className="h-4 w-4 rounded-full" priority />
             {eyebrow}
           </div>
 
