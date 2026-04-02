@@ -31,7 +31,7 @@ export default async function DashboardPage() {
               {dashboardCopy.createProject}
             </Link>
           </div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <div className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-4">
               <p className="text-xs uppercase tracking-[0.22em] text-[var(--text-tertiary)]">{dashboardCopy.projectsEyebrow}</p>
               <p className="mt-3 text-2xl font-black text-[var(--text-primary)]">{projects.length}</p>

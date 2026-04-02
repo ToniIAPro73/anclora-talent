@@ -27,6 +27,9 @@ Fijar una gramática premium compartida para productos públicos o semi-público
 - El CTA principal puede tener mayor presencia visual, pero no debe monopolizar toda la lectura.
 - No más de un CTA dominante por viewport principal.
 - Los secundarios deben sentirse premium, no utilitarios sin remate.
+- Los botones y pills interactivos deben tener variantes reales por tema cuando la app soporte `dark/light`.
+- Un botón válido en `dark` no puede reciclarse sin ajuste como solución por defecto en `light`.
+- El modo `light` debe redefinir al menos fondo, foreground, borde y hover de los CTAs principales y secundarios cuando el contraste o el peso visual lo exijan.
 
 ### 3. Cards premium
 - Se admite mayor profundidad visual que en el grupo interno.
@@ -76,6 +79,7 @@ Fijar una gramática premium compartida para productos públicos o semi-público
 
 ### 8. Tema premium
 - Si la app soporta dos o más temas, cada modo debe sentirse diseñado, no derivado.
+- Los tokens de tema deben poder producir variantes reales por tema en botones, pills, formularios y otros elementos críticos de interacción.
 - Si la app usa un único tema editorial, los tokens base deben dejar abierta una futura extensión sin reescribir componentes.
 
 ## Reglas particulares por aplicación
