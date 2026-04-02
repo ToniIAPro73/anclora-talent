@@ -6,7 +6,6 @@ import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
 import { uploadProjectBlob } from '@/lib/blob/client';
 import type { CoverDesign, UpdateCoverInput, UpdateDocumentInput } from './types';
-import { extractImportedDocumentSeed } from './import';
 
 function parsePalette(value: FormDataEntryValue | null): CoverDesign['palette'] {
   if (value === 'teal' || value === 'sand') {
@@ -27,7 +26,10 @@ export async function createProjectAction(formData: FormData) {
 
   const importedDocument =
     sourceDocument instanceof File && sourceDocument.size > 0
-      ? await extractImportedDocumentSeed(sourceDocument)
+      ? await (async () => {
+          const { extractImportedDocumentSeed } = await import('./import');
+          return extractImportedDocumentSeed(sourceDocument);
+        })()
       : null;
 
   const project = await projectRepository.createProject(userId, { title, importedDocument });
