@@ -215,15 +215,18 @@ async function listProjectsFromDb(userId: string) {
 
 async function getProjectFromDb(userId: string, projectId: string) {
   const db = getDb();
+  console.info('[projectRepository.getProjectById] querying project', { userId, projectId });
   const [projectRow] = await db.select().from(projects).where(and(eq(projects.id, projectId), eq(projects.userId, userId)));
 
   if (!projectRow) {
+    console.warn('[projectRepository.getProjectById] project row not found', { userId, projectId });
     return null;
   }
 
   const [documentRow] = await db.select().from(projectDocuments).where(eq(projectDocuments.projectId, projectRow.id));
 
   if (!documentRow) {
+    console.warn('[projectRepository.getProjectById] document row not found', { userId, projectId });
     return null;
   }
 
@@ -235,9 +238,17 @@ async function getProjectFromDb(userId: string, projectId: string) {
   const [coverRow] = await db.select().from(coverDesigns).where(eq(coverDesigns.projectId, projectRow.id));
 
   if (!coverRow) {
+    console.warn('[projectRepository.getProjectById] cover row not found', { userId, projectId });
     return null;
   }
 
+  console.info('[projectRepository.getProjectById] project graph loaded', {
+    userId,
+    projectId,
+    documentId: documentRow.id,
+    blocks: blockRows.length,
+    coverId: coverRow.id,
+  });
   return mapRowsToProject(projectRow, documentRow, blockRows, coverRow);
 }
 
@@ -245,7 +256,17 @@ async function createProjectInDb(userId: string, input: CreateProjectInput) {
   const db = getDb();
   const project = createProjectRecord(userId, input);
 
+  console.info('[projectRepository.createProject] persisting project graph', {
+    userId,
+    projectId: project.id,
+    slug: project.slug,
+    hasImportedDocument: Boolean(input.importedDocument),
+  });
   await persistProjectGraph(db, project);
+  console.info('[projectRepository.createProject] persisted project graph', {
+    userId,
+    projectId: project.id,
+  });
 
   return project;
 }
