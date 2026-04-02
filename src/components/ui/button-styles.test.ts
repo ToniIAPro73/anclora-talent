@@ -8,6 +8,7 @@ describe('button styles', () => {
   test('defines a high-contrast mint CTA for highlighted actions', () => {
     expect(premiumPrimaryMintButton).toContain('bg-[var(--button-highlight-bg)]');
     expect(premiumPrimaryMintButton).toContain('text-[var(--button-highlight-fg)]');
+    expect(premiumPrimaryMintButton).toContain('font-bold');
     expect(premiumPrimaryMintButton).toContain('min-h-12');
     expect(premiumPrimaryMintButton).toContain('justify-center');
   });

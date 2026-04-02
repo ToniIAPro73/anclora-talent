@@ -12,6 +12,7 @@ describe('Anclora Talent premium palette contract', () => {
   test('applies the quiet luxury palette tokens in globals.css', () => {
     expect(globalsCss).toContain('--background: #0b313f;');
     expect(globalsCss).toContain('--accent-mint: #d4af37;');
+    expect(globalsCss).toContain('--button-highlight-fg: #0b1320;');
     expect(globalsCss).toContain('--surface-elevated: linear-gradient(180deg, rgba(18, 74, 80, 0.96) 0%, rgba(7, 37, 47, 0.98) 100%);');
   });
 
