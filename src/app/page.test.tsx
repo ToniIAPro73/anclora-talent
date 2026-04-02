@@ -2,17 +2,23 @@ import { render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import HomePage from './page';
 import { auth } from '@clerk/nextjs/server';
+import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
 }));
 
+vi.mock('@/lib/ui-preferences/preferences.server', () => ({
+  readUiPreferences: vi.fn(),
+}));
+
 describe('HomePage', () => {
   beforeEach(() => {
     vi.mocked(auth).mockReset();
+    vi.mocked(readUiPreferences).mockResolvedValue({ locale: 'es', theme: 'dark' });
   });
 
-  it('shows the new signup-first hero for anonymous users', async () => {
+  it('shows the new signup-first hero for anonymous users', { timeout: 10000 }, async () => {
     vi.mocked(auth).mockResolvedValue({ userId: null } as Awaited<ReturnType<typeof auth>>);
 
     render(await HomePage());

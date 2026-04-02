@@ -1,14 +1,15 @@
 type LandingProofStripProps = {
-  items: string[];
+  eyebrow: string;
+  items: readonly string[];
 };
 
-export function LandingProofStrip({ items }: LandingProofStripProps) {
+export function LandingProofStrip({ eyebrow, items }: LandingProofStripProps) {
   return (
-    <section className="rounded-[32px] border border-black/8 bg-white/82 px-6 py-6 shadow-[0_18px_60px_rgba(17,24,39,0.06)]">
-      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Confianza</p>
+    <section className="rounded-[32px] border border-[var(--border-subtle)] bg-[var(--page-surface)] px-6 py-6 shadow-[var(--shadow-soft)]">
+      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">{eyebrow}</p>
       <ul className="mt-4 grid gap-3 lg:grid-cols-3" role="list">
         {items.map((item) => (
-          <li key={item} className="rounded-[24px] border border-black/8 bg-[#f8f4eb] px-5 py-4 text-sm font-semibold leading-7 text-slate-800">
+          <li key={item} className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-5 py-4 text-sm font-semibold leading-7 text-[var(--text-primary)]">
             {item}
           </li>
         ))}

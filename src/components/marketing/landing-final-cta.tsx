@@ -4,19 +4,21 @@ import type { MarketingCta } from './marketing-helpers';
 import { premiumPrimaryMintButton } from '@/components/ui/button-styles';
 
 type LandingFinalCtaProps = {
+  eyebrow: string;
+  title: string;
   primaryCta: MarketingCta;
   note: string;
 };
 
-export function LandingFinalCta({ primaryCta, note }: LandingFinalCtaProps) {
+export function LandingFinalCta({ eyebrow, note, primaryCta, title }: LandingFinalCtaProps) {
   return (
-    <section className="rounded-[36px] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(45,212,191,0.16),_transparent_35%),linear-gradient(180deg,_#111a2b_0%,_#0a1120_100%)] px-6 py-8 text-white shadow-[0_18px_60px_rgba(3,7,18,0.28)]">
+    <section className="rounded-[36px] border border-[var(--border-subtle)] bg-[var(--shell-main-surface)] px-6 py-8 text-[var(--text-primary)] shadow-[var(--shadow-strong)]">
       <div className="max-w-3xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/50">Siguiente paso</p>
-        <h2 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl">
-          Abre tu cuenta y empieza con una base que ya parece producto.
+        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">{eyebrow}</p>
+        <h2 className="mt-3 text-3xl font-black tracking-tight text-[var(--text-primary)] sm:text-4xl">
+          {title}
         </h2>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-white/70">
+        <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--text-secondary)]">
           {note}
         </p>
         <div className="mt-8">

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { CreateProjectForm } from './CreateProjectForm';
 import { vi } from 'vitest';
+import { resolveLocaleMessages } from '@/lib/i18n/messages';
 
 vi.mock('@/lib/projects/actions', () => ({
   createProjectAction: vi.fn(),
@@ -8,7 +9,7 @@ vi.mock('@/lib/projects/actions', () => ({
 
 describe('CreateProjectForm', () => {
   test('renders optional document import for supported formats', () => {
-    render(<CreateProjectForm />);
+    render(<CreateProjectForm copy={resolveLocaleMessages('es').project} />);
 
     const fileInput = screen.getByTestId('source-document-input');
     expect(fileInput).toHaveAttribute('type', 'file');

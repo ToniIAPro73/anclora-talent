@@ -1,17 +1,22 @@
 import { CreateProjectForm } from '@/components/projects/CreateProjectForm';
+import { resolveLocaleMessages } from '@/lib/i18n/messages';
+import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
 
-export default function NewProjectPage() {
+export default async function NewProjectPage() {
+  const { locale } = await readUiPreferences();
+  const projectCopy = resolveLocaleMessages(locale).project;
+
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Proyecto nuevo</p>
-        <h2 className="mt-2 text-4xl font-black tracking-tight">Crea el contenedor editorial base</h2>
-        <p className="mt-3 max-w-3xl text-base leading-8 text-slate-600">
-          Al crear el proyecto se generan documento, portada y contrato de edición para que el flujo completo arranque ya sobre el modelo canónico.
+        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">{projectCopy.newEyebrow}</p>
+        <h2 className="mt-2 text-4xl font-black tracking-tight text-[var(--text-primary)]">{projectCopy.newTitle}</h2>
+        <p className="mt-3 max-w-3xl text-base leading-8 text-[var(--text-secondary)]">
+          {projectCopy.newDescription}
         </p>
       </div>
       <div className="max-w-3xl">
-        <CreateProjectForm />
+        <CreateProjectForm copy={projectCopy} />
       </div>
     </div>
   );
