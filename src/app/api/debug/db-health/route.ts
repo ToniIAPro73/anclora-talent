@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 
+function maskUrl(url: string | undefined) {
+  if (!url) return null;
+
+  return url
+    .replace(/:\/\/([^:]+):([^@]+)@/, '://$1:***@')
+    .replace(/([?&](?:password|token)=)[^&]+/gi, '$1***');
+}
+
 export async function GET() {
   const databaseUrl = process.env.DATABASE_URL;
 
@@ -29,7 +37,7 @@ export async function GET() {
     return NextResponse.json({
       ok: true,
       hasDatabaseUrl: true,
-      databaseUrl,
+      databaseUrl: maskUrl(databaseUrl),
       result: result[0] ?? null,
     });
   } catch (error) {
@@ -39,7 +47,7 @@ export async function GET() {
       {
         ok: false,
         hasDatabaseUrl: true,
-        databaseUrl,
+        databaseUrl: maskUrl(databaseUrl),
         error: message,
       },
       { status: 500 },
