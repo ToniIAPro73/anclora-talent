@@ -1,56 +1,57 @@
 import { saveProjectCoverAction } from '@/lib/projects/actions';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
+import type { AppMessages } from '@/lib/i18n/messages';
 
 const previewClasses = {
-  obsidian: 'from-slate-950 via-slate-800 to-slate-700 text-white',
-  teal: 'from-teal-800 via-teal-700 to-cyan-600 text-white',
-  sand: 'from-amber-100 via-orange-100 to-stone-100 text-slate-950',
+  obsidian: 'from-[#0b133f] via-[#0b233f] to-[#07252f] text-[#f2e3b3]',
+  teal: 'from-[#124a50] via-[#0b313f] to-[#07252f] text-[#f2e3b3]',
+  sand: 'from-[#f2e3b3] via-[#e7d4a0] to-[#d4af37] text-[#0b313f]',
 };
 
-export function CoverForm({ project }: { project: ProjectRecord }) {
+export function CoverForm({ copy, project }: { copy: AppMessages['project']; project: ProjectRecord }) {
   return (
     <form action={saveProjectCoverAction} className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
       <input type="hidden" name="projectId" value={project.id} />
       <input type="hidden" name="currentBackgroundImageUrl" value={project.cover.backgroundImageUrl ?? ''} />
       <input type="hidden" name="currentThumbnailUrl" value={project.cover.thumbnailUrl ?? ''} />
 
-      <section className="space-y-4 rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,_rgba(19,29,48,0.96)_0%,_rgba(9,16,29,0.98)_100%)] p-6 text-white shadow-[0_16px_60px_rgba(3,7,18,0.3)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/45">Portada persistente</p>
+      <section className="space-y-4 rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 text-[var(--text-primary)] shadow-[var(--shadow-strong)]">
+        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">{copy.coverFormEyebrow}</p>
         <label className="block space-y-2">
-          <span className="text-sm font-semibold text-white/88">Título</span>
-          <input name="title" defaultValue={project.cover.title} className="w-full rounded-[18px] border border-white/10 bg-white/6 px-4 py-3 text-white outline-none transition focus:border-teal-400" />
+          <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverTitleLabel}</span>
+          <input name="title" defaultValue={project.cover.title} className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]" />
         </label>
         <label className="block space-y-2">
-          <span className="text-sm font-semibold text-white/88">Subtítulo</span>
-          <textarea name="subtitle" defaultValue={project.cover.subtitle} className="min-h-28 w-full rounded-[18px] border border-white/10 bg-white/6 px-4 py-3 text-white outline-none transition focus:border-teal-400" />
+          <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverSubtitleLabel}</span>
+          <textarea name="subtitle" defaultValue={project.cover.subtitle} className="min-h-28 w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]" />
         </label>
         <label className="block space-y-2">
-          <span className="text-sm font-semibold text-white/88">Paleta</span>
-          <select name="palette" defaultValue={project.cover.palette} className="w-full rounded-[18px] border border-white/10 bg-white/6 px-4 py-3 text-white outline-none transition focus:border-teal-400">
-            <option value="obsidian">Obsidian</option>
-            <option value="teal">Teal</option>
-            <option value="sand">Sand</option>
+          <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverPaletteLabel}</span>
+          <select name="palette" defaultValue={project.cover.palette} className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]">
+            <option value="obsidian">{copy.paletteObsidian}</option>
+            <option value="teal">{copy.paletteTeal}</option>
+            <option value="sand">{copy.paletteSand}</option>
           </select>
         </label>
         <label className="block space-y-2">
-          <span className="text-sm font-semibold text-white/88">Imagen de fondo</span>
-          <input type="file" name="backgroundImage" accept="image/*" className="block w-full text-sm text-white/68 file:mr-4 file:rounded-full file:border-0 file:bg-[#8ce9de] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#07111f]" />
+          <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverBackgroundLabel}</span>
+          <input type="file" name="backgroundImage" accept="image/*" className="block w-full text-sm text-[var(--text-secondary)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--button-highlight-bg)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--button-highlight-fg)]" />
         </label>
         <button type="submit" className={`${premiumPrimaryDarkButton} px-5`}>
-          Guardar portada
+          {copy.coverSave}
         </button>
       </section>
 
-      <section className={`rounded-[32px] bg-gradient-to-br p-8 shadow-[0_16px_60px_rgba(17,24,39,0.08)] ${previewClasses[project.cover.palette]}`}>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] opacity-70">Cover studio</p>
+      <section className={`rounded-[32px] border border-[var(--border-subtle)] bg-gradient-to-br p-8 shadow-[var(--shadow-soft)] ${previewClasses[project.cover.palette]}`}>
+        <p className="text-xs font-semibold uppercase tracking-[0.28em] opacity-70">{copy.coverEyebrow}</p>
         <div className="mt-8 overflow-hidden rounded-[28px] border border-white/15 bg-black/10 backdrop-blur">
           {project.cover.backgroundImageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={project.cover.backgroundImageUrl} alt={project.cover.title} className="h-72 w-full object-cover" />
           ) : (
             <div className="flex h-72 items-center justify-center bg-white/10 text-sm font-semibold uppercase tracking-[0.2em] opacity-70">
-              Sin imagen subida
+              {copy.coverNoImage}
             </div>
           )}
           <div className="p-8">

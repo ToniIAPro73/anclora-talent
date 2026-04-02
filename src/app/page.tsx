@@ -5,40 +5,53 @@ import { LandingHero } from '@/components/marketing/landing-hero';
 import { LandingProductShowcase } from '@/components/marketing/landing-product-showcase';
 import { LandingProofStrip } from '@/components/marketing/landing-proof-strip';
 import { LandingWorkflow } from '@/components/marketing/landing-workflow';
-import {
-  marketingBenefitItems,
-  marketingProofItems,
-  marketingShowcasePanels,
-  marketingWorkflowSteps,
-} from '@/components/marketing/marketing-data';
 import { getPrimaryCta, getSecondaryCta } from '@/components/marketing/marketing-helpers';
+import { resolveLocaleMessages } from '@/lib/i18n/messages';
+import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
 
 export default async function HomePage() {
   const { userId } = await auth();
+  const { locale } = await readUiPreferences();
+  const messages = resolveLocaleMessages(locale).landing;
   const primaryCta = getPrimaryCta(userId);
   const secondaryCta = getSecondaryCta(userId);
 
   return (
-    <main className="min-h-screen px-4 py-4 text-slate-950 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+    <main className="min-h-screen px-4 py-4 text-[var(--text-primary)] sm:px-6 sm:py-6 lg:px-8 lg:py-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-5 lg:gap-6">
         <LandingHero
-          eyebrow="Anclora Talent"
-          headline="Convierte talento en una presencia editorial lista para publicar."
-          subheadline="Crea tu cuenta, lanza tu proyecto y trabaja sobre un flujo claro de documento, preview y portada desde una misma plataforma."
+          eyebrow={messages.eyebrow}
+          headline={messages.headline}
+          subheadline={messages.subheadline}
           primaryCta={primaryCta}
           secondaryCta={secondaryCta}
         />
-        <LandingProofStrip items={marketingProofItems} />
-        <LandingWorkflow steps={marketingWorkflowSteps} />
+        <LandingProofStrip eyebrow={messages.proofEyebrow} items={messages.proofItems} />
+        <LandingWorkflow
+          eyebrow={messages.workflowEyebrow}
+          title={messages.workflowTitle}
+          description={messages.workflowDescription}
+          advanceLabel={messages.workflowAdvance}
+          stepLabel={messages.workflowStepLabel}
+          steps={messages.workflowSteps}
+        />
         <LandingProductShowcase
           id="product-showcase"
-          title="Una plataforma donde documento, preview y portada dejan de competir entre si."
-          panels={marketingShowcasePanels}
+          eyebrow={messages.productEyebrow}
+          title={messages.productTitle}
+          description={messages.productDescription}
+          panels={messages.showcasePanels}
         />
-        <LandingBenefits items={marketingBenefitItems} />
+        <LandingBenefits
+          eyebrow={messages.benefitsEyebrow}
+          title={messages.benefitsTitle}
+          items={messages.benefits}
+        />
         <LandingFinalCta
+          eyebrow={messages.finalEyebrow}
+          title={messages.finalTitle}
           primaryCta={primaryCta}
-          note="Empieza con una cuenta propia, crea tu primer proyecto y trabaja con una base que ya transmite claridad, consistencia y salida real."
+          note={messages.finalNote}
         />
       </div>
     </main>

@@ -1,11 +1,102 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f3ede2;
-  --foreground: #111827;
-  --surface: rgba(255, 255, 255, 0.72);
-  --surface-strong: #fffdf8;
-  --surface-muted: #efe6d7;
+:root,
+html[data-theme="dark"] {
+  --background: #0b313f;
+  --foreground: #f2e3b3;
+  --text-primary: #f2e3b3;
+  --text-secondary: rgba(242, 227, 179, 0.76);
+  --text-tertiary: rgba(242, 227, 179, 0.54);
+  --border-subtle: rgba(212, 175, 55, 0.14);
+  --border-strong: rgba(212, 175, 55, 0.28);
+  --surface-soft: rgba(7, 37, 47, 0.72);
+  --surface-highlight: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(18, 74, 80, 0.84) 100%);
+  --surface-elevated: linear-gradient(180deg, rgba(18, 74, 80, 0.96) 0%, rgba(7, 37, 47, 0.98) 100%);
+  --shell-surface: radial-gradient(circle at top left, rgba(212, 175, 55, 0.14), transparent 34%),
+    linear-gradient(180deg, rgba(7, 37, 47, 0.95) 0%, rgba(11, 19, 63, 0.98) 100%);
+  --shell-main-surface: radial-gradient(circle at top, rgba(212, 175, 55, 0.1), transparent 28%),
+    radial-gradient(circle at right, rgba(18, 74, 80, 0.2), transparent 36%),
+    linear-gradient(180deg, rgba(18, 74, 80, 0.96) 0%, rgba(11, 19, 63, 0.98) 100%);
+  --auth-surface: radial-gradient(circle at top left, rgba(212, 175, 55, 0.12), transparent 30%),
+    linear-gradient(180deg, rgba(11, 49, 63, 0.94) 0%, rgba(11, 19, 63, 0.98) 100%);
+  --auth-card-surface: linear-gradient(180deg, rgba(18, 74, 80, 0.94) 0%, rgba(7, 37, 47, 0.98) 100%);
+  --page-surface: linear-gradient(180deg, rgba(18, 74, 80, 0.96) 0%, rgba(7, 37, 47, 0.98) 100%);
+  --page-surface-muted: linear-gradient(180deg, rgba(11, 49, 63, 0.72) 0%, rgba(7, 37, 47, 0.9) 100%);
+  --panel-on-canvas: rgba(11, 49, 63, 0.78);
+  --preview-paper: rgba(10, 30, 39, 0.82);
+  --preview-paper-border: rgba(212, 175, 55, 0.14);
+  --preview-quote-bg: rgba(11, 19, 63, 0.82);
+  --preview-quote-border: #d4af37;
+  --accent-mint: #d4af37;
+  --accent-mint-strong: #ecc768;
+  --accent-ink: #0b1320;
+  --accent-glow: rgba(212, 175, 55, 0.22);
+  --accent-glow-soft: rgba(18, 74, 80, 0.16);
+  --app-gradient: radial-gradient(circle at top center, rgba(212, 175, 55, 0.14), transparent 24%),
+    radial-gradient(circle at left, rgba(18, 74, 80, 0.2), transparent 28%),
+    linear-gradient(180deg, #07252f 0%, #0b313f 48%, #0b133f 100%);
+  --button-highlight-bg: var(--accent-mint);
+  --button-highlight-fg: var(--accent-ink);
+  --button-highlight-hover: var(--accent-mint-strong);
+  --button-primary-bg: #07252f;
+  --button-primary-fg: #f2e3b3;
+  --button-primary-hover: #124a50;
+  --button-secondary-bg: rgba(7, 37, 47, 0.68);
+  --button-secondary-fg: #f2e3b3;
+  --button-secondary-border: rgba(212, 175, 55, 0.16);
+  --button-secondary-hover-bg: rgba(18, 74, 80, 0.8);
+  --button-secondary-hover-border: rgba(212, 175, 55, 0.34);
+  --shadow-soft: 0 14px 34px rgba(4, 17, 23, 0.24);
+  --shadow-strong: 0 28px 100px rgba(3, 9, 26, 0.52);
+}
+
+html[data-theme="light"] {
+  --background: #f5ecda;
+  --foreground: #0b313f;
+  --text-primary: #0b313f;
+  --text-secondary: rgba(11, 49, 63, 0.76);
+  --text-tertiary: rgba(11, 49, 63, 0.54);
+  --border-subtle: rgba(11, 49, 63, 0.12);
+  --border-strong: rgba(212, 175, 55, 0.28);
+  --surface-soft: rgba(255, 255, 255, 0.7);
+  --surface-highlight: linear-gradient(135deg, rgba(212, 175, 55, 0.24) 0%, rgba(255, 253, 248, 0.96) 100%);
+  --surface-elevated: linear-gradient(180deg, rgba(255, 253, 248, 0.94) 0%, rgba(240, 230, 207, 0.98) 100%);
+  --shell-surface: radial-gradient(circle at top left, rgba(212, 175, 55, 0.14), transparent 32%),
+    linear-gradient(180deg, rgba(255, 253, 248, 0.9) 0%, rgba(240, 230, 207, 0.98) 100%);
+  --shell-main-surface: radial-gradient(circle at top, rgba(212, 175, 55, 0.1), transparent 28%),
+    radial-gradient(circle at right, rgba(18, 74, 80, 0.12), transparent 36%),
+    linear-gradient(180deg, rgba(255, 253, 248, 0.94) 0%, rgba(234, 223, 198, 0.98) 100%);
+  --auth-surface: radial-gradient(circle at top left, rgba(212, 175, 55, 0.1), transparent 28%),
+    linear-gradient(180deg, rgba(255, 253, 248, 0.9) 0%, rgba(243, 237, 226, 0.98) 100%);
+  --auth-card-surface: linear-gradient(180deg, rgba(255, 253, 248, 0.96) 0%, rgba(240, 230, 207, 0.98) 100%);
+  --page-surface: linear-gradient(180deg, rgba(255, 253, 248, 0.95) 0%, rgba(240, 230, 207, 0.98) 100%);
+  --page-surface-muted: linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(245, 236, 218, 0.98) 100%);
+  --panel-on-canvas: rgba(255, 253, 248, 0.72);
+  --preview-paper: #fffdf8;
+  --preview-paper-border: rgba(11, 49, 63, 0.14);
+  --preview-quote-bg: #efe2c4;
+  --preview-quote-border: #d4af37;
+  --accent-mint: #d4af37;
+  --accent-mint-strong: #bb9227;
+  --accent-ink: #0b1320;
+  --accent-glow: rgba(212, 175, 55, 0.16);
+  --accent-glow-soft: rgba(18, 74, 80, 0.12);
+  --app-gradient: radial-gradient(circle at top center, rgba(212, 175, 55, 0.12), transparent 24%),
+    radial-gradient(circle at left, rgba(18, 74, 80, 0.1), transparent 28%),
+    linear-gradient(180deg, #fffdf8 0%, #f5ecda 52%, #eadfc6 100%);
+  --button-highlight-bg: #d4af37;
+  --button-highlight-fg: #0b1320;
+  --button-highlight-hover: #bb9227;
+  --button-primary-bg: #07252f;
+  --button-primary-fg: #f2e3b3;
+  --button-primary-hover: #124a50;
+  --button-secondary-bg: rgba(255, 253, 248, 0.82);
+  --button-secondary-fg: #0b313f;
+  --button-secondary-border: rgba(11, 49, 63, 0.14);
+  --button-secondary-hover-bg: rgba(255, 255, 255, 0.98);
+  --button-secondary-hover-border: rgba(212, 175, 55, 0.28);
+  --shadow-soft: 0 12px 30px rgba(11, 49, 63, 0.1);
+  --shadow-strong: 0 28px 90px rgba(11, 49, 63, 0.12);
 }
 
 @theme inline {
@@ -26,10 +117,7 @@ body {
 }
 
 body {
-  background:
-    radial-gradient(circle at top left, rgba(13, 148, 136, 0.12), transparent 26%),
-    radial-gradient(circle at top right, rgba(180, 83, 9, 0.1), transparent 22%),
-    linear-gradient(180deg, #f8f4eb 0%, var(--background) 50%, #ece4d6 100%);
+  background: var(--app-gradient);
   color: var(--foreground);
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
@@ -48,6 +136,6 @@ button {
 }
 
 ::selection {
-  background: rgba(13, 148, 136, 0.18);
-  color: #0f172a;
+  background: color-mix(in srgb, var(--accent-mint) 22%, transparent);
+  color: var(--text-primary);
 }

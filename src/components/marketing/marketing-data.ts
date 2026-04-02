@@ -9,7 +9,7 @@ export type MarketingShowcasePanel = {
   title: string;
   description: string;
   accent?: string;
-  bullets?: string[];
+  bullets?: readonly string[];
 };
 
 export type MarketingBenefit = {
