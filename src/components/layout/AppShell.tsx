@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { UserButton } from '@clerk/nextjs';
-import { FolderOpen, LayoutDashboard, PenSquare, Sparkles } from 'lucide-react';
+import { FolderOpen, LayoutDashboard, PenSquare } from 'lucide-react';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { LocaleToggle } from './LocaleToggle';
@@ -21,9 +22,10 @@ export function AppShell({
       <div className="mx-auto grid min-h-screen max-w-7xl gap-5 px-4 py-4 lg:grid-cols-[280px_1fr]">
         <aside className="overflow-hidden rounded-[36px] border border-[var(--border-subtle)] bg-[var(--shell-surface)] p-6 shadow-[var(--shadow-strong)] backdrop-blur">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-highlight)] text-[var(--accent-mint)] shadow-[var(--shadow-soft)]">
-              <Sparkles className="h-5 w-5" />
-            </div>
+            <BrandLogo
+              size={48}
+              className="h-12 w-12 rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-highlight)] shadow-[var(--shadow-soft)]"
+            />
             <div>
               <p className="text-lg font-black text-[var(--text-primary)]">{messages.brand}</p>
               <p className="text-xs uppercase tracking-[0.24em] text-[var(--text-tertiary)]">{messages.badge}</p>
