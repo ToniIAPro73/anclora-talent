@@ -24,7 +24,7 @@ export function LandingFinalCta({ eyebrow, note, primaryCta, title }: LandingFin
         <div className="mt-8">
           <Link
             href={primaryCta.href}
-            className={`${premiumPrimaryMintButton} focus-visible:ring-offset-[#0a1120]`}
+            className={`${premiumPrimaryMintButton} focus-visible:ring-offset-[var(--background)]`}
           >
             {primaryCta.label}
             <ArrowRight className="h-4 w-4" />

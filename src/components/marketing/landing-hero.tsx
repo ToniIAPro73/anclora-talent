@@ -19,7 +19,7 @@ export function LandingHero({
   secondaryCta,
 }: LandingHeroProps) {
   return (
-    <section className="relative overflow-hidden rounded-[40px] border border-[var(--border-subtle)] bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.18),_transparent_28%),radial-gradient(circle_at_right,_rgba(18,74,80,0.2),_transparent_32%),linear-gradient(180deg,_#07252f_0%,_#0b313f_46%,_#0b133f_100%)] px-6 py-8 text-[var(--text-primary)] shadow-[var(--shadow-strong)] sm:px-8 lg:px-10 lg:py-10">
+    <section className="relative overflow-hidden rounded-[40px] border border-[var(--border-subtle)] bg-[var(--shell-main-surface)] px-6 py-8 text-[var(--text-primary)] shadow-[var(--shadow-strong)] sm:px-8 lg:px-10 lg:py-10">
       <div className="pointer-events-none absolute -right-16 top-8 h-56 w-56 rounded-full bg-[var(--accent-glow)] blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-[var(--accent-glow-soft)] blur-3xl" />
 
@@ -75,7 +75,7 @@ export function LandingHero({
         <div className="relative">
           <div className="absolute inset-x-12 top-0 h-24 rounded-full bg-[var(--accent-glow)] blur-2xl" />
           <div className="relative rounded-[34px] border border-[var(--border-subtle)] bg-[color:var(--panel-on-canvas)] p-5 shadow-[var(--shadow-strong)] backdrop-blur">
-            <div className="rounded-[28px] bg-[linear-gradient(180deg,_rgba(7,37,47,0.92)_0%,_rgba(11,19,63,0.96)_100%)] p-6">
+            <div className="rounded-[28px] bg-[var(--surface-elevated)] p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--accent-mint)]">Anclora Talent</p>
