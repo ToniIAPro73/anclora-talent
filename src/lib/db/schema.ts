@@ -33,6 +33,7 @@ export const projectDocuments = pgTable('project_documents', {
   title: varchar('title', { length: 255 }).notNull(),
   subtitle: text('subtitle').notNull(),
   language: varchar('language', { length: 12 }).notNull(),
+  sourceMetadata: jsonb('source_metadata'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
@@ -68,6 +69,22 @@ export const coverDesigns = pgTable('cover_designs', {
   palette: varchar('palette', { length: 32 }).notNull(),
   backgroundImageUrl: text('background_image_url'),
   thumbnailUrl: text('thumbnail_url'),
+  layout: varchar('layout', { length: 32 }),
+  fontFamily: varchar('font_family', { length: 255 }),
+  accentColor: varchar('accent_color', { length: 32 }),
+  renderedImageUrl: text('rendered_image_url'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const backCoverDesigns = pgTable('back_cover_designs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull().unique(),
+  title: varchar('title', { length: 255 }).notNull(),
+  body: text('body').notNull(),
+  authorBio: text('author_bio').notNull(),
+  accentColor: varchar('accent_color', { length: 32 }),
+  backgroundImageUrl: text('background_image_url'),
+  renderedImageUrl: text('rendered_image_url'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

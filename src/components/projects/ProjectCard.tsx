@@ -3,6 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import type { ProjectSummary } from '@/lib/projects/types';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import type { AppMessages } from '@/lib/i18n/messages';
+import { ProjectDeleteButton } from './ProjectDeleteButton';
 
 const paletteClassMap: Record<ProjectSummary['coverPalette'], string> = {
   obsidian: 'border border-[rgba(212,175,55,0.18)] bg-[#0b133f] text-[#f2e3b3]',
@@ -43,6 +44,11 @@ export function ProjectCard({
         <Link href={`/projects/${project.id}/preview`} className={`${premiumSecondaryLightButton} min-h-11 px-4 py-2`}>
           {copy.cardPreview}
         </Link>
+        <ProjectDeleteButton
+          projectId={project.id}
+          label={copy.cardDelete}
+          confirmMessage={copy.cardDeleteConfirm.replace('{title}', project.title)}
+        />
       </div>
     </article>
   );

@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 
 import { createProjectRecord, updateProjectDocument } from '@/lib/projects/factories';
-import { persistDocumentUpdate, persistProjectGraph } from './repositories';
+import { persistDocumentUpdate, persistProjectGraph, projectRepository, reconstructChaptersFromBlockRows } from './repositories';
 
 function createDbMock() {
   return {
@@ -28,7 +28,26 @@ describe('repository persistence helpers', () => {
 
     await persistProjectGraph(db as never, project);
 
-    expect(db.insert).toHaveBeenCalledTimes(4);
+    expect(db.insert).toHaveBeenCalledTimes(5);
+  });
+
+  test('persists source assets when the imported project contains them', async () => {
+    const db = createDbMock();
+    const project = createProjectRecord('user_123', {
+      title: 'Proyecto importado',
+      importedDocument: {
+        title: 'Proyecto importado',
+        subtitle: 'Subtitulo',
+        chapterTitle: 'Legado',
+        blocks: [{ type: 'paragraph', content: 'Bloque legado' }],
+        sourceFileName: 'source.docx',
+        sourceMimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      },
+    });
+
+    await persistProjectGraph(db as never, project);
+
+    expect(db.insert).toHaveBeenCalledTimes(6);
   });
 
   test('persists a document update without relying on transactions', async () => {
@@ -47,8 +66,69 @@ describe('repository persistence helpers', () => {
 
     await persistDocumentUpdate(db as never, next);
 
-    expect(db.update).toHaveBeenCalledTimes(3);
+    expect(db.update).toHaveBeenCalledTimes(4);
     expect(db.delete).toHaveBeenCalledTimes(1);
     expect(db.insert).toHaveBeenCalledTimes(1);
+  });
+
+  test('reconstructs multiple chapters from flattened block rows', () => {
+    const chapters = reconstructChaptersFromBlockRows([
+      {
+        id: 'block-1',
+        projectDocumentId: 'doc-1',
+        chapterId: 'chapter-a',
+        chapterOrder: 1,
+        chapterTitle: 'Capitulo A',
+        blockOrder: 2,
+        blockType: 'paragraph',
+        content: 'Segundo bloque A',
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+      {
+        id: 'block-2',
+        projectDocumentId: 'doc-1',
+        chapterId: 'chapter-b',
+        chapterOrder: 2,
+        chapterTitle: 'Capitulo B',
+        blockOrder: 1,
+        blockType: 'heading',
+        content: 'Primer bloque B',
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+      {
+        id: 'block-3',
+        projectDocumentId: 'doc-1',
+        chapterId: 'chapter-a',
+        chapterOrder: 1,
+        chapterTitle: 'Capitulo A',
+        blockOrder: 1,
+        blockType: 'heading',
+        content: 'Primer bloque A',
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+    ] as never);
+
+    expect(chapters).toHaveLength(2);
+    expect(chapters[0].id).toBe('chapter-a');
+    expect(chapters[0].blocks.map((block) => block.content)).toEqual([
+      'Primer bloque A',
+      'Segundo bloque A',
+    ]);
+    expect(chapters[1].id).toBe('chapter-b');
+    expect(chapters[1].blocks[0].content).toBe('Primer bloque B');
+  });
+
+  test('deletes a project from the memory repository', async () => {
+    const created = await projectRepository.createProject('memory-user', {
+      title: 'Proyecto eliminable',
+    });
+
+    const beforeDelete = await projectRepository.getProjectById('memory-user', created.id);
+    expect(beforeDelete?.id).toBe(created.id);
+
+    await projectRepository.deleteProject('memory-user', created.id);
+
+    const afterDelete = await projectRepository.getProjectById('memory-user', created.id);
+    expect(afterDelete).toBeNull();
   });
 });
