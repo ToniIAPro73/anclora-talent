@@ -13,6 +13,10 @@ describe('CreateProjectForm', () => {
 
     const fileInput = screen.getByTestId('source-document-input');
     expect(fileInput).toHaveAttribute('type', 'file');
-    expect(fileInput).toHaveAttribute('accept', '.pdf,.doc,.docx,.txt,.md,text/plain,text/markdown,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    expect(screen.getByText('Arrastra tu documento aquí')).toBeInTheDocument();
+    expect(fileInput).toHaveAttribute(
+      'accept',
+      '.pdf,.doc,.docx,.txt,.md,text/plain,text/markdown,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    );
   });
 });

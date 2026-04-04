@@ -64,4 +64,38 @@ describe('project factories', () => {
     expect(project.document.chapters[0].blocks.some((block) => block.content.includes('Primer bloque'))).toBe(true);
     expect(project.cover.title).toBe('Propuesta editorial');
   });
+
+  test('creates a project seeded from multiple imported chapters and default editorial metadata', () => {
+    const project = createProjectRecord('user_123', {
+      title: 'Libro estructurado',
+      importedDocument: {
+        title: 'Libro estructurado',
+        subtitle: 'Subtitulo editorial',
+        chapterTitle: 'Capitulo legado',
+        blocks: [{ type: 'paragraph', content: 'Bloque legado' }],
+        sourceFileName: 'libro.docx',
+        sourceMimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        chapters: [
+          {
+            title: 'Apertura',
+            blocks: [
+              { type: 'heading', content: 'Inicio' },
+              { type: 'paragraph', content: 'Texto de apertura' },
+            ],
+          },
+          {
+            title: 'Cierre',
+            blocks: [{ type: 'paragraph', content: 'Texto final' }],
+          },
+        ],
+      },
+    });
+
+    expect(project.document.chapters).toHaveLength(2);
+    expect(project.document.chapters[0].title).toBe('Apertura');
+    expect(project.document.chapters[1].title).toBe('Cierre');
+    expect(project.document.source?.fileName).toBe('libro.docx');
+    expect(project.assets[0]?.usage).toBe('source-document');
+    expect(project.backCover.title).toBe('Libro estructurado');
+  });
 });

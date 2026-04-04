@@ -14,6 +14,20 @@ function slugify(input: string) {
     .replace(/^-+|-+$/g, '');
 }
 
+function buildChapterBlocks(
+  blocks: Array<{
+    type: 'heading' | 'paragraph' | 'quote';
+    content: string;
+  }>,
+) {
+  return blocks.map((block, index) => ({
+    id: randomUUID(),
+    type: block.type,
+    order: index + 1,
+    content: block.content,
+  }));
+}
+
 export function createProjectRecord(userId: string, input: CreateProjectInput): ProjectRecord {
   const now = new Date().toISOString();
   const imported = input.importedDocument;
@@ -42,6 +56,22 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
           'Una plataforma editorial real no separa el editor del preview; comparte la misma verdad de contenido.',
       },
     ];
+  const chapters =
+    imported?.chapters?.length
+      ? imported.chapters.map((chapter, chapterIndex) => ({
+          id: randomUUID(),
+          order: chapterIndex + 1,
+          title: chapter.title || `Capítulo ${chapterIndex + 1}`,
+          blocks: buildChapterBlocks(chapter.blocks),
+        }))
+      : [
+          {
+            id: randomUUID(),
+            order: 1,
+            title: chapterTitle,
+            blocks: buildChapterBlocks(documentBlocks),
+          },
+        ];
 
   return {
     id: randomUUID(),
@@ -57,19 +87,14 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
       title: documentTitle,
       subtitle: documentSubtitle,
       language: 'es',
-      chapters: [
-        {
-          id: randomUUID(),
-          order: 1,
-          title: chapterTitle,
-          blocks: documentBlocks.map((block, index) => ({
-            id: randomUUID(),
-            type: block.type,
-            order: index + 1,
-            content: block.content,
-          })),
-        },
-      ],
+      chapters,
+      source: imported
+        ? {
+            fileName: imported.sourceFileName,
+            mimeType: imported.sourceMimeType,
+            importedAt: now,
+          }
+        : null,
     },
     cover: {
       id: randomUUID(),
@@ -78,7 +103,33 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
       palette: 'obsidian',
       backgroundImageUrl: null,
       thumbnailUrl: null,
+      layout: 'centered',
+      fontFamily: null,
+      accentColor: null,
+      renderedImageUrl: null,
     },
+    backCover: {
+      id: randomUUID(),
+      title: documentTitle,
+      body: documentSubtitle,
+      authorBio: '',
+      accentColor: null,
+      backgroundImageUrl: null,
+      renderedImageUrl: null,
+    },
+    assets: imported
+      ? [
+          {
+            id: randomUUID(),
+            kind: 'document',
+            usage: 'source-document',
+            blobUrl: null,
+            fileName: imported.sourceFileName,
+            mimeType: imported.sourceMimeType,
+            createdAt: now,
+          },
+        ]
+      : [],
   };
 }
 
@@ -106,6 +157,10 @@ export function updateProjectDocument(project: ProjectRecord, input: UpdateDocum
     },
     cover: {
       ...project.cover,
+      title: input.title,
+    },
+    backCover: {
+      ...project.backCover,
       title: input.title,
     },
   };

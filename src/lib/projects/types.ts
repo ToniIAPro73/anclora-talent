@@ -16,12 +16,19 @@ export interface DocumentChapter {
   blocks: DocumentBlock[];
 }
 
+export interface ProjectDocumentSource {
+  fileName: string;
+  mimeType: string;
+  importedAt: string;
+}
+
 export interface ProjectDocument {
   id: string;
   title: string;
   subtitle: string;
   language: string;
   chapters: DocumentChapter[];
+  source?: ProjectDocumentSource | null;
 }
 
 export interface CoverDesign {
@@ -31,6 +38,37 @@ export interface CoverDesign {
   palette: 'obsidian' | 'teal' | 'sand';
   backgroundImageUrl: string | null;
   thumbnailUrl: string | null;
+  layout?: 'centered' | 'top' | 'bottom' | 'split';
+  fontFamily?: string | null;
+  accentColor?: string | null;
+  renderedImageUrl?: string | null;
+}
+
+export interface BackCoverDesign {
+  id: string;
+  title: string;
+  body: string;
+  authorBio: string;
+  accentColor: string | null;
+  backgroundImageUrl: string | null;
+  renderedImageUrl: string | null;
+}
+
+export type ProjectAssetUsage =
+  | 'source-document'
+  | 'cover-background'
+  | 'cover-thumbnail'
+  | 'cover-render'
+  | 'back-cover-render';
+
+export interface ProjectAsset {
+  id: string;
+  kind: 'document' | 'image' | 'render';
+  usage: ProjectAssetUsage;
+  blobUrl: string | null;
+  fileName: string;
+  mimeType: string;
+  createdAt: string;
 }
 
 export interface ProjectRecord {
@@ -44,6 +82,8 @@ export interface ProjectRecord {
   updatedAt: string;
   document: ProjectDocument;
   cover: CoverDesign;
+  backCover: BackCoverDesign;
+  assets: ProjectAsset[];
 }
 
 export interface ProjectSummary {
@@ -63,6 +103,13 @@ export interface ImportedDocumentSeed {
   blocks: Array<{
     type: DocumentBlockType;
     content: string;
+  }>;
+  chapters?: Array<{
+    title: string;
+    blocks: Array<{
+      type: DocumentBlockType;
+      content: string;
+    }>;
   }>;
   sourceFileName: string;
   sourceMimeType: string;

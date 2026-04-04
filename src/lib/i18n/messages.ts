@@ -106,6 +106,8 @@ export type AppMessages = {
     cardUpdated: string;
     cardOpenEditor: string;
     cardPreview: string;
+    cardDelete: string;
+    cardDeleteConfirm: string;
     editorEyebrow: string;
     editorOpenPreview: string;
     editorOpenCover: string;
@@ -305,6 +307,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       cardUpdated: 'Actualizado',
       cardOpenEditor: 'Abrir editor',
       cardPreview: 'Preview',
+      cardDelete: 'Eliminar',
+      cardDeleteConfirm: '¿Seguro que quieres eliminar "{title}"? Esta acción no se puede deshacer.',
       editorEyebrow: 'Editor',
       editorOpenPreview: 'Abrir preview',
       editorOpenCover: 'Diseñar portada',
@@ -503,6 +507,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       cardUpdated: 'Updated',
       cardOpenEditor: 'Open editor',
       cardPreview: 'Preview',
+      cardDelete: 'Delete',
+      cardDeleteConfirm: 'Are you sure you want to delete "{title}"? This action cannot be undone.',
       editorEyebrow: 'Editor',
       editorOpenPreview: 'Open preview',
       editorOpenCover: 'Design cover',

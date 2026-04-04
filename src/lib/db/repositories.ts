@@ -2,7 +2,7 @@ import 'server-only';
 import { and, asc, eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { getDb, hasDatabase } from './index';
-import { coverDesigns, documentBlocks, projectDocuments, projects } from './schema';
+import { backCoverDesigns, coverDesigns, documentBlocks, projectAssets, projectDocuments, projects } from './schema';
 import { createMockProjectStore } from '@/lib/projects/mock-data';
 import {
   createProjectRecord,
@@ -46,14 +46,57 @@ function toSummary(project: ProjectRecord): ProjectSummary {
   };
 }
 
+export function reconstructChaptersFromBlockRows(
+  blockRows: Array<typeof documentBlocks.$inferSelect>,
+): DocumentChapter[] {
+  const chapterMap = new Map<string, DocumentChapter>();
+
+  const sortedRows = [...blockRows].sort((left, right) => {
+    if (left.chapterOrder !== right.chapterOrder) {
+      return left.chapterOrder - right.chapterOrder;
+    }
+
+    return left.blockOrder - right.blockOrder;
+  });
+
+  for (const block of sortedRows) {
+    const existing = chapterMap.get(block.chapterId);
+    if (existing) {
+      existing.blocks.push({
+        id: block.id,
+        type: block.blockType as ProjectRecord['document']['chapters'][number]['blocks'][number]['type'],
+        order: block.blockOrder,
+        content: block.content,
+      });
+      continue;
+    }
+
+    chapterMap.set(block.chapterId, {
+      id: block.chapterId,
+      order: block.chapterOrder,
+      title: block.chapterTitle,
+      blocks: [
+        {
+          id: block.id,
+          type: block.blockType as ProjectRecord['document']['chapters'][number]['blocks'][number]['type'],
+          order: block.blockOrder,
+          content: block.content,
+        },
+      ],
+    });
+  }
+
+  return Array.from(chapterMap.values()).sort((left, right) => left.order - right.order);
+}
+
 function mapRowsToProject(
   projectRow: typeof projects.$inferSelect,
   documentRow: typeof projectDocuments.$inferSelect,
   blockRows: Array<typeof documentBlocks.$inferSelect>,
   coverRow: typeof coverDesigns.$inferSelect,
+  backCoverRow: typeof backCoverDesigns.$inferSelect | null,
+  assetRows: Array<typeof projectAssets.$inferSelect>,
 ): ProjectRecord {
-  const chapterId = blockRows[0]?.chapterId ?? randomUUID();
-
   return {
     id: projectRow.id,
     userId: projectRow.userId,
@@ -68,21 +111,15 @@ function mapRowsToProject(
       title: documentRow.title,
       subtitle: documentRow.subtitle,
       language: documentRow.language,
-      chapters: [
-        {
-          id: chapterId,
-          order: blockRows[0]?.chapterOrder ?? 1,
-          title: blockRows[0]?.chapterTitle ?? 'Capítulo 1',
-          blocks: blockRows
-            .sort((left, right) => left.blockOrder - right.blockOrder)
-            .map((block) => ({
-              id: block.id,
-              type: block.blockType as ProjectRecord['document']['chapters'][number]['blocks'][number]['type'],
-              order: block.blockOrder,
-              content: block.content,
-            })),
-        },
-      ],
+      chapters: reconstructChaptersFromBlockRows(blockRows),
+      source:
+        documentRow.sourceMetadata && typeof documentRow.sourceMetadata === 'object'
+          ? {
+              fileName: String((documentRow.sourceMetadata as Record<string, unknown>).fileName ?? ''),
+              mimeType: String((documentRow.sourceMetadata as Record<string, unknown>).mimeType ?? 'application/octet-stream'),
+              importedAt: String((documentRow.sourceMetadata as Record<string, unknown>).importedAt ?? projectRow.createdAt.toISOString()),
+            }
+          : null,
     },
     cover: {
       id: coverRow.id,
@@ -91,7 +128,29 @@ function mapRowsToProject(
       palette: coverRow.palette as CoverDesign['palette'],
       backgroundImageUrl: coverRow.backgroundImageUrl,
       thumbnailUrl: coverRow.thumbnailUrl,
+      layout: (coverRow.layout as CoverDesign['layout']) ?? 'centered',
+      fontFamily: coverRow.fontFamily,
+      accentColor: coverRow.accentColor,
+      renderedImageUrl: coverRow.renderedImageUrl,
     },
+    backCover: {
+      id: backCoverRow?.id ?? randomUUID(),
+      title: backCoverRow?.title ?? projectRow.title,
+      body: backCoverRow?.body ?? documentRow.subtitle,
+      authorBio: backCoverRow?.authorBio ?? '',
+      accentColor: backCoverRow?.accentColor ?? null,
+      backgroundImageUrl: backCoverRow?.backgroundImageUrl ?? null,
+      renderedImageUrl: backCoverRow?.renderedImageUrl ?? null,
+    },
+    assets: assetRows.map((asset) => ({
+      id: asset.id,
+      kind: asset.kind as ProjectRecord['assets'][number]['kind'],
+      usage: asset.usage as ProjectRecord['assets'][number]['usage'],
+      blobUrl: asset.blobUrl || null,
+      fileName: asset.alt || 'asset',
+      mimeType: 'application/octet-stream',
+      createdAt: asset.createdAt.toISOString(),
+    })),
   };
 }
 
@@ -131,6 +190,7 @@ export async function persistProjectGraph(db: ProjectGraphWriter, project: Proje
     title: project.document.title,
     subtitle: project.document.subtitle,
     language: project.document.language,
+    sourceMetadata: project.document.source,
     createdAt: new Date(project.createdAt),
     updatedAt: new Date(project.updatedAt),
   });
@@ -147,8 +207,39 @@ export async function persistProjectGraph(db: ProjectGraphWriter, project: Proje
     palette: project.cover.palette,
     backgroundImageUrl: project.cover.backgroundImageUrl,
     thumbnailUrl: project.cover.thumbnailUrl,
+    layout: project.cover.layout,
+    fontFamily: project.cover.fontFamily,
+    accentColor: project.cover.accentColor,
+    renderedImageUrl: project.cover.renderedImageUrl,
     updatedAt: new Date(project.updatedAt),
   });
+
+  await db.insert(backCoverDesigns).values({
+    id: project.backCover.id,
+    projectId: project.id,
+    title: project.backCover.title,
+    body: project.backCover.body,
+    authorBio: project.backCover.authorBio,
+    accentColor: project.backCover.accentColor,
+    backgroundImageUrl: project.backCover.backgroundImageUrl,
+    renderedImageUrl: project.backCover.renderedImageUrl,
+    updatedAt: new Date(project.updatedAt),
+  });
+
+  if (project.assets.length > 0) {
+    await db.insert(projectAssets).values(
+      project.assets.map((asset) => ({
+        id: asset.id,
+        projectId: project.id,
+        workspaceId: project.workspaceId,
+        kind: asset.kind,
+        blobUrl: asset.blobUrl ?? '',
+        alt: asset.fileName,
+        usage: asset.usage,
+        createdAt: new Date(asset.createdAt),
+      })),
+    );
+  }
 }
 
 export async function persistDocumentUpdate(db: ProjectGraphWriter, nextProject: ProjectRecord) {
@@ -165,6 +256,7 @@ export async function persistDocumentUpdate(db: ProjectGraphWriter, nextProject:
     .set({
       title: nextProject.document.title,
       subtitle: nextProject.document.subtitle,
+      sourceMetadata: nextProject.document.source,
       updatedAt: new Date(nextProject.updatedAt),
     })
     .where(eq(projectDocuments.projectId, nextProject.id));
@@ -179,9 +271,30 @@ export async function persistDocumentUpdate(db: ProjectGraphWriter, nextProject:
     .update(coverDesigns)
     .set({
       title: nextProject.cover.title,
+      subtitle: nextProject.cover.subtitle,
+      palette: nextProject.cover.palette,
+      backgroundImageUrl: nextProject.cover.backgroundImageUrl,
+      thumbnailUrl: nextProject.cover.thumbnailUrl,
+      layout: nextProject.cover.layout,
+      fontFamily: nextProject.cover.fontFamily,
+      accentColor: nextProject.cover.accentColor,
+      renderedImageUrl: nextProject.cover.renderedImageUrl,
       updatedAt: new Date(nextProject.updatedAt),
     })
     .where(eq(coverDesigns.projectId, nextProject.id));
+
+  await db
+    .update(backCoverDesigns)
+    .set({
+      title: nextProject.backCover.title,
+      body: nextProject.backCover.body,
+      authorBio: nextProject.backCover.authorBio,
+      accentColor: nextProject.backCover.accentColor,
+      backgroundImageUrl: nextProject.backCover.backgroundImageUrl,
+      renderedImageUrl: nextProject.backCover.renderedImageUrl,
+      updatedAt: new Date(nextProject.updatedAt),
+    })
+    .where(eq(backCoverDesigns.projectId, nextProject.id));
 }
 
 async function listProjectsFromDb(userId: string) {
@@ -215,15 +328,18 @@ async function listProjectsFromDb(userId: string) {
 
 async function getProjectFromDb(userId: string, projectId: string) {
   const db = getDb();
+  console.info('[projectRepository.getProjectById] querying project', { userId, projectId });
   const [projectRow] = await db.select().from(projects).where(and(eq(projects.id, projectId), eq(projects.userId, userId)));
 
   if (!projectRow) {
+    console.warn('[projectRepository.getProjectById] project row not found', { userId, projectId });
     return null;
   }
 
   const [documentRow] = await db.select().from(projectDocuments).where(eq(projectDocuments.projectId, projectRow.id));
 
   if (!documentRow) {
+    console.warn('[projectRepository.getProjectById] document row not found', { userId, projectId });
     return null;
   }
 
@@ -233,19 +349,43 @@ async function getProjectFromDb(userId: string, projectId: string) {
     .where(eq(documentBlocks.projectDocumentId, documentRow.id))
     .orderBy(asc(documentBlocks.blockOrder));
   const [coverRow] = await db.select().from(coverDesigns).where(eq(coverDesigns.projectId, projectRow.id));
+  const [backCoverRow] = await db.select().from(backCoverDesigns).where(eq(backCoverDesigns.projectId, projectRow.id));
+  const assetRows = await db
+    .select()
+    .from(projectAssets)
+    .where(eq(projectAssets.projectId, projectRow.id))
+    .orderBy(asc(projectAssets.createdAt));
 
   if (!coverRow) {
+    console.warn('[projectRepository.getProjectById] cover row not found', { userId, projectId });
     return null;
   }
 
-  return mapRowsToProject(projectRow, documentRow, blockRows, coverRow);
+  console.info('[projectRepository.getProjectById] project graph loaded', {
+    userId,
+    projectId,
+    documentId: documentRow.id,
+    blocks: blockRows.length,
+    coverId: coverRow.id,
+  });
+  return mapRowsToProject(projectRow, documentRow, blockRows, coverRow, backCoverRow ?? null, assetRows);
 }
 
 async function createProjectInDb(userId: string, input: CreateProjectInput) {
   const db = getDb();
   const project = createProjectRecord(userId, input);
 
+  console.info('[projectRepository.createProject] persisting project graph', {
+    userId,
+    projectId: project.id,
+    slug: project.slug,
+    hasImportedDocument: Boolean(input.importedDocument),
+  });
   await persistProjectGraph(db, project);
+  console.info('[projectRepository.createProject] persisted project graph', {
+    userId,
+    projectId: project.id,
+  });
 
   return project;
 }
@@ -288,6 +428,22 @@ async function saveCoverInDb(userId: string, projectId: string, input: UpdateCov
     .where(eq(coverDesigns.projectId, projectId));
 
   return nextProject;
+}
+
+async function deleteProjectInDb(userId: string, projectId: string) {
+  const db = getDb();
+  const current = await getProjectFromDb(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  await db.delete(coverDesigns).where(eq(coverDesigns.projectId, projectId));
+  await db.delete(backCoverDesigns).where(eq(backCoverDesigns.projectId, projectId));
+  await db.delete(projectAssets).where(eq(projectAssets.projectId, projectId));
+  await db.delete(documentBlocks).where(eq(documentBlocks.projectDocumentId, current.document.id));
+  await db.delete(projectDocuments).where(eq(projectDocuments.projectId, projectId));
+  await db.delete(projects).where(and(eq(projects.id, projectId), eq(projects.userId, userId)));
 }
 
 async function listProjectsFromMemory(userId: string) {
@@ -340,6 +496,16 @@ async function saveCoverInMemory(userId: string, projectId: string, input: Updat
   return nextProject;
 }
 
+async function deleteProjectInMemory(userId: string, projectId: string) {
+  const current = await getProjectFromMemory(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  getMemoryStore().delete(projectId);
+}
+
 export const projectRepository = {
   listProjectsForUser(userId: string) {
     return hasDatabase() ? listProjectsFromDb(userId) : listProjectsFromMemory(userId);
@@ -357,5 +523,8 @@ export const projectRepository = {
   },
   saveCover(userId: string, projectId: string, input: UpdateCoverInput) {
     return hasDatabase() ? saveCoverInDb(userId, projectId, input) : saveCoverInMemory(userId, projectId, input);
+  },
+  deleteProject(userId: string, projectId: string) {
+    return hasDatabase() ? deleteProjectInDb(userId, projectId) : deleteProjectInMemory(userId, projectId);
   },
 };

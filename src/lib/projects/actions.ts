@@ -20,21 +20,57 @@ export async function createProjectAction(formData: FormData) {
   const title = String(formData.get('title') ?? '').trim();
   const sourceDocument = formData.get('sourceDocument');
 
+  console.info('[createProjectAction] submit received', {
+    userId,
+    titleLength: title.length,
+    hasSourceDocument: sourceDocument instanceof File,
+    sourceDocumentName: sourceDocument instanceof File ? sourceDocument.name : null,
+    sourceDocumentType: sourceDocument instanceof File ? sourceDocument.type : null,
+    sourceDocumentSize: sourceDocument instanceof File ? sourceDocument.size : null,
+  });
+
   if (!title) {
     throw new Error('Project title is required');
   }
 
-  const importedDocument =
-    sourceDocument instanceof File && sourceDocument.size > 0
-      ? await (async () => {
-          const { extractImportedDocumentSeed } = await import('./import');
-          return extractImportedDocumentSeed(sourceDocument);
-        })()
-      : null;
+  try {
+    const importedDocument =
+      sourceDocument instanceof File && sourceDocument.size > 0
+        ? await (async () => {
+            const { extractImportedDocumentSeed } = await import('./import');
+            const result = await extractImportedDocumentSeed(sourceDocument);
+            console.info('[createProjectAction] imported document extracted', {
+              userId,
+              sourceFileName: result.sourceFileName,
+              sourceMimeType: result.sourceMimeType,
+              title: result.title,
+              blocks: result.blocks.length,
+            });
+            return result;
+          })()
+        : null;
 
-  const project = await projectRepository.createProject(userId, { title, importedDocument });
+    const project = await projectRepository.createProject(userId, { title, importedDocument });
 
-  redirect(`/projects/${project.id}/editor`);
+    console.info('[createProjectAction] project created', {
+      userId,
+      projectId: project.id,
+      projectSlug: project.slug,
+      hasImportedDocument: Boolean(importedDocument),
+    });
+
+    redirect(`/projects/${project.id}/editor`);
+  } catch (error) {
+    console.error('[createProjectAction] failed', {
+      userId,
+      title,
+      sourceDocumentName: sourceDocument instanceof File ? sourceDocument.name : null,
+      sourceDocumentType: sourceDocument instanceof File ? sourceDocument.type : null,
+      sourceDocumentSize: sourceDocument instanceof File ? sourceDocument.size : null,
+      error,
+    });
+    throw error;
+  }
 }
 
 export async function saveProjectDocumentAction(formData: FormData) {
@@ -81,5 +117,19 @@ export async function saveProjectCoverAction(formData: FormData) {
 
   await projectRepository.saveCover(userId, projectId, input);
   revalidatePath(`/projects/${projectId}/cover`);
+  revalidatePath(`/projects/${projectId}/preview`);
+}
+
+export async function deleteProjectAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '').trim();
+
+  if (!projectId) {
+    throw new Error('Project id is required');
+  }
+
+  await projectRepository.deleteProject(userId, projectId);
+  revalidatePath('/dashboard');
+  revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
 }
