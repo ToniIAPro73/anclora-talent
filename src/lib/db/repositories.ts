@@ -481,21 +481,41 @@ async function saveRenderedCoverUrlInMemory(userId: string, projectId: string, r
 
 async function deleteProjectInDb(userId: string, projectId: string) {
   const db = getDb();
-  const current = await getProjectFromDb(userId, projectId);
 
-  if (!current) {
+  // Verify ownership with a minimal query — avoids SELECT * on cover_designs
+  // which would fail if new columns haven't been added via ALTER TABLE yet.
+  const [projectRow] = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.userId, userId)));
+
+  if (!projectRow) {
     throw new Error('Project not found');
   }
 
-  await db.delete(coverDesigns).where(eq(coverDesigns.projectId, projectId));
+  // Resolve document id for block deletion
+  const [documentRow] = await db
+    .select({ id: projectDocuments.id })
+    .from(projectDocuments)
+    .where(eq(projectDocuments.projectId, projectId));
+
+  await db.delete(coverDesigns).where(eq(coverDesigns.projectId, projectId)).catch((err) => {
+    console.warn('[deleteProject] cover_designs delete skipped', err?.message);
+  });
   await db.delete(backCoverDesigns).where(eq(backCoverDesigns.projectId, projectId)).catch((err) => {
-    console.warn('[deleteProject] back_cover_designs delete skipped (schema may need migration)', err?.message);
+    console.warn('[deleteProject] back_cover_designs delete skipped', err?.message);
   });
   await db.delete(projectAssets).where(eq(projectAssets.projectId, projectId)).catch((err) => {
     console.warn('[deleteProject] project_assets delete skipped', err?.message);
   });
-  await db.delete(documentBlocks).where(eq(documentBlocks.projectDocumentId, current.document.id));
-  await db.delete(projectDocuments).where(eq(projectDocuments.projectId, projectId));
+  if (documentRow) {
+    await db.delete(documentBlocks).where(eq(documentBlocks.projectDocumentId, documentRow.id)).catch((err) => {
+      console.warn('[deleteProject] document_blocks delete skipped', err?.message);
+    });
+  }
+  await db.delete(projectDocuments).where(eq(projectDocuments.projectId, projectId)).catch((err) => {
+    console.warn('[deleteProject] project_documents delete skipped', err?.message);
+  });
   await db.delete(projects).where(and(eq(projects.id, projectId), eq(projects.userId, userId)));
 }
 

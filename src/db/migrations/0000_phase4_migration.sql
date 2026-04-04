@@ -118,3 +118,14 @@ CREATE TABLE IF NOT EXISTS "projects" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
+--> statement-breakpoint
+-- Add columns to existing tables that may have been created before the schema was updated.
+-- These are safe to run even if the columns already exist (IF NOT EXISTS).
+ALTER TABLE "cover_designs"
+	ADD COLUMN IF NOT EXISTS "layout" varchar(32),
+	ADD COLUMN IF NOT EXISTS "font_family" varchar(255),
+	ADD COLUMN IF NOT EXISTS "accent_color" varchar(32),
+	ADD COLUMN IF NOT EXISTS "rendered_image_url" text;
+--> statement-breakpoint
+ALTER TABLE "project_documents"
+	ADD COLUMN IF NOT EXISTS "source_metadata" jsonb;
