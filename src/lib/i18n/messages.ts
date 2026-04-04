@@ -158,6 +158,8 @@ export type AppMessages = {
     backCoverAuthorBioLabel: string;
     backCoverSave: string;
     backCoverBackToCover: string;
+    previewExportButton: string;
+    previewExportFilename: string;
   };
 };
 
@@ -380,6 +382,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       backCoverAuthorBioLabel: 'Biografía del autor',
       backCoverSave: 'Guardar contraportada',
       backCoverBackToCover: 'Portada',
+      previewExportButton: 'Exportar HTML',
+      previewExportFilename: 'proyecto',
     },
   },
   en: {
@@ -600,6 +604,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       backCoverAuthorBioLabel: 'Author bio',
       backCoverSave: 'Save back cover',
       backCoverBackToCover: 'Cover',
+      previewExportButton: 'Export HTML',
+      previewExportFilename: 'project',
     },
   },
 };
