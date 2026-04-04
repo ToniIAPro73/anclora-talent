@@ -24,7 +24,10 @@ describe('deleteProjectAction', () => {
     requireUserId.mockResolvedValue('user_delete');
   });
 
-  test('deletes the project and revalidates dashboard and editor routes', async () => {
+  test('deletes the project, revalidates dashboard, and redirects to dashboard', async () => {
+    const redirect = vi.fn();
+    vi.mocked(await import('next/navigation')).redirect = redirect as never;
+
     const { deleteProjectAction } = await import('./actions');
     const formData = new FormData();
     formData.set('projectId', 'project-123');
@@ -33,6 +36,6 @@ describe('deleteProjectAction', () => {
 
     expect(deleteProject).toHaveBeenCalledWith('user_delete', 'project-123');
     expect(revalidatePath).toHaveBeenCalledWith('/dashboard');
-    expect(revalidatePath).toHaveBeenCalledWith('/projects/project-123/editor');
+    expect(redirect).toHaveBeenCalledWith('/dashboard');
   });
 });
