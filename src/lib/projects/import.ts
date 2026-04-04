@@ -26,6 +26,87 @@ function paragraphsFromText(input: string) {
     .filter(Boolean);
 }
 
+function splitLines(input: string) {
+  return input.replace(/\r\n/g, '\n').split('\n');
+}
+
+function cleanHeadingText(input: string) {
+  return input
+    .replace(/^#{1,6}\s+/, '')
+    .replace(/^\d+(?:\.\d+)*[.)]?\s+/, '')
+    .trim();
+}
+
+function getHeadingLevel(input: string) {
+  const markdownMatch = input.match(/^(#{1,6})\s+/);
+  if (markdownMatch) {
+    return markdownMatch[1].length;
+  }
+
+  const numericMatch = input.match(/^(\d+(?:\.\d+)*)[.)]?\s+/);
+  if (numericMatch) {
+    return (numericMatch[1].match(/\./g)?.length ?? 0) + 1;
+  }
+
+  return null;
+}
+
+function isTopLevelChapterHeading(input: string) {
+  const level = getHeadingLevel(input.trim());
+  return level !== null && level <= 1;
+}
+
+function blocksFromSectionText(input: string) {
+  return input
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+    .map((paragraph) => {
+      const level = getHeadingLevel(paragraph);
+      return {
+        type: level !== null ? ('heading' as const) : ('paragraph' as const),
+        content: level !== null ? cleanHeadingText(paragraph) : paragraph,
+      };
+    });
+}
+
+function buildChaptersFromText(input: string) {
+  const lines = splitLines(input);
+  const chapters: Array<{ title: string; blocks: Array<{ type: 'heading' | 'paragraph' | 'quote'; content: string }> }> = [];
+  let currentTitle: string | null = null;
+  let currentLines: string[] = [];
+
+  const flushCurrent = () => {
+    if (!currentTitle) {
+      return;
+    }
+
+    const sectionText = currentLines.join('\n').trim();
+    const blocks = blocksFromSectionText(sectionText);
+    chapters.push({
+      title: currentTitle,
+      blocks: blocks.length > 0 ? blocks : [{ type: 'paragraph', content: currentTitle }],
+    });
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (isTopLevelChapterHeading(trimmed)) {
+      flushCurrent();
+      currentTitle = cleanHeadingText(trimmed) || `Capítulo ${chapters.length + 1}`;
+      currentLines = [trimmed];
+      continue;
+    }
+
+    if (currentTitle) {
+      currentLines.push(line);
+    }
+  }
+
+  flushCurrent();
+  return chapters;
+}
+
 function fileNameToTitle(fileName: string) {
   return fileName
     .replace(/\.[^.]+$/, '')
@@ -44,13 +125,17 @@ export function buildImportedDocumentSeed({
   text: string;
 }): ImportedDocumentSeed {
   const paragraphs = paragraphsFromText(text);
+  const detectedChapters = buildChaptersFromText(text);
   const fallbackTitle = fileNameToTitle(fileName) || 'Documento importado';
   const title = paragraphs[0] && paragraphs[0].length <= 120 ? paragraphs[0] : fallbackTitle;
   const subtitleParagraph = paragraphs.find((paragraph, index) => index > 0 && paragraph !== title) ?? '';
   const subtitle = subtitleParagraph ? subtitleParagraph.slice(0, 180) : `Documento importado desde ${fileName}`;
-  const contentParagraphs = (paragraphs[0] === title ? paragraphs.slice(1) : paragraphs)
-    .filter((paragraph) => paragraph !== subtitleParagraph)
-    .slice(0, 6);
+  const contentParagraphs =
+    detectedChapters.length > 0
+      ? detectedChapters[0].blocks.map((block) => block.content).slice(0, 6)
+      : (paragraphs[0] === title ? paragraphs.slice(1) : paragraphs)
+          .filter((paragraph) => paragraph !== subtitleParagraph)
+          .slice(0, 6);
 
   const blocks =
     contentParagraphs.length > 0
@@ -66,8 +151,17 @@ export function buildImportedDocumentSeed({
   return {
     title,
     subtitle,
-    chapterTitle: title,
+    chapterTitle: detectedChapters[0]?.title || title,
     blocks,
+    chapters:
+      detectedChapters.length > 0
+        ? detectedChapters
+        : [
+            {
+              title,
+              blocks,
+            },
+          ],
     sourceFileName: fileName,
     sourceMimeType: mimeType,
   };
@@ -90,6 +184,20 @@ async function extractTextFromBuffer(fileName: string, mimeType: string, buffer:
     const parsed = await parser.getText();
     await parser.destroy();
     return parsed.text;
+  }
+
+  if (extension === 'docx') {
+    try {
+      const mammoth = await import('mammoth');
+      const result = await mammoth.default.convertToMarkdown({ buffer });
+      const markdown = normalizeText(result.value);
+
+      if (markdown) {
+        return markdown;
+      }
+    } catch {
+      // Fallback to WordExtractor below when Mammoth is unavailable or fails.
+    }
   }
 
   if (extension === 'doc' || extension === 'docx') {
