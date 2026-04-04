@@ -187,7 +187,8 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
   if (extension === 'docx') {
     try {
       const mammoth = await import('mammoth');
-      const result = await mammoth.default.convertToMarkdown({ buffer });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await (mammoth.default as any).convertToMarkdown({ buffer });
       const markdown = normalizeText(result.value);
 
       if (markdown) {
