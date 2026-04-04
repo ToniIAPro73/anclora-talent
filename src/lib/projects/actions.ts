@@ -119,3 +119,17 @@ export async function saveProjectCoverAction(formData: FormData) {
   revalidatePath(`/projects/${projectId}/cover`);
   revalidatePath(`/projects/${projectId}/preview`);
 }
+
+export async function deleteProjectAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '').trim();
+
+  if (!projectId) {
+    throw new Error('Project id is required');
+  }
+
+  await projectRepository.deleteProject(userId, projectId);
+  revalidatePath('/dashboard');
+  revalidatePath(`/projects/${projectId}/editor`);
+  revalidatePath(`/projects/${projectId}/preview`);
+}

@@ -1,7 +1,7 @@
 import { createProjectAction } from '@/lib/projects/actions';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
-import { supportedImportAccept } from '@/lib/projects/import-config';
 import type { AppMessages } from '@/lib/i18n/messages';
+import { DocumentImporter } from './DocumentImporter';
 
 export function CreateProjectForm({ copy }: { copy: AppMessages['project'] }) {
   return (
@@ -22,20 +22,7 @@ export function CreateProjectForm({ copy }: { copy: AppMessages['project'] }) {
           className="w-full rounded-[20px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--accent-mint)]"
         />
       </label>
-      <label htmlFor="source-document" className="mt-5 block space-y-2">
-        <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.sourceDocumentLabel}</span>
-        <input
-          id="source-document"
-          data-testid="source-document-input"
-          type="file"
-          name="sourceDocument"
-          accept={supportedImportAccept}
-          className="block w-full rounded-[18px] border border-dashed border-[var(--border-strong)] bg-[var(--surface-soft)] px-4 py-3 text-sm text-[var(--text-secondary)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--button-highlight-bg)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--button-highlight-fg)]"
-        />
-        <p className="text-xs leading-6 text-[var(--text-tertiary)]">
-          {copy.sourceDocumentHint}
-        </p>
-      </label>
+      <DocumentImporter copy={copy} />
       <div className="mt-6 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <p className="max-w-none text-xs leading-6 text-[var(--text-tertiary)] xl:max-w-xs">
           {copy.createProjectHint}
