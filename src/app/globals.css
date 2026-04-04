@@ -2,112 +2,206 @@
 
 :root,
 html[data-theme="dark"] {
-  --background: #0b313f;
-  --foreground: #f2e3b3;
-  --text-primary: #f2e3b3;
-  --text-secondary: rgba(242, 227, 179, 0.76);
-  --text-tertiary: rgba(242, 227, 179, 0.54);
-  --border-subtle: rgba(212, 175, 55, 0.14);
-  --border-strong: rgba(212, 175, 55, 0.28);
-  --surface-soft: rgba(7, 37, 47, 0.72);
-  --surface-highlight: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(18, 74, 80, 0.84) 100%);
-  --surface-elevated: linear-gradient(180deg, rgba(18, 74, 80, 0.96) 0%, rgba(7, 37, 47, 0.98) 100%);
-  --shell-surface: radial-gradient(circle at top left, rgba(212, 175, 55, 0.14), transparent 34%),
-    linear-gradient(180deg, rgba(7, 37, 47, 0.95) 0%, rgba(11, 19, 63, 0.98) 100%);
-  --shell-main-surface: radial-gradient(circle at top, rgba(212, 175, 55, 0.1), transparent 28%),
-    radial-gradient(circle at right, rgba(18, 74, 80, 0.2), transparent 36%),
-    linear-gradient(180deg, rgba(18, 74, 80, 0.96) 0%, rgba(11, 19, 63, 0.98) 100%);
-  --auth-surface: radial-gradient(circle at top left, rgba(212, 175, 55, 0.12), transparent 30%),
-    linear-gradient(180deg, rgba(11, 49, 63, 0.94) 0%, rgba(11, 19, 63, 0.98) 100%);
-  --auth-card-surface: linear-gradient(180deg, rgba(18, 74, 80, 0.94) 0%, rgba(7, 37, 47, 0.98) 100%);
-  --page-surface: linear-gradient(180deg, rgba(18, 74, 80, 0.96) 0%, rgba(7, 37, 47, 0.98) 100%);
-  --page-surface-muted: linear-gradient(180deg, rgba(11, 49, 63, 0.72) 0%, rgba(7, 37, 47, 0.9) 100%);
-  --panel-on-canvas: rgba(11, 49, 63, 0.78);
-  --preview-paper: rgba(10, 30, 39, 0.82);
-  --preview-paper-border: rgba(212, 175, 55, 0.14);
-  --preview-quote-bg: rgba(11, 19, 63, 0.82);
-  --preview-quote-border: #d4af37;
-  --accent-mint: #c49a24;
-  --accent-mint-strong: #ddb24a;
-  --accent-ink: #050b12;
-  --accent-glow: rgba(212, 175, 55, 0.22);
-  --accent-glow-soft: rgba(18, 74, 80, 0.16);
-  --app-gradient: radial-gradient(circle at top center, rgba(212, 175, 55, 0.14), transparent 24%),
-    radial-gradient(circle at left, rgba(18, 74, 80, 0.2), transparent 28%),
-    linear-gradient(180deg, #07252f 0%, #0b313f 48%, #0b133f 100%);
-  --button-highlight-bg: var(--accent-mint);
-  --button-highlight-fg: #050b12;
-  --button-highlight-hover: var(--accent-mint-strong);
-  --button-highlight-border: rgba(5, 11, 18, 0.24);
-  --button-primary-bg: #07252f;
-  --button-primary-fg: #fffdf8;
-  --button-primary-hover: #124a50;
-  --button-primary-border: rgba(212, 175, 55, 0.16);
-  --button-secondary-bg: rgba(7, 37, 47, 0.68);
-  --button-secondary-fg: #f2e3b3;
-  --button-secondary-border: rgba(212, 175, 55, 0.16);
-  --button-secondary-hover-bg: rgba(18, 74, 80, 0.8);
-  --button-secondary-hover-border: rgba(212, 175, 55, 0.34);
-  --shadow-soft: 0 14px 34px rgba(4, 17, 23, 0.24);
-  --shadow-strong: 0 28px 100px rgba(3, 9, 26, 0.52);
+  /* ── Surfaces ── */
+  --background: #0C141E;
+  --surface: #111C28;
+  --card: #162535;
+  --elevated: #1C2E40;
+  --hover: #22384A;
+
+  /* ── Accent (sky blue) ── */
+  --accent: #4A9FD8;
+  --accent-hover: #5CB4E8;
+  --accent-dim: #3A88BE;
+  --accent-soft: rgba(74, 159, 216, 0.12);
+  --accent-glow: rgba(74, 159, 216, 0.10);
+  --accent-border: rgba(74, 159, 216, 0.30);
+
+  /* ── Secondary (pale blue) ── */
+  --secondary: #A0D0F0;
+  --secondary-soft: rgba(160, 208, 240, 0.10);
+  --secondary-border: rgba(160, 208, 240, 0.18);
+
+  /* ── Sidebar ── */
+  --sidebar: #0E1825;
+  --sidebar-border: rgba(74, 159, 216, 0.10);
+  --sidebar-active: rgba(74, 159, 216, 0.14);
+
+  /* ── Text ── */
+  --text-primary: #EDF2F8;
+  --text-secondary: #B0C4D8;
+  --text-muted: #7090A8;
+  --text-on-accent: #FFFFFF;
+  --foreground: #EDF2F8;
+
+  /* ── Structure (Premium shared) ── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-default: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.20);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.22);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.30);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.38);
+
+  /* ── Semantic ── */
+  --danger: #E53E3E;
+  --danger-soft: rgba(229, 62, 62, 0.12);
+  --success: #38A169;
+  --success-soft: rgba(56, 161, 105, 0.12);
+  --warning: #D69E2E;
+  --warning-soft: rgba(214, 158, 46, 0.12);
+
+  /* ── Surfaces composed ── */
+  --surface-soft: rgba(14, 24, 37, 0.72);
+  --surface-highlight: linear-gradient(135deg, rgba(74, 159, 216, 0.18) 0%, rgba(22, 37, 53, 0.84) 100%);
+  --surface-elevated: linear-gradient(180deg, rgba(28, 46, 64, 0.96) 0%, rgba(12, 20, 30, 0.98) 100%);
+  --shell-surface: radial-gradient(circle at top left, rgba(74, 159, 216, 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(12, 20, 30, 0.95) 0%, rgba(14, 24, 37, 0.98) 100%);
+  --shell-main-surface: radial-gradient(circle at top, rgba(74, 159, 216, 0.08), transparent 28%),
+    radial-gradient(circle at right, rgba(28, 46, 64, 0.2), transparent 36%),
+    linear-gradient(180deg, rgba(17, 28, 40, 0.96) 0%, rgba(12, 20, 30, 0.98) 100%);
+  --auth-surface: radial-gradient(circle at top left, rgba(74, 159, 216, 0.10), transparent 30%),
+    linear-gradient(180deg, rgba(12, 20, 30, 0.94) 0%, rgba(14, 24, 37, 0.98) 100%);
+  --auth-card-surface: linear-gradient(180deg, rgba(17, 28, 40, 0.94) 0%, rgba(12, 20, 30, 0.98) 100%);
+  --page-surface: linear-gradient(180deg, rgba(17, 28, 40, 0.96) 0%, rgba(12, 20, 30, 0.98) 100%);
+  --page-surface-muted: linear-gradient(180deg, rgba(12, 20, 30, 0.72) 0%, rgba(12, 20, 30, 0.9) 100%);
+  --panel-on-canvas: rgba(14, 24, 37, 0.78);
+  --preview-paper: rgba(12, 20, 30, 0.82);
+  --preview-paper-border: rgba(74, 159, 216, 0.14);
+  --preview-quote-bg: rgba(14, 24, 37, 0.82);
+  --preview-quote-border: #4A9FD8;
+
+  /* ── Buttons ── */
+  --button-highlight-bg: var(--accent);
+  --button-highlight-fg: #FFFFFF;
+  --button-highlight-hover: var(--accent-hover);
+  --button-highlight-border: rgba(74, 159, 216, 0.24);
+  --button-primary-bg: #0C141E;
+  --button-primary-fg: #EDF2F8;
+  --button-primary-hover: #1C2E40;
+  --button-primary-border: rgba(74, 159, 216, 0.16);
+  --button-secondary-bg: rgba(14, 24, 37, 0.68);
+  --button-secondary-fg: #EDF2F8;
+  --button-secondary-border: rgba(74, 159, 216, 0.16);
+  --button-secondary-hover-bg: rgba(28, 46, 64, 0.8);
+  --button-secondary-hover-border: rgba(74, 159, 216, 0.34);
+
+  /* ── App gradient ── */
+  --app-gradient: radial-gradient(circle at top center, rgba(74, 159, 216, 0.12), transparent 24%),
+    radial-gradient(circle at left, rgba(28, 46, 64, 0.2), transparent 28%),
+    linear-gradient(180deg, #0C141E 0%, #111C28 48%, #0E1825 100%);
+
+  /* ── Shadows ── */
+  --shadow-soft: 0 14px 34px rgba(4, 12, 22, 0.24);
+  --shadow-strong: 0 28px 100px rgba(4, 12, 22, 0.52);
 }
 
 html[data-theme="light"] {
-  --background: #f5ecda;
-  --foreground: #0b313f;
-  --text-primary: #0b313f;
-  --text-secondary: rgba(11, 49, 63, 0.76);
-  --text-tertiary: rgba(11, 49, 63, 0.54);
-  --border-subtle: rgba(11, 49, 63, 0.12);
-  --border-strong: rgba(212, 175, 55, 0.28);
+  /* ── Surfaces ── */
+  --background: #F2F7FC;
+  --surface: #FFFFFF;
+  --card: #FFFFFF;
+  --elevated: #E8F0F8;
+  --hover: #DEE8F4;
+
+  /* ── Accent ── */
+  --accent: #3A88BE;
+  --accent-hover: #2E78A8;
+  --accent-dim: #4A9FD8;
+  --accent-soft: rgba(58, 136, 190, 0.08);
+  --accent-glow: rgba(58, 136, 190, 0.06);
+  --accent-border: rgba(58, 136, 190, 0.20);
+
+  /* ── Secondary ── */
+  --secondary: #4878A0;
+  --secondary-soft: rgba(72, 120, 160, 0.08);
+  --secondary-border: rgba(72, 120, 160, 0.15);
+
+  /* ── Sidebar ── */
+  --sidebar: #E4EDF5;
+  --sidebar-border: rgba(58, 136, 190, 0.10);
+  --sidebar-active: rgba(58, 136, 190, 0.12);
+
+  /* ── Text ── */
+  --text-primary: #0C1820;
+  --text-secondary: #3A5068;
+  --text-muted: #7898B0;
+  --text-on-accent: #FFFFFF;
+  --foreground: #0C1820;
+
+  /* ── Structure ── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  --border-subtle: rgba(12, 24, 32, 0.06);
+  --border-default: rgba(12, 24, 32, 0.10);
+  --border-strong: rgba(12, 24, 32, 0.18);
+  --shadow-sm: 0 2px 8px rgba(12, 24, 32, 0.08);
+  --shadow-md: 0 8px 24px rgba(12, 24, 32, 0.12);
+  --shadow-lg: 0 16px 48px rgba(12, 24, 32, 0.16);
+
+  /* ── Semantic ── */
+  --danger: #E53E3E;
+  --danger-soft: rgba(229, 62, 62, 0.10);
+  --success: #38A169;
+  --success-soft: rgba(56, 161, 105, 0.10);
+  --warning: #D69E2E;
+  --warning-soft: rgba(214, 158, 46, 0.10);
+
+  /* ── Surfaces composed ── */
   --surface-soft: rgba(255, 255, 255, 0.7);
-  --surface-highlight: linear-gradient(135deg, rgba(212, 175, 55, 0.24) 0%, rgba(255, 253, 248, 0.96) 100%);
-  --surface-elevated: linear-gradient(180deg, rgba(255, 253, 248, 0.94) 0%, rgba(240, 230, 207, 0.98) 100%);
-  --shell-surface: radial-gradient(circle at top left, rgba(212, 175, 55, 0.14), transparent 32%),
-    linear-gradient(180deg, rgba(255, 253, 248, 0.9) 0%, rgba(240, 230, 207, 0.98) 100%);
-  --shell-main-surface: radial-gradient(circle at top, rgba(212, 175, 55, 0.1), transparent 28%),
-    radial-gradient(circle at right, rgba(18, 74, 80, 0.12), transparent 36%),
-    linear-gradient(180deg, rgba(255, 253, 248, 0.94) 0%, rgba(234, 223, 198, 0.98) 100%);
-  --auth-surface: radial-gradient(circle at top left, rgba(212, 175, 55, 0.1), transparent 28%),
-    linear-gradient(180deg, rgba(255, 253, 248, 0.9) 0%, rgba(243, 237, 226, 0.98) 100%);
-  --auth-card-surface: linear-gradient(180deg, rgba(255, 253, 248, 0.96) 0%, rgba(240, 230, 207, 0.98) 100%);
-  --page-surface: linear-gradient(180deg, rgba(255, 253, 248, 0.95) 0%, rgba(240, 230, 207, 0.98) 100%);
-  --page-surface-muted: linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(245, 236, 218, 0.98) 100%);
-  --panel-on-canvas: rgba(255, 253, 248, 0.72);
-  --preview-paper: #fffdf8;
-  --preview-paper-border: rgba(11, 49, 63, 0.14);
-  --preview-quote-bg: #efe2c4;
-  --preview-quote-border: #d4af37;
-  --accent-mint: #c49a24;
-  --accent-mint-strong: #b2881c;
-  --accent-ink: #050b12;
-  --accent-glow: rgba(212, 175, 55, 0.16);
-  --accent-glow-soft: rgba(18, 74, 80, 0.12);
-  --app-gradient: radial-gradient(circle at top center, rgba(212, 175, 55, 0.12), transparent 24%),
-    radial-gradient(circle at left, rgba(18, 74, 80, 0.1), transparent 28%),
-    linear-gradient(180deg, #fffdf8 0%, #f5ecda 52%, #eadfc6 100%);
-  --button-highlight-bg: #c49a24;
-  --button-highlight-fg: #050b12;
-  --button-highlight-hover: #b2881c;
-  --button-highlight-border: rgba(5, 11, 18, 0.18);
-  --button-primary-bg: #124a50;
-  --button-primary-fg: #fffdf8;
-  --button-primary-hover: #0b313f;
-  --button-primary-border: rgba(11, 49, 63, 0.12);
-  --button-secondary-bg: rgba(255, 253, 248, 0.92);
-  --button-secondary-fg: #0b313f;
-  --button-secondary-border: rgba(11, 49, 63, 0.30);
+  --surface-highlight: linear-gradient(135deg, rgba(58, 136, 190, 0.14) 0%, rgba(255, 255, 255, 0.96) 100%);
+  --surface-elevated: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(232, 240, 248, 0.98) 100%);
+  --shell-surface: radial-gradient(circle at top left, rgba(58, 136, 190, 0.10), transparent 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(232, 240, 248, 0.98) 100%);
+  --shell-main-surface: radial-gradient(circle at top, rgba(58, 136, 190, 0.08), transparent 28%),
+    radial-gradient(circle at right, rgba(228, 237, 245, 0.5), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(222, 232, 244, 0.98) 100%);
+  --auth-surface: radial-gradient(circle at top left, rgba(58, 136, 190, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(232, 240, 248, 0.98) 100%);
+  --auth-card-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(232, 240, 248, 0.98) 100%);
+  --page-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(232, 240, 248, 0.98) 100%);
+  --page-surface-muted: linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(242, 247, 252, 0.98) 100%);
+  --panel-on-canvas: rgba(255, 255, 255, 0.72);
+  --preview-paper: #FFFFFF;
+  --preview-paper-border: rgba(12, 24, 32, 0.10);
+  --preview-quote-bg: #E8F0F8;
+  --preview-quote-border: #3A88BE;
+
+  /* ── Buttons ── */
+  --button-highlight-bg: #3A88BE;
+  --button-highlight-fg: #FFFFFF;
+  --button-highlight-hover: #2E78A8;
+  --button-highlight-border: rgba(12, 24, 32, 0.14);
+  --button-primary-bg: #1C2E40;
+  --button-primary-fg: #FFFFFF;
+  --button-primary-hover: #0C141E;
+  --button-primary-border: rgba(58, 136, 190, 0.12);
+  --button-secondary-bg: rgba(255, 255, 255, 0.92);
+  --button-secondary-fg: #0C1820;
+  --button-secondary-border: rgba(12, 24, 32, 0.24);
   --button-secondary-hover-bg: rgba(255, 255, 255, 0.98);
-  --button-secondary-hover-border: rgba(11, 49, 63, 0.45);
-  --shadow-soft: 0 12px 30px rgba(11, 49, 63, 0.1);
-  --shadow-strong: 0 28px 90px rgba(11, 49, 63, 0.12);
+  --button-secondary-hover-border: rgba(12, 24, 32, 0.36);
+
+  /* ── App gradient ── */
+  --app-gradient: radial-gradient(circle at top center, rgba(58, 136, 190, 0.10), transparent 24%),
+    radial-gradient(circle at left, rgba(228, 237, 245, 0.5), transparent 28%),
+    linear-gradient(180deg, #F2F7FC 0%, #FFFFFF 52%, #E8F0F8 100%);
+
+  /* ── Shadows ── */
+  --shadow-soft: 0 12px 30px rgba(12, 24, 32, 0.08);
+  --shadow-strong: 0 28px 90px rgba(12, 24, 32, 0.12);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+  --font-sans: var(--font-dm-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 }
 
 * {
@@ -140,6 +234,6 @@ button {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--accent-mint) 22%, transparent);
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
   color: var(--text-primary);
 }

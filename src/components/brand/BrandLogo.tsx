@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { TALENT_BRAND } from '@/lib/talent-brand';
 
 export function BrandLogo({
   className = '',
@@ -17,8 +18,8 @@ export function BrandLogo({
       aria-hidden="true"
     >
       <Image
-        src="/brand/logo-anclora-talent.png"
-        alt=""
+        src={TALENT_BRAND.logoPath}
+        alt={TALENT_BRAND.name}
         width={size}
         height={size}
         priority={priority}

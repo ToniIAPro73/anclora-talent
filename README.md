@@ -2,6 +2,18 @@
 
 Plataforma editorial construida sobre `Next.js App Router`, `Clerk`, `Neon` y `Vercel Blob`, y clonada desde Anclora Press.
 
+## Branding canónico
+
+- Familia visual: `Premium`
+- Accent objetivo: `#4A9FD8` azul cielo
+- Secondary: `#A0D0F0` azul pálido
+- Tipografía objetivo: `DM Sans` + `JetBrains Mono`
+- Borde de icono: cobre `#C07860`
+- Interior de icono: navy `#141E28`
+- Assets finales: pendientes de sustitución cuando el usuario los entregue
+- Contrato de referencia: `ANCLORA_PREMIUM_APP_CONTRACT`
+- Alcance de esta fase: dejar la app preparada estructuralmente para recibir esos activos sin rehacer el wiring
+
 ## Estado actual
 
 El repo ya no usa Vite. La nueva base incluye:
