@@ -1,4 +1,4 @@
-CREATE TABLE "activity_log" (
+CREATE TABLE IF NOT EXISTS "activity_log" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" varchar(191) NOT NULL,
 	"project_id" uuid,
@@ -7,7 +7,7 @@ CREATE TABLE "activity_log" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "app_users" (
+CREATE TABLE IF NOT EXISTS "app_users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"clerk_user_id" varchar(191) NOT NULL,
 	"email" varchar(255),
@@ -16,7 +16,7 @@ CREATE TABLE "app_users" (
 	CONSTRAINT "app_users_clerk_user_id_unique" UNIQUE("clerk_user_id")
 );
 --> statement-breakpoint
-CREATE TABLE "back_cover_designs" (
+CREATE TABLE IF NOT EXISTS "back_cover_designs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"project_id" uuid NOT NULL,
 	"title" varchar(255) NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE "back_cover_designs" (
 	CONSTRAINT "back_cover_designs_project_id_unique" UNIQUE("project_id")
 );
 --> statement-breakpoint
-CREATE TABLE "cover_designs" (
+CREATE TABLE IF NOT EXISTS "cover_designs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"project_id" uuid NOT NULL,
 	"title" varchar(255) NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE "cover_designs" (
 	CONSTRAINT "cover_designs_project_id_unique" UNIQUE("project_id")
 );
 --> statement-breakpoint
-CREATE TABLE "cover_layers" (
+CREATE TABLE IF NOT EXISTS "cover_layers" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"cover_design_id" uuid NOT NULL,
 	"layer_order" integer NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE "cover_layers" (
 	"payload" jsonb NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "design_templates" (
+CREATE TABLE IF NOT EXISTS "design_templates" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"template_key" varchar(64) NOT NULL,
 	"name" varchar(255) NOT NULL,
@@ -63,7 +63,7 @@ CREATE TABLE "design_templates" (
 	CONSTRAINT "design_templates_template_key_unique" UNIQUE("template_key")
 );
 --> statement-breakpoint
-CREATE TABLE "document_blocks" (
+CREATE TABLE IF NOT EXISTS "document_blocks" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"project_document_id" uuid NOT NULL,
 	"chapter_id" uuid NOT NULL,
@@ -75,7 +75,7 @@ CREATE TABLE "document_blocks" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "export_jobs" (
+CREATE TABLE IF NOT EXISTS "export_jobs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"project_id" uuid NOT NULL,
 	"format" varchar(32) NOT NULL,
@@ -85,7 +85,7 @@ CREATE TABLE "export_jobs" (
 	"completed_at" timestamp with time zone
 );
 --> statement-breakpoint
-CREATE TABLE "project_assets" (
+CREATE TABLE IF NOT EXISTS "project_assets" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"project_id" uuid NOT NULL,
 	"workspace_id" uuid,
@@ -96,7 +96,7 @@ CREATE TABLE "project_assets" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "project_documents" (
+CREATE TABLE IF NOT EXISTS "project_documents" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"project_id" uuid NOT NULL,
 	"title" varchar(255) NOT NULL,
@@ -108,7 +108,7 @@ CREATE TABLE "project_documents" (
 	CONSTRAINT "project_documents_project_id_unique" UNIQUE("project_id")
 );
 --> statement-breakpoint
-CREATE TABLE "projects" (
+CREATE TABLE IF NOT EXISTS "projects" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" varchar(191) NOT NULL,
 	"workspace_id" uuid,
