@@ -138,6 +138,32 @@ export type AppMessages = {
     paletteObsidian: string;
     paletteTeal: string;
     paletteSand: string;
+    importAnalyzing: string;
+    importReady: string;
+    importChaptersDetected: string;
+    importErrorGeneric: string;
+    importFileTooLarge: string;
+    importFormatUnsupported: string;
+    coverOpenBackCover: string;
+    advancedCoverEyebrow: string;
+    advancedCoverLayoutLabel: string;
+    advancedCoverFontLabel: string;
+    advancedCoverAccentLabel: string;
+    backCoverEyebrow: string;
+    backCoverTitle: string;
+    backCoverFormEyebrow: string;
+    backCoverTitleLabel: string;
+    backCoverBodyLabel: string;
+    backCoverBodyPlaceholder: string;
+    backCoverAuthorBioLabel: string;
+    backCoverSave: string;
+    backCoverBackToCover: string;
+    previewExportButton: string;
+    previewExportFilename: string;
+    previewExportPdfButton: string;
+    coverRenderImage: string;
+    coverRenderImageDone: string;
+    coverRenderedImageLabel: string;
   };
 };
 
@@ -340,6 +366,32 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       paletteObsidian: 'Obsidian',
       paletteTeal: 'Teal',
       paletteSand: 'Sand',
+      importAnalyzing: 'Analizando documento...',
+      importReady: 'Listo para importar',
+      importChaptersDetected: '{count} capítulos detectados',
+      importErrorGeneric: 'No se pudo analizar el documento',
+      importFileTooLarge: 'El archivo es demasiado grande (máx. 50 MB)',
+      importFormatUnsupported: 'Formato no compatible',
+      coverOpenBackCover: 'Contraportada',
+      advancedCoverEyebrow: 'Distribución',
+      advancedCoverLayoutLabel: 'Distribución',
+      advancedCoverFontLabel: 'Tipografía',
+      advancedCoverAccentLabel: 'Color de acento',
+      backCoverEyebrow: 'Contraportada',
+      backCoverTitle: 'Diseña la contraportada del proyecto',
+      backCoverFormEyebrow: 'Contraportada persistente',
+      backCoverTitleLabel: 'Título del autor',
+      backCoverBodyLabel: 'Texto de contraportada',
+      backCoverBodyPlaceholder: 'Resumen o blurb del proyecto...',
+      backCoverAuthorBioLabel: 'Biografía del autor',
+      backCoverSave: 'Guardar contraportada',
+      backCoverBackToCover: 'Portada',
+      previewExportButton: 'Exportar HTML',
+      previewExportFilename: 'proyecto',
+      previewExportPdfButton: 'Exportar PDF',
+      coverRenderImage: 'Generar imagen',
+      coverRenderImageDone: 'Imagen guardada',
+      coverRenderedImageLabel: 'Imagen renderizada',
     },
   },
   en: {
@@ -540,6 +592,32 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       paletteObsidian: 'Obsidian',
       paletteTeal: 'Teal',
       paletteSand: 'Sand',
+      importAnalyzing: 'Analyzing document...',
+      importReady: 'Ready to import',
+      importChaptersDetected: '{count} chapters detected',
+      importErrorGeneric: 'Could not analyze the document',
+      importFileTooLarge: 'File is too large (max. 50 MB)',
+      importFormatUnsupported: 'Format not supported',
+      coverOpenBackCover: 'Back cover',
+      advancedCoverEyebrow: 'Layout',
+      advancedCoverLayoutLabel: 'Layout',
+      advancedCoverFontLabel: 'Typography',
+      advancedCoverAccentLabel: 'Accent color',
+      backCoverEyebrow: 'Back cover',
+      backCoverTitle: 'Design the project back cover',
+      backCoverFormEyebrow: 'Persistent back cover',
+      backCoverTitleLabel: 'Author title',
+      backCoverBodyLabel: 'Back cover text',
+      backCoverBodyPlaceholder: 'Project summary or blurb...',
+      backCoverAuthorBioLabel: 'Author bio',
+      backCoverSave: 'Save back cover',
+      backCoverBackToCover: 'Cover',
+      previewExportButton: 'Export HTML',
+      previewExportFilename: 'project',
+      previewExportPdfButton: 'Export PDF',
+      coverRenderImage: 'Generate image',
+      coverRenderImageDone: 'Image saved',
+      coverRenderedImageLabel: 'Rendered image',
     },
   },
 };

@@ -1,5 +1,4 @@
 import 'server-only';
-import type { ImportedDocumentSeed } from './types';
 export { supportedImportAccept } from './import-config';
 import { buildImportedDocumentSeed, extractTextFromBuffer, normalizeText } from './import-pipeline';
 

@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:e2e": "playwright test",
     "clean": "node -e \"require('fs').rmSync('.next', { recursive: true, force: true }); require('fs').rmSync('coverage', { recursive: true, force: true });\"",
     "db:generate": "drizzle-kit generate",
     "db:push": "dotenv -e .env.local -- drizzle-kit push",
@@ -17,9 +18,14 @@
   "dependencies": {
     "@clerk/nextjs": "^7.0.7",
     "@neondatabase/serverless": "^1.0.2",
+    "@react-pdf/renderer": "^4.3.2",
+    "@tiptap/pm": "^3.22.2",
+    "@tiptap/react": "^3.22.2",
+    "@tiptap/starter-kit": "^3.22.2",
     "@vercel/blob": "^2.3.2",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.2",
+    "html-to-image": "^1.11.13",
     "lucide-react": "^0.546.0",
     "mammoth": "^1.11.0",
     "next": "16.2.1",
@@ -32,6 +38,7 @@
     "zod": "^4.1.11"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

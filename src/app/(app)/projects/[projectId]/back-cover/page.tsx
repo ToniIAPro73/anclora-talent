@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { AdvancedCoverEditor } from '@/components/projects/advanced-cover/AdvancedCoverEditor';
+import { BackCoverForm } from '@/components/projects/BackCoverForm';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
 
-export default async function ProjectCoverPage({
+export default async function ProjectBackCoverPage({
   params,
 }: {
   params: Promise<{ projectId: string }>;
@@ -27,25 +27,22 @@ export default async function ProjectCoverPage({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
-            {copy.coverEyebrow}
+            {copy.backCoverEyebrow}
           </p>
           <h2 className="mt-2 text-4xl font-black tracking-tight text-[var(--text-primary)]">
-            {copy.coverTitle}
+            {copy.backCoverTitle}
           </h2>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Link href={`/projects/${project.id}/editor`} className={`${premiumSecondaryLightButton} px-5`}>
-            {copy.coverBackEditor}
-          </Link>
-          <Link href={`/projects/${project.id}/back-cover`} className={`${premiumSecondaryLightButton} px-5`}>
-            {copy.coverOpenBackCover}
+        <div className="flex gap-3">
+          <Link href={`/projects/${project.id}/cover`} className={`${premiumSecondaryLightButton} px-5`}>
+            {copy.backCoverBackToCover}
           </Link>
           <Link href={`/projects/${project.id}/preview`} className={`${premiumPrimaryDarkButton} px-5`}>
-            {copy.coverBackPreview}
+            {copy.previewBackToEditor}
           </Link>
         </div>
       </div>
-      <AdvancedCoverEditor project={project} copy={copy} />
+      <BackCoverForm copy={copy} project={project} />
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
 import { uploadProjectBlob } from '@/lib/blob/client';
-import type { CoverDesign, UpdateCoverInput, UpdateDocumentInput } from './types';
+import type { CoverDesign, UpdateBackCoverInput, UpdateCoverInput, UpdateDocumentInput } from './types';
 
 function parsePalette(value: FormDataEntryValue | null): CoverDesign['palette'] {
   if (value === 'teal' || value === 'sand') {
@@ -76,14 +76,45 @@ export async function createProjectAction(formData: FormData) {
 export async function saveProjectDocumentAction(formData: FormData) {
   const userId = await requireUserId();
   const projectId = String(formData.get('projectId') ?? '');
+  const chapterId = String(formData.get('chapterId') ?? '').trim() || undefined;
   const input: UpdateDocumentInput = {
     title: String(formData.get('title') ?? '').trim(),
     subtitle: String(formData.get('subtitle') ?? '').trim(),
     chapterTitle: String(formData.get('chapterTitle') ?? '').trim(),
+    chapterId,
     blocks: formData.getAll('blockId').map((id, index) => ({
       id: String(id),
       content: String(formData.getAll('blockContent')[index] ?? ''),
     })),
+  };
+
+  await projectRepository.saveDocument(userId, projectId, input);
+  revalidatePath(`/projects/${projectId}/editor`);
+  revalidatePath(`/projects/${projectId}/preview`);
+}
+
+export async function saveChapterContentAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '').trim();
+  const chapterId = String(formData.get('chapterId') ?? '').trim();
+  const chapterTitle = String(formData.get('chapterTitle') ?? '').trim();
+  const htmlContent = String(formData.get('htmlContent') ?? '').trim();
+
+  if (!projectId || !chapterId) return;
+
+  const project = await projectRepository.getProjectById(userId, projectId);
+  if (!project) return;
+
+  const chapter = project.document.chapters.find((ch) => ch.id === chapterId);
+  if (!chapter) return;
+
+  const firstBlockId = chapter.blocks[0]?.id ?? crypto.randomUUID();
+  const input: UpdateDocumentInput = {
+    title: project.document.title,
+    subtitle: project.document.subtitle,
+    chapterTitle: chapterTitle || chapter.title,
+    chapterId,
+    blocks: [{ id: firstBlockId, content: htmlContent }],
   };
 
   await projectRepository.saveDocument(userId, projectId, input);
@@ -107,15 +138,68 @@ export async function saveProjectCoverAction(formData: FormData) {
     }
   }
 
+  const rawLayout = String(formData.get('layout') ?? '').trim();
+  const layout: CoverDesign['layout'] =
+    rawLayout === 'top' || rawLayout === 'bottom' || rawLayout === 'split' ? rawLayout : 'centered';
+
   const input: UpdateCoverInput = {
     title: String(formData.get('title') ?? '').trim(),
     subtitle: String(formData.get('subtitle') ?? '').trim(),
     palette: parsePalette(formData.get('palette')),
     backgroundImageUrl,
     thumbnailUrl,
+    layout,
+    fontFamily: String(formData.get('fontFamily') ?? '').trim() || null,
+    accentColor: String(formData.get('accentColor') ?? '').trim() || null,
   };
 
   await projectRepository.saveCover(userId, projectId, input);
+  revalidatePath(`/projects/${projectId}/cover`);
+  revalidatePath(`/projects/${projectId}/preview`);
+}
+
+export async function saveBackCoverAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '');
+  const file = formData.get('backgroundImage');
+  let backgroundImageUrl = String(formData.get('currentBackgroundImageUrl') ?? '') || null;
+
+  if (file instanceof File && file.size > 0) {
+    const blob = await uploadProjectBlob(projectId, file);
+    if (blob) backgroundImageUrl = blob.url;
+  }
+
+  const input: UpdateBackCoverInput = {
+    title: String(formData.get('title') ?? '').trim(),
+    body: String(formData.get('body') ?? '').trim(),
+    authorBio: String(formData.get('authorBio') ?? '').trim(),
+    accentColor: String(formData.get('accentColor') ?? '').trim() || null,
+    backgroundImageUrl,
+  };
+
+  await projectRepository.saveBackCover(userId, projectId, input);
+  revalidatePath(`/projects/${projectId}/back-cover`);
+  revalidatePath(`/projects/${projectId}/preview`);
+}
+
+export async function renderCoverImageAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '').trim();
+  const dataUrl = String(formData.get('dataUrl') ?? '').trim();
+
+  if (!projectId || !dataUrl.startsWith('data:image/')) return;
+
+  // Convert data URL to Buffer then to File for uploadProjectBlob
+  const base64 = dataUrl.split(',')[1];
+  if (!base64) return;
+
+  const buffer = Buffer.from(base64, 'base64');
+  const file = new File([buffer], `cover-render-${Date.now()}.png`, { type: 'image/png' });
+
+  const blob = await uploadProjectBlob(projectId, file);
+  if (!blob) return;
+
+  await projectRepository.saveRenderedCoverUrl(userId, projectId, blob.url);
   revalidatePath(`/projects/${projectId}/cover`);
   revalidatePath(`/projects/${projectId}/preview`);
 }

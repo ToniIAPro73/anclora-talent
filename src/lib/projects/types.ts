@@ -124,6 +124,8 @@ export interface UpdateDocumentInput {
   title: string;
   subtitle: string;
   chapterTitle: string;
+  /** Target chapter id. Defaults to first chapter when omitted. */
+  chapterId?: string;
   blocks: Array<{
     id: string;
     content: string;
@@ -136,4 +138,15 @@ export interface UpdateCoverInput {
   palette: CoverDesign['palette'];
   backgroundImageUrl: string | null;
   thumbnailUrl: string | null;
+  layout?: CoverDesign['layout'];
+  fontFamily?: string | null;
+  accentColor?: string | null;
+}
+
+export interface UpdateBackCoverInput {
+  title: string;
+  body: string;
+  authorBio: string;
+  accentColor: string | null;
+  backgroundImageUrl: string | null;
 }
