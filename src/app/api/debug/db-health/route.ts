@@ -27,6 +27,8 @@ const EXPECTED_SCHEMA: Record<string, string[]> = {
   activity_log: ['id', 'user_id', 'project_id', 'event_type', 'payload', 'created_at'],
 };
 
+const EXPECTED_TABLE_NAMES = new Set(Object.keys(EXPECTED_SCHEMA));
+
 export async function GET() {
   const databaseUrl = process.env.DATABASE_URL;
 
@@ -49,30 +51,40 @@ export async function GET() {
 
     // Get all columns for those tables
     const columnRows = await sql`
-      SELECT table_name, column_name
+      SELECT table_name, column_name, data_type, is_nullable, column_default
       FROM information_schema.columns
       WHERE table_schema = 'public'
       ORDER BY table_name, ordinal_position
     `;
     const existingColumns: Record<string, Set<string>> = {};
+    const allColumnsByTable: Record<string, string[]> = {};
     for (const row of columnRows as Array<Record<string, string>>) {
-      if (!existingColumns[row.table_name]) existingColumns[row.table_name] = new Set();
+      if (!existingColumns[row.table_name]) {
+        existingColumns[row.table_name] = new Set();
+        allColumnsByTable[row.table_name] = [];
+      }
       existingColumns[row.table_name].add(row.column_name);
+      allColumnsByTable[row.table_name].push(row.column_name);
     }
 
-    // Compare against expected schema
+    // --- Missing tables and columns (schema requires, DB lacks) ---
     const tableReport: Record<string, {
       exists: boolean;
       missingColumns: string[];
       presentColumns: string[];
+      extraColumns: string[];
     }> = {};
 
     for (const [table, expectedCols] of Object.entries(EXPECTED_SCHEMA)) {
       const exists = existingTables.has(table);
       const actualCols = existingColumns[table] ?? new Set();
+      const expectedSet = new Set(expectedCols);
       const missingColumns = expectedCols.filter((c) => !actualCols.has(c));
       const presentColumns = expectedCols.filter((c) => actualCols.has(c));
-      tableReport[table] = { exists, missingColumns, presentColumns };
+      const extraColumns = exists
+        ? [...actualCols].filter((c) => !expectedSet.has(c))
+        : [];
+      tableReport[table] = { exists, missingColumns, presentColumns, extraColumns };
     }
 
     const missingTables = Object.entries(tableReport)
@@ -83,17 +95,30 @@ export async function GET() {
       .filter(([, v]) => v.exists && v.missingColumns.length > 0)
       .map(([t, v]) => ({ table: t, missingColumns: v.missingColumns }));
 
-    const schemaOk = missingTables.length === 0 && tablesWithMissingColumns.length === 0;
+    const tablesWithExtraColumns = Object.entries(tableReport)
+      .filter(([, v]) => v.exists && v.extraColumns.length > 0)
+      .map(([t, v]) => ({ table: t, extraColumns: v.extraColumns }));
+
+    // --- Extra tables (exist in DB but not in schema) ---
+    const extraTables = [...existingTables].filter((t) => !EXPECTED_TABLE_NAMES.has(t));
+
+    const schemaOk =
+      missingTables.length === 0 &&
+      tablesWithMissingColumns.length === 0;
 
     return NextResponse.json({
       ok: schemaOk,
       hasDatabaseUrl: true,
       databaseUrl: maskUrl(databaseUrl),
       summary: schemaOk
-        ? 'Schema is up to date — all tables and columns present.'
+        ? 'Schema is up to date — all required tables and columns present.'
         : `Schema needs migration: ${missingTables.length} missing table(s), ${tablesWithMissingColumns.length} table(s) with missing columns.`,
+      // What the code needs but DB lacks (must fix)
       missingTables,
       tablesWithMissingColumns,
+      // What the DB has beyond the schema (informational — safe to keep or drop)
+      extraTables,
+      tablesWithExtraColumns,
       tableReport,
     });
   } catch (error) {
