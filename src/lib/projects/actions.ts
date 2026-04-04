@@ -76,14 +76,45 @@ export async function createProjectAction(formData: FormData) {
 export async function saveProjectDocumentAction(formData: FormData) {
   const userId = await requireUserId();
   const projectId = String(formData.get('projectId') ?? '');
+  const chapterId = String(formData.get('chapterId') ?? '').trim() || undefined;
   const input: UpdateDocumentInput = {
     title: String(formData.get('title') ?? '').trim(),
     subtitle: String(formData.get('subtitle') ?? '').trim(),
     chapterTitle: String(formData.get('chapterTitle') ?? '').trim(),
+    chapterId,
     blocks: formData.getAll('blockId').map((id, index) => ({
       id: String(id),
       content: String(formData.getAll('blockContent')[index] ?? ''),
     })),
+  };
+
+  await projectRepository.saveDocument(userId, projectId, input);
+  revalidatePath(`/projects/${projectId}/editor`);
+  revalidatePath(`/projects/${projectId}/preview`);
+}
+
+export async function saveChapterContentAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '').trim();
+  const chapterId = String(formData.get('chapterId') ?? '').trim();
+  const chapterTitle = String(formData.get('chapterTitle') ?? '').trim();
+  const htmlContent = String(formData.get('htmlContent') ?? '').trim();
+
+  if (!projectId || !chapterId) return;
+
+  const project = await projectRepository.getProjectById(userId, projectId);
+  if (!project) return;
+
+  const chapter = project.document.chapters.find((ch) => ch.id === chapterId);
+  if (!chapter) return;
+
+  const firstBlockId = chapter.blocks[0]?.id ?? crypto.randomUUID();
+  const input: UpdateDocumentInput = {
+    title: project.document.title,
+    subtitle: project.document.subtitle,
+    chapterTitle: chapterTitle || chapter.title,
+    chapterId,
+    blocks: [{ id: firstBlockId, content: htmlContent }],
   };
 
   await projectRepository.saveDocument(userId, projectId, input);

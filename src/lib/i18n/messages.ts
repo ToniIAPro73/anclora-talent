@@ -138,6 +138,12 @@ export type AppMessages = {
     paletteObsidian: string;
     paletteTeal: string;
     paletteSand: string;
+    importAnalyzing: string;
+    importReady: string;
+    importChaptersDetected: string;
+    importErrorGeneric: string;
+    importFileTooLarge: string;
+    importFormatUnsupported: string;
   };
 };
 
@@ -340,6 +346,12 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       paletteObsidian: 'Obsidian',
       paletteTeal: 'Teal',
       paletteSand: 'Sand',
+      importAnalyzing: 'Analizando documento...',
+      importReady: 'Listo para importar',
+      importChaptersDetected: '{count} capítulos detectados',
+      importErrorGeneric: 'No se pudo analizar el documento',
+      importFileTooLarge: 'El archivo es demasiado grande (máx. 50 MB)',
+      importFormatUnsupported: 'Formato no compatible',
     },
   },
   en: {
@@ -540,6 +552,12 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       paletteObsidian: 'Obsidian',
       paletteTeal: 'Teal',
       paletteSand: 'Sand',
+      importAnalyzing: 'Analyzing document...',
+      importReady: 'Ready to import',
+      importChaptersDetected: '{count} chapters detected',
+      importErrorGeneric: 'Could not analyze the document',
+      importFileTooLarge: 'File is too large (max. 50 MB)',
+      importFormatUnsupported: 'Format not supported',
     },
   },
 };

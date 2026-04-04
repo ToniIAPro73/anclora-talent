@@ -134,7 +134,24 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
 }
 
 export function updateProjectDocument(project: ProjectRecord, input: UpdateDocumentInput): ProjectRecord {
-  const [chapter] = project.document.chapters;
+  const targetIdx = input.chapterId
+    ? project.document.chapters.findIndex((ch) => ch.id === input.chapterId)
+    : 0;
+  const idx = targetIdx >= 0 ? targetIdx : 0;
+  const chapter = project.document.chapters[idx];
+
+  const updatedChapter = {
+    ...chapter,
+    title: input.chapterTitle,
+    blocks: chapter.blocks.map((block) => {
+      const incoming = input.blocks.find((item) => item.id === block.id);
+      return incoming ? { ...block, content: incoming.content } : block;
+    }),
+  };
+
+  const updatedChapters = project.document.chapters.map((ch, i) =>
+    i === idx ? updatedChapter : ch,
+  );
 
   return {
     ...project,
@@ -144,16 +161,7 @@ export function updateProjectDocument(project: ProjectRecord, input: UpdateDocum
       ...project.document,
       title: input.title,
       subtitle: input.subtitle,
-      chapters: [
-        {
-          ...chapter,
-          title: input.chapterTitle,
-          blocks: chapter.blocks.map((block) => {
-            const incoming = input.blocks.find((item) => item.id === block.id);
-            return incoming ? { ...block, content: incoming.content } : block;
-          }),
-        },
-      ],
+      chapters: updatedChapters,
     },
     cover: {
       ...project.cover,
