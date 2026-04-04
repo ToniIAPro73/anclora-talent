@@ -29,10 +29,17 @@ export default async function ProjectPreviewPage({
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">{projectCopy.previewEyebrow}</p>
           <h2 className="mt-2 text-4xl font-black tracking-tight text-[var(--text-primary)]">{projectCopy.previewTitle}</h2>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <Link href={`/projects/${project.id}/editor`} className={`${premiumSecondaryLightButton} px-5`}>
             {projectCopy.previewBackToEditor}
           </Link>
+          <a
+            href={`/api/projects/export?projectId=${project.id}`}
+            download={`${project.slug || projectCopy.previewExportFilename}.html`}
+            className={`${premiumSecondaryLightButton} px-5`}
+          >
+            {projectCopy.previewExportButton}
+          </a>
           <Link href={`/projects/${project.id}/cover`} className={`${premiumPrimaryDarkButton} px-5`}>
             {projectCopy.previewOpenCover}
           </Link>
