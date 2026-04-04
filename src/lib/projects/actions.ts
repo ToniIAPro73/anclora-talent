@@ -182,6 +182,28 @@ export async function saveBackCoverAction(formData: FormData) {
   revalidatePath(`/projects/${projectId}/preview`);
 }
 
+export async function renderCoverImageAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '').trim();
+  const dataUrl = String(formData.get('dataUrl') ?? '').trim();
+
+  if (!projectId || !dataUrl.startsWith('data:image/')) return;
+
+  // Convert data URL to Buffer then to File for uploadProjectBlob
+  const base64 = dataUrl.split(',')[1];
+  if (!base64) return;
+
+  const buffer = Buffer.from(base64, 'base64');
+  const file = new File([buffer], `cover-render-${Date.now()}.png`, { type: 'image/png' });
+
+  const blob = await uploadProjectBlob(projectId, file);
+  if (!blob) return;
+
+  await projectRepository.saveRenderedCoverUrl(userId, projectId, blob.url);
+  revalidatePath(`/projects/${projectId}/cover`);
+  revalidatePath(`/projects/${projectId}/preview`);
+}
+
 export async function deleteProjectAction(formData: FormData) {
   const userId = await requireUserId();
   const projectId = String(formData.get('projectId') ?? '').trim();

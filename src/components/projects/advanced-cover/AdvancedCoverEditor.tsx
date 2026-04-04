@@ -1,12 +1,13 @@
 'use client';
 
 import { useRef, useState, useTransition } from 'react';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { toPng } from 'html-to-image';
 import { CoverCanvas } from './Canvas';
 import { CoverToolbar } from './Toolbar';
 import { CoverPropertyPanel } from './PropertyPanel';
-import { saveProjectCoverAction } from '@/lib/projects/actions';
-import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
+import { renderCoverImageAction, saveProjectCoverAction } from '@/lib/projects/actions';
+import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import type { CoverDesign, ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 
@@ -26,8 +27,28 @@ export function AdvancedCoverEditor({
   const [fontFamily, setFontFamily] = useState(project.cover.fontFamily ?? 'sans');
   const [accentColor, setAccentColor] = useState(project.cover.accentColor ?? '#d4af37');
   const [isPending, startTransition] = useTransition();
+  const [isRendering, startRenderTransition] = useTransition();
   const [saved, setSaved] = useState(false);
+  const [rendered, setRendered] = useState(false);
+  const [renderedImageUrl, setRenderedImageUrl] = useState<string | null>(project.cover.renderedImageUrl ?? null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  const handleRenderImage = () => {
+    const node = canvasRef.current;
+    if (!node) return;
+
+    startRenderTransition(async () => {
+      const dataUrl = await toPng(node, { pixelRatio: 2 });
+      const formData = new FormData();
+      formData.set('projectId', project.id);
+      formData.set('dataUrl', dataUrl);
+      await renderCoverImageAction(formData);
+      setRenderedImageUrl(dataUrl);
+      setRendered(true);
+      setTimeout(() => setRendered(false), 2500);
+    });
+  };
 
   const handleSave = () => {
     const formData = new FormData();
@@ -114,6 +135,7 @@ export function AdvancedCoverEditor({
             {copy.coverEyebrow}
           </p>
           <CoverCanvas
+            ref={canvasRef}
             title={title}
             subtitle={subtitle}
             palette={palette}
@@ -122,6 +144,36 @@ export function AdvancedCoverEditor({
             accentColor={accentColor}
             backgroundImageUrl={project.cover.backgroundImageUrl}
           />
+          <div className="mt-4 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleRenderImage}
+              disabled={isRendering}
+              className={`${premiumSecondaryLightButton} px-4 disabled:opacity-60`}
+            >
+              {isRendering ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="mr-1.5 h-3.5 w-3.5" />}
+              {copy.coverRenderImage}
+            </button>
+            {rendered && !isRendering && (
+              <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]">
+                <Check className="h-3 w-3" />
+                {copy.coverRenderImageDone}
+              </span>
+            )}
+          </div>
+          {renderedImageUrl && (
+            <div className="mt-4 space-y-1.5">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
+                {copy.coverRenderedImageLabel}
+              </p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={renderedImageUrl}
+                alt={copy.coverRenderedImageLabel}
+                className="w-full max-w-[160px] rounded-[12px] border border-[var(--border-subtle)] shadow-[var(--shadow-soft)]"
+              />
+            </div>
+          )}
         </section>
       </div>
     </div>

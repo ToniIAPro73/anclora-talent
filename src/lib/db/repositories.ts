@@ -425,11 +425,42 @@ async function saveCoverInDb(userId: string, projectId: string, input: UpdateCov
       palette: nextProject.cover.palette,
       backgroundImageUrl: nextProject.cover.backgroundImageUrl,
       thumbnailUrl: nextProject.cover.thumbnailUrl,
+      layout: nextProject.cover.layout ?? null,
+      fontFamily: nextProject.cover.fontFamily ?? null,
+      accentColor: nextProject.cover.accentColor ?? null,
       updatedAt: new Date(nextProject.updatedAt),
     })
     .where(eq(coverDesigns.projectId, projectId));
 
   return nextProject;
+}
+
+async function saveRenderedCoverUrlInDb(userId: string, projectId: string, renderedImageUrl: string) {
+  const db = getDb();
+  const current = await getProjectFromDb(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  await db
+    .update(coverDesigns)
+    .set({ renderedImageUrl, updatedAt: new Date() })
+    .where(eq(coverDesigns.projectId, projectId));
+
+  return { ...current, cover: { ...current.cover, renderedImageUrl } };
+}
+
+async function saveRenderedCoverUrlInMemory(userId: string, projectId: string, renderedImageUrl: string) {
+  const current = await getProjectFromMemory(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  const next = { ...current, cover: { ...current.cover, renderedImageUrl } };
+  getMemoryStore().set(projectId, next);
+  return next;
 }
 
 async function deleteProjectInDb(userId: string, projectId: string) {
@@ -578,5 +609,10 @@ export const projectRepository = {
     return hasDatabase()
       ? saveBackCoverInDb(userId, projectId, input)
       : saveBackCoverInMemory(userId, projectId, input);
+  },
+  saveRenderedCoverUrl(userId: string, projectId: string, renderedImageUrl: string) {
+    return hasDatabase()
+      ? saveRenderedCoverUrlInDb(userId, projectId, renderedImageUrl)
+      : saveRenderedCoverUrlInMemory(userId, projectId, renderedImageUrl);
   },
 };
