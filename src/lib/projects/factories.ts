@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type {
   CreateProjectInput,
   ProjectRecord,
+  UpdateBackCoverInput,
   UpdateCoverInput,
   UpdateDocumentInput,
 } from './types';
@@ -181,6 +182,24 @@ export function updateProjectCover(project: ProjectRecord, input: UpdateCoverInp
     cover: {
       ...project.cover,
       ...input,
+    },
+  };
+}
+
+export function updateProjectBackCover(
+  project: ProjectRecord,
+  input: UpdateBackCoverInput,
+): ProjectRecord {
+  return {
+    ...project,
+    updatedAt: new Date().toISOString(),
+    backCover: {
+      ...project.backCover,
+      title: input.title,
+      body: input.body,
+      authorBio: input.authorBio,
+      accentColor: input.accentColor,
+      backgroundImageUrl: input.backgroundImageUrl,
     },
   };
 }

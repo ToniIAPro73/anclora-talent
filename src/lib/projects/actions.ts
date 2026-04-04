@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
 import { uploadProjectBlob } from '@/lib/blob/client';
-import type { CoverDesign, UpdateCoverInput, UpdateDocumentInput } from './types';
+import type { CoverDesign, UpdateBackCoverInput, UpdateCoverInput, UpdateDocumentInput } from './types';
 
 function parsePalette(value: FormDataEntryValue | null): CoverDesign['palette'] {
   if (value === 'teal' || value === 'sand') {
@@ -138,16 +138,47 @@ export async function saveProjectCoverAction(formData: FormData) {
     }
   }
 
+  const rawLayout = String(formData.get('layout') ?? '').trim();
+  const layout: CoverDesign['layout'] =
+    rawLayout === 'top' || rawLayout === 'bottom' || rawLayout === 'split' ? rawLayout : 'centered';
+
   const input: UpdateCoverInput = {
     title: String(formData.get('title') ?? '').trim(),
     subtitle: String(formData.get('subtitle') ?? '').trim(),
     palette: parsePalette(formData.get('palette')),
     backgroundImageUrl,
     thumbnailUrl,
+    layout,
+    fontFamily: String(formData.get('fontFamily') ?? '').trim() || null,
+    accentColor: String(formData.get('accentColor') ?? '').trim() || null,
   };
 
   await projectRepository.saveCover(userId, projectId, input);
   revalidatePath(`/projects/${projectId}/cover`);
+  revalidatePath(`/projects/${projectId}/preview`);
+}
+
+export async function saveBackCoverAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '');
+  const file = formData.get('backgroundImage');
+  let backgroundImageUrl = String(formData.get('currentBackgroundImageUrl') ?? '') || null;
+
+  if (file instanceof File && file.size > 0) {
+    const blob = await uploadProjectBlob(projectId, file);
+    if (blob) backgroundImageUrl = blob.url;
+  }
+
+  const input: UpdateBackCoverInput = {
+    title: String(formData.get('title') ?? '').trim(),
+    body: String(formData.get('body') ?? '').trim(),
+    authorBio: String(formData.get('authorBio') ?? '').trim(),
+    accentColor: String(formData.get('accentColor') ?? '').trim() || null,
+    backgroundImageUrl,
+  };
+
+  await projectRepository.saveBackCover(userId, projectId, input);
+  revalidatePath(`/projects/${projectId}/back-cover`);
   revalidatePath(`/projects/${projectId}/preview`);
 }
 
