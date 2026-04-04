@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import type { ProjectSummary } from '@/lib/projects/types';
-import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
+import { premiumPrimaryMintButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import type { AppMessages } from '@/lib/i18n/messages';
 import { ProjectDeleteButton } from './ProjectDeleteButton';
 
@@ -37,11 +37,11 @@ export function ProjectCard({
       </p>
       <div className="mt-6 h-px bg-[var(--border-subtle)]" />
       <div className="mt-6 flex flex-wrap gap-3">
-        <Link href={`/projects/${project.id}/editor`} className={`${premiumPrimaryDarkButton} min-h-11 px-4 py-2`}>
+        <Link href={`/projects/${project.id}/editor`} className={`${premiumPrimaryMintButton} px-5`}>
           {copy.cardOpenEditor}
           <ArrowRight className="h-4 w-4" />
         </Link>
-        <Link href={`/projects/${project.id}/preview`} className={`${premiumSecondaryLightButton} min-h-11 px-4 py-2`}>
+        <Link href={`/projects/${project.id}/preview`} className={`${premiumSecondaryLightButton} px-5`}>
           {copy.cardPreview}
         </Link>
         <ProjectDeleteButton

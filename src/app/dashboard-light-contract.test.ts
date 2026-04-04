@@ -25,8 +25,10 @@ describe('light theme dashboard contract', () => {
 
   test('keeps dashboard and form layout readable in light mode', () => {
     expect(dashboardPage).toContain('sm:grid-cols-2 xl:grid-cols-3');
-    expect(createProjectForm).toContain('xl:flex-row');
-    expect(createProjectForm).toContain('w-full xl:w-auto');
+    // Hint text + submit button stack vertically so neither collapses to
+    // a single-word column in the narrow (0.8fr) grid column.
+    expect(createProjectForm).toContain('flex flex-col gap-4');
+    expect(createProjectForm).toContain('w-full');
   });
 
   test('documents theme-specific premium variants in the app contract', () => {

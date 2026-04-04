@@ -23,13 +23,13 @@ export function CreateProjectForm({ copy }: { copy: AppMessages['project'] }) {
         />
       </label>
       <DocumentImporter copy={copy} />
-      <div className="mt-6 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-        <p className="max-w-none text-xs leading-6 text-[var(--text-tertiary)] xl:max-w-xs">
+      <div className="mt-6 flex flex-col gap-4">
+        <p className="text-xs leading-6 text-[var(--text-tertiary)]">
           {copy.createProjectHint}
         </p>
         <button
           type="submit"
-          className={`${premiumPrimaryDarkButton} w-full xl:w-auto`}
+          className={`${premiumPrimaryDarkButton} w-full`}
         >
           {copy.createProjectAction}
         </button>
