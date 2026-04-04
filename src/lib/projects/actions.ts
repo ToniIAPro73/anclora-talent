@@ -214,6 +214,5 @@ export async function deleteProjectAction(formData: FormData) {
 
   await projectRepository.deleteProject(userId, projectId);
   revalidatePath('/dashboard');
-  revalidatePath(`/projects/${projectId}/editor`);
-  revalidatePath(`/projects/${projectId}/preview`);
+  redirect('/dashboard');
 }
