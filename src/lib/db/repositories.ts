@@ -6,6 +6,7 @@ import { backCoverDesigns, coverDesigns, documentBlocks, projectAssets, projectD
 import { createMockProjectStore } from '@/lib/projects/mock-data';
 import {
   createProjectRecord,
+  updateProjectBackCover,
   updateProjectCover,
   updateProjectDocument,
 } from '@/lib/projects/factories';
@@ -16,6 +17,7 @@ import type {
   DocumentChapter,
   ProjectRecord,
   ProjectSummary,
+  UpdateBackCoverInput,
   UpdateCoverInput,
   UpdateDocumentInput,
 } from '@/lib/projects/types';
@@ -506,6 +508,51 @@ async function deleteProjectInMemory(userId: string, projectId: string) {
   getMemoryStore().delete(projectId);
 }
 
+async function saveBackCoverInDb(
+  userId: string,
+  projectId: string,
+  input: UpdateBackCoverInput,
+) {
+  const db = getDb();
+  const current = await getProjectFromDb(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  const nextProject = updateProjectBackCover(current, input);
+
+  await db
+    .update(backCoverDesigns)
+    .set({
+      title: nextProject.backCover.title,
+      body: nextProject.backCover.body,
+      authorBio: nextProject.backCover.authorBio,
+      accentColor: nextProject.backCover.accentColor,
+      backgroundImageUrl: nextProject.backCover.backgroundImageUrl,
+      updatedAt: new Date(nextProject.updatedAt),
+    })
+    .where(eq(backCoverDesigns.projectId, projectId));
+
+  return nextProject;
+}
+
+async function saveBackCoverInMemory(
+  userId: string,
+  projectId: string,
+  input: UpdateBackCoverInput,
+) {
+  const current = await getProjectFromMemory(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  const nextProject = updateProjectBackCover(current, input);
+  getMemoryStore().set(nextProject.id, nextProject);
+  return nextProject;
+}
+
 export const projectRepository = {
   listProjectsForUser(userId: string) {
     return hasDatabase() ? listProjectsFromDb(userId) : listProjectsFromMemory(userId);
@@ -526,5 +573,10 @@ export const projectRepository = {
   },
   deleteProject(userId: string, projectId: string) {
     return hasDatabase() ? deleteProjectInDb(userId, projectId) : deleteProjectInMemory(userId, projectId);
+  },
+  saveBackCover(userId: string, projectId: string, input: UpdateBackCoverInput) {
+    return hasDatabase()
+      ? saveBackCoverInDb(userId, projectId, input)
+      : saveBackCoverInMemory(userId, projectId, input);
   },
 };
