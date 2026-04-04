@@ -1,5 +1,6 @@
 'use client';
 
+import { forwardRef } from 'react';
 import type { CoverDesign } from '@/lib/projects/types';
 
 const paletteGradient: Record<CoverDesign['palette'], string> = {
@@ -22,15 +23,7 @@ const fontFamilyMap: Record<string, string> = {
 
 type Layout = NonNullable<CoverDesign['layout']>;
 
-export function CoverCanvas({
-  title,
-  subtitle,
-  palette,
-  layout = 'centered',
-  fontFamily,
-  accentColor,
-  backgroundImageUrl,
-}: {
+export const CoverCanvas = forwardRef<HTMLDivElement, {
   title: string;
   subtitle: string;
   palette: CoverDesign['palette'];
@@ -38,7 +31,15 @@ export function CoverCanvas({
   fontFamily?: string | null;
   accentColor?: string | null;
   backgroundImageUrl?: string | null;
-}) {
+}>(function CoverCanvas({
+  title,
+  subtitle,
+  palette,
+  layout = 'centered',
+  fontFamily,
+  accentColor,
+  backgroundImageUrl,
+}, ref) {
   const colors = paletteText[palette];
   const font = fontFamily ? (fontFamilyMap[fontFamily] ?? fontFamilyMap.sans) : fontFamilyMap.sans;
   const accent = accentColor ?? (palette === 'sand' ? '#0b313f' : '#d4af37');
@@ -52,6 +53,7 @@ export function CoverCanvas({
 
   return (
     <div
+      ref={ref}
       data-testid="cover-canvas"
       style={{
         position: 'relative',
@@ -144,4 +146,4 @@ export function CoverCanvas({
       </div>
     </div>
   );
-}
+});

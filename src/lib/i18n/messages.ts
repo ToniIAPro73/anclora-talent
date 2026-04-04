@@ -160,6 +160,10 @@ export type AppMessages = {
     backCoverBackToCover: string;
     previewExportButton: string;
     previewExportFilename: string;
+    previewExportPdfButton: string;
+    coverRenderImage: string;
+    coverRenderImageDone: string;
+    coverRenderedImageLabel: string;
   };
 };
 
@@ -384,6 +388,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       backCoverBackToCover: 'Portada',
       previewExportButton: 'Exportar HTML',
       previewExportFilename: 'proyecto',
+      previewExportPdfButton: 'Exportar PDF',
+      coverRenderImage: 'Generar imagen',
+      coverRenderImageDone: 'Imagen guardada',
+      coverRenderedImageLabel: 'Imagen renderizada',
     },
   },
   en: {
@@ -606,6 +614,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       backCoverBackToCover: 'Cover',
       previewExportButton: 'Export HTML',
       previewExportFilename: 'project',
+      previewExportPdfButton: 'Export PDF',
+      coverRenderImage: 'Generate image',
+      coverRenderImageDone: 'Image saved',
+      coverRenderedImageLabel: 'Rendered image',
     },
   },
 };
