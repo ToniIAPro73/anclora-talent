@@ -1,11 +1,42 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, test } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import { DocumentImporter } from './DocumentImporter';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 
+const copy = resolveLocaleMessages('es').project;
+
+function mockFetchSuccess(chapterCount = 3, title = 'El título detectado') {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true, title, chapterCount, sourceFileName: 'capitulos.docx' }),
+    }),
+  );
+}
+
+function mockFetchError(errorCode: string, status = 422) {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({
+      ok: false,
+      status,
+      json: async () => ({ error: errorCode }),
+    }),
+  );
+}
+
+function mockFetchNetworkError() {
+  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')));
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe('DocumentImporter', () => {
-  test('renders a richer dropzone while preserving the source document file input', () => {
-    render(<DocumentImporter copy={resolveLocaleMessages('es').project} />);
+  test('renders the dropzone with the file input and format badges', () => {
+    render(<DocumentImporter copy={copy} />);
 
     expect(screen.getByText('Documento base opcional')).toBeInTheDocument();
     expect(screen.getByText('Arrastra tu documento aquí')).toBeInTheDocument();
@@ -16,10 +47,15 @@ describe('DocumentImporter', () => {
       'accept',
       '.pdf,.doc,.docx,.txt,.md,text/plain,text/markdown,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     );
+
+    for (const format of ['DOCX', 'DOC', 'PDF', 'TXT', 'MD']) {
+      expect(screen.getByText(format)).toBeInTheDocument();
+    }
   });
 
-  test('shows the selected file name after picking a document', () => {
-    render(<DocumentImporter copy={resolveLocaleMessages('es').project} />);
+  test('shows analyzing state immediately after picking a file', async () => {
+    mockFetchSuccess();
+    render(<DocumentImporter copy={copy} />);
 
     const fileInput = screen.getByTestId('source-document-input');
     const file = new File(['contenido'], 'capitulos.docx', {
@@ -28,6 +64,81 @@ describe('DocumentImporter', () => {
 
     fireEvent.change(fileInput, { target: { files: [file] } });
 
-    expect(screen.getByText('Archivo listo: capitulos.docx')).toBeInTheDocument();
+    expect(screen.getByText('Analizando documento...')).toBeInTheDocument();
+    expect(screen.getByText('capitulos.docx')).toBeInTheDocument();
+  });
+
+  test('shows ready state with chapter count after successful analysis', async () => {
+    mockFetchSuccess(5);
+    render(<DocumentImporter copy={copy} />);
+
+    const fileInput = screen.getByTestId('source-document-input');
+    const file = new File(['contenido'], 'libro.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    });
+
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Listo para importar')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('5 capítulos detectados')).toBeInTheDocument();
+    expect(screen.getByText('libro.docx')).toBeInTheDocument();
+  });
+
+  test('shows generic error when the API returns IMPORT_FAILED', async () => {
+    mockFetchError('IMPORT_FAILED');
+    render(<DocumentImporter copy={copy} />);
+
+    const fileInput = screen.getByTestId('source-document-input');
+    fireEvent.change(fileInput, { target: { files: [new File(['x'], 'doc.pdf')] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('No se pudo analizar el documento')).toBeInTheDocument();
+    });
+  });
+
+  test('shows unsupported format error when the API returns FORMAT_UNSUPPORTED', async () => {
+    mockFetchError('FORMAT_UNSUPPORTED');
+    render(<DocumentImporter copy={copy} />);
+
+    const fileInput = screen.getByTestId('source-document-input');
+    fireEvent.change(fileInput, { target: { files: [new File(['x'], 'doc.xyz')] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Formato no compatible')).toBeInTheDocument();
+    });
+  });
+
+  test('shows file too large error before calling the API when file exceeds 50 MB', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<DocumentImporter copy={copy} />);
+
+    const fileInput = screen.getByTestId('source-document-input');
+    const largeFile = new File(['x'.repeat(100)], 'grande.pdf');
+    Object.defineProperty(largeFile, 'size', { value: 51 * 1024 * 1024 });
+
+    fireEvent.change(fileInput, { target: { files: [largeFile] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('El archivo es demasiado grande (máx. 50 MB)')).toBeInTheDocument();
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  test('shows generic error on network failure', async () => {
+    mockFetchNetworkError();
+    render(<DocumentImporter copy={copy} />);
+
+    const fileInput = screen.getByTestId('source-document-input');
+    fireEvent.change(fileInput, { target: { files: [new File(['x'], 'doc.pdf')] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('No se pudo analizar el documento')).toBeInTheDocument();
+    });
   });
 });
