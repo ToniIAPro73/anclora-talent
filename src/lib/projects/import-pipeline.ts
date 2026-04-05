@@ -737,18 +737,33 @@ export function buildImportedDocumentSeed({
     ? subtitleDetection.subtitle.slice(0, 260)
     : `Documento importado desde ${fileName}`;
   const detectedChapters = frontMatterSource.chapters;
+  const importedPreviewBlocks = (detectedChapters[0]?.blocks ?? []).slice(0, 6).map(
+    (block): ImportedDocumentSeed['blocks'][number] => ({
+      type: block.type as ImportedDocumentSeed['blocks'][number]['type'],
+      content: block.content,
+    }),
+  );
 
   const blocks: ImportedDocumentSeed['blocks'] =
-    detectedChapters[0]?.blocks?.length
-      ? detectedChapters[0].blocks.slice(0, 6)
+    importedPreviewBlocks.length > 0
+      ? importedPreviewBlocks
       : [
           { type: 'heading' as const, content: title },
           { type: 'paragraph' as const, content: subtitle },
         ];
+  const normalizedDetectedChapters = detectedChapters.map(
+    (chapter): NonNullable<ImportedDocumentSeed['chapters']>[number] => ({
+      title: chapter.title,
+      blocks: chapter.blocks.map((block) => ({
+        type: block.type as ImportedDocumentSeed['blocks'][number]['type'],
+        content: block.content,
+      })),
+    }),
+  );
 
   const chapters: NonNullable<ImportedDocumentSeed['chapters']> =
-    detectedChapters.length > 0
-      ? detectedChapters
+    normalizedDetectedChapters.length > 0
+      ? normalizedDetectedChapters
       : [
           {
             title,
