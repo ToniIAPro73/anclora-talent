@@ -1,6 +1,7 @@
 # Anclora Talent
 
-Plataforma editorial construida sobre `Next.js App Router`, `Clerk`, `Neon` y `Vercel Blob`, y clonada de Anclora Press y mejorada.
+Plataforma editorial construida sobre `Next.js App Router`, `Clerk`, `Neon` y `Vercel Blob`, y clonada de Anclora Press y mejorada, 
+manteniendo la esencia de Anclora Group
 
 ## Branding canónico
 
