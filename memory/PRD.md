@@ -44,6 +44,7 @@ La importación actual degrada la estructura del documento original y obliga al 
 - Compatibilidad reforzada en preview/editor para renderizar encabezados, listas y HTML importado.
 - Segmentación refinada para respetar mejor la estructura real del manuscrito: los `h1` estructurales del cuerpo ahora generan capítulos independientes (incluidos los días del programa).
 - Preview ajustado para insertar una página de portada/título separada antes del primer capítulo importado, evitando mezclar portada y prólogo en la misma hoja.
+- Paginación del preview rehecha para estimar altura editorial por bloques, encabezados, listas y fragmentos HTML, evitando meter demasiado contenido en una sola página.
 - `data-testid` añadidos a más controles clave del flujo editorial.
 - Supervisor desbloqueado para este repo:
   - `frontend` ya levanta en `/app/frontend` mediante wrapper.
@@ -52,6 +53,7 @@ La importación actual degrada la estructura del documento original y obliga al 
 ## Validación realizada
 - Tests verdes:
   - `src/lib/projects/import.test.ts`
+  - `src/components/projects/PreviewCanvas.test.tsx`
   - `src/components/projects/DocumentImporter.test.tsx`
   - `src/lib/projects/actions.test.ts`
   - `src/components/projects/CreateProjectForm.test.tsx`
