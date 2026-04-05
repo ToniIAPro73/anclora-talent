@@ -6,6 +6,8 @@ import { backCoverDesigns, coverDesigns, documentBlocks, projectAssets, projectD
 import { createMockProjectStore } from '@/lib/projects/mock-data';
 import {
   createProjectRecord,
+  deleteProjectChapter,
+  moveProjectChapter,
   updateProjectBackCover,
   updateProjectCover,
   updateProjectDocument,
@@ -15,6 +17,7 @@ import type {
   CreateProjectInput,
   DocumentBlock,
   DocumentChapter,
+  EditorialMapEntry,
   ProjectRecord,
   ProjectSummary,
   UpdateBackCoverInput,
@@ -121,6 +124,9 @@ function mapRowsToProject(
               fileName: String((documentRow.sourceMetadata as Record<string, unknown>).fileName ?? ''),
               mimeType: String((documentRow.sourceMetadata as Record<string, unknown>).mimeType ?? 'application/octet-stream'),
               importedAt: String((documentRow.sourceMetadata as Record<string, unknown>).importedAt ?? projectRow.createdAt.toISOString()),
+              outline: Array.isArray((documentRow.sourceMetadata as Record<string, unknown>).outline)
+                ? ((documentRow.sourceMetadata as Record<string, unknown>).outline as EditorialMapEntry[])
+                : undefined,
             }
           : null,
     },
@@ -572,6 +578,56 @@ async function saveCoverInMemory(userId: string, projectId: string, input: Updat
   return nextProject;
 }
 
+async function moveChapterInDb(userId: string, projectId: string, chapterId: string, direction: 'up' | 'down') {
+  const db = getDb();
+  const current = await getProjectFromDb(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  const nextProject = moveProjectChapter(current, chapterId, direction);
+  await persistDocumentUpdate(db, nextProject);
+  return nextProject;
+}
+
+async function moveChapterInMemory(userId: string, projectId: string, chapterId: string, direction: 'up' | 'down') {
+  const current = await getProjectFromMemory(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  const nextProject = moveProjectChapter(current, chapterId, direction);
+  getMemoryStore().set(nextProject.id, nextProject);
+  return nextProject;
+}
+
+async function deleteChapterInDb(userId: string, projectId: string, chapterId: string) {
+  const db = getDb();
+  const current = await getProjectFromDb(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  const nextProject = deleteProjectChapter(current, chapterId);
+  await persistDocumentUpdate(db, nextProject);
+  return nextProject;
+}
+
+async function deleteChapterInMemory(userId: string, projectId: string, chapterId: string) {
+  const current = await getProjectFromMemory(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  const nextProject = deleteProjectChapter(current, chapterId);
+  getMemoryStore().set(nextProject.id, nextProject);
+  return nextProject;
+}
+
 async function deleteProjectInMemory(userId: string, projectId: string) {
   const current = await getProjectFromMemory(userId, projectId);
 
@@ -657,5 +713,15 @@ export const projectRepository = {
     return hasDatabase()
       ? saveRenderedCoverUrlInDb(userId, projectId, renderedImageUrl)
       : saveRenderedCoverUrlInMemory(userId, projectId, renderedImageUrl);
+  },
+  moveChapter(userId: string, projectId: string, chapterId: string, direction: 'up' | 'down') {
+    return hasDatabase()
+      ? moveChapterInDb(userId, projectId, chapterId, direction)
+      : moveChapterInMemory(userId, projectId, chapterId, direction);
+  },
+  deleteChapter(userId: string, projectId: string, chapterId: string) {
+    return hasDatabase()
+      ? deleteChapterInDb(userId, projectId, chapterId)
+      : deleteChapterInMemory(userId, projectId, chapterId);
   },
 };

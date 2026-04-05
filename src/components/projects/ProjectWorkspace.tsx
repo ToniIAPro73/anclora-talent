@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition, useState } from 'react';
+import { useEffect, useTransition, useState } from 'react';
 import Link from 'next/link';
 import { Check, Loader2 } from 'lucide-react';
 import { ChapterOrganizer } from './ChapterOrganizer';
@@ -14,13 +14,12 @@ import type { AppMessages } from '@/lib/i18n/messages';
 function blocksToHtml(
   blocks: ProjectRecord['document']['chapters'][number]['blocks'],
 ): string {
-  // If the first block already contains HTML (from a previous Tiptap save), use it directly
-  if (blocks.length === 1 && blocks[0].content.trimStart().startsWith('<')) {
-    return blocks[0].content;
-  }
-
   return blocks
     .map((block) => {
+      if (block.content.trimStart().startsWith('<')) {
+        return block.content;
+      }
+
       const escaped = block.content
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -51,6 +50,12 @@ export function ProjectWorkspace({
     project.document.chapters.find((ch) => ch.id === activeChapterId) ??
     project.document.chapters[0];
 
+  useEffect(() => {
+    if (!project.document.chapters.some((chapter) => chapter.id === activeChapterId)) {
+      setActiveChapterId(project.document.chapters[0]?.id ?? '');
+    }
+  }, [activeChapterId, project.document.chapters]);
+
   const handleChapterContentUpdate = (html: string) => {
     const formData = new FormData();
     formData.set('projectId', project.id);
@@ -80,21 +85,21 @@ export function ProjectWorkspace({
         </div>
         <div className="flex items-center gap-3">
           {saveState === 'saving' && (
-            <span className="flex items-center gap-1.5 text-xs text-[var(--text-tertiary)]">
+            <span className="flex items-center gap-1.5 text-xs text-[var(--text-tertiary)]" data-testid="project-save-status-saving">
               <Loader2 className="h-3 w-3 animate-spin" />
               Guardando...
             </span>
           )}
           {saveState === 'saved' && !isPending && (
-            <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]">
+            <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]" data-testid="project-save-status-saved">
               <Check className="h-3 w-3" />
               Guardado
             </span>
           )}
-          <Link href={`/projects/${project.id}/preview`} className={`${premiumSecondaryLightButton} px-5`}>
+          <Link href={`/projects/${project.id}/preview`} data-testid="project-open-preview-link" className={`${premiumSecondaryLightButton} px-5`}>
             {copy.editorOpenPreview}
           </Link>
-          <Link href={`/projects/${project.id}/cover`} className={`${premiumPrimaryDarkButton} px-5`}>
+          <Link href={`/projects/${project.id}/cover`} data-testid="project-open-cover-link" className={`${premiumPrimaryDarkButton} px-5`}>
             {copy.editorOpenCover}
           </Link>
         </div>
@@ -105,6 +110,7 @@ export function ProjectWorkspace({
         {/* Chapter sidebar */}
         <div className="xl:sticky xl:top-6 xl:self-start">
           <ChapterOrganizer
+            projectId={project.id}
             chapters={project.document.chapters}
             activeChapterId={activeChapterId}
             onSelect={setActiveChapterId}
@@ -118,7 +124,7 @@ export function ProjectWorkspace({
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
               {copy.editorMetaEyebrow}
             </p>
-            <form action={saveProjectDocumentAction} className="mt-4 space-y-4">
+            <form action={saveProjectDocumentAction} className="mt-4 space-y-4" data-testid="project-metadata-form">
               <input type="hidden" name="projectId" value={project.id} />
               <input type="hidden" name="chapterId" value={activeChapter.id} />
               <input type="hidden" name="chapterTitle" value={activeChapter.title} />
@@ -131,6 +137,7 @@ export function ProjectWorkspace({
               <label className="block space-y-2">
                 <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorTitleLabel}</span>
                 <input
+                  data-testid="project-document-title-input"
                   name="title"
                   defaultValue={project.document.title}
                   className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
@@ -139,6 +146,7 @@ export function ProjectWorkspace({
               <label className="block space-y-2">
                 <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorSubtitleLabel}</span>
                 <textarea
+                  data-testid="project-document-subtitle-input"
                   name="subtitle"
                   defaultValue={project.document.subtitle}
                   className="min-h-24 w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
@@ -147,12 +155,13 @@ export function ProjectWorkspace({
               <label className="block space-y-2">
                 <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorAuthorLabel}</span>
                 <input
+                  data-testid="project-document-author-input"
                   name="author"
                   defaultValue={project.document.author}
                   className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
                 />
               </label>
-              <SubmitButton className={`${premiumSecondaryLightButton} px-5`}>
+              <SubmitButton className={`${premiumSecondaryLightButton} px-5`} data-testid="project-document-save-button">
                 {copy.saveChanges}
               </SubmitButton>
             </form>
@@ -164,7 +173,7 @@ export function ProjectWorkspace({
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
                 {copy.editorLiveEyebrow}
               </p>
-              <h3 className="mt-2 text-xl font-black tracking-tight text-[var(--text-primary)]">
+              <h3 className="mt-2 text-xl font-black tracking-tight text-[var(--text-primary)]" data-testid="active-chapter-title">
                 {activeChapter.title}
               </h3>
               <p className="mt-1 text-xs text-[var(--text-secondary)]">{copy.editorLiveDescription}</p>

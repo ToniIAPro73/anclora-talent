@@ -69,15 +69,15 @@ describe('document import parser isolation', () => {
     expect(result.chapters?.[1].title).toBe('Capitulo dos');
   });
 
-  test('docx import prefers mammoth markdown extraction for chapter-aware parsing', async () => {
+  test('docx import prefers mammoth html extraction for chapter-aware parsing', async () => {
     vi.doMock('server-only', () => ({}));
     vi.doMock('pdf-parse', () => {
       throw new Error('pdf parser should not load for docx imports');
     });
     vi.doMock('mammoth', () => ({
       default: {
-        convertToMarkdown: vi.fn(async () => ({
-          value: '# Capitulo uno\n\nTexto A\n\n# Capitulo dos\n\nTexto B',
+        convertToHtml: vi.fn(async () => ({
+          value: '<h1>Capitulo uno</h1><p>Texto A</p><h1>Capitulo dos</h1><p>Texto B</p>',
           messages: [],
         })),
       },
@@ -104,5 +104,79 @@ describe('document import parser isolation', () => {
     expect(result.chapters).toHaveLength(2);
     expect(result.chapters?.[0].title).toBe('Capitulo uno');
     expect(result.chapters?.[1].title).toBe('Capitulo dos');
+  });
+
+  test('structural h1 day headings become independent chapters while index entries do not', async () => {
+    vi.doMock('server-only', () => ({}));
+
+    const { buildImportedDocumentSeed } = await import('./import');
+    const result = buildImportedDocumentSeed({
+      fileName: 'programa.docx',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      text: 'texto normalizado',
+      html: [
+        '<p><strong>Índice</strong></p>',
+        '<p><strong>Día 1:</strong> Autoimagen.</p>',
+        '<p><strong>Día 2:</strong> Fortalezas latentes.</p>',
+        '<h1>Introducción</h1>',
+        '<p>Texto de apertura</p>',
+        '<h1>Fase 1: Percepción</h1>',
+        '<p>Cómo te ves determina cómo te muestras.</p>',
+        '<h1>Día 1: El espejo de la autoimagen</h1>',
+        '<p>Texto del día 1.</p>',
+        '<h1>Día 2: El inventario de fortalezas olvidadas</h1>',
+        '<p>Texto del día 2.</p>',
+      ].join(''),
+    });
+
+    expect(result.chapters?.map((chapter) => chapter.title)).toEqual([
+      'Índice',
+      'Introducción',
+      'Fase 1: Percepción',
+      'Día 1: El espejo de la autoimagen',
+      'Día 2: El inventario de fortalezas olvidadas',
+    ]);
+  });
+
+  test('markdown without explicit index generates an editable synthetic index after prologue when chapters exist', async () => {
+    vi.doMock('server-only', () => ({}));
+
+    const { buildImportedDocumentSeed } = await import('./import');
+    const result = buildImportedDocumentSeed({
+      fileName: 'ebook-estructurado.md',
+      mimeType: 'text/markdown',
+      text: [
+        '# Ebook premium',
+        '',
+        'Introducción general.',
+        '',
+        '## Contexto del mercado',
+        '',
+        'Texto del contexto.',
+        '',
+        '## Dolores escondidos',
+        '',
+        '### Dolor 1',
+        '',
+        'Detalle 1.',
+        '',
+        '### Dolor 2',
+        '',
+        'Detalle 2.',
+        '',
+        '## Monetización',
+        '',
+        'Texto monetización.',
+      ].join('\n'),
+    });
+
+    expect(result.chapters?.map((chapter) => chapter.title)).toEqual([
+      'Índice',
+      'Contexto del mercado',
+      'Dolores escondidos',
+      'Monetización',
+    ]);
+    expect(result.detectedOutline?.some((entry) => entry.title === 'Índice' && entry.origin === 'generated')).toBe(true);
+    expect(result.warnings?.some((warning) => warning.includes('índice sintético editable'))).toBe(true);
   });
 });

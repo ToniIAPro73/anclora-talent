@@ -125,6 +125,11 @@ export type AppMessages = {
     previewOpenCover: string;
     previewCanvasEyebrow: string;
     previewCoverEyebrow: string;
+    editorialMapTitle: string;
+    editorialMapDescription: string;
+    editorialMapOriginalColumn: string;
+    editorialMapChaptersColumn: string;
+    editorialMapPagesColumn: string;
     coverEyebrow: string;
     coverTitle: string;
     coverBackEditor: string;
@@ -142,6 +147,10 @@ export type AppMessages = {
     importAnalyzing: string;
     importReady: string;
     importChaptersDetected: string;
+    importTitleDetected: string;
+    importAuthorDetected: string;
+    importWarningsLabel: string;
+    importChapterPreviewLabel: string;
     importErrorGeneric: string;
     importFileTooLarge: string;
     importFormatUnsupported: string;
@@ -354,6 +363,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewOpenCover: 'Abrir cover studio',
       previewCanvasEyebrow: 'Preview editorial',
       previewCoverEyebrow: 'Portada actual',
+      editorialMapTitle: 'Mapa editorial',
+      editorialMapDescription: 'Compara la estructura detectada del documento, los capítulos actuales y el reparto de páginas del preview.',
+      editorialMapOriginalColumn: 'Documento detectado',
+      editorialMapChaptersColumn: 'Capítulos actuales',
+      editorialMapPagesColumn: 'Páginas del preview',
       coverEyebrow: 'Cover studio',
       coverTitle: 'Diseña y guarda la portada del proyecto',
       coverBackEditor: 'Editor',
@@ -371,6 +385,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       importAnalyzing: 'Analizando documento...',
       importReady: 'Listo para importar',
       importChaptersDetected: '{count} capítulos detectados',
+      importTitleDetected: 'Título detectado',
+      importAuthorDetected: 'Autor detectado',
+      importWarningsLabel: 'Revisión recomendada',
+      importChapterPreviewLabel: 'Estructura detectada',
       importErrorGeneric: 'No se pudo analizar el documento',
       importFileTooLarge: 'El archivo es demasiado grande (máx. 50 MB)',
       importFormatUnsupported: 'Formato no compatible',
@@ -581,6 +599,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewOpenCover: 'Open cover studio',
       previewCanvasEyebrow: 'Editorial preview',
       previewCoverEyebrow: 'Current cover',
+      editorialMapTitle: 'Editorial map',
+      editorialMapDescription: 'Compare the detected source structure, current chapters, and preview page distribution at a glance.',
+      editorialMapOriginalColumn: 'Detected document',
+      editorialMapChaptersColumn: 'Current chapters',
+      editorialMapPagesColumn: 'Preview pages',
       coverEyebrow: 'Cover studio',
       coverTitle: 'Design and save the project cover',
       coverBackEditor: 'Editor',
@@ -598,6 +621,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       importAnalyzing: 'Analyzing document...',
       importReady: 'Ready to import',
       importChaptersDetected: '{count} chapters detected',
+      importTitleDetected: 'Detected title',
+      importAuthorDetected: 'Detected author',
+      importWarningsLabel: 'Recommended review',
+      importChapterPreviewLabel: 'Detected structure',
       importErrorGeneric: 'Could not analyze the document',
       importFileTooLarge: 'File is too large (max. 50 MB)',
       importFormatUnsupported: 'Format not supported',

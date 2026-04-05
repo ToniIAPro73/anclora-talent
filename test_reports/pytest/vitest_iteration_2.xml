@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="28" failures="0" errors="0" time="1.44814483">
+    <testsuite name="src/components/projects/DocumentImporter.test.tsx" timestamp="2026-04-05T06:23:40.392Z" hostname="agent-env-49cd9d7d-ec20-489d-b1d2-c16b78863c7b" tests="7" failures="0" errors="0" skipped="0" time="0.26211129">
+        <testcase classname="src/components/projects/DocumentImporter.test.tsx" name="DocumentImporter &gt; renders the dropzone with the file input and format badges" time="0.084689591">
+        </testcase>
+        <testcase classname="src/components/projects/DocumentImporter.test.tsx" name="DocumentImporter &gt; shows analyzing state immediately after picking a file" time="0.011723513">
+        </testcase>
+        <testcase classname="src/components/projects/DocumentImporter.test.tsx" name="DocumentImporter &gt; shows ready state with chapter count after successful analysis" time="0.066435641">
+        </testcase>
+        <testcase classname="src/components/projects/DocumentImporter.test.tsx" name="DocumentImporter &gt; shows generic error when the API returns IMPORT_FAILED" time="0.01023523">
+        </testcase>
+        <testcase classname="src/components/projects/DocumentImporter.test.tsx" name="DocumentImporter &gt; shows unsupported format error when the API returns FORMAT_UNSUPPORTED" time="0.013843765">
+        </testcase>
+        <testcase classname="src/components/projects/DocumentImporter.test.tsx" name="DocumentImporter &gt; shows file too large error before calling the API when file exceeds 50 MB" time="0.006237935">
+        </testcase>
+        <testcase classname="src/components/projects/DocumentImporter.test.tsx" name="DocumentImporter &gt; shows generic error on network failure" time="0.06704956">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/projects/PreviewCanvas.test.tsx" timestamp="2026-04-05T06:23:40.393Z" hostname="agent-env-49cd9d7d-ec20-489d-b1d2-c16b78863c7b" tests="4" failures="0" errors="0" skipped="0" time="0.248622493">
+        <testcase classname="src/components/projects/PreviewCanvas.test.tsx" name="PreviewCanvas &gt; renders a dedicated title page first for imported documents" time="0.090404196">
+        </testcase>
+        <testcase classname="src/components/projects/PreviewCanvas.test.tsx" name="PreviewCanvas &gt; renders imported HTML blocks with headings and list items after advancing page" time="0.056719311">
+        </testcase>
+        <testcase classname="src/components/projects/PreviewCanvas.test.tsx" name="PreviewCanvas &gt; splits long index content across multiple pages instead of squeezing it into one" time="0.043274273">
+        </testcase>
+        <testcase classname="src/components/projects/PreviewCanvas.test.tsx" name="PreviewCanvas &gt; renders preview controls with stable data-testid attributes" time="0.056020481">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/projects/ProjectWorkspace.test.tsx" timestamp="2026-04-05T06:23:40.394Z" hostname="agent-env-49cd9d7d-ec20-489d-b1d2-c16b78863c7b" tests="6" failures="0" errors="0" skipped="0" time="0.421762815">
+        <testcase classname="src/components/projects/ProjectWorkspace.test.tsx" name="ProjectWorkspace &gt; renders the project title in the header" time="0.056177822">
+        </testcase>
+        <testcase classname="src/components/projects/ProjectWorkspace.test.tsx" name="ProjectWorkspace &gt; renders the chapter organizer with all chapter titles" time="0.271346961">
+        </testcase>
+        <testcase classname="src/components/projects/ProjectWorkspace.test.tsx" name="ProjectWorkspace &gt; shows first chapter content in the editor by default" time="0.009655797">
+        </testcase>
+        <testcase classname="src/components/projects/ProjectWorkspace.test.tsx" name="ProjectWorkspace &gt; switches to the second chapter when clicked" time="0.052299273">
+        </testcase>
+        <testcase classname="src/components/projects/ProjectWorkspace.test.tsx" name="ProjectWorkspace &gt; shows links to preview and cover" time="0.021762815">
+        </testcase>
+        <testcase classname="src/components/projects/ProjectWorkspace.test.tsx" name="ProjectWorkspace &gt; renders chapter management controls in the organizer" time="0.008343789">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/lib/projects/actions.test.ts" timestamp="2026-04-05T06:23:40.395Z" hostname="agent-env-49cd9d7d-ec20-489d-b1d2-c16b78863c7b" tests="6" failures="0" errors="0" skipped="0" time="0.057484135">
+        <testcase classname="src/lib/projects/actions.test.ts" name="project factories &gt; creates a canonical project with editor, preview, and cover state" time="0.002549439">
+        </testcase>
+        <testcase classname="src/lib/projects/actions.test.ts" name="project factories &gt; updates document blocks while preserving the project structure" time="0.00049083">
+        </testcase>
+        <testcase classname="src/lib/projects/actions.test.ts" name="project factories &gt; updates cover metadata and background references" time="0.000343248">
+        </testcase>
+        <testcase classname="src/lib/projects/actions.test.ts" name="project factories &gt; creates a project seeded from an imported document" time="0.051806955">
+        </testcase>
+        <testcase classname="src/lib/projects/actions.test.ts" name="project factories &gt; creates a project seeded from multiple imported chapters and default editorial metadata" time="0.000539236">
+        </testcase>
+        <testcase classname="src/lib/projects/actions.test.ts" name="project factories &gt; moves and deletes chapters while preserving document consistency" time="0.000735326">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/lib/projects/import.test.ts" timestamp="2026-04-05T06:23:40.396Z" hostname="agent-env-49cd9d7d-ec20-489d-b1d2-c16b78863c7b" tests="5" failures="0" errors="0" skipped="0" time="0.458164097">
+        <testcase classname="src/lib/projects/import.test.ts" name="document import parser isolation &gt; docx import does not load the pdf parser" time="0.334220485">
+        </testcase>
+        <testcase classname="src/lib/projects/import.test.ts" name="document import parser isolation &gt; builds multiple chapters from markdown headings" time="0.00350945">
+        </testcase>
+        <testcase classname="src/lib/projects/import.test.ts" name="document import parser isolation &gt; docx import prefers mammoth html extraction for chapter-aware parsing" time="0.06350985">
+        </testcase>
+        <testcase classname="src/lib/projects/import.test.ts" name="document import parser isolation &gt; structural h1 day headings become independent chapters while index entries do not" time="0.003031339">
+        </testcase>
+        <testcase classname="src/lib/projects/import.test.ts" name="document import parser isolation &gt; markdown without explicit index generates an editable synthetic index after prologue when chapters exist" time="0.012718816">
+        </testcase>
+    </testsuite>
+</testsuites>

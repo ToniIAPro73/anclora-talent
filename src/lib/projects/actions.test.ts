@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { createProjectRecord, updateProjectCover, updateProjectDocument } from './factories';
+import { createProjectRecord, deleteProjectChapter, moveProjectChapter, updateProjectCover, updateProjectDocument } from './factories';
 import { buildImportedDocumentSeed } from './import';
 
 vi.mock('server-only', () => ({}));
@@ -73,6 +73,7 @@ describe('project factories', () => {
         subtitle: 'Subtitulo editorial',
         chapterTitle: 'Capitulo legado',
         blocks: [{ type: 'paragraph', content: 'Bloque legado' }],
+        detectedOutline: [{ title: 'Apertura', level: 1, origin: 'detected' }],
         sourceFileName: 'libro.docx',
         sourceMimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         chapters: [
@@ -95,7 +96,34 @@ describe('project factories', () => {
     expect(project.document.chapters[0].title).toBe('Apertura');
     expect(project.document.chapters[1].title).toBe('Cierre');
     expect(project.document.source?.fileName).toBe('libro.docx');
+    expect(project.document.source?.outline?.[0]?.title).toBe('Apertura');
     expect(project.assets[0]?.usage).toBe('source-document');
     expect(project.backCover.title).toBe('Libro estructurado');
+  });
+
+  test('moves and deletes chapters while preserving document consistency', () => {
+    const project = createProjectRecord('user_123', {
+      title: 'Libro reordenable',
+      importedDocument: {
+        title: 'Libro reordenable',
+        subtitle: 'Subtitulo',
+        author: 'Autor',
+        chapterTitle: 'Capitulo base',
+        blocks: [{ type: 'paragraph', content: 'Base' }],
+        sourceFileName: 'libro.md',
+        sourceMimeType: 'text/markdown',
+        chapters: [
+          { title: 'Uno', blocks: [{ type: 'paragraph', content: '1' }] },
+          { title: 'Dos', blocks: [{ type: 'paragraph', content: '2' }] },
+          { title: 'Tres', blocks: [{ type: 'paragraph', content: '3' }] },
+        ],
+      },
+    });
+
+    const moved = moveProjectChapter(project, project.document.chapters[2].id, 'up');
+    expect(moved.document.chapters.map((chapter) => chapter.title)).toEqual(['Uno', 'Tres', 'Dos']);
+
+    const deleted = deleteProjectChapter(moved, moved.document.chapters[1].id);
+    expect(deleted.document.chapters.map((chapter) => chapter.title)).toEqual(['Uno', 'Dos']);
   });
 });
