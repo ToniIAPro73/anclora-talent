@@ -26,6 +26,8 @@ type ExtractedImportSource = {
   html: string | null;
 };
 
+type OutlineEntry = NonNullable<ImportedDocumentSeed['detectedOutline']>[number];
+
 export function normalizeText(input: string) {
   return input
     .replace(/\r\n/g, '\n')
@@ -274,6 +276,18 @@ function parseTextBlocks(input: string): ParsedBlock[] {
       return;
     }
 
+    const explicitHeadingLevel = getHeadingLevel(paragraph);
+    if (explicitHeadingLevel !== null) {
+      blocks.push({
+        kind: 'heading',
+        text: cleanHeadingText(paragraph),
+        html: `<h${Math.min(explicitHeadingLevel + 1, 3)}>${escapeHtml(cleanHeadingText(paragraph))}</h${Math.min(explicitHeadingLevel + 1, 3)}>`,
+        level: explicitHeadingLevel,
+        structural: true,
+      });
+      return;
+    }
+
     if (isLikelyStandaloneHeading(paragraph)) {
       const level = inferHeadingLevel(paragraph) ?? 2;
       blocks.push({
@@ -281,7 +295,7 @@ function parseTextBlocks(input: string): ParsedBlock[] {
         text: cleanHeadingText(paragraph),
         html: `<h${Math.min(level + 1, 3)}>${escapeHtml(cleanHeadingText(paragraph))}</h${Math.min(level + 1, 3)}>`,
         level,
-        structural: false,
+        structural: getHeadingLevel(paragraph) !== null,
       });
       return;
     }
@@ -313,8 +327,9 @@ function parseTextBlocks(input: string): ParsedBlock[] {
 
     const bulletMatch = trimmed.match(/^[-•*]\s+(.+)$/);
     const orderedMatch = trimmed.match(/^\d+[.)]\s+(.+)$/);
+    const markdownLevel = getHeadingLevel(trimmed);
 
-    if (bulletMatch || orderedMatch || isLikelyIndexEntry(trimmed)) {
+    if (bulletMatch || orderedMatch || (markdownLevel === null && isLikelyIndexEntry(trimmed))) {
       flushParagraph();
       const nextOrdered = Boolean(orderedMatch);
       if (listItems.length > 0 && orderedList !== nextOrdered) {
@@ -322,6 +337,20 @@ function parseTextBlocks(input: string): ParsedBlock[] {
       }
       orderedList = nextOrdered;
       listItems.push((orderedMatch?.[1] ?? bulletMatch?.[1] ?? trimmed).trim());
+      continue;
+    }
+
+    if (markdownLevel !== null) {
+      flushParagraph();
+      flushList();
+      const heading = cleanHeadingText(trimmed);
+      blocks.push({
+        kind: 'heading',
+        text: heading,
+        html: `<h${Math.min(markdownLevel + 1, 3)}>${escapeHtml(heading)}</h${Math.min(markdownLevel + 1, 3)}>`,
+        level: markdownLevel,
+        structural: true,
+      });
       continue;
     }
 
@@ -335,7 +364,7 @@ function parseTextBlocks(input: string): ParsedBlock[] {
         text: heading,
         html: `<h${Math.min(level + 1, 3)}>${escapeHtml(heading)}</h${Math.min(level + 1, 3)}>`,
         level,
-        structural: false,
+        structural: markdownLevel !== null,
       });
       continue;
     }
@@ -486,15 +515,120 @@ function scoreParsedBlocks(blocks: ParsedBlock[]) {
   }, 0);
 }
 
-function isMajorChapterBlock(block: ParsedBlock) {
+function determineChapterBoundaryLevel(blocks: ParsedBlock[]) {
+  const structuralHeadings = blocks.filter((block) => block.kind === 'heading' && block.structural && block.level !== null);
+  const level1Count = structuralHeadings.filter((block) => block.level === 1).length;
+  const level2Count = structuralHeadings.filter((block) => block.level === 2).length;
+
+  if (level1Count === 1 && level2Count > 0) {
+    return 2;
+  }
+
+  if (level1Count === 0 && level2Count > 1) {
+    return 2;
+  }
+
+  return 1;
+}
+
+function isMajorChapterBlock(block: ParsedBlock, chapterBoundaryLevel: number) {
   if (block.kind !== 'heading') return false;
   const normalized = cleanHeadingText(block.text);
   if (!normalized) return false;
 
-  if (block.structural && (block.level ?? 9) <= 1) return true;
+  if (block.structural && (block.level ?? 9) <= chapterBoundaryLevel) return true;
   if (MAJOR_HEADING_RE.test(normalized)) return true;
   if (MINOR_HEADING_RE.test(normalized)) return false;
   return false;
+}
+
+function chunkOutlineItems(items: string[], maxItems = 6) {
+  const chunks: string[][] = [];
+  for (let index = 0; index < items.length; index += maxItems) {
+    chunks.push(items.slice(index, index + maxItems));
+  }
+  return chunks;
+}
+
+function buildOutlineEntriesFromBlocks(
+  blocks: ParsedBlock[],
+  title: string,
+  chapterBoundaryLevel: number,
+): OutlineEntry[] {
+  return blocks.reduce<OutlineEntry[]>((entries, block) => {
+    if (block.kind !== 'heading') {
+      return entries;
+    }
+
+    const headingText = cleanHeadingText(block.text);
+    if (!headingText || headingText === title) {
+      return entries;
+    }
+
+    const derivedLevel =
+      block.structural && block.level !== null
+        ? Math.max(1, block.level - chapterBoundaryLevel + 1)
+        : MAJOR_HEADING_RE.test(headingText)
+          ? 1
+          : 2;
+
+    entries.push({
+      title: headingText,
+      level: derivedLevel,
+      origin: 'detected',
+    });
+
+    return entries;
+  }, []);
+}
+
+function buildGeneratedIndexChapter(outline: OutlineEntry[]) {
+  const filtered = outline.filter((entry) => entry.title.toLowerCase() !== 'índice');
+  if (filtered.length < 2) return null;
+
+  const blocks: ImportedDocumentSeed['blocks'] = [];
+  let currentTopLevel: OutlineEntry | null = null;
+  let nestedItems: string[] = [];
+
+  const flushNested = () => {
+    if (nestedItems.length === 0) return;
+    for (const chunk of chunkOutlineItems(nestedItems, 6)) {
+      blocks.push({
+        type: 'paragraph',
+        content: `<ul>${chunk.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`,
+      });
+    }
+    nestedItems = [];
+  };
+
+  for (const entry of filtered) {
+    if (entry.level <= 1) {
+      flushNested();
+      currentTopLevel = entry;
+      blocks.push({ type: 'heading', content: entry.title });
+      continue;
+    }
+
+    if (currentTopLevel) {
+      nestedItems.push(entry.title);
+    }
+  }
+
+  flushNested();
+
+  if (blocks.length === 0) return null;
+
+  return {
+    chapter: {
+      title: 'Índice',
+      blocks,
+    },
+    outlineEntry: {
+      title: 'Índice',
+      level: 1,
+      origin: 'generated' as const,
+    },
+  };
 }
 
 function findTitleCandidate(frontMatter: ParsedBlock[]) {
@@ -608,6 +742,7 @@ function buildChaptersFromBlocks(blocks: ParsedBlock[], title: string, author: s
   const frontMatter: ParsedBlock[] = [];
   let currentTitle: string | null = null;
   let currentBlocks: ParsedBlock[] = [];
+  const chapterBoundaryLevel = determineChapterBoundaryLevel(blocks);
 
   const flushCurrent = () => {
     if (!currentTitle) return;
@@ -628,7 +763,18 @@ function buildChaptersFromBlocks(blocks: ParsedBlock[], title: string, author: s
   for (const block of blocks) {
     const withinIndex = cleanHeadingText(currentTitle ?? '').toLowerCase() === 'índice';
 
-    if (isMajorChapterBlock(block) && !(withinIndex && !block.structural)) {
+    if (
+      currentTitle === null &&
+      block.kind === 'heading' &&
+      block.structural &&
+      block.level === 1 &&
+      chapterBoundaryLevel > 1
+    ) {
+      frontMatter.push(block);
+      continue;
+    }
+
+    if (isMajorChapterBlock(block, chapterBoundaryLevel) && !(withinIndex && !block.structural)) {
       if (currentTitle === null && frontMatter.length > 0) {
         const prologueBlocks = extractPrologueBlocksFromFrontMatter(frontMatter, title, author);
         if (prologueBlocks.length > 0) {
@@ -654,8 +800,10 @@ function buildChaptersFromBlocks(blocks: ParsedBlock[], title: string, author: s
 
   flushCurrent();
 
+  const detectedOutline = buildOutlineEntriesFromBlocks(blocks, title, chapterBoundaryLevel);
+
   if (chapters.length > 0) {
-    return { chapters, frontMatter };
+    return { chapters, frontMatter, detectedOutline };
   }
 
   const fallbackBlocks = blocks
@@ -664,6 +812,7 @@ function buildChaptersFromBlocks(blocks: ParsedBlock[], title: string, author: s
 
   return {
     frontMatter,
+    detectedOutline,
     chapters: [
       {
         title,
@@ -737,7 +886,32 @@ export function buildImportedDocumentSeed({
   const subtitle = subtitleDetection.subtitle
     ? subtitleDetection.subtitle.slice(0, 260)
     : `Documento importado desde ${fileName}`;
-  const detectedChapters = frontMatterSource.chapters;
+  let detectedChapters = frontMatterSource.chapters;
+  let detectedOutline = (frontMatterSource.detectedOutline ?? detectedChapters.map((chapter) => ({
+    title: chapter.title,
+    level: 1,
+    origin: 'detected' as const,
+  }))).filter((entry) => entry.title !== title);
+
+  const hasExplicitIndex = detectedChapters.some((chapter) => chapter.title.toLowerCase() === 'índice');
+  const topLevelOutlineCount = detectedOutline.filter((entry) => entry.level === 1).length;
+  const generatedIndex = !hasExplicitIndex && topLevelOutlineCount >= 3 ? buildGeneratedIndexChapter(detectedOutline) : null;
+
+  if (generatedIndex) {
+    const prologueIndex = detectedChapters.findIndex((chapter) => chapter.title.toLowerCase() === 'prólogo');
+    const insertAt = prologueIndex >= 0 ? prologueIndex + 1 : 0;
+    detectedChapters = [
+      ...detectedChapters.slice(0, insertAt),
+      generatedIndex.chapter,
+      ...detectedChapters.slice(insertAt),
+    ];
+    detectedOutline = [
+      ...detectedOutline.slice(0, insertAt),
+      generatedIndex.outlineEntry,
+      ...detectedOutline.slice(insertAt),
+    ];
+  }
+
   const importedPreviewBlocks = (detectedChapters[0]?.blocks ?? []).slice(0, 6).map(
     (block): ImportedDocumentSeed['blocks'][number] => ({
       type: block.type as ImportedDocumentSeed['blocks'][number]['type'],
@@ -778,6 +952,10 @@ export function buildImportedDocumentSeed({
     warnings.push('No se detectó con certeza el autor; revísalo tras importar.');
   }
 
+  if (generatedIndex) {
+    warnings.push('Se ha generado un índice sintético editable a partir de la estructura detectada del documento.');
+  }
+
   if (subtitleDetection.candidateCount > 2) {
     warnings.push('La portada contenía varias líneas y se han condensado en un único subtítulo editable.');
   }
@@ -791,6 +969,7 @@ export function buildImportedDocumentSeed({
     subtitle,
     author,
     warnings,
+    detectedOutline,
     chapterTitle: detectedChapters[0]?.title || title,
     blocks,
     chapters,

@@ -124,6 +124,31 @@ export async function saveChapterContentAction(formData: FormData) {
   revalidatePath(`/projects/${projectId}/preview`);
 }
 
+export async function moveChapterAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '').trim();
+  const chapterId = String(formData.get('chapterId') ?? '').trim();
+  const direction = String(formData.get('direction') ?? '').trim();
+
+  if (!projectId || !chapterId || (direction !== 'up' && direction !== 'down')) return;
+
+  await projectRepository.moveChapter(userId, projectId, chapterId, direction);
+  revalidatePath(`/projects/${projectId}/editor`);
+  revalidatePath(`/projects/${projectId}/preview`);
+}
+
+export async function deleteChapterAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '').trim();
+  const chapterId = String(formData.get('chapterId') ?? '').trim();
+
+  if (!projectId || !chapterId) return;
+
+  await projectRepository.deleteChapter(userId, projectId, chapterId);
+  revalidatePath(`/projects/${projectId}/editor`);
+  revalidatePath(`/projects/${projectId}/preview`);
+}
+
 export async function saveProjectCoverAction(formData: FormData) {
   const userId = await requireUserId();
   const projectId = String(formData.get('projectId') ?? '');

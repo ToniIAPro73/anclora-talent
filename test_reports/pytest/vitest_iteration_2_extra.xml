@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="6" failures="0" errors="0" time="0.050199066">
+    <testsuite name="src/lib/db/repositories.test.ts" timestamp="2026-04-05T06:24:19.011Z" hostname="agent-env-49cd9d7d-ec20-489d-b1d2-c16b78863c7b" tests="5" failures="0" errors="0" skipped="0" time="0.006873516">
+        <testcase classname="src/lib/db/repositories.test.ts" name="repository persistence helpers &gt; persists a new project without relying on transactions" time="0.002526557">
+        </testcase>
+        <testcase classname="src/lib/db/repositories.test.ts" name="repository persistence helpers &gt; persists source assets when the imported project contains them" time="0.000856091">
+        </testcase>
+        <testcase classname="src/lib/db/repositories.test.ts" name="repository persistence helpers &gt; persists a document update without relying on transactions" time="0.00095021">
+        </testcase>
+        <testcase classname="src/lib/db/repositories.test.ts" name="repository persistence helpers &gt; reconstructs multiple chapters from flattened block rows" time="0.001140451">
+        </testcase>
+        <testcase classname="src/lib/db/repositories.test.ts" name="repository persistence helpers &gt; deletes a project from the memory repository" time="0.000475722">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/lib/projects/actions.import.test.ts" timestamp="2026-04-05T06:24:19.013Z" hostname="agent-env-49cd9d7d-ec20-489d-b1d2-c16b78863c7b" tests="1" failures="0" errors="0" skipped="0" time="0.04332555">
+        <testcase classname="src/lib/projects/actions.import.test.ts" name="project actions module loading &gt; does not eagerly load document import parsers on module import" time="0.042296975">
+        </testcase>
+    </testsuite>
+</testsuites>

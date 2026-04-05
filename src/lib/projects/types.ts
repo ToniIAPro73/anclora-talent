@@ -20,6 +20,13 @@ export interface ProjectDocumentSource {
   fileName: string;
   mimeType: string;
   importedAt: string;
+  outline?: EditorialMapEntry[];
+}
+
+export interface EditorialMapEntry {
+  title: string;
+  level: number;
+  origin?: 'detected' | 'generated' | 'inferred';
 }
 
 export interface ProjectDocument {
@@ -102,6 +109,7 @@ export interface ImportedDocumentSeed {
   subtitle: string;
   author: string;
   warnings?: string[];
+  detectedOutline?: EditorialMapEntry[];
   chapterTitle: string;
   blocks: Array<{
     type: DocumentBlockType;

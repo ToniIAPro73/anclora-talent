@@ -42,6 +42,10 @@ function makeProject(): ProjectRecord {
         fileName: 'nunca.docx',
         mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         importedAt: '2026-01-01T00:00:00.000Z',
+        outline: [
+          { title: 'Introducción', level: 1, origin: 'detected' },
+          { title: 'Contexto', level: 2, origin: 'detected' },
+        ],
       },
     },
     cover: {
@@ -99,7 +103,7 @@ describe('PreviewCanvas', () => {
     render(<PreviewCanvas copy={copy} project={makeProject()} />);
 
     expect(screen.getAllByText('Nunca más en la sombra').length).toBeGreaterThan(0);
-    expect(screen.queryByText('Contexto')).not.toBeInTheDocument();
+    expect(screen.queryByText('Punto 1')).not.toBeInTheDocument();
   });
 
   test('renders imported HTML blocks with headings and list items after advancing page', () => {
@@ -107,7 +111,7 @@ describe('PreviewCanvas', () => {
 
     fireEvent.click(screen.getByTestId('preview-next-page-button'));
 
-    expect(screen.getByText('Contexto')).toBeInTheDocument();
+    expect(screen.getAllByText('Contexto').length).toBeGreaterThan(0);
     expect(screen.getByText('Punto 1')).toBeInTheDocument();
     expect(screen.getByText('Punto 2')).toBeInTheDocument();
   });
@@ -133,6 +137,7 @@ describe('PreviewCanvas', () => {
   test('renders preview controls with stable data-testid attributes', () => {
     render(<PreviewCanvas copy={copy} project={makeProject()} />);
 
+    expect(screen.getByTestId('editorial-map-panel')).toBeInTheDocument();
     expect(screen.getByTestId('preview-scroll-view-button')).toBeInTheDocument();
     expect(screen.getByTestId('preview-book-view-button')).toBeInTheDocument();
     expect(screen.getByTestId('preview-cover-panel')).toBeInTheDocument();

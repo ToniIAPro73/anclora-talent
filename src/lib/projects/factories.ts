@@ -96,6 +96,7 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
             fileName: imported.sourceFileName,
             mimeType: imported.sourceMimeType,
             importedAt: now,
+            outline: imported.detectedOutline,
           }
         : null,
     },
@@ -174,6 +175,57 @@ export function updateProjectDocument(project: ProjectRecord, input: UpdateDocum
     backCover: {
       ...project.backCover,
       title: input.title,
+    },
+  };
+}
+
+export function moveProjectChapter(
+  project: ProjectRecord,
+  chapterId: string,
+  direction: 'up' | 'down',
+): ProjectRecord {
+  const currentIndex = project.document.chapters.findIndex((chapter) => chapter.id === chapterId);
+  if (currentIndex < 0) return project;
+
+  const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+  if (targetIndex < 0 || targetIndex >= project.document.chapters.length) return project;
+
+  const chapters = [...project.document.chapters];
+  const [chapter] = chapters.splice(currentIndex, 1);
+  chapters.splice(targetIndex, 0, chapter);
+
+  return {
+    ...project,
+    updatedAt: new Date().toISOString(),
+    document: {
+      ...project.document,
+      chapters: chapters.map((item, index) => ({
+        ...item,
+        order: index + 1,
+      })),
+    },
+  };
+}
+
+export function deleteProjectChapter(project: ProjectRecord, chapterId: string): ProjectRecord {
+  if (project.document.chapters.length <= 1) {
+    return project;
+  }
+
+  const chapters = project.document.chapters.filter((chapter) => chapter.id !== chapterId);
+  if (chapters.length === project.document.chapters.length) {
+    return project;
+  }
+
+  return {
+    ...project,
+    updatedAt: new Date().toISOString(),
+    document: {
+      ...project.document,
+      chapters: chapters.map((chapter, index) => ({
+        ...chapter,
+        order: index + 1,
+      })),
     },
   };
 }

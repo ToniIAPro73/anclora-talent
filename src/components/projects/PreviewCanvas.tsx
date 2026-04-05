@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { BookOpen, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import type { DocumentBlock, ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
+import { EditorialMapPanel } from './EditorialMapPanel';
 
 const paletteMap = {
   obsidian: 'from-[#0b133f] via-[#0b233f] to-[#07252f] text-[#f2e3b3]',
@@ -284,6 +285,28 @@ export function PreviewCanvas({
   project: ProjectRecord;
 }) {
   const pages = useMemo(() => buildPages(project), [project]);
+  const pageSummaries = useMemo(
+    () =>
+      pages.map((page, index) => {
+        if (index === 0) {
+          return { pageNumber: 1, label: 'Portada / título' };
+        }
+
+        const chapterTitle = page.find((item) => item.kind === 'chapter-title');
+        if (chapterTitle && chapterTitle.kind === 'chapter-title') {
+          return { pageNumber: index + 1, label: chapterTitle.text };
+        }
+
+        const blockItem = page.find((item) => item.kind === 'block');
+        if (blockItem && blockItem.kind === 'block') {
+          const raw = blockItem.block.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+          return { pageNumber: index + 1, label: raw.slice(0, 80) || project.document.title };
+        }
+
+        return { pageNumber: index + 1, label: project.document.title };
+      }),
+    [pages, project.document.title],
+  );
   const [pageIndex, setPageIndex] = useState(0);
   const [bookView, setBookView] = useState(false);
 
@@ -314,6 +337,7 @@ export function PreviewCanvas({
 
   return (
     <div className="space-y-4">
+      <EditorialMapPanel copy={copy} pageSummaries={pageSummaries} project={project} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-1">
           <button

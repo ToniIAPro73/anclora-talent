@@ -8,6 +8,8 @@ import type { ProjectRecord } from '@/lib/projects/types';
 vi.mock('@/lib/projects/actions', () => ({
   saveChapterContentAction: vi.fn().mockResolvedValue(undefined),
   saveProjectDocumentAction: vi.fn().mockResolvedValue(undefined),
+  moveChapterAction: vi.fn().mockResolvedValue(undefined),
+  deleteChapterAction: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Tiptap requires a real browser DOM — stub it out for jsdom
@@ -33,6 +35,7 @@ function makeProject(overrides: Partial<ProjectRecord> = {}): ProjectRecord {
       id: 'doc-1',
       title: 'Mi Proyecto',
       subtitle: 'Subtítulo del proyecto',
+      author: 'Autor Demo',
       language: 'es',
       chapters: [
         {
@@ -107,5 +110,13 @@ describe('ProjectWorkspace', () => {
       'href',
       '/projects/proj-1/cover',
     );
+  });
+
+  test('renders chapter management controls in the organizer', () => {
+    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+
+    expect(screen.getByTestId('chapter-move-up-button-1')).toBeInTheDocument();
+    expect(screen.getByTestId('chapter-move-down-button-1')).toBeInTheDocument();
+    expect(screen.getByTestId('chapter-delete-button-1')).toBeInTheDocument();
   });
 });

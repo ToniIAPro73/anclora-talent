@@ -125,6 +125,11 @@ export type AppMessages = {
     previewOpenCover: string;
     previewCanvasEyebrow: string;
     previewCoverEyebrow: string;
+    editorialMapTitle: string;
+    editorialMapDescription: string;
+    editorialMapOriginalColumn: string;
+    editorialMapChaptersColumn: string;
+    editorialMapPagesColumn: string;
     coverEyebrow: string;
     coverTitle: string;
     coverBackEditor: string;
@@ -358,6 +363,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewOpenCover: 'Abrir cover studio',
       previewCanvasEyebrow: 'Preview editorial',
       previewCoverEyebrow: 'Portada actual',
+      editorialMapTitle: 'Mapa editorial',
+      editorialMapDescription: 'Compara la estructura detectada del documento, los capítulos actuales y el reparto de páginas del preview.',
+      editorialMapOriginalColumn: 'Documento detectado',
+      editorialMapChaptersColumn: 'Capítulos actuales',
+      editorialMapPagesColumn: 'Páginas del preview',
       coverEyebrow: 'Cover studio',
       coverTitle: 'Diseña y guarda la portada del proyecto',
       coverBackEditor: 'Editor',
@@ -589,6 +599,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewOpenCover: 'Open cover studio',
       previewCanvasEyebrow: 'Editorial preview',
       previewCoverEyebrow: 'Current cover',
+      editorialMapTitle: 'Editorial map',
+      editorialMapDescription: 'Compare the detected source structure, current chapters, and preview page distribution at a glance.',
+      editorialMapOriginalColumn: 'Detected document',
+      editorialMapChaptersColumn: 'Current chapters',
+      editorialMapPagesColumn: 'Preview pages',
       coverEyebrow: 'Cover studio',
       coverTitle: 'Design and save the project cover',
       coverBackEditor: 'Editor',

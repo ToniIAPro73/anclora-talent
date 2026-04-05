@@ -1,0 +1,67 @@
+{
+  "summary": "Ran targeted regression for editorial map/import/chapter organizer changes: build OK, 34/34 relevant Vitest tests pass, but protected app routes fail at runtime due malformed auth redirect URL.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "Protected app routes (/projects, /projects/*)",
+        "issue": "Runtime error on auth flow: 'URL is malformed \"/sign-in\". Please use only absolute URLs'. Blocks authenticated editor/preview E2E validation.",
+        "priority": "CRITICAL"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Auth redirect boundary",
+        "issue": "Navigating to protected routes renders Next.js runtime error overlay instead of clean sign-in redirect.",
+        "selector": "route:/projects",
+        "priority": "CRITICAL"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Editorial map + chapter move/delete in authenticated workspace",
+        "issue": "Could not execute browser E2E for requested feature flows because protected routes crash before login redirect completes.",
+        "affected_selectors": [
+          "[data-testid='editorial-map-panel']",
+          "[data-testid^='chapter-move-up-button-']",
+          "[data-testid^='chapter-delete-button-']"
+        ]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/src/lib/projects/import.test.ts",
+    "/app/src/lib/projects/actions.test.ts",
+    "/app/src/lib/projects/actions.import.test.ts",
+    "/app/src/lib/db/repositories.test.ts",
+    "/app/src/components/projects/PreviewCanvas.test.tsx",
+    "/app/src/components/projects/ProjectWorkspace.test.tsx",
+    "/app/src/components/projects/DocumentImporter.test.tsx",
+    "/app/test_reports/pytest/vitest_iteration_2.xml",
+    "/app/test_reports/pytest/vitest_iteration_2_extra.xml"
+  ],
+  "action_items": [
+    "Fix auth redirect URL construction for protected routes (absolute URL requirement) in guard/middleware path handling.",
+    "After auth redirect fix, rerun browser E2E on /projects/[projectId]/editor and /preview to validate editorial map rendering and chapter move/delete server actions end-to-end.",
+    "Provide test credentials remains optional after redirect fix if protected routes are still gated in this environment."
+  ],
+  "critical_code_review_comments": [
+    "src/lib/auth/guards.ts and src/lib/auth/middleware.ts use '/sign-in' relative path; current runtime expects absolute URL in this environment/version combination.",
+    "Feature logic for synthetic index generation, editorial map panel rendering, and organizer controls is covered by unit tests and passes; blocker is auth route integration at runtime."
+  ],
+  "updated_files": [
+    "/app/test_reports/iteration_2.json"
+  ],
+  "success_rate": {
+    "backend": "85%",
+    "frontend": "70%"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Use local URL http://localhost:3000 for current container run. Build passes. Relevant tests passed: 28/28 (import/actions/preview/workspace/importer) + 6/6 (repositories/actions.import). Repro for blocker: open /projects and observe runtime overlay 'URL is malformed \"/sign-in\"'.",
+  "rca of the issue": "RCA: auth guard/middleware currently redirect/protect with relative '/sign-in'. In this runtime, redirect target is validated as absolute URL, causing malformed URL runtime error on protected routes. Repro: navigate to /projects in browser (or curl); response redirects to /sign-in and UI shows runtime overlay with malformed URL message. Mitigation: build redirect/protect URL using absolute origin-aware URL construction for unauthenticated targets."
+}
