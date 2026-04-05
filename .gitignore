@@ -47,4 +47,7 @@ next-env.d.ts
 /.clerk/
 
 __pycache__/
-*.pyc
+*.pyc-e 
+# Environment files
+*.env
+*.env.*
