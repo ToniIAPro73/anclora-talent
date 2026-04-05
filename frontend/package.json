@@ -1,0 +1,7 @@
+{
+  "name": "anclora-talent-supervisor-frontend",
+  "private": true,
+  "scripts": {
+    "start": "yarn --cwd /app next dev -H 0.0.0.0 -p 3000"
+  }
+}

@@ -71,7 +71,7 @@ function BlockRenderer({ block }: { block: DocumentBlock }) {
   if (isHtmlContent(block.content)) {
     return (
       <div
-        className="prose prose-sm max-w-none text-[var(--text-secondary)] [&_h2]:text-2xl [&_h2]:font-black [&_h2]:tracking-tight [&_h2]:text-[var(--text-primary)] [&_blockquote]:rounded-[16px] [&_blockquote]:border-l-4 [&_blockquote]:border-[var(--preview-quote-border)] [&_blockquote]:bg-[var(--preview-quote-bg)] [&_blockquote]:px-5 [&_blockquote]:py-4 [&_p]:leading-8"
+        className="max-w-none text-[var(--text-secondary)] [&_blockquote]:my-5 [&_blockquote]:rounded-[20px] [&_blockquote]:border-l-4 [&_blockquote]:border-[var(--preview-quote-border)] [&_blockquote]:bg-[var(--preview-quote-bg)] [&_blockquote]:px-5 [&_blockquote]:py-4 [&_h1]:mt-8 [&_h1]:text-3xl [&_h1]:font-black [&_h1]:tracking-tight [&_h1]:text-[var(--text-primary)] [&_h2]:mt-7 [&_h2]:text-2xl [&_h2]:font-black [&_h2]:tracking-tight [&_h2]:text-[var(--text-primary)] [&_h3]:mt-6 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:tracking-tight [&_h3]:text-[var(--text-primary)] [&_hr]:my-8 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-[var(--border-subtle)] [&_li]:mb-2 [&_li]:leading-7 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:space-y-2 [&_ol]:pl-6 [&_p]:leading-8 [&_strong]:font-semibold [&_strong]:text-[var(--text-primary)] [&_ul]:my-4 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6"
         dangerouslySetInnerHTML={{ __html: block.content }}
       />
     );
@@ -150,6 +150,7 @@ function PageContent({
 function CoverPanel({ project, copy }: { project: ProjectRecord; copy: AppMessages['project'] }) {
   return (
     <aside
+      data-testid="preview-cover-panel"
       className={`rounded-[32px] border border-[var(--border-subtle)] bg-gradient-to-br p-8 shadow-[var(--shadow-soft)] ${paletteMap[project.cover.palette]}`}
     >
       <p className="text-xs font-semibold uppercase tracking-[0.28em] opacity-70">{copy.previewCoverEyebrow}</p>
@@ -211,6 +212,7 @@ export function PreviewCanvas({
         <div className="flex items-center gap-1 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-1">
           <button
             onClick={switchToScroll}
+            data-testid="preview-scroll-view-button"
             className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
               !bookView
                 ? 'bg-[var(--shell-main-surface)] text-[var(--text-primary)] shadow-[var(--shadow-soft)]'
@@ -222,6 +224,7 @@ export function PreviewCanvas({
           </button>
           <button
             onClick={switchToBook}
+            data-testid="preview-book-view-button"
             className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
               bookView
                 ? 'bg-[var(--shell-main-surface)] text-[var(--text-primary)] shadow-[var(--shadow-soft)]'
@@ -238,6 +241,7 @@ export function PreviewCanvas({
             <button
               onClick={goPrev}
               disabled={!canPrev}
+              data-testid="preview-previous-page-button"
               className="flex h-8 w-8 items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] disabled:opacity-30"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -248,6 +252,7 @@ export function PreviewCanvas({
             <button
               onClick={goNext}
               disabled={!canNext}
+              data-testid="preview-next-page-button"
               className="flex h-8 w-8 items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] disabled:opacity-30"
             >
               <ChevronRight className="h-4 w-4" />
@@ -266,7 +271,7 @@ export function PreviewCanvas({
           )}
         </div>
       ) : (
-        <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.75fr)]">
           <PageContent page={pages[pageIndex] ?? []} project={project} pageIndex={pageIndex} copy={copy} />
           <CoverPanel project={project} copy={copy} />
         </div>

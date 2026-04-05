@@ -14,6 +14,7 @@ export function ChapterOrganizer({
   return (
     <nav
       aria-label="Capítulos"
+      data-testid="chapter-organizer"
       className="flex flex-col gap-1 rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-4 shadow-[var(--shadow-strong)]"
     >
       <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-tertiary)]">
@@ -25,6 +26,7 @@ export function ChapterOrganizer({
           <button
             key={chapter.id}
             type="button"
+            data-testid={`chapter-organizer-button-${index + 1}`}
             onClick={() => onSelect(chapter.id)}
             aria-current={isActive ? 'page' : undefined}
             className={`flex w-full items-start gap-3 rounded-[18px] px-3 py-2.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-mint)] ${

@@ -69,15 +69,15 @@ describe('document import parser isolation', () => {
     expect(result.chapters?.[1].title).toBe('Capitulo dos');
   });
 
-  test('docx import prefers mammoth markdown extraction for chapter-aware parsing', async () => {
+  test('docx import prefers mammoth html extraction for chapter-aware parsing', async () => {
     vi.doMock('server-only', () => ({}));
     vi.doMock('pdf-parse', () => {
       throw new Error('pdf parser should not load for docx imports');
     });
     vi.doMock('mammoth', () => ({
       default: {
-        convertToMarkdown: vi.fn(async () => ({
-          value: '# Capitulo uno\n\nTexto A\n\n# Capitulo dos\n\nTexto B',
+        convertToHtml: vi.fn(async () => ({
+          value: '<h1>Capitulo uno</h1><p>Texto A</p><h1>Capitulo dos</h1><p>Texto B</p>',
           messages: [],
         })),
       },

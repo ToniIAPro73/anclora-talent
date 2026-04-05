@@ -9,7 +9,11 @@ type ImportState = 'idle' | 'analyzing' | 'ready' | 'error';
 
 type AnalysisResult = {
   title: string;
+  subtitle?: string;
+  author?: string;
   chapterCount: number;
+  chapterTitles: string[];
+  warnings: string[];
   sourceFileName: string;
 };
 
@@ -43,8 +47,17 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         body: formData,
       });
 
-      const data: { ok?: boolean; error?: string; title?: string; chapterCount?: number; sourceFileName?: string } =
-        await response.json();
+      const data: {
+        ok?: boolean;
+        error?: string;
+        title?: string;
+        subtitle?: string;
+        author?: string;
+        chapterCount?: number;
+        chapterTitles?: string[];
+        warnings?: string[];
+        sourceFileName?: string;
+      } = await response.json();
 
       if (!response.ok) {
         const message =
@@ -60,7 +73,11 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
 
       setAnalysis({
         title: data.title ?? file.name,
+        subtitle: data.subtitle ?? '',
+        author: data.author ?? '',
         chapterCount: data.chapterCount ?? 1,
+        chapterTitles: data.chapterTitles ?? [],
+        warnings: data.warnings ?? [],
         sourceFileName: data.sourceFileName ?? file.name,
       });
       setImportState('ready');
@@ -137,6 +154,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.sourceDocumentLabel}</span>
         <label
           htmlFor={inputId}
+          data-testid="source-document-dropzone"
           tabIndex={0}
           onKeyDown={handleKeyDown}
           onDragEnter={handleDragEvent}
@@ -199,11 +217,66 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
             )}
 
             {importState === 'ready' && analysis && (
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-[var(--text-primary)]">{copy.importReady}</p>
-                <p className="text-xs text-[var(--text-secondary)]">{selectedFileName}</p>
-                <p className="text-xs font-semibold text-[var(--accent-mint)]">
-                  {copy.importChaptersDetected.replace('{count}', String(analysis.chapterCount))}
+              <div className="w-full max-w-xl space-y-3 text-left" data-testid="import-analysis-panel">
+                <div className="space-y-1 text-center">
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">{copy.importReady}</p>
+                  <p className="text-xs text-[var(--text-secondary)]" data-testid="import-analysis-file-name">{selectedFileName}</p>
+                </div>
+                <div className="grid gap-3 rounded-[22px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-4 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                      {copy.importTitleDetected}
+                    </p>
+                    <p className="text-sm font-semibold text-[var(--text-primary)]" data-testid="import-analysis-title">
+                      {analysis.title}
+                    </p>
+                    {analysis.subtitle ? (
+                      <p className="text-xs leading-6 text-[var(--text-secondary)]" data-testid="import-analysis-subtitle">
+                        {analysis.subtitle}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                      {copy.importAuthorDetected}
+                    </p>
+                    <p className="text-sm font-semibold text-[var(--text-primary)]" data-testid="import-analysis-author">
+                      {analysis.author || '—'}
+                    </p>
+                    <p className="text-xs font-semibold text-[var(--accent-mint)]" data-testid="import-analysis-chapters">
+                      {copy.importChaptersDetected.replace('{count}', String(analysis.chapterCount))}
+                    </p>
+                  </div>
+                </div>
+                {analysis.chapterTitles.length > 0 ? (
+                  <div className="space-y-2 rounded-[22px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                      {copy.importChapterPreviewLabel}
+                    </p>
+                    <ul className="space-y-2 text-xs leading-6 text-[var(--text-secondary)]" data-testid="import-analysis-chapter-list">
+                      {analysis.chapterTitles.map((chapterTitle, index) => (
+                        <li key={`${chapterTitle}-${index}`} className="flex items-start gap-2">
+                          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[var(--accent-mint)]" />
+                          <span>{chapterTitle}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                {analysis.warnings.length > 0 ? (
+                  <div className="space-y-2 rounded-[22px] border border-amber-400/40 bg-amber-400/10 p-4" data-testid="import-analysis-warnings">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-200">
+                      {copy.importWarningsLabel}
+                    </p>
+                    <ul className="space-y-1 text-xs leading-6 text-amber-50/90">
+                      {analysis.warnings.map((warning, index) => (
+                        <li key={`${warning}-${index}`}>{warning}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                <p className="text-xs text-center text-[var(--text-secondary)]">
+                  El proyecto se creará con esta estructura y podrás afinar lo mínimo desde el editor.
                 </p>
               </div>
             )}

@@ -42,3 +42,12 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# clerk configuration (can include secrets)
+/.clerk/
+
+__pycache__/
+*.pyc-e 
+# Environment files
+*.env
+*.env.*

@@ -6,7 +6,7 @@ import { DocumentImporter } from './DocumentImporter';
 
 export function CreateProjectForm({ copy }: { copy: AppMessages['project'] }) {
   return (
-    <form action={createProjectAction} className="rounded-[32px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 text-[var(--text-primary)] shadow-[var(--shadow-strong)]">
+    <form action={createProjectAction} className="rounded-[32px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 text-[var(--text-primary)] shadow-[var(--shadow-strong)]" data-testid="create-project-form">
       <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">{copy.createFormEyebrow}</p>
       <h2 className="mt-3 text-2xl font-black tracking-tight text-[var(--text-primary)]">{copy.createFormTitle}</h2>
       <p className="mt-3 max-w-xl text-sm leading-7 text-[var(--text-secondary)]">
@@ -16,6 +16,7 @@ export function CreateProjectForm({ copy }: { copy: AppMessages['project'] }) {
         <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.titleLabel}</span>
         <input
           id="project-title"
+          data-testid="create-project-title-input"
           type="text"
           name="title"
           required
@@ -28,7 +29,7 @@ export function CreateProjectForm({ copy }: { copy: AppMessages['project'] }) {
         <p className="text-xs leading-6 text-[var(--text-tertiary)]">
           {copy.createProjectHint}
         </p>
-        <SubmitButton className={`${premiumPrimaryDarkButton} w-full`}>
+        <SubmitButton className={`${premiumPrimaryDarkButton} w-full`} data-testid="create-project-submit-button">
           {copy.createProjectAction}
         </SubmitButton>
       </div>
