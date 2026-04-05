@@ -83,6 +83,14 @@ function blocksFromSectionText(input: string) {
     });
 }
 
+// Headings that belong to front matter and should not be imported as chapters.
+const FRONT_MATTER_TITLE_RE =
+  /^(índice|indice|table\s+of\s+contents?|contenido|copyright|dedicatoria|dedicación|dedicacion|prólogo|prologo|prefacio|preface|agradecimientos|acknowledgements?)$/i;
+
+function isFrontMatterChapter(title: string): boolean {
+  return FRONT_MATTER_TITLE_RE.test(title.trim());
+}
+
 function buildChaptersFromText(input: string) {
   const lines = splitLines(input);
   const chapters: NonNullable<ImportedDocumentSeed['chapters']> = [];
@@ -117,7 +125,7 @@ function buildChaptersFromText(input: string) {
   }
 
   flushCurrent();
-  return chapters;
+  return chapters.filter((ch) => !isFrontMatterChapter(ch.title));
 }
 
 function fileNameToTitle(fileName: string) {
