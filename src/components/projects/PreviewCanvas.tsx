@@ -40,6 +40,9 @@ function buildPages(project: ProjectRecord): PageItem[][] {
   };
 
   for (const chapter of project.document.chapters) {
+    if (multiChapter && current.length > 0) {
+      flush();
+    }
     let isFirstBlock = true;
 
     for (const block of chapter.blocks) {
