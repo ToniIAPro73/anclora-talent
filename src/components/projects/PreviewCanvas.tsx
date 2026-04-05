@@ -30,6 +30,7 @@ function buildPages(project: ProjectRecord): PageItem[][] {
   let current: PageItem[] = [];
   let wordCount = 0;
   const multiChapter = project.document.chapters.length > 1;
+  const shouldAddTitlePage = Boolean(project.document.source) || multiChapter;
 
   const flush = () => {
     if (current.length > 0) {
@@ -60,7 +61,8 @@ function buildPages(project: ProjectRecord): PageItem[][] {
   }
 
   flush();
-  return pages.length > 0 ? pages : [[]];
+  const contentPages = pages.length > 0 ? pages : [[]];
+  return shouldAddTitlePage ? [[], ...contentPages] : contentPages;
 }
 
 function isHtmlContent(content: string) {

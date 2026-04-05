@@ -42,6 +42,8 @@ La importación actual degrada la estructura del documento original y obliga al 
   - vista previa de estructura.
 - UI de importación premium en `DocumentImporter` con panel de análisis previo.
 - Compatibilidad reforzada en preview/editor para renderizar encabezados, listas y HTML importado.
+- Segmentación refinada para respetar mejor la estructura real del manuscrito: los `h1` estructurales del cuerpo ahora generan capítulos independientes (incluidos los días del programa).
+- Preview ajustado para insertar una página de portada/título separada antes del primer capítulo importado, evitando mezclar portada y prólogo en la misma hoja.
 - `data-testid` añadidos a más controles clave del flujo editorial.
 - Supervisor desbloqueado para este repo:
   - `frontend` ya levanta en `/app/frontend` mediante wrapper.
@@ -57,7 +59,7 @@ La importación actual degrada la estructura del documento original y obliga al 
 - Resultado real del DOCX aportado:
   - título: `NUNCA MÁS EN LA SOMBRA`
   - autor: `Antonio Ballesteros Alonso`
-  - 8 capítulos razonables detectados
+  - 38 capítulos detectados tras respetar mejor la jerarquía real del contenido
 - Servicios verificados:
   - `frontend` RUNNING
   - `backend` RUNNING

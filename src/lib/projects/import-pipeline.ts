@@ -491,9 +491,10 @@ function isMajorChapterBlock(block: ParsedBlock) {
   const normalized = cleanHeadingText(block.text);
   if (!normalized) return false;
 
+  if (block.structural && (block.level ?? 9) <= 1) return true;
   if (MAJOR_HEADING_RE.test(normalized)) return true;
   if (MINOR_HEADING_RE.test(normalized)) return false;
-  return block.structural && (block.level ?? 9) <= 1;
+  return false;
 }
 
 function findTitleCandidate(frontMatter: ParsedBlock[]) {
