@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, test } from 'vitest';
 import { PreviewCanvas } from './PreviewCanvas';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
@@ -20,6 +20,7 @@ function makeProject(): ProjectRecord {
       id: 'doc-1',
       title: 'Nunca más en la sombra',
       subtitle: 'Guía práctica de presencia editorial',
+      author: 'Antonio Ballesteros Alonso',
       language: 'es',
       chapters: [
         {
@@ -37,6 +38,11 @@ function makeProject(): ProjectRecord {
           ],
         },
       ],
+      source: {
+        fileName: 'nunca.docx',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        importedAt: '2026-01-01T00:00:00.000Z',
+      },
     },
     cover: {
       id: 'cover-1',
@@ -60,8 +66,17 @@ function makeProject(): ProjectRecord {
 }
 
 describe('PreviewCanvas', () => {
-  test('renders imported HTML blocks with headings and list items', () => {
+  test('renders a dedicated title page first for imported documents', () => {
     render(<PreviewCanvas copy={copy} project={makeProject()} />);
+
+    expect(screen.getAllByText('Nunca más en la sombra').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Contexto')).not.toBeInTheDocument();
+  });
+
+  test('renders imported HTML blocks with headings and list items after advancing page', () => {
+    render(<PreviewCanvas copy={copy} project={makeProject()} />);
+
+    fireEvent.click(screen.getByTestId('preview-next-page-button'));
 
     expect(screen.getByText('Contexto')).toBeInTheDocument();
     expect(screen.getByText('Punto 1')).toBeInTheDocument();

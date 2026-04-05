@@ -105,4 +105,36 @@ describe('document import parser isolation', () => {
     expect(result.chapters?.[0].title).toBe('Capitulo uno');
     expect(result.chapters?.[1].title).toBe('Capitulo dos');
   });
+
+  test('structural h1 day headings become independent chapters while index entries do not', async () => {
+    vi.doMock('server-only', () => ({}));
+
+    const { buildImportedDocumentSeed } = await import('./import');
+    const result = buildImportedDocumentSeed({
+      fileName: 'programa.docx',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      text: 'texto normalizado',
+      html: [
+        '<p><strong>Índice</strong></p>',
+        '<p><strong>Día 1:</strong> Autoimagen.</p>',
+        '<p><strong>Día 2:</strong> Fortalezas latentes.</p>',
+        '<h1>Introducción</h1>',
+        '<p>Texto de apertura</p>',
+        '<h1>Fase 1: Percepción</h1>',
+        '<p>Cómo te ves determina cómo te muestras.</p>',
+        '<h1>Día 1: El espejo de la autoimagen</h1>',
+        '<p>Texto del día 1.</p>',
+        '<h1>Día 2: El inventario de fortalezas olvidadas</h1>',
+        '<p>Texto del día 2.</p>',
+      ].join(''),
+    });
+
+    expect(result.chapters?.map((chapter) => chapter.title)).toEqual([
+      'Índice',
+      'Introducción',
+      'Fase 1: Percepción',
+      'Día 1: El espejo de la autoimagen',
+      'Día 2: El inventario de fortalezas olvidadas',
+    ]);
+  });
 });
