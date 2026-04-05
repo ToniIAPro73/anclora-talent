@@ -32,6 +32,7 @@ export const projectDocuments = pgTable('project_documents', {
   projectId: uuid('project_id').notNull().unique(),
   title: varchar('title', { length: 255 }).notNull(),
   subtitle: text('subtitle').notNull(),
+  author: varchar('author', { length: 255 }).notNull().default(''),
   language: varchar('language', { length: 12 }).notNull(),
   sourceMetadata: jsonb('source_metadata'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),

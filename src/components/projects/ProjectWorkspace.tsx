@@ -144,6 +144,14 @@ export function ProjectWorkspace({
                   className="min-h-24 w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
                 />
               </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorAuthorLabel}</span>
+                <input
+                  name="author"
+                  defaultValue={project.document.author}
+                  className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+                />
+              </label>
               <SubmitButton className={`${premiumSecondaryLightButton} px-5`}>
                 {copy.saveChanges}
               </SubmitButton>

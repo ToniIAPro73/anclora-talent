@@ -34,6 +34,7 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
   const imported = input.importedDocument;
   const documentTitle = imported?.title || input.title;
   const documentSubtitle = imported?.subtitle || 'Documento editorial inicial listo para evolución.';
+  const documentAuthor = imported?.author || '';
   const chapterTitle = imported?.chapterTitle || 'Capítulo 1';
   const documentBlocks =
     imported?.blocks ?? [
@@ -87,6 +88,7 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
       id: randomUUID(),
       title: documentTitle,
       subtitle: documentSubtitle,
+      author: documentAuthor,
       language: 'es',
       chapters,
       source: imported
@@ -162,6 +164,7 @@ export function updateProjectDocument(project: ProjectRecord, input: UpdateDocum
       ...project.document,
       title: input.title,
       subtitle: input.subtitle,
+      author: input.author,
       chapters: updatedChapters,
     },
     cover: {

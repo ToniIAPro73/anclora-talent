@@ -112,6 +112,7 @@ function mapRowsToProject(
       id: documentRow.id,
       title: documentRow.title,
       subtitle: documentRow.subtitle,
+      author: documentRow.author,
       language: documentRow.language,
       chapters: reconstructChaptersFromBlockRows(blockRows),
       source:
@@ -191,6 +192,7 @@ export async function persistProjectGraph(db: ProjectGraphWriter, project: Proje
     projectId: project.id,
     title: project.document.title,
     subtitle: project.document.subtitle,
+    author: project.document.author,
     language: project.document.language,
     sourceMetadata: project.document.source,
     createdAt: new Date(project.createdAt),
@@ -258,6 +260,7 @@ export async function persistDocumentUpdate(db: ProjectGraphWriter, nextProject:
     .set({
       title: nextProject.document.title,
       subtitle: nextProject.document.subtitle,
+      author: nextProject.document.author,
       sourceMetadata: nextProject.document.source,
       updatedAt: new Date(nextProject.updatedAt),
     })

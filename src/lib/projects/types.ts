@@ -26,6 +26,7 @@ export interface ProjectDocument {
   id: string;
   title: string;
   subtitle: string;
+  author: string;
   language: string;
   chapters: DocumentChapter[];
   source?: ProjectDocumentSource | null;
@@ -99,6 +100,7 @@ export interface ProjectSummary {
 export interface ImportedDocumentSeed {
   title: string;
   subtitle: string;
+  author: string;
   chapterTitle: string;
   blocks: Array<{
     type: DocumentBlockType;
@@ -123,6 +125,7 @@ export interface CreateProjectInput {
 export interface UpdateDocumentInput {
   title: string;
   subtitle: string;
+  author: string;
   chapterTitle: string;
   /** Target chapter id. Defaults to first chapter when omitted. */
   chapterId?: string;
