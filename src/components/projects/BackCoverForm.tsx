@@ -1,5 +1,6 @@
 import { saveBackCoverAction } from '@/lib/projects/actions';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 
@@ -79,9 +80,9 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
           />
         </label>
 
-        <button type="submit" className={`${premiumPrimaryDarkButton} px-5`}>
+        <SubmitButton className={`${premiumPrimaryDarkButton} px-5`}>
           {copy.backCoverSave}
-        </button>
+        </SubmitButton>
       </section>
 
       {/* Preview */}

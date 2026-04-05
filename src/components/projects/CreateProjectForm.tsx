@@ -1,5 +1,6 @@
 import { createProjectAction } from '@/lib/projects/actions';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import type { AppMessages } from '@/lib/i18n/messages';
 import { DocumentImporter } from './DocumentImporter';
 
@@ -27,12 +28,9 @@ export function CreateProjectForm({ copy }: { copy: AppMessages['project'] }) {
         <p className="text-xs leading-6 text-[var(--text-tertiary)]">
           {copy.createProjectHint}
         </p>
-        <button
-          type="submit"
-          className={`${premiumPrimaryDarkButton} w-full`}
-        >
+        <SubmitButton className={`${premiumPrimaryDarkButton} w-full`}>
           {copy.createProjectAction}
-        </button>
+        </SubmitButton>
       </div>
     </form>
   );
