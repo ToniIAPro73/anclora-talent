@@ -10,9 +10,22 @@ function mockFetchSuccess(chapterCount = 3, title = 'El título detectado') {
     'fetch',
     vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ ok: true, title, chapterCount, sourceFileName: 'capitulos.docx' }),
+      json: async () => ({
+        ok: true,
+        title,
+        subtitle: 'Subtítulo curado',
+        author: 'Antonio Ballesteros Alonso',
+        chapterCount,
+        chapterTitles: ['Introducción', 'Fase 1: Percepción', 'Fase 2: Presencia'],
+        warnings: ['La portada contenía varias líneas y se han condensado en un único subtítulo editable.'],
+        sourceFileName: 'capitulos.docx',
+      }),
     }),
   );
+}
+
+function mockFetchPending() {
+  vi.stubGlobal('fetch', vi.fn(() => new Promise(() => undefined)));
 }
 
 function mockFetchError(errorCode: string, status = 422) {
@@ -54,7 +67,7 @@ describe('DocumentImporter', () => {
   });
 
   test('shows analyzing state immediately after picking a file', async () => {
-    mockFetchSuccess();
+    mockFetchPending();
     render(<DocumentImporter copy={copy} />);
 
     const fileInput = screen.getByTestId('source-document-input');
@@ -85,6 +98,9 @@ describe('DocumentImporter', () => {
 
     expect(screen.getByText('5 capítulos detectados')).toBeInTheDocument();
     expect(screen.getByText('libro.docx')).toBeInTheDocument();
+    expect(screen.getByTestId('import-analysis-author')).toHaveTextContent('Antonio Ballesteros Alonso');
+    expect(screen.getByTestId('import-analysis-chapter-list')).toHaveTextContent('Fase 1: Percepción');
+    expect(screen.getByTestId('import-analysis-warnings')).toBeInTheDocument();
   });
 
   test('shows generic error when the API returns IMPORT_FAILED', async () => {

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="16" failures="0" errors="0" time="0.801301458">
+    <testsuite name="src/components/projects/DocumentImporter.test.tsx" timestamp="2026-04-05T04:59:22.315Z" hostname="agent-env-49cd9d7d-ec20-489d-b1d2-c16b78863c7b" tests="7" failures="0" errors="0" skipped="0" time="0.131140864">
+        <testcase classname="src/components/projects/DocumentImporter.test.tsx" name="DocumentImporter &gt; renders the dropzone with the file input and format badges" time="0.039188187">
+        </testcase>
+        <testcase classname="src/components/projects/DocumentImporter.test.tsx" name="DocumentImporter &gt; shows analyzing state immediately after picking a file" time="0.012570522">
+        </testcase>
+        <testcase classname="src/components/projects/DocumentImporter.test.tsx" name="DocumentImporter &gt; shows ready state with chapter count after successful analysis" time="0.042328876">
+        </testcase>
+        <testcase classname="src/components/projects/DocumentImporter.test.tsx" name="DocumentImporter &gt; shows generic error when the API returns IMPORT_FAILED" time="0.010110626">
+        </testcase>
+        <testcase classname="src/components/projects/DocumentImporter.test.tsx" name="DocumentImporter &gt; shows unsupported format error when the API returns FORMAT_UNSUPPORTED" time="0.010283124">
+        </testcase>
+        <testcase classname="src/components/projects/DocumentImporter.test.tsx" name="DocumentImporter &gt; shows file too large error before calling the API when file exceeds 50 MB" time="0.006623672">
+        </testcase>
+        <testcase classname="src/components/projects/DocumentImporter.test.tsx" name="DocumentImporter &gt; shows generic error on network failure" time="0.008014325">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/lib/projects/import.test.ts" timestamp="2026-04-05T04:59:22.318Z" hostname="agent-env-49cd9d7d-ec20-489d-b1d2-c16b78863c7b" tests="3" failures="0" errors="0" skipped="0" time="0.479577328">
+        <testcase classname="src/lib/projects/import.test.ts" name="document import parser isolation &gt; docx import does not load the pdf parser" time="0.403860548">
+        </testcase>
+        <testcase classname="src/lib/projects/import.test.ts" name="document import parser isolation &gt; builds multiple chapters from markdown headings" time="0.00265946">
+        </testcase>
+        <testcase classname="src/lib/projects/import.test.ts" name="document import parser isolation &gt; docx import prefers mammoth html extraction for chapter-aware parsing" time="0.003524803">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/app/api/projects/import/route.test.ts" timestamp="2026-04-05T04:59:22.318Z" hostname="agent-env-49cd9d7d-ec20-489d-b1d2-c16b78863c7b" tests="6" failures="0" errors="0" skipped="0" time="0.190583266">
+        <testcase classname="src/app/api/projects/import/route.test.ts" name="POST /api/projects/import &gt; returns 401 when user is not authenticated" time="0.182439409">
+        </testcase>
+        <testcase classname="src/app/api/projects/import/route.test.ts" name="POST /api/projects/import &gt; returns 400 when no file is provided" time="0.000853665">
+        </testcase>
+        <testcase classname="src/app/api/projects/import/route.test.ts" name="POST /api/projects/import &gt; returns 413 when file is too large" time="0.001067566">
+        </testcase>
+        <testcase classname="src/app/api/projects/import/route.test.ts" name="POST /api/projects/import &gt; returns 422 for unsupported extension" time="0.001055854">
+        </testcase>
+        <testcase classname="src/app/api/projects/import/route.test.ts" name="POST /api/projects/import &gt; returns summarized analysis on successful import" time="0.001049732">
+        </testcase>
+        <testcase classname="src/app/api/projects/import/route.test.ts" name="POST /api/projects/import &gt; returns IMPORT_FAILED when parser throws" time="0.00274738">
+            <system-err>
+[import-route] extraction failed {
+  userId: [32m&apos;user_123&apos;[39m,
+  fileName: [32m&apos;sample.docx&apos;[39m,
+  detail: [32m&apos;Parser failed unexpectedly&apos;[39m
+}
+
+            </system-err>
+        </testcase>
+    </testsuite>
+</testsuites>

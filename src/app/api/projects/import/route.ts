@@ -46,7 +46,10 @@ export async function POST(request: NextRequest) {
       ok: true,
       title: seed.title,
       subtitle: seed.subtitle,
+      author: seed.author,
       chapterCount: seed.chapters?.length ?? 1,
+      chapterTitles: seed.chapters?.map((chapter) => chapter.title).slice(0, 4) ?? [],
+      warnings: seed.warnings ?? [],
       sourceFileName: seed.sourceFileName,
     });
   } catch (error) {

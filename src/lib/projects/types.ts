@@ -101,6 +101,7 @@ export interface ImportedDocumentSeed {
   title: string;
   subtitle: string;
   author: string;
+  warnings?: string[];
   chapterTitle: string;
   blocks: Array<{
     type: DocumentBlockType;

@@ -14,13 +14,12 @@ import type { AppMessages } from '@/lib/i18n/messages';
 function blocksToHtml(
   blocks: ProjectRecord['document']['chapters'][number]['blocks'],
 ): string {
-  // If the first block already contains HTML (from a previous Tiptap save), use it directly
-  if (blocks.length === 1 && blocks[0].content.trimStart().startsWith('<')) {
-    return blocks[0].content;
-  }
-
   return blocks
     .map((block) => {
+      if (block.content.trimStart().startsWith('<')) {
+        return block.content;
+      }
+
       const escaped = block.content
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')

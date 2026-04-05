@@ -142,6 +142,10 @@ export type AppMessages = {
     importAnalyzing: string;
     importReady: string;
     importChaptersDetected: string;
+    importTitleDetected: string;
+    importAuthorDetected: string;
+    importWarningsLabel: string;
+    importChapterPreviewLabel: string;
     importErrorGeneric: string;
     importFileTooLarge: string;
     importFormatUnsupported: string;
@@ -371,6 +375,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       importAnalyzing: 'Analizando documento...',
       importReady: 'Listo para importar',
       importChaptersDetected: '{count} capítulos detectados',
+      importTitleDetected: 'Título detectado',
+      importAuthorDetected: 'Autor detectado',
+      importWarningsLabel: 'Revisión recomendada',
+      importChapterPreviewLabel: 'Estructura detectada',
       importErrorGeneric: 'No se pudo analizar el documento',
       importFileTooLarge: 'El archivo es demasiado grande (máx. 50 MB)',
       importFormatUnsupported: 'Formato no compatible',
@@ -598,6 +606,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       importAnalyzing: 'Analyzing document...',
       importReady: 'Ready to import',
       importChaptersDetected: '{count} chapters detected',
+      importTitleDetected: 'Detected title',
+      importAuthorDetected: 'Detected author',
+      importWarningsLabel: 'Recommended review',
+      importChapterPreviewLabel: 'Detected structure',
       importErrorGeneric: 'Could not analyze the document',
       importFileTooLarge: 'File is too large (max. 50 MB)',
       importFormatUnsupported: 'Format not supported',
