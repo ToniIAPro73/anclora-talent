@@ -28,11 +28,26 @@ function splitLines(input: string) {
   return input.replace(/\r\n/g, '\n').split('\n');
 }
 
-function cleanHeadingText(input: string) {
+function stripMarkdownInline(input: string): string {
   return input
-    .replace(/^#{1,6}\s+/, '')
-    .replace(/^\d+(?:\.\d+)*[.)]?\s+/, '')
+    // Unescape markdown escape sequences (e.g. \. \! \, \- etc.)
+    .replace(/\\([.!,;:()\[\]{}\-_*#`>|~\\])/g, '$1')
+    // Remove bold markers (**text** or __text__)
+    .replace(/\*\*([^*\n]+)\*\*/g, '$1')
+    .replace(/__([^_\n]+)__/g, '$1')
+    // Remove italic markers (*text* or _text_)
+    .replace(/\*([^*\n]+)\*/g, '$1')
+    .replace(/_([^_\n]+)_/g, '$1')
     .trim();
+}
+
+function cleanHeadingText(input: string) {
+  return stripMarkdownInline(
+    input
+      .replace(/^#{1,6}\s+/, '')
+      .replace(/^\d+(?:\.\d+)*[.)]?\s+/, '')
+      .trim()
+  );
 }
 
 function getHeadingLevel(input: string) {
@@ -63,7 +78,7 @@ function blocksFromSectionText(input: string) {
       const level = getHeadingLevel(paragraph);
       return {
         type: level !== null ? ('heading' as const) : ('paragraph' as const),
-        content: level !== null ? cleanHeadingText(paragraph) : paragraph,
+        content: level !== null ? cleanHeadingText(paragraph) : stripMarkdownInline(paragraph),
       };
     });
 }
@@ -125,14 +140,17 @@ export function buildImportedDocumentSeed({
   const paragraphs = paragraphsFromText(text);
   const detectedChapters = buildChaptersFromText(text);
   const fallbackTitle = fileNameToTitle(fileName) || 'Documento importado';
-  const title = paragraphs[0] && paragraphs[0].length <= 120 ? paragraphs[0] : fallbackTitle;
-  const subtitleParagraph = paragraphs.find((paragraph, index) => index > 0 && paragraph !== title) ?? '';
+  const rawTitle = paragraphs[0] && paragraphs[0].length <= 120 ? paragraphs[0] : fallbackTitle;
+  const title = stripMarkdownInline(rawTitle);
+  const rawSubtitleParagraph = paragraphs.find((paragraph, index) => index > 0 && paragraph !== paragraphs[0]) ?? '';
+  const subtitleParagraph = rawSubtitleParagraph ? stripMarkdownInline(rawSubtitleParagraph) : '';
   const subtitle = subtitleParagraph ? subtitleParagraph.slice(0, 180) : `Documento importado desde ${fileName}`;
   const contentParagraphs =
     detectedChapters.length > 0
       ? detectedChapters[0].blocks.map((block) => block.content).slice(0, 6)
-      : (paragraphs[0] === title ? paragraphs.slice(1) : paragraphs)
-          .filter((paragraph) => paragraph !== subtitleParagraph)
+      : (paragraphs[0] === rawTitle ? paragraphs.slice(1) : paragraphs)
+          .filter((paragraph) => paragraph !== rawSubtitleParagraph)
+          .map(stripMarkdownInline)
           .slice(0, 6);
 
   const blocks =
