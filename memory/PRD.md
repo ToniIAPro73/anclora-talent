@@ -44,6 +44,11 @@ La importación actual degrada la estructura del documento original y obliga al 
 - Compatibilidad reforzada en preview/editor para renderizar encabezados, listas y HTML importado.
 - Segmentación refinada para respetar mejor la estructura real del manuscrito: los `h1` estructurales del cuerpo ahora generan capítulos independientes (incluidos los días del programa).
 - Preview ajustado para insertar una página de portada/título separada antes del primer capítulo importado, evitando mezclar portada y prólogo en la misma hoja.
+- Paginación del preview rehecha para estimar altura editorial por bloques, encabezados, listas y fragmentos HTML, evitando meter demasiado contenido en una sola página.
+- Nuevo mapa editorial para comparar de un vistazo: estructura detectada del documento, capítulos actuales y páginas del preview.
+- Importación markdown reforzada: ahora reconoce mejor jerarquías `# / ## / ###` y puede generar un índice sintético editable cuando el documento no trae uno explícito.
+- El editor ya permite mover y eliminar capítulos desde el organizador lateral, útil para índices generados o ajustes manuales.
+- Redirects protegidos corregidos para usar URL absoluta de login, evitando el runtime error en rutas privadas.
 - `data-testid` añadidos a más controles clave del flujo editorial.
 - Supervisor desbloqueado para este repo:
   - `frontend` ya levanta en `/app/frontend` mediante wrapper.
@@ -52,10 +57,15 @@ La importación actual degrada la estructura del documento original y obliga al 
 ## Validación realizada
 - Tests verdes:
   - `src/lib/projects/import.test.ts`
+  - `src/components/projects/PreviewCanvas.test.tsx`
   - `src/components/projects/DocumentImporter.test.tsx`
   - `src/lib/projects/actions.test.ts`
   - `src/components/projects/CreateProjectForm.test.tsx`
   - `src/components/projects/ProjectWorkspace.test.tsx`
+- Resultado real del markdown aportado:
+  - se genera un índice sintético editable
+  - se detectan capítulos estructurados sin necesidad de índice previo
+  - el título y la jerarquía markdown `# / ## / ###` se interpretan correctamente
 - Resultado real del DOCX aportado:
   - título: `NUNCA MÁS EN LA SOMBRA`
   - autor: `Antonio Ballesteros Alonso`

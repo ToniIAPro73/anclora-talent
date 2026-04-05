@@ -42,6 +42,10 @@ function makeProject(): ProjectRecord {
         fileName: 'nunca.docx',
         mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         importedAt: '2026-01-01T00:00:00.000Z',
+        outline: [
+          { title: 'Introducción', level: 1, origin: 'detected' },
+          { title: 'Contexto', level: 2, origin: 'detected' },
+        ],
       },
     },
     cover: {
@@ -65,12 +69,41 @@ function makeProject(): ProjectRecord {
   };
 }
 
+function makeLongIndexProject(): ProjectRecord {
+  return {
+    ...makeProject(),
+    document: {
+      ...makeProject().document,
+      chapters: [
+        {
+          id: 'index-chapter',
+          order: 0,
+          title: 'Índice',
+          blocks: [
+            {
+              id: 'index-block-1',
+              type: 'paragraph',
+              order: 0,
+              content:
+                '<h2>Índice</h2><p><strong>FASE 1:</strong> Autoconciencia</p><ul>' +
+                Array.from({ length: 16 }, (_, index) => `<li>Día ${index + 1}: Entrada del índice con texto suficientemente largo para consumir espacio editorial.</li>`).join('') +
+                '</ul><p><strong>FASE 2:</strong> Presencia</p><ul>' +
+                Array.from({ length: 10 }, (_, index) => `<li>Día ${index + 17}: Otra entrada extensa del índice para forzar salto de página en el preview.</li>`).join('') +
+                '</ul>',
+            },
+          ],
+        },
+      ],
+    },
+  };
+}
+
 describe('PreviewCanvas', () => {
   test('renders a dedicated title page first for imported documents', () => {
     render(<PreviewCanvas copy={copy} project={makeProject()} />);
 
     expect(screen.getAllByText('Nunca más en la sombra').length).toBeGreaterThan(0);
-    expect(screen.queryByText('Contexto')).not.toBeInTheDocument();
+    expect(screen.queryByText('Punto 1')).not.toBeInTheDocument();
   });
 
   test('renders imported HTML blocks with headings and list items after advancing page', () => {
@@ -78,14 +111,33 @@ describe('PreviewCanvas', () => {
 
     fireEvent.click(screen.getByTestId('preview-next-page-button'));
 
-    expect(screen.getByText('Contexto')).toBeInTheDocument();
+    expect(screen.getAllByText('Contexto').length).toBeGreaterThan(0);
     expect(screen.getByText('Punto 1')).toBeInTheDocument();
     expect(screen.getByText('Punto 2')).toBeInTheDocument();
+  });
+
+  test('splits long index content across multiple pages instead of squeezing it into one', () => {
+    render(<PreviewCanvas copy={copy} project={makeLongIndexProject()} />);
+
+    fireEvent.click(screen.getByTestId('preview-next-page-button'));
+
+    expect(screen.getByText('Día 1: Entrada del índice con texto suficientemente largo para consumir espacio editorial.')).toBeInTheDocument();
+    expect(screen.queryByText('Día 26: Otra entrada extensa del índice para forzar salto de página en el preview.')).not.toBeInTheDocument();
+
+    for (let step = 0; step < 4; step += 1) {
+      fireEvent.click(screen.getByTestId('preview-next-page-button'));
+      if (screen.queryByText((content) => content.includes('Día 26: Otra entrada extensa del índice'))) {
+        break;
+      }
+    }
+
+    expect(screen.getByText((content) => content.includes('Día 26: Otra entrada extensa del índice'))).toBeInTheDocument();
   });
 
   test('renders preview controls with stable data-testid attributes', () => {
     render(<PreviewCanvas copy={copy} project={makeProject()} />);
 
+    expect(screen.getByTestId('editorial-map-panel')).toBeInTheDocument();
     expect(screen.getByTestId('preview-scroll-view-button')).toBeInTheDocument();
     expect(screen.getByTestId('preview-book-view-button')).toBeInTheDocument();
     expect(screen.getByTestId('preview-cover-panel')).toBeInTheDocument();

@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { BookOpen, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import type { DocumentBlock, ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
+import { EditorialMapPanel } from './EditorialMapPanel';
 
 const paletteMap = {
   obsidian: 'from-[#0b133f] via-[#0b233f] to-[#07252f] text-[#f2e3b3]',
@@ -11,7 +12,8 @@ const paletteMap = {
   sand: 'from-[#f2e3b3] via-[#e7d4a0] to-[#d4af37] text-[#0b313f]',
 };
 
-const WORDS_PER_PAGE = 350;
+const PAGE_UNIT_LIMIT = 64;
+const HTML_BLOCK_SEGMENT_RE = /<(h[1-6]|p|ul|ol|blockquote)[^>]*>[\s\S]*?<\/\1>|<hr[^>]*\/?>/gi;
 
 type PageItem =
   | { kind: 'chapter-title'; text: string }
@@ -25,10 +27,106 @@ function countWords(text: string): number {
     .filter(Boolean).length;
 }
 
+function normalizeHtmlFragment(input: string) {
+  return input.replace(/>\s+</g, '><').trim();
+}
+
+function splitListFragment(fragment: string) {
+  const tag = fragment.match(/^<(ul|ol)/i)?.[1]?.toLowerCase() === 'ol' ? 'ol' : 'ul';
+  const items = Array.from(fragment.matchAll(/<li[^>]*>[\s\S]*?<\/li>/gi)).map((match) => match[0]);
+
+  if (items.length <= 5) {
+    return [fragment];
+  }
+
+  const groups: string[] = [];
+  for (let index = 0; index < items.length; index += 5) {
+    groups.push(`<${tag}>${items.slice(index, index + 5).join('')}</${tag}>`);
+  }
+
+  return groups;
+}
+
+function expandBlockForPagination(block: DocumentBlock) {
+  if (!isHtmlContent(block.content)) {
+    return [block];
+  }
+
+  const fragments = block.content.match(HTML_BLOCK_SEGMENT_RE) ?? [];
+  if (fragments.length === 0) {
+    return [block];
+  }
+
+  return fragments.flatMap((fragment, index) => {
+    const normalized = normalizeHtmlFragment(fragment);
+    const pieces = /^<(ul|ol)\b/i.test(normalized) ? splitListFragment(normalized) : [normalized];
+
+    return pieces.map((piece, pieceIndex) => ({
+      ...block,
+      id: `${block.id}-part-${index}-${pieceIndex}`,
+      content: piece,
+    }));
+  });
+}
+
+function estimateHtmlUnits(content: string) {
+  const headings = (content.match(/<h[1-6][^>]*>/gi) ?? []).length;
+  const paragraphs = (content.match(/<p[^>]*>/gi) ?? []).length;
+  const quotes = (content.match(/<blockquote[^>]*>/gi) ?? []).length;
+  const listItems = Array.from(content.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi));
+
+  let units = 0;
+
+  if (headings > 0) {
+    units += headings * 8;
+  }
+
+  if (paragraphs > 0) {
+    units += paragraphs * 3;
+  }
+
+  if (quotes > 0) {
+    units += quotes * 6;
+  }
+
+  if (listItems.length > 0) {
+    units += 2;
+    for (const [, itemContent] of listItems) {
+      units += 2 + Math.ceil(countWords(itemContent.replace(/<[^>]+>/g, ' ')) / 10);
+    }
+  }
+
+  const looseTextWords = countWords(content);
+  units += Math.ceil(looseTextWords / 28);
+
+  return units;
+}
+
+function estimatePageItemUnits(item: PageItem) {
+  if (item.kind === 'chapter-title') {
+    return 7 + Math.ceil(countWords(item.text) / 10);
+  }
+
+  const { block } = item;
+  if (isHtmlContent(block.content)) {
+    return estimateHtmlUnits(block.content);
+  }
+
+  if (block.type === 'heading') {
+    return 7 + Math.ceil(countWords(block.content) / 10);
+  }
+
+  if (block.type === 'quote') {
+    return 6 + Math.ceil(countWords(block.content) / 16);
+  }
+
+  return 3 + Math.ceil(countWords(block.content) / 22);
+}
+
 function buildPages(project: ProjectRecord): PageItem[][] {
   const pages: PageItem[][] = [];
   let current: PageItem[] = [];
-  let wordCount = 0;
+  let pageUnits = 0;
   const multiChapter = project.document.chapters.length > 1;
   const shouldAddTitlePage = Boolean(project.document.source) || multiChapter;
 
@@ -36,7 +134,7 @@ function buildPages(project: ProjectRecord): PageItem[][] {
     if (current.length > 0) {
       pages.push(current);
       current = [];
-      wordCount = 0;
+      pageUnits = 0;
     }
   };
 
@@ -46,17 +144,24 @@ function buildPages(project: ProjectRecord): PageItem[][] {
     }
     let isFirstBlock = true;
 
-    for (const block of chapter.blocks) {
-      const w = countWords(block.content);
-      if (wordCount + w > WORDS_PER_PAGE && wordCount > 0) {
-        flush();
-      }
+    const paginatedBlocks = chapter.blocks.flatMap(expandBlockForPagination);
+
+    for (const block of paginatedBlocks) {
       if (isFirstBlock && multiChapter) {
-        current.push({ kind: 'chapter-title', text: chapter.title });
+        const chapterTitleItem = { kind: 'chapter-title', text: chapter.title } as const;
+        current.push(chapterTitleItem);
+        pageUnits += estimatePageItemUnits(chapterTitleItem);
         isFirstBlock = false;
       }
-      current.push({ kind: 'block', block });
-      wordCount += w;
+      const item = { kind: 'block', block } as const;
+      const itemUnits = estimatePageItemUnits(item);
+
+      if (pageUnits + itemUnits > PAGE_UNIT_LIMIT && pageUnits > 0) {
+        flush();
+      }
+
+      current.push(item);
+      pageUnits += itemUnits;
     }
   }
 
@@ -180,6 +285,28 @@ export function PreviewCanvas({
   project: ProjectRecord;
 }) {
   const pages = useMemo(() => buildPages(project), [project]);
+  const pageSummaries = useMemo(
+    () =>
+      pages.map((page, index) => {
+        if (index === 0) {
+          return { pageNumber: 1, label: 'Portada / título' };
+        }
+
+        const chapterTitle = page.find((item) => item.kind === 'chapter-title');
+        if (chapterTitle && chapterTitle.kind === 'chapter-title') {
+          return { pageNumber: index + 1, label: chapterTitle.text };
+        }
+
+        const blockItem = page.find((item) => item.kind === 'block');
+        if (blockItem && blockItem.kind === 'block') {
+          const raw = blockItem.block.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+          return { pageNumber: index + 1, label: raw.slice(0, 80) || project.document.title };
+        }
+
+        return { pageNumber: index + 1, label: project.document.title };
+      }),
+    [pages, project.document.title],
+  );
   const [pageIndex, setPageIndex] = useState(0);
   const [bookView, setBookView] = useState(false);
 
@@ -210,6 +337,7 @@ export function PreviewCanvas({
 
   return (
     <div className="space-y-4">
+      <EditorialMapPanel copy={copy} pageSummaries={pageSummaries} project={project} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-1">
           <button

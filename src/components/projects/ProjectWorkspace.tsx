@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition, useState } from 'react';
+import { useEffect, useTransition, useState } from 'react';
 import Link from 'next/link';
 import { Check, Loader2 } from 'lucide-react';
 import { ChapterOrganizer } from './ChapterOrganizer';
@@ -49,6 +49,12 @@ export function ProjectWorkspace({
   const activeChapter =
     project.document.chapters.find((ch) => ch.id === activeChapterId) ??
     project.document.chapters[0];
+
+  useEffect(() => {
+    if (!project.document.chapters.some((chapter) => chapter.id === activeChapterId)) {
+      setActiveChapterId(project.document.chapters[0]?.id ?? '');
+    }
+  }, [activeChapterId, project.document.chapters]);
 
   const handleChapterContentUpdate = (html: string) => {
     const formData = new FormData();
@@ -104,6 +110,7 @@ export function ProjectWorkspace({
         {/* Chapter sidebar */}
         <div className="xl:sticky xl:top-6 xl:self-start">
           <ChapterOrganizer
+            projectId={project.id}
             chapters={project.document.chapters}
             activeChapterId={activeChapterId}
             onSelect={setActiveChapterId}

@@ -137,4 +137,46 @@ describe('document import parser isolation', () => {
       'Día 2: El inventario de fortalezas olvidadas',
     ]);
   });
+
+  test('markdown without explicit index generates an editable synthetic index after prologue when chapters exist', async () => {
+    vi.doMock('server-only', () => ({}));
+
+    const { buildImportedDocumentSeed } = await import('./import');
+    const result = buildImportedDocumentSeed({
+      fileName: 'ebook-estructurado.md',
+      mimeType: 'text/markdown',
+      text: [
+        '# Ebook premium',
+        '',
+        'Introducción general.',
+        '',
+        '## Contexto del mercado',
+        '',
+        'Texto del contexto.',
+        '',
+        '## Dolores escondidos',
+        '',
+        '### Dolor 1',
+        '',
+        'Detalle 1.',
+        '',
+        '### Dolor 2',
+        '',
+        'Detalle 2.',
+        '',
+        '## Monetización',
+        '',
+        'Texto monetización.',
+      ].join('\n'),
+    });
+
+    expect(result.chapters?.map((chapter) => chapter.title)).toEqual([
+      'Índice',
+      'Contexto del mercado',
+      'Dolores escondidos',
+      'Monetización',
+    ]);
+    expect(result.detectedOutline?.some((entry) => entry.title === 'Índice' && entry.origin === 'generated')).toBe(true);
+    expect(result.warnings?.some((warning) => warning.includes('índice sintético editable'))).toBe(true);
+  });
 });
