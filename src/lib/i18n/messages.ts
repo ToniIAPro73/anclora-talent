@@ -116,6 +116,7 @@ export type AppMessages = {
     editorLiveDescription: string;
     editorTitleLabel: string;
     editorSubtitleLabel: string;
+    editorAuthorLabel: string;
     editorChapterLabel: string;
     saveChanges: string;
     previewEyebrow: string;
@@ -344,6 +345,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         'La edición persiste sobre el documento canónico. El preview lee exactamente este mismo contenido.',
       editorTitleLabel: 'Título',
       editorSubtitleLabel: 'Subtítulo',
+      editorAuthorLabel: 'Autor',
       editorChapterLabel: 'Título del capítulo',
       saveChanges: 'Guardar cambios',
       previewEyebrow: 'Preview',
@@ -570,6 +572,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         'Editing persists on the canonical document. Preview reads this exact same content.',
       editorTitleLabel: 'Title',
       editorSubtitleLabel: 'Subtitle',
+      editorAuthorLabel: 'Author',
       editorChapterLabel: 'Chapter title',
       saveChanges: 'Save changes',
       previewEyebrow: 'Preview',

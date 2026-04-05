@@ -83,12 +83,65 @@ function blocksFromSectionText(input: string) {
     });
 }
 
-// Headings that belong to front matter and should not be imported as chapters.
-const FRONT_MATTER_TITLE_RE =
-  /^(índice|indice|table\s+of\s+contents?|contenido|copyright|dedicatoria|dedicación|dedicacion|prólogo|prologo|prefacio|preface|agradecimientos|acknowledgements?)$/i;
+// Copyright/legal patterns: paragraphs matching these are skipped when extracting the prologue.
+const COPYRIGHT_RE =
+  /©|derechos\s+reservados|all\s+rights\s+reserved|primera\s+edici[oó]n|metodolog[ií]a\s+original/i;
 
-function isFrontMatterChapter(title: string): boolean {
-  return FRONT_MATTER_TITLE_RE.test(title.trim());
+/**
+ * From the raw pre-heading text (before the first H1), extract the prologue/dedication
+ * that typically appears after the copyright page.
+ *
+ * A Prólogo is only extracted when a copyright marker is found, confirming that there
+ * is a copyright page separating the cover from the dedication/prologue content.
+ * Without a copyright marker the pre-heading text is assumed to be only cover material.
+ */
+function extractPrologueText(preHeadingText: string): string {
+  const paragraphs = preHeadingText
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  // Find the last paragraph that looks like copyright/legal boilerplate.
+  let lastCopyrightIdx = -1;
+  for (let i = 0; i < paragraphs.length; i++) {
+    if (COPYRIGHT_RE.test(paragraphs[i])) {
+      lastCopyrightIdx = i;
+    }
+  }
+
+  // Only extract a prologue when a copyright page is present.
+  if (lastCopyrightIdx < 0) return '';
+
+  const candidates = paragraphs.slice(lastCopyrightIdx + 1);
+  const cleaned = candidates
+    .map((p) => stripMarkdownInline(p))
+    .filter((p) => p.length > 5);
+
+  return cleaned.join('\n\n');
+}
+
+/**
+ * From the raw text (before markdown stripping), detect the author name.
+ * Author lines in DOCX → mammoth markdown appear as bold-only lines: **Name**.
+ */
+function extractAuthorFromText(text: string): string {
+  const lines = splitLines(text);
+  // Scan lines in reverse, stopping at the first H1 heading.
+  for (const line of [...lines].reverse()) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (isTopLevelChapterHeading(trimmed)) break;
+    // Match a line that is entirely a bold span and looks like a person's name.
+    const boldMatch = trimmed.match(/^\*\*([^*]+)\*\*$/) ?? trimmed.match(/^__([^_]+)__$/);
+    if (boldMatch) {
+      const candidate = boldMatch[1].trim();
+      // A name has multiple words and no copyright-like content.
+      if (candidate.includes(' ') && candidate.length > 5 && !COPYRIGHT_RE.test(candidate)) {
+        return candidate;
+      }
+    }
+  }
+  return '';
 }
 
 function buildChaptersFromText(input: string) {
@@ -96,12 +149,12 @@ function buildChaptersFromText(input: string) {
   const chapters: NonNullable<ImportedDocumentSeed['chapters']> = [];
   let currentTitle: string | null = null;
   let currentLines: string[] = [];
+  const preHeadingLines: string[] = [];
 
   const flushCurrent = () => {
     if (!currentTitle) {
       return;
     }
-
     const sectionText = currentLines.join('\n').trim();
     const blocks = blocksFromSectionText(sectionText);
     chapters.push({
@@ -113,6 +166,16 @@ function buildChaptersFromText(input: string) {
   for (const line of lines) {
     const trimmed = line.trim();
     if (isTopLevelChapterHeading(trimmed)) {
+      // On the first heading, try to salvage a prologue from pre-heading content.
+      if (currentTitle === null && preHeadingLines.length > 0) {
+        const prologueText = extractPrologueText(preHeadingLines.join('\n'));
+        if (prologueText) {
+          const prologueBlocks = blocksFromSectionText(prologueText);
+          if (prologueBlocks.length > 0) {
+            chapters.push({ title: 'Prólogo', blocks: prologueBlocks });
+          }
+        }
+      }
       flushCurrent();
       currentTitle = cleanHeadingText(trimmed) || `Capítulo ${chapters.length + 1}`;
       currentLines = [trimmed];
@@ -121,11 +184,13 @@ function buildChaptersFromText(input: string) {
 
     if (currentTitle) {
       currentLines.push(line);
+    } else {
+      preHeadingLines.push(line);
     }
   }
 
   flushCurrent();
-  return chapters.filter((ch) => !isFrontMatterChapter(ch.title));
+  return chapters;
 }
 
 function fileNameToTitle(fileName: string) {
@@ -153,6 +218,7 @@ export function buildImportedDocumentSeed({
   const rawSubtitleParagraph = paragraphs.find((paragraph, index) => index > 0 && paragraph !== paragraphs[0]) ?? '';
   const subtitleParagraph = rawSubtitleParagraph ? stripMarkdownInline(rawSubtitleParagraph) : '';
   const subtitle = subtitleParagraph ? subtitleParagraph.slice(0, 180) : `Documento importado desde ${fileName}`;
+  const author = extractAuthorFromText(text);
   const contentParagraphs =
     detectedChapters.length > 0
       ? detectedChapters[0].blocks.map((block) => block.content).slice(0, 6)
@@ -175,6 +241,7 @@ export function buildImportedDocumentSeed({
   return {
     title,
     subtitle,
+    author,
     chapterTitle: detectedChapters[0]?.title || title,
     blocks,
     chapters:

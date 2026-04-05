@@ -1,6 +1,7 @@
 import { saveProjectCoverAction } from '@/lib/projects/actions';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import type { AppMessages } from '@/lib/i18n/messages';
 
 const previewClasses = {
@@ -38,9 +39,9 @@ export function CoverForm({ copy, project }: { copy: AppMessages['project']; pro
           <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverBackgroundLabel}</span>
           <input type="file" name="backgroundImage" accept="image/*" className="block w-full text-sm text-[var(--text-secondary)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--button-highlight-bg)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--button-highlight-fg)]" />
         </label>
-        <button type="submit" className={`${premiumPrimaryDarkButton} px-5`}>
+        <SubmitButton className={`${premiumPrimaryDarkButton} px-5`}>
           {copy.coverSave}
-        </button>
+        </SubmitButton>
       </section>
 
       <section className={`rounded-[32px] border border-[var(--border-subtle)] bg-gradient-to-br p-8 shadow-[var(--shadow-soft)] ${previewClasses[project.cover.palette]}`}>

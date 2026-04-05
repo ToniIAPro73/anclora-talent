@@ -80,6 +80,7 @@ export async function saveProjectDocumentAction(formData: FormData) {
   const input: UpdateDocumentInput = {
     title: String(formData.get('title') ?? '').trim(),
     subtitle: String(formData.get('subtitle') ?? '').trim(),
+    author: String(formData.get('author') ?? '').trim(),
     chapterTitle: String(formData.get('chapterTitle') ?? '').trim(),
     chapterId,
     blocks: formData.getAll('blockId').map((id, index) => ({
@@ -112,6 +113,7 @@ export async function saveChapterContentAction(formData: FormData) {
   const input: UpdateDocumentInput = {
     title: project.document.title,
     subtitle: project.document.subtitle,
+    author: project.document.author,
     chapterTitle: chapterTitle || chapter.title,
     chapterId,
     blocks: [{ id: firstBlockId, content: htmlContent }],

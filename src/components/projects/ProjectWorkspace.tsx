@@ -7,6 +7,7 @@ import { ChapterOrganizer } from './ChapterOrganizer';
 import { RichTextEditor } from './RichTextEditor';
 import { saveChapterContentAction, saveProjectDocumentAction } from '@/lib/projects/actions';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 
@@ -143,9 +144,17 @@ export function ProjectWorkspace({
                   className="min-h-24 w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
                 />
               </label>
-              <button type="submit" className={`${premiumSecondaryLightButton} px-5`}>
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorAuthorLabel}</span>
+                <input
+                  name="author"
+                  defaultValue={project.document.author}
+                  className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+                />
+              </label>
+              <SubmitButton className={`${premiumSecondaryLightButton} px-5`}>
                 {copy.saveChanges}
-              </button>
+              </SubmitButton>
             </form>
           </section>
 
