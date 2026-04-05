@@ -5,10 +5,10 @@ describe('protectRequest', () => {
   test('protects a request using sign-in as unauthenticated target', async () => {
         const protect = vi.fn().mockResolvedValue(undefined);
 
-        await protectRequest({ protect });
+        await protectRequest({ protect }, 'https://example.com/projects');
 
         expect(protect).toHaveBeenCalledWith({
-          unauthenticatedUrl: '/sign-in',
+          unauthenticatedUrl: 'https://example.com/sign-in',
         });
   });
 });
