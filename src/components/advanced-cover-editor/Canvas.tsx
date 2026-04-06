@@ -310,7 +310,7 @@ export default function Canvas({ onCanvasReady }: CanvasProps) {
           if (!selectedObj) return;
 
           const elements = useCanvasStore.getState().elements;
-          const element = elements.find((el) => el.id === selectedObj.id);
+          const element = elements.find((el: any) => el.id === selectedObj.id);
 
           if (element) {
             selectElement(element);
