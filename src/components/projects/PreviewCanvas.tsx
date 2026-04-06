@@ -336,6 +336,17 @@ export function PreviewCanvas({
   );
   const [pageIndex, setPageIndex] = useState(0);
   const [bookView, setBookView] = useState(false);
+  
+  // Show advanced preview modal if requested
+  if (showAdvancedPreview) {
+    return (
+      <PreviewModal
+        project={project}
+        copy={copy}
+        onClose={() => setShowAdvancedPreview(false)}
+      />
+    );
+  }
 
   const totalPages = pages.length;
   const rightIdx = bookView ? pageIndex + 1 : -1;
