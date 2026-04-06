@@ -244,9 +244,15 @@ export function ProjectWorkspace({
               Tu proyecto está listo para ser publicado. Elige el formato de salida deseado.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
-               <SubmitButton className={`${premiumPrimaryDarkButton} px-8 cursor-pointer hover:cursor-pointer`}>
+               <button
+                 onClick={() => {
+                   const pdfUrl = `/api/projects/export/pdf?projectId=${project.id}`;
+                   window.open(pdfUrl, '_blank');
+                 }}
+                 className={`${premiumPrimaryDarkButton} px-8 cursor-pointer hover:cursor-pointer`}
+               >
                   Exportar formato PDF
-               </SubmitButton>
+               </button>
                <button className={`${premiumSecondaryLightButton} px-8 opacity-30 cursor-default`} disabled>
                   Exportar EPUB (Próximamente)
                </button>
