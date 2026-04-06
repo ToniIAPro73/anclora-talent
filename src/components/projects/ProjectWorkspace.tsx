@@ -47,6 +47,7 @@ export function ProjectWorkspace({
   copy: AppMessages['project'];
 }) {
   const [activeStep, setActiveStep] = useState(1);
+  const [isAdvancedCover, setIsAdvancedCover] = useState(false);
   const [activeChapterId, setActiveChapterId] = useState(
     project.document.chapters[0]?.id ?? '',
   );
