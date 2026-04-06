@@ -6,6 +6,7 @@ import { Stepper, type Step } from '@/components/ui/Stepper';
 import { ChapterOrganizer } from './ChapterOrganizer';
 import { RichTextEditor } from './RichTextEditor';
 import { CoverForm } from './CoverForm';
+import { AdvancedCoverEditor } from './advanced-cover/AdvancedCoverEditor';
 import { BackCoverForm } from './BackCoverForm';
 import { PreviewCanvas } from './PreviewCanvas';
 import { TemplateSelector } from './TemplateSelector';
