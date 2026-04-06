@@ -165,6 +165,7 @@ function mapRowsToProject(
 }
 
 type ProjectGraphWriter = Pick<ReturnType<typeof getDb>, 'insert' | 'update' | 'delete'>;
+type ProjectGraphWriterWithQuery = ReturnType<typeof getDb>;
 
 function toBlockRows(projectDocumentId: string, chapters: DocumentChapter[], timestamp: string) {
   return chapters.flatMap((chapter) =>
@@ -254,7 +255,7 @@ export async function persistProjectGraph(db: ProjectGraphWriter, project: Proje
   }
 }
 
-export async function persistDocumentUpdate(db: ProjectGraphWriter, nextProject: ProjectRecord) {
+export async function persistDocumentUpdate(db: ProjectGraphWriterWithQuery, nextProject: ProjectRecord) {
   await db
     .update(projects)
     .set({
@@ -297,9 +298,29 @@ export async function persistDocumentUpdate(db: ProjectGraphWriter, nextProject:
     })
     .where(eq(coverDesigns.projectId, nextProject.id));
 
-  await db
-    .update(backCoverDesigns)
-    .set({
+  // Check if back cover exists, INSERT if missing (for projects created before back_cover_designs feature)
+  const existingBackCover = await db.query.backCoverDesigns.findFirst({
+    where: eq(backCoverDesigns.projectId, nextProject.id),
+  });
+
+  if (existingBackCover) {
+    await db
+      .update(backCoverDesigns)
+      .set({
+        title: nextProject.backCover.title,
+        body: nextProject.backCover.body,
+        authorBio: nextProject.backCover.authorBio,
+        accentColor: nextProject.backCover.accentColor,
+        backgroundImageUrl: nextProject.backCover.backgroundImageUrl,
+        renderedImageUrl: nextProject.backCover.renderedImageUrl,
+        updatedAt: new Date(nextProject.updatedAt),
+      })
+      .where(eq(backCoverDesigns.projectId, nextProject.id));
+  } else {
+    // Create new back cover with default values if it doesn't exist
+    await db.insert(backCoverDesigns).values({
+      id: randomUUID(),
+      projectId: nextProject.id,
       title: nextProject.backCover.title,
       body: nextProject.backCover.body,
       authorBio: nextProject.backCover.authorBio,
@@ -307,8 +328,8 @@ export async function persistDocumentUpdate(db: ProjectGraphWriter, nextProject:
       backgroundImageUrl: nextProject.backCover.backgroundImageUrl,
       renderedImageUrl: nextProject.backCover.renderedImageUrl,
       updatedAt: new Date(nextProject.updatedAt),
-    })
-    .where(eq(backCoverDesigns.projectId, nextProject.id));
+    });
+  }
 }
 
 async function listProjectsFromDb(userId: string) {
