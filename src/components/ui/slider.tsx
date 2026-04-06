@@ -1,23 +1,23 @@
 import { forwardRef, InputHTMLAttributes } from 'react';
 
-interface SliderProps extends InputHTMLAttributes<HTMLInputElement> {
+interface SliderProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
   min?: number;
   max?: number;
   step?: number;
-  value?: number;
-  onChange?: (value: number) => void;
+  value?: number[];
+  onValueChange?: (value: number[]) => void;
 }
 
 const Slider = forwardRef<HTMLInputElement, SliderProps>(
-  ({ className = '', min = 0, max = 100, step = 1, value, onChange, ...props }, ref) => (
+  ({ className = '', min = 0, max = 100, step = 1, value, onValueChange, ...props }, ref) => (
     <input
       ref={ref}
       type="range"
       min={min}
       max={max}
       step={step}
-      value={value}
-      onChange={(e) => onChange?.(Number(e.target.value))}
+      value={value?.[0] ?? 0}
+      onChange={(e) => onValueChange?.([Number(e.target.value)])}
       className={`
         w-full h-2 bg-[var(--surface-soft)] rounded-lg appearance-none cursor-pointer
         accent-[var(--accent)]
