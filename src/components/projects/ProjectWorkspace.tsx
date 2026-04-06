@@ -52,6 +52,7 @@ export function ProjectWorkspace({
   const [activeChapterId, setActiveChapterId] = useState(
     project.document.chapters[0]?.id ?? '',
   );
+  const [selectedTemplate, setSelectedTemplate] = useState(project.cover.palette);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [isPending, startTransition] = useTransition();
 
@@ -81,6 +82,9 @@ export function ProjectWorkspace({
   };
 
   const handleTemplateSelect = (templateId: string) => {
+    // Optimistic update
+    setSelectedTemplate(templateId);
+
     const formData = new FormData();
     formData.set('projectId', project.id);
     formData.set('title', project.cover.title);
@@ -195,7 +199,7 @@ export function ProjectWorkspace({
         return (
           <div className="mx-auto max-w-5xl">
             <TemplateSelector
-              selectedTemplateId={project.cover.palette}
+              selectedTemplateId={selectedTemplate}
               onSelect={handleTemplateSelect}
               copy={copy}
             />
@@ -240,10 +244,10 @@ export function ProjectWorkspace({
               Tu proyecto está listo para ser publicado. Elige el formato de salida deseado.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
-               <SubmitButton className={`${premiumPrimaryDarkButton} px-8`}>
-                  {copy.previewExportPdfButton} (PDF)
+               <SubmitButton className={`${premiumPrimaryDarkButton} px-8 cursor-pointer hover:cursor-pointer`}>
+                  Exportar formato PDF
                </SubmitButton>
-               <button className={`${premiumSecondaryLightButton} px-8`} disabled>
+               <button className={`${premiumSecondaryLightButton} px-8 opacity-30 cursor-default`} disabled>
                   Exportar EPUB (Próximamente)
                </button>
             </div>
@@ -306,14 +310,14 @@ export function ProjectWorkspace({
               <button
                 onClick={() => setActiveStep(prev => Math.max(1, prev - 1))}
                 disabled={activeStep === 1}
-                className={`${premiumSecondaryLightButton} w-full py-3 text-xs disabled:opacity-30`}
+                className={`${premiumSecondaryLightButton} w-full py-3 text-xs disabled:opacity-30 disabled:cursor-default cursor-pointer`}
               >
                  Paso anterior
               </button>
               <button
                 onClick={() => setActiveStep(prev => Math.min(9, prev + 1))}
                 disabled={activeStep === 9}
-                className={`${premiumPrimaryDarkButton} w-full py-3 text-xs disabled:opacity-30`}
+                className={`${premiumPrimaryDarkButton} w-full py-3 text-xs disabled:opacity-30 disabled:cursor-default cursor-pointer`}
               >
                  Siguiente paso
               </button>

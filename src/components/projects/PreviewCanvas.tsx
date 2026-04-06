@@ -337,7 +337,8 @@ export function PreviewCanvas({
 
   return (
     <div className="space-y-4">
-      <EditorialMapPanel copy={copy} pageSummaries={pageSummaries} project={project} />
+      {/* Editorial Map Panel hidden - uncomment to show */}
+      {/* <EditorialMapPanel copy={copy} pageSummaries={pageSummaries} project={project} /> */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-1">
           <button
