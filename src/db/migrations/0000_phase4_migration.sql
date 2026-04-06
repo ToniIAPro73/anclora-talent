@@ -125,7 +125,8 @@ ALTER TABLE "cover_designs"
 	ADD COLUMN IF NOT EXISTS "layout" varchar(32),
 	ADD COLUMN IF NOT EXISTS "font_family" varchar(255),
 	ADD COLUMN IF NOT EXISTS "accent_color" varchar(32),
-	ADD COLUMN IF NOT EXISTS "rendered_image_url" text;
+	ADD COLUMN IF NOT EXISTS "rendered_image_url" text,
+	ADD COLUMN IF NOT EXISTS "show_subtitle" integer DEFAULT 1;
 --> statement-breakpoint
 ALTER TABLE "project_documents"
 	ADD COLUMN IF NOT EXISTS "source_metadata" jsonb;
