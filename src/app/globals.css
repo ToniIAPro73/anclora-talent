@@ -3,7 +3,7 @@
 :root,
 html[data-theme="dark"] {
   /* ── Surfaces ── */
-  --background: #0C141E;
+  --background: #0b313f;
   --surface: #111C28;
   --card: #162535;
   --elevated: #1C2E40;
@@ -16,6 +16,7 @@ html[data-theme="dark"] {
   --accent-soft: rgba(74, 159, 216, 0.12);
   --accent-glow: rgba(74, 159, 216, 0.10);
   --accent-border: rgba(74, 159, 216, 0.30);
+  --accent-mint: #c49a24;
 
   /* ── Secondary (pale blue) ── */
   --secondary: #A0D0F0;
@@ -57,7 +58,7 @@ html[data-theme="dark"] {
   /* ── Surfaces composed ── */
   --surface-soft: rgba(14, 24, 37, 0.72);
   --surface-highlight: linear-gradient(135deg, rgba(74, 159, 216, 0.18) 0%, rgba(22, 37, 53, 0.84) 100%);
-  --surface-elevated: linear-gradient(180deg, rgba(28, 46, 64, 0.96) 0%, rgba(12, 20, 30, 0.98) 100%);
+  --surface-elevated: linear-gradient(180deg, rgba(18, 74, 80, 0.96) 0%, rgba(7, 37, 47, 0.98) 100%);
   --shell-surface: radial-gradient(circle at top left, rgba(74, 159, 216, 0.12), transparent 34%),
     linear-gradient(180deg, rgba(12, 20, 30, 0.95) 0%, rgba(14, 24, 37, 0.98) 100%);
   --shell-main-surface: radial-gradient(circle at top, rgba(74, 159, 216, 0.08), transparent 28%),
@@ -76,11 +77,11 @@ html[data-theme="dark"] {
 
   /* ── Buttons ── */
   --button-highlight-bg: var(--accent);
-  --button-highlight-fg: #FFFFFF;
+  --button-highlight-fg: #050b12;
   --button-highlight-hover: var(--accent-hover);
-  --button-highlight-border: rgba(74, 159, 216, 0.24);
+  --button-highlight-border: rgba(5, 11, 18, 0.24);
   --button-primary-bg: #0C141E;
-  --button-primary-fg: #EDF2F8;
+  --button-primary-fg: #fffdf8;
   --button-primary-hover: #1C2E40;
   --button-primary-border: rgba(74, 159, 216, 0.16);
   --button-secondary-bg: rgba(14, 24, 37, 0.68);
@@ -174,14 +175,14 @@ html[data-theme="light"] {
 
   /* ── Buttons ── */
   --button-highlight-bg: #3A88BE;
-  --button-highlight-fg: #FFFFFF;
+  --button-highlight-fg: #050b12;
   --button-highlight-hover: #2E78A8;
   --button-highlight-border: rgba(12, 24, 32, 0.14);
-  --button-primary-bg: #1C2E40;
-  --button-primary-fg: #FFFFFF;
+  --button-primary-bg: #124a50;
+  --button-primary-fg: #fffdf8;
   --button-primary-hover: #0C141E;
   --button-primary-border: rgba(58, 136, 190, 0.12);
-  --button-secondary-bg: rgba(255, 255, 255, 0.92);
+  --button-secondary-bg: rgba(255, 253, 248, 0.92);
   --button-secondary-fg: #0C1820;
   --button-secondary-border: rgba(12, 24, 32, 0.24);
   --button-secondary-hover-bg: rgba(255, 255, 255, 0.98);

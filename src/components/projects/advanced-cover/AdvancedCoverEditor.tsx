@@ -7,6 +7,7 @@ import { CoverCanvas } from './Canvas';
 import { CoverToolbar } from './Toolbar';
 import { CoverPropertyPanel } from './PropertyPanel';
 import { renderCoverImageAction, saveProjectCoverAction } from '@/lib/projects/actions';
+import { resizeImage } from '@/lib/ui/images';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import type { CoverDesign, ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
@@ -50,7 +51,7 @@ export function AdvancedCoverEditor({
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const formData = new FormData();
     formData.set('projectId', project.id);
     formData.set('title', title);
@@ -63,7 +64,14 @@ export function AdvancedCoverEditor({
     formData.set('currentThumbnailUrl', project.cover.thumbnailUrl ?? '');
 
     const file = fileInputRef.current?.files?.[0];
-    if (file) formData.set('backgroundImage', file);
+    if (file) {
+      if (file.size > 4 * 1024 * 1024) {
+        const compressed = await resizeImage(file);
+        formData.set('backgroundImage', compressed, 'cover.jpg');
+      } else {
+        formData.set('backgroundImage', file);
+      }
+    }
 
     startTransition(async () => {
       await saveProjectCoverAction(formData);
