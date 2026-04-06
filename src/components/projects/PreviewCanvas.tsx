@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { BookOpen, ChevronLeft, ChevronRight, FileText, List } from 'lucide-react';
 import type { DocumentBlock, ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
-import { EditorialMapPanel } from './EditorialMapPanel';
+import { PreviewModal } from './PreviewModal';
 
 const paletteMap = {
   obsidian: 'from-[#0b133f] via-[#0b233f] to-[#07252f] text-[#f2e3b3]',
@@ -298,6 +298,19 @@ export function PreviewCanvas({
   copy: AppMessages['project'];
   project: ProjectRecord;
 }) {
+  const [showAdvancedPreview, setShowAdvancedPreview] = useState(false);
+
+  // Show advanced preview modal if requested
+  if (showAdvancedPreview) {
+    return (
+      <PreviewModal
+        project={project}
+        copy={copy}
+        onClose={() => setShowAdvancedPreview(false)}
+      />
+    );
+  }
+
   const pages = useMemo(() => buildPages(project), [project]);
   const pageSummaries = useMemo(
     () =>
@@ -353,6 +366,17 @@ export function PreviewCanvas({
 
   return (
     <div className="flex flex-col gap-4 h-full">
+      {/* Advanced Preview Button */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => setShowAdvancedPreview(true)}
+          className="inline-flex min-h-10 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] px-4 py-2 text-sm font-bold !text-[var(--button-primary-fg)] shadow-[var(--shadow-soft)] transition hover:bg-[var(--button-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--button-primary-bg)] focus-visible:ring-offset-2"
+        >
+          <BookOpen className="h-4 w-4" />
+          Vista previa avanzada
+        </button>
+      </div>
+
       {/* Header with Controls */}
       <div className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-4 shadow-[var(--shadow-soft)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
