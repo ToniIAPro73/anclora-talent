@@ -1,7 +1,11 @@
+'use client';
+
+import { useRef, useState, useTransition } from 'react';
+import { Check, Loader2 } from 'lucide-react';
 import { saveProjectCoverAction } from '@/lib/projects/actions';
+import { resizeImage } from '@/lib/ui/images';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
-import { SubmitButton } from '@/components/ui/SubmitButton';
 import type { AppMessages } from '@/lib/i18n/messages';
 
 const previewClasses = {
@@ -11,8 +15,29 @@ const previewClasses = {
 };
 
 export function CoverForm({ copy, project }: { copy: AppMessages['project']; project: ProjectRecord }) {
+  const [isPending, startTransition] = useTransition();
+  const [saved, setSaved] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const file = formData.get('backgroundImage');
+
+    if (file instanceof File && file.size > 4 * 1024 * 1024) {
+      const compressed = await resizeImage(file);
+      formData.set('backgroundImage', compressed, 'cover.jpg');
+    }
+
+    startTransition(async () => {
+      await saveProjectCoverAction(formData);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    });
+  };
+
   return (
-    <form action={saveProjectCoverAction} className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
+    <form ref={formRef} onSubmit={handleSubmit} className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
       <input type="hidden" name="projectId" value={project.id} />
       <input type="hidden" name="currentBackgroundImageUrl" value={project.cover.backgroundImageUrl ?? ''} />
       <input type="hidden" name="currentThumbnailUrl" value={project.cover.thumbnailUrl ?? ''} />
@@ -39,9 +64,23 @@ export function CoverForm({ copy, project }: { copy: AppMessages['project']; pro
           <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverBackgroundLabel}</span>
           <input type="file" name="backgroundImage" accept="image/*" className="block w-full text-sm text-[var(--text-secondary)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--button-highlight-bg)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--button-highlight-fg)]" />
         </label>
-        <SubmitButton className={`${premiumPrimaryDarkButton} px-5`}>
-          {copy.coverSave}
-        </SubmitButton>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="submit"
+            disabled={isPending}
+            className={`${premiumPrimaryDarkButton} px-5 disabled:opacity-60`}
+          >
+            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {copy.coverSave}
+          </button>
+          {saved && !isPending && (
+            <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]">
+              <Check className="h-3 w-3" />
+              Guardado
+            </span>
+          )}
+        </div>
       </section>
 
       <section className={`rounded-[32px] border border-[var(--border-subtle)] bg-gradient-to-br p-8 shadow-[var(--shadow-soft)] ${previewClasses[project.cover.palette]}`}>
