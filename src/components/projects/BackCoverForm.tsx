@@ -1,3 +1,5 @@
+'use client';
+
 import { saveBackCoverAction } from '@/lib/projects/actions';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
@@ -6,8 +8,6 @@ import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 
 const ACCENT_PRESETS = ['#d4af37', '#4fd1c5', '#f6a35c', '#a78bfa', '#f87171', '#34d399'];
-
-'use client';
 
 export function BackCoverForm({ copy, project }: { copy: AppMessages['project']; project: ProjectRecord }) {
   const bc = project.backCover;
