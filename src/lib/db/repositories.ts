@@ -500,10 +500,30 @@ async function saveRenderedBackCoverUrlInDb(userId: string, projectId: string, r
     throw new Error('Project not found');
   }
 
-  await db
-    .update(backCoverDesigns)
-    .set({ renderedImageUrl, updatedAt: new Date() })
-    .where(eq(backCoverDesigns.projectId, projectId));
+  // Check if back cover exists
+  const existing = await db.query.backCoverDesigns.findFirst({
+    where: eq(backCoverDesigns.projectId, projectId),
+  });
+
+  if (existing) {
+    await db
+      .update(backCoverDesigns)
+      .set({ renderedImageUrl, updatedAt: new Date() })
+      .where(eq(backCoverDesigns.projectId, projectId));
+  } else {
+    // Create new back cover with default values if it doesn't exist
+    await db.insert(backCoverDesigns).values({
+      id: randomUUID(),
+      projectId,
+      title: current.backCover.title,
+      body: current.backCover.body,
+      authorBio: current.backCover.authorBio,
+      accentColor: current.backCover.accentColor,
+      backgroundImageUrl: current.backCover.backgroundImageUrl,
+      renderedImageUrl,
+      updatedAt: new Date(),
+    });
+  }
 
   return { ...current, backCover: { ...current.backCover, renderedImageUrl } };
 }
@@ -684,17 +704,37 @@ async function saveBackCoverInDb(
 
   const nextProject = updateProjectBackCover(current, input);
 
-  await db
-    .update(backCoverDesigns)
-    .set({
+  // Check if back cover exists
+  const existing = await db.query.backCoverDesigns.findFirst({
+    where: eq(backCoverDesigns.projectId, projectId),
+  });
+
+  if (existing) {
+    await db
+      .update(backCoverDesigns)
+      .set({
+        title: nextProject.backCover.title,
+        body: nextProject.backCover.body,
+        authorBio: nextProject.backCover.authorBio,
+        accentColor: nextProject.backCover.accentColor,
+        backgroundImageUrl: nextProject.backCover.backgroundImageUrl,
+        updatedAt: new Date(nextProject.updatedAt),
+      })
+      .where(eq(backCoverDesigns.projectId, projectId));
+  } else {
+    // Create new back cover if it doesn't exist
+    await db.insert(backCoverDesigns).values({
+      id: randomUUID(),
+      projectId,
       title: nextProject.backCover.title,
       body: nextProject.backCover.body,
       authorBio: nextProject.backCover.authorBio,
       accentColor: nextProject.backCover.accentColor,
       backgroundImageUrl: nextProject.backCover.backgroundImageUrl,
+      renderedImageUrl: nextProject.backCover.renderedImageUrl,
       updatedAt: new Date(nextProject.updatedAt),
-    })
-    .where(eq(backCoverDesigns.projectId, projectId));
+    });
+  }
 
   return nextProject;
 }
