@@ -141,3 +141,5 @@ export const BackCoverCanvas = forwardRef<HTMLDivElement, {
     </div>
   );
 });
+
+BackCoverCanvas.displayName = 'BackCoverCanvas';
