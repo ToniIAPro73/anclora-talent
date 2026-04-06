@@ -7,16 +7,16 @@ async function build() {
   try {
     console.log('🔄 Running database migrations...');
 
-    // Run migrations using drizzle-kit
+    // Run direct SQL migrations
     try {
-      execSync('npx drizzle-kit push --config drizzle.config.ts', {
+      execSync('node scripts/ensure-migrations.js', {
         stdio: 'inherit',
         cwd: path.resolve(__dirname, '..')
       });
-      console.log('✅ Migrations completed successfully');
     } catch (error) {
-      // Drizzle-kit may exit with non-zero if no new migrations, that's OK
-      console.log('⚠️  Migration check completed (no new migrations needed)');
+      console.error('⚠️  Migration warning:', error.message);
+      // Continue with build even if migrations have issues
+      // (they may already be applied)
     }
 
     console.log('🏗️  Building Next.js application...');
