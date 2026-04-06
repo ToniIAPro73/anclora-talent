@@ -18,7 +18,7 @@ export function BrandLogo({
       aria-hidden="true"
     >
       <Image
-        src={TALENT_BRAND.logoPath}
+        src="/brand/logo-anclora-talent.png"
         alt={TALENT_BRAND.name}
         width={size}
         height={size}
