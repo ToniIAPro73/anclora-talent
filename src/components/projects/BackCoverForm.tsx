@@ -1,13 +1,17 @@
 import { saveBackCoverAction } from '@/lib/projects/actions';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
+import { useState } from 'react';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 
 const ACCENT_PRESETS = ['#d4af37', '#4fd1c5', '#f6a35c', '#a78bfa', '#f87171', '#34d399'];
 
+'use client';
+
 export function BackCoverForm({ copy, project }: { copy: AppMessages['project']; project: ProjectRecord }) {
   const bc = project.backCover;
+  const [accentColor, setAccentColor] = useState(bc.accentColor ?? ACCENT_PRESETS[0]);
 
   return (
     <form action={saveBackCoverAction} className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
@@ -54,20 +58,24 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
           <div className="flex flex-wrap items-center gap-2">
             {ACCENT_PRESETS.map((color) => (
               <label key={color} className="cursor-pointer">
-                <input type="radio" name="accentColor" value={color} defaultChecked={bc.accentColor === color} className="sr-only" />
+                <input
+                  type="radio"
+                  name="accentColor"
+                  value={color}
+                  checked={accentColor === color}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  className="sr-only"
+                />
                 <span
-                  className="block h-7 w-7 rounded-full border-2 border-transparent transition hover:scale-110"
+                  className={`block h-7 w-7 rounded-full transition hover:scale-110 ${
+                    accentColor === color ? 'border-2 border-[var(--text-primary)] scale-110' : 'border-2 border-transparent'
+                  }`}
                   style={{ background: color }}
                   title={color}
                 />
               </label>
             ))}
           </div>
-          <input
-            type="hidden"
-            name="accentColor"
-            defaultValue={bc.accentColor ?? ACCENT_PRESETS[0]}
-          />
         </div>
 
         <label className="block space-y-2">
@@ -106,14 +114,14 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
             {bc.authorBio && (
               <div
                 className="border-l-4 pl-4 text-sm leading-7 opacity-70"
-                style={{ borderColor: bc.accentColor ?? '#d4af37' }}
+                style={{ borderColor: accentColor }}
               >
                 {bc.authorBio}
               </div>
             )}
           </div>
           <div className="mt-10">
-            <div className="h-px w-16 opacity-40" style={{ background: bc.accentColor ?? '#d4af37' }} />
+            <div className="h-px w-16 opacity-40" style={{ background: accentColor }} />
             <p className="mt-4 text-xl font-black tracking-tight">{bc.title}</p>
           </div>
         </div>

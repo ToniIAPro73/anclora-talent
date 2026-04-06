@@ -27,7 +27,9 @@ export function Stepper({ steps, activeStep, onStepClick }: StepperProps) {
                 type="button"
                 onClick={() => onStepClick?.(step.id)}
                 disabled={step.status === 'pending' && step.id > activeStep + 1}
-                className="relative flex items-center justify-center"
+                className={`relative flex items-center justify-center ${
+                  step.status === 'pending' && step.id > activeStep + 1 ? '' : 'cursor-pointer'
+                }`}
                 aria-current={step.id === activeStep ? 'step' : undefined}
               >
                 {/* Connector Line */}

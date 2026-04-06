@@ -452,7 +452,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       stepTemplate: 'Plantilla',
       stepCover: 'Portada',
       stepBackCover: 'Contraportada',
-      stepPreview: 'Vista Previa',
+      stepPreview: 'PREVIEW',
       stepCollaborate: 'Colaborar',
       stepAI: 'IA',
       stepExport: 'Exportar',
