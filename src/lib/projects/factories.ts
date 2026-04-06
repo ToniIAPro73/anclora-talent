@@ -111,6 +111,7 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
       fontFamily: null,
       accentColor: null,
       renderedImageUrl: null,
+      showSubtitle: true,
     },
     backCover: {
       id: randomUUID(),

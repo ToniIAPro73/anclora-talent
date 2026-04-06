@@ -46,10 +46,11 @@ export interface CoverDesign {
   palette: 'obsidian' | 'teal' | 'sand';
   backgroundImageUrl: string | null;
   thumbnailUrl: string | null;
-  layout?: 'centered' | 'top' | 'bottom' | 'split';
+  layout?: 'centered' | 'top' | 'bottom' | 'overlay-centered' | 'overlay-bottom' | 'image-only' | 'minimalist';
   fontFamily?: string | null;
   accentColor?: string | null;
   renderedImageUrl?: string | null;
+  showSubtitle?: boolean;
 }
 
 export interface BackCoverDesign {
@@ -153,6 +154,7 @@ export interface UpdateCoverInput {
   layout?: CoverDesign['layout'];
   fontFamily?: string | null;
   accentColor?: string | null;
+  showSubtitle?: boolean;
 }
 
 export interface UpdateBackCoverInput {

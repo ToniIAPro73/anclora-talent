@@ -141,6 +141,7 @@ function mapRowsToProject(
       fontFamily: coverRow.fontFamily,
       accentColor: coverRow.accentColor,
       renderedImageUrl: coverRow.renderedImageUrl,
+      showSubtitle: coverRow.showSubtitle ? Boolean(coverRow.showSubtitle) : true,
     },
     backCover: {
       id: backCoverRow?.id ?? randomUUID(),
@@ -221,6 +222,7 @@ export async function persistProjectGraph(db: ProjectGraphWriter, project: Proje
     fontFamily: project.cover.fontFamily,
     accentColor: project.cover.accentColor,
     renderedImageUrl: project.cover.renderedImageUrl,
+    showSubtitle: project.cover.showSubtitle ? 1 : 0,
     updatedAt: new Date(project.updatedAt),
   });
 
@@ -290,6 +292,7 @@ export async function persistDocumentUpdate(db: ProjectGraphWriter, nextProject:
       fontFamily: nextProject.cover.fontFamily,
       accentColor: nextProject.cover.accentColor,
       renderedImageUrl: nextProject.cover.renderedImageUrl,
+      showSubtitle: nextProject.cover.showSubtitle ? 1 : 0,
       updatedAt: new Date(nextProject.updatedAt),
     })
     .where(eq(coverDesigns.projectId, nextProject.id));
@@ -453,6 +456,7 @@ async function saveCoverInDb(userId: string, projectId: string, input: UpdateCov
       layout: nextProject.cover.layout ?? null,
       fontFamily: nextProject.cover.fontFamily ?? null,
       accentColor: nextProject.cover.accentColor ?? null,
+      showSubtitle: nextProject.cover.showSubtitle ? 1 : 0,
       updatedAt: new Date(nextProject.updatedAt),
     })
     .where(eq(coverDesigns.projectId, projectId));
@@ -484,6 +488,34 @@ async function saveRenderedCoverUrlInMemory(userId: string, projectId: string, r
   }
 
   const next = { ...current, cover: { ...current.cover, renderedImageUrl } };
+  getMemoryStore().set(projectId, next);
+  return next;
+}
+
+async function saveRenderedBackCoverUrlInDb(userId: string, projectId: string, renderedImageUrl: string) {
+  const db = getDb();
+  const current = await getProjectFromDb(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  await db
+    .update(backCoverDesigns)
+    .set({ renderedImageUrl, updatedAt: new Date() })
+    .where(eq(backCoverDesigns.projectId, projectId));
+
+  return { ...current, backCover: { ...current.backCover, renderedImageUrl } };
+}
+
+async function saveRenderedBackCoverUrlInMemory(userId: string, projectId: string, renderedImageUrl: string) {
+  const current = await getProjectFromMemory(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  const next = { ...current, backCover: { ...current.backCover, renderedImageUrl } };
   getMemoryStore().set(projectId, next);
   return next;
 }
@@ -713,6 +745,11 @@ export const projectRepository = {
     return hasDatabase()
       ? saveRenderedCoverUrlInDb(userId, projectId, renderedImageUrl)
       : saveRenderedCoverUrlInMemory(userId, projectId, renderedImageUrl);
+  },
+  saveRenderedBackCoverUrl(userId: string, projectId: string, renderedImageUrl: string) {
+    return hasDatabase()
+      ? saveRenderedBackCoverUrlInDb(userId, projectId, renderedImageUrl)
+      : saveRenderedBackCoverUrlInMemory(userId, projectId, renderedImageUrl);
   },
   moveChapter(userId: string, projectId: string, chapterId: string, direction: 'up' | 'down') {
     return hasDatabase()

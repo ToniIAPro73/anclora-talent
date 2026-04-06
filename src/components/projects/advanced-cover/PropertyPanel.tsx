@@ -18,11 +18,13 @@ export function CoverPropertyPanel({
   palette,
   fontFamily,
   accentColor,
+  showSubtitle = true,
   onTitleChange,
   onSubtitleChange,
   onPaletteChange,
   onFontChange,
   onAccentChange,
+  onShowSubtitleChange,
 }: {
   copy: AppMessages['project'];
   title: string;
@@ -30,11 +32,13 @@ export function CoverPropertyPanel({
   palette: CoverDesign['palette'];
   fontFamily: string;
   accentColor: string;
+  showSubtitle?: boolean;
   onTitleChange: (v: string) => void;
   onSubtitleChange: (v: string) => void;
   onPaletteChange: (v: CoverDesign['palette']) => void;
   onFontChange: (v: string) => void;
   onAccentChange: (v: string) => void;
+  onShowSubtitleChange?: (v: boolean) => void;
 }) {
   return (
     <div className="space-y-5">
@@ -48,12 +52,27 @@ export function CoverPropertyPanel({
       </label>
 
       <label className="block space-y-2">
-        <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverSubtitleLabel}</span>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverSubtitleLabel}</span>
+          <button
+            type="button"
+            onClick={() => onShowSubtitleChange?.(!showSubtitle)}
+            className={`px-2 py-1 text-xs font-semibold rounded-[8px] transition ${
+              showSubtitle
+                ? 'bg-[var(--button-highlight-bg)] text-[var(--button-highlight-fg)]'
+                : 'bg-[var(--surface-soft)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            }`}
+            title={showSubtitle ? 'Hide subtitle' : 'Show subtitle'}
+          >
+            {showSubtitle ? 'Visible' : 'Oculto'}
+          </button>
+        </div>
         <textarea
           value={subtitle}
           onChange={(e) => onSubtitleChange(e.target.value)}
+          disabled={!showSubtitle}
           rows={3}
-          className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+          className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)] disabled:opacity-50"
         />
       </label>
 

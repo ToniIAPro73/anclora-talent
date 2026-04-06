@@ -2,7 +2,7 @@
 
 /**
  * Preview Modal - Anclora Talent Premium Edition
- * Complete book preview with paginated view, device selector, and view modes
+ * Full-screen modal for professional book preview with multiple device views
  *
  * Respects:
  * - ANCLORA_PREMIUM_APP_CONTRACT.md (editorial framing, premium motion)
@@ -11,7 +11,7 @@
  * - LOCALIZATION_CONTRACT.md (full i18n coverage)
  */
 
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import {
   X,
   ChevronLeft,
@@ -24,6 +24,7 @@ import {
   Tablet,
   Smartphone,
   Eye,
+  ChevronDown,
 } from 'lucide-react';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
@@ -35,6 +36,7 @@ import {
   type PreviewFormat,
 } from '@/lib/preview/device-configs';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
+import { DeviceFrame } from './DeviceViewers';
 
 
 interface PreviewModalProps {
@@ -52,8 +54,20 @@ export function PreviewModal({
   const [currentPage, setCurrentPage] = useState(0);
   const [viewMode, setViewMode] = useState<'single' | 'spread'>('single');
   const [format, setFormat] = useState<PreviewFormat>('laptop');
-  const [zoom, setZoom] = useState(75);
+  const [zoom, setZoom] = useState(100);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showTableOfContents, setShowTableOfContents] = useState(true);
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   // Generate pages based on selected format
   const pages = useMemo(() => {
@@ -111,18 +125,20 @@ export function PreviewModal({
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'ArrowLeft') {
+        e.preventDefault();
         prevPage();
       } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
         nextPage();
       } else if (e.key === 'Home') {
+        e.preventDefault();
         goToPage(0);
       } else if (e.key === 'End') {
+        e.preventDefault();
         goToPage(totalPages - 1);
-      } else if (e.key === 'Escape') {
-        onClose();
       }
     },
-    [prevPage, nextPage, goToPage, totalPages, onClose],
+    [prevPage, nextPage, goToPage, totalPages],
   );
 
   // Visible pages based on view mode
@@ -137,6 +153,17 @@ export function PreviewModal({
 
   const preset = FORMAT_PRESETS[format];
 
+  // Generate table of contents from pages
+  const tocEntries = useMemo(() => {
+    return pages
+      .filter(p => p.type === 'content')
+      .map((p, idx) => ({
+        title: p.chapterTitle || `Página ${p.pageNumber || idx + 1}`,
+        pageIndex: idx,
+        pageNumber: p.pageNumber || idx + 1,
+      }));
+  }, [pages]);
+
   return (
     <div
       className="fixed inset-0 z-50 flex flex-col bg-[var(--background)] overflow-hidden"
@@ -145,190 +172,222 @@ export function PreviewModal({
     >
       {/* ═══════════════════════ HEADER ═══════════════════════ */}
       <header className="shrink-0 flex items-center justify-between border-b border-[var(--border-subtle)] px-6 py-4 bg-[var(--page-surface)]">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-1">
           <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className={`${premiumSecondaryLightButton} p-3 text-xs`}
-            title="Toggle índice"
+            onClick={() => setShowTableOfContents(!showTableOfContents)}
+            className={`${premiumSecondaryLightButton} p-3 text-xs flex items-center gap-2 whitespace-nowrap`}
+            title="Toggle table of contents"
           >
             <List className="h-4 w-4" />
+            <span className="text-xs hidden sm:inline">{showTableOfContents ? 'Ocultar' : 'Índice'}</span>
           </button>
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
               {copy.previewEyebrow}
             </p>
-            <h2 className="text-lg font-black flex items-center gap-2 text-[var(--text-primary)]">
-              <Eye className="w-4 h-4" />
-              {project.document.title || 'Proyecto sin título'}
+            <h2 className="text-lg font-black flex items-center gap-2 text-[var(--text-primary)] truncate">
+              <Eye className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">{project.document.title || 'Proyecto sin título'}</span>
             </h2>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onClose}
-            className={`${premiumSecondaryLightButton} p-3 text-xs`}
-            title="Cerrar"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+        <button
+          onClick={onClose}
+          className={`${premiumSecondaryLightButton} p-3 text-xs ml-auto flex-shrink-0`}
+          title="Close preview"
+        >
+          <X className="h-4 w-4" />
+        </button>
       </header>
 
       {/* ═══════════════════════ TOOLBAR ═══════════════════════ */}
-      <div className="shrink-0 flex items-center justify-between border-b border-[var(--border-subtle)] px-6 py-3 bg-[var(--page-surface-muted)]">
-        {/* Zoom controls */}
-        <div className="flex items-center gap-3">
+      <div className="shrink-0 flex items-center justify-between border-b border-[var(--border-subtle)] px-6 py-3 bg-[var(--page-surface-muted)] gap-4 flex-wrap">
+        {/* View mode and device selection */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-1">
+            <button
+              onClick={() => setViewMode('single')}
+              className={`${
+                viewMode === 'single'
+                  ? premiumPrimaryDarkButton
+                  : premiumSecondaryLightButton
+              } px-2 py-1.5 text-xs`}
+              title="Single page view"
+            >
+              <Eye className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('spread')}
+              className={`${
+                viewMode === 'spread'
+                  ? premiumPrimaryDarkButton
+                  : premiumSecondaryLightButton
+              } px-2 py-1.5 text-xs`}
+              title="Two page spread"
+            >
+              <BookOpen className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Separator */}
+          <div className="h-6 border-l border-[var(--border-subtle)]" />
+
+          {/* Device selector */}
+          <div className="flex items-center gap-1 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-1">
+            {(
+              [
+                { format: 'mobile' as const, icon: Smartphone, label: 'Mobile' },
+                { format: 'tablet' as const, icon: Tablet, label: 'Tablet' },
+                { format: 'laptop' as const, icon: Monitor, label: 'Desktop' },
+              ] as const
+            ).map(({ format: fmt, icon: Icon, label }) => (
+              <button
+                key={fmt}
+                onClick={() => setFormat(fmt)}
+                className={`${
+                  format === fmt
+                    ? premiumPrimaryDarkButton
+                    : premiumSecondaryLightButton
+                } px-2 py-1.5 text-xs`}
+                title={label}
+              >
+                <Icon className="h-4 w-4" />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Zoom and pagination controls */}
+        <div className="flex items-center gap-3 ml-auto">
           <button
             onClick={() => setZoom(Math.max(50, zoom - 10))}
             disabled={zoom <= 50}
             className={`${premiumSecondaryLightButton} p-2 text-xs disabled:opacity-50`}
-            title="Reducir zoom"
+            title="Zoom out"
           >
             <ZoomOut className="h-4 w-4" />
           </button>
-          <input
-            type="range"
-            min={50}
-            max={150}
-            step={5}
-            value={zoom}
-            onChange={(e) => setZoom(Number(e.target.value))}
-            className="w-28 accent-[var(--button-primary-bg)] cursor-pointer"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min={50}
+              max={150}
+              step={5}
+              value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
+              className="w-24 accent-[var(--button-primary-bg)] cursor-pointer"
+            />
+            <span className="text-xs text-[var(--text-tertiary)] w-12 text-center">
+              {zoom}%
+            </span>
+          </div>
           <button
             onClick={() => setZoom(Math.min(150, zoom + 10))}
             disabled={zoom >= 150}
             className={`${premiumSecondaryLightButton} p-2 text-xs disabled:opacity-50`}
-            title="Aumentar zoom"
+            title="Zoom in"
           >
             <ZoomIn className="h-4 w-4" />
           </button>
-          <span className="text-xs text-[var(--text-tertiary)] w-10 text-center">
-            {zoom}%
-          </span>
-        </div>
-
-        {/* Separator */}
-        <div className="h-6 border-l border-[var(--border-subtle)]" />
-
-        {/* View mode toggle */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setViewMode('single')}
-            className={`${
-              viewMode === 'single'
-                ? premiumPrimaryDarkButton
-                : premiumSecondaryLightButton
-            } p-2 text-xs`}
-            title="Vista de 1 página"
-          >
-            <Eye className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setViewMode('spread')}
-            className={`${
-              viewMode === 'spread'
-                ? premiumPrimaryDarkButton
-                : premiumSecondaryLightButton
-            } p-2 text-xs`}
-            title="Vista de 2 páginas"
-          >
-            <BookOpen className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* Separator */}
-        <div className="h-6 border-l border-[var(--border-subtle)]" />
-
-        {/* Device selector */}
-        <div className="flex items-center gap-2">
-          {(
-            [
-              { format: 'laptop' as const, icon: Monitor },
-              { format: 'tablet' as const, icon: Tablet },
-              { format: 'mobile' as const, icon: Smartphone },
-            ] as const
-          ).map(({ format: fmt, icon: Icon }) => (
-            <button
-              key={fmt}
-              onClick={() => setFormat(fmt)}
-              className={`${
-                format === fmt
-                  ? premiumPrimaryDarkButton
-                  : premiumSecondaryLightButton
-              } p-2 text-xs`}
-              title={FORMAT_PRESETS[fmt].label}
-            >
-              <Icon className="h-4 w-4" />
-            </button>
-          ))}
         </div>
       </div>
 
-      {/* ═══════════════════════ MAIN CONTENT ═══════════════════════ */}
+      {/* ═══════════════════════ MAIN CONTENT AREA ═══════════════════════ */}
       <div className="flex-1 flex min-h-0 overflow-hidden">
-        {/* Preview area */}
-        <main className="flex-1 flex items-center justify-center bg-[var(--page-surface-muted)] p-4 overflow-auto">
-          <div
-            className="flex transition-all duration-300"
-            style={{
-              gap: viewMode === 'spread' ? '1rem' : '0',
-              transform: `scale(${zoom / 100})`,
-              transformOrigin: 'center center',
-            }}
-          >
-            {visiblePages.length > 0 ? (
-              visiblePages.map((page, idx) => (
-                <PageRenderer
-                  key={`page-${currentPage}-${idx}`}
-                  page={page}
-                  format={format}
-                  project={project}
-                />
-              ))
-            ) : (
-              <div className="flex items-center justify-center text-[var(--text-tertiary)]">
-                <p>No hay contenido para mostrar</p>
-              </div>
-            )}
+        {/* Table of Contents Sidebar */}
+        {showTableOfContents && (
+          <aside className="w-64 border-r border-[var(--border-subtle)] bg-[var(--page-surface)] flex flex-col flex-shrink-0 overflow-hidden">
+            <div className="p-4 border-b border-[var(--border-subtle)] flex-shrink-0">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">
+                Table of Contents
+              </h3>
+            </div>
+            <ul className="space-y-1 overflow-y-auto flex-1 p-4">
+              {tocEntries.map((entry, idx) => (
+                <li key={idx}>
+                  <button
+                    onClick={() => setCurrentPage(entry.pageIndex)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-xs transition line-clamp-2 ${
+                      currentPage === entry.pageIndex
+                        ? 'bg-[var(--accent)] text-white font-semibold'
+                        : 'text-[var(--text-secondary)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    <span className="text-[10px] opacity-70 block">p. {entry.pageNumber}</span>
+                    <span className="block">{entry.title}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        )}
+
+        {/* Preview Area */}
+        <main className="flex-1 flex flex-col bg-[var(--page-surface-muted)] overflow-hidden">
+          {/* Content scrollable area */}
+          <div className="flex-1 flex items-center justify-center overflow-auto p-4">
+            <div
+              className="flex transition-all duration-300"
+              style={{
+                gap: viewMode === 'spread' ? '1.5rem' : '0',
+                transform: `scale(${zoom / 100})`,
+                transformOrigin: 'center center',
+              }}
+              onKeyDown={handleKeyDown}
+            >
+              {visiblePages.length > 0 ? (
+                visiblePages.map((page, idx) => (
+                  <PageRenderer
+                    key={`page-${currentPage}-${idx}`}
+                    page={page}
+                    format={format}
+                    project={project}
+                  />
+                ))
+              ) : (
+                <div className="flex items-center justify-center text-[var(--text-tertiary)] text-center px-6">
+                  <p>No content to display</p>
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* Pagination Bar */}
+          <footer className="shrink-0 flex items-center justify-center gap-4 border-t border-[var(--border-subtle)] px-6 py-3 bg-[var(--page-surface)] flex-wrap">
+            <button
+              onClick={prevPage}
+              disabled={currentPage === 0}
+              className={`${premiumSecondaryLightButton} px-3 py-2 text-xs disabled:opacity-50 flex items-center gap-1`}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Previous</span>
+            </button>
+
+            <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+              <span className="hidden sm:inline">Page</span>
+              <input
+                type="number"
+                min={1}
+                max={totalPages}
+                value={currentPage + 1}
+                onChange={(e) => goToPage(Number(e.target.value) - 1)}
+                className="w-12 text-center border border-[var(--border-subtle)] rounded-lg px-2 py-1 bg-[var(--surface-soft)] text-[var(--text-primary)]"
+              />
+              <span className="text-xs">/ {totalPages}</span>
+            </div>
+
+            <button
+              onClick={nextPage}
+              disabled={currentPage >= totalPages - 1}
+              className={`${premiumSecondaryLightButton} px-3 py-2 text-xs disabled:opacity-50 flex items-center gap-1`}
+            >
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </footer>
         </main>
       </div>
-
-      {/* ═══════════════════════ PAGINATION BAR ═══════════════════════ */}
-      <footer className="shrink-0 flex items-center justify-center gap-6 border-t border-[var(--border-subtle)] px-6 py-4 bg-[var(--page-surface)]">
-        <button
-          onClick={prevPage}
-          disabled={currentPage === 0}
-          className={`${premiumSecondaryLightButton} px-4 py-2 text-xs disabled:opacity-50`}
-        >
-          <ChevronLeft className="h-4 w-4 mr-1 inline" />
-          Anterior
-        </button>
-
-        <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-          <span>Página</span>
-          <input
-            type="number"
-            min={1}
-            max={totalPages}
-            value={currentPage + 1}
-            onChange={(e) => goToPage(Number(e.target.value) - 1)}
-            className="w-16 text-center border border-[var(--border-subtle)] rounded-full px-2 py-1 bg-[var(--surface-soft)] text-[var(--text-primary)]"
-          />
-          <span>de {totalPages}</span>
-        </div>
-
-        <button
-          onClick={nextPage}
-          disabled={currentPage >= totalPages - 1}
-          className={`${premiumSecondaryLightButton} px-4 py-2 text-xs disabled:opacity-50`}
-        >
-          Siguiente
-          <ChevronRight className="h-4 w-4 ml-1 inline" />
-        </button>
-      </footer>
     </div>
   );
 }

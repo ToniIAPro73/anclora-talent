@@ -3,36 +3,31 @@
 import { useRef, useState, useTransition } from 'react';
 import { Check, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { toPng } from 'html-to-image';
-import { CoverCanvas } from './Canvas';
-import { CoverToolbar } from './Toolbar';
-import { CoverPropertyPanel } from './PropertyPanel';
-import { renderCoverImageAction, saveProjectCoverAction } from '@/lib/projects/actions';
+import { BackCoverCanvas } from './BackCoverCanvas';
+import { BackCoverPropertyPanel } from './BackCoverPropertyPanel';
+import { saveBackCoverAction, renderBackCoverImageAction } from '@/lib/projects/actions';
 import { resizeImage } from '@/lib/ui/images';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
-import type { CoverDesign, ProjectRecord } from '@/lib/projects/types';
+import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 
-type Layout = NonNullable<CoverDesign['layout']>;
-
-export function AdvancedCoverEditor({
+export function AdvancedBackCoverEditor({
   project,
   copy,
 }: {
   project: ProjectRecord;
   copy: AppMessages['project'];
 }) {
-  const [title, setTitle] = useState(project.cover.title);
-  const [subtitle, setSubtitle] = useState(project.cover.subtitle);
-  const [palette, setPalette] = useState<CoverDesign['palette']>(project.cover.palette);
-  const [layout, setLayout] = useState<Layout>(project.cover.layout ?? 'centered');
-  const [fontFamily, setFontFamily] = useState(project.cover.fontFamily ?? 'sans');
-  const [accentColor, setAccentColor] = useState(project.cover.accentColor ?? '#d4af37');
-  const [showSubtitle, setShowSubtitle] = useState(project.cover.showSubtitle ?? true);
+  const [title, setTitle] = useState(project.backCover.title);
+  const [body, setBody] = useState(project.backCover.body);
+  const [authorBio, setAuthorBio] = useState(project.backCover.authorBio);
+  const [accentColor, setAccentColor] = useState(project.backCover.accentColor ?? '#d4af37');
+  const [backgroundImageOpacity, setBackgroundImageOpacity] = useState(0.25);
   const [isPending, startTransition] = useTransition();
   const [isRendering, startRenderTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const [rendered, setRendered] = useState(false);
-  const [renderedImageUrl, setRenderedImageUrl] = useState<string | null>(project.cover.renderedImageUrl ?? null);
+  const [renderedImageUrl, setRenderedImageUrl] = useState<string | null>(project.backCover.renderedImageUrl ?? null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -45,7 +40,7 @@ export function AdvancedCoverEditor({
       const formData = new FormData();
       formData.set('projectId', project.id);
       formData.set('dataUrl', dataUrl);
-      await renderCoverImageAction(formData);
+      await renderBackCoverImageAction(formData);
       setRenderedImageUrl(dataUrl);
       setRendered(true);
       setTimeout(() => setRendered(false), 2500);
@@ -56,59 +51,45 @@ export function AdvancedCoverEditor({
     const formData = new FormData();
     formData.set('projectId', project.id);
     formData.set('title', title);
-    formData.set('subtitle', subtitle);
-    formData.set('palette', palette);
-    formData.set('layout', layout);
-    formData.set('fontFamily', fontFamily);
+    formData.set('body', body);
+    formData.set('authorBio', authorBio);
     formData.set('accentColor', accentColor);
-    formData.set('showSubtitle', String(showSubtitle));
-    formData.set('currentBackgroundImageUrl', project.cover.backgroundImageUrl ?? '');
-    formData.set('currentThumbnailUrl', project.cover.thumbnailUrl ?? '');
+    formData.set('currentBackgroundImageUrl', project.backCover.backgroundImageUrl ?? '');
 
     const file = fileInputRef.current?.files?.[0];
     if (file) {
       if (file.size > 4 * 1024 * 1024) {
         const compressed = await resizeImage(file);
-        formData.set('backgroundImage', compressed, 'cover.jpg');
+        formData.set('backgroundImage', compressed, 'back-cover.jpg');
       } else {
         formData.set('backgroundImage', file);
       }
     }
 
     startTransition(async () => {
-      await saveProjectCoverAction(formData);
+      await saveBackCoverAction(formData);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     });
   };
 
   return (
-    <div className="space-y-6" data-testid="advanced-cover-editor">
-      {/* Layout toolbar */}
-      <div className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-5 shadow-[var(--shadow-strong)]">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
-          {copy.advancedCoverEyebrow}
-        </p>
-        <CoverToolbar layout={layout} onLayoutChange={setLayout} />
-      </div>
-
+    <div className="space-y-6" data-testid="advanced-back-cover-editor">
       <div className="grid gap-6 xl:grid-cols-[1fr_1.4fr]">
         {/* Property panel */}
         <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
-          <CoverPropertyPanel
+          <BackCoverPropertyPanel
             copy={copy}
             title={title}
-            subtitle={subtitle}
-            palette={palette}
-            fontFamily={fontFamily}
+            body={body}
+            authorBio={authorBio}
             accentColor={accentColor}
-            showSubtitle={showSubtitle}
+            backgroundImageOpacity={backgroundImageOpacity}
             onTitleChange={setTitle}
-            onSubtitleChange={setSubtitle}
-            onPaletteChange={setPalette}
-            onFontChange={setFontFamily}
+            onBodyChange={setBody}
+            onAuthorBioChange={setAuthorBio}
             onAccentChange={setAccentColor}
-            onShowSubtitleChange={setShowSubtitle}
+            onOpacityChange={setBackgroundImageOpacity}
           />
 
           <label className="mt-5 block space-y-2">
@@ -130,7 +111,7 @@ export function AdvancedCoverEditor({
               className={`${premiumPrimaryDarkButton} px-5 disabled:opacity-60`}
             >
               {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {copy.coverSave}
+              {copy.backCoverSave}
             </button>
             {saved && !isPending && (
               <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]">
@@ -144,18 +125,16 @@ export function AdvancedCoverEditor({
         {/* Live canvas */}
         <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
           <p className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
-            {copy.coverEyebrow}
+            {copy.backCoverEyebrow}
           </p>
-          <CoverCanvas
+          <BackCoverCanvas
             ref={canvasRef}
             title={title}
-            subtitle={subtitle}
-            palette={palette}
-            layout={layout}
-            fontFamily={fontFamily}
+            body={body}
+            authorBio={authorBio}
             accentColor={accentColor}
-            backgroundImageUrl={project.cover.backgroundImageUrl}
-            showSubtitle={showSubtitle}
+            backgroundImageUrl={project.backCover.backgroundImageUrl}
+            backgroundImageOpacity={backgroundImageOpacity}
           />
           <div className="mt-4 flex items-center gap-3">
             <button

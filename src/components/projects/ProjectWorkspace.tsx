@@ -8,6 +8,7 @@ import { RichTextEditor } from './RichTextEditor';
 import { CoverForm } from './CoverForm';
 import { AdvancedCoverEditor } from './advanced-cover/AdvancedCoverEditor';
 import { BackCoverForm } from './BackCoverForm';
+import { AdvancedBackCoverEditor } from './advanced-back-cover/AdvancedBackCoverEditor';
 import { PreviewCanvas } from './PreviewCanvas';
 import { TemplateSelector } from './TemplateSelector';
 import { CollaborationPanel } from './CollaborationPanel';
@@ -49,6 +50,7 @@ export function ProjectWorkspace({
 }) {
   const [activeStep, setActiveStep] = useState(1);
   const [isAdvancedCover, setIsAdvancedCover] = useState(false);
+  const [isAdvancedBackCover, setIsAdvancedBackCover] = useState(false);
   const [activeChapterId, setActiveChapterId] = useState(
     project.document.chapters[0]?.id ?? '',
   );
@@ -225,8 +227,20 @@ export function ProjectWorkspace({
         );
       case 5: // Back Cover
         return (
-          <div className="max-w-4xl mx-auto">
-            <BackCoverForm project={project} copy={copy} />
+          <div className="mx-auto max-w-5xl space-y-6">
+            <div className="flex justify-end">
+              <button
+                onClick={() => setIsAdvancedBackCover(!isAdvancedBackCover)}
+                className={`${premiumSecondaryLightButton} px-4 py-2 text-xs`}
+              >
+                {isAdvancedBackCover ? copy.coverSwitchToBasic : copy.coverSwitchToAdvanced}
+              </button>
+            </div>
+            {isAdvancedBackCover ? (
+              <AdvancedBackCoverEditor project={project} copy={copy} />
+            ) : (
+              <BackCoverForm project={project} copy={copy} />
+            )}
           </div>
         );
       case 6: // Preview
