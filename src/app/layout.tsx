@@ -1,22 +1,14 @@
 import type { Metadata } from 'next';
 import { ClerkProvider } from '@clerk/nextjs';
-import { DM_Sans, JetBrains_Mono } from 'next/font/google';
 import { UiPreferencesProvider } from '@/components/providers/UiPreferencesProvider';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
 import { TALENT_BRAND } from '@/lib/talent-brand';
 import './globals.css';
 
-const dmSans = DM_Sans({
-  variable: '--font-dm-sans',
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: '--font-jetbrains-mono',
-  subsets: ['latin'],
-  weight: ['400'],
-});
+// Use system fonts instead of Google Fonts to avoid network fetch issues during build
+// Google Fonts will load at runtime via CSS if available
+const dmSans = { variable: '--font-dm-sans' };
+const jetbrainsMono = { variable: '--font-jetbrains-mono' };
 
 export const metadata: Metadata = {
   title: `${TALENT_BRAND.name} | Crea y publica proyectos editoriales con claridad`,
