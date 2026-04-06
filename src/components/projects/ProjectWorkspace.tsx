@@ -83,7 +83,7 @@ export function ProjectWorkspace({
 
   const handleTemplateSelect = (templateId: string) => {
     // Optimistic update
-    setSelectedTemplate(templateId);
+    setSelectedTemplate(templateId as 'obsidian' | 'teal' | 'sand');
 
     const formData = new FormData();
     formData.set('projectId', project.id);
