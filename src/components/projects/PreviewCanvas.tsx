@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { BookOpen, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, FileText, List } from 'lucide-react';
 import type { DocumentBlock, ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 import { EditorialMapPanel } from './EditorialMapPanel';
@@ -255,24 +255,38 @@ function PageContent({
 }
 
 function CoverPanel({ project, copy }: { project: ProjectRecord; copy: AppMessages['project'] }) {
+  // Mostrar la portada renderizada si existe, si no, mostrar un fallback
+  const hasCover = project.cover.renderedImageUrl || project.cover.backgroundImageUrl;
+
   return (
     <aside
       data-testid="preview-cover-panel"
       className={`rounded-[32px] border border-[var(--border-subtle)] bg-gradient-to-br p-8 shadow-[var(--shadow-soft)] ${paletteMap[project.cover.palette]}`}
     >
-      <p className="text-xs font-semibold uppercase tracking-[0.28em] opacity-70">{copy.previewCoverEyebrow}</p>
-      <div className="mt-6 rounded-[28px] border border-white/15 bg-black/10 p-6 backdrop-blur">
-        {project.cover.backgroundImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={project.cover.backgroundImageUrl}
-            alt={project.cover.title}
-            className="mb-6 h-56 w-full rounded-[22px] object-cover"
-          />
-        ) : null}
-        <h3 className="text-4xl font-black tracking-tight">{project.cover.title}</h3>
-        <p className="mt-4 text-sm leading-7 opacity-80">{project.cover.subtitle}</p>
-      </div>
+      {project.cover.renderedImageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={project.cover.renderedImageUrl}
+          alt={project.cover.title}
+          className="w-full rounded-[22px] object-cover"
+        />
+      ) : (
+        <>
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] opacity-70">{copy.previewCoverEyebrow}</p>
+          <div className="mt-6 rounded-[28px] border border-white/15 bg-black/10 p-6 backdrop-blur">
+            {project.cover.backgroundImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={project.cover.backgroundImageUrl}
+                alt={project.cover.title}
+                className="mb-6 h-56 w-full rounded-[22px] object-cover"
+              />
+            ) : null}
+            <h3 className="text-4xl font-black tracking-tight">{project.cover.title}</h3>
+            <p className="mt-4 text-sm leading-7 opacity-80">{project.cover.subtitle}</p>
+          </div>
+        </>
+      )}
     </aside>
   );
 }
@@ -335,11 +349,47 @@ export function PreviewCanvas({
     setBookView(false);
   };
 
+  const [showIndex, setShowIndex] = useState(true);
+
   return (
-    <div className="space-y-4">
-      {/* Editorial Map Panel hidden - uncomment to show */}
-      {/* <EditorialMapPanel copy={copy} pageSummaries={pageSummaries} project={project} /> */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex gap-4 h-full">
+      {/* Table of Contents Sidebar */}
+      {showIndex && (
+        <aside className="w-80 rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-5 shadow-[var(--shadow-strong)] overflow-y-auto max-h-[800px]">
+          <div className="flex items-center gap-2 mb-4">
+            <List className="h-4 w-4 text-[var(--accent)]" />
+            <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Índice</h3>
+          </div>
+          <ul className="space-y-2">
+            {pageSummaries.map((summary, idx) => (
+              <li key={idx}>
+                <button
+                  onClick={() => setPageIndex(Math.max(0, summary.pageNumber - 1))}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-xs transition ${
+                    pageIndex === Math.max(0, summary.pageNumber - 1)
+                      ? 'bg-[var(--accent)] text-white font-semibold'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  <span className="text-[10px] opacity-70">p. {summary.pageNumber}</span> {summary.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )}
+
+      <div className="flex-1 space-y-4">
+        {/* Toggle Index Button */}
+        <button
+          onClick={() => setShowIndex(!showIndex)}
+          className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition"
+        >
+          <List className="h-3.5 w-3.5" />
+          {showIndex ? 'Ocultar Índice' : 'Mostrar Índice'}
+        </button>
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-1">
           <button
             onClick={switchToScroll}
@@ -402,11 +452,13 @@ export function PreviewCanvas({
           )}
         </div>
       ) : (
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.75fr)]">
-          <PageContent page={pages[pageIndex] ?? []} project={project} pageIndex={pageIndex} copy={copy} />
-          <CoverPanel project={project} copy={copy} />
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.75fr)]">
+            <PageContent page={pages[pageIndex] ?? []} project={project} pageIndex={pageIndex} copy={copy} />
+            <CoverPanel project={project} copy={copy} />
+          </div>
+        )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
