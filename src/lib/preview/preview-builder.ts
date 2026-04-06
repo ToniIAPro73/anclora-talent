@@ -186,13 +186,16 @@ export function buildPreviewPages(
 function blocksToHtml(blocks: any[]): string {
   return blocks
     .map((block) => {
-      if (block.content.trimStart().startsWith('<')) {
-        return block.content;
+      const content = block.block?.content || block.content || '';
+      const type = block.block?.type || block.type || 'paragraph';
+
+      if (content.trimStart().startsWith('<')) {
+        return content;
       }
 
-      const escaped = escapeHtml(block.content);
-      if (block.type === 'heading') return `<h3>${escaped}</h3>`;
-      if (block.type === 'quote') return `<blockquote><p>${escaped}</p></blockquote>`;
+      const escaped = escapeHtml(content);
+      if (type === 'heading') return `<h3>${escaped}</h3>`;
+      if (type === 'quote') return `<blockquote><p>${escaped}</p></blockquote>`;
       return `<p>${escaped}</p>`;
     })
     .join('');

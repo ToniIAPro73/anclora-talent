@@ -35,7 +35,7 @@ import {
   type PreviewFormat,
 } from '@/lib/preview/device-configs';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
-import { Slider } from '@/components/ui/slider';
+
 
 interface PreviewModalProps {
   project: ProjectRecord;
@@ -187,13 +187,14 @@ export function PreviewModal({
           >
             <ZoomOut className="h-4 w-4" />
           </button>
-          <Slider
-            value={[zoom]}
-            onValueChange={([v]) => setZoom(v)}
+          <input
+            type="range"
             min={50}
             max={150}
             step={5}
-            className="w-28"
+            value={zoom}
+            onChange={(e) => setZoom(Number(e.target.value))}
+            className="w-28 accent-[var(--button-primary-bg)] cursor-pointer"
           />
           <button
             onClick={() => setZoom(Math.min(150, zoom + 10))}
