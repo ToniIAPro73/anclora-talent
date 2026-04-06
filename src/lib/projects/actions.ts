@@ -167,7 +167,11 @@ export async function saveProjectCoverAction(formData: FormData) {
 
   const rawLayout = String(formData.get('layout') ?? '').trim();
   const layout: CoverDesign['layout'] =
-    rawLayout === 'top' || rawLayout === 'bottom' || rawLayout === 'split' ? rawLayout : 'centered';
+    ['top', 'bottom', 'overlay-centered', 'overlay-bottom', 'image-only', 'minimalist'].includes(rawLayout)
+      ? (rawLayout as CoverDesign['layout'])
+      : 'centered';
+
+  const showSubtitle = String(formData.get('showSubtitle') ?? 'true') === 'true';
 
   const input: UpdateCoverInput = {
     title: String(formData.get('title') ?? '').trim(),
@@ -178,6 +182,7 @@ export async function saveProjectCoverAction(formData: FormData) {
     layout,
     fontFamily: String(formData.get('fontFamily') ?? '').trim() || null,
     accentColor: String(formData.get('accentColor') ?? '').trim() || null,
+    showSubtitle,
   };
 
   await projectRepository.saveCover(userId, projectId, input);
@@ -228,6 +233,28 @@ export async function renderCoverImageAction(formData: FormData) {
 
   await projectRepository.saveRenderedCoverUrl(userId, projectId, blob.url);
   revalidatePath(`/projects/${projectId}/cover`);
+  revalidatePath(`/projects/${projectId}/preview`);
+}
+
+export async function renderBackCoverImageAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '').trim();
+  const dataUrl = String(formData.get('dataUrl') ?? '').trim();
+
+  if (!projectId || !dataUrl.startsWith('data:image/')) return;
+
+  // Convert data URL to Buffer then to File for uploadProjectBlob
+  const base64 = dataUrl.split(',')[1];
+  if (!base64) return;
+
+  const buffer = Buffer.from(base64, 'base64');
+  const file = new File([buffer], `back-cover-render-${Date.now()}.png`, { type: 'image/png' });
+
+  const blob = await uploadProjectBlob(projectId, file);
+  if (!blob) return;
+
+  await projectRepository.saveRenderedBackCoverUrl(userId, projectId, blob.url);
+  revalidatePath(`/projects/${projectId}/back-cover`);
   revalidatePath(`/projects/${projectId}/preview`);
 }
 

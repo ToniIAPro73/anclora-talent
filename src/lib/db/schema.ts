@@ -74,6 +74,7 @@ export const coverDesigns = pgTable('cover_designs', {
   fontFamily: varchar('font_family', { length: 255 }),
   accentColor: varchar('accent_color', { length: 32 }),
   renderedImageUrl: text('rendered_image_url'),
+  showSubtitle: integer('show_subtitle').default(1),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

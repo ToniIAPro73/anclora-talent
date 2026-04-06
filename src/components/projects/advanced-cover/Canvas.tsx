@@ -31,6 +31,7 @@ export const CoverCanvas = forwardRef<HTMLDivElement, {
   fontFamily?: string | null;
   accentColor?: string | null;
   backgroundImageUrl?: string | null;
+  showSubtitle?: boolean;
 }>(function CoverCanvas({
   title,
   subtitle,
@@ -39,6 +40,7 @@ export const CoverCanvas = forwardRef<HTMLDivElement, {
   fontFamily,
   accentColor,
   backgroundImageUrl,
+  showSubtitle = true,
 }, ref) {
   const colors = paletteText[palette];
   const font = fontFamily ? (fontFamilyMap[fontFamily] ?? fontFamilyMap.sans) : fontFamilyMap.sans;
@@ -48,8 +50,17 @@ export const CoverCanvas = forwardRef<HTMLDivElement, {
     centered: { justifyContent: 'center', textAlign: 'center', padding: '2rem' },
     top: { justifyContent: 'flex-start', textAlign: 'left', padding: '2.5rem 2rem 2rem' },
     bottom: { justifyContent: 'flex-end', textAlign: 'left', padding: '2rem 2rem 2.5rem' },
-    split: { justifyContent: 'center', textAlign: 'left', padding: '2rem', flexDirection: 'row', alignItems: 'stretch' },
+    'overlay-centered': { justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '2rem' },
+    'overlay-bottom': { justifyContent: 'flex-end', textAlign: 'left', padding: '2rem' },
+    'image-only': { justifyContent: 'flex-end', alignItems: 'flex-end', textAlign: 'left', padding: '2rem' },
+    minimalist: { justifyContent: 'flex-start', alignItems: 'flex-start', textAlign: 'left', padding: '2rem' },
   };
+
+  // Determine if this is an overlay layout
+  const isOverlayLayout = ['overlay-centered', 'overlay-bottom', 'image-only', 'minimalist'].includes(layout);
+
+  // For overlay layouts, image fills the cover. For traditional layouts, image is a subtle background
+  const imageOpacity = isOverlayLayout ? 1 : 0.3;
 
   return (
     <div
@@ -78,36 +89,51 @@ export const CoverCanvas = forwardRef<HTMLDivElement, {
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            opacity: layout === 'split' ? 1 : 0.3,
-            ...(layout === 'split' ? { width: '50%' } : {}),
+            opacity: imageOpacity,
           }}
         />
       )}
 
-      {/* Accent bar */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '4px',
-          background: accent,
-        }}
-      />
+      {/* Dark overlay for overlay layouts to ensure text readability */}
+      {isOverlayLayout && backgroundImageUrl && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.5) 100%)',
+            zIndex: 1,
+          }}
+        />
+      )}
 
-      {/* Text */}
+      {/* Accent bar - only for non-overlay layouts */}
+      {!isOverlayLayout && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '4px',
+            background: accent,
+            zIndex: 2,
+          }}
+        />
+      )}
+
+      {/* Text container */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
           display: 'flex',
-          flexDirection: layout === 'split' ? 'row' : 'column',
+          flexDirection: 'column',
+          zIndex: isOverlayLayout ? 2 : 1,
           ...layoutStyles[layout],
         }}
       >
-        {layout === 'split' && <div style={{ flex: '0 0 50%' }} />}
-        <div style={layout === 'split' ? { flex: 1, padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' } : {}}>
+        {/* Only show label for non-overlay layouts */}
+        {!isOverlayLayout && (
           <div
             style={{
               fontSize: '10px',
@@ -120,6 +146,10 @@ export const CoverCanvas = forwardRef<HTMLDivElement, {
           >
             Anclora Talent
           </div>
+        )}
+
+        {/* Title and subtitle wrapper */}
+        <div>
           <div
             style={{
               fontSize: 'clamp(18px, 6cqw, 28px)',
@@ -127,21 +157,25 @@ export const CoverCanvas = forwardRef<HTMLDivElement, {
               lineHeight: 1.1,
               letterSpacing: '-0.02em',
               color: colors.primary,
-              marginBottom: '12px',
+              marginBottom: showSubtitle ? '12px' : '0px',
+              textShadow: isOverlayLayout ? '0 2px 8px rgba(0, 0, 0, 0.3)' : 'none',
             }}
           >
             {title || 'Título del proyecto'}
           </div>
-          <div
-            style={{
-              fontSize: 'clamp(10px, 3cqw, 13px)',
-              fontWeight: 500,
-              lineHeight: 1.6,
-              color: colors.secondary,
-            }}
-          >
-            {subtitle || 'Subtítulo'}
-          </div>
+          {showSubtitle && (
+            <div
+              style={{
+                fontSize: 'clamp(10px, 3cqw, 13px)',
+                fontWeight: 500,
+                lineHeight: 1.6,
+                color: colors.secondary,
+                textShadow: isOverlayLayout ? '0 1px 4px rgba(0, 0, 0, 0.3)' : 'none',
+              }}
+            >
+              {subtitle || 'Subtítulo'}
+            </div>
+          )}
         </div>
       </div>
     </div>
