@@ -5,6 +5,7 @@ import { BookOpen, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import type { DocumentBlock, ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 import { EditorialMapPanel } from './EditorialMapPanel';
+import { PreviewModal } from './PreviewModal';
 
 const paletteMap = {
   obsidian: 'from-[#0b133f] via-[#0b233f] to-[#07252f] text-[#f2e3b3]',
@@ -284,6 +285,9 @@ export function PreviewCanvas({
   copy: AppMessages['project'];
   project: ProjectRecord;
 }) {
+  const [showAdvancedPreview, setShowAdvancedPreview] = useState(false);
+  
+  // Legacy preview state (kept for backward compatibility)
   const pages = useMemo(() => buildPages(project), [project]);
   const pageSummaries = useMemo(
     () =>
@@ -309,6 +313,17 @@ export function PreviewCanvas({
   );
   const [pageIndex, setPageIndex] = useState(0);
   const [bookView, setBookView] = useState(false);
+  
+  // Show advanced preview modal if requested
+  if (showAdvancedPreview) {
+    return (
+      <PreviewModal
+        project={project}
+        copy={copy}
+        onClose={() => setShowAdvancedPreview(false)}
+      />
+    );
+  }
 
   const totalPages = pages.length;
   const rightIdx = bookView ? pageIndex + 1 : -1;
@@ -336,7 +351,17 @@ export function PreviewCanvas({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Advanced Preview Button */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => setShowAdvancedPreview(true)}
+          className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] px-6 py-3 text-base font-bold !text-[var(--button-primary-fg)] shadow-[var(--shadow-soft)] transition hover:bg-[var(--button-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--button-primary-bg)] focus-visible:ring-offset-2"
+        >
+          <BookOpen className="h-4 w-4" />
+          Vista previa avanzada
+        </button>
+      </div>
       <EditorialMapPanel copy={copy} pageSummaries={pageSummaries} project={project} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-1">

@@ -194,6 +194,19 @@ export type AppMessages = {
     stepCollaborateDesc: string;
     stepAIDesc: string;
     stepExportDesc: string;
+    previewModalZoomOut: string;
+    previewModalZoomIn: string;
+    previewModalSingleView: string;
+    previewModalSpreadView: string;
+    previewModalLaptop: string;
+    previewModalTablet: string;
+    previewModalMobile: string;
+    previewModalPrevious: string;
+    previewModalNext: string;
+    previewModalPage: string;
+    previewModalOf: string;
+    previewModalClose: string;
+    previewModalAdvanced: string;
   };
 };
 
@@ -452,6 +465,19 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       stepCollaborateDesc: 'Gestiona el acceso de tu equipo y revisores al proyecto.',
       stepAIDesc: 'Potencia tu contenido con sugerencias inteligentes de IA.',
       stepExportDesc: 'Publica y descarga tu obra en múltiples formatos profesionales.',
+      previewModalZoomOut: 'Reducir zoom',
+      previewModalZoomIn: 'Aumentar zoom',
+      previewModalSingleView: 'Vista de 1 página',
+      previewModalSpreadView: 'Vista de 2 páginas',
+      previewModalLaptop: 'Laptop (6x9)',
+      previewModalTablet: 'Tablet (5.5x8.5)',
+      previewModalMobile: 'Móvil (3.7x6.2)',
+      previewModalPrevious: 'Anterior',
+      previewModalNext: 'Siguiente',
+      previewModalPage: 'Página',
+      previewModalOf: 'de',
+      previewModalClose: 'Cerrar',
+      previewModalAdvanced: 'Vista previa avanzada',
     },
   },
   en: {
@@ -708,6 +734,19 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       stepCollaborateDesc: 'Manage team and reviewer access to the project.',
       stepAIDesc: 'Enhance your content with smart AI suggestions.',
       stepExportDesc: 'Publish and download your work in multiple professional formats.',
+      previewModalZoomOut: 'Zoom out',
+      previewModalZoomIn: 'Zoom in',
+      previewModalSingleView: 'Single page view',
+      previewModalSpreadView: 'Two page view',
+      previewModalLaptop: 'Laptop (6x9)',
+      previewModalTablet: 'Tablet (5.5x8.5)',
+      previewModalMobile: 'Mobile (3.7x6.2)',
+      previewModalPrevious: 'Previous',
+      previewModalNext: 'Next',
+      previewModalPage: 'Page',
+      previewModalOf: 'of',
+      previewModalClose: 'Close',
+      previewModalAdvanced: 'Advanced preview',
     },
   },
 };
