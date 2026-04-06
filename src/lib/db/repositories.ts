@@ -223,8 +223,7 @@ export async function persistProjectGraph(db: ProjectGraphWriter, project: Proje
     fontFamily: project.cover.fontFamily,
     accentColor: project.cover.accentColor,
     renderedImageUrl: project.cover.renderedImageUrl,
-    // TODO: Re-enable showSubtitle after database migration is applied
-    // showSubtitle: project.cover.showSubtitle ? 1 : 0,
+    showSubtitle: project.cover.showSubtitle ? 1 : 0,
     updatedAt: new Date(project.updatedAt),
   });
 
@@ -294,8 +293,7 @@ export async function persistDocumentUpdate(db: ProjectGraphWriterWithQuery, nex
       fontFamily: nextProject.cover.fontFamily,
       accentColor: nextProject.cover.accentColor,
       renderedImageUrl: nextProject.cover.renderedImageUrl,
-      // TODO: Re-enable showSubtitle after database migration is applied
-      // showSubtitle: nextProject.cover.showSubtitle ? 1 : 0,
+      showSubtitle: nextProject.cover.showSubtitle ? 1 : 0,
       updatedAt: new Date(nextProject.updatedAt),
     })
     .where(eq(coverDesigns.projectId, nextProject.id));
@@ -479,8 +477,7 @@ async function saveCoverInDb(userId: string, projectId: string, input: UpdateCov
       layout: nextProject.cover.layout ?? null,
       fontFamily: nextProject.cover.fontFamily ?? null,
       accentColor: nextProject.cover.accentColor ?? null,
-      // TODO: Re-enable showSubtitle after database migration is applied
-      // showSubtitle: nextProject.cover.showSubtitle ? 1 : 0,
+      showSubtitle: nextProject.cover.showSubtitle ? 1 : 0,
       updatedAt: new Date(nextProject.updatedAt),
     })
     .where(eq(coverDesigns.projectId, projectId));
