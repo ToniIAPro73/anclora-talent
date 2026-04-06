@@ -39,7 +39,7 @@ export default async function RootLayout({
         className={`${dmSans.variable} ${jetbrainsMono.variable}`}
         suppressHydrationWarning
       >
-        <body>
+        <body suppressHydrationWarning>
           <UiPreferencesProvider initialPreferences={preferences}>{children}</UiPreferencesProvider>
         </body>
       </html>

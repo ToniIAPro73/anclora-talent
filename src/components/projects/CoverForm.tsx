@@ -64,7 +64,7 @@ export function CoverForm({ copy, project }: { copy: AppMessages['project']; pro
           <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverBackgroundLabel}</span>
           <input type="file" name="backgroundImage" accept="image/*" className="block w-full text-sm text-[var(--text-secondary)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--button-highlight-bg)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--button-highlight-fg)]" />
         </label>
-
+        
         <div className="flex items-center gap-3">
           <button
             type="submit"

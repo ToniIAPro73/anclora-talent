@@ -1,7 +1,10 @@
 /**
- * Client-side image utilities for Anclora Talent.
- * Resizes/compresses images before upload to avoid 413 Payload Too Large
- * errors in Server Actions (bodySizeLimit: 8mb).
+ * Client-side image utilities for Anclora Talent
+ */
+
+/**
+ * Resizes and compresses an image file on the client side.
+ * Useful for avoiding 413 Payload Too Large errors in Server Actions.
  */
 export async function resizeImage(
   file: File,
