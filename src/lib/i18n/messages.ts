@@ -174,6 +174,26 @@ export type AppMessages = {
     coverRenderImage: string;
     coverRenderImageDone: string;
     coverRenderedImageLabel: string;
+    coverSwitchToAdvanced: string;
+    coverSwitchToBasic: string;
+    stepContent: string;
+    stepChapters: string;
+    stepTemplate: string;
+    stepCover: string;
+    stepBackCover: string;
+    stepPreview: string;
+    stepCollaborate: string;
+    stepAI: string;
+    stepExport: string;
+    stepContentDesc: string;
+    stepChaptersDesc: string;
+    stepTemplateDesc: string;
+    stepCoverDesc: string;
+    stepBackCoverDesc: string;
+    stepPreviewDesc: string;
+    stepCollaborateDesc: string;
+    stepAIDesc: string;
+    stepExportDesc: string;
   };
 };
 
@@ -412,6 +432,26 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverRenderImage: 'Generar imagen',
       coverRenderImageDone: 'Imagen guardada',
       coverRenderedImageLabel: 'Imagen renderizada',
+      coverSwitchToAdvanced: 'Editor Avanzado',
+      coverSwitchToBasic: 'Editor Básico',
+      stepContent: 'Contenido',
+      stepChapters: 'Capítulos',
+      stepTemplate: 'Plantilla',
+      stepCover: 'Portada',
+      stepBackCover: 'Contraportada',
+      stepPreview: 'Vista Previa',
+      stepCollaborate: 'Colaborar',
+      stepAI: 'IA',
+      stepExport: 'Exportar',
+      stepContentDesc: 'Escribe y estructura el contenido principal de tu publicación.',
+      stepChaptersDesc: 'Organiza los capítulos y la jerarquía de tu documento.',
+      stepTemplateDesc: 'Selecciona una identidad visual premium para tu libro.',
+      stepCoverDesc: 'Diseña una portada impactante con imágenes y paletas personalizadas.',
+      stepBackCoverDesc: 'Configura la contraportada y la biografía del autor.',
+      stepPreviewDesc: 'Valida la experiencia de lectura final en diferentes dispositivos.',
+      stepCollaborateDesc: 'Gestiona el acceso de tu equipo y revisores al proyecto.',
+      stepAIDesc: 'Potencia tu contenido con sugerencias inteligentes de IA.',
+      stepExportDesc: 'Publica y descarga tu obra en múltiples formatos profesionales.',
     },
   },
   en: {
@@ -648,6 +688,26 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverRenderImage: 'Generate image',
       coverRenderImageDone: 'Image saved',
       coverRenderedImageLabel: 'Rendered image',
+      coverSwitchToAdvanced: 'Advanced Editor',
+      coverSwitchToBasic: 'Basic Editor',
+      stepContent: 'Content',
+      stepChapters: 'Chapters',
+      stepTemplate: 'Template',
+      stepCover: 'Cover',
+      stepBackCover: 'Back Cover',
+      stepPreview: 'Preview',
+      stepCollaborate: 'Collaborate',
+      stepAI: 'AI',
+      stepExport: 'Export',
+      stepContentDesc: 'Write and structure the main content of your publication.',
+      stepChaptersDesc: 'Organize the chapters and hierarchy of your document.',
+      stepTemplateDesc: 'Select a premium visual identity for your book.',
+      stepCoverDesc: 'Design a striking cover with custom images and palettes.',
+      stepBackCoverDesc: 'Configure the back cover and author biography.',
+      stepPreviewDesc: 'Validate the final reading experience across different devices.',
+      stepCollaborateDesc: 'Manage team and reviewer access to the project.',
+      stepAIDesc: 'Enhance your content with smart AI suggestions.',
+      stepExportDesc: 'Publish and download your work in multiple professional formats.',
     },
   },
 };
