@@ -52,7 +52,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         className="mx-auto grid min-h-screen max-w-7xl gap-5 px-4 py-4 transition-[grid-template-columns] duration-300"
         style={{ gridTemplateColumns: sidebarCols }}
       >
-        <aside className="flex flex-col overflow-hidden rounded-[36px] border border-[var(--border-subtle)] bg-[var(--shell-surface)] shadow-[var(--shadow-strong)] backdrop-blur">
+        <aside className="flex flex-col overflow-hidden rounded-[36px] border border-[var(--border-subtle)] bg-[var(--shell-surface)] shadow-[var(--shadow-strong)]">
           <div className={`flex ${collapsed ? 'justify-center px-3 py-4' : 'justify-end px-6 pt-4'}`}>
             <button
               onClick={toggle}
@@ -111,7 +111,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}
         </aside>
 
-        <div className="rounded-[40px] border border-[var(--border-subtle)] bg-[var(--shell-main-surface)] p-6 shadow-[var(--shadow-strong)] backdrop-blur xl:p-8">
+        <div className="rounded-[40px] border border-[var(--border-subtle)] bg-[var(--shell-main-surface)] p-6 shadow-[var(--shadow-strong)] xl:p-8">
           <header className="flex flex-col gap-4 border-b border-[var(--border-subtle)] pb-6 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">{messages.topbarEyebrow}</p>

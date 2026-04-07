@@ -1,235 +1,210 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { X, Save, AlertCircle, Check, Loader2 } from 'lucide-react';
-import { EnhancedRichTextEditor } from './EnhancedRichTextEditor';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { X, Loader2, Save } from 'lucide-react';
+import { AdvancedRichTextEditor } from './AdvancedRichTextEditor';
 import { saveChapterContentAction } from '@/lib/projects/actions';
+import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import type { DocumentChapter } from '@/lib/projects/types';
 
 interface ChapterEditorModalProps {
-  isOpen: boolean;
-  projectId: string;
   chapter: DocumentChapter;
   chapterIndex: number;
   totalChapters: number;
+  isOpen: boolean;
+  projectId: string;
   onClose: () => void;
-  onSaved?: () => void;
-}
-
-type SaveState = 'idle' | 'saving' | 'saved' | 'error';
-
-function blocksToHtml(blocks: DocumentChapter['blocks']): string {
-  return blocks
-    .filter((block) => block.content.trim())
-    .map((block) => {
-      if (block.content.trimStart().startsWith('<')) {
-        return block.content;
-      }
-      const escaped = block.content
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-      if (block.type === 'heading') return `<h2>${escaped}</h2>`;
-      if (block.type === 'quote') return `<blockquote><p>${escaped}</p></blockquote>`;
-      return `<p>${escaped}</p>`;
-    })
-    .join('');
+  onSave?: () => void;
 }
 
 export function ChapterEditorModal({
-  isOpen,
-  projectId,
   chapter,
   chapterIndex,
   totalChapters,
+  isOpen,
+  projectId,
   onClose,
-  onSaved,
+  onSave,
 }: ChapterEditorModalProps) {
-  const [editorContent, setEditorContent] = useState(blocksToHtml(chapter.blocks));
-  const [chapterTitle, setChapterTitle] = useState(chapter.title);
+  const [title, setTitle] = useState(chapter.title);
+  const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const [saveState, setSaveState] = useState<SaveState>('idle');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const editorContentRef = useRef<string>('');
 
-  useEffect(() => {
-    if (!isOpen) {
-      setHasChanges(false);
-      setSaveState('idle');
-      setErrorMessage('');
-    }
-  }, [isOpen]);
+  // Convert blocks to HTML
+  const blocksToHtml = useCallback((blocks: DocumentChapter['blocks']): string => {
+    return blocks
+      .filter((block) => block.content.trim())
+      .map((block) => {
+        if (block.content.trimStart().startsWith('<')) {
+          return block.content;
+        }
 
-  const handleContentChange = (html: string) => {
-    setEditorContent(html);
+        const escaped = block.content
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+        if (block.type === 'heading') return `<h2>${escaped}</h2>`;
+        if (block.type === 'quote') return `<blockquote><p>${escaped}</p></blockquote>`;
+        return `<p>${escaped}</p>`;
+      })
+      .join('');
+  }, []);
+
+  const initialContent = blocksToHtml(chapter.blocks);
+
+  const handleEditorUpdate = useCallback((html: string) => {
+    editorContentRef.current = html;
     setHasChanges(true);
-  };
+  }, []);
 
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setChapterTitle(e.target.value);
-    setHasChanges(true);
-  };
+  const handleSave = useCallback(async () => {
+    if (!editorContentRef.current && initialContent === '') return;
 
-  const handleSave = async () => {
-    setSaveState('saving');
-    setErrorMessage('');
-
+    setIsSaving(true);
     try {
       const formData = new FormData();
       formData.set('projectId', projectId);
       formData.set('chapterId', chapter.id);
-      formData.set('chapterTitle', chapterTitle);
-      formData.set('htmlContent', editorContent);
+      formData.set('chapterTitle', title);
+      formData.set('htmlContent', editorContentRef.current || initialContent);
 
       await saveChapterContentAction(formData);
-
-      setSaveState('saved');
       setHasChanges(false);
-      onSaved?.();
-
-      setTimeout(() => {
-        setSaveState('idle');
-      }, 2000);
-    } catch (err) {
-      setSaveState('error');
-      setErrorMessage(err instanceof Error ? err.message : 'Error al guardar');
+      setLastSaved(new Date());
+      onSave?.();
+      // No cerramos el modal aquí, el usuario debe decidir cuándo salir
+    } catch (error) {
+      console.error('Failed to save chapter:', error);
+    } finally {
+      setIsSaving(false);
     }
-  };
+  }, [projectId, chapter.id, title, initialContent, onSave]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (hasChanges) {
-      const confirmed = confirm(
-        'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?'
-      );
-      if (!confirmed) return;
+      if (confirm('Tienes cambios sin guardar. ¿Deseas salir de todas formas?')) {
+        onClose();
+      }
+    } else {
+      onClose();
     }
-    onClose();
-  };
+  }, [hasChanges, onClose]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeydown = (e: KeyboardEvent) => {
       if (!isOpen) return;
 
       if (e.key === 'Escape') {
         handleClose();
       }
+
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, hasChanges, editorContent, chapterTitle]);
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, [isOpen, handleClose, handleSave]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="w-full max-w-6xl h-[90vh] rounded-[32px] border border-[var(--border-subtle)] bg-[var(--page-surface)] shadow-[var(--shadow-strong)] flex flex-col">
-
-        {/* Header */}
-        <div className="flex items-start justify-between border-b border-[var(--border-subtle)] px-8 py-6">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 sm:p-6" onClick={handleClose}>
+      <div
+        className="flex h-full max-h-[98vh] w-full max-w-[98vw] flex-col overflow-hidden rounded-[32px] border border-white/10 bg-[#0C141E] shadow-[0_0_100px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in duration-300 md:max-h-[95vh] md:max-w-[95vw]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Premium Header */}
+        <div className="flex items-center justify-between border-b border-white/5 bg-[#0E1825] px-8 py-5">
           <div className="flex-1">
-            <div className="flex items-center gap-3 mb-3">
-              <h2 className="text-2xl font-black text-[var(--text-primary)]">
-                Editar capítulo
-              </h2>
-              <span className="text-sm px-3 py-1 rounded-full bg-[var(--accent-mint)]/15 text-[var(--accent-mint)] font-semibold">
-                Capítulo {chapterIndex + 1} de {totalChapters}
-              </span>
-            </div>
-            <p className="text-sm text-[var(--text-tertiary)]">
-              Edita el título y contenido del capítulo. Usa Ctrl+S para guardar rápidamente.
-            </p>
-          </div>
-          <button
-            onClick={handleClose}
-            className="p-2 hover:bg-[var(--surface-highlight)] rounded-lg transition text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-            title="Cerrar (Esc)"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
-
-          {/* Title Input */}
-          <div>
-            <label className="block text-sm font-semibold text-[var(--text-primary)] mb-2">
-              Título del capítulo
-            </label>
-            <input
-              type="text"
-              value={chapterTitle}
-              onChange={handleTitleChange}
-              placeholder="Ej: Introducción"
-              className="w-full px-4 py-3 rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] outline-none transition focus:border-[var(--accent-mint)]"
-            />
-          </div>
-
-          {/* Editor */}
-          <div>
-            <label className="block text-sm font-semibold text-[var(--text-primary)] mb-2">
-              Contenido
-            </label>
-            <EnhancedRichTextEditor
-              defaultContent={editorContent}
-              onUpdate={handleContentChange}
-            />
-          </div>
-
-          {/* Error Alert */}
-          {saveState === 'error' && (
-            <div className="flex gap-3 rounded-lg bg-red-50 border border-red-200 p-4">
-              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--accent-mint)]/10 text-[var(--accent-mint)]">
+                <Save className="h-5 w-5" />
+              </div>
               <div>
-                <p className="text-sm font-semibold text-red-900">Error al guardar</p>
-                <p className="text-sm text-red-700">{errorMessage}</p>
+                <h2 className="text-xl font-black tracking-tight text-white md:text-2xl">
+                  Editor de Contenido
+                </h2>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)]">
+                  Capítulo {chapterIndex + 1}: {chapter.title}
+                </p>
               </div>
             </div>
-          )}
-        </div>
-
-        {/* Footer Actions */}
-        <div className="border-t border-[var(--border-subtle)] bg-[var(--surface-soft)] px-8 py-4 flex items-center justify-between rounded-b-[32px]">
-          <div className="flex items-center gap-2">
-            {saveState === 'saving' && (
-              <span className="flex items-center gap-1.5 text-xs text-[var(--text-tertiary)]">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                Guardando...
-              </span>
-            )}
-            {saveState === 'saved' && (
-              <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]">
-                <Check className="h-3 w-3" />
-                Cambios guardados
-              </span>
-            )}
-            {hasChanges && saveState === 'idle' && (
-              <span className="text-xs text-[var(--text-secondary)]">
-                Cambios sin guardar
-              </span>
-            )}
           </div>
-          <div className="flex gap-3">
+
+          <div className="flex items-center gap-4">
+            {lastSaved && (
+              <span className="text-[10px] font-medium text-[var(--accent-mint)] opacity-70">
+                Guardado a las {lastSaved.toLocaleTimeString()}
+              </span>
+            )}
             <button
               onClick={handleClose}
-              className="px-6 py-2 rounded-[14px] border border-[var(--border-subtle)] text-sm font-semibold text-[var(--text-primary)] hover:bg-[var(--surface-highlight)] transition"
+              className="group flex h-10 w-10 items-center justify-center rounded-full border border-white/5 bg-white/5 transition-all hover:bg-white/10 hover:scale-110 active:scale-95"
+              title="Cerrar Editor"
             >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={!hasChanges || saveState === 'saving'}
-              className="inline-flex items-center gap-2 px-6 py-2 rounded-[14px] bg-[var(--accent-mint)] text-white text-sm font-semibold hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Save className="h-4 w-4" />
-              Guardar cambios
+              <X className="h-5 w-5 text-white transition-colors group-hover:text-[var(--accent-mint)]" />
             </button>
           </div>
+        </div>
+
+        {/* Content area */}
+        <div className="flex-1 overflow-hidden bg-[var(--background)]">
+          <div className="flex h-full flex-col gap-6 overflow-y-auto px-8 py-8 custom-scrollbar">
+            {/* Chapter title input - Styled as Premium Input */}
+            <div className="mx-auto w-full max-w-4xl space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-tertiary)]">Título del capítulo</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setHasChanges(true);
+                }}
+                className="w-full bg-transparent border-b-2 border-white/10 py-3 text-3xl font-black text-white outline-none transition-all focus:border-[var(--accent-mint)] focus:placeholder:opacity-0"
+                placeholder="Escribe el título..."
+              />
+            </div>
+
+            {/* Advanced Rich text editor */}
+            <div className="flex-1 min-h-[600px]">
+              <AdvancedRichTextEditor
+                defaultContent={initialContent}
+                onUpdate={handleEditorUpdate}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Premium Footer - Aligned with CONTRACTS */}
+        <div className="flex items-center justify-between border-t border-white/5 bg-[#0E1825] px-10 py-6">
+          <button
+            onClick={handleClose}
+            disabled={isSaving}
+            className={`${premiumSecondaryLightButton} min-w-[140px] border-white/10 hover:bg-white/5`}
+          >
+            Cerrar
+          </button>
+
+          <button
+            onClick={handleSave}
+            disabled={isSaving || (!hasChanges && lastSaved !== null)}
+            className={`${premiumPrimaryDarkButton} min-w-[180px] shadow-[0_10px_30px_rgba(196,154,36,0.2)]`}
+          >
+            {isSaving ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Guardando...
+              </div>
+            ) : (
+              'Guardar Cambios'
+            )}
+          </button>
         </div>
       </div>
     </div>

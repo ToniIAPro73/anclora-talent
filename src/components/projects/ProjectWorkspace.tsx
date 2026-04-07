@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useTransition, useState, useMemo } from 'react';
+import { useEffect, useTransition, useState, useMemo, useCallback } from 'react';
 import { Check, Loader2, BookOpen, FileText, Palette, Users, Sparkles, Download, Monitor } from 'lucide-react';
 import { Stepper, type Step } from '@/components/ui/Stepper';
 import { ChapterOrganizer } from './ChapterOrganizer';
@@ -13,7 +13,11 @@ import { PreviewCanvas } from './PreviewCanvas';
 import { TemplateSelector } from './TemplateSelector';
 import { CollaborationPanel } from './CollaborationPanel';
 import { AIAssistant } from './AIAssistant';
-import { saveProjectDocumentAction, saveProjectCoverAction } from '@/lib/projects/actions';
+import { ChapterEditorModal } from './ChapterEditorModal';
+import { AddChapterDialog } from './AddChapterDialog';
+import { ImportChapterDialog } from './ImportChapterDialog';
+import { Portal } from '@/components/ui/Portal';
+import { saveProjectDocumentAction, saveProjectCoverAction, saveChapterContentAction } from '@/lib/projects/actions';
 import { computeChapterPageMetrics } from '@/lib/preview/metrics';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
@@ -56,6 +60,12 @@ export function ProjectWorkspace({
   const [activeChapterId, setActiveChapterId] = useState(
     project.document.chapters[0]?.id ?? '',
   );
+  
+  // Modal states
+  const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+
   const [selectedTemplate, setSelectedTemplate] = useState(project.cover.palette);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [isPending, startTransition] = useTransition();
@@ -63,6 +73,13 @@ export function ProjectWorkspace({
   const activeChapter =
     project.document.chapters.find((ch) => ch.id === activeChapterId) ??
     project.document.chapters[0];
+
+  const editingChapterIndex = useMemo(
+    () => project.document.chapters.findIndex((ch) => ch.id === editingChapterId),
+    [project.document.chapters, editingChapterId],
+  );
+
+  const editingChapter = editingChapterId ? project.document.chapters.find((ch) => ch.id === editingChapterId) : null;
 
   useEffect(() => {
     if (!project.document.chapters.some((chapter) => chapter.id === activeChapterId)) {
@@ -77,7 +94,6 @@ export function ProjectWorkspace({
   }, [project]);
 
   const handleTemplateSelect = (templateId: string) => {
-    // Optimistic update
     setSelectedTemplate(templateId as 'obsidian' | 'teal' | 'sand');
 
     const formData = new FormData();
@@ -116,22 +132,22 @@ export function ProjectWorkspace({
     switch (activeStep) {
       case 1: // Content
         return (
-          <div className="space-y-6">
-            <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
-                {copy.editorMetaEyebrow}
-              </p>
-              <form action={saveProjectDocumentAction} className="mt-4 space-y-4" data-testid="project-metadata-form">
+          <div className="flex flex-col gap-6">
+            {/* Metadata Card - Full Width */}
+            <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-8 shadow-[var(--shadow-strong)]">
+              <div className="mb-6 flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
+                  {copy.editorMetaEyebrow}
+                </p>
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold text-blue-600 border border-blue-100">
+                  Máx. 50MB
+                </span>
+              </div>
+              <form action={saveProjectDocumentAction} className="space-y-6" data-testid="project-metadata-form">
                 <input type="hidden" name="projectId" value={project.id} />
                 <input type="hidden" name="chapterId" value={activeChapter.id} />
                 <input type="hidden" name="chapterTitle" value={activeChapter.title} />
-                {activeChapter.blocks.map((block) => (
-                  <span key={block.id}>
-                    <input type="hidden" name="blockId" value={block.id} />
-                    <input type="hidden" name="blockContent" value={block.content} />
-                  </span>
-                ))}
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-6 md:grid-cols-2">
                   <label className="block space-y-2">
                     <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorTitleLabel}</span>
                     <input
@@ -157,12 +173,14 @@ export function ProjectWorkspace({
                     data-testid="project-document-subtitle-input"
                     name="subtitle"
                     defaultValue={project.document.subtitle}
-                    className="min-h-24 w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+                    className="min-h-32 w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
                   />
                 </label>
-                <SubmitButton className={`${premiumSecondaryLightButton} px-5`} data-testid="project-document-save-button">
-                  {copy.saveChanges}
-                </SubmitButton>
+                <div className="flex justify-end">
+                  <SubmitButton className={`${premiumSecondaryLightButton} px-8 py-3`} data-testid="project-document-save-button">
+                    {copy.saveChanges}
+                  </SubmitButton>
+                </div>
               </form>
             </section>
 
@@ -177,6 +195,9 @@ export function ProjectWorkspace({
               chapters={project.document.chapters}
               activeChapterId={activeChapterId}
               onSelect={setActiveChapterId}
+              onEditChapter={setEditingChapterId}
+              onAddChapter={() => setIsAddDialogOpen(true)}
+              onImportChapter={() => setIsImportDialogOpen(true)}
               metricsById={chapterMetricsById}
             />
           </section>
@@ -297,7 +318,6 @@ export function ProjectWorkspace({
 
       {/* Step Layout */}
       <div className="grid gap-8 xl:grid-cols-[240px_1fr]">
-        {/* Navigation Info */}
         <aside className="space-y-6 xl:sticky xl:top-8 xl:self-start">
            <div className="rounded-[24px] bg-[var(--surface-soft)] p-5 border border-[var(--border-subtle)]">
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-[var(--accent)]">Progreso</h4>
@@ -328,11 +348,38 @@ export function ProjectWorkspace({
            </div>
         </aside>
 
-        {/* Dynamic Content Area */}
         <main className="min-h-[600px]">
           {renderStepContent()}
         </main>
       </div>
+
+      {/* Modals rendered via Portal to escape any transform/backdrop-filter trapping */}
+      <Portal>
+        {editingChapter && editingChapterIndex >= 0 && (
+          <ChapterEditorModal
+            chapter={editingChapter}
+            chapterIndex={editingChapterIndex}
+            totalChapters={project.document.chapters.length}
+            isOpen={editingChapterId !== null}
+            projectId={project.id}
+            onClose={() => setEditingChapterId(null)}
+          />
+        )}
+
+        <AddChapterDialog
+          isOpen={isAddDialogOpen}
+          projectId={project.id}
+          chapters={project.document.chapters}
+          onClose={() => setIsAddDialogOpen(false)}
+        />
+
+        <ImportChapterDialog
+          isOpen={isImportDialogOpen}
+          projectId={project.id}
+          chapters={project.document.chapters}
+          onClose={() => setIsImportDialogOpen(false)}
+        />
+      </Portal>
     </div>
   );
 }

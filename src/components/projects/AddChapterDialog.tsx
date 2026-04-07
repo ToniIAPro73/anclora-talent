@@ -63,12 +63,12 @@ export function AddChapterDialog({ isOpen, projectId, chapters, onClose, onChapt
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 sm:p-6"
       onClick={handleClose}
     >
       <div
         ref={dialogRef}
-        className="w-full max-w-md rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]"
+        className="w-full max-w-md rounded-[28px] border border-[var(--border-subtle)] bg-[#111C28] p-6 shadow-[var(--shadow-strong)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
