@@ -217,7 +217,8 @@ const MenuBar = ({ editor, viewMode, setViewMode, device, setDevice }: { editor:
       const reader = new FileReader();
       reader.onload = (event) => {
         const imageUrl = event.target?.result as string;
-        editor.chain().focus().setImage({ src: imageUrl }).run();
+        // Set default size to 45% width, left aligned with text wrapping
+        editor.chain().focus().setImage({ src: imageUrl, width: 350, align: 'left' }).run();
       };
       reader.readAsDataURL(file);
     }
@@ -386,9 +387,24 @@ export function AdvancedRichTextEditor({
     <div className="flex flex-col h-full overflow-hidden rounded-[24px] border border-[var(--border-strong)] bg-[#0B121D] shadow-2xl">
       <MenuBar editor={editor} viewMode={viewMode} setViewMode={setViewMode} device={device} setDevice={setDevice} />
       
-      <div className="flex-1 overflow-y-auto bg-[var(--background)] p-8 flex justify-center custom-scrollbar">
+      <div className="flex-1 overflow-auto bg-[var(--background)] p-6 flex justify-center custom-scrollbar">
         <div className={`transition-all duration-500 ease-in-out ${deviceClasses[device]} ${viewMode === 'double' ? 'grid grid-cols-2 gap-8 max-w-5xl' : ''}`}>
-          <div className="bg-[#111C28] min-h-[1000px] p-12 shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 prose prose-invert max-w-none">
+          <div className="bg-[#111C28] min-h-[1000px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 prose prose-invert max-w-none overflow-x-auto prose-img:rounded-lg prose-img:shadow-md">
+            <style>{`
+              .ProseMirror img {
+                max-width: 100%;
+                height: auto;
+                object-fit: cover;
+              }
+              .ProseMirror p {
+                overflow-wrap: break-word;
+                word-break: break-word;
+              }
+              .ProseMirror {
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+              }
+            `}</style>
             <EditorContent editor={editor} />
           </div>
           {viewMode === 'double' && (

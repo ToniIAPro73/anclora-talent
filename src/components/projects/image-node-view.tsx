@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { NodeViewWrapper } from '@tiptap/react';
-import { X, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+import { X, AlignLeft, AlignCenter, AlignRight, Move } from 'lucide-react';
 
 export const ImageNodeView = ({
   node,
@@ -10,8 +10,10 @@ export const ImageNodeView = ({
   selected,
   extension,
   deleteNode,
+  editor,
 }: any) => {
   const [isResizing, setIsResizing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const startPosRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
 
@@ -65,21 +67,22 @@ export const ImageNodeView = ({
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
   const alignmentClasses = {
-    left: 'float-left mr-4',
-    center: 'mx-auto',
-    right: 'float-right ml-4',
+    left: 'float-left mr-6 mb-4',
+    center: 'block mx-auto mb-4',
+    right: 'float-right ml-6 mb-4',
   };
 
   return (
-    <NodeViewWrapper as="div" className="my-4 clear-both">
+    <NodeViewWrapper as="div" className={`relative ${align === 'center' ? 'clear-both' : ''}`}>
       <div
         ref={containerRef}
         className={`relative inline-block group ${alignmentClasses[align as keyof typeof alignmentClasses]} ${
           selected ? 'ring-2 ring-[var(--accent-mint)]' : ''
         }`}
         style={{
-          width: typeof width === 'number' ? `${width}px` : width,
-          height: typeof height === 'number' ? `${height}px` : height,
+          width: typeof width === 'number' ? `${width}px` : 'auto',
+          maxWidth: '100%',
+          height: typeof height === 'number' ? `${height}px` : 'auto',
         }}
         onMouseDown={handleMouseDown}
       >
@@ -107,25 +110,37 @@ export const ImageNodeView = ({
 
         {/* Controls - visible when selected */}
         {selected && (
-          <div className="absolute -top-10 left-0 right-0 flex items-center gap-1 bg-[#111C28] rounded-[6px] border border-[var(--border-subtle)] px-2 py-1.5">
+          <div className="absolute -top-10 left-0 right-0 flex items-center gap-1 bg-[#111C28] rounded-[6px] border border-[var(--border-subtle)] px-2 py-1.5 flex-wrap z-10">
             <button
-              className="p-1 hover:bg-[var(--surface-highlight)] rounded-[4px] transition text-[var(--text-secondary)]"
+              className={`p-1 rounded-[4px] transition text-sm ${
+                align === 'left'
+                  ? 'bg-[var(--accent-mint)]/20 text-[var(--accent-mint)]'
+                  : 'hover:bg-[var(--surface-highlight)] text-[var(--text-secondary)]'
+              }`}
               onClick={() => updateAttributes({ align: 'left' })}
-              title="Alinear izquierda"
+              title="Alinear izquierda (texto fluye a la derecha)"
             >
               <AlignLeft className="h-3.5 w-3.5" />
             </button>
             <button
-              className="p-1 hover:bg-[var(--surface-highlight)] rounded-[4px] transition text-[var(--text-secondary)]"
+              className={`p-1 rounded-[4px] transition text-sm ${
+                align === 'center'
+                  ? 'bg-[var(--accent-mint)]/20 text-[var(--accent-mint)]'
+                  : 'hover:bg-[var(--surface-highlight)] text-[var(--text-secondary)]'
+              }`}
               onClick={() => updateAttributes({ align: 'center' })}
-              title="Centrar"
+              title="Centrar (sin texto alrededor)"
             >
               <AlignCenter className="h-3.5 w-3.5" />
             </button>
             <button
-              className="p-1 hover:bg-[var(--surface-highlight)] rounded-[4px] transition text-[var(--text-secondary)]"
+              className={`p-1 rounded-[4px] transition text-sm ${
+                align === 'right'
+                  ? 'bg-[var(--accent-mint)]/20 text-[var(--accent-mint)]'
+                  : 'hover:bg-[var(--surface-highlight)] text-[var(--text-secondary)]'
+              }`}
               onClick={() => updateAttributes({ align: 'right' })}
-              title="Alinear derecha"
+              title="Alinear derecha (texto fluye a la izquierda)"
             >
               <AlignRight className="h-3.5 w-3.5" />
             </button>
