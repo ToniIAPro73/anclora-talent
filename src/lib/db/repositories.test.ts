@@ -18,6 +18,11 @@ function createDbMock() {
     delete: vi.fn(() => ({
       where: vi.fn().mockResolvedValue(undefined),
     })),
+    query: {
+      backCoverDesigns: {
+        findFirst: vi.fn().mockResolvedValue({ id: 'bc-1' }),
+      },
+    },
   };
 }
 

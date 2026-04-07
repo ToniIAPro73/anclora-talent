@@ -1,18 +1,16 @@
 'use client';
 
-import { useRef, useState, useTransition } from 'react';
-import { Check, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { toPng } from 'html-to-image';
+import { useCallback, useRef, useState, useTransition } from 'react';
+import { Check, Image as ImageIcon, Loader2, Sparkles } from 'lucide-react';
 import { CoverCanvas } from './Canvas';
 import { CoverToolbar } from './Toolbar';
 import { CoverPropertyPanel } from './PropertyPanel';
 import { renderCoverImageAction, saveProjectCoverAction } from '@/lib/projects/actions';
-import { resizeImage } from '@/lib/ui/images';
+import { useCanvasStore } from '@/lib/canvas-store';
+import { addTextToCanvas, addImageToCanvas, getFabric } from '@/lib/canvas-utils';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
-import type { CoverDesign, ProjectRecord } from '@/lib/projects/types';
+import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
-
-type Layout = NonNullable<CoverDesign['layout']>;
 
 export function AdvancedCoverEditor({
   project,
@@ -21,30 +19,112 @@ export function AdvancedCoverEditor({
   project: ProjectRecord;
   copy: AppMessages['project'];
 }) {
-  const [title, setTitle] = useState(project.cover.title);
-  const [subtitle, setSubtitle] = useState(project.cover.subtitle);
-  const [palette, setPalette] = useState<CoverDesign['palette']>(project.cover.palette);
-  const [layout, setLayout] = useState<Layout>(project.cover.layout ?? 'centered');
-  const [fontFamily, setFontFamily] = useState(project.cover.fontFamily ?? 'sans');
-  const [accentColor, setAccentColor] = useState(project.cover.accentColor ?? '#d4af37');
-  const [showSubtitle, setShowSubtitle] = useState(project.cover.showSubtitle ?? true);
+  const { canvas, addElement, clear } = useCanvasStore();
   const [isPending, startTransition] = useTransition();
   const [isRendering, startRenderTransition] = useTransition();
-  const [saved, setSaved] = useState(false);
   const [rendered, setRendered] = useState(false);
   const [renderedImageUrl, setRenderedImageUrl] = useState<string | null>(project.cover.renderedImageUrl ?? null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const canvasRef = useRef<HTMLDivElement>(null);
 
-  const handleRenderImage = () => {
-    const node = canvasRef.current;
-    if (!node) return;
+  const handleCanvasReady = useCallback(async (fabricCanvas: any) => {
+    const fabric = await getFabric();
+    const canvasWidth = fabricCanvas.width;
+    const canvasHeight = fabricCanvas.height;
 
+    // Load background image if exists
+    if (project.cover.backgroundImageUrl) {
+      try {
+        const fabricImg = (await addImageToCanvas(fabricCanvas, project.cover.backgroundImageUrl, {
+          selectable: true,
+          evented: true,
+          id: 'background-image'
+        })) as any;
+        
+        // Scale to cover
+        const scaleX = canvasWidth / fabricImg.width;
+        const scaleY = canvasHeight / fabricImg.height;
+        const scale = Math.max(scaleX, scaleY);
+        
+        fabricImg.set({
+          scaleX: scale,
+          scaleY: scale,
+          left: canvasWidth / 2,
+          top: canvasHeight / 2,
+          originX: 'center',
+          originY: 'center',
+        });
+        
+        fabricCanvas.sendToBack(fabricImg);
+        
+        addElement({
+          id: 'background-image',
+          type: 'image',
+          object: fabricImg,
+          properties: { opacity: 1 }
+        });
+      } catch (e) {
+        console.error('Error loading background image', e);
+      }
+    }
+
+    // Add initial metadata as text objects if they are missing
+    const defaultTitleColor = project.cover.accentColor || (project.cover.palette === 'sand' ? '#0b313f' : '#f2e3b3');
+
+    if (project.cover.title) {
+      const titleObj = await addTextToCanvas(fabricCanvas, project.cover.title, {
+        top: canvasHeight * 0.35,
+        fontSize: 36,
+        fontWeight: 900,
+        fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+        fill: defaultTitleColor,
+        textAlign: 'center',
+        id: 'title-text'
+      });
+      addElement({
+        id: 'title-text',
+        type: 'text',
+        object: titleObj,
+        properties: { fill: defaultTitleColor, fontSize: 36, opacity: 1 }
+      });
+    }
+
+    if (project.cover.subtitle) {
+      const subtitleObj = await addTextToCanvas(fabricCanvas, project.cover.subtitle, {
+        top: canvasHeight * 0.45,
+        fontSize: 16,
+        fontWeight: 500,
+        fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+        fill: 'rgba(242,227,179,0.8)',
+        textAlign: 'center',
+        id: 'subtitle-text',
+        width: canvasWidth * 0.8
+      });
+      addElement({
+        id: 'subtitle-text',
+        type: 'text',
+        object: subtitleObj,
+        properties: { fill: 'rgba(242,227,179,0.8)', fontSize: 16, opacity: 1 }
+      });
+    }
+
+    fabricCanvas.renderAll();
+    useCanvasStore.getState().pushHistory();
+  }, [project, addElement]);
+
+  const handleSaveAndRender = () => {
+    if (!canvas) return;
+    
     startRenderTransition(async () => {
-      const dataUrl = await toPng(node, { pixelRatio: 2 });
+      // Export to PNG
+      const dataUrl = canvas.toDataURL({
+        format: 'png',
+        quality: 1,
+        multiplier: 2,
+      });
+
       const formData = new FormData();
       formData.set('projectId', project.id);
       formData.set('dataUrl', dataUrl);
+      
       await renderCoverImageAction(formData);
       setRenderedImageUrl(dataUrl);
       setRendered(true);
@@ -52,142 +132,54 @@ export function AdvancedCoverEditor({
     });
   };
 
-  const handleSave = async () => {
-    const formData = new FormData();
-    formData.set('projectId', project.id);
-    formData.set('title', title);
-    formData.set('subtitle', subtitle);
-    formData.set('palette', palette);
-    formData.set('layout', layout);
-    formData.set('fontFamily', fontFamily);
-    formData.set('accentColor', accentColor);
-    formData.set('showSubtitle', String(showSubtitle));
-    formData.set('currentBackgroundImageUrl', project.cover.backgroundImageUrl ?? '');
-    formData.set('currentThumbnailUrl', project.cover.thumbnailUrl ?? '');
-
-    const file = fileInputRef.current?.files?.[0];
-    if (file) {
-      if (file.size > 4 * 1024 * 1024) {
-        const compressed = await resizeImage(file);
-        formData.set('backgroundImage', compressed, 'cover.jpg');
-      } else {
-        formData.set('backgroundImage', file);
-      }
-    }
-
-    startTransition(async () => {
-      await saveProjectCoverAction(formData);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    });
-  };
-
   return (
     <div className="space-y-6" data-testid="advanced-cover-editor">
-      {/* Layout toolbar */}
-      <div className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-5 shadow-[var(--shadow-strong)]">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
-          {copy.advancedCoverEyebrow}
-        </p>
-        <CoverToolbar layout={layout} onLayoutChange={setLayout} />
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1fr_1.4fr]">
-        {/* Property panel */}
-        <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
-          <CoverPropertyPanel
-            copy={copy}
-            title={title}
-            subtitle={subtitle}
-            palette={palette}
-            fontFamily={fontFamily}
-            accentColor={accentColor}
-            showSubtitle={showSubtitle}
-            onTitleChange={setTitle}
-            onSubtitleChange={setSubtitle}
-            onPaletteChange={setPalette}
-            onFontChange={setFontFamily}
-            onAccentChange={setAccentColor}
-            onShowSubtitleChange={setShowSubtitle}
-          />
-
-          <label className="mt-5 block space-y-2">
-            <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverBackgroundLabel}</span>
-            <input
-              ref={fileInputRef}
-              type="file"
-              name="backgroundImage"
-              accept="image/*"
-              className="block w-full text-sm text-[var(--text-secondary)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--button-highlight-bg)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--button-highlight-fg)]"
-            />
-          </label>
-
-          <div className="mt-6 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={isPending}
-              className={`${premiumPrimaryDarkButton} px-5 disabled:opacity-60`}
-            >
-              {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {copy.coverSave}
-            </button>
-            {saved && !isPending && (
-              <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]">
+      {/* Top Toolbar */}
+      <div className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-4 shadow-[var(--shadow-strong)] flex items-center justify-between">
+        <CoverToolbar />
+        <div className="flex items-center gap-2">
+           <button
+            type="button"
+            onClick={handleSaveAndRender}
+            disabled={isRendering}
+            className={`${premiumPrimaryDarkButton} px-4 py-2 text-xs`}
+          >
+            {isRendering ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5" />}
+            Guardar Diseño Final
+          </button>
+          {rendered && (
+             <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]">
                 <Check className="h-3 w-3" />
                 Guardado
-              </span>
-            )}
-          </div>
-        </section>
+             </span>
+          )}
+        </div>
+      </div>
 
-        {/* Live canvas */}
-        <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
-            {copy.coverEyebrow}
-          </p>
-          <CoverCanvas
-            ref={canvasRef}
-            title={title}
-            subtitle={subtitle}
-            palette={palette}
-            layout={layout}
-            fontFamily={fontFamily}
-            accentColor={accentColor}
-            backgroundImageUrl={project.cover.backgroundImageUrl}
-            showSubtitle={showSubtitle}
+      <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
+        {/* Main Editor Area */}
+        <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-8 shadow-[var(--shadow-strong)] flex flex-col items-center min-h-[700px]">
+          <CoverCanvas 
+            onCanvasReady={handleCanvasReady} 
+            initialPalette={project.cover.palette} 
           />
-          <div className="mt-4 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleRenderImage}
-              disabled={isRendering}
-              className={`${premiumSecondaryLightButton} px-4 disabled:opacity-60`}
-            >
-              {isRendering ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="mr-1.5 h-3.5 w-3.5" />}
-              {copy.coverRenderImage}
-            </button>
-            {rendered && !isRendering && (
-              <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]">
-                <Check className="h-3 w-3" />
-                {copy.coverRenderImageDone}
-              </span>
-            )}
-          </div>
+          
           {renderedImageUrl && (
-            <div className="mt-4 space-y-1.5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
-                {copy.coverRenderedImageLabel}
-              </p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={renderedImageUrl}
-                alt={copy.coverRenderedImageLabel}
-                className="w-full max-w-[160px] rounded-[12px] border border-[var(--border-subtle)] shadow-[var(--shadow-soft)]"
+            <div className="mt-8 p-4 rounded-2xl bg-[var(--surface-soft)] border border-[var(--border-subtle)] w-full max-w-md">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)] mb-3">Última versión guardada</p>
+              <img 
+                src={renderedImageUrl} 
+                alt="Rendered Cover" 
+                className="w-24 rounded-lg shadow-lg border border-white/10" 
               />
             </div>
           )}
         </section>
+
+        {/* Right Property Panel */}
+        <aside className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)] self-start sticky top-8">
+          <CoverPropertyPanel />
+        </aside>
       </div>
     </div>
   );

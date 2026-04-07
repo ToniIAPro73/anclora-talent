@@ -19,6 +19,14 @@ vi.mock('./RichTextEditor', () => ({
   ),
 }));
 
+vi.mock('./advanced-cover/AdvancedCoverEditor', () => ({
+  AdvancedCoverEditor: () => <div data-testid="advanced-cover-editor" />,
+}));
+
+vi.mock('./advanced-back-cover/AdvancedBackCoverEditor', () => ({
+  AdvancedBackCoverEditor: () => <div data-testid="advanced-back-cover-editor" />,
+}));
+
 const copy = resolveLocaleMessages('es').project;
 
 function makeProject(overrides: Partial<ProjectRecord> = {}): ProjectRecord {

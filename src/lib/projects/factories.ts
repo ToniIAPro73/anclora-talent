@@ -172,10 +172,12 @@ export function updateProjectDocument(project: ProjectRecord, input: UpdateDocum
     cover: {
       ...project.cover,
       title: input.title,
+      subtitle: input.subtitle,
     },
     backCover: {
       ...project.backCover,
       title: input.title,
+      body: input.subtitle,
     },
   };
 }
