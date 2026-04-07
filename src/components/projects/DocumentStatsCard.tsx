@@ -1,19 +1,26 @@
 'use client';
 
 import { useMemo } from 'react';
-import { BookOpen, FileText, BarChart3, Clock } from 'lucide-react';
+import { BookOpen, FileText, BarChart3, Clock, FileJson } from 'lucide-react';
 import { getDocumentStats, formatNumber, formatReadingTime } from '@/lib/projects/document-stats';
+import { getSourceDocumentMetrics, formatSourceDocumentComparison } from '@/lib/projects/source-document-metrics';
 import type { ProjectDocument } from '@/lib/projects/types';
+import type { ProjectRecord } from '@/lib/projects/types';
 
 interface DocumentStatsCardProps {
   document: ProjectDocument;
+  project?: ProjectRecord; // Optional: used to get source document metrics
   isLoading?: boolean;
 }
 
-export function DocumentStatsCard({ document, isLoading = false }: DocumentStatsCardProps) {
+export function DocumentStatsCard({ document, project, isLoading = false }: DocumentStatsCardProps) {
   const stats = useMemo(() => {
     return getDocumentStats(document, 'laptop');
   }, [document]);
+
+  const sourceMetrics = useMemo(() => {
+    return project ? getSourceDocumentMetrics(project) : null;
+  }, [project]);
 
   if (isLoading) {
     return (
@@ -102,6 +109,29 @@ export function DocumentStatsCard({ document, isLoading = false }: DocumentStats
           <span className="font-semibold">Nota:</span> Las estadísticas se calculan basándose en el formato laptop (6×9"). Los números pueden variar según el dispositivo y configuración de lectura.
         </p>
       </div>
+
+      {/* Source document comparison (Commit 5) */}
+      {sourceMetrics && (
+        <div className="mt-6 border-t border-[var(--border-subtle)] pt-4">
+          <div className="flex items-center gap-2 mb-3">
+            <FileJson className="h-4 w-4 text-[var(--accent-mint)]" />
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
+              Comparación con documento original
+            </p>
+          </div>
+          <div className="rounded-lg bg-[var(--surface-soft)] p-3">
+            <p className="text-sm font-semibold text-[var(--text-primary)]">
+              {sourceMetrics.fileType}: ~{sourceMetrics.estimatedSourcePages} págs
+            </p>
+            <p className="mt-2 text-xs text-[var(--text-secondary)]">
+              <span className="font-semibold">Talent layout:</span> {sourceMetrics.talentPages.laptop} laptop · {sourceMetrics.talentPages.tablet} tablet · {sourceMetrics.talentPages.mobile} móvil
+            </p>
+            <p className="mt-1 text-xs text-[var(--text-tertiary)]">
+              {sourceMetrics.pageReduction.laptop > 0 ? '+' : ''}{sourceMetrics.pageReduction.laptop}% páginas en formato laptop
+            </p>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

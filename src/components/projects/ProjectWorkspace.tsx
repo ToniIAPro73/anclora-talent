@@ -166,7 +166,7 @@ export function ProjectWorkspace({
               </form>
             </section>
 
-            <DocumentStatsCard document={project.document} isLoading={isPending} />
+            <DocumentStatsCard document={project.document} project={project} isLoading={isPending} />
           </div>
         );
       case 2: // Chapters
