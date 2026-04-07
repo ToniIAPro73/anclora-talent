@@ -1,48 +1,41 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Search, X, Type } from 'lucide-react';
+import { useState, useMemo, useRef } from 'react';
+import { Search, ChevronDown } from 'lucide-react';
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Label } from '@/components/ui/label';
 import type { GoogleFont } from '@/hooks/use-google-fonts';
 
 interface FontSelectorProps {
   selectedFont: string;
   onFontSelect: (fontFamily: string) => void;
-  triggerLabel?: string;
 }
 
 export function FontSelector({
   selectedFont,
   onFontSelect,
-  triggerLabel = 'Tipografía',
 }: FontSelectorProps) {
-  const { fonts, loading, loadFont, searchFonts, getFontsByCategory, getCategories } =
-    useGoogleFonts();
-
-  const [open, setOpen] = useState(false);
+  const { fonts, loadFont } = useGoogleFonts();
+  const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [displayedFonts, setDisplayedFonts] = useState<GoogleFont[]>(fonts);
   const [activeCategory, setActiveCategory] = useState<string>('all');
-  const categories = getCategories();
+  const [openUp, setOpenUp] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Update displayed fonts based on search and category
-  useEffect(() => {
+  // Get unique categories
+  const categories = useMemo(() => {
+    const cats = new Set(fonts.map((f) => f.category));
+    return Array.from(cats).sort();
+  }, [fonts]);
+
+  // Filter fonts based on search and category
+  const displayedFonts = useMemo(() => {
     let result = fonts;
 
     if (activeCategory !== 'all') {
-      result = getFontsByCategory(activeCategory);
+      result = result.filter((f) => f.category === activeCategory);
     }
 
     if (searchQuery.trim()) {
@@ -51,135 +44,130 @@ export function FontSelector({
       );
     }
 
-    setDisplayedFonts(result);
-  }, [searchQuery, activeCategory, fonts, searchFonts, getFontsByCategory]);
+    return result.slice(0, 50); // Limit to 50 for performance
+  }, [fonts, searchQuery, activeCategory]);
 
   const handleSelectFont = (fontFamily: string) => {
     loadFont(fontFamily);
     onFontSelect(fontFamily);
-    setOpen(false);
+    setIsOpen(false);
     setSearchQuery('');
-    setActiveCategory('all');
   };
 
-  // Extract font name for display (remove Google Fonts variants)
-  const getDisplayName = (fontFamily: string) => {
-    return fontFamily.replace(/[0-9]/g, '').trim();
+  const handleOpenDropdown = () => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+
+      // Si hay más espacio arriba (y menos de 300px abajo), abrir hacia arriba
+      if (spaceAbove > 350 && spaceBelow < 350) {
+        setOpenUp(true);
+      } else {
+        setOpenUp(false);
+      }
+    }
+    setIsOpen(true);
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="w-full justify-start gap-2 bg-[var(--surface-soft)] border-[var(--border-subtle)] hover:bg-[var(--surface-highlight)]"
-        >
-          <Type className="h-4 w-4" />
-          <span className="truncate text-sm">{getDisplayName(selectedFont)}</span>
-        </Button>
-      </DialogTrigger>
+    <div className="relative w-full" ref={containerRef}>
+      <button
+        onClick={() => (isOpen ? setIsOpen(false) : handleOpenDropdown())}
+        className="w-full h-10 px-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-primary)] text-sm flex items-center justify-between hover:bg-[var(--surface-highlight)] transition-colors"
+      >
+        <span className="truncate">{selectedFont}</span>
+        <ChevronDown
+          className={`h-4 w-4 transition-transform ${
+            isOpen ? (openUp ? '-rotate-180' : 'rotate-180') : ''
+          }`}
+        />
+      </button>
 
-      <DialogContent className="max-w-2xl max-h-[80vh] bg-[var(--page-surface)] border-[var(--border-subtle)]">
-        <DialogHeader>
-          <DialogTitle className="text-[var(--text-primary)] flex items-center gap-2">
-            <Type className="h-5 w-5" />
-            Selecciona una Tipografía
-          </DialogTitle>
-          <DialogDescription className="text-[var(--text-secondary)]">
-            Explora cientos de fuentes premium. Usa búsqueda o filtra por categoría.
-          </DialogDescription>
-        </DialogHeader>
+      {isOpen && (
+        <div className={`absolute left-0 right-0 z-50 bg-[var(--page-surface)] border border-[var(--border-subtle)] rounded-lg shadow-lg ${
+          openUp ? 'bottom-12' : 'top-12'
+        }`}>
+          {/* Search */}
+          <div className="p-3 border-b border-[var(--border-subtle)]">
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-[var(--text-tertiary)]" />
+              <Input
+                placeholder="Busca fuentes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 h-8 text-sm bg-[var(--surface-soft)] border-[var(--border-subtle)]"
+                autoFocus
+              />
+            </div>
+          </div>
 
-        <div className="space-y-4 py-4">
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-[var(--text-tertiary)]" />
-            <Input
-              placeholder="Busca fuentes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-[var(--surface-soft)] border-[var(--border-subtle)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
-            />
-            {searchQuery && (
+          {/* Categories */}
+          <div className="flex gap-1 p-2 border-b border-[var(--border-subtle)] flex-wrap">
+            <button
+              onClick={() => setActiveCategory('all')}
+              className={`px-3 py-1 text-xs rounded transition-colors ${
+                activeCategory === 'all'
+                  ? 'bg-[var(--accent-mint)] text-black font-semibold'
+                  : 'bg-[var(--surface-soft)] text-[var(--text-primary)] hover:bg-[var(--surface-highlight)]'
+              }`}
+            >
+              Todos
+            </button>
+            {categories.map((cat) => (
               <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-3 text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`px-3 py-1 text-xs rounded capitalize transition-colors ${
+                  activeCategory === cat
+                    ? 'bg-[var(--accent-mint)] text-black font-semibold'
+                    : 'bg-[var(--surface-soft)] text-[var(--text-primary)] hover:bg-[var(--surface-highlight)]'
+                }`}
               >
-                <X className="h-4 w-4" />
+                {cat === 'sans-serif' ? 'Sans' : cat === 'monospace' ? 'Mono' : cat}
               </button>
+            ))}
+          </div>
+
+          {/* Font List */}
+          <div className="max-h-80 overflow-y-auto p-2">
+            {displayedFonts.length === 0 ? (
+              <div className="text-center py-4 text-[var(--text-tertiary)] text-sm">
+                No se encontraron fuentes
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {displayedFonts.map((font) => (
+                  <button
+                    key={font.family}
+                    onClick={() => handleSelectFont(font.family)}
+                    className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
+                      selectedFont === font.family
+                        ? 'bg-[var(--accent-mint)] text-black font-semibold'
+                        : 'hover:bg-[var(--surface-soft)] text-[var(--text-primary)]'
+                    }`}
+                    style={{ fontFamily: font.family }}
+                  >
+                    <div className="font-semibold">{font.family}</div>
+                    <div className="text-xs opacity-70">
+                      {font.category}
+                      {font.variants.length > 1 && ` • ${font.variants.length} estilos`}
+                    </div>
+                  </button>
+                ))}
+              </div>
             )}
           </div>
-
-          {/* Category Tabs */}
-          {categories.length > 0 && (
-            <Tabs
-              value={activeCategory}
-              onValueChange={setActiveCategory}
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-5 gap-2 bg-[var(--surface-soft)] p-1">
-                <TabsTrigger
-                  value="all"
-                  className="text-xs data-[state=active]:bg-[var(--accent-mint)] data-[state=active]:text-black"
-                >
-                  Todos
-                </TabsTrigger>
-                {categories.map((cat) => (
-                  <TabsTrigger
-                    key={cat}
-                    value={cat}
-                    className="text-xs capitalize data-[state=active]:bg-[var(--accent-mint)] data-[state=active]:text-black"
-                  >
-                    {cat === 'sans-serif' ? 'Sans' : cat === 'monospace' ? 'Mono' : cat}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
-              <TabsContent value={activeCategory} className="mt-4">
-                {loading ? (
-                  <div className="text-center py-8 text-[var(--text-tertiary)]">
-                    Cargando fuentes...
-                  </div>
-                ) : displayedFonts.length === 0 ? (
-                  <div className="text-center py-8 text-[var(--text-tertiary)]">
-                    No se encontraron fuentes
-                  </div>
-                ) : (
-                  <ScrollArea className="h-[400px] w-full rounded-lg border border-[var(--border-subtle)] p-4">
-                    <div className="space-y-2">
-                      {displayedFonts.map((font) => (
-                        <button
-                          key={font.family}
-                          onClick={() => handleSelectFont(font.family)}
-                          className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
-                            selectedFont === font.family
-                              ? 'bg-[var(--accent-mint)] text-black font-semibold'
-                              : 'bg-[var(--surface-soft)] text-[var(--text-primary)] hover:bg-[var(--surface-highlight)]'
-                          }`}
-                          style={{ fontFamily: font.family }}
-                        >
-                          <div className="font-semibold text-sm">{font.family}</div>
-                          <div className="text-xs opacity-70 capitalize">
-                            {font.category}
-                            {font.variants.length > 1 &&
-                              ` • ${font.variants.length} estilos`}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                )}
-              </TabsContent>
-            </Tabs>
-          )}
-
-          {/* Info */}
-          <div className="text-xs text-[var(--text-tertiary)] bg-[var(--surface-soft)] rounded-lg p-3">
-            💡 Selecciona una fuente para aplicarla al texto seleccionado. El cambio se aplica
-            instantáneamente en el lienzo.
-          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
+
+      {/* Close on click outside */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+    </div>
   );
 }
