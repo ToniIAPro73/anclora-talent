@@ -4,10 +4,17 @@
  *
  * Adapts Press preview architecture to Talent's ProjectRecord model
  * while maintaining premium UI contract compliance
+ *
+ * PAGINATION ARCHITECTURE (Commit 1):
+ * - Each chapter is paginated independently using paginateContent
+ * - Global page numbering across all chapters (cover=1, toc=2, content=3+)
+ * - TOC reflects actual first-page numbers per chapter (not estimates)
+ * - Back-cover numbered after all content pages
  */
 
 import type { ProjectRecord } from '@/lib/projects/types';
 import { PaginationConfig } from './device-configs';
+import { paginateContent } from './content-paginator';
 
 // ==================== TYPES ====================
 
@@ -31,13 +38,20 @@ export interface PreviewPage {
     level: number;
   }>;
   chapterTitle?: string;
-  pageNumber?: number;
+  chapterId?: string;
+  pageNumber: number;
 }
 
 // ==================== PAGE BUILDER ====================
 
 /**
  * Build preview pages from project data
+ *
+ * PAGINATION FLOW:
+ * 1. Cover (page 1)
+ * 2. TOC (page 2) - holds entry points for chapters
+ * 3+ Content pages - each chapter paginated independently with global page numbers
+ * Last: Back-cover
  */
 export function buildPreviewPages(
   project: ProjectRecord,
@@ -61,29 +75,18 @@ export function buildPreviewPages(
   });
 
   // ─────────────────────────────────────────────────────────────
-  // BUILD CONTENT STRUCTURE (for TOC and content pages)
+  // BUILD CHAPTER SECTIONS (for pagination and TOC)
   // ─────────────────────────────────────────────────────────────
 
-  interface ContentSection {
+  interface ChapterSection {
+    id: string;
     title: string;
-    content: string;
-    isChapter: boolean;
-    chapterNumber?: number;
+    html: string;
+    order: number;
   }
 
-  const sections: ContentSection[] = [];
+  const chapterSections: ChapterSection[] = [];
 
-  // Add document source outline if exists
-  if (project.document.source?.outline && project.document.source.outline.length > 0) {
-    // Source outline available - use as reference
-    sections.push({
-      title: 'Estructura original',
-      content: `<p>Documento importado: ${project.document.source.fileName}</p>`,
-      isChapter: false,
-    });
-  }
-
-  // Add chapters
   if (project.document.chapters && project.document.chapters.length > 0) {
     const sortedChapters = [...project.document.chapters].sort(
       (a, b) => a.order - b.order,
@@ -93,69 +96,68 @@ export function buildPreviewPages(
       const chapterTitle = chapter.title?.trim() || `Capítulo ${index + 1}`;
       const chapterHtml = blocksToHtml(chapter.blocks);
 
-      sections.push({
+      chapterSections.push({
+        id: chapter.id,
         title: chapterTitle,
-        content: chapterHtml || '<p><em>Contenido aún no disponible</em></p>',
-        isChapter: true,
-        chapterNumber: index + 1,
+        html: chapterHtml || '<p><em>Contenido aún no disponible</em></p>',
+        order: index,
       });
     });
   }
 
   // ─────────────────────────────────────────────────────────────
-  // PAGE 2: TABLE OF CONTENTS
+  // PAGINATE CHAPTERS AND BUILD TOC ENTRIES
   // ─────────────────────────────────────────────────────────────
 
   const tocEntries: Array<{ title: string; pageNumber: number; level: number }> = [];
-  let currentPageNumber = 3; // Content starts at page 3
+  let globalPageNumber = 3; // Content starts at page 3 (after cover and TOC)
 
-  sections.forEach((section) => {
+  // Track chapter first page for TOC
+  const chapterFirstPages = new Map<string, number>();
+
+  for (const chapter of chapterSections) {
+    // Record first page of this chapter for TOC
+    chapterFirstPages.set(chapter.id, globalPageNumber);
+
+    // Add chapter heading + content to paginate together
+    const chapterContentHtml = `<h2>${escapeHtml(chapter.title)}</h2>\n${chapter.html}`;
+
+    // Paginate this chapter's content
+    const chapterPages = paginateContent(chapterContentHtml, config);
+
+    // Add paginated pages with global numbering and chapter metadata
+    for (const page of chapterPages) {
+      pages.push({
+        type: 'content',
+        content: page.html,
+        chapterTitle: chapter.title,
+        chapterId: chapter.id,
+        pageNumber: globalPageNumber,
+      });
+      globalPageNumber++;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // PAGE 2: TABLE OF CONTENTS (now with actual page numbers)
+  // ─────────────────────────────────────────────────────────────
+
+  chapterSections.forEach((chapter) => {
+    const firstPageNumber = chapterFirstPages.get(chapter.id) || 3;
     tocEntries.push({
-      title: section.title,
-      pageNumber: currentPageNumber,
-      level: section.isChapter ? 1 : 0,
+      title: chapter.title,
+      pageNumber: firstPageNumber,
+      level: 1,
     });
-
-    // Estimate pages per section (rough: 1 page per 2000 chars)
-    const estimatedPages = Math.max(
-      1,
-      Math.ceil(section.content.length / 2000),
-    );
-    currentPageNumber += estimatedPages;
   });
 
-  // Generate TOC HTML
   const tocHtml = generateTOCHtml(tocEntries, project.document.title);
 
-  pages.push({
+  pages.splice(1, 0, {
     type: 'toc',
     content: tocHtml,
     tocEntries: tocEntries,
     pageNumber: 2,
-  });
-
-  // ─────────────────────────────────────────────────────────────
-  // PAGE 3+: CONTENT PAGES
-  // ─────────────────────────────────────────────────────────────
-
-  let fullContent = '';
-
-  sections.forEach((section) => {
-    if (section.isChapter) {
-      fullContent += `<h2>${escapeHtml(section.title)}</h2>\n${section.content}\n\n`;
-    } else {
-      fullContent += `${section.content}\n\n`;
-    }
-  });
-
-  if (!fullContent.trim()) {
-    fullContent = '<p><em>Todavía no hay contenido para previsualizar.</em></p>';
-  }
-
-  pages.push({
-    type: 'content',
-    content: fullContent,
-    pageNumber: 3,
   });
 
   // ─────────────────────────────────────────────────────────────
@@ -171,7 +173,7 @@ export function buildPreviewPages(
         body: project.backCover.body,
         authorBio: project.backCover.authorBio,
       },
-      pageNumber: pages.length + 1,
+      pageNumber: globalPageNumber,
     });
   }
 

@@ -238,3 +238,25 @@ button {
   background: color-mix(in srgb, var(--accent) 22%, transparent);
   color: var(--text-primary);
 }
+
+/* Page Break Marker Styles (Commit 4) */
+hr[data-page-break="true"] {
+  border: 0;
+  border-top: 1px dashed var(--border-subtle);
+  margin: 2rem 0;
+  position: relative;
+}
+
+hr[data-page-break="true"]::after {
+  content: 'Salto de página (preview)';
+  position: absolute;
+  top: -0.9rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0 0.5rem;
+  background: var(--page-surface);
+  color: var(--text-tertiary);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
