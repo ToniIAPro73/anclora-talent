@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { saveChapterContentAction } from '@/lib/projects/actions';
+import { saveChapterContentAction, uploadChapterImagesAction } from '@/lib/projects/actions';
 import type { DocumentChapter } from '@/lib/projects/types';
 
 export interface ChapterImage {
@@ -113,12 +113,25 @@ export function useChapterEditor({
     setError(null);
 
     try {
+      // First, upload any images that have data URLs to blob storage
+      let imagesToSave = chapterImages;
+      const imageFormData = new FormData();
+      imageFormData.set('projectId', projectId);
+      imageFormData.set('chapterId', currentChapter.id);
+      imageFormData.set('imageData', JSON.stringify(chapterImages));
+
+      const uploadedImages = await uploadChapterImagesAction(imageFormData);
+      if (uploadedImages) {
+        imagesToSave = uploadedImages;
+      }
+
+      // Then save the chapter content with the blob URLs
       const formData = new FormData();
       formData.set('projectId', projectId);
       formData.set('chapterId', currentChapter.id);
       formData.set('chapterTitle', title);
       formData.set('htmlContent', htmlContent);
-      formData.set('imageData', JSON.stringify(chapterImages));
+      formData.set('imageData', JSON.stringify(imagesToSave));
 
       await saveChapterContentAction(formData);
       setHasChanges(false);
