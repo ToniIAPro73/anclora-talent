@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Image as ImageIcon, Trash2, Undo2, Redo2 } from 'lucide-react';
+import { Image as ImageIcon, Trash2, Undo2, Redo2, Grid3x3 } from 'lucide-react';
 import { getFabric, addImageToCanvas } from '@/lib/canvas-utils';
 import { createGuideManager } from '@/lib/canvas-guides';
 
@@ -44,6 +44,7 @@ export function ChapterImageCanvas({
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [history, setHistory] = useState<string[]>([]);
   const [historyStep, setHistoryStep] = useState(-1);
+  const [showGuides, setShowGuides] = useState(true);
 
   // Initialize fabric canvas
   useEffect(() => {
@@ -303,6 +304,21 @@ export function ChapterImageCanvas({
             <Redo2 className="h-4 w-4" />
           </button>
         </div>
+
+        <div className="h-5 w-px bg-[var(--border-subtle)] mx-1" />
+
+        <button
+          type="button"
+          onClick={() => setShowGuides(!showGuides)}
+          className={`flex h-8 w-8 items-center justify-center rounded-md transition ${
+            showGuides
+              ? 'text-[var(--accent-mint)] bg-[var(--accent-mint)]/10'
+              : 'text-[var(--text-tertiary)] hover:bg-[var(--surface-highlight)]'
+          }`}
+          title="Alternar guías de alineación"
+        >
+          <Grid3x3 className="h-4 w-4" />
+        </button>
 
         <div className="h-5 w-px bg-[var(--border-subtle)] mx-1" />
 
