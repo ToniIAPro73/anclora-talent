@@ -160,20 +160,6 @@ export function ProjectWorkspace({
             </section>
 
             <DocumentStatsCard document={project.document} isLoading={isPending} />
-
-            <section className="rounded-[28px] border border-[var(--border-subtle)] bg-blue-50 p-6 shadow-[var(--shadow-strong)]">
-              <div className="flex gap-3">
-                <div className="flex-shrink-0 pt-0.5">
-                  <FileText className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-blue-900">Límite de tamaño de documento</h3>
-                  <p className="mt-1 text-sm text-blue-800">
-                    El tamaño máximo permitido para cargar documentos es de <strong>50 MB</strong>. Los archivos que excedan este límite no podrán ser importados.
-                  </p>
-                </div>
-              </div>
-            </section>
           </div>
         );
       case 2: // Chapters

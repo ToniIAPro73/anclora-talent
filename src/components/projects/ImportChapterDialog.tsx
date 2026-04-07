@@ -171,6 +171,21 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
           </button>
         </div>
 
+        {/* File size limit notice */}
+        {!analysis && (
+          <div className="mb-6 rounded-[20px] border border-blue-200 bg-blue-50 p-4">
+            <div className="flex gap-3">
+              <Upload className="h-5 w-5 flex-shrink-0 text-blue-600 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-semibold text-blue-900">Límite de tamaño de documento</h3>
+                <p className="mt-1 text-sm text-blue-800">
+                  El tamaño máximo permitido es de <strong>50 MB</strong>. Los archivos que excedan este límite no podrán ser importados.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* File upload area */}
         {!analysis && (
           <div
@@ -207,7 +222,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
                 </button>
                 <p className="text-xs text-[var(--text-tertiary)]">o arrastra un archivo aquí</p>
                 <p className="text-xs text-[var(--text-tertiary)]">
-                  Formatos: DOCX, PDF, Markdown, TXT (máx. 50MB)
+                  Formatos: DOCX, PDF, Markdown, TXT
                 </p>
               </div>
             )}

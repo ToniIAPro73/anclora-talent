@@ -150,6 +150,19 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
 
   return (
     <div className="mt-5 space-y-3">
+      {/* File size limit notice */}
+      <div className="rounded-[20px] border border-blue-200 bg-blue-50 p-4">
+        <div className="flex gap-3">
+          <Upload className="h-5 w-5 flex-shrink-0 text-blue-600 mt-0.5" />
+          <div>
+            <h3 className="text-sm font-semibold text-blue-900">Límite de tamaño de documento</h3>
+            <p className="mt-1 text-sm text-blue-800">
+              El tamaño máximo permitido es de <strong>50 MB</strong>. Los archivos que excedan este límite no podrán ser importados.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-2">
         <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.sourceDocumentLabel}</span>
         <label
