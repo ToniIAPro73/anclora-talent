@@ -121,7 +121,9 @@ export function AdvancedCoverEditor({
             id: 'title-text',
             width: canvasWidth * 0.85,
             left: canvasWidth / 2,
-            originX: 'center'
+            originX: 'center',
+            selectable: true,
+            evented: true
           });
           console.info('[AdvancedCoverEditor] Title object created:', titleObj);
           addElement({
@@ -148,7 +150,9 @@ export function AdvancedCoverEditor({
           id: 'subtitle-text',
           width: canvasWidth * 0.85,
           left: canvasWidth / 2,
-          originX: 'center'
+          originX: 'center',
+          selectable: true,
+          evented: true
         });
         addElement({
           id: 'subtitle-text',
@@ -157,6 +161,32 @@ export function AdvancedCoverEditor({
           properties: { fill: project.cover.palette === 'sand' ? 'rgba(11,49,63,0.7)' : 'rgba(242,227,179,0.8)', fontSize: 16, opacity: 1, fontWeight: 500, textAlign: 'center' }
         });
       }
+
+      // Setup canvas event listeners for object selection
+      fabricCanvas.on('object:added', (e: any) => {
+        console.info('[AdvancedCoverEditor] Object added:', e.target?.id);
+      });
+
+      fabricCanvas.on('selection:created', (e: any) => {
+        console.info('[AdvancedCoverEditor] Selection created:', e.selected);
+        if (e.selected && e.selected.length > 0) {
+          const selectedObj = e.selected[0];
+          selectElement(selectedObj.id || selectedObj.type);
+        }
+      });
+
+      fabricCanvas.on('selection:updated', (e: any) => {
+        console.info('[AdvancedCoverEditor] Selection updated:', e.selected);
+        if (e.selected && e.selected.length > 0) {
+          const selectedObj = e.selected[0];
+          selectElement(selectedObj.id || selectedObj.type);
+        }
+      });
+
+      fabricCanvas.on('selection:cleared', () => {
+        console.info('[AdvancedCoverEditor] Selection cleared');
+        selectElement(null);
+      });
 
       fabricCanvas.requestRenderAll();
       useCanvasStore.getState().pushHistory();
