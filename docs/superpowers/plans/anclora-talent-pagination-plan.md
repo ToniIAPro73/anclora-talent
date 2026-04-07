@@ -1,4 +1,4 @@
-# Anclora Talent – Plan de implementación de paginación realista
+# Anclora Talent – Plan para la implementación de paginación realista
 
 > Objetivo: implementar una paginación realista por capítulo y dispositivo en anclora‑talent, reaprovechando la arquitectura de Anclora‑Press y respetando los contratos premium del ecosistema.[file:6][file:7]
 

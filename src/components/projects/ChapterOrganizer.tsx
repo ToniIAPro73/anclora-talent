@@ -3,6 +3,7 @@
 import { ChevronDown, ChevronUp, Trash2, Edit2, Plus, Download } from 'lucide-react';
 import { deleteChapterAction, moveChapterAction } from '@/lib/projects/actions';
 import { calculateWordCount } from '@/lib/projects/document-stats';
+import { formatChapterPageMetrics, type ChapterPageMetrics } from '@/lib/preview/metrics';
 import type { DocumentChapter } from '@/lib/projects/types';
 
 export function ChapterOrganizer({
@@ -13,6 +14,7 @@ export function ChapterOrganizer({
   onEditChapter,
   onAddChapter,
   onImportChapter,
+  metricsById = {},
 }: {
   projectId: string;
   chapters: DocumentChapter[];
@@ -21,6 +23,7 @@ export function ChapterOrganizer({
   onEditChapter: (chapterId: string) => void;
   onAddChapter: () => void;
   onImportChapter: () => void;
+  metricsById?: Record<string, ChapterPageMetrics>;
 }) {
   return (
     <nav
@@ -90,6 +93,11 @@ export function ChapterOrganizer({
                   <div className="text-[10px] opacity-75">
                     {wordCount} palabras
                   </div>
+                  {metricsById[chapter.id] && (
+                    <div className="text-[10px] opacity-60 mt-0.5">
+                      {formatChapterPageMetrics(metricsById[chapter.id])}
+                    </div>
+                  )}
                 </div>
               </button>
 

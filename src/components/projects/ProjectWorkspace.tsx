@@ -13,12 +13,12 @@ import { PreviewCanvas } from './PreviewCanvas';
 import { TemplateSelector } from './TemplateSelector';
 import { CollaborationPanel } from './CollaborationPanel';
 import { AIAssistant } from './AIAssistant';
-import { AdvancedRichTextEditor } from './AdvancedRichTextEditor';
 import { ChapterEditorModal } from './ChapterEditorModal';
 import { AddChapterDialog } from './AddChapterDialog';
 import { ImportChapterDialog } from './ImportChapterDialog';
 import { Portal } from '@/components/ui/Portal';
 import { saveProjectDocumentAction, saveProjectCoverAction, saveChapterContentAction } from '@/lib/projects/actions';
+import { computeChapterPageMetrics } from '@/lib/preview/metrics';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import type { ProjectRecord } from '@/lib/projects/types';
@@ -86,6 +86,12 @@ export function ProjectWorkspace({
       setActiveChapterId(project.document.chapters[0]?.id ?? '');
     }
   }, [activeChapterId, project.document.chapters]);
+
+  // Compute chapter page metrics (Commit 3)
+  const chapterMetricsById = useMemo(() => {
+    const metrics = computeChapterPageMetrics(project);
+    return Object.fromEntries(metrics.map((m) => [m.chapterId, m]));
+  }, [project]);
 
   const handleTemplateSelect = (templateId: string) => {
     setSelectedTemplate(templateId as 'obsidian' | 'teal' | 'sand');
@@ -178,10 +184,7 @@ export function ProjectWorkspace({
               </form>
             </section>
 
-            {/* Stats Card - Full Width, Stacked below Metadata */}
-            <div className="w-full">
-              <DocumentStatsCard document={project.document} isLoading={isPending} />
-            </div>
+            <DocumentStatsCard document={project.document} project={project} isLoading={isPending} />
           </div>
         );
       case 2: // Chapters
@@ -195,6 +198,7 @@ export function ProjectWorkspace({
               onEditChapter={setEditingChapterId}
               onAddChapter={() => setIsAddDialogOpen(true)}
               onImportChapter={() => setIsImportDialogOpen(true)}
+              metricsById={chapterMetricsById}
             />
           </section>
         );

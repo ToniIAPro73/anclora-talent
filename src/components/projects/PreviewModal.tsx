@@ -29,7 +29,6 @@ import {
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 import { buildPreviewPages, type PreviewPage } from '@/lib/preview/preview-builder';
-import { paginateContent } from '@/lib/preview/content-paginator';
 import {
   DEVICE_PAGINATION_CONFIGS,
   FORMAT_PRESETS,
@@ -70,35 +69,11 @@ export function PreviewModal({
   }, [onClose]);
 
   // Generate pages based on selected format
+  // Commit 2: buildPreviewPages now returns fully paginated pages (per-chapter pagination with global numbering)
+  // No need for duplicate pagination here - use pages directly
   const pages = useMemo(() => {
     const config = DEVICE_PAGINATION_CONFIGS[format];
-    const initialPages = buildPreviewPages(project, config);
-
-    // Expand content pages into multiple paginated pages
-    const expandedPages: PreviewPage[] = [];
-
-    for (const page of initialPages) {
-      if (page.type === 'content' && page.content) {
-        // Paginate content page into multiple pages
-        const contentPages = paginateContent(page.content, config);
-        expandedPages.push(
-          ...contentPages.map((cp, idx) => ({
-            type: 'content' as const,
-            content: cp.html,
-            chapterTitle: cp.chapterTitle,
-            pageNumber: expandedPages.length + idx,
-          })),
-        );
-      } else {
-        // Keep cover, TOC and back-cover pages as-is
-        expandedPages.push({
-          ...page,
-          pageNumber: expandedPages.length,
-        });
-      }
-    }
-
-    return expandedPages;
+    return buildPreviewPages(project, config);
   }, [project, format]);
 
   const totalPages = pages.length;
@@ -154,14 +129,37 @@ export function PreviewModal({
   const preset = FORMAT_PRESETS[format];
 
   // Generate table of contents from pages
+  // Commit 2: TOC now uses first page of each chapter (from toc page or first content page of chapter)
   const tocEntries = useMemo(() => {
-    return pages
-      .filter(p => p.type === 'content')
-      .map((p, idx) => ({
-        title: p.chapterTitle || `Página ${p.pageNumber || idx + 1}`,
-        pageIndex: idx,
-        pageNumber: p.pageNumber || idx + 1,
-      }));
+    const entries = [];
+    const seenChapters = new Set<string>();
+
+    for (let i = 0; i < pages.length; i++) {
+      const page = pages[i];
+
+      // Add TOC page entry if present
+      if (page.type === 'toc' && page.tocEntries) {
+        page.tocEntries.forEach(entry => {
+          entries.push({
+            title: entry.title,
+            pageIndex: i,
+            pageNumber: entry.pageNumber,
+          });
+        });
+      }
+
+      // Add chapter entries (first page of each chapter)
+      if (page.type === 'content' && page.chapterId && !seenChapters.has(page.chapterId)) {
+        seenChapters.add(page.chapterId);
+        entries.push({
+          title: page.chapterTitle || `Capítulo sin título`,
+          pageIndex: i,
+          pageNumber: page.pageNumber,
+        });
+      }
+    }
+
+    return entries;
   }, [pages]);
 
   return (
@@ -474,7 +472,7 @@ function PageRenderer({ page, format, project }: PageRendererProps) {
       </div>
       {page.pageNumber !== undefined && (
         <div className="border-t border-[var(--border-subtle)] pt-3 text-center text-xs text-[var(--text-tertiary)]">
-          p. {page.pageNumber + 1}
+          p. {page.pageNumber}
         </div>
       )}
     </div>
