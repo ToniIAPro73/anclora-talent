@@ -113,8 +113,9 @@ export function CoverPropertyPanel() {
     canvas.renderAll();
   };
 
-  const handleDuplicate = () => {
-    fabricObject.clone((cloned: any) => {
+  const handleDuplicate = async () => {
+    try {
+      const cloned = await fabricObject.clone();
       cloned.set({
         left: (cloned.left || 0) + 20,
         top: (cloned.top || 0) + 20,
@@ -123,7 +124,9 @@ export function CoverPropertyPanel() {
       canvas.add(cloned);
       canvas.setActiveObject(cloned);
       canvas.renderAll();
-    });
+    } catch (error) {
+      console.error('[PropertyPanel] Error duplicating:', error);
+    }
   };
 
   return (

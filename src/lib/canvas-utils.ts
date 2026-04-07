@@ -26,13 +26,24 @@ export async function createFabricCanvas(
   const fabric = await getFabric();
   // Intentar usar fabric.Canvas o fabric.Canvas (clase)
   const CanvasClass = fabric.Canvas || (fabric as any).default?.Canvas;
-  return new CanvasClass(canvasElement, {
+  const canvas = new CanvasClass(canvasElement, {
     width: CANVAS_WIDTH,
     height: CANVAS_HEIGHT,
     backgroundColor: '#ffffff',
     preserveObjectStacking: true,
     ...options,
   });
+
+  // Enable object clipping to canvas boundaries
+  canvas.clipPath = new fabric.Rect({
+    left: 0,
+    top: 0,
+    width: CANVAS_WIDTH,
+    height: CANVAS_HEIGHT,
+    absolutePositioned: true,
+  });
+
+  return canvas;
 }
 
 /**
