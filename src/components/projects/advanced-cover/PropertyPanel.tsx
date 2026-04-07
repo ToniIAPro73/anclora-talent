@@ -47,6 +47,12 @@ export function CoverPropertyPanel() {
   useEffect(() => {
     if (selectedElement?.object) {
       const obj = selectedElement.object;
+      console.log('[PropertyPanel] Updating localProps from object:', {
+        id: selectedElement.id,
+        type: obj.type,
+        text: obj.text
+      });
+      
       setLocalProps({
         text: obj.text || '',
         fill: typeof obj.fill === 'string' ? obj.fill : '#ffffff',
@@ -59,8 +65,10 @@ export function CoverPropertyPanel() {
         lineHeight: obj.lineHeight || 1.2,
         charSpacing: obj.charSpacing || 0,
       });
+    } else {
+      setLocalProps({});
     }
-  }, [selectedElement]);
+  }, [selectedElement, selectedElement?.object, selectedElement?.id]);
 
   if (!selectedElement || !canvas) {
     return (

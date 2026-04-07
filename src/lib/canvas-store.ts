@@ -57,6 +57,7 @@ export const useCanvasStore = create<CanvasStore>((set: any, get: any) => ({
   addElement: (element: CanvasElement) => {
     set((state: CanvasStore) => ({
       elements: [...state.elements, element],
+      selectedElement: element, // Seleccionar automáticamente al añadir
     }));
     get().pushHistory();
   },
