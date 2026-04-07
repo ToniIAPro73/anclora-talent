@@ -106,7 +106,8 @@ export async function addImageToCanvas(canvas: any, imageUrl: string, options?: 
 
     canvas.add(img);
     canvas.setActiveObject(img);
-    canvas.renderAll();
+    if (canvas.requestRenderAll) canvas.requestRenderAll();
+    else canvas.renderAll();
     console.info('[addImageToCanvas] Image added and rendered');
     return img;
   } catch (error) {
