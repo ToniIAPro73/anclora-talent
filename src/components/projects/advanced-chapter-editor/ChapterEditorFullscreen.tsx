@@ -139,17 +139,7 @@ export function ChapterEditorFullscreen({
       </header>
 
       {/* ═══════════════════════ CONTENT AREA ═══════════════════════ */}
-      <div className="flex-1 overflow-hidden flex flex-col gap-2 p-3">
-        {/* Chapter Title Input */}
-        <input
-          type="text"
-          value={editor.title}
-          onChange={(e) => editor.setTitle(e.target.value)}
-          disabled={editor.isSaving}
-          className="h-10 rounded-[8px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2 text-sm font-semibold text-[var(--text-primary)] outline-none transition disabled:opacity-50 focus:border-[var(--accent-mint)]"
-          placeholder="Título del capítulo"
-        />
-
+      <div className="flex-1 overflow-hidden flex flex-col gap-1 p-3">
         {/* Error message */}
         {editor.error && (
           <div className="rounded-[8px] border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-400 flex-shrink-0">
@@ -157,7 +147,7 @@ export function ChapterEditorFullscreen({
           </div>
         )}
 
-        {/* Content Editor - Fills available space */}
+        {/* Content Editor - Fills available space - includes chapter title as first line */}
         <div className="flex-1 min-h-0 rounded-[8px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] overflow-hidden">
           <AdvancedRichTextEditor
             defaultContent={editor.htmlContent}

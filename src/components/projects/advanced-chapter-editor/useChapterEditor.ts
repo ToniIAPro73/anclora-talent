@@ -48,9 +48,10 @@ export function useChapterEditor({
     async (newIndex: number) => {
       if (newIndex < 0 || newIndex >= chapters.length) return;
 
+      // Only prompt if there are actual changes
       if (hasChanges) {
         const confirmed = confirm(
-          'Tienes cambios sin guardar. ¿Deseas cambiar de capítulo?'
+          'Tienes cambios sin guardar. ¿Deseas cambiar de capítulo sin guardar?'
         );
         if (!confirmed) return;
       }

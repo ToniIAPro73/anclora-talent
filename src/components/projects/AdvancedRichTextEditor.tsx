@@ -152,10 +152,65 @@ const AdvancedFontSelector = ({ editor }: { editor: any }) => {
   );
 };
 
+const FontSizeSelector = ({ editor }: { editor: any }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const sizes = [
+    { name: 'Pequeño', value: '12px' },
+    { name: 'Normal', value: '16px' },
+    { name: 'Grande', value: '20px' },
+    { name: 'XL', value: '24px' },
+    { name: '2XL', value: '32px' },
+  ];
+
+  const currentSize = editor.getAttributes('fontSize')?.fontSize || '16px';
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <ToolbarButton onClick={() => setIsOpen(!isOpen)} title="Tamaño de fuente">
+        <Type className="h-4 w-4" />
+      </ToolbarButton>
+
+      {isOpen && (
+        <div className="absolute left-0 top-11 z-[110] flex flex-col gap-0.5 rounded-xl border border-[var(--border-strong)] bg-[#0E1825] p-2 shadow-2xl shadow-black animate-in fade-in zoom-in duration-200">
+          {sizes.map((size) => (
+            <button
+              key={size.value}
+              onClick={() => {
+                editor.chain().focus().setFontSize(size.value).run();
+                setIsOpen(false);
+              }}
+              className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                currentSize === size.value
+                  ? 'bg-[var(--accent-mint)]/20 text-[var(--accent-mint)]'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--hover)]'
+              }`}
+              title={size.name}
+            >
+              {size.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ColorSelector = ({ editor }: { editor: any }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
+
   const colors = [
     { name: 'Default', value: 'inherit' },
     { name: 'Primary', value: '#EDF2F8' },
@@ -249,6 +304,7 @@ const MenuBar = ({ editor, viewMode, setViewMode, device, setDevice }: { editor:
 
       <div className="flex items-center gap-2 pr-3 border-r border-[var(--border-subtle)]">
         <AdvancedFontSelector editor={editor} />
+        <FontSizeSelector editor={editor} />
         <ColorSelector editor={editor} />
       </div>
 
@@ -283,8 +339,14 @@ const MenuBar = ({ editor, viewMode, setViewMode, device, setDevice }: { editor:
 
       {/* Elements */}
       <div className="flex items-center gap-1 pr-3 border-r border-[var(--border-subtle)]">
-        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} title="Título">
+        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive('heading', { level: 1 })} title="Encabezado 1">
+          <Heading1 className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} title="Encabezado 2">
           <Heading2 className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} title="Encabezado 3">
+          <Heading3 className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Lista">
           <List className="h-4 w-4" />
