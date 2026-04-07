@@ -85,9 +85,9 @@ export function FontSelector({
       </button>
 
       {isOpen && (
-        <div className={`absolute left-0 right-0 z-50 bg-[var(--page-surface)] border border-[var(--border-subtle)] rounded-lg shadow-2xl ${
+        <div className={`absolute left-0 right-0 z-50 border border-[var(--border-subtle)] rounded-lg shadow-2xl ${
           openUp ? 'bottom-12' : 'top-12'
-        }`} style={{ backdropFilter: 'blur(10px)' }}>
+        }`} style={{ backgroundColor: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(12px)' }}>
           {/* Search */}
           <div className="p-3 border-b border-[var(--border-subtle)]">
             <div className="relative">
@@ -103,7 +103,7 @@ export function FontSelector({
           </div>
 
           {/* Categories */}
-          <div className="flex gap-2 p-3 border-b border-[var(--border-subtle)] flex-wrap bg-[rgba(255,255,255,0.02)]">
+          <div className="flex gap-2 p-3 border-b border-[var(--border-subtle)] flex-wrap" style={{ backgroundColor: 'rgba(15, 23, 42, 0.7)' }}>
             <button
               onClick={() => setActiveCategory('all')}
               className={`px-3 py-1.5 text-xs rounded font-medium transition-all ${
@@ -130,7 +130,7 @@ export function FontSelector({
           </div>
 
           {/* Font List */}
-          <div className="max-h-80 overflow-y-auto p-2 bg-[rgba(0,0,0,0.3)]">
+          <div className="max-h-80 overflow-y-auto p-2" style={{ backgroundColor: 'rgba(5, 12, 25, 0.8)' }}>
             {displayedFonts.length === 0 ? (
               <div className="text-center py-6 text-slate-300 text-sm font-medium">
                 No se encontraron fuentes
