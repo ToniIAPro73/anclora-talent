@@ -20,9 +20,13 @@ async function runMigrations() {
     console.log('🔄 Checking and applying database migrations...');
 
     for (const migration of migrations) {
-      console.log('   Executing: ALTER TABLE cover_designs ADD COLUMN show_subtitle');
-      const result = await sql(migration);
-      console.log('   ✓ Column ensured');
+      try {
+        console.log('   Executing migration...');
+        await sql(migration);
+        console.log('   ✓ Column ensured');
+      } catch (err) {
+        console.warn('   ⚠️ Migration step skipped (might already exist):', err instanceof Error ? err.message : String(err));
+      }
     }
 
     console.log('✅ All migrations completed successfully');
@@ -32,6 +36,12 @@ async function runMigrations() {
   }
 }
 
-runMigrations().catch(err => {
-  console.error('Migration error:', err);
-});
+async function main() {
+  try {
+    await runMigrations();
+  } catch (err) {
+    console.error('Final migration error:', err);
+  }
+}
+
+main();

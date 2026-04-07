@@ -40,7 +40,7 @@ const fontFamilies = [
 ];
 
 export function CoverPropertyPanel() {
-  const { selectedElement, canvas, removeElement, updateElement } = useCanvasStore();
+  const { selectedElement, canvas, removeElement, updateElement, addElement } = useCanvasStore();
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [localProps, setLocalProps] = useState<any>({});
 
