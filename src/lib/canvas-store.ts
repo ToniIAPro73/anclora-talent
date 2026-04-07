@@ -16,6 +16,7 @@ export interface CanvasElement {
     charSpacing?: number;
     fontWeight?: string | number;
     fontStyle?: string;
+    text?: string;
   };
 }
 
@@ -42,41 +43,41 @@ interface CanvasStore {
   clear: () => void;
 }
 
-export const useCanvasStore = create<CanvasStore>((set, get) => ({
+export const useCanvasStore = create<CanvasStore>((set: any, get: any) => ({
   canvas: null,
   selectedElement: null,
   elements: [],
   history: [],
   historyStep: -1,
 
-  setCanvas: (canvas) => set({ canvas }),
+  setCanvas: (canvas: any) => set({ canvas }),
 
-  selectElement: (element) => set({ selectedElement: element }),
+  selectElement: (element: CanvasElement | null) => set({ selectedElement: element }),
 
-  addElement: (element) => {
-    set((state) => ({
+  addElement: (element: CanvasElement) => {
+    set((state: CanvasStore) => ({
       elements: [...state.elements, element],
     }));
     get().pushHistory();
   },
 
-  removeElement: (id) => {
+  removeElement: (id: string) => {
     const state = get();
-    const element = state.elements.find((el) => el.id === id);
+    const element = state.elements.find((el: CanvasElement) => el.id === id);
     if (element && state.canvas) {
       state.canvas.remove(element.object);
       state.canvas.renderAll();
-      set((state) => ({
-        elements: state.elements.filter((el) => el.id !== id),
+      set((state: CanvasStore) => ({
+        elements: state.elements.filter((el: CanvasElement) => el.id !== id),
         selectedElement: state.selectedElement?.id === id ? null : state.selectedElement,
       }));
       get().pushHistory();
     }
   },
 
-  updateElement: (id, properties) => {
+  updateElement: (id: string, properties: Partial<CanvasElement['properties']>) => {
     const state = get();
-    const element = state.elements.find((el) => el.id === id);
+    const element = state.elements.find((el: CanvasElement) => el.id === id);
     if (element && element.object) {
       const updated = {
         ...element,
@@ -94,12 +95,10 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       
       state.canvas?.requestRenderAll();
       
-      set((state) => ({
-        elements: state.elements.map((el) => (el.id === id ? updated : el)),
+      set((state: CanvasStore) => ({
+        elements: state.elements.map((el: CanvasElement) => (el.id === id ? updated : el)),
         selectedElement: state.selectedElement?.id === id ? updated : state.selectedElement,
       }));
-      // We don't push history on every tiny change (like slider move)
-      // PropertyPanel handles debouncing or specific push points if needed
     }
   },
 

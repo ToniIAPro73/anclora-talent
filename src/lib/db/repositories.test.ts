@@ -43,6 +43,7 @@ describe('repository persistence helpers', () => {
       importedDocument: {
         title: 'Proyecto importado',
         subtitle: 'Subtitulo',
+        author: 'Autor Demo',
         chapterTitle: 'Legado',
         blocks: [{ type: 'paragraph', content: 'Bloque legado' }],
         sourceFileName: 'source.docx',
@@ -62,6 +63,7 @@ describe('repository persistence helpers', () => {
     const next = updateProjectDocument(current, {
       title: 'Proyecto actualizado',
       subtitle: 'Subtitulo actualizado',
+      author: 'Autor Actualizado',
       chapterTitle: 'Capitulo actualizado',
       blocks: chapter.blocks.map((block) => ({
         id: block.id,

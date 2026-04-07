@@ -6,6 +6,8 @@ describe('LandingProductShowcase', () => {
     render(
       <LandingProductShowcase
         id="product-showcase"
+        eyebrow="Producto"
+        description="Una plataforma donde documento, preview y portada dejan de competir entre sí."
         title="Un sistema editorial que une documento, preview y portada."
         panels={[
           { title: 'Documento canonico', description: 'Un solo origen de verdad.' },

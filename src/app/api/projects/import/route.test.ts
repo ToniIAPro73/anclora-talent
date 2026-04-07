@@ -78,15 +78,18 @@ describe('POST /api/projects/import', () => {
       title: 'NUNCA MÁS EN LA SOMBRA',
       subtitle: 'Subtítulo',
       author: 'Antonio Ballesteros Alonso',
+      chapterTitle: 'Prólogo',
+      blocks: [],
       chapters: [
-        { title: 'Prólogo' },
-        { title: 'Índice' },
-        { title: 'Introducción' },
-        { title: 'Fase 1' },
-        { title: 'Fase 2' },
+        { title: 'Prólogo', blocks: [] },
+        { title: 'Índice', blocks: [] },
+        { title: 'Introducción', blocks: [] },
+        { title: 'Fase 1', blocks: [] },
+        { title: 'Fase 2', blocks: [] },
       ],
       warnings: ['No se detectó con certeza el autor; revísalo tras importar.'],
       sourceFileName: 'Nunca_mas_en_la_sombra.docx',
+      sourceMimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     });
 
     const file = new File(['x'], 'Nunca_mas_en_la_sombra.docx', {

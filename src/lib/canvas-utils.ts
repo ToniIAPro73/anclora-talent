@@ -55,7 +55,7 @@ export async function addTextToCanvas(canvas: any, text: string, options?: any) 
     ...options,
   });
   
-  if (options?.id) fabricText.id = options.id;
+  if (options?.id) (fabricText as any).id = options.id;
 
   canvas.add(fabricText);
   canvas.setActiveObject(fabricText);
@@ -109,13 +109,44 @@ export async function addImageToCanvas(canvas: any, imageUrl: string, options?: 
       ...options,
     });
     
-    if (options?.id) img.id = options.id;
+    if (options?.id) (img as any).id = options.id;
 
     canvas.add(img);
     canvas.setActiveObject(img);
     if (canvas.requestRenderAll) canvas.requestRenderAll();
     else canvas.renderAll();
   }
+}
+
+/**
+ * Exportar canvas a imagen
+ */
+export function exportCanvasToImage(canvas: any, format: 'png' | 'jpg' = 'png'): string {
+  return canvas.toDataURL({
+    format,
+    quality: 0.95,
+    multiplier: 2,
+  });
+}
+
+/**
+ * Exportar canvas a JSON
+ */
+export function exportCanvasToJSON(canvas: any): string {
+  return JSON.stringify(canvas.toJSON());
+}
+
+/**
+ * Cargar canvas desde JSON
+ */
+export function loadCanvasFromJSON(canvas: any, json: string): Promise<void> {
+  return new Promise((resolve) => {
+    canvas.loadFromJSON(json, () => {
+      if (canvas.requestRenderAll) canvas.requestRenderAll();
+      else canvas.renderAll();
+      resolve();
+    });
+  });
 }
 
 /**

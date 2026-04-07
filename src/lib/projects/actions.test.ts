@@ -20,6 +20,7 @@ describe('project factories', () => {
     const updated = updateProjectDocument(project, {
       title: 'Manual actualizado',
       subtitle: 'Subtítulo actualizado',
+      author: 'Autor Actualizado',
       chapterTitle: 'Capítulo renovado',
       blocks: chapter.blocks.map((block) => ({
         id: block.id,
@@ -71,6 +72,7 @@ describe('project factories', () => {
       importedDocument: {
         title: 'Libro estructurado',
         subtitle: 'Subtitulo editorial',
+        author: 'Autor Demo',
         chapterTitle: 'Capitulo legado',
         blocks: [{ type: 'paragraph', content: 'Bloque legado' }],
         detectedOutline: [{ title: 'Apertura', level: 1, origin: 'detected' }],

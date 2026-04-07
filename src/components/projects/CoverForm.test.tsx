@@ -41,6 +41,7 @@ function makeProject(): ProjectRecord {
       id: 'd-1',
       title: 'Test Project',
       subtitle: 'Sub',
+      author: 'Author Demo',
       language: 'es',
       chapters: [
         {
