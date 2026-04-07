@@ -19,6 +19,12 @@ export function AdvancedCoverEditor({
   project: ProjectRecord;
   copy: AppMessages['project'];
 }) {
+  console.info('[AdvancedCoverEditor] Mounted with project:', {
+    id: project.id,
+    title: project.cover.title,
+    subtitle: project.cover.subtitle,
+  });
+
   const { canvas, addElement, clear, selectElement } = useCanvasStore();
   const [isRendering, startRenderTransition] = useTransition();
   const [rendered, setRendered] = useState(false);
@@ -28,10 +34,16 @@ export function AdvancedCoverEditor({
 
   const loadProjectData = useCallback(async (fabricCanvas: any) => {
     if (!fabricCanvas || loadingRef.current) return;
-    
+
     loadingRef.current = true;
     console.info('[AdvancedCoverEditor] Starting loadProjectData...');
-    
+    console.info('[AdvancedCoverEditor] Project data:', {
+      title: project.cover.title,
+      subtitle: project.cover.subtitle,
+      palette: project.cover.palette,
+      backgroundImageUrl: project.cover.backgroundImageUrl,
+    });
+
     try {
       // Clear previous state to avoid duplicates
       clear();
@@ -59,12 +71,14 @@ export function AdvancedCoverEditor({
             evented: true,
             id: 'background-image'
           })) as any;
-          
+
+          console.info('[AdvancedCoverEditor] Background image loaded, scaling...');
+
           // Scale to cover
           const scaleX = canvasWidth / fabricImg.width;
           const scaleY = canvasHeight / fabricImg.height;
           const scale = Math.max(scaleX, scaleY);
-          
+
           fabricImg.set({
             scaleX: scale,
             scaleY: scale,
@@ -73,43 +87,53 @@ export function AdvancedCoverEditor({
             originX: 'center',
             originY: 'center',
           });
-          
+
           fabricCanvas.sendToBack(fabricImg);
-          
+
           addElement({
             id: 'background-image',
             type: 'image',
             object: fabricImg,
             properties: { opacity: 1 }
           });
+
+          console.info('[AdvancedCoverEditor] Background image added to canvas');
         } catch (e) {
           console.error('[AdvancedCoverEditor] Error loading background image', e);
         }
       }
 
+      console.info('[AdvancedCoverEditor] Moving to text elements, title:', project.cover.title);
+
       // Add initial metadata as text objects
       const defaultTitleColor = project.cover.accentColor || (project.cover.palette === 'sand' ? '#0b313f' : '#f2e3b3');
 
       if (project.cover.title) {
-        console.info('[AdvancedCoverEditor] Adding title:', project.cover.title);
-        const titleObj = await addTextToCanvas(fabricCanvas, project.cover.title, {
-          top: canvasHeight * 0.35,
-          fontSize: 36,
-          fontWeight: 900,
-          fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-          fill: defaultTitleColor,
-          textAlign: 'center',
-          id: 'title-text',
-          width: canvasWidth * 0.85,
-          left: canvasWidth / 2,
-          originX: 'center'
-        });
-        addElement({
-          id: 'title-text',
-          type: 'text',
-          object: titleObj,
-          properties: { fill: defaultTitleColor, fontSize: 36, opacity: 1, fontWeight: 900, textAlign: 'center' }
-        });
+        try {
+          console.info('[AdvancedCoverEditor] Adding title:', project.cover.title);
+          const titleObj = await addTextToCanvas(fabricCanvas, project.cover.title, {
+            top: canvasHeight * 0.35,
+            fontSize: 36,
+            fontWeight: 900,
+            fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+            fill: defaultTitleColor,
+            textAlign: 'center',
+            id: 'title-text',
+            width: canvasWidth * 0.85,
+            left: canvasWidth / 2,
+            originX: 'center'
+          });
+          console.info('[AdvancedCoverEditor] Title object created:', titleObj);
+          addElement({
+            id: 'title-text',
+            type: 'text',
+            object: titleObj,
+            properties: { fill: defaultTitleColor, fontSize: 36, opacity: 1, fontWeight: 900, textAlign: 'center' }
+          });
+          console.info('[AdvancedCoverEditor] Title added to canvas');
+        } catch (titleError) {
+          console.error('[AdvancedCoverEditor] Error adding title:', titleError);
+        }
       }
 
       if (project.cover.subtitle) {
