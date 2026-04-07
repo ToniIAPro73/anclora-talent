@@ -5,6 +5,7 @@ import { Check, Loader2, BookOpen, FileText, Palette, Users, Sparkles, Download,
 import { Stepper, type Step } from '@/components/ui/Stepper';
 import { ChapterOrganizer } from './ChapterOrganizer';
 import { RichTextEditor } from './RichTextEditor';
+import { DocumentStatsCard } from './DocumentStatsCard';
 import { CoverForm } from './CoverForm';
 import { AdvancedCoverEditor } from './advanced-cover/AdvancedCoverEditor';
 import { BackCoverForm } from './BackCoverForm';
@@ -23,6 +24,7 @@ function blocksToHtml(
   blocks: ProjectRecord['document']['chapters'][number]['blocks'],
 ): string {
   return blocks
+    .filter((block) => block.content.trim()) // Skip empty blocks
     .map((block) => {
       if (block.content.trimStart().startsWith('<')) {
         return block.content;
@@ -172,6 +174,8 @@ export function ProjectWorkspace({
                 </SubmitButton>
               </form>
             </section>
+
+            <DocumentStatsCard document={project.document} isLoading={isPending} />
 
             <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
               <div className="mb-4">

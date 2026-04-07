@@ -110,14 +110,20 @@ export async function saveChapterContentAction(formData: FormData) {
   const chapter = project.document.chapters.find((ch) => ch.id === chapterId);
   if (!chapter) return;
 
-  const firstBlockId = chapter.blocks[0]?.id ?? randomUUID();
+  // Replace all blocks with a single block containing the complete HTML content
+  // This prevents duplication when concatenating multiple blocks
+  const blockId = chapter.blocks[0]?.id ?? randomUUID();
   const input: UpdateDocumentInput = {
     title: project.document.title,
     subtitle: project.document.subtitle,
     author: project.document.author,
     chapterTitle: chapterTitle || chapter.title,
     chapterId,
-    blocks: [{ id: firstBlockId, content: htmlContent }],
+    blocks: [
+      { id: blockId, content: htmlContent },
+      // Include other blocks with empty content to preserve their IDs but effectively remove them
+      ...chapter.blocks.slice(1).map((block) => ({ id: block.id, content: '' })),
+    ],
   };
 
   await projectRepository.saveDocument(userId, projectId, input);
@@ -146,6 +152,27 @@ export async function deleteChapterAction(formData: FormData) {
   if (!projectId || !chapterId) return;
 
   await projectRepository.deleteChapter(userId, projectId, chapterId);
+  revalidatePath(`/projects/${projectId}/editor`);
+  revalidatePath(`/projects/${projectId}/preview`);
+}
+
+export async function createChapterAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '').trim();
+  const chapterTitle = String(formData.get('chapterTitle') ?? '').trim() || 'Nuevo Capítulo';
+  const position = String(formData.get('position') ?? '').trim(); // 'end', 'before:chapterId', 'after:chapterId'
+  const targetChapterId = String(formData.get('targetChapterId') ?? '').trim() || undefined;
+
+  if (!projectId) return;
+
+  let positionType: 'before' | 'after' | undefined;
+  if (position === 'before') {
+    positionType = 'before';
+  } else if (position === 'after') {
+    positionType = 'after';
+  }
+
+  await projectRepository.addChapter(userId, projectId, chapterTitle, positionType, targetChapterId);
   revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
 }

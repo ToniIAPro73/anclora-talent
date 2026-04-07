@@ -210,6 +210,55 @@ export function moveProjectChapter(
   };
 }
 
+export function addProjectChapter(
+  project: ProjectRecord,
+  title: string,
+  position?: 'before' | 'after',
+  targetChapterId?: string,
+): ProjectRecord {
+  const newChapterId = randomUUID();
+  const newBlockId = randomUUID();
+  const chapters = [...project.document.chapters];
+
+  let insertIndex = chapters.length;
+
+  // Determine insertion position
+  if (position && targetChapterId) {
+    const targetIndex = chapters.findIndex((ch) => ch.id === targetChapterId);
+    if (targetIndex >= 0) {
+      insertIndex = position === 'before' ? targetIndex : targetIndex + 1;
+    }
+  }
+
+  const newChapter = {
+    id: newChapterId,
+    order: insertIndex + 1,
+    title: title || `Capítulo ${chapters.length + 1}`,
+    blocks: [
+      {
+        id: newBlockId,
+        type: 'paragraph' as const,
+        order: 1,
+        content: '',
+      },
+    ],
+  };
+
+  chapters.splice(insertIndex, 0, newChapter);
+
+  return {
+    ...project,
+    updatedAt: new Date().toISOString(),
+    document: {
+      ...project.document,
+      chapters: chapters.map((chapter, index) => ({
+        ...chapter,
+        order: index + 1,
+      })),
+    },
+  };
+}
+
 export function deleteProjectChapter(project: ProjectRecord, chapterId: string): ProjectRecord {
   if (project.document.chapters.length <= 1) {
     return project;

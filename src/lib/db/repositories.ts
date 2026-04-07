@@ -676,6 +676,45 @@ async function moveChapterInMemory(userId: string, projectId: string, chapterId:
   return nextProject;
 }
 
+async function addChapterInDb(
+  userId: string,
+  projectId: string,
+  title: string,
+  position?: 'before' | 'after',
+  targetChapterId?: string,
+) {
+  const db = getDb();
+  const current = await getProjectFromDb(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  const { addProjectChapter } = await import('@/lib/projects/factories');
+  const nextProject = addProjectChapter(current, title, position, targetChapterId);
+  await persistDocumentUpdate(db, nextProject);
+  return nextProject;
+}
+
+async function addChapterInMemory(
+  userId: string,
+  projectId: string,
+  title: string,
+  position?: 'before' | 'after',
+  targetChapterId?: string,
+) {
+  const current = await getProjectFromMemory(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  const { addProjectChapter } = await import('@/lib/projects/factories');
+  const nextProject = addProjectChapter(current, title, position, targetChapterId);
+  getMemoryStore().set(nextProject.id, nextProject);
+  return nextProject;
+}
+
 async function deleteChapterInDb(userId: string, projectId: string, chapterId: string) {
   const db = getDb();
   const current = await getProjectFromDb(userId, projectId);
@@ -816,6 +855,17 @@ export const projectRepository = {
     return hasDatabase()
       ? moveChapterInDb(userId, projectId, chapterId, direction)
       : moveChapterInMemory(userId, projectId, chapterId, direction);
+  },
+  addChapter(
+    userId: string,
+    projectId: string,
+    title: string,
+    position?: 'before' | 'after',
+    targetChapterId?: string,
+  ) {
+    return hasDatabase()
+      ? addChapterInDb(userId, projectId, title, position, targetChapterId)
+      : addChapterInMemory(userId, projectId, title, position, targetChapterId);
   },
   deleteChapter(userId: string, projectId: string, chapterId: string) {
     return hasDatabase()
