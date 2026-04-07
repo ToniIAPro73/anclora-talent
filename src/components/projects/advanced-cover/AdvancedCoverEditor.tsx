@@ -86,9 +86,8 @@ export function AdvancedCoverEditor({
             top: canvasHeight / 2,
             originX: 'center',
             originY: 'center',
+            zIndex: 0
           });
-
-          fabricCanvas.sendToBack(fabricImg);
 
           addElement({
             id: 'background-image',
