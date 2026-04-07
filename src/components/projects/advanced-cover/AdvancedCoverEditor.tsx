@@ -19,6 +19,12 @@ export function AdvancedCoverEditor({
   project: ProjectRecord;
   copy: AppMessages['project'];
 }) {
+  console.info('[AdvancedCoverEditor] Mounted with project:', {
+    id: project.id,
+    title: project.cover.title,
+    subtitle: project.cover.subtitle,
+  });
+
   const { canvas, addElement, clear, selectElement } = useCanvasStore();
   const [isRendering, startRenderTransition] = useTransition();
   const [rendered, setRendered] = useState(false);
@@ -28,10 +34,16 @@ export function AdvancedCoverEditor({
 
   const loadProjectData = useCallback(async (fabricCanvas: any) => {
     if (!fabricCanvas || loadingRef.current) return;
-    
+
     loadingRef.current = true;
     console.info('[AdvancedCoverEditor] Starting loadProjectData...');
-    
+    console.info('[AdvancedCoverEditor] Project data:', {
+      title: project.cover.title,
+      subtitle: project.cover.subtitle,
+      palette: project.cover.palette,
+      backgroundImageUrl: project.cover.backgroundImageUrl,
+    });
+
     try {
       // Clear previous state to avoid duplicates
       clear();
