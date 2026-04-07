@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ChevronDown, ChevronUp, Trash2, Edit2, Plus, Upload } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2, Edit2, Plus, Download } from 'lucide-react';
 import { deleteChapterAction, moveChapterAction } from '@/lib/projects/actions';
 import { ChapterEditorModal } from './ChapterEditorModal';
 import { AddChapterDialog } from './AddChapterDialog';
@@ -58,7 +58,7 @@ export function ChapterOrganizer({
               title="Importar capítulo"
               data-testid="import-chapter-button"
             >
-              <Upload className="h-3.5 w-3.5" />
+              <Download className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>

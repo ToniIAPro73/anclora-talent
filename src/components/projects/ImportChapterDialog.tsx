@@ -148,7 +148,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 sm:p-6"
       onClick={handleClose}
     >
       <div
@@ -217,7 +217,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
                   onClick={() => fileInputRef.current?.click()}
                   className="inline-flex items-center gap-2 rounded-[12px] bg-[var(--accent-mint)] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
                 >
-                  <Upload className="h-4 w-4" />
+                  <Download className="h-4 w-4" />
                   Seleccionar archivo
                 </button>
                 <p className="text-xs text-[var(--text-tertiary)]">o arrastra un archivo aquí</p>
@@ -329,7 +329,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
                 </>
               ) : (
                 <>
-                  <Upload className="h-4 w-4" />
+                  <Download className="h-4 w-4" />
                   Importar
                 </>
               )}
