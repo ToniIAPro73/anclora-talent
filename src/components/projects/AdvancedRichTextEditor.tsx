@@ -9,7 +9,7 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import FontFamily from '@tiptap/extension-font-family';
 import TextAlign from '@tiptap/extension-text-align';
 import { Color } from '@tiptap/extension-color';
-import Image from '@tiptap/extension-image';
+import { ResizableImage } from './resizable-image-extension';
 import {
   Bold,
   Italic,
@@ -350,7 +350,7 @@ export function AdvancedRichTextEditor({
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
-      Image.configure({
+      ResizableImage.configure({
         allowBase64: true,
       }),
     ],
@@ -366,6 +366,13 @@ export function AdvancedRichTextEditor({
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, []);
+
+  // Update editor content when defaultContent changes (e.g., when switching chapters)
+  useEffect(() => {
+    if (editor && defaultContent !== editor.getHTML()) {
+      editor.commands.setContent(defaultContent);
+    }
+  }, [defaultContent, editor]);
 
   if (!editor) return null;
 
