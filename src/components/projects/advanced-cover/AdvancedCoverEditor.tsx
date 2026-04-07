@@ -88,9 +88,6 @@ export function AdvancedCoverEditor({
             originY: 'center',
           });
 
-          // Send image to back (Fabric.js uses object method, not canvas method)
-          fabricImg.sendToBack();
-
           addElement({
             id: 'background-image',
             type: 'image',
@@ -164,23 +161,25 @@ export function AdvancedCoverEditor({
       }
 
       // Setup canvas event listeners for object selection
-      fabricCanvas.on('object:added', (e: any) => {
-        console.info('[AdvancedCoverEditor] Object added:', e.target?.id);
-      });
-
       fabricCanvas.on('selection:created', (e: any) => {
         console.info('[AdvancedCoverEditor] Selection created:', e.selected);
         if (e.selected && e.selected.length > 0) {
-          const selectedObj = e.selected[0];
-          selectElement(selectedObj.id || selectedObj.type);
+          const selectedFabricObj = e.selected[0];
+          const element = useCanvasStore.getState().elements.find((el: any) => el.id === selectedFabricObj.id);
+          if (element) {
+            selectElement(element);
+          }
         }
       });
 
       fabricCanvas.on('selection:updated', (e: any) => {
         console.info('[AdvancedCoverEditor] Selection updated:', e.selected);
         if (e.selected && e.selected.length > 0) {
-          const selectedObj = e.selected[0];
-          selectElement(selectedObj.id || selectedObj.type);
+          const selectedFabricObj = e.selected[0];
+          const element = useCanvasStore.getState().elements.find((el: any) => el.id === selectedFabricObj.id);
+          if (element) {
+            selectElement(element);
+          }
         }
       });
 
