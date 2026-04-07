@@ -177,6 +177,80 @@ export async function createChapterAction(formData: FormData) {
   revalidatePath(`/projects/${projectId}/preview`);
 }
 
+export async function importChapterAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '').trim();
+  const sourceDocument = formData.get('sourceDocument');
+  const chapterTitle = String(formData.get('chapterTitle') ?? '').trim() || 'Capítulo importado';
+  const position = String(formData.get('position') ?? '').trim();
+  const targetChapterId = String(formData.get('targetChapterId') ?? '').trim() || undefined;
+
+  if (!projectId || !(sourceDocument instanceof File) || sourceDocument.size === 0) {
+    throw new Error('Project ID and valid file are required');
+  }
+
+  // Extract document content from file
+  const { extractImportedDocumentSeed } = await import('./import');
+  const importedDocument = await extractImportedDocumentSeed(sourceDocument);
+
+  // Get the first chapter's content or combine all blocks
+  const blocks = importedDocument.chapters?.[0]?.blocks || importedDocument.blocks || [];
+
+  // Convert blocks to a single HTML content block
+  const htmlContent = blocks
+    .map((block: any) => {
+      const content = block.content || '';
+      if (content.trimStart().startsWith('<')) {
+        return content;
+      }
+      if (block.type === 'heading') return `<h2>${content}</h2>`;
+      if (block.type === 'quote') return `<blockquote><p>${content}</p></blockquote>`;
+      return `<p>${content}</p>`;
+    })
+    .join('');
+
+  // Parse position
+  let positionType: 'before' | 'after' | undefined;
+  if (position === 'before') {
+    positionType = 'before';
+  } else if (position === 'after') {
+    positionType = 'after';
+  }
+
+  // Add chapter with imported content
+  const newProject = await projectRepository.addChapter(
+    userId,
+    projectId,
+    chapterTitle,
+    positionType,
+    targetChapterId,
+  );
+
+  // Get the newly created chapter ID
+  const newChapterId = newProject.document.chapters[
+    positionType === 'before'
+      ? newProject.document.chapters.findIndex((ch) => ch.id === targetChapterId)
+      : positionType === 'after'
+        ? newProject.document.chapters.findIndex((ch) => ch.id === targetChapterId) + 1
+        : newProject.document.chapters.length - 1
+  ]?.id;
+
+  if (newChapterId) {
+    // Save the imported content to the new chapter
+    await projectRepository.saveDocument(userId, projectId, {
+      title: newProject.document.title,
+      subtitle: newProject.document.subtitle,
+      author: newProject.document.author,
+      chapterId: newChapterId,
+      chapterTitle,
+      blocks: [{ id: newProject.document.chapters.find((ch) => ch.id === newChapterId)?.blocks[0]?.id ?? randomUUID(), content: htmlContent }],
+    });
+  }
+
+  revalidatePath(`/projects/${projectId}/editor`);
+  revalidatePath(`/projects/${projectId}/preview`);
+}
+
 export async function saveProjectCoverAction(formData: FormData) {
   const userId = await requireUserId();
   const projectId = String(formData.get('projectId') ?? '');

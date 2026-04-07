@@ -110,24 +110,17 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
     setError('');
 
     try {
+      const { importChapterAction } = await import('@/lib/projects/actions');
       const formData = new FormData();
       formData.set('projectId', projectId);
       formData.set('sourceDocument', selectedFile);
       formData.set('chapterTitle', chapterTitle);
-      formData.set('position', position);
+      formData.set('position', position.split('-')[0]); // Extract 'before' or 'after' from 'before-id' or 'after-id'
       if (position !== 'end' && selectedChapterId) {
-        formData.set('targetChapterId', selectedChapterId);
+        formData.set('targetChapterId', selectedChapterId.split('-')[1] || selectedChapterId);
       }
 
-      // Call a new server action for importing chapters
-      const response = await fetch('/api/projects/import-chapter', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al importar el capítulo');
-      }
+      await importChapterAction(formData);
 
       onChapterImported?.();
       onClose();
