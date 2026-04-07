@@ -148,9 +148,14 @@ export function updateProjectDocument(project: ProjectRecord, input: UpdateDocum
   const updatedChapter = {
     ...chapter,
     title: input.chapterTitle,
-    blocks: chapter.blocks.map((block) => {
-      const incoming = input.blocks.find((item) => item.id === block.id);
-      return incoming ? { ...block, content: incoming.content } : block;
+    blocks: input.blocks.map((block, bIdx) => {
+      const existing = chapter.blocks.find((b) => b.id === block.id);
+      return {
+        id: block.id || randomUUID(),
+        content: block.content,
+        type: existing?.type || (bIdx === 0 && block.content.trimStart().startsWith('<h') ? 'heading' : 'text'),
+        order: bIdx,
+      };
     }),
   };
 

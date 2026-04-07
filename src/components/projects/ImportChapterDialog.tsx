@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { X, Upload, Loader2, AlertCircle } from 'lucide-react';
+import { X, Upload, Loader2, AlertCircle, Download } from 'lucide-react';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { supportedImportAccept } from '@/lib/projects/import-config';
 import type { DocumentChapter } from '@/lib/projects/types';
