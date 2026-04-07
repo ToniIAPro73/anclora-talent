@@ -386,8 +386,9 @@ export function AdvancedRichTextEditor({
   defaultContent: string;
   onUpdate: (html: string) => void;
 }) {
-  const [viewMode, setViewMode] = useState<'single' | 'double'>('single');
+  const [viewMode, setViewMode] = useState<'single' | 'double'>('double');
   const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
+  const [autoPages, setAutoPages] = useState<boolean>(true);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleUpdate = useCallback(
