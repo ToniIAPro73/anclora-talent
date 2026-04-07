@@ -113,17 +113,30 @@ export function CoverPropertyPanel() {
     canvas.renderAll();
   };
 
-  const handleDuplicate = () => {
-    fabricObject.clone((cloned: any) => {
+  const handleDuplicate = async () => {
+    try {
+      const cloned = await fabricObject.clone();
+      const id = `clone-${Date.now()}`;
       cloned.set({
         left: (cloned.left || 0) + 20,
         top: (cloned.top || 0) + 20,
-        id: `clone-${Date.now()}`,
+        id: id,
       });
       canvas.add(cloned);
+      
+      // Add to store
+      addElement({
+        id,
+        type: fabricObject.type.includes('text') ? 'text' : 'image',
+        object: cloned,
+        properties: { ...((fabricObject as any).toObject?.() || {}) },
+      });
+
       canvas.setActiveObject(cloned);
       canvas.renderAll();
-    });
+    } catch (error) {
+      console.error('[PropertyPanel] Error cloning object:', error);
+    }
   };
 
   return (

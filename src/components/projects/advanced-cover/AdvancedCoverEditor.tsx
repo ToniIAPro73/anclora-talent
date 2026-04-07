@@ -25,7 +25,7 @@ export function AdvancedCoverEditor({
     subtitle: project.cover.subtitle,
   });
 
-  const { canvas, addElement, clear, selectElement } = useCanvasStore();
+  const { canvas, setCanvas, addElement, clear, selectElement } = useCanvasStore();
   const [isRendering, startRenderTransition] = useTransition();
   const [rendered, setRendered] = useState(false);
   const [renderedImageUrl, setRenderedImageUrl] = useState<string | null>(project.cover.renderedImageUrl ?? null);
@@ -201,8 +201,9 @@ export function AdvancedCoverEditor({
   const handleCanvasReady = useCallback((fabricCanvas: any) => {
     console.info('[AdvancedCoverEditor] handleCanvasReady triggered');
     setCanvasInitialized(true);
+    setCanvas(fabricCanvas);
     loadProjectData(fabricCanvas);
-  }, [loadProjectData]);
+  }, [loadProjectData, setCanvas]);
 
   const handleSaveAndRender = () => {
     if (!canvas) return;

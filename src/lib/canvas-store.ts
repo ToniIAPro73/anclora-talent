@@ -106,7 +106,8 @@ export const useCanvasStore = create<CanvasStore>((set: any, get: any) => ({
     const state = get();
     if (state.canvas) {
       const newHistory = state.history.slice(0, state.historyStep + 1);
-      newHistory.push(JSON.stringify(state.canvas.toJSON()));
+      // Incluir 'id' en la serialización para que se mantenga en el historial
+      newHistory.push(JSON.stringify(state.canvas.toJSON(['id'])));
       set({
         history: newHistory,
         historyStep: newHistory.length - 1,
