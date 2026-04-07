@@ -140,7 +140,7 @@ export function ChapterEditorModal({
         {/* Header - MODAL_CONTRACT compliant */}
         <div className="flex items-start justify-between border-b border-[var(--border-subtle)] px-6 py-5 sm:px-8 sm:py-6 flex-shrink-0">
           <div className="flex-1">
-            <h2 className="text-lg font-black tracking-tight text-[var(--text-primary)] sm:text-xl">
+            <h2 className="text-xl font-black tracking-tight text-[var(--text-primary)] sm:text-2xl">
               Editar Capítulo
             </h2>
             <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
@@ -148,14 +148,14 @@ export function ChapterEditorModal({
             </p>
           </div>
 
-          {/* Close button - top right, always visible */}
+          {/* Close button - labeled text button, top right */}
           <button
             onClick={handleClose}
             disabled={isSaving}
-            className="ml-4 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-[var(--border-subtle)] text-[var(--text-secondary)] transition hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)] disabled:opacity-50"
+            className="ml-6 flex-shrink-0 rounded-full border border-[var(--border-subtle)] px-5 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-soft)] disabled:opacity-50"
             title="Cerrar editor (Esc)"
           >
-            <X className="h-5 w-5" />
+            Cerrar
           </button>
         </div>
 
@@ -210,40 +210,40 @@ export function ChapterEditorModal({
         </div>
 
         {/* Footer - Always visible, MODAL_CONTRACT compliant */}
-        <div className="flex items-center justify-between gap-3 border-t border-[var(--border-subtle)] bg-[var(--page-surface)] px-6 py-4 sm:px-8 flex-shrink-0">
+        <div className="flex items-center gap-4 border-t border-[var(--border-subtle)] bg-[var(--page-surface)] px-6 py-5 sm:px-8 flex-shrink-0">
+          {/* Navigation hint */}
+          {!isLastChapter && (
+            <span className="text-xs text-[var(--text-tertiary)] flex-1">
+              Siguiente: Capítulo {chapterIndex + 2}
+            </span>
+          )}
+
+          {/* Buttons - Cancelar (outline) and Guardar (filled) */}
           <button
             onClick={handleClose}
             disabled={isSaving}
-            className={`${premiumSecondaryLightButton} px-5 py-2.5 text-sm`}
+            className="flex-1 rounded-full border-2 border-[var(--border-subtle)] px-6 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-soft)] hover:border-[var(--text-primary)] disabled:opacity-50"
           >
-            Cerrar
+            Cancelar
           </button>
 
-          <div className="flex items-center gap-2">
-            {!isLastChapter && (
-              <span className="text-xs text-[var(--text-tertiary)]">
-                Siguiente: Capítulo {chapterIndex + 2}
-              </span>
+          <button
+            onClick={handleSave}
+            disabled={isSaving || (!hasChanges && lastSaved !== null)}
+            className="flex-1 rounded-full bg-[var(--accent-mint)] px-6 py-3 text-sm font-semibold text-black transition hover:brightness-110 disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Guardando...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Guardar Cambios
+              </>
             )}
-
-            <button
-              onClick={handleSave}
-              disabled={isSaving || (!hasChanges && lastSaved !== null)}
-              className={`${premiumPrimaryDarkButton} px-6 py-2.5 text-sm flex items-center gap-2`}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Guardar
-                </>
-              )}
-            </button>
-          </div>
+          </button>
         </div>
       </div>
     </div>
