@@ -209,6 +209,22 @@ const ColorSelector = ({ editor }: { editor: any }) => {
 };
 
 const MenuBar = ({ editor, viewMode, setViewMode, device, setDevice }: { editor: any, viewMode: string, setViewMode: any, device: string, setDevice: any }) => {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const imageUrl = event.target?.result as string;
+        editor.chain().focus().setImage({ src: imageUrl }).run();
+      };
+      reader.readAsDataURL(file);
+    }
+    // Reset the input so the same file can be selected again
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   if (!editor) return null;
 
   return (
@@ -272,12 +288,19 @@ const MenuBar = ({ editor, viewMode, setViewMode, device, setDevice }: { editor:
         <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Lista">
           <List className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={() => {
-          const url = window.prompt('URL de la imagen:');
-          if (url) editor.chain().focus().setImage({ src: url }).run();
-        }} title="Insertar Imagen">
+        <ToolbarButton
+          onClick={() => fileInputRef.current?.click()}
+          title="Insertar Imagen (click para archivo o pegar URL)"
+        >
           <ImageIcon className="h-4 w-4" />
         </ToolbarButton>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="hidden"
+        />
       </div>
 
       {/* History */}

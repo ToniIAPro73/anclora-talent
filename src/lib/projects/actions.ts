@@ -101,7 +101,6 @@ export async function saveChapterContentAction(formData: FormData) {
   const chapterId = String(formData.get('chapterId') ?? '').trim();
   const chapterTitle = String(formData.get('chapterTitle') ?? '').trim();
   const htmlContent = String(formData.get('htmlContent') ?? '').trim();
-  const imageDataJson = String(formData.get('imageData') ?? '[]').trim();
 
   if (!projectId || !chapterId) return;
 
@@ -110,15 +109,6 @@ export async function saveChapterContentAction(formData: FormData) {
 
   const chapter = project.document.chapters.find((ch) => ch.id === chapterId);
   if (!chapter) return;
-
-  // Parse image data
-  let chapterImages: any[] = [];
-  try {
-    chapterImages = JSON.parse(imageDataJson);
-  } catch (error) {
-    console.error('Error parsing image data:', error);
-    chapterImages = [];
-  }
 
   // Replace all blocks with a single block containing the complete HTML content
   // This prevents duplication when concatenating multiple blocks
@@ -136,25 +126,7 @@ export async function saveChapterContentAction(formData: FormData) {
     ],
   };
 
-  // Update project with new chapter data including images
-  const updatedProject = { ...project };
-  const chapterIndex = updatedProject.document.chapters.findIndex((ch) => ch.id === chapterId);
-  if (chapterIndex >= 0) {
-    updatedProject.document.chapters[chapterIndex] = {
-      ...updatedProject.document.chapters[chapterIndex],
-      images: chapterImages,
-    };
-  }
-
   await projectRepository.saveDocument(userId, projectId, input);
-
-  // Also save the images metadata directly to the project
-  // This requires updating the project's document chapters
-  await projectRepository.updateProjectData(userId, projectId, {
-    document: {
-      ...updatedProject.document,
-    },
-  });
 
   revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
