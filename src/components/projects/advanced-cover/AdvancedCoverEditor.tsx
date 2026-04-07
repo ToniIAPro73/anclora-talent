@@ -26,9 +26,21 @@ export function AdvancedCoverEditor({
   const [renderedImageUrl, setRenderedImageUrl] = useState<string | null>(project.cover.renderedImageUrl ?? null);
 
   const handleCanvasReady = useCallback(async (fabricCanvas: any) => {
+    // Clear previous state to avoid duplicates
+    clear();
+    fabricCanvas.clear();
+    
     const fabric = await getFabric();
     const canvasWidth = fabricCanvas.width;
     const canvasHeight = fabricCanvas.height;
+
+    // Set background color based on palette
+    const bgColors: Record<string, string> = {
+      obsidian: '#0b133f',
+      teal: '#124a50',
+      sand: '#f2e3b3',
+    };
+    fabricCanvas.set({ backgroundColor: bgColors[project.cover.palette] || '#0b133f' });
 
     // Load background image if exists
     if (project.cover.backgroundImageUrl) {
@@ -66,7 +78,7 @@ export function AdvancedCoverEditor({
       }
     }
 
-    // Add initial metadata as text objects if they are missing
+    // Add initial metadata as text objects
     const defaultTitleColor = project.cover.accentColor || (project.cover.palette === 'sand' ? '#0b313f' : '#f2e3b3');
 
     if (project.cover.title) {
@@ -77,7 +89,10 @@ export function AdvancedCoverEditor({
         fontFamily: 'ui-sans-serif, system-ui, sans-serif',
         fill: defaultTitleColor,
         textAlign: 'center',
-        id: 'title-text'
+        id: 'title-text',
+        width: canvasWidth * 0.8,
+        left: canvasWidth / 2,
+        originX: 'center'
       });
       addElement({
         id: 'title-text',
@@ -89,26 +104,28 @@ export function AdvancedCoverEditor({
 
     if (project.cover.subtitle) {
       const subtitleObj = await addTextToCanvas(fabricCanvas, project.cover.subtitle, {
-        top: canvasHeight * 0.45,
+        top: canvasHeight * 0.5,
         fontSize: 16,
         fontWeight: 500,
         fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-        fill: 'rgba(242,227,179,0.8)',
+        fill: project.cover.palette === 'sand' ? 'rgba(11,49,63,0.7)' : 'rgba(242,227,179,0.8)',
         textAlign: 'center',
         id: 'subtitle-text',
-        width: canvasWidth * 0.8
+        width: canvasWidth * 0.8,
+        left: canvasWidth / 2,
+        originX: 'center'
       });
       addElement({
         id: 'subtitle-text',
         type: 'text',
         object: subtitleObj,
-        properties: { fill: 'rgba(242,227,179,0.8)', fontSize: 16, opacity: 1 }
+        properties: { fill: project.cover.palette === 'sand' ? 'rgba(11,49,63,0.7)' : 'rgba(242,227,179,0.8)', fontSize: 16, opacity: 1 }
       });
     }
 
     fabricCanvas.renderAll();
     useCanvasStore.getState().pushHistory();
-  }, [project, addElement]);
+  }, [project, addElement, clear]);
 
   const handleSaveAndRender = () => {
     if (!canvas) return;

@@ -11,6 +11,11 @@ export interface CanvasElement {
     fontFamily?: string;
     opacity?: number;
     angle?: number;
+    textAlign?: string;
+    lineHeight?: number;
+    charSpacing?: number;
+    fontWeight?: string | number;
+    fontStyle?: string;
   };
 }
 
@@ -83,7 +88,12 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       if (properties.fontSize) element.object.set({ fontSize: properties.fontSize });
       if (properties.fontFamily) element.object.set({ fontFamily: properties.fontFamily });
       if (properties.opacity !== undefined) element.object.set({ opacity: properties.opacity });
-      if (properties.angle) element.object.set({ angle: properties.angle });
+      if (properties.angle !== undefined) element.object.set({ angle: properties.angle });
+      if (properties.textAlign) element.object.set({ textAlign: properties.textAlign });
+      if (properties.lineHeight !== undefined) element.object.set({ lineHeight: properties.lineHeight });
+      if (properties.charSpacing !== undefined) element.object.set({ charSpacing: properties.charSpacing });
+      if (properties.fontWeight) element.object.set({ fontWeight: properties.fontWeight });
+      if (properties.fontStyle) element.object.set({ fontStyle: properties.fontStyle });
       
       state.canvas?.renderAll();
       
@@ -136,7 +146,6 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
 
   clear: () => {
     set({
-      canvas: null,
       selectedElement: null,
       elements: [],
       history: [],

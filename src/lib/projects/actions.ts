@@ -187,6 +187,7 @@ export async function saveProjectCoverAction(formData: FormData) {
 
   await projectRepository.saveCover(userId, projectId, input);
   revalidatePath(`/projects/${projectId}/cover`);
+  revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
 }
 
@@ -211,6 +212,7 @@ export async function saveBackCoverAction(formData: FormData) {
 
   await projectRepository.saveBackCover(userId, projectId, input);
   revalidatePath(`/projects/${projectId}/back-cover`);
+  revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
 }
 
@@ -233,6 +235,7 @@ export async function renderCoverImageAction(formData: FormData) {
 
   await projectRepository.saveRenderedCoverUrl(userId, projectId, blob.url);
   revalidatePath(`/projects/${projectId}/cover`);
+  revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
 }
 
@@ -255,6 +258,7 @@ export async function renderBackCoverImageAction(formData: FormData) {
 
   await projectRepository.saveRenderedBackCoverUrl(userId, projectId, blob.url);
   revalidatePath(`/projects/${projectId}/back-cover`);
+  revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
 }
 

@@ -8,13 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -22,7 +15,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Trash2, Copy, Bold, Italic, AlignCenter } from 'lucide-react';
+import { 
+  Trash2, 
+  Copy, 
+  Bold, 
+  Italic, 
+  AlignLeft, 
+  AlignCenter, 
+  AlignRight, 
+  Type, 
+  ArrowUp, 
+  ArrowDown,
+  Layers
+} from 'lucide-react';
 
 const fontFamilies = [
   { value: 'ui-sans-serif, system-ui, sans-serif', label: 'Sans Serif' },
@@ -35,7 +40,7 @@ const fontFamilies = [
 ];
 
 export function CoverPropertyPanel() {
-  const { selectedElement, canvas, removeElement } = useCanvasStore();
+  const { selectedElement, canvas, removeElement, updateElement } = useCanvasStore();
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [localProps, setLocalProps] = useState<any>({});
 
@@ -50,6 +55,9 @@ export function CoverPropertyPanel() {
         opacity: Math.round((obj.opacity || 1) * 100),
         fontWeight: obj.fontWeight || 'normal',
         fontStyle: obj.fontStyle || 'normal',
+        textAlign: obj.textAlign || 'center',
+        lineHeight: obj.lineHeight || 1.2,
+        charSpacing: obj.charSpacing || 0,
       });
     }
   }, [selectedElement]);
@@ -58,11 +66,11 @@ export function CoverPropertyPanel() {
     return (
       <div className="flex h-full flex-col items-center justify-center space-y-4 p-8 text-center">
         <div className="rounded-full bg-[var(--surface-soft)] p-4 border border-[var(--border-subtle)]">
-          <AlignCenter className="h-8 w-8 text-[var(--text-tertiary)]" />
+          <Type className="h-8 w-8 text-[var(--text-tertiary)]" />
         </div>
         <div className="space-y-1">
           <p className="text-sm font-semibold text-[var(--text-primary)]">Sin selección</p>
-          <p className="text-xs text-[var(--text-secondary)]">Haz clic en un elemento del diseño para editar sus propiedades.</p>
+          <p className="text-xs text-[var(--text-secondary)]">Haz clic en un elemento para editarlo.</p>
         </div>
       </div>
     );
@@ -71,28 +79,38 @@ export function CoverPropertyPanel() {
   const fabricObject = selectedElement.object;
   const isText = fabricObject.type.includes('text');
 
-  const updateFabric = (props: any) => {
-    fabricObject.set(props);
-    canvas.renderAll();
+  const updateProperties = (props: any) => {
+    updateElement(selectedElement.id, props);
     setLocalProps((prev: any) => ({ ...prev, ...props }));
-    // Also push to history if significant change? 
-    // Usually better to push on mouse up or debounce
   };
 
-  const handleTextChange = (text: string) => updateFabric({ text });
-  const handleColorChange = (color: any) => updateFabric({ fill: color.hex });
-  const handleFontSizeChange = (val: number[]) => updateFabric({ fontSize: val[0] });
-  const handleFontFamilyChange = (fontFamily: string) => updateFabric({ fontFamily });
-  const handleOpacityChange = (val: number[]) => updateFabric({ opacity: val[0] / 100 });
+  const handleTextChange = (text: string) => updateProperties({ text });
+  const handleColorChange = (color: any) => updateProperties({ fill: color.hex });
+  const handleFontSizeChange = (val: number[]) => updateProperties({ fontSize: val[0] });
+  const handleFontFamilyChange = (fontFamily: string) => updateProperties({ fontFamily });
+  const handleOpacityChange = (val: number[]) => updateProperties({ opacity: val[0] / 100 });
+  const handleAlignChange = (textAlign: string) => updateProperties({ textAlign });
+  const handleLineHeightChange = (val: number[]) => updateProperties({ lineHeight: val[0] });
+  const handleCharSpacingChange = (val: number[]) => updateProperties({ charSpacing: val[0] });
   
   const handleBoldToggle = () => {
     const next = localProps.fontWeight === 'bold' ? 'normal' : 'bold';
-    updateFabric({ fontWeight: next });
+    updateProperties({ fontWeight: next });
   };
 
   const handleItalicToggle = () => {
     const next = localProps.fontStyle === 'italic' ? 'normal' : 'italic';
-    updateFabric({ fontStyle: next });
+    updateProperties({ fontStyle: next });
+  };
+
+  const handleBringForward = () => {
+    fabricObject.bringForward();
+    canvas.renderAll();
+  };
+
+  const handleSendBackward = () => {
+    fabricObject.sendBackwards();
+    canvas.renderAll();
   };
 
   const handleDuplicate = () => {
@@ -108,15 +126,12 @@ export function CoverPropertyPanel() {
     });
   };
 
-  const handleDelete = () => {
-    removeElement(selectedElement.id);
-  };
-
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div>
-        <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--accent)] mb-4">
-          Propiedades {isText ? 'de Texto' : 'de Imagen'}
+        <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--accent)] mb-4 flex items-center gap-2">
+          {isText ? <Type className="h-4 w-4" /> : <Layers className="h-4 w-4" />}
+          Propiedades
         </h3>
         
         <div className="space-y-5">
@@ -127,14 +142,14 @@ export function CoverPropertyPanel() {
                 <Textarea
                   value={localProps.text}
                   onChange={(e) => handleTextChange(e.target.value)}
-                  className="min-h-20 bg-[var(--surface-soft)] border-[var(--border-subtle)] focus:border-[var(--accent-mint)]"
+                  className="min-h-20 bg-[var(--surface-soft)] border-[var(--border-subtle)] focus:border-[var(--accent-mint)] text-sm"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label className="text-xs font-semibold">Tipografía</Label>
                 <Select value={localProps.fontFamily} onValueChange={handleFontFamilyChange}>
-                  <SelectTrigger className="bg-[var(--surface-soft)] border-[var(--border-subtle)]">
+                  <SelectTrigger className="bg-[var(--surface-soft)] border-[var(--border-subtle)] h-10 text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -147,35 +162,71 @@ export function CoverPropertyPanel() {
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold">Tamaño ({localProps.fontSize}px)</Label>
-                  <Slider
-                    value={[localProps.fontSize]}
-                    min={8}
-                    max={120}
-                    step={1}
-                    onValueChange={handleFontSizeChange}
-                  />
-                </div>
-                <div className="flex items-end gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Alineación y Estilo</Label>
+                <div className="flex gap-1 bg-[var(--surface-soft)] p-1 rounded-lg border border-[var(--border-subtle)]">
+                  <button
+                    onClick={() => handleAlignChange('left')}
+                    className={`flex-1 flex justify-center py-2 rounded-md transition ${localProps.textAlign === 'left' ? 'bg-[var(--accent-mint)] text-black' : 'hover:bg-white/5'}`}
+                    title="Alinear izquierda"
+                  >
+                    <AlignLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleAlignChange('center')}
+                    className={`flex-1 flex justify-center py-2 rounded-md transition ${localProps.textAlign === 'center' ? 'bg-[var(--accent-mint)] text-black' : 'hover:bg-white/5'}`}
+                    title="Centrar"
+                  >
+                    <AlignCenter className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleAlignChange('right')}
+                    className={`flex-1 flex justify-center py-2 rounded-md transition ${localProps.textAlign === 'right' ? 'bg-[var(--accent-mint)] text-black' : 'hover:bg-white/5'}`}
+                    title="Alinear derecha"
+                  >
+                    <AlignRight className="h-4 w-4" />
+                  </button>
+                  <div className="w-px bg-white/10 mx-1" />
+                  <button
                     onClick={handleBoldToggle}
-                    className={`flex-1 h-10 ${localProps.fontWeight === 'bold' ? 'bg-[var(--accent-mint)] text-black border-[var(--accent-mint)]' : ''}`}
+                    className={`flex-1 flex justify-center py-2 rounded-md transition ${localProps.fontWeight === 'bold' ? 'bg-[var(--accent-mint)] text-black' : 'hover:bg-white/5'}`}
+                    title="Negrita"
                   >
                     <Bold className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  </button>
+                  <button
                     onClick={handleItalicToggle}
-                    className={`flex-1 h-10 ${localProps.fontStyle === 'italic' ? 'bg-[var(--accent-mint)] text-black border-[var(--accent-mint)]' : ''}`}
+                    className={`flex-1 flex justify-center py-2 rounded-md transition ${localProps.fontStyle === 'italic' ? 'bg-[var(--accent-mint)] text-black' : 'hover:bg-white/5'}`}
+                    title="Cursiva"
                   >
                     <Italic className="h-4 w-4" />
-                  </Button>
+                  </button>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label className="text-xs font-semibold">Tamaño</Label>
+                    <span className="text-[10px] font-mono text-[var(--text-tertiary)]">{localProps.fontSize}px</span>
+                  </div>
+                  <Slider value={[localProps.fontSize]} min={8} max={120} step={1} onValueChange={handleFontSizeChange} />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label className="text-xs font-semibold">Interlineado</Label>
+                    <span className="text-[10px] font-mono text-[var(--text-tertiary)]">{localProps.lineHeight}</span>
+                  </div>
+                  <Slider value={[localProps.lineHeight]} min={0.5} max={3} step={0.1} onValueChange={handleLineHeightChange} />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label className="text-xs font-semibold">Espaciado letras</Label>
+                  <span className="text-[10px] font-mono text-[var(--text-tertiary)]">{localProps.charSpacing}</span>
+                </div>
+                <Slider value={[localProps.charSpacing]} min={-100} max={1000} step={10} onValueChange={handleCharSpacingChange} />
               </div>
 
               <div className="space-y-2">
@@ -202,14 +253,23 @@ export function CoverPropertyPanel() {
           )}
 
           <div className="space-y-2">
-            <Label className="text-xs font-semibold">Opacidad ({localProps.opacity}%)</Label>
-            <Slider
-              value={[localProps.opacity]}
-              min={0}
-              max={100}
-              step={1}
-              onValueChange={handleOpacityChange}
-            />
+            <div className="flex justify-between items-center">
+              <Label className="text-xs font-semibold">Opacidad</Label>
+              <span className="text-[10px] font-mono text-[var(--text-tertiary)]">{localProps.opacity}%</span>
+            </div>
+            <Slider value={[localProps.opacity]} min={0} max={100} step={1} onValueChange={handleOpacityChange} />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold">Capas (Orden)</Label>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleBringForward} className="flex-1 gap-2 bg-[var(--surface-soft)]">
+                <ArrowUp className="h-3 w-3" /> Subir
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleSendBackward} className="flex-1 gap-2 bg-[var(--surface-soft)]">
+                <ArrowDown className="h-3 w-3" /> Bajar
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -226,7 +286,7 @@ export function CoverPropertyPanel() {
         <Button
           variant="outline"
           className="w-full justify-start gap-2 text-red-500 bg-red-500/5 border-red-500/20 hover:bg-red-500/10 hover:border-red-500/40"
-          onClick={handleDelete}
+          onClick={() => removeElement(selectedElement.id)}
         >
           <Trash2 className="h-4 w-4" />
           <span>Eliminar elemento</span>
