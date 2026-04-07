@@ -70,52 +70,36 @@ export async function addTextToCanvas(canvas: any, text: string, options?: any) 
  */
 export async function addImageToCanvas(canvas: any, imageUrl: string, options?: any) {
   const fabric = await getFabric();
-  const ImageClass = fabric.Image || fabric.FabricImage;
   
-  try {
-    // Compatibilidad Fabric 6/7 (Promise-based)
-    if (ImageClass.fromURL && typeof ImageClass.fromURL(imageUrl) === 'object' && (ImageClass.fromURL(imageUrl) as any).then) {
-      const img = await ImageClass.fromURL(imageUrl, { crossOrigin: 'anonymous' });
-      setupImage(img);
-      return img;
-    } 
-    // Compatibilidad Fabric 5 (Callback-based)
-    else {
-      return new Promise((resolve, reject) => {
-        ImageClass.fromURL(imageUrl, (img: any) => {
-          if (!img) return reject(new Error('Failed to load image'));
-          setupImage(img);
-          resolve(img);
-        }, { crossOrigin: 'anonymous' });
-      });
-    }
-  } catch (error) {
-    console.error('Error in addImageToCanvas:', error);
-    throw error;
-  }
+  return new Promise((resolve, reject) => {
+    fabric.Image.fromURL(
+      imageUrl,
+      (img: any) => {
+        const maxWidth = canvas.width * 0.8;
+        const maxHeight = canvas.height * 0.8;
+        const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
 
-  function setupImage(img: any) {
-    const maxWidth = canvas.width * 0.8;
-    const maxHeight = canvas.height * 0.8;
-    const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
+        img.set({
+          left: canvas.width / 2,
+          top: canvas.height / 2,
+          scaleX: scale,
+          scaleY: scale,
+          originX: 'center',
+          originY: 'center',
+          ...options,
+        });
 
-    img.set({
-      left: canvas.width / 2,
-      top: canvas.height / 2,
-      scaleX: scale,
-      scaleY: scale,
-      originX: 'center',
-      originY: 'center',
-      ...options,
-    });
-    
-    if (options?.id) (img as any).id = options.id;
+        if (options?.id) (img as any).id = options.id;
 
-    canvas.add(img);
-    canvas.setActiveObject(img);
-    if (canvas.requestRenderAll) canvas.requestRenderAll();
-    else canvas.renderAll();
-  }
+        canvas.add(img);
+        canvas.setActiveObject(img);
+        canvas.renderAll();
+        resolve(img);
+      },
+      { crossOrigin: 'anonymous' },
+      (error: any) => reject(error)
+    );
+  });
 }
 
 /**
