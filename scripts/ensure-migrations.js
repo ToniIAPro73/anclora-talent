@@ -3,8 +3,8 @@ const { neon } = require('@neondatabase/serverless');
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
-  console.error('❌ DATABASE_URL not configured');
-  process.exit(1);
+  console.warn('⚠️  DATABASE_URL not configured, skipping migrations during build');
+  process.exit(0);
 }
 
 const sql = neon(databaseUrl);
