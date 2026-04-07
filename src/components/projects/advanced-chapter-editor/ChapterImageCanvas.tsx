@@ -42,7 +42,7 @@ export function ChapterImageCanvas({
   const guideManagerRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<string[]>([]);
   const [historyStep, setHistoryStep] = useState(-1);
 
   // Initialize fabric canvas
@@ -82,7 +82,7 @@ export function ChapterImageCanvas({
         setSelectedImageId(null);
       });
 
-      // Setup object modification handler to track changes
+      // Setup object modification handler to track changes and save to history
       canvas.on('object:modified', (e: any) => {
         if (e.target && e.target.id) {
           const obj = e.target;
@@ -95,6 +95,15 @@ export function ChapterImageCanvas({
             opacity: obj.opacity || 1,
             zIndex: canvas.getObjects().indexOf(obj),
           });
+
+          // Save state to history for undo/redo
+          const canvasState = JSON.stringify(canvas.toJSON());
+          setHistory((prev) => {
+            const newHistory = prev.slice(0, historyStep + 1);
+            newHistory.push(canvasState);
+            return newHistory;
+          });
+          setHistoryStep((prev) => prev + 1);
         }
       });
 
@@ -121,6 +130,11 @@ export function ChapterImageCanvas({
       }
 
       canvas.renderAll();
+
+      // Save initial state to history
+      const initialState = JSON.stringify(canvas.toJSON());
+      setHistory([initialState]);
+      setHistoryStep(0);
     };
 
     initializeCanvas();
@@ -166,6 +180,15 @@ export function ChapterImageCanvas({
           canvas.setActiveObject(fabricImg);
           canvas.renderAll();
 
+          // Save state to history for undo/redo
+          const canvasState = JSON.stringify(canvas.toJSON());
+          setHistory((prev) => {
+            const newHistory = prev.slice(0, historyStep + 1);
+            newHistory.push(canvasState);
+            return newHistory;
+          });
+          setHistoryStep((prev) => prev + 1);
+
           const newImage: ChapterImage = {
             id,
             url: imageUrl,
@@ -202,20 +225,43 @@ export function ChapterImageCanvas({
       canvas.renderAll();
       setSelectedImageId(null);
       onImageDelete?.(selectedImageId);
+
+      // Save state to history for undo/redo
+      const canvasState = JSON.stringify(canvas.toJSON());
+      setHistory((prev) => {
+        const newHistory = prev.slice(0, historyStep + 1);
+        newHistory.push(canvasState);
+        return newHistory;
+      });
+      setHistoryStep((prev) => prev + 1);
     }
-  }, [selectedImageId, onImageDelete]);
+  }, [selectedImageId, onImageDelete, historyStep]);
 
   const handleUndo = useCallback(() => {
-    if (historyStep > 0) {
-      setHistoryStep(historyStep - 1);
-      // Implement undo logic
+    if (historyStep > 0 && fabricCanvasRef.current) {
+      const newStep = historyStep - 1;
+      const canvasState = history[newStep];
+      if (canvasState) {
+        const canvas = fabricCanvasRef.current;
+        canvas.loadFromJSON(canvasState, () => {
+          canvas.renderAll();
+          setHistoryStep(newStep);
+        });
+      }
     }
-  }, [historyStep]);
+  }, [historyStep, history]);
 
   const handleRedo = useCallback(() => {
-    if (historyStep < history.length - 1) {
-      setHistoryStep(historyStep + 1);
-      // Implement redo logic
+    if (historyStep < history.length - 1 && fabricCanvasRef.current) {
+      const newStep = historyStep + 1;
+      const canvasState = history[newStep];
+      if (canvasState) {
+        const canvas = fabricCanvasRef.current;
+        canvas.loadFromJSON(canvasState, () => {
+          canvas.renderAll();
+          setHistoryStep(newStep);
+        });
+      }
     }
   }, [historyStep, history]);
 
