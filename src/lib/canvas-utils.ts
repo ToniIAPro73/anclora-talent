@@ -71,37 +71,48 @@ export async function addTextToCanvas(canvas: any, text: string, options?: any) 
 export async function addImageToCanvas(canvas: any, imageUrl: string, options?: any) {
   const fabric = await getFabric();
 
+  console.info('[addImageToCanvas] Starting with URL:', imageUrl);
+  console.info('[addImageToCanvas] Fabric Image class:', fabric.Image);
+
   return new Promise((resolve, reject) => {
-    fabric.Image.fromURL(
-      imageUrl,
-      (img: any) => {
-        try {
-          const maxWidth = canvas.width * 0.8;
-          const maxHeight = canvas.height * 0.8;
-          const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
+    try {
+      fabric.Image.fromURL(
+        imageUrl,
+        (img: any) => {
+          console.info('[addImageToCanvas] fromURL callback fired, img:', img);
+          try {
+            const maxWidth = canvas.width * 0.8;
+            const maxHeight = canvas.height * 0.8;
+            const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
 
-          img.set({
-            left: canvas.width / 2,
-            top: canvas.height / 2,
-            scaleX: scale,
-            scaleY: scale,
-            originX: 'center',
-            originY: 'center',
-            ...options,
-          });
+            img.set({
+              left: canvas.width / 2,
+              top: canvas.height / 2,
+              scaleX: scale,
+              scaleY: scale,
+              originX: 'center',
+              originY: 'center',
+              ...options,
+            });
 
-          if (options?.id) (img as any).id = options.id;
+            if (options?.id) (img as any).id = options.id;
 
-          canvas.add(img);
-          canvas.setActiveObject(img);
-          canvas.renderAll();
-          resolve(img);
-        } catch (error) {
-          reject(error);
-        }
-      },
-      { crossOrigin: 'anonymous' }
-    );
+            canvas.add(img);
+            canvas.setActiveObject(img);
+            canvas.renderAll();
+            console.info('[addImageToCanvas] Image added and rendered');
+            resolve(img);
+          } catch (error) {
+            console.error('[addImageToCanvas] Error in callback:', error);
+            reject(error);
+          }
+        },
+        { crossOrigin: 'anonymous' }
+      );
+    } catch (error) {
+      console.error('[addImageToCanvas] Error calling fromURL:', error);
+      reject(error);
+    }
   });
 }
 
