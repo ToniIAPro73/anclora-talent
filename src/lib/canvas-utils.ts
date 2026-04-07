@@ -4,7 +4,10 @@ let fabricModule: any = null;
 // Función para obtener la instancia de Fabric.js
 export async function getFabric() {
   if (fabricModule) return fabricModule;
-  fabricModule = await import('fabric');
+  const mod = await import('fabric');
+  // En Fabric 6/7 ESM, el objeto fabric está en mod
+  // En versiones anteriores o CJS, podría estar en mod.default
+  fabricModule = (mod as any).fabric || mod;
   return fabricModule;
 }
 
@@ -249,11 +252,11 @@ export async function addTextToCanvas(canvas: any, text: string, options?: any) 
  */
 export async function addImageToCanvas(canvas: any, imageUrl: string, options?: any) {
   const fabric = await getFabric();
+  
   return new Promise((resolve, reject) => {
     fabric.Image.fromURL(
       imageUrl,
       (img: any) => {
-        // Escalar imagen para que quepa en el canvas
         const maxWidth = canvas.width * 0.8;
         const maxHeight = canvas.height * 0.8;
         const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
@@ -268,14 +271,15 @@ export async function addImageToCanvas(canvas: any, imageUrl: string, options?: 
           ...options,
         });
 
+        if (options?.id) (img as any).id = options.id;
+
         canvas.add(img);
         canvas.setActiveObject(img);
         canvas.renderAll();
-
         resolve(img);
       },
       { crossOrigin: 'anonymous' },
-      { crossOrigin: 'anonymous' }
+      (error: any) => reject(error)
     );
   });
 }
