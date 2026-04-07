@@ -4,8 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { X, Loader2, Save } from 'lucide-react';
 import { AdvancedRichTextEditor } from './AdvancedRichTextEditor';
 import { saveChapterContentAction } from '@/lib/projects/actions';
-import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
-import { SubmitButton } from '@/components/ui/SubmitButton';
+import { premiumPrimaryMintButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import type { DocumentChapter } from '@/lib/projects/types';
 
 interface ChapterEditorModalProps {
@@ -152,7 +151,7 @@ export function ChapterEditorModal({
           <button
             onClick={handleClose}
             disabled={isSaving}
-            className="ml-6 flex-shrink-0 rounded-full border border-[var(--border-subtle)] px-5 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-soft)] disabled:opacity-50"
+            className={`ml-6 flex-shrink-0 ${premiumSecondaryLightButton}`}
             title="Cerrar editor (Esc)"
           >
             Cerrar
@@ -222,7 +221,7 @@ export function ChapterEditorModal({
           <button
             onClick={handleClose}
             disabled={isSaving}
-            className="flex-1 rounded-full border-2 border-[var(--border-subtle)] px-6 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-soft)] hover:border-[var(--text-primary)] disabled:opacity-50"
+            className={`flex-1 ${premiumSecondaryLightButton}`}
           >
             Cancelar
           </button>
@@ -230,7 +229,7 @@ export function ChapterEditorModal({
           <button
             onClick={handleSave}
             disabled={isSaving || (!hasChanges && lastSaved !== null)}
-            className="flex-1 rounded-full bg-[var(--accent-mint)] px-6 py-3 text-sm font-semibold text-black transition hover:brightness-110 disabled:opacity-50 flex items-center justify-center gap-2"
+            className={`flex-1 flex items-center justify-center gap-2 ${premiumPrimaryMintButton}`}
           >
             {isSaving ? (
               <>
