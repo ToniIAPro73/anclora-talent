@@ -5,6 +5,11 @@ describe('LandingWorkflow', () => {
   test('renders the three-step onboarding flow', () => {
     render(
       <LandingWorkflow
+        eyebrow="Flujo de trabajo"
+        title="Como funciona la plataforma"
+        description="Tres pasos para llevar tu idea a una publicación real."
+        stepLabel="Paso"
+        advanceLabel="Siguiente"
         steps={[
           { title: 'Crea tu cuenta', description: 'Entra en segundos y deja listo tu espacio.' },
           { title: 'Lanza tu proyecto', description: 'Trabaja sobre un documento inicial consistente.' },

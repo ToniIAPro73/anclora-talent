@@ -1,117 +1,177 @@
 'use client';
 
-import type { CoverDesign } from '@/lib/projects/types';
+import { useRef } from 'react';
+import { useCanvasStore } from '@/lib/canvas-store';
+import {
+  addTextToCanvas,
+  addImageToCanvas,
+} from '@/lib/canvas-utils';
+import { 
+  Type, 
+  Image as ImageIcon, 
+  RotateCcw, 
+  RotateCw, 
+  Copy, 
+  Trash2,
+  Undo2,
+  Redo2
+} from 'lucide-react';
 
-type Layout = NonNullable<CoverDesign['layout']>;
+export function CoverToolbar() {
+  const { canvas, addElement, undo, redo, historyStep, history } = useCanvasStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-const LAYOUTS: { value: Layout; label: string; icon: React.ReactNode }[] = [
-  {
-    value: 'centered',
-    label: 'Centrado',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
-        <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
-        <line x1="7" y1="10" x2="17" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="9" y1="14" x2="15" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    value: 'top',
-    label: 'Arriba',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
-        <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
-        <line x1="6" y1="7" x2="18" y2="7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="6" y1="11" x2="14" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    value: 'bottom',
-    label: 'Abajo',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
-        <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
-        <line x1="6" y1="14" x2="18" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="6" y1="18" x2="14" y2="18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    value: 'overlay-centered',
-    label: 'Superpuesto Central',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
-        <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
-        <rect x="5" y="5" width="14" height="14" rx="1" fill="currentColor" opacity="0.3" />
-        <line x1="7" y1="12" x2="17" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="9" y1="15" x2="15" y2="15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    value: 'overlay-bottom',
-    label: 'Superpuesto Abajo',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
-        <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
-        <rect x="5" y="5" width="14" height="14" rx="1" fill="currentColor" opacity="0.3" />
-        <line x1="6" y1="16" x2="18" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="6" y1="19" x2="14" y2="19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    value: 'image-only',
-    label: 'Solo Imagen',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
-        <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
-        <rect x="5" y="5" width="14" height="14" rx="1" fill="currentColor" opacity="0.4" />
-        <line x1="6" y1="18" x2="18" y2="18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    value: 'minimalist',
-    label: 'Minimalista',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
-        <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
-        <rect x="5" y="5" width="14" height="14" rx="1" fill="currentColor" opacity="0.2" />
-        <line x1="6" y1="8" x2="14" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="6" y1="11" x2="10" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-];
+  const handleAddText = async () => {
+    if (!canvas) return;
+    const id = `text-${Date.now()}`;
+    const fabricText = await addTextToCanvas(canvas, 'Nuevo Texto', { id });
+    
+    // Add to store
+    addElement({
+      id,
+      type: 'text',
+      object: fabricText,
+      properties: {
+        fill: '#ffffff',
+        fontSize: 24,
+        fontFamily: 'sans',
+        opacity: 1,
+      },
+    });
+  };
 
-export function CoverToolbar({
-  layout,
-  onLayoutChange,
-}: {
-  layout: Layout;
-  onLayoutChange: (layout: Layout) => void;
-}) {
+  const handleAddImage = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !canvas) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const imageUrl = e.target?.result as string;
+      const id = `image-${Date.now()}`;
+      try {
+        const fabricImage = (await addImageToCanvas(canvas, imageUrl, { id })) as any;
+        
+        addElement({
+          id,
+          type: 'image',
+          object: fabricImage,
+          properties: {
+            opacity: 1,
+          },
+        });
+      } catch (error) {
+        console.error('Error adding image:', error);
+      }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  };
+
+  const handleClear = () => {
+    if (!canvas) return;
+    if (confirm('¿Estás seguro de que deseas limpiar el diseño?')) {
+      // Keep only background if exists? No, clear all for now
+      canvas.clear();
+      canvas.set({ backgroundColor: '#0b133f' }); // Default palette
+      canvas.renderAll();
+    }
+  };
+
+  const handleDuplicate = () => {
+    if (!canvas) return;
+    const activeObject = canvas.getActiveObject();
+    if (!activeObject) return;
+
+    activeObject.clone((cloned: any) => {
+      cloned.set({
+        left: (cloned.left || 0) + 20,
+        top: (cloned.top || 0) + 20,
+        id: `clone-${Date.now()}`,
+      });
+      canvas.add(cloned);
+      canvas.setActiveObject(cloned);
+      canvas.renderAll();
+    });
+  };
+
   return (
-    <div className="flex flex-wrap gap-2">
-      {LAYOUTS.map((item) => (
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-1 rounded-xl bg-[var(--surface-soft)] p-1 border border-[var(--border-subtle)]">
         <button
-          key={item.value}
           type="button"
-          onClick={() => onLayoutChange(item.value)}
-          title={item.label}
-          className={`flex items-center gap-2 rounded-[14px] border px-3 py-2 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-mint)] ${
-            layout === item.value
-              ? 'border-[var(--button-highlight-bg)] bg-[var(--button-highlight-bg)] text-[var(--button-highlight-fg)]'
-              : 'border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)] hover:border-[var(--accent-mint)] hover:text-[var(--text-primary)]'
-          }`}
+          onClick={handleAddText}
+          className="flex h-9 items-center gap-2 rounded-lg px-3 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--surface-highlight)] transition"
+          title="Añadir texto"
         >
-          {item.icon}
-          {item.label}
+          <Type className="h-4 w-4 text-[var(--accent)]" />
+          <span>Texto</span>
         </button>
-      ))}
+        <button
+          type="button"
+          onClick={handleAddImage}
+          className="flex h-9 items-center gap-2 rounded-lg px-3 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--surface-highlight)] transition"
+          title="Añadir imagen"
+        >
+          <ImageIcon className="h-4 w-4 text-[var(--accent)]" />
+          <span>Imagen</span>
+        </button>
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleImageUpload}
+        className="hidden"
+      />
+
+      <div className="h-6 w-px bg-[var(--border-subtle)] mx-1" />
+
+      <div className="flex items-center gap-1 rounded-xl bg-[var(--surface-soft)] p-1 border border-[var(--border-subtle)]">
+        <button
+          type="button"
+          onClick={undo}
+          disabled={historyStep <= 0}
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-primary)] hover:bg-[var(--surface-highlight)] disabled:opacity-30 transition"
+          title="Deshacer"
+        >
+          <Undo2 className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={redo}
+          disabled={historyStep >= history.length - 1}
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-primary)] hover:bg-[var(--surface-highlight)] disabled:opacity-30 transition"
+          title="Rehacer"
+        >
+          <Redo2 className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="h-6 w-px bg-[var(--border-subtle)] mx-1" />
+
+      <div className="flex items-center gap-1 rounded-xl bg-[var(--surface-soft)] p-1 border border-[var(--border-subtle)]">
+        <button
+          type="button"
+          onClick={handleDuplicate}
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-primary)] hover:bg-[var(--surface-highlight)] transition"
+          title="Duplicar seleccionado"
+        >
+          <Copy className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={handleClear}
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-red-500 hover:bg-red-500/10 transition"
+          title="Limpiar diseño"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }

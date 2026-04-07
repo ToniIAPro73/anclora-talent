@@ -55,7 +55,7 @@ export function RichTextEditor({
   const editor = useEditor({
     extensions: [StarterKit],
     content: defaultContent,
-    onUpdate: ({ editor: ed }) => {
+    onUpdate: ({ editor: ed }: { editor: any }) => {
       handleUpdate(ed.getHTML());
     },
     editorProps: {

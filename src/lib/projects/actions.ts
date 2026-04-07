@@ -1,5 +1,6 @@
 'use server';
 
+import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireUserId } from '@/lib/auth/guards';
@@ -109,7 +110,7 @@ export async function saveChapterContentAction(formData: FormData) {
   const chapter = project.document.chapters.find((ch) => ch.id === chapterId);
   if (!chapter) return;
 
-  const firstBlockId = chapter.blocks[0]?.id ?? crypto.randomUUID();
+  const firstBlockId = chapter.blocks[0]?.id ?? randomUUID();
   const input: UpdateDocumentInput = {
     title: project.document.title,
     subtitle: project.document.subtitle,
@@ -187,6 +188,7 @@ export async function saveProjectCoverAction(formData: FormData) {
 
   await projectRepository.saveCover(userId, projectId, input);
   revalidatePath(`/projects/${projectId}/cover`);
+  revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
 }
 
@@ -211,6 +213,7 @@ export async function saveBackCoverAction(formData: FormData) {
 
   await projectRepository.saveBackCover(userId, projectId, input);
   revalidatePath(`/projects/${projectId}/back-cover`);
+  revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
 }
 
@@ -233,6 +236,7 @@ export async function renderCoverImageAction(formData: FormData) {
 
   await projectRepository.saveRenderedCoverUrl(userId, projectId, blob.url);
   revalidatePath(`/projects/${projectId}/cover`);
+  revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
 }
 
@@ -255,6 +259,7 @@ export async function renderBackCoverImageAction(formData: FormData) {
 
   await projectRepository.saveRenderedBackCoverUrl(userId, projectId, blob.url);
   revalidatePath(`/projects/${projectId}/back-cover`);
+  revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
 }
 

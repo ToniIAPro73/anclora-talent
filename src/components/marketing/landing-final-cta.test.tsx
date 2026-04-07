@@ -5,6 +5,8 @@ describe('LandingFinalCta', () => {
   test('renders the final signup action', () => {
     render(
       <LandingFinalCta
+        eyebrow="Siguiente paso"
+        title="Abre tu cuenta"
         primaryCta={{ href: '/sign-up', label: 'Crear cuenta' }}
         note="No credit card required"
       />

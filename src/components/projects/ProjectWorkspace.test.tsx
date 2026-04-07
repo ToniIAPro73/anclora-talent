@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import { fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
 import { ProjectWorkspace } from './ProjectWorkspace';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
@@ -10,6 +9,7 @@ vi.mock('@/lib/projects/actions', () => ({
   saveProjectDocumentAction: vi.fn().mockResolvedValue(undefined),
   moveChapterAction: vi.fn().mockResolvedValue(undefined),
   deleteChapterAction: vi.fn().mockResolvedValue(undefined),
+  saveProjectCoverAction: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Tiptap requires a real browser DOM — stub it out for jsdom
@@ -17,6 +17,14 @@ vi.mock('./RichTextEditor', () => ({
   RichTextEditor: ({ defaultContent }: { defaultContent: string }) => (
     <div data-testid="rich-text-editor">{defaultContent}</div>
   ),
+}));
+
+vi.mock('./advanced-cover/AdvancedCoverEditor', () => ({
+  AdvancedCoverEditor: () => <div data-testid="advanced-cover-editor" />,
+}));
+
+vi.mock('./advanced-back-cover/AdvancedBackCoverEditor', () => ({
+  AdvancedBackCoverEditor: () => <div data-testid="advanced-back-cover-editor" />,
 }));
 
 const copy = resolveLocaleMessages('es').project;
@@ -80,43 +88,51 @@ describe('ProjectWorkspace', () => {
     expect(screen.getByText('Mi Proyecto')).toBeInTheDocument();
   });
 
-  test('renders the chapter organizer with all chapter titles', () => {
+  test('shows first chapter content in the editor by default (Step 1)', () => {
     render(<ProjectWorkspace project={makeProject()} copy={copy} />);
-    expect(screen.getByRole('button', { name: /Capítulo 1/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Capítulo 2/ })).toBeInTheDocument();
-  });
-
-  test('shows first chapter content in the editor by default', () => {
-    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
-    // RichTextEditor mock renders defaultContent
     expect(screen.getByTestId('rich-text-editor')).toHaveTextContent('<p>Primer párrafo.</p>');
   });
 
-  test('switches to the second chapter when clicked', () => {
+  test('renders chapter organizer when moving to Step 2', () => {
     render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+    
+    // Navigate to step 2 (Capítulos)
+    const nextButton = screen.getByText('Siguiente paso');
+    fireEvent.click(nextButton);
 
-    fireEvent.click(screen.getByRole('button', { name: /Capítulo 2/ }));
-
-    expect(screen.getByTestId('rich-text-editor')).toHaveTextContent('<p>Segundo párrafo.</p>');
+    expect(screen.getByText('Capítulo 1')).toBeInTheDocument();
+    expect(screen.getByText('Capítulo 2')).toBeInTheDocument();
   });
 
-  test('shows links to preview and cover', () => {
+  test('navigates through steps', () => {
     render(<ProjectWorkspace project={makeProject()} copy={copy} />);
-    expect(screen.getByRole('link', { name: copy.editorOpenPreview })).toHaveAttribute(
-      'href',
-      '/projects/proj-1/preview',
-    );
-    expect(screen.getByRole('link', { name: copy.editorOpenCover })).toHaveAttribute(
-      'href',
-      '/projects/proj-1/cover',
-    );
+    
+    const nextButton = screen.getByText('Siguiente paso');
+    
+    // Step 1 -> 2
+    fireEvent.click(nextButton);
+    expect(screen.getByText('de 9 pasos')).toBeInTheDocument();
+    expect(screen.getAllByText('2').length).toBeGreaterThan(0);
+    
+    // Step 2 -> 3
+    fireEvent.click(nextButton);
+    expect(screen.getAllByText('3').length).toBeGreaterThan(0);
   });
 
-  test('renders chapter management controls in the organizer', () => {
+  test('can switch to advanced cover in Step 4', () => {
     render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+    
+    const nextButton = screen.getByText('Siguiente paso');
+    // 1 -> 2
+    fireEvent.click(nextButton);
+    // 2 -> 3
+    fireEvent.click(nextButton);
+    // 3 -> 4
+    fireEvent.click(nextButton);
 
-    expect(screen.getByTestId('chapter-move-up-button-1')).toBeInTheDocument();
-    expect(screen.getByTestId('chapter-move-down-button-1')).toBeInTheDocument();
-    expect(screen.getByTestId('chapter-delete-button-1')).toBeInTheDocument();
+    const advancedButton = screen.getByText(copy.coverSwitchToAdvanced);
+    fireEvent.click(advancedButton);
+
+    expect(screen.getByTestId('advanced-cover-editor')).toBeInTheDocument();
   });
 });

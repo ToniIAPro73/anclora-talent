@@ -73,8 +73,9 @@ export const BackCoverCanvas = forwardRef<HTMLDivElement, {
             textTransform: 'uppercase',
             color: accent,
             margin: 0,
+            opacity: 0
           }}>
-            Anclora Talent
+            &nbsp;
           </p>
         </div>
 

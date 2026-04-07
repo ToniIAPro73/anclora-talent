@@ -94,6 +94,10 @@ export function ProjectWorkspace({
     formData.set('palette', templateId);
     formData.set('currentBackgroundImageUrl', project.cover.backgroundImageUrl ?? '');
     formData.set('currentThumbnailUrl', project.cover.thumbnailUrl ?? '');
+    formData.set('layout', project.cover.layout || 'centered');
+    formData.set('showSubtitle', String(project.cover.showSubtitle ?? true));
+    formData.set('accentColor', project.cover.accentColor ?? '');
+    formData.set('fontFamily', project.cover.fontFamily ?? '');
 
     setSaveState('saving');
     startTransition(async () => {

@@ -134,65 +134,7 @@ export const CoverCanvas = forwardRef<HTMLDivElement, {
             opacity: 0.6,
           }}
         />
-      )}
-
-      {/* Text container */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          zIndex: isOverlayLayout ? 2 : 1,
-          ...layoutStyles[layout],
-        }}
-      >
-        {/* Only show label for non-overlay layouts */}
-        {!isOverlayLayout && (
-          <div
-            style={{
-              fontSize: '10px',
-              fontWeight: 700,
-              letterSpacing: '0.25em',
-              textTransform: 'uppercase',
-              color: accent,
-              marginBottom: '12px',
-            }}
-          >
-            Anclora Talent
-          </div>
-        )}
-
-        {/* Title and subtitle wrapper */}
-        <div>
-          <div
-            style={{
-              fontSize: 'clamp(18px, 6cqw, 28px)',
-              fontWeight: 900,
-              lineHeight: 1.1,
-              letterSpacing: '-0.02em',
-              color: colors.primary,
-              marginBottom: showSubtitle ? '12px' : '0px',
-              textShadow: isOverlayLayout ? '0 2px 8px rgba(0, 0, 0, 0.3)' : 'none',
-            }}
-          >
-            {title || 'Título del proyecto'}
-          </div>
-          {showSubtitle && (
-            <div
-              style={{
-                fontSize: 'clamp(10px, 3cqw, 13px)',
-                fontWeight: 500,
-                lineHeight: 1.6,
-                color: colors.secondary,
-                textShadow: isOverlayLayout ? '0 1px 4px rgba(0, 0, 0, 0.3)' : 'none',
-              }}
-            >
-              {subtitle || 'Subtítulo'}
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
-});
+}
