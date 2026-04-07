@@ -47,20 +47,20 @@ export const CoverCanvas = forwardRef<HTMLDivElement, {
   const accent = accentColor ?? (palette === 'sand' ? '#0b313f' : '#d4af37');
 
   const layoutStyles: Record<Layout, React.CSSProperties> = {
-    centered: { justifyContent: 'center', textAlign: 'center', padding: '2rem' },
-    top: { justifyContent: 'flex-start', textAlign: 'left', padding: '2.5rem 2rem 2rem' },
-    bottom: { justifyContent: 'flex-end', textAlign: 'left', padding: '2rem 2rem 2.5rem' },
+    centered: { justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '2rem' },
+    top: { justifyContent: 'flex-start', alignItems: 'flex-start', textAlign: 'left', paddingTop: '3rem', paddingBottom: '2rem', paddingLeft: '2rem', paddingRight: '2rem' },
+    bottom: { justifyContent: 'flex-end', alignItems: 'flex-end', textAlign: 'left', paddingTop: '2rem', paddingBottom: '3rem', paddingLeft: '2rem', paddingRight: '2rem' },
     'overlay-centered': { justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '2rem' },
-    'overlay-bottom': { justifyContent: 'flex-end', textAlign: 'left', padding: '2rem' },
+    'overlay-bottom': { justifyContent: 'flex-end', alignItems: 'flex-end', textAlign: 'left', padding: '2rem' },
     'image-only': { justifyContent: 'flex-end', alignItems: 'flex-end', textAlign: 'left', padding: '2rem' },
-    minimalist: { justifyContent: 'flex-start', alignItems: 'flex-start', textAlign: 'left', padding: '2rem' },
+    minimalist: { justifyContent: 'flex-start', alignItems: 'flex-start', textAlign: 'left', padding: '2.5rem 2rem 2rem' },
   };
 
   // Determine if this is an overlay layout
   const isOverlayLayout = ['overlay-centered', 'overlay-bottom', 'image-only', 'minimalist'].includes(layout);
 
   // For overlay layouts, image fills the cover. For traditional layouts, image is a subtle background
-  const imageOpacity = isOverlayLayout ? 1 : 0.3;
+  const imageOpacity = isOverlayLayout ? 1 : 0.25;
 
   return (
     <div
@@ -100,23 +100,38 @@ export const CoverCanvas = forwardRef<HTMLDivElement, {
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.5) 100%)',
+            background: `linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, ${accent}33 100%)`,
             zIndex: 1,
           }}
         />
       )}
 
-      {/* Accent bar - only for non-overlay layouts */}
-      {!isOverlayLayout && (
+      {/* Accent bar - for all layouts */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: isOverlayLayout ? '2px' : '4px',
+          background: accent,
+          zIndex: isOverlayLayout ? 3 : 2,
+          opacity: isOverlayLayout ? 0.8 : 1,
+        }}
+      />
+
+      {/* Accent bottom border for overlay layouts */}
+      {isOverlayLayout && (
         <div
           style={{
             position: 'absolute',
-            top: 0,
+            bottom: 0,
             left: 0,
             right: 0,
-            height: '4px',
+            height: '2px',
             background: accent,
-            zIndex: 2,
+            zIndex: 3,
+            opacity: 0.6,
           }}
         />
       )}
