@@ -14,6 +14,7 @@ import { TemplateSelector } from './TemplateSelector';
 import { CollaborationPanel } from './CollaborationPanel';
 import { AIAssistant } from './AIAssistant';
 import { saveProjectDocumentAction, saveProjectCoverAction } from '@/lib/projects/actions';
+import { computeChapterPageMetrics } from '@/lib/preview/metrics';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import type { ProjectRecord } from '@/lib/projects/types';
@@ -68,6 +69,12 @@ export function ProjectWorkspace({
       setActiveChapterId(project.document.chapters[0]?.id ?? '');
     }
   }, [activeChapterId, project.document.chapters]);
+
+  // Compute chapter page metrics (Commit 3)
+  const chapterMetricsById = useMemo(() => {
+    const metrics = computeChapterPageMetrics(project);
+    return Object.fromEntries(metrics.map((m) => [m.chapterId, m]));
+  }, [project]);
 
   const handleTemplateSelect = (templateId: string) => {
     // Optimistic update
@@ -170,6 +177,7 @@ export function ProjectWorkspace({
               chapters={project.document.chapters}
               activeChapterId={activeChapterId}
               onSelect={setActiveChapterId}
+              metricsById={chapterMetricsById}
             />
           </section>
         );

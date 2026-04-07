@@ -7,6 +7,7 @@ import { ChapterEditorModal } from './ChapterEditorModal';
 import { AddChapterDialog } from './AddChapterDialog';
 import { ImportChapterDialog } from './ImportChapterDialog';
 import { calculateWordCount } from '@/lib/projects/document-stats';
+import { formatChapterPageMetrics, type ChapterPageMetrics } from '@/lib/preview/metrics';
 import type { DocumentChapter } from '@/lib/projects/types';
 
 export function ChapterOrganizer({
@@ -14,11 +15,13 @@ export function ChapterOrganizer({
   chapters,
   activeChapterId,
   onSelect,
+  metricsById = {},
 }: {
   projectId: string;
   chapters: DocumentChapter[];
   activeChapterId: string;
   onSelect: (chapterId: string) => void;
+  metricsById?: Record<string, ChapterPageMetrics>;
 }) {
   const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -99,6 +102,11 @@ export function ChapterOrganizer({
                     <div className="text-[10px] opacity-75">
                       {wordCount} palabras
                     </div>
+                    {metricsById[chapter.id] && (
+                      <div className="text-[10px] opacity-60 mt-0.5">
+                        {formatChapterPageMetrics(metricsById[chapter.id])}
+                      </div>
+                    )}
                   </div>
                 </button>
 
