@@ -95,12 +95,22 @@ export function CoverToolbar() {
 
     try {
       const cloned = await activeObject.clone();
+      const id = `clone-${Date.now()}`;
       cloned.set({
         left: (cloned.left || 0) + 20,
         top: (cloned.top || 0) + 20,
-        id: `clone-${Date.now()}`,
+        id: id,
       });
       canvas.add(cloned);
+      
+      // Add to store
+      addElement({
+        id,
+        type: activeObject.type.includes('text') ? 'text' : 'image',
+        object: cloned,
+        properties: { ...((activeObject as any).toObject?.() || {}) },
+      });
+
       canvas.setActiveObject(cloned);
       canvas.requestRenderAll?.() || canvas.renderAll();
     } catch (error) {

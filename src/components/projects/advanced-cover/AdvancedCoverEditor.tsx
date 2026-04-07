@@ -26,7 +26,7 @@ export function AdvancedCoverEditor({
     subtitle: project.cover.subtitle,
   });
 
-  const { canvas, addElement, clear, selectElement } = useCanvasStore();
+  const { canvas, setCanvas, addElement, clear, selectElement } = useCanvasStore();
   const [isRendering, startRenderTransition] = useTransition();
   const [rendered, setRendered] = useState(false);
   const [renderedImageUrl, setRenderedImageUrl] = useState<string | null>(project.cover.renderedImageUrl ?? null);
@@ -57,6 +57,31 @@ export function AdvancedCoverEditor({
       selectElement(null);
       listenersAttachedRef.current = false; // Reset flag so listeners can be re-attached
       
+      // Setup canvas event listeners BEFORE loading elements
+      fabricCanvas.on('selection:created', (e: any) => {
+        if (e.selected && e.selected.length > 0) {
+          const selectedFabricObj = e.selected[0];
+          const element = useCanvasStore.getState().elements.find((el: any) => el.id === selectedFabricObj.id);
+          if (element) {
+            selectElement(element);
+          }
+        }
+      });
+
+      fabricCanvas.on('selection:updated', (e: any) => {
+        if (e.selected && e.selected.length > 0) {
+          const selectedFabricObj = e.selected[0];
+          const element = useCanvasStore.getState().elements.find((el: any) => el.id === selectedFabricObj.id);
+          if (element) {
+            selectElement(element);
+          }
+        }
+      });
+
+      fabricCanvas.on('selection:cleared', () => {
+        selectElement(null);
+      });
+
       const fabric = await getFabric();
       const canvasWidth = fabricCanvas.width || 400;
       const canvasHeight = fabricCanvas.height || 600;
@@ -71,15 +96,12 @@ export function AdvancedCoverEditor({
 
       // Load background image if exists
       if (project.cover.backgroundImageUrl) {
-        console.info('[AdvancedCoverEditor] Loading background image:', project.cover.backgroundImageUrl);
         try {
           const fabricImg = (await addImageToCanvas(fabricCanvas, project.cover.backgroundImageUrl, {
             selectable: true,
             evented: true,
             id: 'background-image'
           })) as any;
-
-          console.info('[AdvancedCoverEditor] Background image loaded, scaling...');
 
           // Scale to cover
           const scaleX = canvasWidth / fabricImg.width;
@@ -101,21 +123,19 @@ export function AdvancedCoverEditor({
             object: fabricImg,
             properties: { opacity: 1 }
           });
-
-          console.info('[AdvancedCoverEditor] Background image added to canvas');
         } catch (e) {
           console.error('[AdvancedCoverEditor] Error loading background image', e);
         }
       }
 
-      console.info('[AdvancedCoverEditor] Moving to text elements, title:', project.cover.title);
+      // Track elements for initial selection
+      let titleElementObj: any = null;
 
       // Add initial metadata as text objects
       const defaultTitleColor = project.cover.accentColor || (project.cover.palette === 'sand' ? '#0b313f' : '#f2e3b3');
 
       if (project.cover.title) {
         try {
-          console.info('[AdvancedCoverEditor] Adding title:', project.cover.title);
           const titleObj = await addTextToCanvas(fabricCanvas, project.cover.title, {
             top: canvasHeight * 0.35,
             fontSize: 36,
@@ -130,21 +150,21 @@ export function AdvancedCoverEditor({
             selectable: true,
             evented: true
           });
-          console.info('[AdvancedCoverEditor] Title object created:', titleObj);
-          addElement({
+          
+          titleElementObj = {
             id: 'title-text',
             type: 'text',
             object: titleObj,
             properties: { fill: defaultTitleColor, fontSize: 36, opacity: 1, fontWeight: 900, textAlign: 'center' }
-          });
-          console.info('[AdvancedCoverEditor] Title added to canvas');
+          };
+          
+          addElement(titleElementObj);
         } catch (titleError) {
           console.error('[AdvancedCoverEditor] Error adding title:', titleError);
         }
       }
 
       if (project.cover.subtitle) {
-        console.info('[AdvancedCoverEditor] Adding subtitle:', project.cover.subtitle);
         const subtitleObj = await addTextToCanvas(fabricCanvas, project.cover.subtitle, {
           top: canvasHeight * 0.5,
           fontSize: 16,
@@ -226,6 +246,13 @@ export function AdvancedCoverEditor({
       }
 
       fabricCanvas.requestRenderAll();
+      
+      // Explicitly select title at the end to trigger property panel
+      if (titleElementObj) {
+        fabricCanvas.setActiveObject(titleElementObj.object);
+        selectElement(titleElementObj);
+      }
+      
       useCanvasStore.getState().pushHistory();
       console.info('[AdvancedCoverEditor] loadProjectData completed');
     } catch (error) {
@@ -238,8 +265,9 @@ export function AdvancedCoverEditor({
   const handleCanvasReady = useCallback((fabricCanvas: any) => {
     console.info('[AdvancedCoverEditor] handleCanvasReady triggered');
     setCanvasInitialized(true);
+    setCanvas(fabricCanvas);
     loadProjectData(fabricCanvas);
-  }, [loadProjectData]);
+  }, [loadProjectData, setCanvas]);
 
   // Cleanup on unmount
   useEffect(() => {

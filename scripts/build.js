@@ -20,9 +20,11 @@ async function build() {
     }
 
     console.log('🏗️  Building Next.js application...');
-    execSync('next build', {
+    // Use npx to ensure the local next binary is found
+    execSync('npx next build', {
       stdio: 'inherit',
-      cwd: path.resolve(__dirname, '..')
+      cwd: path.resolve(__dirname, '..'),
+      env: { ...process.env, NEXT_TELEMETRY_DISABLED: '1' }
     });
 
     console.log('✅ Build completed successfully');

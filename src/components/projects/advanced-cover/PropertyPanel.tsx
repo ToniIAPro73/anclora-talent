@@ -24,13 +24,19 @@ import {
 } from 'lucide-react';
 
 export function CoverPropertyPanel() {
-  const { selectedElement, canvas, removeElement, updateElement } = useCanvasStore();
+  const { selectedElement, canvas, removeElement, updateElement, addElement } = useCanvasStore();
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [localProps, setLocalProps] = useState<any>({});
 
   useEffect(() => {
     if (selectedElement?.object) {
       const obj = selectedElement.object;
+      console.log('[PropertyPanel] Updating localProps from object:', {
+        id: selectedElement.id,
+        type: obj.type,
+        text: obj.text
+      });
+      
       setLocalProps({
         text: obj.text || '',
         fill: typeof obj.fill === 'string' ? obj.fill : '#ffffff',
@@ -43,8 +49,10 @@ export function CoverPropertyPanel() {
         lineHeight: obj.lineHeight || 1.2,
         charSpacing: obj.charSpacing || 0,
       });
+    } else {
+      setLocalProps({});
     }
-  }, [selectedElement]);
+  }, [selectedElement, selectedElement?.object, selectedElement?.id]);
 
   if (!selectedElement || !canvas) {
     return (
@@ -103,9 +111,18 @@ export function CoverPropertyPanel() {
       cloned.set({
         left: (cloned.left || 0) + 20,
         top: (cloned.top || 0) + 20,
-        id: `clone-${Date.now()}`,
+        id: id,
       });
       canvas.add(cloned);
+      
+      // Add to store
+      addElement({
+        id,
+        type: fabricObject.type.includes('text') ? 'text' : 'image',
+        object: cloned,
+        properties: { ...((fabricObject as any).toObject?.() || {}) },
+      });
+
       canvas.setActiveObject(cloned);
       canvas.renderAll();
     } catch (error) {

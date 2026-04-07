@@ -4,11 +4,23 @@ let fabricModule: any = null;
 // Función para obtener la instancia de Fabric.js
 export async function getFabric() {
   if (fabricModule) return fabricModule;
-  const mod = await import('fabric');
-  // En Fabric 6/7 ESM, el objeto fabric está en mod
-  // En versiones anteriores o CJS, podría estar en mod.default
-  fabricModule = (mod as any).fabric || mod;
-  return fabricModule;
+  try {
+    const mod = await import('fabric');
+    console.info('[getFabric] Fabric module imported:', Object.keys(mod));
+    // En Fabric 7 ESM, las clases están en el módulo directamente.
+    // Algunos bundlers podrían poner todo en .default
+    fabricModule = mod.fabric || (mod.default && mod.default.fabric) ? (mod.fabric || mod.default.fabric) : mod;
+    
+    // Si fabricModule.default existe y tiene lo que necesitamos, usarlo (común en algunos entornos Next.js)
+    if (fabricModule.default && (fabricModule.default.Canvas || fabricModule.default.Textbox)) {
+      fabricModule = fabricModule.default;
+    }
+    
+    return fabricModule;
+  } catch (error) {
+    console.error('[getFabric] Error importing fabric:', error);
+    throw error;
+  }
 }
 
 export const CANVAS_WIDTH = 400;
@@ -51,8 +63,14 @@ export async function createFabricCanvas(
  */
 export async function addTextToCanvas(canvas: any, text: string, options?: any) {
   const fabric = await getFabric();
-  const TextboxClass = fabric.Textbox || fabric.IText;
+  // En Fabric 7, Textbox es el nombre preferido
+  const TextboxClass = fabric.Textbox || fabric.IText || fabric.Text;
   
+  if (!TextboxClass) {
+    console.error('[addTextToCanvas] Textbox class not found in fabric module', fabric);
+    throw new Error('Fabric Textbox class not found');
+  }
+
   const fabricText = new TextboxClass(text, {
     left: canvas.width / 2,
     top: canvas.height / 2,
@@ -70,6 +88,7 @@ export async function addTextToCanvas(canvas: any, text: string, options?: any) 
 
   canvas.add(fabricText);
   canvas.setActiveObject(fabricText);
+  
   if (canvas.requestRenderAll) canvas.requestRenderAll();
   else canvas.renderAll();
 
