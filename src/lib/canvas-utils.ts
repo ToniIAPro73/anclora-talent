@@ -7,7 +7,7 @@ export async function getFabric() {
   const mod = await import('fabric');
   // En Fabric 6/7 ESM, el objeto fabric está en mod
   // En versiones anteriores o CJS, podría estar en mod.default
-  fabricModule = mod.fabric || mod;
+  fabricModule = (mod as any).fabric || mod;
   return fabricModule;
 }
 
