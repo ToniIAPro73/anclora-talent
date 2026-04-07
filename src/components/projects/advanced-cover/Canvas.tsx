@@ -1,138 +1,193 @@
 'use client';
 
-import { forwardRef } from 'react';
-import type { CoverDesign } from '@/lib/projects/types';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import {
+  createFabricCanvas,
+  disposeCanvas,
+  CANVAS_WIDTH,
+  CANVAS_HEIGHT,
+  getFabric,
+} from '@/lib/canvas-utils';
+import { useCanvasStore } from '@/lib/canvas-store';
 
-const paletteGradient: Record<CoverDesign['palette'], string> = {
-  obsidian: 'linear-gradient(160deg, #0b133f 0%, #0b233f 50%, #07252f 100%)',
-  teal: 'linear-gradient(160deg, #124a50 0%, #0b313f 50%, #07252f 100%)',
-  sand: 'linear-gradient(160deg, #f2e3b3 0%, #e7d4a0 50%, #d4af37 100%)',
-};
+interface CanvasProps {
+  onCanvasReady?: (canvas: any) => void;
+  initialPalette?: string;
+}
 
-const paletteText: Record<CoverDesign['palette'], { primary: string; secondary: string }> = {
-  obsidian: { primary: '#f2e3b3', secondary: 'rgba(242,227,179,0.75)' },
-  teal: { primary: '#f2e3b3', secondary: 'rgba(242,227,179,0.75)' },
-  sand: { primary: '#0b313f', secondary: 'rgba(11,49,63,0.72)' },
-};
+const SNAP_THRESHOLD = 8;
 
-const fontFamilyMap: Record<string, string> = {
-  sans: 'ui-sans-serif, system-ui, sans-serif',
-  serif: 'ui-serif, Georgia, serif',
-  mono: 'ui-monospace, monospace',
-};
+export function CoverCanvas({ onCanvasReady, initialPalette }: CanvasProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fabricCanvasRef = useRef<any>(null);
+  const guideLinesRef = useRef<any[]>([]);
+  const { setCanvas, selectElement } = useCanvasStore();
+  const [isInitialized, setIsInitialized] = useState(false);
 
-type Layout = NonNullable<CoverDesign['layout']>;
+  const clearGuideLines = useCallback((fabricCanvas: any) => {
+    guideLinesRef.current.forEach((line) => {
+      try {
+        fabricCanvas.remove(line);
+      } catch (e) {}
+    });
+    guideLinesRef.current = [];
+  }, []);
 
-export const CoverCanvas = forwardRef<HTMLDivElement, {
-  title: string;
-  subtitle: string;
-  palette: CoverDesign['palette'];
-  layout?: Layout;
-  fontFamily?: string | null;
-  accentColor?: string | null;
-  backgroundImageUrl?: string | null;
-  showSubtitle?: boolean;
-}>(function CoverCanvas({
-  title,
-  subtitle,
-  palette,
-  layout = 'centered',
-  fontFamily,
-  accentColor,
-  backgroundImageUrl,
-  showSubtitle = true,
-}, ref) {
-  const colors = paletteText[palette];
-  const font = fontFamily ? (fontFamilyMap[fontFamily] ?? fontFamilyMap.sans) : fontFamilyMap.sans;
-  const accent = accentColor ?? (palette === 'sand' ? '#0b313f' : '#d4af37');
+  const createGuideLine = useCallback(
+    async (fabricCanvas: any, points: number[], color: string = '#4a9fd8') => {
+      const fabric = await getFabric();
+      const line = new fabric.Line(points, {
+        stroke: color,
+        strokeWidth: 1,
+        strokeDashArray: [5, 5],
+        selectable: false,
+        evented: false,
+        excludeFromExport: true,
+      });
+      fabricCanvas.add(line);
+      guideLinesRef.current.push(line);
+      return line;
+    },
+    []
+  );
 
-  const layoutStyles: Record<Layout, React.CSSProperties> = {
-    centered: { justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '2rem' },
-    top: { justifyContent: 'flex-start', alignItems: 'flex-start', textAlign: 'left', paddingTop: '3rem', paddingBottom: '2rem', paddingLeft: '2rem', paddingRight: '2rem' },
-    bottom: { justifyContent: 'flex-end', alignItems: 'flex-end', textAlign: 'left', paddingTop: '2rem', paddingBottom: '3rem', paddingLeft: '2rem', paddingRight: '2rem' },
-    'overlay-centered': { justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '2rem' },
-    'overlay-bottom': { justifyContent: 'flex-end', alignItems: 'flex-end', textAlign: 'left', padding: '2rem' },
-    'image-only': { justifyContent: 'flex-end', alignItems: 'flex-end', textAlign: 'left', padding: '2rem' },
-    minimalist: { justifyContent: 'flex-start', alignItems: 'flex-start', textAlign: 'left', padding: '2.5rem 2rem 2rem' },
-  };
+  const showAlignmentGuides = useCallback(
+    async (fabricCanvas: any, movingObj: any) => {
+      clearGuideLines(fabricCanvas);
 
-  // Determine if this is an overlay layout
-  const isOverlayLayout = ['overlay-centered', 'overlay-bottom', 'image-only', 'minimalist'].includes(layout);
+      const canvasWidth = fabricCanvas.width;
+      const canvasHeight = fabricCanvas.height;
+      const centerX = canvasWidth / 2;
+      const centerY = canvasHeight / 2;
 
-  // For overlay layouts, image fills the cover. For traditional layouts, image is a subtle background
-  const imageOpacity = isOverlayLayout ? 1 : 0.25;
+      const objBounds = movingObj.getBoundingRect();
+      const objCenterX = objBounds.left + objBounds.width / 2;
+      const objCenterY = objBounds.top + objBounds.height / 2;
+
+      // Vertical Center
+      if (Math.abs(objCenterX - centerX) < SNAP_THRESHOLD) {
+        await createGuideLine(fabricCanvas, [centerX, 0, centerX, canvasHeight]);
+        movingObj.set({
+          left: centerX - objBounds.width / 2 + (movingObj.left - objBounds.left),
+        });
+      }
+
+      // Horizontal Center
+      if (Math.abs(objCenterY - centerY) < SNAP_THRESHOLD) {
+        await createGuideLine(fabricCanvas, [0, centerY, canvasWidth, centerY]);
+        movingObj.set({
+          top: centerY - objBounds.height / 2 + (movingObj.top - objBounds.top),
+        });
+      }
+
+      fabricCanvas.renderAll();
+    },
+    [clearGuideLines, createGuideLine]
+  );
+
+  useEffect(() => {
+    if (!canvasRef.current || isInitialized) return;
+
+    let isMounted = true;
+
+    const initCanvas = async () => {
+      try {
+        const fabricCanvas = await createFabricCanvas(canvasRef.current!);
+        if (!isMounted) {
+          disposeCanvas(fabricCanvas);
+          return;
+        }
+
+        fabricCanvasRef.current = fabricCanvas;
+
+        // Initial background color based on palette
+        const bgColors: Record<string, string> = {
+          obsidian: '#0b133f',
+          teal: '#124a50',
+          sand: '#f2e3b3',
+        };
+        fabricCanvas.set({ backgroundColor: bgColors[initialPalette || 'obsidian'] || '#0b133f' });
+
+        fabricCanvas.on('selection:created', (e: any) => handleObjectSelected(e.selected?.[0]));
+        fabricCanvas.on('selection:updated', (e: any) => handleObjectSelected(e.selected?.[0]));
+        fabricCanvas.on('selection:cleared', () => selectElement(null));
+
+        fabricCanvas.on('object:moving', (e: any) => {
+          if (e.target) showAlignmentGuides(fabricCanvas, e.target);
+        });
+
+        fabricCanvas.on('object:modified', () => {
+          clearGuideLines(fabricCanvas);
+          fabricCanvas.renderAll();
+          useCanvasStore.getState().pushHistory();
+        });
+
+        fabricCanvas.on('mouse:up', () => {
+          clearGuideLines(fabricCanvas);
+          fabricCanvas.renderAll();
+        });
+
+        fabricCanvas.on('text:changed', (e: any) => {
+          if (e.target) {
+            const elements = useCanvasStore.getState().elements;
+            const element = elements.find((el: any) => el.id === e.target.id);
+            if (element) {
+              useCanvasStore.getState().updateElement(element.id, { text: e.target.text });
+            }
+          }
+        });
+
+        const handleObjectSelected = (selectedObj: any) => {
+          if (!selectedObj) return;
+          const elements = useCanvasStore.getState().elements;
+          const element = elements.find((el: any) => el.id === selectedObj.id);
+
+          if (element) {
+            selectElement(element);
+          } else {
+            selectElement({
+              id: selectedObj.id || `temp-${Date.now()}`,
+              type: selectedObj.type.includes('image') ? 'image' : 'text',
+              object: selectedObj,
+              properties: {
+                fill: selectedObj.fill,
+                fontSize: selectedObj.fontSize,
+                fontFamily: selectedObj.fontFamily,
+                opacity: selectedObj.opacity,
+              },
+            });
+          }
+        };
+
+        setCanvas(fabricCanvas);
+        setIsInitialized(true);
+        if (onCanvasReady) onCanvasReady(fabricCanvas);
+      } catch (error) {
+        console.error('Error initializing canvas:', error);
+      }
+    };
+
+    initCanvas();
+    return () => { isMounted = false; };
+  }, [isInitialized, setCanvas, onCanvasReady, selectElement, showAlignmentGuides, clearGuideLines, initialPalette]);
+
+  useEffect(() => {
+    return () => {
+      if (fabricCanvasRef.current) {
+        disposeCanvas(fabricCanvasRef.current);
+        fabricCanvasRef.current = null;
+      }
+    };
+  }, []);
 
   return (
-    <div
-      ref={ref}
-      data-testid="cover-canvas"
-      style={{
-        position: 'relative',
-        width: '100%',
-        aspectRatio: '2 / 3',
-        borderRadius: '20px',
-        overflow: 'hidden',
-        background: paletteGradient[palette],
-        fontFamily: font,
-      }}
-    >
-      {/* Background image */}
-      {backgroundImageUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={backgroundImageUrl}
-          alt=""
-          aria-hidden
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            opacity: imageOpacity,
-          }}
-        />
-      )}
-
-      {/* Dark overlay for overlay layouts to ensure text readability */}
-      {isOverlayLayout && backgroundImageUrl && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: `linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, ${accent}33 100%)`,
-            zIndex: 1,
-          }}
-        />
-      )}
-
-      {/* Accent bar - for all layouts */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: isOverlayLayout ? '2px' : '4px',
-          background: accent,
-          zIndex: isOverlayLayout ? 3 : 2,
-          opacity: isOverlayLayout ? 0.8 : 1,
-        }}
-      />
-
-      {/* Accent bottom border for overlay layouts */}
-      {isOverlayLayout && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: '2px',
-            background: accent,
-            zIndex: 3,
-            opacity: 0.6,
-          }}
+    <div className="flex justify-center items-center bg-[var(--surface-soft)] rounded-[32px] overflow-hidden p-6 border border-[var(--border-subtle)] shadow-inner">
+      <div className="relative shadow-2xl rounded-lg overflow-hidden border-4 border-white/5">
+        <canvas
+          ref={canvasRef}
+          width={CANVAS_WIDTH}
+          height={CANVAS_HEIGHT}
+          style={{ cursor: 'default' }}
         />
       </div>
     </div>
