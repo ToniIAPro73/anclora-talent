@@ -31,10 +31,15 @@ export function useChapterEditor({
   projectId,
   onChapterChange,
 }: UseChapterEditorOptions) {
+  const initialChapter = chapters[initialChapterIndex];
   const [currentIndex, setCurrentIndex] = useState(initialChapterIndex);
-  const [title, setTitle] = useState(chapters[currentIndex]?.title || '');
-  const [htmlContent, setHtmlContent] = useState('');
-  const [chapterImages, setChapterImages] = useState<ChapterImage[]>([]);
+  const [title, setTitle] = useState(initialChapter?.title || '');
+  const [htmlContent, setHtmlContent] = useState(
+    initialChapter?.blocks.map((block) => block.content).join('') || ''
+  );
+  const [chapterImages, setChapterImages] = useState<ChapterImage[]>(
+    initialChapter?.images || []
+  );
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +76,11 @@ export function useChapterEditor({
       const newChapter = chapters[newIndex];
       setCurrentIndex(newIndex);
       setTitle(newChapter.title);
-      setHtmlContent('');
+      // Reconstruct HTML content from blocks
+      const reconstructedHtml = newChapter.blocks
+        .map((block) => block.content)
+        .join('');
+      setHtmlContent(reconstructedHtml);
       // Load images from the chapter if they exist
       setChapterImages(newChapter.images || []);
       setHasChanges(false);
