@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState, useTransition } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { Check, Image as ImageIcon, Loader2, Sparkles } from 'lucide-react';
 import { CoverCanvas } from './Canvas';
 import { CoverToolbar } from './Toolbar';
@@ -19,16 +19,19 @@ export function AdvancedCoverEditor({
   project: ProjectRecord;
   copy: AppMessages['project'];
 }) {
-  const { canvas, addElement, clear } = useCanvasStore();
-  const [isPending, startTransition] = useTransition();
+  const { canvas, addElement, clear, selectElement } = useCanvasStore();
   const [isRendering, startRenderTransition] = useTransition();
   const [rendered, setRendered] = useState(false);
   const [renderedImageUrl, setRenderedImageUrl] = useState<string | null>(project.cover.renderedImageUrl ?? null);
+  const [canvasInitialized, setCanvasInitialized] = useState(false);
 
-  const handleCanvasReady = useCallback(async (fabricCanvas: any) => {
+  const loadProjectData = useCallback(async (fabricCanvas: any) => {
+    if (!fabricCanvas) return;
+    
     // Clear previous state to avoid duplicates
     clear();
     fabricCanvas.clear();
+    selectElement(null);
     
     const fabric = await getFabric();
     const canvasWidth = fabricCanvas.width;
@@ -98,7 +101,7 @@ export function AdvancedCoverEditor({
         id: 'title-text',
         type: 'text',
         object: titleObj,
-        properties: { fill: defaultTitleColor, fontSize: 36, opacity: 1 }
+        properties: { fill: defaultTitleColor, fontSize: 36, opacity: 1, fontWeight: 900, textAlign: 'center' }
       });
     }
 
@@ -119,13 +122,25 @@ export function AdvancedCoverEditor({
         id: 'subtitle-text',
         type: 'text',
         object: subtitleObj,
-        properties: { fill: project.cover.palette === 'sand' ? 'rgba(11,49,63,0.7)' : 'rgba(242,227,179,0.8)', fontSize: 16, opacity: 1 }
+        properties: { fill: project.cover.palette === 'sand' ? 'rgba(11,49,63,0.7)' : 'rgba(242,227,179,0.8)', fontSize: 16, opacity: 1, fontWeight: 500, textAlign: 'center' }
       });
     }
 
     fabricCanvas.renderAll();
     useCanvasStore.getState().pushHistory();
-  }, [project, addElement, clear]);
+  }, [project.cover.palette, project.cover.backgroundImageUrl, project.cover.title, project.cover.subtitle, project.cover.accentColor, addElement, clear, selectElement]);
+
+  const handleCanvasReady = useCallback((fabricCanvas: any) => {
+    setCanvasInitialized(true);
+    loadProjectData(fabricCanvas);
+  }, [loadProjectData]);
+
+  // If project data changes and canvas is already initialized, reload data
+  useEffect(() => {
+    if (canvasInitialized && canvas) {
+      loadProjectData(canvas);
+    }
+  }, [project.id, project.cover.updatedAt, canvasInitialized, canvas, loadProjectData]);
 
   const handleSaveAndRender = () => {
     if (!canvas) return;

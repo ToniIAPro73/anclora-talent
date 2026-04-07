@@ -47,10 +47,7 @@ export function CoverPreview({
           />
         )}
         
-        <div className="absolute inset-0 flex flex-col justify-center p-8 text-center">
-          <div className="mb-4 text-[10px] font-bold uppercase tracking-[0.25em]" style={{ color: colors.primary, opacity: 0.6 }}>
-            {projectTitle || 'Anclora Talent'}
-          </div>
+        <div className="absolute inset-0 flex flex-col justify-center p-10 text-center">
           <h2 
             className="text-4xl font-black tracking-tight" 
             style={{ color: colors.primary, lineHeight: 1.1 }}
@@ -59,7 +56,7 @@ export function CoverPreview({
           </h2>
           {subtitle && (
             <p 
-              className="mt-4 text-sm font-medium leading-relaxed" 
+              className="mt-6 text-sm font-medium leading-relaxed" 
               style={{ color: colors.secondary }}
             >
               {subtitle}

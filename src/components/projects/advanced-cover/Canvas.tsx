@@ -127,6 +127,16 @@ export function CoverCanvas({ onCanvasReady, initialPalette }: CanvasProps) {
           fabricCanvas.renderAll();
         });
 
+        fabricCanvas.on('text:changed', (e: any) => {
+          if (e.target) {
+            const elements = useCanvasStore.getState().elements;
+            const element = elements.find((el: any) => el.id === e.target.id);
+            if (element) {
+              useCanvasStore.getState().updateElement(element.id, { text: e.target.text });
+            }
+          }
+        });
+
         const handleObjectSelected = (selectedObj: any) => {
           if (!selectedObj) return;
           const elements = useCanvasStore.getState().elements;

@@ -77,30 +77,27 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   updateElement: (id, properties) => {
     const state = get();
     const element = state.elements.find((el) => el.id === id);
-    if (element) {
+    if (element && element.object) {
       const updated = {
         ...element,
         properties: { ...element.properties, ...properties },
       };
       
-      // Apply properties to fabric object
-      if (properties.fill) element.object.set({ fill: properties.fill });
-      if (properties.fontSize) element.object.set({ fontSize: properties.fontSize });
-      if (properties.fontFamily) element.object.set({ fontFamily: properties.fontFamily });
-      if (properties.opacity !== undefined) element.object.set({ opacity: properties.opacity });
-      if (properties.angle !== undefined) element.object.set({ angle: properties.angle });
-      if (properties.textAlign) element.object.set({ textAlign: properties.textAlign });
-      if (properties.lineHeight !== undefined) element.object.set({ lineHeight: properties.lineHeight });
-      if (properties.charSpacing !== undefined) element.object.set({ charSpacing: properties.charSpacing });
-      if (properties.fontWeight) element.object.set({ fontWeight: properties.fontWeight });
-      if (properties.fontStyle) element.object.set({ fontStyle: properties.fontStyle });
+      // Apply properties to fabric object directly
+      element.object.set(properties);
+      
+      // Special handling for text related properties that might need re-render or re-calc
+      if (properties.fontSize || properties.fontFamily || properties.fontWeight || properties.text) {
+        element.object.setCoords();
+      }
       
       state.canvas?.renderAll();
       
       set((state) => ({
         elements: state.elements.map((el) => (el.id === id ? updated : el)),
       }));
-      get().pushHistory();
+      // We don't push history on every tiny change (like slider move)
+      // PropertyPanel handles debouncing or specific push points if needed
     }
   },
 
