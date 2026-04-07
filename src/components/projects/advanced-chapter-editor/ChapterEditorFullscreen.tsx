@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { X, ChevronLeft, ChevronRight, Loader2, Save } from 'lucide-react';
 import { AdvancedRichTextEditor } from '../AdvancedRichTextEditor';
-import { ChapterImageCanvas } from './ChapterImageCanvas';
 import { premiumPrimaryMintButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { useChapterEditor, type UseChapterEditorOptions } from './useChapterEditor';
 import type { DocumentChapter } from '@/lib/projects/types';
@@ -23,8 +22,6 @@ export function ChapterEditorFullscreen({
   onClose,
   onSave,
 }: ChapterEditorFullscreenProps) {
-  const [showImageCanvas, setShowImageCanvas] = useState(true);
-
   const editor = useChapterEditor({
     chapters,
     initialChapterIndex,
@@ -142,58 +139,41 @@ export function ChapterEditorFullscreen({
       </header>
 
       {/* ═══════════════════════ CONTENT AREA ═══════════════════════ */}
-      <div className="flex-1 overflow-hidden flex flex-col lg:flex-row gap-4 p-4 sm:p-6">
-        {/* Left Panel: Text Editor */}
-        <div className="flex-1 min-h-0 flex flex-col gap-3">
-          {/* Chapter Title Input */}
-          <div className="space-y-1.5 flex-shrink-0">
-            <label className="text-xs font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
-              Título del Capítulo
-            </label>
-            <input
-              type="text"
-              value={editor.title}
-              onChange={(e) => editor.setTitle(e.target.value)}
-              disabled={editor.isSaving}
-              className="w-full rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] outline-none transition disabled:opacity-50 focus:border-[var(--accent-mint)]"
-              placeholder="Título del capítulo"
-            />
-          </div>
-
-          {/* Error message */}
-          {editor.error && (
-            <div className="rounded-[12px] border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400 flex-shrink-0">
-              {editor.error}
-            </div>
-          )}
-
-          {/* Content Editor - Fills available space */}
-          <div className="flex-1 min-h-0 rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] overflow-hidden">
-            <AdvancedRichTextEditor
-              defaultContent={editor.htmlContent}
-              onUpdate={editor.setHtmlContent}
-            />
-          </div>
-
-          {/* Save Status */}
-          {editor.lastSaved && (
-            <div className="text-xs text-[var(--accent-mint)] opacity-70 flex-shrink-0">
-              ✓ Guardado a las {editor.lastSaved.toLocaleTimeString()}
-            </div>
-          )}
+      <div className="flex-1 overflow-hidden flex flex-col gap-4 p-4 sm:p-6">
+        {/* Chapter Title Input */}
+        <div className="space-y-1.5 flex-shrink-0">
+          <label className="text-xs font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
+            Título del Capítulo
+          </label>
+          <input
+            type="text"
+            value={editor.title}
+            onChange={(e) => editor.setTitle(e.target.value)}
+            disabled={editor.isSaving}
+            className="w-full rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] outline-none transition disabled:opacity-50 focus:border-[var(--accent-mint)]"
+            placeholder="Título del capítulo"
+          />
         </div>
 
-        {/* Right Panel: Image Canvas (desktop side-by-side) */}
-        {showImageCanvas && (
-          <div className="w-full lg:w-[450px] min-h-[400px] lg:min-h-0 flex-shrink-0 overflow-hidden">
-            <ChapterImageCanvas
-              images={editor.chapterImages}
-              onImageAdd={editor.addImage}
-              onImageDelete={editor.deleteImage}
-              onImageUpdate={editor.updateImage}
-              canvasWidth={400}
-              canvasHeight={550}
-            />
+        {/* Error message */}
+        {editor.error && (
+          <div className="rounded-[12px] border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400 flex-shrink-0">
+            {editor.error}
+          </div>
+        )}
+
+        {/* Content Editor - Fills available space */}
+        <div className="flex-1 min-h-0 rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] overflow-hidden">
+          <AdvancedRichTextEditor
+            defaultContent={editor.htmlContent}
+            onUpdate={editor.setHtmlContent}
+          />
+        </div>
+
+        {/* Save Status */}
+        {editor.lastSaved && (
+          <div className="text-xs text-[var(--accent-mint)] opacity-70 flex-shrink-0">
+            ✓ Guardado a las {editor.lastSaved.toLocaleTimeString()}
           </div>
         )}
       </div>
