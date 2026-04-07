@@ -56,23 +56,21 @@ function calculateParagraphCount(content: string): number {
 /**
  * Estimate page count based on word count and device format
  * Uses average words per page based on pagination config
+ * Calibrated to match standard book publishing (250-300 words per page)
  */
 export function estimatePageCount(wordCount: number, format: PreviewFormat = 'laptop'): number {
   if (wordCount === 0) return 1;
 
-  const config = DEVICE_PAGINATION_CONFIGS[format];
+  // Standard publishing benchmarks: 250-300 words per page depending on format
+  // These values are calibrated to match typical printed book page counts
+  const wordsPerPageByFormat: Record<PreviewFormat, number> = {
+    laptop: 275,    // 6×9" standard book format
+    tablet: 260,    // Slightly smaller, more conservative
+    mobile: 200,    // Much narrower columns
+    ereader: 280,   // Similar to book format
+  };
 
-  // Calculate approximate lines per page
-  const contentHeight = config.pageHeight - config.marginTop - config.marginBottom;
-  const lineHeightPx = config.fontSize * config.lineHeight;
-  const linesPerPage = Math.floor((contentHeight / lineHeightPx) * 0.75);
-
-  // Estimate words per line (average ~10-12 words per line at standard font size)
-  // This is conservative to account for formatting, headings, etc.
-  const avgWordsPerLine = format === 'laptop' ? 12 : format === 'tablet' ? 11 : format === 'mobile' ? 9 : 11;
-
-  // Calculate words per page
-  const wordsPerPage = linesPerPage * avgWordsPerLine;
+  const wordsPerPage = wordsPerPageByFormat[format];
 
   // Calculate pages needed
   const pages = Math.ceil(wordCount / wordsPerPage);

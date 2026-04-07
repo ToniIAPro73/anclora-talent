@@ -4,7 +4,6 @@ import { useEffect, useTransition, useState, useMemo } from 'react';
 import { Check, Loader2, BookOpen, FileText, Palette, Users, Sparkles, Download, Monitor } from 'lucide-react';
 import { Stepper, type Step } from '@/components/ui/Stepper';
 import { ChapterOrganizer } from './ChapterOrganizer';
-import { RichTextEditor } from './RichTextEditor';
 import { DocumentStatsCard } from './DocumentStatsCard';
 import { CoverForm } from './CoverForm';
 import { AdvancedCoverEditor } from './advanced-cover/AdvancedCoverEditor';
@@ -14,7 +13,7 @@ import { PreviewCanvas } from './PreviewCanvas';
 import { TemplateSelector } from './TemplateSelector';
 import { CollaborationPanel } from './CollaborationPanel';
 import { AIAssistant } from './AIAssistant';
-import { saveChapterContentAction, saveProjectDocumentAction, saveProjectCoverAction } from '@/lib/projects/actions';
+import { saveProjectDocumentAction, saveProjectCoverAction } from '@/lib/projects/actions';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import type { ProjectRecord } from '@/lib/projects/types';
@@ -69,21 +68,6 @@ export function ProjectWorkspace({
       setActiveChapterId(project.document.chapters[0]?.id ?? '');
     }
   }, [activeChapterId, project.document.chapters]);
-
-  const handleChapterContentUpdate = (html: string) => {
-    const formData = new FormData();
-    formData.set('projectId', project.id);
-    formData.set('chapterId', activeChapter.id);
-    formData.set('chapterTitle', activeChapter.title);
-    formData.set('htmlContent', html);
-
-    setSaveState('saving');
-    startTransition(async () => {
-      await saveChapterContentAction(formData);
-      setSaveState('saved');
-      setTimeout(() => setSaveState('idle'), 2000);
-    });
-  };
 
   const handleTemplateSelect = (templateId: string) => {
     // Optimistic update
@@ -177,20 +161,18 @@ export function ProjectWorkspace({
 
             <DocumentStatsCard document={project.document} isLoading={isPending} />
 
-            <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
-              <div className="mb-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
-                  {copy.editorLiveEyebrow}
-                </p>
-                <h3 className="mt-2 text-xl font-black tracking-tight text-[var(--text-primary)]" data-testid="active-chapter-title">
-                  {activeChapter.title}
-                </h3>
+            <section className="rounded-[28px] border border-[var(--border-subtle)] bg-blue-50 p-6 shadow-[var(--shadow-strong)]">
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 pt-0.5">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-blue-900">Límite de tamaño de documento</h3>
+                  <p className="mt-1 text-sm text-blue-800">
+                    El tamaño máximo permitido para cargar documentos es de <strong>50 MB</strong>. Los archivos que excedan este límite no podrán ser importados.
+                  </p>
+                </div>
               </div>
-              <RichTextEditor
-                key={activeChapter.id}
-                defaultContent={blocksToHtml(activeChapter.blocks)}
-                onUpdate={handleChapterContentUpdate}
-              />
             </section>
           </div>
         );
