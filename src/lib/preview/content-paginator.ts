@@ -6,6 +6,7 @@
  */
 
 import { PaginationConfig } from './device-configs';
+import { isPageBreakElement } from './page-breaks';
 
 export interface ContentPage {
   type: 'content';
@@ -82,6 +83,34 @@ export function paginateContent(
       (node as Element).tagName === 'BR'
     ) {
       currentLines += 1.5; // BR adds some vertical space
+      continue;
+    }
+
+    // Handle manual page break markers (Commit 4)
+    if (
+      node.nodeType === Node.ELEMENT_NODE &&
+      isPageBreakElement(node as Element)
+    ) {
+      // Force page break: save current page if it has content
+      if (currentPageNodes.length > 0) {
+        const pageDiv = document.createElement('div');
+        pageDiv.className = 'preview-page-content';
+        currentPageNodes.forEach((n) =>
+          pageDiv.appendChild(n.cloneNode(true)),
+        );
+
+        pages.push({
+          type: 'content',
+          html: pageDiv.innerHTML,
+          chapterTitle: currentChapter,
+          pageNumber: pages.length + 1,
+        });
+
+        // Start new page
+        currentPageNodes = [];
+        currentLines = 0;
+      }
+      // Don't include the page break marker itself in the output
       continue;
     }
 

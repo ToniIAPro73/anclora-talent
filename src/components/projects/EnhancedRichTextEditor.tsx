@@ -13,7 +13,7 @@ import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough, Code,
   Heading2, Quote, List, ListOrdered, Link as LinkIcon, Image as ImageIcon,
   Search, RotateCcw, RotateCw, Eye, Maximize2, Minimize2,
-  Highlighter, Copy, Trash2
+  Highlighter, Copy, Trash2, Layers
 } from 'lucide-react';
 
 const DEBOUNCE_MS = 800;
@@ -264,6 +264,16 @@ export function EnhancedRichTextEditor({
           title="Add image"
         >
           <ImageIcon className="h-3.5 w-3.5" />
+        </ToolbarButton>
+
+        <div className="mx-1 h-4 w-px bg-[var(--border-subtle)]" />
+
+        <ToolbarButton
+          dataTestId="editor-toolbar-page-break-button"
+          onClick={() => editor?.chain().focus().insertContent('<hr data-page-break="true" />').run()}
+          title="Insert page break"
+        >
+          <Layers className="h-3.5 w-3.5" />
         </ToolbarButton>
 
         <div className="ml-auto flex gap-1">
