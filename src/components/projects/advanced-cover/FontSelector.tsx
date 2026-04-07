@@ -85,9 +85,9 @@ export function FontSelector({
       </button>
 
       {isOpen && (
-        <div className={`absolute left-0 right-0 z-50 bg-[var(--page-surface)] border border-[var(--border-subtle)] rounded-lg shadow-lg ${
+        <div className={`absolute left-0 right-0 z-50 bg-[var(--page-surface)] border border-[var(--border-subtle)] rounded-lg shadow-2xl ${
           openUp ? 'bottom-12' : 'top-12'
-        }`}>
+        }`} style={{ backdropFilter: 'blur(10px)' }}>
           {/* Search */}
           <div className="p-3 border-b border-[var(--border-subtle)]">
             <div className="relative">
@@ -103,13 +103,13 @@ export function FontSelector({
           </div>
 
           {/* Categories */}
-          <div className="flex gap-1 p-2 border-b border-[var(--border-subtle)] flex-wrap">
+          <div className="flex gap-2 p-3 border-b border-[var(--border-subtle)] flex-wrap bg-[rgba(255,255,255,0.02)]">
             <button
               onClick={() => setActiveCategory('all')}
-              className={`px-3 py-1 text-xs rounded transition-colors ${
+              className={`px-3 py-1.5 text-xs rounded font-medium transition-all ${
                 activeCategory === 'all'
-                  ? 'bg-[var(--accent-mint)] text-black font-semibold'
-                  : 'bg-[var(--surface-soft)] text-[var(--text-primary)] hover:bg-[var(--surface-highlight)]'
+                  ? 'bg-[var(--accent-mint)] text-black shadow-md'
+                  : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
               }`}
             >
               Todos
@@ -118,10 +118,10 @@ export function FontSelector({
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`px-3 py-1 text-xs rounded capitalize transition-colors ${
+                className={`px-3 py-1.5 text-xs rounded capitalize font-medium transition-all ${
                   activeCategory === cat
-                    ? 'bg-[var(--accent-mint)] text-black font-semibold'
-                    : 'bg-[var(--surface-soft)] text-[var(--text-primary)] hover:bg-[var(--surface-highlight)]'
+                    ? 'bg-[var(--accent-mint)] text-black shadow-md'
+                    : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
                 }`}
               >
                 {cat === 'sans-serif' ? 'Sans' : cat === 'monospace' ? 'Mono' : cat}
@@ -130,26 +130,26 @@ export function FontSelector({
           </div>
 
           {/* Font List */}
-          <div className="max-h-80 overflow-y-auto p-2">
+          <div className="max-h-80 overflow-y-auto p-2 bg-[rgba(0,0,0,0.3)]">
             {displayedFonts.length === 0 ? (
-              <div className="text-center py-4 text-[var(--text-tertiary)] text-sm">
+              <div className="text-center py-6 text-slate-300 text-sm font-medium">
                 No se encontraron fuentes
               </div>
             ) : (
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {displayedFonts.map((font) => (
                   <button
                     key={font.family}
                     onClick={() => handleSelectFont(font.family)}
-                    className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
+                    className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-all ${
                       selectedFont === font.family
-                        ? 'bg-[var(--accent-mint)] text-black font-semibold'
-                        : 'hover:bg-[var(--surface-soft)] text-[var(--text-primary)]'
+                        ? 'bg-[var(--accent-mint)] text-black font-bold shadow-md'
+                        : 'hover:bg-slate-700 text-slate-100 hover:text-white'
                     }`}
                     style={{ fontFamily: font.family }}
                   >
                     <div className="font-semibold">{font.family}</div>
-                    <div className="text-xs opacity-70">
+                    <div className="text-xs text-slate-300 mt-0.5">
                       {font.category}
                       {font.variants.length > 1 && ` • ${font.variants.length} estilos`}
                     </div>
