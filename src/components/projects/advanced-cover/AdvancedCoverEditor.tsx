@@ -88,9 +88,6 @@ export function AdvancedCoverEditor({
             originY: 'center',
           });
 
-          // Send image to back (Fabric.js uses object method, not canvas method)
-          fabricImg.sendToBack();
-
           addElement({
             id: 'background-image',
             type: 'image',
