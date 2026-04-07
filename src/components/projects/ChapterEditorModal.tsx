@@ -127,22 +127,22 @@ export function ChapterEditorModal({
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 sm:p-6"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 sm:p-6"
       onClick={handleClose}
     >
       {/* Modal - Contract Compliant */}
       <div
         ref={modalRef}
-        className="flex w-full max-w-3xl flex-col rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] shadow-[var(--shadow-strong)] max-h-[90vh] overflow-hidden"
+        className="flex w-full max-w-3xl flex-col rounded-[28px] border border-[var(--border-subtle)] bg-[#111C28] shadow-[var(--shadow-strong)] max-h-[95vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header - MODAL_CONTRACT compliant */}
-        <div className="flex items-start justify-between border-b border-[var(--border-subtle)] px-6 py-5 sm:px-8 sm:py-6 flex-shrink-0">
+        <div className="flex items-start justify-between border-b border-[var(--border-subtle)] px-6 py-4 sm:px-8 sm:py-5 flex-shrink-0">
           <div className="flex-1">
-            <h2 className="text-xl font-black tracking-tight text-[var(--text-primary)] sm:text-2xl">
+            <h2 className="text-lg font-black tracking-tight text-[var(--text-primary)] sm:text-xl">
               Editar Capítulo
             </h2>
-            <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
+            <p className="mt-0.5 text-xs font-semibold uppercase tracking-widest text-[var(--text-tertiary)] truncate">
               Capítulo {chapterIndex + 1} de {totalChapters}: {chapter.title}
             </p>
           </div>
@@ -160,9 +160,9 @@ export function ChapterEditorModal({
 
         {/* Content Area - Dynamic height with internal scroll */}
         <div className="flex-1 overflow-hidden flex flex-col">
-          <div className="flex-1 overflow-y-auto px-6 py-5 sm:px-8 sm:py-6 space-y-4">
+          <div className="flex-1 overflow-y-auto px-6 py-4 sm:px-8 sm:py-5 space-y-3">
             {/* Chapter Title Input */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="text-xs font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
                 Título del Capítulo
               </label>
@@ -174,7 +174,7 @@ export function ChapterEditorModal({
                   setHasChanges(true);
                 }}
                 disabled={isSaving}
-                className="w-full rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-sm font-semibold text-[var(--text-primary)] outline-none transition disabled:opacity-50 focus:border-[var(--accent-mint)]"
+                className="w-full rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] outline-none transition disabled:opacity-50 focus:border-[var(--accent-mint)]"
                 placeholder="Título del capítulo"
               />
             </div>
@@ -187,7 +187,7 @@ export function ChapterEditorModal({
             )}
 
             {/* Content Editor - Fills available space */}
-            <div className="flex-1 min-h-[400px] rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] overflow-hidden">
+            <div className="flex-1 min-h-[250px] rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] overflow-hidden">
               <AdvancedRichTextEditor
                 defaultContent={initialContent}
                 onUpdate={handleEditorUpdate}
@@ -195,21 +195,16 @@ export function ChapterEditorModal({
             </div>
 
             {/* Chapter Navigation Info */}
-            <div className="text-xs text-[var(--text-tertiary)] space-y-1">
-              <p>
-                {chapter.blocks.length} bloques de contenido • {chapter.blocks.reduce((acc, b) => acc + (b.content?.length || 0), 0)} caracteres
-              </p>
-              {lastSaved && (
-                <p className="text-[var(--accent-mint)] opacity-70">
-                  ✓ Guardado a las {lastSaved.toLocaleTimeString()}
-                </p>
-              )}
-            </div>
+            {lastSaved && (
+              <div className="text-xs text-[var(--accent-mint)] opacity-70">
+                ✓ Guardado a las {lastSaved.toLocaleTimeString()}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Footer - Always visible, MODAL_CONTRACT compliant */}
-        <div className="flex items-center gap-4 border-t border-[var(--border-subtle)] bg-[var(--page-surface)] px-6 py-5 sm:px-8 flex-shrink-0">
+        <div className="flex items-center gap-3 border-t border-[var(--border-subtle)] bg-[#111C28] px-6 py-4 sm:px-8 flex-shrink-0">
           {/* Navigation hint */}
           {!isLastChapter && (
             <span className="text-xs text-[var(--text-tertiary)] flex-1">
@@ -229,7 +224,7 @@ export function ChapterEditorModal({
           <button
             onClick={handleSave}
             disabled={isSaving || (!hasChanges && lastSaved !== null)}
-            className={`flex-1 flex items-center justify-center gap-2 ${premiumPrimaryMintButton}`}
+            className={`flex-1 flex items-center justify-center gap-1.5 ${premiumPrimaryMintButton}`}
           >
             {isSaving ? (
               <>
