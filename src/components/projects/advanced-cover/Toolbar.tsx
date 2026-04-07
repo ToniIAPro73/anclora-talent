@@ -24,8 +24,15 @@ export function CoverToolbar() {
   const handleAddText = async () => {
     if (!canvas) return;
     const id = `text-${Date.now()}`;
-    const fabricText = await addTextToCanvas(canvas, 'Nuevo Texto', { id });
-    
+    const fabricText = await addTextToCanvas(canvas, 'Nuevo Texto', {
+      id,
+      selectable: true,
+      evented: true,
+      fill: '#ffffff',
+      fontSize: 24,
+      fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    });
+
     // Add to store
     addElement({
       id,
@@ -81,12 +88,13 @@ export function CoverToolbar() {
     }
   };
 
-  const handleDuplicate = () => {
+  const handleDuplicate = async () => {
     if (!canvas) return;
     const activeObject = canvas.getActiveObject();
     if (!activeObject) return;
 
-    activeObject.clone((cloned: any) => {
+    try {
+      const cloned = await activeObject.clone();
       cloned.set({
         left: (cloned.left || 0) + 20,
         top: (cloned.top || 0) + 20,
@@ -94,8 +102,10 @@ export function CoverToolbar() {
       });
       canvas.add(cloned);
       canvas.setActiveObject(cloned);
-      canvas.renderAll();
-    });
+      canvas.requestRenderAll?.() || canvas.renderAll();
+    } catch (error) {
+      console.error('[CoverToolbar] Error cloning object:', error);
+    }
   };
 
   return (
