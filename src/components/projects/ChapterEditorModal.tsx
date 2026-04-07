@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
-import { RichTextEditor } from './RichTextEditor';
+import { AdvancedRichTextEditor } from './AdvancedRichTextEditor';
 import { saveChapterContentAction } from '@/lib/projects/actions';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import type { DocumentChapter } from '@/lib/projects/types';
@@ -160,14 +160,13 @@ export function ChapterEditorModal({
               </label>
             </div>
 
-            {/* Rich text editor */}
+            {/* Advanced Rich text editor */}
             <div className="flex-1 overflow-hidden">
               <div className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
                 Contenido
               </div>
               <div className="mt-2 h-full overflow-hidden">
-                <RichTextEditor
-                  key={chapter.id}
+                <AdvancedRichTextEditor
                   defaultContent={initialContent}
                   onUpdate={handleEditorUpdate}
                 />
