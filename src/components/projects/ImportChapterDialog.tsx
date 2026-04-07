@@ -153,7 +153,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
     >
       <div
         ref={dialogRef}
-        className="w-full max-w-md rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]"
+        className="w-full max-w-md rounded-[28px] border border-[var(--border-subtle)] bg-[#111C28] p-6 shadow-[var(--shadow-strong)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

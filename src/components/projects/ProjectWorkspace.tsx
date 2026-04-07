@@ -17,6 +17,7 @@ import { AdvancedRichTextEditor } from './AdvancedRichTextEditor';
 import { ChapterEditorModal } from './ChapterEditorModal';
 import { AddChapterDialog } from './AddChapterDialog';
 import { ImportChapterDialog } from './ImportChapterDialog';
+import { Portal } from '@/components/ui/Portal';
 import { saveProjectDocumentAction, saveProjectCoverAction, saveChapterContentAction } from '@/lib/projects/actions';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
@@ -60,7 +61,7 @@ export function ProjectWorkspace({
     project.document.chapters[0]?.id ?? '',
   );
   
-  // Modal states moved here for better positioning control
+  // Modal states
   const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -109,21 +110,6 @@ export function ProjectWorkspace({
     });
   };
 
-  const handleChapterContentUpdate = useCallback((html: string) => {
-    const formData = new FormData();
-    formData.set('projectId', project.id);
-    formData.set('chapterId', activeChapter.id);
-    formData.set('chapterTitle', activeChapter.title);
-    formData.set('htmlContent', html);
-
-    setSaveState('saving');
-    startTransition(async () => {
-      await saveChapterContentAction(formData);
-      setSaveState('saved');
-      setTimeout(() => setSaveState('idle'), 2000);
-    });
-  }, [project.id, activeChapter.id, activeChapter.title]);
-
   const steps: Step[] = useMemo(() => [
     { id: 1, title: copy.stepContent, description: copy.stepContentDesc, status: activeStep === 1 ? 'active' : activeStep > 1 ? 'completed' : 'pending' },
     { id: 2, title: copy.stepChapters, description: copy.stepChaptersDesc, status: activeStep === 2 ? 'active' : activeStep > 2 ? 'completed' : 'pending' },
@@ -140,76 +126,62 @@ export function ProjectWorkspace({
     switch (activeStep) {
       case 1: // Content
         return (
-          <div className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
-              <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
-                <div className="mb-4 flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
-                    {copy.editorMetaEyebrow}
-                  </p>
-                  <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold text-blue-600 border border-blue-100">
-                    Máx. 50MB
-                  </span>
-                </div>
-                <form action={saveProjectDocumentAction} className="space-y-4" data-testid="project-metadata-form">
-                  <input type="hidden" name="projectId" value={project.id} />
-                  <input type="hidden" name="chapterId" value={activeChapter.id} />
-                  <input type="hidden" name="chapterTitle" value={activeChapter.title} />
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <label className="block space-y-2">
-                      <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorTitleLabel}</span>
-                      <input
-                        data-testid="project-document-title-input"
-                        name="title"
-                        defaultValue={project.document.title}
-                        className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
-                      />
-                    </label>
-                    <label className="block space-y-2">
-                      <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorAuthorLabel}</span>
-                      <input
-                        data-testid="project-document-author-input"
-                        name="author"
-                        defaultValue={project.document.author}
-                        className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
-                      />
-                    </label>
-                  </div>
+          <div className="flex flex-col gap-6">
+            {/* Metadata Card - Full Width */}
+            <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-8 shadow-[var(--shadow-strong)]">
+              <div className="mb-6 flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
+                  {copy.editorMetaEyebrow}
+                </p>
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold text-blue-600 border border-blue-100">
+                  Máx. 50MB
+                </span>
+              </div>
+              <form action={saveProjectDocumentAction} className="space-y-6" data-testid="project-metadata-form">
+                <input type="hidden" name="projectId" value={project.id} />
+                <input type="hidden" name="chapterId" value={activeChapter.id} />
+                <input type="hidden" name="chapterTitle" value={activeChapter.title} />
+                <div className="grid gap-6 md:grid-cols-2">
                   <label className="block space-y-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorSubtitleLabel}</span>
-                    <textarea
-                      data-testid="project-document-subtitle-input"
-                      name="subtitle"
-                      defaultValue={project.document.subtitle}
-                      className="min-h-24 w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorTitleLabel}</span>
+                    <input
+                      data-testid="project-document-title-input"
+                      name="title"
+                      defaultValue={project.document.title}
+                      className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
                     />
                   </label>
-                  <SubmitButton className={`${premiumSecondaryLightButton} px-5`} data-testid="project-document-save-button">
+                  <label className="block space-y-2">
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorAuthorLabel}</span>
+                    <input
+                      data-testid="project-document-author-input"
+                      name="author"
+                      defaultValue={project.document.author}
+                      className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+                    />
+                  </label>
+                </div>
+                <label className="block space-y-2">
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorSubtitleLabel}</span>
+                  <textarea
+                    data-testid="project-document-subtitle-input"
+                    name="subtitle"
+                    defaultValue={project.document.subtitle}
+                    className="min-h-32 w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+                  />
+                </label>
+                <div className="flex justify-end">
+                  <SubmitButton className={`${premiumSecondaryLightButton} px-8 py-3`} data-testid="project-document-save-button">
                     {copy.saveChanges}
                   </SubmitButton>
-                </form>
-              </section>
+                </div>
+              </form>
+            </section>
 
+            {/* Stats Card - Full Width, Stacked below Metadata */}
+            <div className="w-full">
               <DocumentStatsCard document={project.document} isLoading={isPending} />
             </div>
-
-            <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
-               <div className="mb-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
-                    Edición del Prólogo / Contenido Inicial
-                  </p>
-                  <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                    Realiza cambios profundos en el contenido principal del documento.
-                  </p>
-               </div>
-               <div className="min-h-[500px]">
-                  <AdvancedRichTextEditor
-                    key={activeChapter.id}
-                    defaultContent={blocksToHtml(activeChapter.blocks)}
-                    onUpdate={handleChapterContentUpdate}
-                  />
-               </div>
-            </section>
           </div>
         );
       case 2: // Chapters
@@ -377,31 +349,33 @@ export function ProjectWorkspace({
         </main>
       </div>
 
-      {/* Modals moved to root level for better positioning and z-index behavior */}
-      {editingChapter && editingChapterIndex >= 0 && (
-        <ChapterEditorModal
-          chapter={editingChapter}
-          chapterIndex={editingChapterIndex}
-          totalChapters={project.document.chapters.length}
-          isOpen={editingChapterId !== null}
+      {/* Modals rendered via Portal to escape any transform/backdrop-filter trapping */}
+      <Portal>
+        {editingChapter && editingChapterIndex >= 0 && (
+          <ChapterEditorModal
+            chapter={editingChapter}
+            chapterIndex={editingChapterIndex}
+            totalChapters={project.document.chapters.length}
+            isOpen={editingChapterId !== null}
+            projectId={project.id}
+            onClose={() => setEditingChapterId(null)}
+          />
+        )}
+
+        <AddChapterDialog
+          isOpen={isAddDialogOpen}
           projectId={project.id}
-          onClose={() => setEditingChapterId(null)}
+          chapters={project.document.chapters}
+          onClose={() => setIsAddDialogOpen(false)}
         />
-      )}
 
-      <AddChapterDialog
-        isOpen={isAddDialogOpen}
-        projectId={project.id}
-        chapters={project.document.chapters}
-        onClose={() => setIsAddDialogOpen(false)}
-      />
-
-      <ImportChapterDialog
-        isOpen={isImportDialogOpen}
-        projectId={project.id}
-        chapters={project.document.chapters}
-        onClose={() => setIsImportDialogOpen(false)}
-      />
+        <ImportChapterDialog
+          isOpen={isImportDialogOpen}
+          projectId={project.id}
+          chapters={project.document.chapters}
+          onClose={() => setIsImportDialogOpen(false)}
+        />
+      </Portal>
     </div>
   );
 }

@@ -31,7 +31,7 @@ export function DocumentStatsCard({ document, isLoading = false }: DocumentStats
   }
 
   return (
-    <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
+    <section className="h-full rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
       <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
         Estadísticas del documento
       </p>

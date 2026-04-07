@@ -116,7 +116,7 @@ export function ChapterEditorModal({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 sm:p-6" onClick={handleClose}>
       <div
-        className="flex h-full max-h-[95vh] w-full max-w-[95vw] flex-col overflow-hidden rounded-[24px] bg-[var(--page-surface)] shadow-[var(--shadow-strong)] sm:rounded-[32px] md:max-h-[90vh] md:max-w-[90vw]"
+        className="flex h-full max-h-[95vh] w-full max-w-[95vw] flex-col overflow-hidden rounded-[24px] bg-[#111C28] shadow-[var(--shadow-strong)] sm:rounded-[32px] md:max-h-[90vh] md:max-w-[90vw]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
