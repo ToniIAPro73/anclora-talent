@@ -8,6 +8,7 @@ import { CoverPropertyPanel } from './PropertyPanel';
 import { renderCoverImageAction, saveProjectCoverAction } from '@/lib/projects/actions';
 import { useCanvasStore } from '@/lib/canvas-store';
 import { addTextToCanvas, addImageToCanvas, getFabric } from '@/lib/canvas-utils';
+import { createGuideManager } from '@/lib/canvas-guides';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
@@ -31,6 +32,8 @@ export function AdvancedCoverEditor({
   const [renderedImageUrl, setRenderedImageUrl] = useState<string | null>(project.cover.renderedImageUrl ?? null);
   const [canvasInitialized, setCanvasInitialized] = useState(false);
   const loadingRef = useRef(false);
+  const listenersAttachedRef = useRef(false);
+  const guideManagerRef = useRef<any>(null);
 
   const loadProjectData = useCallback(async (fabricCanvas: any) => {
     if (!fabricCanvas || loadingRef.current) return;
@@ -47,8 +50,12 @@ export function AdvancedCoverEditor({
     try {
       // Clear previous state to avoid duplicates
       clear();
+      if (guideManagerRef.current) {
+        guideManagerRef.current.clearGuides();
+      }
       fabricCanvas.clear();
       selectElement(null);
+      listenersAttachedRef.current = false; // Reset flag so listeners can be re-attached
       
       // Setup canvas event listeners BEFORE loading elements
       fabricCanvas.on('selection:created', (e: any) => {
@@ -180,6 +187,64 @@ export function AdvancedCoverEditor({
         });
       }
 
+      // Setup canvas event listeners for object selection and movement (only once)
+      if (!listenersAttachedRef.current) {
+        console.info('[AdvancedCoverEditor] Attaching event listeners');
+
+        // Initialize guide manager
+        if (!guideManagerRef.current) {
+          guideManagerRef.current = createGuideManager(fabricCanvas);
+          console.info('[AdvancedCoverEditor] Guide manager initialized');
+        }
+
+        fabricCanvas.on('selection:created', (e: any) => {
+          console.info('[AdvancedCoverEditor] Selection created:', e.selected);
+          if (e.selected && e.selected.length > 0) {
+            const selectedFabricObj = e.selected[0];
+            const element = useCanvasStore.getState().elements.find((el: any) => el.id === selectedFabricObj.id);
+            if (element) {
+              selectElement(element);
+            }
+          }
+        });
+
+        fabricCanvas.on('selection:updated', (e: any) => {
+          console.info('[AdvancedCoverEditor] Selection updated:', e.selected);
+          if (e.selected && e.selected.length > 0) {
+            const selectedFabricObj = e.selected[0];
+            const element = useCanvasStore.getState().elements.find((el: any) => el.id === selectedFabricObj.id);
+            if (element) {
+              selectElement(element);
+            }
+          }
+        });
+
+        fabricCanvas.on('selection:cleared', () => {
+          console.info('[AdvancedCoverEditor] Selection cleared');
+          selectElement(null);
+          // Clear guides when deselecting
+          if (guideManagerRef.current) {
+            guideManagerRef.current.hideGuidesWithAnimation();
+          }
+        });
+
+        // Object movement handlers for alignment guides
+        fabricCanvas.on('object:moving', async (e: any) => {
+          if (guideManagerRef.current && e.target) {
+            await guideManagerRef.current.showGuides(e.target);
+            guideManagerRef.current.snapToGuides(e.target);
+          }
+        });
+
+        fabricCanvas.on('object:modified', (e: any) => {
+          if (guideManagerRef.current) {
+            guideManagerRef.current.hideGuidesWithAnimation();
+          }
+        });
+
+        listenersAttachedRef.current = true;
+      }
+
       fabricCanvas.requestRenderAll();
       
       // Explicitly select title at the end to trigger property panel
@@ -203,6 +268,16 @@ export function AdvancedCoverEditor({
     setCanvas(fabricCanvas);
     loadProjectData(fabricCanvas);
   }, [loadProjectData, setCanvas]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (guideManagerRef.current) {
+        guideManagerRef.current.dispose();
+        guideManagerRef.current = null;
+      }
+    };
+  }, []);
 
   const handleSaveAndRender = () => {
     if (!canvas) return;

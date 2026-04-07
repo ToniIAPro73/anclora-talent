@@ -3,41 +3,25 @@
 import { useState, useEffect } from 'react';
 import { ChromePicker } from 'react-color';
 import { useCanvasStore } from '@/lib/canvas-store';
+import { FontSelector } from './FontSelector';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { 
-  Trash2, 
-  Copy, 
-  Bold, 
-  Italic, 
-  AlignLeft, 
-  AlignCenter, 
-  AlignRight, 
-  Type, 
-  ArrowUp, 
+import {
+  Trash2,
+  Copy,
+  Bold,
+  Italic,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Type,
+  ArrowUp,
   ArrowDown,
   Layers
 } from 'lucide-react';
-
-const fontFamilies = [
-  { value: 'ui-sans-serif, system-ui, sans-serif', label: 'Sans Serif' },
-  { value: 'ui-serif, Georgia, serif', label: 'Serif' },
-  { value: 'ui-monospace, monospace', label: 'Monospace' },
-  { value: 'Libre Baskerville, Georgia, serif', label: 'Libre Baskerville' },
-  { value: 'Playfair Display, Georgia, serif', label: 'Playfair Display' },
-  { value: 'Inter, system-ui, sans-serif', label: 'Inter' },
-  { value: 'Poppins, system-ui, sans-serif', label: 'Poppins' },
-];
 
 export function CoverPropertyPanel() {
   const { selectedElement, canvas, removeElement, updateElement, addElement } = useCanvasStore();
@@ -124,7 +108,6 @@ export function CoverPropertyPanel() {
   const handleDuplicate = async () => {
     try {
       const cloned = await fabricObject.clone();
-      const id = `clone-${Date.now()}`;
       cloned.set({
         left: (cloned.left || 0) + 20,
         top: (cloned.top || 0) + 20,
@@ -143,7 +126,7 @@ export function CoverPropertyPanel() {
       canvas.setActiveObject(cloned);
       canvas.renderAll();
     } catch (error) {
-      console.error('[PropertyPanel] Error cloning object:', error);
+      console.error('[PropertyPanel] Error duplicating:', error);
     }
   };
 
@@ -169,18 +152,10 @@ export function CoverPropertyPanel() {
 
               <div className="space-y-2">
                 <Label className="text-xs font-semibold">Tipografía</Label>
-                <Select value={localProps.fontFamily} onValueChange={handleFontFamilyChange}>
-                  <SelectTrigger className="bg-[var(--surface-soft)] border-[var(--border-subtle)] h-10 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {fontFamilies.map((f) => (
-                      <SelectItem key={f.value} value={f.value} style={{ fontFamily: f.value }}>
-                        {f.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FontSelector
+                  selectedFont={localProps.fontFamily}
+                  onFontSelect={handleFontFamilyChange}
+                />
               </div>
 
               <div className="space-y-2">

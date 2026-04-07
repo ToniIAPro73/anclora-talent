@@ -36,22 +36,26 @@ export async function createFabricCanvas(
   options?: any
 ) {
   const fabric = await getFabric();
-  // En Fabric 7, la clase es Canvas. 
-  // Intentar obtenerla de varias formas comunes
-  const CanvasClass = fabric.Canvas || fabric.FabricCanvas || (fabric as any).default?.Canvas;
-  
-  if (!CanvasClass) {
-    console.error('[createFabricCanvas] Canvas class not found in fabric module', fabric);
-    throw new Error('Fabric Canvas class not found');
-  }
-
-  return new CanvasClass(canvasElement, {
+  // Intentar usar fabric.Canvas o fabric.Canvas (clase)
+  const CanvasClass = fabric.Canvas || (fabric as any).default?.Canvas;
+  const canvas = new CanvasClass(canvasElement, {
     width: CANVAS_WIDTH,
     height: CANVAS_HEIGHT,
     backgroundColor: '#ffffff',
     preserveObjectStacking: true,
     ...options,
   });
+
+  // Enable object clipping to canvas boundaries
+  canvas.clipPath = new fabric.Rect({
+    left: 0,
+    top: 0,
+    width: CANVAS_WIDTH,
+    height: CANVAS_HEIGHT,
+    absolutePositioned: true,
+  });
+
+  return canvas;
 }
 
 /**
