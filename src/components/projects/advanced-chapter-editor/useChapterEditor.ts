@@ -4,6 +4,20 @@ import { useCallback, useState } from 'react';
 import { saveChapterContentAction } from '@/lib/projects/actions';
 import type { DocumentChapter } from '@/lib/projects/types';
 
+export interface ChapterImage {
+  id: string;
+  url: string;
+  alt: string;
+  width: number;
+  height: number;
+  left: number;
+  top: number;
+  rotation: number;
+  opacity: number;
+  zIndex: number;
+  createdAt: string;
+}
+
 export interface UseChapterEditorOptions {
   chapters: DocumentChapter[];
   initialChapterIndex: number;
@@ -20,6 +34,7 @@ export function useChapterEditor({
   const [currentIndex, setCurrentIndex] = useState(initialChapterIndex);
   const [title, setTitle] = useState(chapters[currentIndex]?.title || '');
   const [htmlContent, setHtmlContent] = useState('');
+  const [chapterImages, setChapterImages] = useState<ChapterImage[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +87,23 @@ export function useChapterEditor({
     navigateToChapter(currentIndex + 1);
   }, [currentIndex, navigateToChapter]);
 
+  const addImage = useCallback((image: ChapterImage) => {
+    setChapterImages((prev) => [...prev, image]);
+    setHasChanges(true);
+  }, []);
+
+  const deleteImage = useCallback((id: string) => {
+    setChapterImages((prev) => prev.filter((img) => img.id !== id));
+    setHasChanges(true);
+  }, []);
+
+  const updateImage = useCallback((id: string, properties: Partial<ChapterImage>) => {
+    setChapterImages((prev) =>
+      prev.map((img) => (img.id === id ? { ...img, ...properties } : img))
+    );
+    setHasChanges(true);
+  }, []);
+
   const saveChapter = useCallback(async () => {
     if (!currentChapter) return;
 
@@ -84,6 +116,7 @@ export function useChapterEditor({
       formData.set('chapterId', currentChapter.id);
       formData.set('chapterTitle', title);
       formData.set('htmlContent', htmlContent);
+      formData.set('imageData', JSON.stringify(chapterImages));
 
       await saveChapterContentAction(formData);
       setHasChanges(false);
@@ -96,7 +129,7 @@ export function useChapterEditor({
     } finally {
       setIsSaving(false);
     }
-  }, [projectId, currentChapter, title, htmlContent]);
+  }, [projectId, currentChapter, title, htmlContent, chapterImages]);
 
   return {
     // Current state
@@ -105,6 +138,7 @@ export function useChapterEditor({
     totalChapters: chapters.length,
     title,
     htmlContent,
+    chapterImages,
     hasChanges,
     isSaving,
     error,
@@ -117,6 +151,11 @@ export function useChapterEditor({
     setTitle: handleTitleChange,
     setHtmlContent: handleContentChange,
     setFabricCanvas,
+
+    // Image operations
+    addImage,
+    deleteImage,
+    updateImage,
 
     // Navigation
     goToPrevChapter,
