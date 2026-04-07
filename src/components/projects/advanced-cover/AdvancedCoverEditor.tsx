@@ -31,6 +31,7 @@ export function AdvancedCoverEditor({
   const [renderedImageUrl, setRenderedImageUrl] = useState<string | null>(project.cover.renderedImageUrl ?? null);
   const [canvasInitialized, setCanvasInitialized] = useState(false);
   const loadingRef = useRef(false);
+  const listenersAttachedRef = useRef(false);
 
   const loadProjectData = useCallback(async (fabricCanvas: any) => {
     if (!fabricCanvas || loadingRef.current) return;
@@ -49,6 +50,7 @@ export function AdvancedCoverEditor({
       clear();
       fabricCanvas.clear();
       selectElement(null);
+      listenersAttachedRef.current = false; // Reset flag so listeners can be re-attached
       
       const fabric = await getFabric();
       const canvasWidth = fabricCanvas.width || 400;
@@ -160,33 +162,39 @@ export function AdvancedCoverEditor({
         });
       }
 
-      // Setup canvas event listeners for object selection
-      fabricCanvas.on('selection:created', (e: any) => {
-        console.info('[AdvancedCoverEditor] Selection created:', e.selected);
-        if (e.selected && e.selected.length > 0) {
-          const selectedFabricObj = e.selected[0];
-          const element = useCanvasStore.getState().elements.find((el: any) => el.id === selectedFabricObj.id);
-          if (element) {
-            selectElement(element);
-          }
-        }
-      });
+      // Setup canvas event listeners for object selection (only once)
+      if (!listenersAttachedRef.current) {
+        console.info('[AdvancedCoverEditor] Attaching event listeners');
 
-      fabricCanvas.on('selection:updated', (e: any) => {
-        console.info('[AdvancedCoverEditor] Selection updated:', e.selected);
-        if (e.selected && e.selected.length > 0) {
-          const selectedFabricObj = e.selected[0];
-          const element = useCanvasStore.getState().elements.find((el: any) => el.id === selectedFabricObj.id);
-          if (element) {
-            selectElement(element);
+        fabricCanvas.on('selection:created', (e: any) => {
+          console.info('[AdvancedCoverEditor] Selection created:', e.selected);
+          if (e.selected && e.selected.length > 0) {
+            const selectedFabricObj = e.selected[0];
+            const element = useCanvasStore.getState().elements.find((el: any) => el.id === selectedFabricObj.id);
+            if (element) {
+              selectElement(element);
+            }
           }
-        }
-      });
+        });
 
-      fabricCanvas.on('selection:cleared', () => {
-        console.info('[AdvancedCoverEditor] Selection cleared');
-        selectElement(null);
-      });
+        fabricCanvas.on('selection:updated', (e: any) => {
+          console.info('[AdvancedCoverEditor] Selection updated:', e.selected);
+          if (e.selected && e.selected.length > 0) {
+            const selectedFabricObj = e.selected[0];
+            const element = useCanvasStore.getState().elements.find((el: any) => el.id === selectedFabricObj.id);
+            if (element) {
+              selectElement(element);
+            }
+          }
+        });
+
+        fabricCanvas.on('selection:cleared', () => {
+          console.info('[AdvancedCoverEditor] Selection cleared');
+          selectElement(null);
+        });
+
+        listenersAttachedRef.current = true;
+      }
 
       fabricCanvas.requestRenderAll();
       useCanvasStore.getState().pushHistory();
