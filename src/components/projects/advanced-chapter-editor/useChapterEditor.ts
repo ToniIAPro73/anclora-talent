@@ -72,6 +72,8 @@ export function useChapterEditor({
       setCurrentIndex(newIndex);
       setTitle(newChapter.title);
       setHtmlContent('');
+      // Load images from the chapter if they exist
+      setChapterImages(newChapter.images || []);
       setHasChanges(false);
       setError(null);
       onChapterChange?.(newIndex);

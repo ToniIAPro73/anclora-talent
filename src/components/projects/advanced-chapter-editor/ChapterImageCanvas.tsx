@@ -82,6 +82,22 @@ export function ChapterImageCanvas({
         setSelectedImageId(null);
       });
 
+      // Setup object modification handler to track changes
+      canvas.on('object:modified', (e: any) => {
+        if (e.target && e.target.id) {
+          const obj = e.target;
+          onImageUpdate?.(e.target.id, {
+            left: obj.left,
+            top: obj.top,
+            width: (obj.width || 0) * (obj.scaleX || 1),
+            height: (obj.height || 0) * (obj.scaleY || 1),
+            rotation: obj.angle || 0,
+            opacity: obj.opacity || 1,
+            zIndex: canvas.getObjects().indexOf(obj),
+          });
+        }
+      });
+
       // Load existing images
       for (const img of images) {
         try {
@@ -94,8 +110,8 @@ export function ChapterImageCanvas({
           fabricImg.set({
             left: img.left,
             top: img.top,
-            scaleX: img.width / 100,
-            scaleY: img.height / 100,
+            scaleX: img.width / (fabricImg.width || 100),
+            scaleY: img.height / (fabricImg.height || 100),
             angle: img.rotation,
             opacity: img.opacity,
           });
@@ -114,7 +130,7 @@ export function ChapterImageCanvas({
         fabricCanvasRef.current.dispose();
       }
     };
-  }, [canvasWidth, canvasHeight]);
+  }, [canvasWidth, canvasHeight, images, onImageUpdate]);
 
   const handleAddImage = useCallback(() => {
     fileInputRef.current?.click();
