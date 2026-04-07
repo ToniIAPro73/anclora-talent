@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { X, Upload, Loader2, AlertCircle, Download } from 'lucide-react';
-import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
+import { premiumPrimaryDarkButton, premiumSecondaryLightButton, premiumPrimaryMintButton } from '@/components/ui/button-styles';
 import { supportedImportAccept } from '@/lib/projects/import-config';
 import type { DocumentChapter } from '@/lib/projects/types';
 
@@ -165,7 +165,8 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
           <button
             onClick={handleClose}
             disabled={importState === 'importing'}
-            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50"
+            className={`${premiumSecondaryLightButton} p-2 disabled:opacity-50`}
+            title="Cerrar"
           >
             <X className="h-5 w-5" />
           </button>
@@ -215,7 +216,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center gap-2 rounded-[12px] bg-[var(--accent-mint)] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
+                  className={`${premiumPrimaryMintButton} inline-flex items-center gap-2`}
                 >
                   <Download className="h-4 w-4" />
                   Seleccionar archivo
