@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { X, Loader2, Save } from 'lucide-react';
 import { AdvancedRichTextEditor } from './AdvancedRichTextEditor';
 import { saveChapterContentAction } from '@/lib/projects/actions';
-import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
+import { premiumPrimaryMintButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import type { DocumentChapter } from '@/lib/projects/types';
 
 interface ChapterEditorModalProps {
@@ -30,10 +30,16 @@ export function ChapterEditorModal({
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const editorContentRef = useRef<string>('');
+  const modalRef = useRef<HTMLDivElement>(null);
 
-  // Convert blocks to HTML
+  // Convert blocks to HTML - ensures complete chapter content
   const blocksToHtml = useCallback((blocks: DocumentChapter['blocks']): string => {
+    if (!blocks || blocks.length === 0) {
+      return '<p>Sin contenido</p>';
+    }
+
     return blocks
       .filter((block) => block.content.trim())
       .map((block) => {
@@ -57,12 +63,15 @@ export function ChapterEditorModal({
   const handleEditorUpdate = useCallback((html: string) => {
     editorContentRef.current = html;
     setHasChanges(true);
+    setError(null);
   }, []);
 
   const handleSave = useCallback(async () => {
     if (!editorContentRef.current && initialContent === '') return;
 
     setIsSaving(true);
+    setError(null);
+
     try {
       const formData = new FormData();
       formData.set('projectId', projectId);
@@ -74,9 +83,9 @@ export function ChapterEditorModal({
       setHasChanges(false);
       setLastSaved(new Date());
       onSave?.();
-      // No cerramos el modal aquí, el usuario debe decidir cuándo salir
-    } catch (error) {
-      console.error('Failed to save chapter:', error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al guardar');
+      console.error('Failed to save chapter:', err);
     } finally {
       setIsSaving(false);
     }
@@ -84,19 +93,20 @@ export function ChapterEditorModal({
 
   const handleClose = useCallback(() => {
     if (hasChanges) {
-      if (confirm('Tienes cambios sin guardar. ¿Deseas salir de todas formas?')) {
-        onClose();
-      }
-    } else {
-      onClose();
+      const confirmed = confirm('Tienes cambios sin guardar. ¿Deseas salir de todas formas?');
+      if (!confirmed) return;
     }
-  }, [hasChanges, onClose]);
+    setTitle(chapter.title);
+    setHasChanges(false);
+    setError(null);
+    onClose();
+  }, [hasChanges, chapter.title, onClose]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
-    const handleKeydown = (e: KeyboardEvent) => {
-      if (!isOpen) return;
+    if (!isOpen) return;
 
+    const handleKeydown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         handleClose();
       }
@@ -113,52 +123,49 @@ export function ChapterEditorModal({
 
   if (!isOpen) return null;
 
+  const isLastChapter = chapterIndex === totalChapters - 1;
+
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 sm:p-6" onClick={handleClose}>
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 sm:p-6"
+      onClick={handleClose}
+    >
+      {/* Modal - Contract Compliant */}
       <div
-        className="flex h-full max-h-[98vh] w-full max-w-[98vw] flex-col overflow-hidden rounded-[32px] border border-white/10 bg-[#0C141E] shadow-[0_0_100px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in duration-300 md:max-h-[95vh] md:max-w-[95vw]"
+        ref={modalRef}
+        className="flex w-full max-w-3xl flex-col rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] shadow-[var(--shadow-strong)] max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Premium Header */}
-        <div className="flex items-center justify-between border-b border-white/5 bg-[#0E1825] px-8 py-5">
+        {/* Header - MODAL_CONTRACT compliant */}
+        <div className="flex items-start justify-between border-b border-[var(--border-subtle)] px-6 py-5 sm:px-8 sm:py-6 flex-shrink-0">
           <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--accent-mint)]/10 text-[var(--accent-mint)]">
-                <Save className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black tracking-tight text-white md:text-2xl">
-                  Editor de Contenido
-                </h2>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)]">
-                  Capítulo {chapterIndex + 1}: {chapter.title}
-                </p>
-              </div>
-            </div>
+            <h2 className="text-xl font-black tracking-tight text-[var(--text-primary)] sm:text-2xl">
+              Editar Capítulo
+            </h2>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
+              Capítulo {chapterIndex + 1} de {totalChapters}: {chapter.title}
+            </p>
           </div>
 
-          <div className="flex items-center gap-4">
-            {lastSaved && (
-              <span className="text-[10px] font-medium text-[var(--accent-mint)] opacity-70">
-                Guardado a las {lastSaved.toLocaleTimeString()}
-              </span>
-            )}
-            <button
-              onClick={handleClose}
-              className="group flex h-10 w-10 items-center justify-center rounded-full border border-white/5 bg-white/5 transition-all hover:bg-white/10 hover:scale-110 active:scale-95"
-              title="Cerrar Editor"
-            >
-              <X className="h-5 w-5 text-white transition-colors group-hover:text-[var(--accent-mint)]" />
-            </button>
-          </div>
+          {/* Close button - labeled text button, top right */}
+          <button
+            onClick={handleClose}
+            disabled={isSaving}
+            className={`ml-6 flex-shrink-0 ${premiumSecondaryLightButton}`}
+            title="Cerrar editor (Esc)"
+          >
+            Cerrar
+          </button>
         </div>
 
-        {/* Content area */}
-        <div className="flex-1 overflow-hidden bg-[var(--background)]">
-          <div className="flex h-full flex-col gap-6 overflow-y-auto px-8 py-8 custom-scrollbar">
-            {/* Chapter title input - Styled as Premium Input */}
-            <div className="mx-auto w-full max-w-4xl space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-tertiary)]">Título del capítulo</label>
+        {/* Content Area - Dynamic height with internal scroll */}
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="flex-1 overflow-y-auto px-6 py-5 sm:px-8 sm:py-6 space-y-4">
+            {/* Chapter Title Input */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
+                Título del Capítulo
+              </label>
               <input
                 type="text"
                 value={title}
@@ -166,43 +173,74 @@ export function ChapterEditorModal({
                   setTitle(e.target.value);
                   setHasChanges(true);
                 }}
-                className="w-full bg-transparent border-b-2 border-white/10 py-3 text-3xl font-black text-white outline-none transition-all focus:border-[var(--accent-mint)] focus:placeholder:opacity-0"
-                placeholder="Escribe el título..."
+                disabled={isSaving}
+                className="w-full rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-sm font-semibold text-[var(--text-primary)] outline-none transition disabled:opacity-50 focus:border-[var(--accent-mint)]"
+                placeholder="Título del capítulo"
               />
             </div>
 
-            {/* Advanced Rich text editor */}
-            <div className="flex-1 min-h-[600px]">
+            {/* Error message */}
+            {error && (
+              <div className="rounded-[12px] border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                {error}
+              </div>
+            )}
+
+            {/* Content Editor - Fills available space */}
+            <div className="flex-1 min-h-[400px] rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] overflow-hidden">
               <AdvancedRichTextEditor
                 defaultContent={initialContent}
                 onUpdate={handleEditorUpdate}
               />
             </div>
+
+            {/* Chapter Navigation Info */}
+            <div className="text-xs text-[var(--text-tertiary)] space-y-1">
+              <p>
+                {chapter.blocks.length} bloques de contenido • {chapter.blocks.reduce((acc, b) => acc + (b.content?.length || 0), 0)} caracteres
+              </p>
+              {lastSaved && (
+                <p className="text-[var(--accent-mint)] opacity-70">
+                  ✓ Guardado a las {lastSaved.toLocaleTimeString()}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Premium Footer - Aligned with CONTRACTS */}
-        <div className="flex items-center justify-between border-t border-white/5 bg-[#0E1825] px-10 py-6">
+        {/* Footer - Always visible, MODAL_CONTRACT compliant */}
+        <div className="flex items-center gap-4 border-t border-[var(--border-subtle)] bg-[var(--page-surface)] px-6 py-5 sm:px-8 flex-shrink-0">
+          {/* Navigation hint */}
+          {!isLastChapter && (
+            <span className="text-xs text-[var(--text-tertiary)] flex-1">
+              Siguiente: Capítulo {chapterIndex + 2}
+            </span>
+          )}
+
+          {/* Buttons - Cancelar (outline) and Guardar (filled) */}
           <button
             onClick={handleClose}
             disabled={isSaving}
-            className={`${premiumSecondaryLightButton} min-w-[140px] border-white/10 hover:bg-white/5`}
+            className={`flex-1 ${premiumSecondaryLightButton}`}
           >
-            Cerrar
+            Cancelar
           </button>
 
           <button
             onClick={handleSave}
             disabled={isSaving || (!hasChanges && lastSaved !== null)}
-            className={`${premiumPrimaryDarkButton} min-w-[180px] shadow-[0_10px_30px_rgba(196,154,36,0.2)]`}
+            className={`flex-1 flex items-center justify-center gap-2 ${premiumPrimaryMintButton}`}
           >
             {isSaving ? (
-              <div className="flex items-center gap-2">
+              <>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Guardando...
-              </div>
+              </>
             ) : (
-              'Guardar Cambios'
+              <>
+                <Save className="h-4 w-4" />
+                Guardar Cambios
+              </>
             )}
           </button>
         </div>

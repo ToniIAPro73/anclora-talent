@@ -82,7 +82,8 @@ export function AddChapterDialog({ isOpen, projectId, chapters, onClose, onChapt
           <button
             onClick={handleClose}
             disabled={isSaving}
-            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            className={`${premiumSecondaryLightButton} p-2`}
+            title="Cerrar"
           >
             <X className="h-5 w-5" />
           </button>
