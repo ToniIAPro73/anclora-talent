@@ -59,18 +59,33 @@ export function ChapterEditorFullscreen({
     return () => window.removeEventListener('keydown', handleKeydown);
   }, [editor]);
 
-  const handleClose = useCallback(() => {
+  const handleClose = useCallback(async () => {
     if (editor.hasChanges) {
-      const confirmed = confirm('Tienes cambios sin guardar. ¿Deseas salir?');
-      if (!confirmed) return;
+      const response = confirm(
+        '⚠️ Tienes cambios sin guardar.\n\n¿Deseas guardarlos antes de cerrar?'
+      );
+
+      if (response) {
+        // User clicked OK - save changes
+        await editor.saveChapter();
+        onSave?.();
+        onClose();
+      } else {
+        // User clicked Cancel - just close without saving
+        onClose();
+      }
+    } else {
+      // No changes, just close
+      onClose();
     }
-    onClose();
-  }, [editor.hasChanges, onClose]);
+  }, [editor.hasChanges, editor, onSave, onClose]);
 
   const handleSave = useCallback(async () => {
     await editor.saveChapter();
     onSave?.();
   }, [editor, onSave]);
+
+  const handleCloseOrSave = handleClose;
 
   if (!editor.currentChapter) return null;
 
@@ -187,7 +202,7 @@ export function ChapterEditorFullscreen({
       <footer className="shrink-0 flex items-center gap-3 border-t border-[var(--border-subtle)] bg-[#111C28] px-6 py-4 sm:px-8 flex-wrap">
         {/* Buttons - Cancelar (outline) and Guardar (filled) */}
         <button
-          onClick={handleClose}
+          onClick={handleCloseOrSave}
           disabled={editor.isSaving}
           className={`flex-1 min-w-[120px] ${premiumSecondaryLightButton}`}
         >
