@@ -355,11 +355,10 @@ export function ProjectWorkspace({
 
       {/* Modals rendered via Portal to escape any transform/backdrop-filter trapping */}
       <Portal>
-        {editingChapter && editingChapterIndex >= 0 && (
+        {editingChapterId !== null && editingChapterIndex >= 0 && (
           <ChapterEditorModal
-            chapter={editingChapter}
-            chapterIndex={editingChapterIndex}
-            totalChapters={project.document.chapters.length}
+            chapters={project.document.chapters}
+            currentChapterIndex={editingChapterIndex}
             isOpen={editingChapterId !== null}
             projectId={project.id}
             onClose={() => setEditingChapterId(null)}

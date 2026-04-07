@@ -9,11 +9,27 @@ export interface DocumentBlock {
   content: string;
 }
 
+export interface ChapterImage {
+  id: string;
+  url: string;
+  alt: string;
+  width: number;
+  height: number;
+  left: number;
+  top: number;
+  rotation: number;
+  opacity: number;
+  zIndex: number;
+  createdAt: string;
+}
+
 export interface DocumentChapter {
   id: string;
   order: number;
   title: string;
   blocks: DocumentBlock[];
+  images?: ChapterImage[];
+  imageCanvasHeight?: number;
 }
 
 export interface ProjectDocumentSource {

@@ -101,6 +101,7 @@ export async function saveChapterContentAction(formData: FormData) {
   const chapterId = String(formData.get('chapterId') ?? '').trim();
   const chapterTitle = String(formData.get('chapterTitle') ?? '').trim();
   const htmlContent = String(formData.get('htmlContent') ?? '').trim();
+  const imageDataJson = String(formData.get('imageData') ?? '[]').trim();
 
   if (!projectId || !chapterId) return;
 
@@ -109,6 +110,15 @@ export async function saveChapterContentAction(formData: FormData) {
 
   const chapter = project.document.chapters.find((ch) => ch.id === chapterId);
   if (!chapter) return;
+
+  // Parse image data
+  let chapterImages: any[] = [];
+  try {
+    chapterImages = JSON.parse(imageDataJson);
+  } catch (error) {
+    console.error('Error parsing image data:', error);
+    chapterImages = [];
+  }
 
   // Replace all blocks with a single block containing the complete HTML content
   // This prevents duplication when concatenating multiple blocks
@@ -126,7 +136,26 @@ export async function saveChapterContentAction(formData: FormData) {
     ],
   };
 
+  // Update project with new chapter data including images
+  const updatedProject = { ...project };
+  const chapterIndex = updatedProject.document.chapters.findIndex((ch) => ch.id === chapterId);
+  if (chapterIndex >= 0) {
+    updatedProject.document.chapters[chapterIndex] = {
+      ...updatedProject.document.chapters[chapterIndex],
+      images: chapterImages,
+    };
+  }
+
   await projectRepository.saveDocument(userId, projectId, input);
+
+  // Also save the images metadata directly to the project
+  // This requires updating the project's document chapters
+  await projectRepository.updateProjectData(userId, projectId, {
+    document: {
+      ...updatedProject.document,
+    },
+  });
+
   revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
 }
@@ -362,6 +391,57 @@ export async function renderBackCoverImageAction(formData: FormData) {
   revalidatePath(`/projects/${projectId}/back-cover`);
   revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
+}
+
+export async function uploadChapterImagesAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '').trim();
+  const chapterId = String(formData.get('chapterId') ?? '').trim();
+  const imageDataJson = String(formData.get('imageData') ?? '[]').trim();
+
+  if (!projectId || !chapterId) return null;
+
+  try {
+    let images: any[] = [];
+    try {
+      images = JSON.parse(imageDataJson);
+    } catch (error) {
+      console.error('Error parsing image data:', error);
+      return null;
+    }
+
+    const uploadedImages = await Promise.all(
+      images.map(async (image: any) => {
+        // If image URL is a data URL, convert and upload to blob storage
+        if (image.url && image.url.startsWith('data:image/')) {
+          try {
+            const base64 = image.url.split(',')[1];
+            if (!base64) return image;
+
+            const buffer = Buffer.from(base64, 'base64');
+            const file = new File([buffer], `chapter-image-${image.id}.png`, { type: 'image/png' });
+
+            const blob = await uploadProjectBlob(projectId, file);
+            if (blob) {
+              return {
+                ...image,
+                url: blob.url,
+              };
+            }
+          } catch (error) {
+            console.error('Error uploading image:', error);
+          }
+        }
+        // Return image as-is if already has blob URL or other URL
+        return image;
+      })
+    );
+
+    return uploadedImages;
+  } catch (error) {
+    console.error('Error in uploadChapterImagesAction:', error);
+    return null;
+  }
 }
 
 export async function deleteProjectAction(formData: FormData) {
