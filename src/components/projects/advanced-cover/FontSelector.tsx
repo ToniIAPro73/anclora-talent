@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Search, ChevronDown } from 'lucide-react';
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,8 @@ export function FontSelector({
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [openUp, setOpenUp] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -52,22 +54,40 @@ export function FontSelector({
     setSearchQuery('');
   };
 
+  const handleOpenDropdown = () => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+
+      // Si hay más espacio arriba (y menos de 300px abajo), abrir hacia arriba
+      if (spaceAbove > 350 && spaceBelow < 350) {
+        setOpenUp(true);
+      } else {
+        setOpenUp(false);
+      }
+    }
+    setIsOpen(true);
+  };
+
   return (
-    <div className="relative w-full">
+    <div className="relative w-full" ref={containerRef}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => (isOpen ? setIsOpen(false) : handleOpenDropdown())}
         className="w-full h-10 px-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-primary)] text-sm flex items-center justify-between hover:bg-[var(--surface-highlight)] transition-colors"
       >
         <span className="truncate">{selectedFont}</span>
         <ChevronDown
           className={`h-4 w-4 transition-transform ${
-            isOpen ? 'rotate-180' : ''
+            isOpen ? (openUp ? '-rotate-180' : 'rotate-180') : ''
           }`}
         />
       </button>
 
       {isOpen && (
-        <div className="absolute top-12 left-0 right-0 z-50 bg-[var(--page-surface)] border border-[var(--border-subtle)] rounded-lg shadow-lg">
+        <div className={`absolute left-0 right-0 z-50 bg-[var(--page-surface)] border border-[var(--border-subtle)] rounded-lg shadow-lg ${
+          openUp ? 'bottom-12' : 'top-12'
+        }`}>
           {/* Search */}
           <div className="p-3 border-b border-[var(--border-subtle)]">
             <div className="relative">
