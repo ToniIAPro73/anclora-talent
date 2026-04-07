@@ -70,34 +70,37 @@ export async function addTextToCanvas(canvas: any, text: string, options?: any) 
  */
 export async function addImageToCanvas(canvas: any, imageUrl: string, options?: any) {
   const fabric = await getFabric();
-  
+
   return new Promise((resolve, reject) => {
     fabric.Image.fromURL(
       imageUrl,
       (img: any) => {
-        const maxWidth = canvas.width * 0.8;
-        const maxHeight = canvas.height * 0.8;
-        const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
+        try {
+          const maxWidth = canvas.width * 0.8;
+          const maxHeight = canvas.height * 0.8;
+          const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
 
-        img.set({
-          left: canvas.width / 2,
-          top: canvas.height / 2,
-          scaleX: scale,
-          scaleY: scale,
-          originX: 'center',
-          originY: 'center',
-          ...options,
-        });
+          img.set({
+            left: canvas.width / 2,
+            top: canvas.height / 2,
+            scaleX: scale,
+            scaleY: scale,
+            originX: 'center',
+            originY: 'center',
+            ...options,
+          });
 
-        if (options?.id) (img as any).id = options.id;
+          if (options?.id) (img as any).id = options.id;
 
-        canvas.add(img);
-        canvas.setActiveObject(img);
-        canvas.renderAll();
-        resolve(img);
+          canvas.add(img);
+          canvas.setActiveObject(img);
+          canvas.renderAll();
+          resolve(img);
+        } catch (error) {
+          reject(error);
+        }
       },
-      { crossOrigin: 'anonymous' },
-      (error: any) => reject(error)
+      { crossOrigin: 'anonymous' }
     );
   });
 }
