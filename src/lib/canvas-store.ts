@@ -115,31 +115,63 @@ export const useCanvasStore = create<CanvasStore>((set: any, get: any) => ({
     }
   },
 
-  undo: () => {
+  undo: async () => {
     const state = get();
     if (state.historyStep > 0 && state.canvas) {
       const newStep = state.historyStep - 1;
-      state.canvas.loadFromJSON(
-        JSON.parse(state.history[newStep]),
-        () => {
-          state.canvas?.renderAll();
-          set({ historyStep: newStep });
-        }
-      );
+      const json = JSON.parse(state.history[newStep]);
+      
+      try {
+        // En Fabric 7, loadFromJSON devuelve una Promesa
+        await state.canvas.loadFromJSON(json);
+        
+        // Sincronizar los elementos del store con los nuevos objetos del canvas
+        const canvasObjects = state.canvas.getObjects();
+        const newElements: CanvasElement[] = canvasObjects.map((obj: any) => ({
+          id: obj.id || `element-${Math.random().toString(36).substr(2, 9)}`,
+          type: obj.type.includes('text') ? 'text' : 'image',
+          object: obj,
+          properties: { ...(obj.toObject(['id']) || {}) }
+        }));
+        
+        state.canvas.renderAll();
+        set({ 
+          historyStep: newStep,
+          elements: newElements,
+          selectedElement: null // Limpiar selección al deshacer para evitar referencias muertas
+        });
+      } catch (error) {
+        console.error('[CanvasStore] Error during undo:', error);
+      }
     }
   },
 
-  redo: () => {
+  redo: async () => {
     const state = get();
     if (state.historyStep < state.history.length - 1 && state.canvas) {
       const newStep = state.historyStep + 1;
-      state.canvas.loadFromJSON(
-        JSON.parse(state.history[newStep]),
-        () => {
-          state.canvas?.renderAll();
-          set({ historyStep: newStep });
-        }
-      );
+      const json = JSON.parse(state.history[newStep]);
+      
+      try {
+        await state.canvas.loadFromJSON(json);
+        
+        const canvasObjects = state.canvas.getObjects();
+        const newElements: CanvasElement[] = canvasObjects.map((obj: any) => ({
+          id: obj.id || `element-${Math.random().toString(36).substr(2, 9)}`,
+          type: obj.type.includes('text') ? 'text' : 'image',
+          object: obj,
+          properties: { ...(obj.toObject(['id']) || {}) }
+        }));
+        
+        state.canvas.renderAll();
+        set({ 
+          historyStep: newStep,
+          elements: newElements,
+          selectedElement: null
+        });
+      } catch (error) {
+        console.error('[CanvasStore] Error during redo:', error);
+      }
     }
   },
 
