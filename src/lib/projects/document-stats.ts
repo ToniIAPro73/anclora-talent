@@ -55,19 +55,19 @@ function calculateParagraphCount(content: string): number {
 
 /**
  * Estimate page count based on word count and device format
- * Uses average words per page based on pagination config
- * Calibrated to match standard book publishing (250-300 words per page)
+ * Uses average words per page calibrated to match Microsoft Word's page counting
  */
 export function estimatePageCount(wordCount: number, format: PreviewFormat = 'laptop'): number {
   if (wordCount === 0) return 1;
 
-  // Standard publishing benchmarks: 250-300 words per page depending on format
-  // These values are calibrated to match typical printed book page counts
+  // Words per page calibrated to match Microsoft Word default settings
+  // Word uses 12pt font, 1.15 line spacing, 1" margins by default
+  // These values account for spacing between paragraphs and typical formatting
   const wordsPerPageByFormat: Record<PreviewFormat, number> = {
-    laptop: 275,    // 6×9" standard book format
-    tablet: 260,    // Slightly smaller, more conservative
-    mobile: 200,    // Much narrower columns
-    ereader: 280,   // Similar to book format
+    laptop: 200,    // 6×9" book format - lower than traditional book standards
+    tablet: 190,    // Slightly narrower format
+    mobile: 150,    // Much narrower columns
+    ereader: 210,   // Similar to book format but with more spacing
   };
 
   const wordsPerPage = wordsPerPageByFormat[format];
