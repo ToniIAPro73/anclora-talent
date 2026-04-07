@@ -367,6 +367,13 @@ export function AdvancedRichTextEditor({
     };
   }, []);
 
+  // Update editor content when defaultContent changes (e.g., when switching chapters)
+  useEffect(() => {
+    if (editor && defaultContent !== editor.getHTML()) {
+      editor.commands.setContent(defaultContent);
+    }
+  }, [defaultContent, editor]);
+
   if (!editor) return null;
 
   const deviceClasses = {

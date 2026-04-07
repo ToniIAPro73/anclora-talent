@@ -92,99 +92,86 @@ export function ChapterEditorFullscreen({
       onClick={(e) => e.stopPropagation()}
     >
       {/* ═══════════════════════ HEADER ═══════════════════════ */}
-      <header className="shrink-0 flex items-start justify-between border-b border-[var(--border-subtle)] px-6 py-4 sm:px-8 sm:py-5 gap-4">
+      <header className="shrink-0 flex items-center justify-between border-b border-[var(--border-subtle)] px-4 py-3 gap-3">
         <div className="flex-1 min-w-0">
-          <h2 className="text-lg font-black tracking-tight text-[var(--text-primary)] sm:text-xl">
-            Editar Capítulo
+          <h2 className="text-sm font-black tracking-tight text-[var(--text-primary)]">
+            Capítulo {editor.currentIndex + 1}/{editor.totalChapters}
           </h2>
-          <p className="mt-0.5 text-xs font-semibold uppercase tracking-widest text-[var(--text-tertiary)] truncate">
-            Capítulo {editor.currentIndex + 1} de {editor.totalChapters}: {editor.currentChapter.title}
-          </p>
         </div>
 
         {/* Chapter Navigation */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-1 flex-shrink-0">
           <button
             onClick={editor.goToPrevChapter}
             disabled={!editor.canNavigatePrev || editor.isSaving}
-            className={`${premiumSecondaryLightButton} p-2 disabled:opacity-50`}
+            className={`${premiumSecondaryLightButton} p-1.5 disabled:opacity-50`}
             title="Capítulo anterior (Ctrl+←)"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
 
-          <div className="text-xs text-[var(--text-tertiary)] px-2 py-1 whitespace-nowrap">
-            {editor.currentIndex + 1}/{editor.totalChapters}
-          </div>
-
           <button
             onClick={editor.goToNextChapter}
             disabled={!editor.canNavigateNext || editor.isSaving}
-            className={`${premiumSecondaryLightButton} p-2 disabled:opacity-50`}
+            className={`${premiumSecondaryLightButton} p-1.5 disabled:opacity-50`}
             title="Siguiente capítulo (Ctrl+→)"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Close button */}
-        <button
-          onClick={handleClose}
-          disabled={editor.isSaving}
-          className={`${premiumSecondaryLightButton} p-2 flex-shrink-0`}
-          title="Cerrar editor (Esc)"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        {/* Status and Close button */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {editor.lastSaved && (
+            <span className="text-xs text-[var(--accent-mint)] opacity-70 px-2">
+              ✓ Guardado
+            </span>
+          )}
+          <button
+            onClick={handleClose}
+            disabled={editor.isSaving}
+            className={`${premiumSecondaryLightButton} p-1.5 flex-shrink-0`}
+            title="Cerrar editor (Esc)"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </header>
 
       {/* ═══════════════════════ CONTENT AREA ═══════════════════════ */}
-      <div className="flex-1 overflow-hidden flex flex-col gap-4 p-4 sm:p-6">
+      <div className="flex-1 overflow-hidden flex flex-col gap-2 p-3">
         {/* Chapter Title Input */}
-        <div className="space-y-1.5 flex-shrink-0">
-          <label className="text-xs font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
-            Título del Capítulo
-          </label>
-          <input
-            type="text"
-            value={editor.title}
-            onChange={(e) => editor.setTitle(e.target.value)}
-            disabled={editor.isSaving}
-            className="w-full rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] outline-none transition disabled:opacity-50 focus:border-[var(--accent-mint)]"
-            placeholder="Título del capítulo"
-          />
-        </div>
+        <input
+          type="text"
+          value={editor.title}
+          onChange={(e) => editor.setTitle(e.target.value)}
+          disabled={editor.isSaving}
+          className="h-10 rounded-[8px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2 text-sm font-semibold text-[var(--text-primary)] outline-none transition disabled:opacity-50 focus:border-[var(--accent-mint)]"
+          placeholder="Título del capítulo"
+        />
 
         {/* Error message */}
         {editor.error && (
-          <div className="rounded-[12px] border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400 flex-shrink-0">
+          <div className="rounded-[8px] border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-400 flex-shrink-0">
             {editor.error}
           </div>
         )}
 
         {/* Content Editor - Fills available space */}
-        <div className="flex-1 min-h-0 rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] overflow-hidden">
+        <div className="flex-1 min-h-0 rounded-[8px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] overflow-hidden">
           <AdvancedRichTextEditor
             defaultContent={editor.htmlContent}
             onUpdate={editor.setHtmlContent}
           />
         </div>
-
-        {/* Save Status */}
-        {editor.lastSaved && (
-          <div className="text-xs text-[var(--accent-mint)] opacity-70 flex-shrink-0">
-            ✓ Guardado a las {editor.lastSaved.toLocaleTimeString()}
-          </div>
-        )}
       </div>
 
       {/* ═══════════════════════ FOOTER ═══════════════════════ */}
-      <footer className="shrink-0 flex items-center gap-3 border-t border-[var(--border-subtle)] bg-[#111C28] px-6 py-4 sm:px-8 flex-wrap">
-        {/* Buttons - Cancelar (outline) and Guardar (filled) */}
+      <footer className="shrink-0 flex items-center gap-2 border-t border-[var(--border-subtle)] bg-[#111C28] px-3 py-2">
         <button
           onClick={handleCloseOrSave}
           disabled={editor.isSaving}
-          className={`flex-1 min-w-[120px] ${premiumSecondaryLightButton}`}
+          className={`flex-1 min-w-[100px] h-9 ${premiumSecondaryLightButton}`}
         >
           Cancelar
         </button>
@@ -192,17 +179,17 @@ export function ChapterEditorFullscreen({
         <button
           onClick={handleSave}
           disabled={editor.isSaving || (!editor.hasChanges && editor.lastSaved !== null)}
-          className={`flex-1 min-w-[120px] flex items-center justify-center gap-1.5 ${premiumPrimaryMintButton}`}
+          className={`flex-1 min-w-[100px] h-9 flex items-center justify-center gap-1.5 ${premiumPrimaryMintButton}`}
         >
           {editor.isSaving ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Guardando...
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span className="text-sm">Guardando...</span>
             </>
           ) : (
             <>
-              <Save className="h-4 w-4" />
-              Guardar Cambios
+              <Save className="h-3 w-3" />
+              <span className="text-sm">Guardar</span>
             </>
           )}
         </button>
