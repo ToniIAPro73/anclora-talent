@@ -85,16 +85,18 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       
       // Apply properties to fabric object directly
       element.object.set(properties);
+      element.object.set('dirty', true);
       
       // Special handling for text related properties that might need re-render or re-calc
-      if (properties.fontSize || properties.fontFamily || properties.fontWeight || properties.text) {
+      if (properties.fontSize || properties.fontFamily || properties.fontWeight || properties.text || properties.textAlign) {
         element.object.setCoords();
       }
       
-      state.canvas?.renderAll();
+      state.canvas?.requestRenderAll();
       
       set((state) => ({
         elements: state.elements.map((el) => (el.id === id ? updated : el)),
+        selectedElement: state.selectedElement?.id === id ? updated : state.selectedElement,
       }));
       // We don't push history on every tiny change (like slider move)
       // PropertyPanel handles debouncing or specific push points if needed

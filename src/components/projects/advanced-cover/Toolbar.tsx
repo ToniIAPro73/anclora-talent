@@ -23,11 +23,12 @@ export function CoverToolbar() {
 
   const handleAddText = async () => {
     if (!canvas) return;
-    const fabricText = await addTextToCanvas(canvas, 'Nuevo Texto');
+    const id = `text-${Date.now()}`;
+    const fabricText = await addTextToCanvas(canvas, 'Nuevo Texto', { id });
     
     // Add to store
     addElement({
-      id: `text-${Date.now()}`,
+      id,
       type: 'text',
       object: fabricText,
       properties: {
@@ -50,11 +51,12 @@ export function CoverToolbar() {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const imageUrl = e.target?.result as string;
+      const id = `image-${Date.now()}`;
       try {
-        const fabricImage = (await addImageToCanvas(canvas, imageUrl)) as any;
+        const fabricImage = (await addImageToCanvas(canvas, imageUrl, { id })) as any;
         
         addElement({
-          id: `image-${Date.now()}`,
+          id,
           type: 'image',
           object: fabricImage,
           properties: {

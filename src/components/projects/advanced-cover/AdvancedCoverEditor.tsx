@@ -24,123 +24,131 @@ export function AdvancedCoverEditor({
   const [rendered, setRendered] = useState(false);
   const [renderedImageUrl, setRenderedImageUrl] = useState<string | null>(project.cover.renderedImageUrl ?? null);
   const [canvasInitialized, setCanvasInitialized] = useState(false);
+  const loadingRef = useRef(false);
 
   const loadProjectData = useCallback(async (fabricCanvas: any) => {
-    if (!fabricCanvas) return;
+    if (!fabricCanvas || loadingRef.current) return;
     
-    // Clear previous state to avoid duplicates
-    clear();
-    fabricCanvas.clear();
-    selectElement(null);
+    loadingRef.current = true;
+    console.info('[AdvancedCoverEditor] Starting loadProjectData...');
     
-    const fabric = await getFabric();
-    const canvasWidth = fabricCanvas.width;
-    const canvasHeight = fabricCanvas.height;
+    try {
+      // Clear previous state to avoid duplicates
+      clear();
+      fabricCanvas.clear();
+      selectElement(null);
+      
+      const fabric = await getFabric();
+      const canvasWidth = fabricCanvas.width || 400;
+      const canvasHeight = fabricCanvas.height || 600;
 
-    // Set background color based on palette
-    const bgColors: Record<string, string> = {
-      obsidian: '#0b133f',
-      teal: '#124a50',
-      sand: '#f2e3b3',
-    };
-    fabricCanvas.set({ backgroundColor: bgColors[project.cover.palette] || '#0b133f' });
+      // Set background color based on palette
+      const bgColors: Record<string, string> = {
+        obsidian: '#0b133f',
+        teal: '#124a50',
+        sand: '#f2e3b3',
+      };
+      fabricCanvas.set({ backgroundColor: bgColors[project.cover.palette] || '#0b133f' });
 
-    // Load background image if exists
-    if (project.cover.backgroundImageUrl) {
-      try {
-        const fabricImg = (await addImageToCanvas(fabricCanvas, project.cover.backgroundImageUrl, {
-          selectable: true,
-          evented: true,
-          id: 'background-image'
-        })) as any;
-        
-        // Scale to cover
-        const scaleX = canvasWidth / fabricImg.width;
-        const scaleY = canvasHeight / fabricImg.height;
-        const scale = Math.max(scaleX, scaleY);
-        
-        fabricImg.set({
-          scaleX: scale,
-          scaleY: scale,
-          left: canvasWidth / 2,
-          top: canvasHeight / 2,
-          originX: 'center',
-          originY: 'center',
-        });
-        
-        fabricCanvas.sendToBack(fabricImg);
-        
-        addElement({
-          id: 'background-image',
-          type: 'image',
-          object: fabricImg,
-          properties: { opacity: 1 }
-        });
-      } catch (e) {
-        console.error('Error loading background image', e);
+      // Load background image if exists
+      if (project.cover.backgroundImageUrl) {
+        console.info('[AdvancedCoverEditor] Loading background image:', project.cover.backgroundImageUrl);
+        try {
+          const fabricImg = (await addImageToCanvas(fabricCanvas, project.cover.backgroundImageUrl, {
+            selectable: true,
+            evented: true,
+            id: 'background-image'
+          })) as any;
+          
+          // Scale to cover
+          const scaleX = canvasWidth / fabricImg.width;
+          const scaleY = canvasHeight / fabricImg.height;
+          const scale = Math.max(scaleX, scaleY);
+          
+          fabricImg.set({
+            scaleX: scale,
+            scaleY: scale,
+            left: canvasWidth / 2,
+            top: canvasHeight / 2,
+            originX: 'center',
+            originY: 'center',
+          });
+          
+          fabricCanvas.sendToBack(fabricImg);
+          
+          addElement({
+            id: 'background-image',
+            type: 'image',
+            object: fabricImg,
+            properties: { opacity: 1 }
+          });
+        } catch (e) {
+          console.error('[AdvancedCoverEditor] Error loading background image', e);
+        }
       }
+
+      // Add initial metadata as text objects
+      const defaultTitleColor = project.cover.accentColor || (project.cover.palette === 'sand' ? '#0b313f' : '#f2e3b3');
+
+      if (project.cover.title) {
+        console.info('[AdvancedCoverEditor] Adding title:', project.cover.title);
+        const titleObj = await addTextToCanvas(fabricCanvas, project.cover.title, {
+          top: canvasHeight * 0.35,
+          fontSize: 36,
+          fontWeight: 900,
+          fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+          fill: defaultTitleColor,
+          textAlign: 'center',
+          id: 'title-text',
+          width: canvasWidth * 0.85,
+          left: canvasWidth / 2,
+          originX: 'center'
+        });
+        addElement({
+          id: 'title-text',
+          type: 'text',
+          object: titleObj,
+          properties: { fill: defaultTitleColor, fontSize: 36, opacity: 1, fontWeight: 900, textAlign: 'center' }
+        });
+      }
+
+      if (project.cover.subtitle) {
+        console.info('[AdvancedCoverEditor] Adding subtitle:', project.cover.subtitle);
+        const subtitleObj = await addTextToCanvas(fabricCanvas, project.cover.subtitle, {
+          top: canvasHeight * 0.5,
+          fontSize: 16,
+          fontWeight: 500,
+          fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+          fill: project.cover.palette === 'sand' ? 'rgba(11,49,63,0.7)' : 'rgba(242,227,179,0.8)',
+          textAlign: 'center',
+          id: 'subtitle-text',
+          width: canvasWidth * 0.85,
+          left: canvasWidth / 2,
+          originX: 'center'
+        });
+        addElement({
+          id: 'subtitle-text',
+          type: 'text',
+          object: subtitleObj,
+          properties: { fill: project.cover.palette === 'sand' ? 'rgba(11,49,63,0.7)' : 'rgba(242,227,179,0.8)', fontSize: 16, opacity: 1, fontWeight: 500, textAlign: 'center' }
+        });
+      }
+
+      fabricCanvas.requestRenderAll();
+      useCanvasStore.getState().pushHistory();
+      console.info('[AdvancedCoverEditor] loadProjectData completed');
+    } catch (error) {
+      console.error('[AdvancedCoverEditor] Error in loadProjectData:', error);
+    } finally {
+      loadingRef.current = false;
     }
-
-    // Add initial metadata as text objects
-    const defaultTitleColor = project.cover.accentColor || (project.cover.palette === 'sand' ? '#0b313f' : '#f2e3b3');
-
-    if (project.cover.title) {
-      const titleObj = await addTextToCanvas(fabricCanvas, project.cover.title, {
-        top: canvasHeight * 0.35,
-        fontSize: 36,
-        fontWeight: 900,
-        fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-        fill: defaultTitleColor,
-        textAlign: 'center',
-        id: 'title-text',
-        width: canvasWidth * 0.8,
-        left: canvasWidth / 2,
-        originX: 'center'
-      });
-      addElement({
-        id: 'title-text',
-        type: 'text',
-        object: titleObj,
-        properties: { fill: defaultTitleColor, fontSize: 36, opacity: 1, fontWeight: 900, textAlign: 'center' }
-      });
-    }
-
-    if (project.cover.subtitle) {
-      const subtitleObj = await addTextToCanvas(fabricCanvas, project.cover.subtitle, {
-        top: canvasHeight * 0.5,
-        fontSize: 16,
-        fontWeight: 500,
-        fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-        fill: project.cover.palette === 'sand' ? 'rgba(11,49,63,0.7)' : 'rgba(242,227,179,0.8)',
-        textAlign: 'center',
-        id: 'subtitle-text',
-        width: canvasWidth * 0.8,
-        left: canvasWidth / 2,
-        originX: 'center'
-      });
-      addElement({
-        id: 'subtitle-text',
-        type: 'text',
-        object: subtitleObj,
-        properties: { fill: project.cover.palette === 'sand' ? 'rgba(11,49,63,0.7)' : 'rgba(242,227,179,0.8)', fontSize: 16, opacity: 1, fontWeight: 500, textAlign: 'center' }
-      });
-    }
-
-    fabricCanvas.renderAll();
-    useCanvasStore.getState().pushHistory();
   }, [project.cover.palette, project.cover.backgroundImageUrl, project.cover.title, project.cover.subtitle, project.cover.accentColor, addElement, clear, selectElement]);
 
   const handleCanvasReady = useCallback((fabricCanvas: any) => {
+    console.info('[AdvancedCoverEditor] handleCanvasReady triggered');
     setCanvasInitialized(true);
     loadProjectData(fabricCanvas);
   }, [loadProjectData]);
-
-  // If project data changes and canvas is already initialized, reload data
-  useEffect(() => {
-    if (canvasInitialized && canvas) {
-      loadProjectData(canvas);
-    }
-  }, [project.id, project.cover.updatedAt, canvasInitialized, canvas, loadProjectData]);
 
   const handleSaveAndRender = () => {
     if (!canvas) return;
