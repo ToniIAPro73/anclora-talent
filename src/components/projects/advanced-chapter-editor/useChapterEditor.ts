@@ -19,6 +19,34 @@ export interface UseChapterEditorOptions {
   margins?: { top: number; bottom: number; left: number; right: number };
 }
 
+function buildPreviewConfig(
+  device: 'mobile' | 'tablet' | 'desktop',
+  fontSize: string,
+  margins: { top: number; bottom: number; left: number; right: number },
+) {
+  const previewFormat = device === 'desktop' ? 'laptop' : device;
+  const previewBaseConfig = DEVICE_PAGINATION_CONFIGS[previewFormat];
+  const parsedFontSize = Number.parseInt(fontSize, 10);
+
+  return {
+    ...previewBaseConfig,
+    fontSize: Number.isFinite(parsedFontSize) ? parsedFontSize : previewBaseConfig.fontSize,
+    marginTop: margins.top,
+    marginBottom: margins.bottom,
+    marginLeft: margins.left,
+    marginRight: margins.right,
+  };
+}
+
+function normalizeLoadedChapterHtml(
+  content: string,
+  device: 'mobile' | 'tablet' | 'desktop',
+  fontSize: string,
+  margins: { top: number; bottom: number; left: number; right: number },
+) {
+  return reconcileOverflowBreaks(content, buildPreviewConfig(device, fontSize, margins));
+}
+
 function normalizeHtmlContent(content: string): string {
   const trimmed = content.trim();
   if (!trimmed) return '';
@@ -49,7 +77,14 @@ export function useChapterEditor({
   margins = { top: 24, bottom: 24, left: 24, right: 24 },
 }: UseChapterEditorOptions) {
   const initialChapter = chapters[initialChapterIndex];
-  const initialHtmlContent = initialChapter ? chapterBlocksToHtml(initialChapter.blocks) : '';
+  const initialHtmlContent = initialChapter
+    ? normalizeLoadedChapterHtml(
+        chapterBlocksToHtml(initialChapter.blocks),
+        device,
+        fontSize,
+        margins,
+      )
+    : '';
   const [currentIndex, setCurrentIndex] = useState(initialChapterIndex);
   const [title, setTitle] = useState(initialChapter?.title || '');
   const [htmlContent, setHtmlContent] = useState(initialHtmlContent);
@@ -64,20 +99,13 @@ export function useChapterEditor({
   const currentChapter = chapters[currentIndex];
   const canNavigatePrev = currentIndex > 0;
   const canNavigateNext = currentIndex < chapters.length - 1;
+  const previewConfig = useMemo(
+    () => buildPreviewConfig(device, fontSize, margins),
+    [device, fontSize, margins],
+  );
 
   // Memoized page calculation with dynamic config
   const estimatedTotalPages = useMemo(() => {
-    const previewFormat = device === 'desktop' ? 'laptop' : device;
-    const previewBaseConfig = DEVICE_PAGINATION_CONFIGS[previewFormat];
-    const parsedFontSize = Number.parseInt(fontSize, 10);
-    const previewConfig = {
-      ...previewBaseConfig,
-      fontSize: Number.isFinite(parsedFontSize) ? parsedFontSize : previewBaseConfig.fontSize,
-      marginTop: margins.top,
-      marginBottom: margins.bottom,
-      marginLeft: margins.left,
-      marginRight: margins.right,
-    };
     const reconciledContent = reconcileOverflowBreaks(htmlContent, previewConfig);
 
     if (typeof window !== 'undefined' && typeof DOMParser !== 'undefined') {
@@ -93,7 +121,7 @@ export function useChapterEditor({
       marginRight: margins.right,
     };
     return estimateTotalPages(reconciledContent, pageConfig);
-  }, [htmlContent, device, fontSize, margins]);
+  }, [htmlContent, device, fontSize, margins, previewConfig]);
 
   const totalPages = Math.max(1, measuredTotalPages ?? estimatedTotalPages);
 
@@ -115,12 +143,15 @@ export function useChapterEditor({
   }, []);
 
   const handleContentChange = useCallback((newContent: string) => {
+    const normalizedIncomingContent = normalizeHtmlContent(
+      reconcileOverflowBreaks(newContent, previewConfig),
+    );
     setHtmlContent(newContent);
     setHasChanges(
-      normalizeHtmlContent(newContent) !== savedBaselineRef.current
+      normalizedIncomingContent !== savedBaselineRef.current
     );
     setError(null);
-  }, []);
+  }, [previewConfig]);
 
   const navigateToChapter = useCallback(
     async (newIndex: number) => {
@@ -135,7 +166,12 @@ export function useChapterEditor({
       }
 
       const newChapter = chapters[newIndex];
-      const reconstructedHtml = chapterBlocksToHtml(newChapter.blocks);
+      const reconstructedHtml = normalizeLoadedChapterHtml(
+        chapterBlocksToHtml(newChapter.blocks),
+        device,
+        fontSize,
+        margins,
+      );
       savedBaselineRef.current = normalizeHtmlContent(reconstructedHtml);
       setCurrentIndex(newIndex);
       setTitle(newChapter.title);
@@ -145,7 +181,7 @@ export function useChapterEditor({
       setCurrentPage(0); // Reset to first page when changing chapters
       onChapterChange?.(newIndex);
     },
-    [chapters, hasChanges, onChapterChange]
+    [chapters, device, fontSize, hasChanges, margins, onChapterChange]
   );
 
   const goToPagePrev = useCallback(() => {

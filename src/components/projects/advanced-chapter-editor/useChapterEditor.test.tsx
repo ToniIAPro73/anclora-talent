@@ -99,7 +99,7 @@ describe('useChapterEditor', () => {
     });
 
     expect(result.current.currentIndex).toBe(1);
-    expect(result.current.htmlContent).toBe('<h2>Capítulo 2</h2>\n<p>Dos</p>');
+    expect(result.current.htmlContent).toBe('<h2>Capítulo 2</h2><p>Dos</p>');
 
     act(() => {
       result.current.setHtmlContent('<h2>Capítulo 2</h2><p>Dos</p>');
@@ -196,6 +196,7 @@ describe('useChapterEditor', () => {
     );
 
     expect(result.current.totalPages).toBe(1);
+    expect(result.current.htmlContent).toBe('<p>Fase 1: Percepción</p><p>Días 1 al 10</p>');
   });
 
   test('navigates page by page when a chapter spans multiple pages', () => {
