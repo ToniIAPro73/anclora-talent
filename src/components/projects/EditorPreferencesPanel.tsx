@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Settings, RotateCcw } from 'lucide-react';
 import { MarginSelector, type MarginConfig } from './MarginSelector';
 import { EditorPreferences, defaultEditorPreferences } from '@/lib/ui-preferences/preferences';
@@ -16,8 +16,6 @@ export function EditorPreferencesPanel({
   onPreferencesChange,
   onReset,
 }: EditorPreferencesPanelProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
   const currentMargins = preferences.margins || defaultEditorPreferences.margins!;
   const currentFontSize = preferences.fontSize || defaultEditorPreferences.fontSize;
   const currentDevice = preferences.device || defaultEditorPreferences.device;

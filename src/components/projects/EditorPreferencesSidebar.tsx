@@ -20,12 +20,6 @@ export function EditorPreferencesSidebar() {
   const currentDevice = preferences.device || defaultEditorPreferences.device;
   const currentMargins = preferences.margins || defaultEditorPreferences.margins;
 
-  const deviceLabel = {
-    mobile: '📱 Móvil',
-    tablet: '📱 Tablet',
-    desktop: '🖥️ Escritorio',
-  }[currentDevice];
-
   const getMarginPresetName = () => {
     for (const [name, preset] of Object.entries(MARGIN_PRESETS)) {
       if (
