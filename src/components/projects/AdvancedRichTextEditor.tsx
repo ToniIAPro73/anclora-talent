@@ -1186,6 +1186,9 @@ export function AdvancedRichTextEditor({
   const contentHeight = Math.max(120, pageHeight - margins.top - margins.bottom);
   const columnGap = pageGap + margins.left + margins.right;
   const viewportWidth = showSecondPage ? pageWidth * 2 + pageGap : pageWidth;
+  const flowWidth =
+    contentWidth * totalRenderablePages +
+    columnGap * Math.max(totalRenderablePages - 1, 0);
   const flowOffset = currentPage * (pageWidth + pageGap);
   const visiblePageIndices = Array.from(
     { length: showSecondPage ? 2 : 1 },
@@ -1198,10 +1201,24 @@ export function AdvancedRichTextEditor({
       return;
     }
 
-    const scrollWidth = proseMirror.scrollWidth;
+    const proseMirrorRect = proseMirror.getBoundingClientRect();
+    const childNodes = Array.from(proseMirror.children) as HTMLElement[];
+    const occupiedWidth = childNodes.reduce((maxRight, child) => {
+      const rects = Array.from(child.getClientRects());
+      if (rects.length === 0) {
+        return maxRight;
+      }
+
+      const childRight = Math.max(
+        ...rects.map((rect) => Math.max(0, rect.right - proseMirrorRect.left)),
+      );
+
+      return Math.max(maxRight, childRight);
+    }, 0);
+
     const measuredPages = Math.max(
       1,
-      Math.ceil((scrollWidth + columnGap) / (contentWidth + columnGap)),
+      Math.ceil((occupiedWidth + 1) / (contentWidth + columnGap)),
     );
 
     onPageCountChange(measuredPages);
@@ -1478,9 +1495,7 @@ export function AdvancedRichTextEditor({
               }
               .multipage-editor-flow .ProseMirror {
                 height: ${contentHeight}px;
-                width: max-content;
-                min-width: ${contentWidth}px;
-                max-width: none;
+                width: ${flowWidth}px;
                 padding: 0;
                 column-width: ${contentWidth}px;
                 column-gap: ${columnGap}px;
