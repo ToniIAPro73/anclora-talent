@@ -136,4 +136,37 @@ describe('useChapterEditor', () => {
 
     expect(result.current.totalPages).toBe(2);
   });
+
+  test('does not mark typed page break serialization changes as unsaved edits', () => {
+    const chaptersWithTypedBreaks = [
+      {
+        id: 'chapter-layout',
+        order: 1,
+        title: 'Capítulo maquetado',
+        blocks: [
+          {
+            id: 'block-layout',
+            order: 1,
+            type: 'paragraph' as const,
+            content: '<p>Uno</p><hr data-page-break="manual" /><p>Dos</p><hr data-page-break="auto" /><p>Tres</p>',
+          },
+        ],
+      },
+    ];
+
+    const { result } = renderHook(() =>
+      useChapterEditor({
+        chapters: chaptersWithTypedBreaks,
+        initialChapterIndex: 0,
+        projectId: 'project-1',
+      }),
+    );
+
+    act(() => {
+      result.current.setHtmlContent('<p>Uno</p><hr data-page-break="manual"><p>Dos</p><hr data-page-break="auto"><p>Tres</p>');
+    });
+
+    expect(result.current.hasChanges).toBe(false);
+    expect(result.current.totalPages).toBe(3);
+  });
 });

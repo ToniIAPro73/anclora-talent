@@ -366,7 +366,7 @@ describe('AdvancedRichTextEditor selection behavior', () => {
     expect(screen.queryByText('Página 3')).not.toBeInTheDocument();
   });
 
-  test('renders second-page content when a manual page break creates another page in double view', () => {
+  test('keeps a shared editor surface when a manual page break creates another page in double view', () => {
     const editor = createMockEditor(createSelection('Hello world', 0));
     useEditorMock.mockReturnValue(editor);
 
@@ -379,7 +379,8 @@ describe('AdvancedRichTextEditor selection behavior', () => {
       />,
     );
 
-    expect(screen.getByText('Segunda página')).toBeInTheDocument();
+    expect(screen.getAllByTestId('editable-page-surface')).toHaveLength(2);
+    expect(screen.getAllByTestId('advanced-tiptap-content')).toHaveLength(1);
   });
 
   test('renders multiple visible pages as part of the editable flow', () => {

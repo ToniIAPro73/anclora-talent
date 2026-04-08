@@ -59,7 +59,6 @@ import {
   MARGIN_PRESETS,
   type PageCalculationConfig,
 } from '@/lib/projects/page-calculator';
-import { paginateContent } from '@/lib/preview/content-paginator';
 import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 import { reconcileOverflowBreaks } from '@/lib/preview/editor-page-layout';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
@@ -1050,8 +1049,8 @@ export function AdvancedRichTextEditor({
   };
 
   const wordsPerPage = calculateWordsPerPage(pageConfig);
-  const showSecondPage = viewMode === 'double' && (totalPages === undefined || currentPage + 1 < totalPages);
-  const secondPageNumber = currentPage + 2;
+  const totalRenderablePages = Math.max(totalPages ?? 1, 1);
+  const showSecondPage = viewMode === 'double' && currentPage + 1 < totalRenderablePages;
   const previewFormat = device === 'desktop' ? 'laptop' : device;
   const previewConfig = useMemo(() => {
     const baseConfig = DEVICE_PAGINATION_CONFIGS[previewFormat];
@@ -1162,18 +1161,24 @@ export function AdvancedRichTextEditor({
       editor.commands.setContent(defaultContent, false);
     }
   }, [defaultContent, editor]);
-  const paginatedPages = useMemo(
-    () => paginateContent(defaultContent, previewConfig),
-    [defaultContent, previewConfig],
-  );
-  const currentPreviewHtml = paginatedPages[currentPage]?.html ?? '';
-  const nextPreviewHtml = paginatedPages[currentPage + 1]?.html ?? '';
   const pagePaddingStyle = {
     paddingTop: `${margins.top}px`,
     paddingBottom: `${margins.bottom}px`,
     paddingLeft: `${margins.left}px`,
     paddingRight: `${margins.right}px`,
   };
+  const pageWidth = previewConfig.pageWidth;
+  const pageHeight = previewConfig.pageHeight;
+  const pageGap = 32;
+  const viewportWidth = showSecondPage ? pageWidth * 2 + pageGap : pageWidth;
+  const flowWidth =
+    pageWidth * totalRenderablePages +
+    pageGap * Math.max(totalRenderablePages - 1, 0);
+  const flowOffset = currentPage * (pageWidth + pageGap);
+  const visiblePageIndices = Array.from(
+    { length: showSecondPage ? 2 : 1 },
+    (_, index) => currentPage + index,
+  ).filter((pageIndex) => pageIndex < totalRenderablePages);
 
   if (!editor) return null;
 
@@ -1198,13 +1203,10 @@ export function AdvancedRichTextEditor({
       />
 
       <div className="flex-1 overflow-auto bg-[var(--background)] p-6 flex justify-center custom-scrollbar">
-        <div className={`transition-all duration-500 ease-in-out ${deviceClasses[device]} ${showSecondPage ? 'grid grid-cols-2 gap-8 max-w-5xl' : ''}`}>
-          {/* First page or single page */}
+        <div className={`transition-all duration-500 ease-in-out ${deviceClasses[device]}`}>
           <div
-            data-testid="editable-page-surface"
-            data-page-index={currentPage}
-            className="bg-[#111C28] min-h-[1000px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 prose prose-invert max-w-none overflow-x-auto prose-img:rounded-lg prose-img:shadow-md"
-            style={pagePaddingStyle}
+            className="relative overflow-hidden"
+            style={{ width: `${viewportWidth}px`, minHeight: `${pageHeight}px` }}
           >
             <style>{`
               .ProseMirror img {
@@ -1404,39 +1406,79 @@ export function AdvancedRichTextEditor({
                 font-weight: 600;
               }
               .ProseMirror hr[data-page-break="true"],
-              .preview-page hr[data-page-break="true"] {
+              .preview-page hr[data-page-break="true"],
+              .ProseMirror hr[data-page-break="manual"],
+              .preview-page hr[data-page-break="manual"],
+              .ProseMirror hr[data-page-break="auto"],
+              .preview-page hr[data-page-break="auto"] {
                 border: 0;
                 border-top: 2px dashed rgba(196, 154, 36, 0.45);
                 margin: 1.75rem 0;
+                break-after: column;
+                page-break-after: always;
+                -webkit-column-break-after: always;
+              }
+              .multipage-editor-flow {
+                position: absolute;
+                inset: 0;
+                overflow: hidden;
+              }
+              .multipage-editor-flow-track {
+                height: 100%;
+                transition: transform 0.25s ease;
+              }
+              .multipage-editor-flow .ProseMirror {
+                height: ${pageHeight}px;
+                width: ${flowWidth}px;
+                padding: 0;
+                column-width: ${pageWidth}px;
+                column-gap: ${pageGap}px;
+                column-fill: auto;
+                outline: none;
+              }
+              .multipage-editor-flow .ProseMirror > * {
+                break-inside: avoid;
+                page-break-inside: avoid;
+              }
+              .multipage-page-frame {
+                background: #111C28;
+                min-height: ${pageHeight}px;
+                box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+                border-radius: 2px;
+                border: 1px solid rgba(255,255,255,0.05);
+              }
+              .multipage-page-inner {
+                height: 100%;
+                overflow: hidden;
               }
             `}</style>
-            {currentPage === 0 && <EditorContent editor={editor} />}
-            {currentPage > 0 && (
-              <div
-                className="preview-page text-[var(--text-primary)]"
-                dangerouslySetInnerHTML={{ __html: currentPreviewHtml }}
-              />
-            )}
-          </div>
-          {showSecondPage && (
             <div
-              data-testid="editable-page-surface"
-              data-page-index={currentPage + 1}
-              className="preview-page bg-[#111C28] min-h-[1000px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 opacity-90 overflow-x-auto"
-              style={pagePaddingStyle}
+              className="grid"
+              style={{
+                gridTemplateColumns: `repeat(${visiblePageIndices.length}, minmax(0, 1fr))`,
+                gap: `${pageGap}px`,
+              }}
             >
-              {nextPreviewHtml ? (
+              {visiblePageIndices.map((pageIndex) => (
                 <div
-                  className="text-[var(--text-primary)]"
-                  dangerouslySetInnerHTML={{ __html: nextPreviewHtml }}
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center italic text-[var(--text-tertiary)]">
-                  Página {secondPageNumber}
+                  key={pageIndex}
+                  data-testid="editable-page-surface"
+                  data-page-index={pageIndex}
+                  className="multipage-page-frame"
+                >
+                  <div className="multipage-page-inner" style={pagePaddingStyle} />
                 </div>
-              )}
+              ))}
             </div>
-          )}
+            <div className="multipage-editor-flow prose prose-invert max-w-none prose-img:rounded-lg prose-img:shadow-md">
+              <div
+                className="multipage-editor-flow-track"
+                style={{ transform: `translateX(-${flowOffset}px)` }}
+              >
+                <EditorContent editor={editor} />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
