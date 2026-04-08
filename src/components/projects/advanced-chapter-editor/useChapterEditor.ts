@@ -58,6 +58,7 @@ export function useChapterEditor({
   const [error, setError] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
+  const [measuredTotalPages, setMeasuredTotalPages] = useState<number | null>(null);
   const savedBaselineRef = useRef(normalizeHtmlContent(initialHtmlContent));
 
   const currentChapter = chapters[currentIndex];
@@ -65,7 +66,7 @@ export function useChapterEditor({
   const canNavigateNext = currentIndex < chapters.length - 1;
 
   // Memoized page calculation with dynamic config
-  const totalPages = useMemo(() => {
+  const estimatedTotalPages = useMemo(() => {
     const previewFormat = device === 'desktop' ? 'laptop' : device;
     const previewBaseConfig = DEVICE_PAGINATION_CONFIGS[previewFormat];
     const parsedFontSize = Number.parseInt(fontSize, 10);
@@ -94,12 +95,18 @@ export function useChapterEditor({
     return estimateTotalPages(reconciledContent, pageConfig);
   }, [htmlContent, device, fontSize, margins]);
 
+  const totalPages = Math.max(1, measuredTotalPages ?? estimatedTotalPages);
+
+  useEffect(() => {
+    setMeasuredTotalPages(null);
+  }, [currentIndex, htmlContent, device, fontSize, margins.bottom, margins.left, margins.right, margins.top]);
+
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, Math.max(totalPages - 1, 0)));
   }, [totalPages]);
 
   const canNavigatePagePrev = currentPage > 0;
-  const canNavigatePageNext = currentPage < totalPages - 2; // 2 pages visible at a time
+  const canNavigatePageNext = currentPage < totalPages - 1;
 
   const handleTitleChange = useCallback((newTitle: string) => {
     setTitle(newTitle);
@@ -149,7 +156,7 @@ export function useChapterEditor({
 
   const goToPageNext = useCallback(() => {
     if (canNavigatePageNext) {
-      setCurrentPage(p => Math.min(totalPages - 2, p + 1));
+      setCurrentPage(p => Math.min(totalPages - 1, p + 1));
     }
   }, [canNavigatePageNext, totalPages]);
 
@@ -184,9 +191,9 @@ export function useChapterEditor({
       );
       console.error('Failed to save chapter:', err);
     } finally {
-      setIsSaving(false);
-    }
-  }, [projectId, currentChapter, title, htmlContent]);
+    setIsSaving(false);
+  }
+}, [projectId, currentChapter, title, htmlContent]);
 
   return {
     // Current state
@@ -211,6 +218,7 @@ export function useChapterEditor({
     // Setters
     setTitle: handleTitleChange,
     setHtmlContent: handleContentChange,
+    setMeasuredTotalPages,
 
     // Navigation
     goToPrevChapter,

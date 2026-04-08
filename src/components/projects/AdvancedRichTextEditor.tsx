@@ -1019,14 +1019,17 @@ export function AdvancedRichTextEditor({
   onUpdate,
   currentPage = 0,
   totalPages,
+  onPageCountChange,
 }: {
   defaultContent: string;
   onUpdate: (html: string) => void;
   currentPage?: number;
   totalPages?: number;
+  onPageCountChange?: (pages: number) => void;
 }) {
   const { preferences, setPreferences } = useEditorPreferences();
   const isSyncingExternalContentRef = useRef(false);
+  const multipageFlowRef = useRef<HTMLDivElement>(null);
   const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop'>(
     (preferences.device as 'mobile' | 'tablet' | 'desktop') || 'desktop'
   );
@@ -1169,6 +1172,7 @@ export function AdvancedRichTextEditor({
       editor.commands.setContent(defaultContent, false);
     }
   }, [defaultContent, editor]);
+
   const pagePaddingStyle = {
     paddingTop: `${margins.top}px`,
     paddingBottom: `${margins.bottom}px`,
@@ -1182,14 +1186,45 @@ export function AdvancedRichTextEditor({
   const contentHeight = Math.max(120, pageHeight - margins.top - margins.bottom);
   const columnGap = pageGap + margins.left + margins.right;
   const viewportWidth = showSecondPage ? pageWidth * 2 + pageGap : pageWidth;
-  const flowWidth =
-    contentWidth * totalRenderablePages +
-    columnGap * Math.max(totalRenderablePages - 1, 0);
   const flowOffset = currentPage * (pageWidth + pageGap);
   const visiblePageIndices = Array.from(
     { length: showSecondPage ? 2 : 1 },
     (_, index) => currentPage + index,
   ).filter((pageIndex) => pageIndex < totalRenderablePages);
+
+  const measureRenderablePages = useCallback(() => {
+    const proseMirror = multipageFlowRef.current?.querySelector('.ProseMirror') as HTMLElement | null;
+    if (!proseMirror || !onPageCountChange) {
+      return;
+    }
+
+    const scrollWidth = proseMirror.scrollWidth;
+    const measuredPages = Math.max(
+      1,
+      Math.ceil((scrollWidth + columnGap) / (contentWidth + columnGap)),
+    );
+
+    onPageCountChange(measuredPages);
+  }, [columnGap, contentWidth, onPageCountChange]);
+
+  useEffect(() => {
+    if (!editor || !onPageCountChange) {
+      return;
+    }
+
+    const scheduleMeasure = () => {
+      requestAnimationFrame(measureRenderablePages);
+    };
+
+    scheduleMeasure();
+    editor.on('update', scheduleMeasure);
+    window.addEventListener('resize', scheduleMeasure);
+
+    return () => {
+      editor.off('update', scheduleMeasure);
+      window.removeEventListener('resize', scheduleMeasure);
+    };
+  }, [editor, measureRenderablePages, onPageCountChange]);
 
   if (!editor) return null;
 
@@ -1443,7 +1478,9 @@ export function AdvancedRichTextEditor({
               }
               .multipage-editor-flow .ProseMirror {
                 height: ${contentHeight}px;
-                width: ${flowWidth}px;
+                width: max-content;
+                min-width: ${contentWidth}px;
+                max-width: none;
                 padding: 0;
                 column-width: ${contentWidth}px;
                 column-gap: ${columnGap}px;
@@ -1484,7 +1521,10 @@ export function AdvancedRichTextEditor({
                 </div>
               ))}
             </div>
-            <div className="multipage-editor-flow prose prose-invert max-w-none prose-img:rounded-lg prose-img:shadow-md">
+            <div
+              ref={multipageFlowRef}
+              className="multipage-editor-flow prose prose-invert max-w-none prose-img:rounded-lg prose-img:shadow-md"
+            >
               <div
                 className="multipage-editor-flow-track"
                 style={{ transform: `translateX(-${flowOffset}px)` }}

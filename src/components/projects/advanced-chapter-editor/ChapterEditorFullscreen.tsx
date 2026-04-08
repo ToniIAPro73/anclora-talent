@@ -157,8 +157,8 @@ export function ChapterEditorFullscreen({
           </button>
         </div>
 
-        {/* Page Navigation - only show when a chapter spans beyond the visible spread */}
-        {editor.totalPages > 2 && (
+        {/* Page Navigation */}
+        {editor.totalPages > 1 && (
           <div className="flex items-center gap-1 flex-shrink-0">
             <button
               onClick={editor.goToPagePrev}
@@ -218,6 +218,7 @@ export function ChapterEditorFullscreen({
             onUpdate={editor.setHtmlContent}
             currentPage={editor.currentPage}
             totalPages={editor.totalPages}
+            onPageCountChange={editor.setMeasuredTotalPages}
           />
         </div>
       </div>
