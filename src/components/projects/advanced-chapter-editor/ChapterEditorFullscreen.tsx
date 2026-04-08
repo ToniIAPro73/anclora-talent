@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { X, ChevronLeft, ChevronRight, Loader2, Save } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Loader2, Save, PageDown, PageUp } from 'lucide-react';
 import { AdvancedRichTextEditor } from '../AdvancedRichTextEditor';
 import { premiumPrimaryMintButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { useChapterEditor, type UseChapterEditorOptions } from './useChapterEditor';
@@ -49,6 +49,27 @@ export function ChapterEditorFullscreen({
       if ((e.ctrlKey || e.metaKey) && e.key === 'ArrowRight') {
         e.preventDefault();
         editor.goToNextChapter();
+      }
+
+      // Page navigation with Alt + arrows or Page Up/Down
+      if ((e.altKey) && e.key === 'ArrowUp') {
+        e.preventDefault();
+        editor.goToPagePrev();
+      }
+
+      if ((e.altKey) && e.key === 'ArrowDown') {
+        e.preventDefault();
+        editor.goToPageNext();
+      }
+
+      if (e.key === 'PageUp') {
+        e.preventDefault();
+        editor.goToPagePrev();
+      }
+
+      if (e.key === 'PageDown') {
+        e.preventDefault();
+        editor.goToPageNext();
       }
     };
 
@@ -120,6 +141,33 @@ export function ChapterEditorFullscreen({
           </button>
         </div>
 
+        {/* Page Navigation - only show if more than 2 pages */}
+        {editor.totalPages > 2 && (
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <button
+              onClick={editor.goToPagePrev}
+              disabled={!editor.canNavigatePagePrev || editor.isSaving}
+              className={`${premiumSecondaryLightButton} p-1.5 disabled:opacity-50`}
+              title="Página anterior (Alt+↑ o Page Up)"
+            >
+              <PageUp className="h-4 w-4" />
+            </button>
+
+            <span className="text-xs text-[var(--text-secondary)] px-2">
+              P.{editor.currentPage + 1}
+            </span>
+
+            <button
+              onClick={editor.goToPageNext}
+              disabled={!editor.canNavigatePageNext || editor.isSaving}
+              className={`${premiumSecondaryLightButton} p-1.5 disabled:opacity-50`}
+              title="Siguiente página (Alt+↓ o Page Down)"
+            >
+              <PageDown className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
         {/* Status and Close button */}
         <div className="flex items-center gap-1 flex-shrink-0">
           {editor.lastSaved && (
@@ -152,6 +200,7 @@ export function ChapterEditorFullscreen({
           <AdvancedRichTextEditor
             defaultContent={editor.htmlContent}
             onUpdate={editor.setHtmlContent}
+            currentPage={editor.currentPage}
           />
         </div>
       </div>

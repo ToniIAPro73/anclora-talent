@@ -10,6 +10,7 @@ import FontFamily from '@tiptap/extension-font-family';
 import TextAlign from '@tiptap/extension-text-align';
 import { Color } from '@tiptap/extension-color';
 import { ResizableImage } from './resizable-image-extension';
+import { PageBreak } from './page-break-extension';
 import {
   Bold,
   Italic,
@@ -36,7 +37,8 @@ import {
   Smartphone,
   Monitor,
   Tablet,
-  Columns
+  Columns,
+  Separator
 } from 'lucide-react';
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
 
@@ -364,6 +366,12 @@ const MenuBar = ({ editor, viewMode, setViewMode, device, setDevice }: { editor:
           onChange={handleImageUpload}
           className="hidden"
         />
+        <ToolbarButton
+          onClick={() => editor.chain().focus().insertContent({ type: 'pageBreak' }).run()}
+          title="Insertar Salto de Página (Ctrl+Shift+Enter)"
+        >
+          <Separator className="h-4 w-4" />
+        </ToolbarButton>
       </div>
 
       {/* History */}
@@ -382,9 +390,11 @@ const MenuBar = ({ editor, viewMode, setViewMode, device, setDevice }: { editor:
 export function AdvancedRichTextEditor({
   defaultContent,
   onUpdate,
+  currentPage = 0,
 }: {
   defaultContent: string;
   onUpdate: (html: string) => void;
+  currentPage?: number;
 }) {
   const [viewMode, setViewMode] = useState<'single' | 'double'>('double');
   const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
@@ -417,6 +427,7 @@ export function AdvancedRichTextEditor({
       ResizableImage.configure({
         allowBase64: true,
       }),
+      PageBreak,
     ],
     content: defaultContent,
     onUpdate: ({ editor: ed }) => {
@@ -446,12 +457,22 @@ export function AdvancedRichTextEditor({
     desktop: 'max-w-none w-full',
   };
 
+  // Calculate approximate page count based on content
+  const wordCount = editor.getHTML().split(/\s+/).filter((w: string) => w.length > 0).length;
+  const estimatedPages = Math.max(1, Math.ceil(wordCount / 375)); // ~375 words per page
+
+  // For double mode with page navigation, we show 2 pages at a time
+  // Current page can range from 0 to estimatedPages - 2
+  const displayStartPage = viewMode === 'double' ? currentPage : currentPage;
+  const displayEndPage = viewMode === 'double' ? currentPage + 2 : currentPage + 1;
+
   return (
     <div className="flex flex-col h-full overflow-hidden rounded-[24px] border border-[var(--border-strong)] bg-[#0B121D] shadow-2xl">
       <MenuBar editor={editor} viewMode={viewMode} setViewMode={setViewMode} device={device} setDevice={setDevice} />
-      
+
       <div className="flex-1 overflow-auto bg-[var(--background)] p-6 flex justify-center custom-scrollbar">
         <div className={`transition-all duration-500 ease-in-out ${deviceClasses[device]} ${viewMode === 'double' ? 'grid grid-cols-2 gap-8 max-w-5xl' : ''}`}>
+          {/* First page or single page */}
           <div className="bg-[#111C28] min-h-[1000px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 prose prose-invert max-w-none overflow-x-auto prose-img:rounded-lg prose-img:shadow-md">
             <style>{`
               .ProseMirror img {
@@ -468,11 +489,16 @@ export function AdvancedRichTextEditor({
                 overflow-wrap: break-word;
               }
             `}</style>
-            <EditorContent editor={editor} />
+            {displayStartPage === 0 && <EditorContent editor={editor} />}
+            {displayStartPage > 0 && (
+              <div className="italic text-[var(--text-tertiary)] text-sm">
+                Página {displayStartPage + 1}
+              </div>
+            )}
           </div>
           {viewMode === 'double' && (
             <div className="bg-[#111C28] min-h-[1000px] p-12 shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 opacity-50 flex items-center justify-center italic text-[var(--text-tertiary)]">
-              Página siguiente
+              Página {displayEndPage + 1}
             </div>
           )}
         </div>
