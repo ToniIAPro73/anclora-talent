@@ -41,6 +41,13 @@ import {
   Separator
 } from 'lucide-react';
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
+import { MarginSelector, type MarginConfig } from './MarginSelector';
+import {
+  estimateTotalPages,
+  calculateWordsPerPage,
+  MARGIN_PRESETS,
+  type PageCalculationConfig,
+} from '@/lib/projects/page-calculator';
 
 const DEBOUNCE_MS = 1000;
 
@@ -154,7 +161,7 @@ const AdvancedFontSelector = ({ editor }: { editor: any }) => {
   );
 };
 
-const FontSizeSelector = ({ editor }: { editor: any }) => {
+const FontSizeSelector = ({ editor, onFontSizeChange }: { editor: any; onFontSizeChange?: (size: string) => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -191,6 +198,7 @@ const FontSizeSelector = ({ editor }: { editor: any }) => {
               key={size.value}
               onClick={() => {
                 editor.chain().focus().setFontSize(size.value).run();
+                onFontSizeChange?.(size.value);
                 setIsOpen(false);
               }}
               className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
@@ -265,7 +273,29 @@ const ColorSelector = ({ editor }: { editor: any }) => {
   );
 };
 
-const MenuBar = ({ editor, viewMode, setViewMode, device, setDevice }: { editor: any, viewMode: string, setViewMode: any, device: string, setDevice: any }) => {
+const MenuBar = ({
+  editor,
+  viewMode,
+  setViewMode,
+  device,
+  setDevice,
+  margins,
+  onMarginsChange,
+  currentFontSize,
+  onFontSizeChange,
+  wordsPerPage,
+}: {
+  editor: any;
+  viewMode: string;
+  setViewMode: any;
+  device: string;
+  setDevice: any;
+  margins: MarginConfig;
+  onMarginsChange: (margins: MarginConfig) => void;
+  currentFontSize: string;
+  onFontSizeChange: (size: string) => void;
+  wordsPerPage?: number;
+}) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -306,8 +336,9 @@ const MenuBar = ({ editor, viewMode, setViewMode, device, setDevice }: { editor:
 
       <div className="flex items-center gap-2 pr-3 border-r border-[var(--border-subtle)]">
         <AdvancedFontSelector editor={editor} />
-        <FontSizeSelector editor={editor} />
+        <FontSizeSelector editor={editor} onFontSizeChange={onFontSizeChange} />
         <ColorSelector editor={editor} />
+        <MarginSelector margins={margins} onMarginsChange={onMarginsChange} wordsPerPage={wordsPerPage} />
       </div>
 
       {/* Text Formatting */}
@@ -399,6 +430,8 @@ export function AdvancedRichTextEditor({
   const [viewMode, setViewMode] = useState<'single' | 'double'>('double');
   const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
   const [autoPages, setAutoPages] = useState<boolean>(true);
+  const [margins, setMargins] = useState<MarginConfig>(MARGIN_PRESETS.normal);
+  const [currentFontSize, setCurrentFontSize] = useState<string>('16px');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleUpdate = useCallback(
@@ -457,9 +490,18 @@ export function AdvancedRichTextEditor({
     desktop: 'max-w-none w-full',
   };
 
-  // Calculate approximate page count based on content
-  const wordCount = editor.getHTML().split(/\s+/).filter((w: string) => w.length > 0).length;
-  const estimatedPages = Math.max(1, Math.ceil(wordCount / 375)); // ~375 words per page
+  // Calculate words per page based on device, font size, and margins
+  const pageConfig: PageCalculationConfig = {
+    device: device as 'mobile' | 'tablet' | 'desktop',
+    fontSize: currentFontSize,
+    marginTop: margins.top,
+    marginBottom: margins.bottom,
+    marginLeft: margins.left,
+    marginRight: margins.right,
+  };
+
+  const wordsPerPage = calculateWordsPerPage(pageConfig);
+  const estimatedPages = estimateTotalPages(editor.getHTML(), pageConfig);
 
   // For double mode with page navigation, we show 2 pages at a time
   // Current page can range from 0 to estimatedPages - 2
@@ -468,7 +510,18 @@ export function AdvancedRichTextEditor({
 
   return (
     <div className="flex flex-col h-full overflow-hidden rounded-[24px] border border-[var(--border-strong)] bg-[#0B121D] shadow-2xl">
-      <MenuBar editor={editor} viewMode={viewMode} setViewMode={setViewMode} device={device} setDevice={setDevice} />
+      <MenuBar
+        editor={editor}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        device={device}
+        setDevice={setDevice}
+        margins={margins}
+        onMarginsChange={setMargins}
+        currentFontSize={currentFontSize}
+        onFontSizeChange={setCurrentFontSize}
+        wordsPerPage={wordsPerPage}
+      />
 
       <div className="flex-1 overflow-auto bg-[var(--background)] p-6 flex justify-center custom-scrollbar">
         <div className={`transition-all duration-500 ease-in-out ${deviceClasses[device]} ${viewMode === 'double' ? 'grid grid-cols-2 gap-8 max-w-5xl' : ''}`}>

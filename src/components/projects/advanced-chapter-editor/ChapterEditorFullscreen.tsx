@@ -13,6 +13,9 @@ interface ChapterEditorFullscreenProps {
   projectId: string;
   onClose: () => void;
   onSave?: () => void;
+  defaultDevice?: 'mobile' | 'tablet' | 'desktop';
+  defaultFontSize?: string;
+  defaultMargins?: { top: number; bottom: number; left: number; right: number };
 }
 
 export function ChapterEditorFullscreen({
@@ -21,11 +24,17 @@ export function ChapterEditorFullscreen({
   projectId,
   onClose,
   onSave,
+  defaultDevice = 'desktop',
+  defaultFontSize = '16px',
+  defaultMargins = { top: 24, bottom: 24, left: 24, right: 24 },
 }: ChapterEditorFullscreenProps) {
   const editor = useChapterEditor({
     chapters,
     initialChapterIndex,
     projectId,
+    device: defaultDevice,
+    fontSize: defaultFontSize,
+    margins: defaultMargins,
   });
 
   // Handle keyboard shortcuts

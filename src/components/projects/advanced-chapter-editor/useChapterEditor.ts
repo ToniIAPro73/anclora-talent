@@ -2,6 +2,7 @@
 
 import { useCallback, useState, useMemo } from 'react';
 import { saveChapterContentAction } from '@/lib/projects/actions';
+import { estimateTotalPages, type PageCalculationConfig } from '@/lib/projects/page-calculator';
 import type { DocumentChapter } from '@/lib/projects/types';
 
 export interface UseChapterEditorOptions {
@@ -9,11 +10,13 @@ export interface UseChapterEditorOptions {
   initialChapterIndex: number;
   projectId: string;
   onChapterChange?: (index: number) => void;
+  device?: 'mobile' | 'tablet' | 'desktop';
+  fontSize?: string;
+  margins?: { top: number; bottom: number; left: number; right: number };
 }
 
-// Estimate pages based on content length
-// Rough heuristic: ~1000px per page with padding, ~350-400 words per page
-const estimatePageCount = (htmlContent: string): number => {
+// Simple fallback estimate if page config not provided
+const estimatePageCountSimple = (htmlContent: string): number => {
   const wordCount = htmlContent.split(/\s+/).filter(w => w.length > 0).length;
   const pageCount = Math.ceil(wordCount / 375); // ~375 words per page
   return Math.max(1, pageCount);
@@ -24,6 +27,9 @@ export function useChapterEditor({
   initialChapterIndex,
   projectId,
   onChapterChange,
+  device = 'desktop',
+  fontSize = '16px',
+  margins = { top: 24, bottom: 24, left: 24, right: 24 },
 }: UseChapterEditorOptions) {
   const initialChapter = chapters[initialChapterIndex];
   const [currentIndex, setCurrentIndex] = useState(initialChapterIndex);
@@ -41,8 +47,19 @@ export function useChapterEditor({
   const canNavigatePrev = currentIndex > 0;
   const canNavigateNext = currentIndex < chapters.length - 1;
 
-  // Memoized page calculation
-  const totalPages = useMemo(() => estimatePageCount(htmlContent), [htmlContent]);
+  // Memoized page calculation with dynamic config
+  const totalPages = useMemo(() => {
+    const pageConfig: PageCalculationConfig = {
+      device: device as 'mobile' | 'tablet' | 'desktop',
+      fontSize,
+      marginTop: margins.top,
+      marginBottom: margins.bottom,
+      marginLeft: margins.left,
+      marginRight: margins.right,
+    };
+    return estimateTotalPages(htmlContent, pageConfig);
+  }, [htmlContent, device, fontSize, margins]);
+
   const canNavigatePagePrev = currentPage > 0;
   const canNavigatePageNext = currentPage < totalPages - 2; // 2 pages visible at a time
 
