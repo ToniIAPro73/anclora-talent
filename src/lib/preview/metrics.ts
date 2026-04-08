@@ -20,10 +20,12 @@ export interface ChapterPageMetrics {
 
 // ==================== HELPERS ====================
 
+type ChapterBlock = ProjectRecord['document']['chapters'][number]['blocks'][number];
+
 /**
  * Convert chapter blocks to HTML (same as in preview-builder)
  */
-function blocksToHtml(blocks: any[]): string {
+function blocksToHtml(blocks: ChapterBlock[]): string {
   return blocks
     .map((block) => {
       const content = block.block?.content || block.content || '';
@@ -39,6 +41,16 @@ function blocksToHtml(blocks: any[]): string {
       return `<p>${escaped}</p>`;
     })
     .join('');
+}
+
+function chapterStartsWithTitle(blocks: ChapterBlock[], title: string): boolean {
+  const firstBlock = blocks[0];
+  if (!firstBlock) return false;
+
+  const firstContent = String(firstBlock.block?.content || firstBlock.content || '').trim();
+  if (!firstContent) return false;
+
+  return firstContent.replace(/<[^>]+>/g, '').trim().toLowerCase() === title.trim().toLowerCase();
 }
 
 /**
@@ -84,7 +96,9 @@ export function computeChapterPageMetrics(
     const chapterHtml = blocksToHtml(chapter.blocks);
 
     // Combine chapter heading with content for pagination
-    const fullHtml = `<h2>${escapeHtml(title)}</h2>\n${chapterHtml}`;
+    const fullHtml = chapterStartsWithTitle(chapter.blocks, title)
+      ? chapterHtml
+      : `<h2>${escapeHtml(title)}</h2>\n${chapterHtml}`;
 
     const pagesByFormat: Record<PreviewFormat, number> = {
       mobile: 0,

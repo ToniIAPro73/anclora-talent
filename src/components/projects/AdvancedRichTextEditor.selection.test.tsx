@@ -9,6 +9,7 @@ type MockSelection = {
     parent: { textContent: string };
     parentOffset: number;
     start: () => number;
+    end: () => number;
   };
 };
 
@@ -113,6 +114,7 @@ function createSelection(text: string, parentOffset: number, start = 1): MockSel
       parent: { textContent: text },
       parentOffset,
       start: () => start,
+      end: () => start + text.length,
     },
   };
 }
@@ -120,6 +122,8 @@ function createSelection(text: string, parentOffset: number, start = 1): MockSel
 function createMockEditor(selection: MockSelection) {
   const dispatchCalls: Array<{ from: number; to: number }> = [];
   const commandSelections: Array<{ from: number; to: number; empty: boolean }> = [];
+  const headingSelections: Array<{ from: number; to: number; empty: boolean; level: number }> = [];
+  const insertedContent: Array<unknown> = [];
   let currentSelection = selection;
 
   const state = {
@@ -165,10 +169,25 @@ function createMockEditor(selection: MockSelection) {
     unsetColor: () => ({ run: () => true }),
     setColor: () => ({ run: () => true }),
     setTextAlign: () => ({ run: () => true }),
-    toggleHeading: () => ({ run: () => true }),
+    toggleHeading: ({ level }: { level: number }) => ({
+      run: () => {
+        headingSelections.push({
+          from: state.selection.from,
+          to: state.selection.to,
+          empty: state.selection.empty,
+          level,
+        });
+        return true;
+      },
+    }),
     toggleBulletList: () => ({ run: () => true }),
     setImage: () => ({ run: () => true }),
-    insertContent: () => ({ run: () => true }),
+    insertContent: (content: unknown) => ({
+      run: () => {
+        insertedContent.push(content);
+        return true;
+      },
+    }),
     undo: () => ({ run: () => true }),
     redo: () => ({ run: () => true }),
   };
@@ -190,6 +209,8 @@ function createMockEditor(selection: MockSelection) {
     },
     __dispatchCalls: dispatchCalls,
     __commandSelections: commandSelections,
+    __headingSelections: headingSelections,
+    __insertedContent: insertedContent,
   };
 }
 
@@ -226,5 +247,33 @@ describe('AdvancedRichTextEditor selection behavior', () => {
     expect(screen.getAllByTitle('Coloca el cursor dentro de una palabra o selecciona texto')[0]).toBeDisabled();
     expect(screen.getAllByTitle('Coloca el cursor en un párrafo con texto o selecciona texto').length).toBeGreaterThan(0);
     expect(screen.getAllByTitle('Coloca el cursor en un párrafo con texto o selecciona texto')[0]).toBeDisabled();
+  });
+
+  test('expands a collapsed caret to the current paragraph before applying heading formatting and restores the caret', () => {
+    const editor = createMockEditor(createSelection('Hello world', 4));
+    useEditorMock.mockReturnValue(editor);
+
+    render(<AdvancedRichTextEditor defaultContent="<p>Hello world</p>" onUpdate={vi.fn()} />);
+
+    fireEvent.click(screen.getByTitle('Encabezado 1'));
+
+    expect(editor.__headingSelections).toEqual([{ from: 1, to: 12, empty: false, level: 1 }]);
+    expect(editor.__dispatchCalls).toEqual([{ from: 1, to: 12 }, { from: 5, to: 5 }]);
+  });
+
+  test('does not render a synthetic second page when double view has only one page of content', () => {
+    const editor = createMockEditor(createSelection('Hello world', 0));
+    useEditorMock.mockReturnValue(editor);
+
+    render(
+      <AdvancedRichTextEditor
+        defaultContent="<p>Hello world</p>"
+        onUpdate={vi.fn()}
+        currentPage={0}
+        totalPages={1}
+      />,
+    );
+
+    expect(screen.queryByText('Página 3')).not.toBeInTheDocument();
   });
 });

@@ -20,5 +20,6 @@ export async function extractImportedDocumentSeed(file: File) {
     mimeType,
     text: normalized,
     html: extractedSource.html,
+    sourcePageCount: extractedSource.pageCount,
   });
 }

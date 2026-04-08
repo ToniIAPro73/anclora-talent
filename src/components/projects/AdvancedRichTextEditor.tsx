@@ -53,8 +53,8 @@ import {
   type PageCalculationConfig,
 } from '@/lib/projects/page-calculator';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
+import { PAGE_BREAK_HTML } from '@/lib/preview/page-breaks';
 
-const DEBOUNCE_MS = 1000;
 type ChainedCommand = ReturnType<Editor['chain']>;
 type ApplyToSelectionTarget = (command: (chain: ChainedCommand) => ChainedCommand) => boolean;
 
@@ -326,23 +326,21 @@ const ColorSelector = ({
       </button>
 
       {isOpen && isAvailable && (
-        <div className="absolute left-0 top-11 z-[110] rounded-2xl border border-[var(--border-strong)] bg-gradient-to-br from-[#0E1825] to-[#0B121D] p-4 shadow-2xl shadow-black/50 animate-in fade-in zoom-in duration-200 w-72">
-          {/* Header */}
+        <div className="absolute left-0 top-11 z-[110] w-[min(92vw,320px)] rounded-2xl border border-[var(--border-strong)] bg-[#0E1825] p-3 shadow-2xl shadow-black/50 animate-in fade-in zoom-in duration-200">
           <div className="mb-4">
             <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)] mb-2">
               Paleta de Colores
             </div>
-            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-[var(--background)]/50 border border-[var(--border-subtle)]">
+            <div className="flex items-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--background)]/50 p-2.5">
               <div
-                className="w-6 h-6 rounded-lg border border-[var(--border-strong)]"
+                className="h-6 w-6 rounded-lg border border-[var(--border-strong)]"
                 style={{ backgroundColor: currentColor === 'inherit' ? 'var(--text-primary)' : currentColor }}
               />
               <span className="text-xs font-semibold text-[var(--text-primary)]">{currentColorName}</span>
             </div>
           </div>
 
-          {/* Colors Grid */}
-          <div className="grid grid-cols-2 gap-2.5 mb-4">
+          <div className="grid max-h-[320px] grid-cols-1 gap-2 overflow-y-auto pr-1 custom-scrollbar">
             {colors.map((color) => (
               <button
                 type="button"
@@ -352,38 +350,25 @@ const ColorSelector = ({
                   else applyToWordOrSelection((chain) => chain.setColor(color.value));
                   setIsOpen(false);
                 }}
-                className={`relative group p-2.5 rounded-xl border-2 transition-all duration-200 ${
+                className={`group flex items-center gap-3 rounded-xl border px-3 py-2 text-left transition-all duration-200 ${
                   currentColor === color.value
-                    ? 'border-[var(--accent-mint)] bg-[var(--accent-mint)]/10 shadow-[0_0_12px_rgba(45,212,191,0.5)]'
-                    : 'border-[var(--border-subtle)] hover:border-[var(--accent-mint)]/50 bg-[var(--background)]/30'
+                    ? 'border-[var(--accent-mint)] bg-[var(--accent-mint)]/10'
+                    : 'border-[var(--border-subtle)] bg-[var(--background)]/30 hover:border-[var(--accent-mint)]/50'
                 }`}
                 title={color.name}
               >
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`w-5 h-5 rounded-lg border border-white/20 transition-transform duration-200 ${
-                      currentColor === color.value ? 'scale-110' : 'group-hover:scale-105'
-                    }`}
-                    style={{ backgroundColor: color.value === 'inherit' ? 'transparent' : color.value }}
-                  >
-                    {color.value === 'inherit' && (
-                      <div className="w-full h-full flex items-center justify-center text-[8px] font-bold">∅</div>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-0.5 text-left">
-                    <div className="text-[11px] font-semibold text-[var(--text-primary)]">{color.name}</div>
-                    <div className="text-[9px] text-[var(--text-tertiary)]">{color.description}</div>
-                  </div>
+                <div
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-white/20 text-[8px] font-bold transition-transform duration-200 group-hover:scale-105"
+                  style={{ backgroundColor: color.value === 'inherit' ? 'transparent' : color.value }}
+                >
+                  {color.value === 'inherit' ? '∅' : ''}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[11px] font-semibold text-[var(--text-primary)]">{color.name}</div>
+                  <div className="text-[9px] text-[var(--text-tertiary)]">{color.description}</div>
                 </div>
               </button>
             ))}
-          </div>
-
-          {/* Footer Info */}
-          <div className="border-t border-[var(--border-subtle)] pt-3">
-            <div className="text-[9px] text-[var(--text-tertiary)] text-center">
-              Haz click para aplicar el color al texto activo
-            </div>
           </div>
         </div>
       )}
@@ -460,7 +445,8 @@ const MenuBar = ({
   };
 
   const applyToParagraphOrSelection: ApplyToSelectionTarget = (command) => {
-    const { selection } = editor.state;
+    const { state, view } = editor;
+    const { selection } = state;
 
     if (!selection.empty) {
       return command(editor.chain().focus()).run();
@@ -469,7 +455,24 @@ const MenuBar = ({
     const paragraphText = selection.$from.parent.textContent ?? '';
     if (!hasUsableParagraphAtCursor(paragraphText)) return false;
 
-    return command(editor.chain().focus()).run();
+    const paragraphStart = selection.$from.start();
+    const paragraphEnd = selection.$from.end();
+    const cursorPosition = selection.from;
+
+    view.dispatch(
+      state.tr.setSelection(TextSelection.create(state.doc, paragraphStart, paragraphEnd)),
+    );
+
+    const applied = command(editor.chain().focus()).run();
+
+    if (!applied) return false;
+
+    const nextState = editor.state;
+    editor.view.dispatch(
+      nextState.tr.setSelection(TextSelection.create(nextState.doc, cursorPosition)),
+    );
+
+    return true;
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -648,7 +651,7 @@ const MenuBar = ({
           className="hidden"
         />
         <ToolbarButton
-          onClick={() => editor.chain().focus().insertContent({ type: 'pageBreak' }).run()}
+          onClick={() => editor.chain().focus().insertContent(PAGE_BREAK_HTML).run()}
           title="Insertar Salto de Página (Ctrl+Shift+Enter)"
         >
           <Minus className="h-4 w-4" />
@@ -672,10 +675,12 @@ export function AdvancedRichTextEditor({
   defaultContent,
   onUpdate,
   currentPage = 0,
+  totalPages,
 }: {
   defaultContent: string;
   onUpdate: (html: string) => void;
   currentPage?: number;
+  totalPages?: number;
 }) {
   const { preferences, setPreferences } = useEditorPreferences();
   const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop'>(
@@ -689,12 +694,10 @@ export function AdvancedRichTextEditor({
     preferences.margins || MARGIN_PRESETS.normal
   );
   const [currentFontSize, setCurrentFontSize] = useState<string>(preferences.fontSize || '16px');
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleUpdate = useCallback(
     (html: string) => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => onUpdate(html), DEBOUNCE_MS);
+      onUpdate(html);
     },
     [onUpdate],
   );
@@ -762,12 +765,6 @@ export function AdvancedRichTextEditor({
     immediatelyRender: false,
   });
 
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, []);
-
   // Update editor content when defaultContent changes (e.g., when switching chapters)
   useEffect(() => {
     if (editor && defaultContent !== editor.getHTML()) {
@@ -794,9 +791,14 @@ export function AdvancedRichTextEditor({
   };
 
   const wordsPerPage = calculateWordsPerPage(pageConfig);
-  // For double mode with page navigation, we show 2 pages at a time.
-  const displayStartPage = viewMode === 'double' ? currentPage : currentPage;
-  const displayEndPage = viewMode === 'double' ? currentPage + 2 : currentPage + 1;
+  const showSecondPage = viewMode === 'double' && (totalPages === undefined || currentPage + 1 < totalPages);
+  const secondPageNumber = currentPage + 2;
+  const pagePaddingStyle = {
+    paddingTop: `${margins.top}px`,
+    paddingBottom: `${margins.bottom}px`,
+    paddingLeft: `${margins.left}px`,
+    paddingRight: `${margins.right}px`,
+  };
 
   return (
     <div className="flex flex-col h-full overflow-hidden rounded-[24px] border border-[var(--border-strong)] bg-[#0B121D] shadow-2xl">
@@ -813,9 +815,12 @@ export function AdvancedRichTextEditor({
       />
 
       <div className="flex-1 overflow-auto bg-[var(--background)] p-6 flex justify-center custom-scrollbar">
-        <div className={`transition-all duration-500 ease-in-out ${deviceClasses[device]} ${viewMode === 'double' ? 'grid grid-cols-2 gap-8 max-w-5xl' : ''}`}>
+        <div className={`transition-all duration-500 ease-in-out ${deviceClasses[device]} ${showSecondPage ? 'grid grid-cols-2 gap-8 max-w-5xl' : ''}`}>
           {/* First page or single page */}
-          <div className="bg-[#111C28] min-h-[1000px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 prose prose-invert max-w-none overflow-x-auto prose-img:rounded-lg prose-img:shadow-md">
+          <div
+            className="bg-[#111C28] min-h-[1000px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 prose prose-invert max-w-none overflow-x-auto prose-img:rounded-lg prose-img:shadow-md"
+            style={pagePaddingStyle}
+          >
             <style>{`
               .ProseMirror img {
                 max-width: 100%;
@@ -831,16 +836,19 @@ export function AdvancedRichTextEditor({
                 overflow-wrap: break-word;
               }
             `}</style>
-            {displayStartPage === 0 && <EditorContent editor={editor} />}
-            {displayStartPage > 0 && (
+            {currentPage === 0 && <EditorContent editor={editor} />}
+            {currentPage > 0 && (
               <div className="italic text-[var(--text-tertiary)] text-sm">
-                Página {displayStartPage + 1}
+                Página {currentPage + 1}
               </div>
             )}
           </div>
-          {viewMode === 'double' && (
-            <div className="bg-[#111C28] min-h-[1000px] p-12 shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 opacity-50 flex items-center justify-center italic text-[var(--text-tertiary)]">
-              Página {displayEndPage + 1}
+          {showSecondPage && (
+            <div
+              className="bg-[#111C28] min-h-[1000px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 opacity-50 flex items-center justify-center italic text-[var(--text-tertiary)]"
+              style={pagePaddingStyle}
+            >
+              Página {secondPageNumber}
             </div>
           )}
         </div>

@@ -129,7 +129,9 @@ export function estimateTotalPages(
     .filter((word) => word.length > 0).length;
 
   const wordsPerPage = calculateWordsPerPage(config);
-  const pageCount = Math.max(1, Math.ceil(wordCount / wordsPerPage));
+  const contentPages = Math.max(1, Math.ceil(wordCount / wordsPerPage));
+  const manualBreakPages = countPageBreaks(htmlContent);
+  const pageCount = contentPages + manualBreakPages;
 
   return pageCount;
 }
@@ -146,3 +148,4 @@ export const MARGIN_PRESETS = {
 } as const;
 
 export type MarginPreset = keyof typeof MARGIN_PRESETS;
+import { countPageBreaks } from '@/lib/preview/page-breaks';

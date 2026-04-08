@@ -70,8 +70,10 @@ export function getSourceDocumentMetrics(
   // Get document stats
   const stats = getDocumentStats(project.document);
 
-  // Estimate pages in source format
-  const estimatedSourcePages = estimateSourceDocumentPages(stats.wordCount);
+  // Prefer explicit source metadata when available; fall back to an estimate.
+  const estimatedSourcePages = source.pageCount && source.pageCount > 0
+    ? source.pageCount
+    : estimateSourceDocumentPages(stats.wordCount);
 
   // Calculate Talent format page counts
   const talentPages: Record<PreviewFormat, number> = {

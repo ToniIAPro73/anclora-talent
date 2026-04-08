@@ -96,6 +96,7 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
             fileName: imported.sourceFileName,
             mimeType: imported.sourceMimeType,
             importedAt: now,
+            pageCount: imported.sourcePageCount,
             outline: imported.detectedOutline,
           }
         : null,

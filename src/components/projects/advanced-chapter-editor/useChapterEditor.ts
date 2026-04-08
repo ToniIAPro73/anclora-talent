@@ -15,12 +15,9 @@ export interface UseChapterEditorOptions {
   margins?: { top: number; bottom: number; left: number; right: number };
 }
 
-// Simple fallback estimate if page config not provided
-const estimatePageCountSimple = (htmlContent: string): number => {
-  const wordCount = htmlContent.split(/\s+/).filter(w => w.length > 0).length;
-  const pageCount = Math.ceil(wordCount / 375); // ~375 words per page
-  return Math.max(1, pageCount);
-};
+function normalizeHtmlContent(content: string): string {
+  return content.trim();
+}
 
 export function useChapterEditor({
   chapters,
@@ -35,6 +32,9 @@ export function useChapterEditor({
   const [currentIndex, setCurrentIndex] = useState(initialChapterIndex);
   const [title, setTitle] = useState(initialChapter?.title || '');
   const [htmlContent, setHtmlContent] = useState(
+    initialChapter?.blocks.map((block) => block.content).join('') || ''
+  );
+  const [savedHtmlContent, setSavedHtmlContent] = useState(
     initialChapter?.blocks.map((block) => block.content).join('') || ''
   );
   const [hasChanges, setHasChanges] = useState(false);
@@ -71,9 +71,11 @@ export function useChapterEditor({
 
   const handleContentChange = useCallback((newContent: string) => {
     setHtmlContent(newContent);
-    setHasChanges(true);
+    setHasChanges(
+      normalizeHtmlContent(newContent) !== normalizeHtmlContent(savedHtmlContent)
+    );
     setError(null);
-  }, []);
+  }, [savedHtmlContent]);
 
   const navigateToChapter = useCallback(
     async (newIndex: number) => {
@@ -95,6 +97,7 @@ export function useChapterEditor({
         .map((block) => block.content)
         .join('');
       setHtmlContent(reconstructedHtml);
+      setSavedHtmlContent(reconstructedHtml);
       setHasChanges(false);
       setError(null);
       setCurrentPage(0); // Reset to first page when changing chapters
@@ -137,6 +140,7 @@ export function useChapterEditor({
       formData.set('htmlContent', htmlContent);
 
       await saveChapterContentAction(formData);
+      setSavedHtmlContent(htmlContent);
       setHasChanges(false);
       setLastSaved(new Date());
     } catch (err) {

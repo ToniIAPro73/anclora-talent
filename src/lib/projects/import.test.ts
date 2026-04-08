@@ -65,6 +65,10 @@ describe('document import parser isolation', () => {
 
     expect(result.chapters).toHaveLength(2);
     expect(result.chapters?.[0].title).toBe('Capitulo uno');
+    expect(result.chapters?.[0].blocks[0]).toEqual({
+      type: 'heading',
+      content: 'Capitulo uno',
+    });
     expect(result.chapters?.[0].blocks.some((block) => block.content.includes('Texto del primer capitulo.'))).toBe(true);
     expect(result.chapters?.[1].title).toBe('Capitulo dos');
   });

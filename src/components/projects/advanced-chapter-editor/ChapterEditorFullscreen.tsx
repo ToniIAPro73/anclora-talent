@@ -29,7 +29,7 @@ export function ChapterEditorFullscreen({
   defaultFontSize = '16px',
   defaultMargins = { top: 24, bottom: 24, left: 24, right: 24 },
 }: ChapterEditorFullscreenProps) {
-  const { preferences, isLoaded } = useEditorPreferences();
+  const { preferences } = useEditorPreferences();
 
   // Use saved preferences if available, otherwise use passed defaults
   const device = (preferences.device as 'mobile' | 'tablet' | 'desktop') || defaultDevice;
@@ -65,7 +65,7 @@ export function ChapterEditorFullscreen({
       // No changes, just close
       onClose();
     }
-  }, [editor.hasChanges, editor, onSave, onClose]);
+  }, [editor, onSave, onClose]);
 
   const handleSave = useCallback(async () => {
     await editor.saveChapter();
@@ -157,7 +157,7 @@ export function ChapterEditorFullscreen({
           </button>
         </div>
 
-        {/* Page Navigation - only show if more than 2 pages */}
+        {/* Page Navigation - only show when a chapter spans beyond the visible spread */}
         {editor.totalPages > 2 && (
           <div className="flex items-center gap-1 flex-shrink-0">
             <button
@@ -217,6 +217,7 @@ export function ChapterEditorFullscreen({
             defaultContent={editor.htmlContent}
             onUpdate={editor.setHtmlContent}
             currentPage={editor.currentPage}
+            totalPages={editor.totalPages}
           />
         </div>
       </div>
