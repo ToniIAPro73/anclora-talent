@@ -6,6 +6,7 @@
 import { paginateContent } from './content-paginator';
 import { DEVICE_PAGINATION_CONFIGS } from './device-configs';
 import { PAGE_BREAK_HTML } from './page-breaks';
+import { vi } from 'vitest';
 
 describe('content-paginator', () => {
   describe('paginateContent', () => {
@@ -64,6 +65,36 @@ describe('content-paginator', () => {
 
       expect(firstPageHtml).toContain('First page content');
       expect(lastPageHtml).toContain('Third page content');
+    });
+
+    it('treats manual and auto breaks as hard page cuts in preview', () => {
+      const content =
+        '<p>Uno</p><hr data-page-break="manual" /><p>Dos</p><hr data-page-break="auto" /><p>Tres</p>';
+      const pages = paginateContent(content, DEVICE_PAGINATION_CONFIGS.laptop);
+
+      expect(pages).toHaveLength(3);
+      expect(pages[0].html).toContain('Uno');
+      expect(pages[1].html).toContain('Dos');
+      expect(pages[2].html).toContain('Tres');
+    });
+
+    it('treats typed breaks as hard page cuts in the server fallback path', () => {
+      const content =
+        '<p>Uno</p><hr data-page-break="manual" /><p>Dos</p><hr data-page-break="auto" /><p>Tres</p>';
+      const originalDomParser = globalThis.DOMParser;
+
+      vi.stubGlobal('DOMParser', undefined);
+
+      try {
+        const pages = paginateContent(content, DEVICE_PAGINATION_CONFIGS.laptop);
+
+        expect(pages).toHaveLength(3);
+        expect(pages[0].html).toContain('Uno');
+        expect(pages[1].html).toContain('Dos');
+        expect(pages[2].html).toContain('Tres');
+      } finally {
+        vi.stubGlobal('DOMParser', originalDomParser);
+      }
     });
 
     it('should force all content after a manual break onto the next page', () => {

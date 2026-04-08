@@ -502,4 +502,23 @@ describe('AdvancedRichTextEditor selection behavior', () => {
     );
     expect(onUpdate).toHaveBeenCalledWith(expect.stringContaining('data-page-break="auto"'));
   });
+
+  test('keeps one shared editing flow across visible pages', () => {
+    const editor = createMockEditor(createSelection('Segunda pagina', 3));
+    useEditorMock.mockReturnValue(editor);
+
+    render(
+      <AdvancedRichTextEditor
+        defaultContent={'<p>Primera</p><hr data-page-break="manual" /><p>Segunda pagina</p>'}
+        onUpdate={vi.fn()}
+        currentPage={0}
+        totalPages={2}
+      />,
+    );
+
+    fireEvent.click(screen.getByTitle('Negrita'));
+
+    expect(screen.getAllByTestId('advanced-tiptap-content')).toHaveLength(1);
+    expect(editor.__commandSelections).toEqual([{ from: 1, to: 8, empty: false }]);
+  });
 });
