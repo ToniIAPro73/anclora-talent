@@ -174,6 +174,7 @@ const FontSizeSelector = ({ editor, onFontSizeChange }: { editor: any; onFontSiz
   ];
 
   const currentSize = editor.getAttributes('textStyle')?.fontSize || '16px';
+  const hasSelection = !editor.state.selection.empty;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -187,11 +188,15 @@ const FontSizeSelector = ({ editor, onFontSizeChange }: { editor: any; onFontSiz
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <ToolbarButton onClick={() => setIsOpen(!isOpen)} title="Tamaño de fuente">
+      <ToolbarButton
+        onClick={() => setIsOpen(!isOpen)}
+        disabled={!hasSelection}
+        title={hasSelection ? "Tamaño de fuente (selecciona texto)" : "Selecciona texto primero"}
+      >
         <Type className="h-4 w-4" />
       </ToolbarButton>
 
-      {isOpen && (
+      {isOpen && hasSelection && (
         <div className="absolute left-0 top-11 z-[110] flex flex-col gap-0.5 rounded-xl border border-[var(--border-strong)] bg-[#0E1825] p-2 shadow-2xl shadow-black animate-in fade-in zoom-in duration-200">
           {sizes.map((size) => (
             <button
@@ -235,6 +240,7 @@ const ColorSelector = ({ editor }: { editor: any }) => {
 
   const currentColor = editor.getAttributes('textStyle').color || 'inherit';
   const currentColorName = colors.find(c => c.value === currentColor)?.name || 'Por Defecto';
+  const hasSelection = !editor.state.selection.empty;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -250,18 +256,21 @@ const ColorSelector = ({ editor }: { editor: any }) => {
     <div className="relative" ref={dropdownRef}>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`inline-flex h-9 w-9 items-center justify-center rounded-[10px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-mint)] ${
-          currentColor !== 'inherit'
+        onClick={() => hasSelection && setIsOpen(!isOpen)}
+        disabled={!hasSelection}
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-[10px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-mint)] disabled:opacity-30 disabled:cursor-not-allowed ${
+          hasSelection && currentColor !== 'inherit'
             ? 'bg-[var(--accent-mint)] text-white shadow-[0_0_15px_rgba(45,212,191,0.5)]'
-            : 'text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]'
+            : hasSelection
+            ? 'text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]'
+            : 'text-[var(--text-secondary)]'
         }`}
-        title="Color de texto"
+        title={hasSelection ? "Color de texto (selecciona texto)" : "Selecciona texto primero"}
       >
         <Palette className="h-4 w-4" />
       </button>
 
-      {isOpen && (
+      {isOpen && hasSelection && (
         <div className="absolute left-0 top-11 z-[110] rounded-2xl border border-[var(--border-strong)] bg-gradient-to-br from-[#0E1825] to-[#0B121D] p-4 shadow-2xl shadow-black/50 animate-in fade-in zoom-in duration-200 w-72">
           {/* Header */}
           <div className="mb-4">
