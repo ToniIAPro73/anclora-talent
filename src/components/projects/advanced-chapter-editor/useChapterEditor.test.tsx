@@ -275,4 +275,36 @@ describe('useChapterEditor', () => {
     expect(result.current.currentPage).toBe(1);
     expect(result.current.canNavigatePageNext).toBe(false);
   });
+
+  test('never lets an overcounted measured page total exceed the canonical pagination', () => {
+    const chaptersWithStaleAutoBreak = [
+      {
+        id: 'chapter-auto',
+        order: 1,
+        title: 'Capítulo corto',
+        blocks: [
+          {
+            id: 'block-auto',
+            order: 1,
+            type: 'paragraph' as const,
+            content: '<p>Fase 1: Percepción</p><hr data-page-break="auto" /><p>Días 1 al 10</p>',
+          },
+        ],
+      },
+    ];
+
+    const { result } = renderHook(() =>
+      useChapterEditor({
+        chapters: chaptersWithStaleAutoBreak,
+        initialChapterIndex: 0,
+        projectId: 'project-1',
+      }),
+    );
+
+    act(() => {
+      result.current.setMeasuredTotalPages(3);
+    });
+
+    expect(result.current.totalPages).toBe(1);
+  });
 });

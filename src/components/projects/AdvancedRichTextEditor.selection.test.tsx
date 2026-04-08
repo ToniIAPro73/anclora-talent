@@ -175,6 +175,7 @@ function createMockEditor(selection: MockSelection) {
   };
 
   const view = {
+    posAtCoords: vi.fn(() => ({ pos: 7 })),
     dispatch(transaction: { selection?: { from: number; to: number } }) {
       if (!transaction.selection) {
         return;
@@ -291,6 +292,7 @@ function createMockEditor(selection: MockSelection) {
       },
     },
     __dispatchCalls: dispatchCalls,
+    __posAtCoords: view.posAtCoords,
     __commandSelections: commandSelections,
     __headingSelections: headingSelections,
     __bulletListSelections: bulletListSelections,
@@ -415,6 +417,43 @@ describe('AdvancedRichTextEditor selection behavior', () => {
     expect(screen.queryByText('Página 2')).not.toBeInTheDocument();
   });
 
+  test('places the caret into the first visible page on mount', () => {
+    const editor = createMockEditor(createSelection('Hello', 0));
+    useEditorMock.mockReturnValue(editor);
+
+    render(
+      <AdvancedRichTextEditor
+        defaultContent={'<p>Uno</p><hr data-page-break="manual" /><p>Dos</p>'}
+        onUpdate={vi.fn()}
+        currentPage={0}
+        totalPages={2}
+      />,
+    );
+
+    expect(editor.__posAtCoords).toHaveBeenCalled();
+    expect(editor.__dispatchCalls[0]).toEqual({ from: 7, to: 7 });
+  });
+
+  test('moves the caret into the clicked adjacent page in double view', () => {
+    const editor = createMockEditor(createSelection('Hello', 0));
+    editor.__posAtCoords.mockReturnValueOnce({ pos: 3 }).mockReturnValueOnce({ pos: 42 });
+    useEditorMock.mockReturnValue(editor);
+
+    render(
+      <AdvancedRichTextEditor
+        defaultContent={'<p>Uno</p><hr data-page-break="manual" /><p>Dos</p>'}
+        onUpdate={vi.fn()}
+        currentPage={0}
+        totalPages={2}
+      />,
+    );
+
+    const surfaces = screen.getAllByTestId('editable-page-surface');
+    fireEvent.mouseDown(surfaces[1]);
+
+    expect(editor.__dispatchCalls.at(-1)).toEqual({ from: 42, to: 42 });
+  });
+
   test('removes the first page break found below the cursor', () => {
     const editor = createMockEditor(createSelection('Hello world', 0));
     useEditorMock.mockReturnValue(editor);
@@ -478,6 +517,8 @@ describe('AdvancedRichTextEditor selection behavior', () => {
 
     expect(styles).toContain('.ProseMirror ul:not([data-bullet-style])');
     expect(styles).toContain('.ProseMirror ol:not([data-list-style])');
+    expect(styles).toContain('.ProseMirror hr[data-page-break="auto"]');
+    expect(styles).toContain('opacity: 0');
   });
 
   test('re-emits html containing auto breaks after overflow reconciliation', () => {
