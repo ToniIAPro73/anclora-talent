@@ -173,7 +173,7 @@ const FontSizeSelector = ({ editor, onFontSizeChange }: { editor: any; onFontSiz
     { name: '2XL', value: '32px' },
   ];
 
-  const currentSize = editor.getAttributes('fontSize')?.fontSize || '16px';
+  const currentSize = editor.getAttributes('textStyle')?.fontSize || '16px';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -456,9 +456,12 @@ export function AdvancedRichTextEditor({
   currentPage?: number;
 }) {
   const { preferences, isLoaded, setPreferences } = useEditorPreferences();
-  const [viewMode, setViewMode] = useState<'single' | 'double'>('double');
   const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop'>(
     (preferences.device as 'mobile' | 'tablet' | 'desktop') || 'desktop'
+  );
+  // Initialize viewMode based on device - mobile should always be single
+  const [viewMode, setViewMode] = useState<'single' | 'double'>(
+    device === 'mobile' ? 'single' : 'double'
   );
   const [autoPages, setAutoPages] = useState<boolean>(true);
   const [margins, setMargins] = useState<MarginConfig>(
@@ -480,8 +483,16 @@ export function AdvancedRichTextEditor({
     (newDevice: 'mobile' | 'tablet' | 'desktop') => {
       setDevice(newDevice);
       setPreferences({ device: newDevice });
+      // If switching to mobile, force single page mode
+      if (newDevice === 'mobile' && viewMode === 'double') {
+        setViewMode('single');
+      }
+      // If switching from mobile, allow double mode
+      if (newDevice !== 'mobile' && viewMode === 'single') {
+        setViewMode('double');
+      }
     },
-    [setPreferences]
+    [setPreferences, viewMode]
   );
 
   // Save preferences when margins change

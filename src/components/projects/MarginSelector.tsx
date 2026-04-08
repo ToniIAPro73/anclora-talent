@@ -73,7 +73,7 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-11 z-[110] w-[280px] rounded-xl border border-[var(--border-strong)] bg-[#0E1825] p-3 shadow-2xl shadow-black animate-in fade-in zoom-in duration-200">
+        <div className="absolute left-0 top-11 z-[110] w-[300px] rounded-xl border border-[var(--border-strong)] bg-[#0E1825] p-3 shadow-2xl shadow-black animate-in fade-in zoom-in duration-200">
           {/* Presets */}
           <div className="mb-3 flex flex-col gap-1.5">
             <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)] px-2">
