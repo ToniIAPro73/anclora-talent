@@ -19,14 +19,12 @@ export function CoverPreview({
   subtitle,
   palette,
   backgroundImageUrl,
-  projectTitle,
   eyebrow,
 }: {
   title: string;
   subtitle: string;
   palette: CoverDesign['palette'];
   backgroundImageUrl?: string | null;
-  projectTitle: string;
   eyebrow: string;
 }) {
   const colors = previewText[palette];

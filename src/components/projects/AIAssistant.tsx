@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Sparkles, Zap, Wand2, FileText, Check, MessageSquare } from 'lucide-react';
-import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
+import { Sparkles, MessageSquare, Zap, Wand2, Check } from 'lucide-react';
 
 interface AISuggestion {
   id: string;
@@ -49,7 +48,7 @@ export function AIAssistant() {
                       {suggestion.type}
                     </span>
                   </div>
-                  <p className="text-sm leading-6 text-[var(--text-primary)] font-medium">"{suggestion.content}"</p>
+                  <p className="text-sm leading-6 text-[var(--text-primary)] font-medium">&quot;{suggestion.content}&quot;</p>
                   <div className="mt-4 flex gap-3">
                     <button className="text-[10px] font-bold uppercase tracking-widest text-[var(--accent)] hover:underline">Aplicar cambio</button>
                     <button className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)] hover:underline">Descartar</button>

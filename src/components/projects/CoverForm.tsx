@@ -109,7 +109,6 @@ export function CoverForm({ copy, project }: { copy: AppMessages['project']; pro
         subtitle={subtitle}
         palette={palette}
         backgroundImageUrl={project.cover.backgroundImageUrl}
-        projectTitle={project.title}
         eyebrow={copy.coverEyebrow}
       />
     </form>
