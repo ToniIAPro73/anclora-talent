@@ -6,6 +6,7 @@ import { estimateTotalPages, type PageCalculationConfig } from '@/lib/projects/p
 import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
 import { paginateContent } from '@/lib/preview/content-paginator';
 import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
+import { reconcileOverflowBreaks } from '@/lib/preview/editor-page-layout';
 import type { DocumentChapter } from '@/lib/projects/types';
 
 export interface UseChapterEditorOptions {
@@ -68,16 +69,18 @@ export function useChapterEditor({
     const previewFormat = device === 'desktop' ? 'laptop' : device;
     const previewBaseConfig = DEVICE_PAGINATION_CONFIGS[previewFormat];
     const parsedFontSize = Number.parseInt(fontSize, 10);
+    const previewConfig = {
+      ...previewBaseConfig,
+      fontSize: Number.isFinite(parsedFontSize) ? parsedFontSize : previewBaseConfig.fontSize,
+      marginTop: margins.top,
+      marginBottom: margins.bottom,
+      marginLeft: margins.left,
+      marginRight: margins.right,
+    };
+    const reconciledContent = reconcileOverflowBreaks(htmlContent, previewConfig);
 
     if (typeof window !== 'undefined' && typeof DOMParser !== 'undefined') {
-      return paginateContent(htmlContent, {
-        ...previewBaseConfig,
-        fontSize: Number.isFinite(parsedFontSize) ? parsedFontSize : previewBaseConfig.fontSize,
-        marginTop: margins.top,
-        marginBottom: margins.bottom,
-        marginLeft: margins.left,
-        marginRight: margins.right,
-      }).length;
+      return paginateContent(reconciledContent, previewConfig).length;
     }
 
     const pageConfig: PageCalculationConfig = {
@@ -88,7 +91,7 @@ export function useChapterEditor({
       marginLeft: margins.left,
       marginRight: margins.right,
     };
-    return estimateTotalPages(htmlContent, pageConfig);
+    return estimateTotalPages(reconciledContent, pageConfig);
   }, [htmlContent, device, fontSize, margins]);
 
   const canNavigatePagePrev = currentPage > 0;

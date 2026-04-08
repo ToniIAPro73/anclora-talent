@@ -167,6 +167,34 @@ describe('useChapterEditor', () => {
     });
 
     expect(result.current.hasChanges).toBe(false);
-    expect(result.current.totalPages).toBe(3);
+    expect(result.current.totalPages).toBe(2);
+  });
+
+  test('collapses stale auto page breaks when short content fits on one page', () => {
+    const chaptersWithStaleAutoBreak = [
+      {
+        id: 'chapter-auto',
+        order: 1,
+        title: 'Capítulo corto',
+        blocks: [
+          {
+            id: 'block-auto',
+            order: 1,
+            type: 'paragraph' as const,
+            content: '<p>Fase 1: Percepción</p><hr data-page-break="auto" /><p>Días 1 al 10</p>',
+          },
+        ],
+      },
+    ];
+
+    const { result } = renderHook(() =>
+      useChapterEditor({
+        chapters: chaptersWithStaleAutoBreak,
+        initialChapterIndex: 0,
+        projectId: 'project-1',
+      }),
+    );
+
+    expect(result.current.totalPages).toBe(1);
   });
 });
