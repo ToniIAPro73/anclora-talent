@@ -5,6 +5,7 @@ import { X, ChevronLeft, ChevronRight, Loader2, Save, PageDown, PageUp } from 'l
 import { AdvancedRichTextEditor } from '../AdvancedRichTextEditor';
 import { premiumPrimaryMintButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { useChapterEditor, type UseChapterEditorOptions } from './useChapterEditor';
+import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import type { DocumentChapter } from '@/lib/projects/types';
 
 interface ChapterEditorFullscreenProps {
@@ -28,13 +29,20 @@ export function ChapterEditorFullscreen({
   defaultFontSize = '16px',
   defaultMargins = { top: 24, bottom: 24, left: 24, right: 24 },
 }: ChapterEditorFullscreenProps) {
+  const { preferences, isLoaded } = useEditorPreferences();
+
+  // Use saved preferences if available, otherwise use passed defaults
+  const device = (preferences.device as 'mobile' | 'tablet' | 'desktop') || defaultDevice;
+  const fontSize = preferences.fontSize || defaultFontSize;
+  const margins = preferences.margins || defaultMargins;
+
   const editor = useChapterEditor({
     chapters,
     initialChapterIndex,
     projectId,
-    device: defaultDevice,
-    fontSize: defaultFontSize,
-    margins: defaultMargins,
+    device,
+    fontSize,
+    margins,
   });
 
   // Handle keyboard shortcuts

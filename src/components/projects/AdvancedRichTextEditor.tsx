@@ -48,6 +48,7 @@ import {
   MARGIN_PRESETS,
   type PageCalculationConfig,
 } from '@/lib/projects/page-calculator';
+import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 
 const DEBOUNCE_MS = 1000;
 
@@ -427,11 +428,16 @@ export function AdvancedRichTextEditor({
   onUpdate: (html: string) => void;
   currentPage?: number;
 }) {
+  const { preferences, isLoaded, setPreferences } = useEditorPreferences();
   const [viewMode, setViewMode] = useState<'single' | 'double'>('double');
-  const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
+  const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop'>(
+    (preferences.device as 'mobile' | 'tablet' | 'desktop') || 'desktop'
+  );
   const [autoPages, setAutoPages] = useState<boolean>(true);
-  const [margins, setMargins] = useState<MarginConfig>(MARGIN_PRESETS.normal);
-  const [currentFontSize, setCurrentFontSize] = useState<string>('16px');
+  const [margins, setMargins] = useState<MarginConfig>(
+    preferences.margins || MARGIN_PRESETS.normal
+  );
+  const [currentFontSize, setCurrentFontSize] = useState<string>(preferences.fontSize || '16px');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleUpdate = useCallback(
@@ -440,6 +446,33 @@ export function AdvancedRichTextEditor({
       debounceRef.current = setTimeout(() => onUpdate(html), DEBOUNCE_MS);
     },
     [onUpdate],
+  );
+
+  // Save preferences when device changes
+  const handleDeviceChange = useCallback(
+    (newDevice: 'mobile' | 'tablet' | 'desktop') => {
+      setDevice(newDevice);
+      setPreferences({ device: newDevice });
+    },
+    [setPreferences]
+  );
+
+  // Save preferences when margins change
+  const handleMarginsChange = useCallback(
+    (newMargins: MarginConfig) => {
+      setMargins(newMargins);
+      setPreferences({ margins: newMargins });
+    },
+    [setPreferences]
+  );
+
+  // Save preferences when font size changes
+  const handleFontSizeChange = useCallback(
+    (newSize: string) => {
+      setCurrentFontSize(newSize);
+      setPreferences({ fontSize: newSize });
+    },
+    [setPreferences]
   );
 
   const editor = useEditor({
@@ -515,11 +548,11 @@ export function AdvancedRichTextEditor({
         viewMode={viewMode}
         setViewMode={setViewMode}
         device={device}
-        setDevice={setDevice}
+        setDevice={handleDeviceChange}
         margins={margins}
-        onMarginsChange={setMargins}
+        onMarginsChange={handleMarginsChange}
         currentFontSize={currentFontSize}
-        onFontSizeChange={setCurrentFontSize}
+        onFontSizeChange={handleFontSizeChange}
         wordsPerPage={wordsPerPage}
       />
 
