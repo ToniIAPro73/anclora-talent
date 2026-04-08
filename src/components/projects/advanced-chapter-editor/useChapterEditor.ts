@@ -4,6 +4,8 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { saveChapterContentAction } from '@/lib/projects/actions';
 import { estimateTotalPages, type PageCalculationConfig } from '@/lib/projects/page-calculator';
 import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
+import { paginateContent } from '@/lib/preview/content-paginator';
+import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 import type { DocumentChapter } from '@/lib/projects/types';
 
 export interface UseChapterEditorOptions {
@@ -62,6 +64,21 @@ export function useChapterEditor({
 
   // Memoized page calculation with dynamic config
   const totalPages = useMemo(() => {
+    const previewFormat = device === 'desktop' ? 'laptop' : device;
+    const previewBaseConfig = DEVICE_PAGINATION_CONFIGS[previewFormat];
+    const parsedFontSize = Number.parseInt(fontSize, 10);
+
+    if (typeof window !== 'undefined' && typeof DOMParser !== 'undefined') {
+      return paginateContent(htmlContent, {
+        ...previewBaseConfig,
+        fontSize: Number.isFinite(parsedFontSize) ? parsedFontSize : previewBaseConfig.fontSize,
+        marginTop: margins.top,
+        marginBottom: margins.bottom,
+        marginLeft: margins.left,
+        marginRight: margins.right,
+      }).length;
+    }
+
     const pageConfig: PageCalculationConfig = {
       device: device as 'mobile' | 'tablet' | 'desktop',
       fontSize,

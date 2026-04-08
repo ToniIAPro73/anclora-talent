@@ -66,6 +66,23 @@ describe('content-paginator', () => {
       expect(lastPageHtml).toContain('Third page content');
     });
 
+    it('should force all content after a manual break onto the next page', () => {
+      const content = `
+        <p>Antes del salto</p>
+        ${PAGE_BREAK_HTML}
+        <p>Despues del salto</p>
+      `;
+
+      const config = DEVICE_PAGINATION_CONFIGS.laptop;
+      const pages = paginateContent(content, config);
+
+      expect(pages).toHaveLength(2);
+      expect(pages[0].html).toContain('Antes del salto');
+      expect(pages[0].html).not.toContain('Despues del salto');
+      expect(pages[1].html).toContain('Despues del salto');
+      expect(pages[1].html).not.toContain('Antes del salto');
+    });
+
     it('should assign correct page numbers', () => {
       const content = `
         <p>${'Lorem ipsum dolor sit amet. '.repeat(100)}</p>

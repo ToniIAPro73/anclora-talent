@@ -732,26 +732,19 @@ const MenuBar = ({
   const outdentListItem = () => updateBlockIndent(-1);
 
   const removeNextPageBreak = () => {
-    editor
-      .chain()
-      .focus()
-      .command(({ state, tr }) => {
-        let target: { from: number; to: number } | null = null;
+    const { doc, selection } = editor.state;
+    let target: { from: number; to: number } | null = null;
 
-        state.doc.descendants((node, pos) => {
-          if (node.type.name !== 'pageBreak') return true;
-          if (pos + node.nodeSize <= state.selection.from) return true;
-          target = { from: pos, to: pos + node.nodeSize };
-          return false;
-        });
+    doc.descendants((node, pos) => {
+      if (node.type.name !== 'pageBreak') return true;
+      if (pos + node.nodeSize <= selection.from) return true;
+      target = { from: pos, to: pos + node.nodeSize };
+      return false;
+    });
 
-        if (!target) return false;
+    if (!target) return false;
 
-        tr.delete(target.from, target.to);
-        editor.view.dispatch(tr);
-        return true;
-      })
-      .run();
+    return editor.chain().focus().deleteRange(target).run();
   };
 
   if (!editor) return null;
@@ -1276,6 +1269,14 @@ export function AdvancedRichTextEditor({
               .preview-page ol {
                 margin: 0 0 1rem 1.5rem;
                 padding: 0;
+              }
+              .ProseMirror ul:not([data-bullet-style]),
+              .preview-page ul:not([data-bullet-style]) {
+                list-style-type: disc;
+              }
+              .ProseMirror ol:not([data-list-style]),
+              .preview-page ol:not([data-list-style]) {
+                list-style-type: decimal;
               }
               .ProseMirror li,
               .preview-page li {

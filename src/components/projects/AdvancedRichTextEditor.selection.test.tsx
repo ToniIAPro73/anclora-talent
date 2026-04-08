@@ -256,6 +256,12 @@ function createMockEditor(selection: MockSelection) {
         return true;
       },
     }),
+    deleteRange: (range: { from: number; to: number }) => ({
+      run: () => {
+        deletedRanges.push(range);
+        return true;
+      },
+    }),
     sinkListItem: () => ({ run: () => true }),
     liftListItem: () => ({ run: () => true }),
     setImage: () => ({ run: () => true }),
@@ -416,5 +422,17 @@ describe('AdvancedRichTextEditor selection behavior', () => {
       type: 'paragraph',
       attributes: { indent: 1 },
     });
+  });
+
+  test('defines explicit default selectors for bullet and ordered lists', () => {
+    const editor = createMockEditor(createSelection('Hola', 0));
+    useEditorMock.mockReturnValue(editor);
+
+    render(<AdvancedRichTextEditor defaultContent="<ul><li>Uno</li></ul><ol><li>Uno</li></ol>" onUpdate={vi.fn()} />);
+
+    const styles = Array.from(document.querySelectorAll('style')).map((node) => node.textContent ?? '').join('\n');
+
+    expect(styles).toContain('.ProseMirror ul:not([data-bullet-style])');
+    expect(styles).toContain('.ProseMirror ol:not([data-list-style])');
   });
 });

@@ -108,4 +108,32 @@ describe('useChapterEditor', () => {
     expect(result.current.hasChanges).toBe(false);
     expect(confirmSpy).not.toHaveBeenCalled();
   });
+
+  test('derives total pages from real pagination instead of counting consecutive manual breaks', () => {
+    const chaptersWithBreaks = [
+      {
+        id: 'chapter-breaks',
+        order: 1,
+        title: 'Capítulo con saltos',
+        blocks: [
+          {
+            id: 'block-breaks',
+            order: 1,
+            type: 'paragraph' as const,
+            content: '<p>Uno</p><hr data-page-break="true" /><hr data-page-break="true" /><p>Dos</p>',
+          },
+        ],
+      },
+    ];
+
+    const { result } = renderHook(() =>
+      useChapterEditor({
+        chapters: chaptersWithBreaks,
+        initialChapterIndex: 0,
+        projectId: 'project-1',
+      }),
+    );
+
+    expect(result.current.totalPages).toBe(2);
+  });
 });
