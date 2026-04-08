@@ -311,54 +311,56 @@ function paginateByCharacters(
   const linesPerPage = Math.floor((availableHeight / lineHeightPx) * 0.7);
   const charsPerPage = charsPerLine * linesPerPage;
 
-  // Split by paragraphs (</p> tags or double newlines)
-  const paragraphs = htmlContent
-    .split(/(<\/p>|<\/h[1-6]>|<br\s*\/?>)/i)
-    .filter((p) => p.trim());
-
   const pages: ContentPage[] = [];
-  let currentPageHtml = '';
-  let currentChars = 0;
   let currentChapter = '';
+  const hardSegments = htmlContent
+    .split(/<hr\s+data-page-break="(?:true|manual|auto)"\s*\/?>/i)
+    .map((segment) => segment.trim())
+    .filter(Boolean);
 
-  for (let i = 0; i < paragraphs.length; i++) {
-    const para = paragraphs[i];
+  for (const segment of hardSegments) {
+    const paragraphs = segment
+      .split(/(<\/p>|<\/h[1-6]>|<br\s*\/?>)/i)
+      .filter((p) => p.trim());
 
-    // Detect chapter headings
-    const chapterMatch = para.match(/<h[12][^>]*>([^<]+)/i);
-    if (chapterMatch) {
-      currentChapter = chapterMatch[1];
+    let currentPageHtml = '';
+    let currentChars = 0;
+
+    for (let i = 0; i < paragraphs.length; i++) {
+      const para = paragraphs[i];
+
+      const chapterMatch = para.match(/<h[12][^>]*>([^<]+)/i);
+      if (chapterMatch) {
+        currentChapter = chapterMatch[1];
+      }
+
+      const textContent = para.replace(/<[^>]+>/g, '');
+      const paraChars = textContent.length;
+
+      if (currentChars + paraChars > charsPerPage && currentPageHtml) {
+        pages.push({
+          type: 'content',
+          html: currentPageHtml,
+          chapterTitle: currentChapter,
+          pageNumber: pages.length + 1,
+        });
+
+        currentPageHtml = para;
+        currentChars = paraChars;
+      } else {
+        currentPageHtml += para;
+        currentChars += paraChars;
+      }
     }
 
-    // Get text length (strip tags)
-    const textContent = para.replace(/<[^>]+>/g, '');
-    const paraChars = textContent.length;
-
-    // Check if we need a new page
-    if (currentChars + paraChars > charsPerPage && currentPageHtml) {
+    if (currentPageHtml) {
       pages.push({
         type: 'content',
         html: currentPageHtml,
         chapterTitle: currentChapter,
         pageNumber: pages.length + 1,
       });
-
-      currentPageHtml = para;
-      currentChars = paraChars;
-    } else {
-      currentPageHtml += para;
-      currentChars += paraChars;
     }
-  }
-
-  // Last page
-  if (currentPageHtml) {
-    pages.push({
-      type: 'content',
-      html: currentPageHtml,
-      chapterTitle: currentChapter,
-      pageNumber: pages.length + 1,
-    });
   }
 
   return pages.length > 0 ? pages : [{ type: 'content', html: htmlContent, pageNumber: 1 }];

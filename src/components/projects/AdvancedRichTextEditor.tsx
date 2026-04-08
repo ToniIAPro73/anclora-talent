@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { Extension } from '@tiptap/core';
 import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import { TextSelection } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
+import BulletList from '@tiptap/extension-bullet-list';
+import OrderedList from '@tiptap/extension-ordered-list';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { TextStyle } from '@tiptap/extension-text-style';
@@ -20,6 +23,7 @@ import {
   Heading2,
   Heading3,
   List,
+  ListOrdered,
   Undo2,
   Redo2,
   Strikethrough,
@@ -39,7 +43,9 @@ import {
   Tablet,
   Columns,
   Minus,
-  X
+  X,
+  IndentIncrease,
+  IndentDecrease
 } from 'lucide-react';
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
 import { MarginSelector, type MarginConfig } from './MarginSelector';
@@ -53,8 +59,8 @@ import {
   MARGIN_PRESETS,
   type PageCalculationConfig,
 } from '@/lib/projects/page-calculator';
-import { paginateContent } from '@/lib/preview/content-paginator';
 import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
+import { reconcileOverflowBreaks } from '@/lib/preview/editor-page-layout';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { PAGE_BREAK_HTML } from '@/lib/preview/page-breaks';
 
@@ -68,6 +74,112 @@ type ToolbarButtonProps = {
   title: string;
   children: React.ReactNode;
 };
+
+type SplitToolbarButtonProps = {
+  icon: React.ReactNode;
+  title: string;
+  active?: boolean;
+  disabled?: boolean;
+  onPrimaryClick: () => void;
+  children: React.ReactNode;
+};
+
+type BulletStyle =
+  | 'disc'
+  | 'circle'
+  | 'square'
+  | 'diamond'
+  | 'arrow'
+  | 'check';
+
+type OrderedStyle =
+  | 'decimal'
+  | 'decimal-parentheses'
+  | 'upper-alpha'
+  | 'lower-alpha'
+  | 'lower-alpha-parentheses'
+  | 'upper-roman'
+  | 'lower-roman';
+
+const BULLET_STYLE_OPTIONS: Array<{ value: BulletStyle; label: string; sample: string }> = [
+  { value: 'disc', label: 'Punto sólido', sample: '•' },
+  { value: 'circle', label: 'Círculo', sample: '○' },
+  { value: 'square', label: 'Cuadrado', sample: '■' },
+  { value: 'diamond', label: 'Diamante', sample: '◆' },
+  { value: 'arrow', label: 'Flecha', sample: '➤' },
+  { value: 'check', label: 'Check', sample: '✓' },
+];
+
+const ORDERED_STYLE_OPTIONS: Array<{ value: OrderedStyle; label: string; sample: string }> = [
+  { value: 'decimal', label: '1. 2. 3.', sample: '1.' },
+  { value: 'decimal-parentheses', label: '1) 2) 3)', sample: '1)' },
+  { value: 'upper-alpha', label: 'A. B. C.', sample: 'A.' },
+  { value: 'lower-alpha', label: 'a. b. c.', sample: 'a.' },
+  { value: 'lower-alpha-parentheses', label: 'a) b) c)', sample: 'a)' },
+  { value: 'upper-roman', label: 'I. II. III.', sample: 'I.' },
+  { value: 'lower-roman', label: 'i. ii. iii.', sample: 'i.' },
+];
+
+const StyledBulletList = BulletList.extend({
+  addAttributes() {
+    return {
+      ...(this.parent?.() ?? {}),
+      bulletStyle: {
+        default: 'disc',
+        parseHTML: (element) => element.getAttribute('data-bullet-style') ?? 'disc',
+        renderHTML: (attributes) =>
+          attributes.bulletStyle && attributes.bulletStyle !== 'disc'
+            ? { 'data-bullet-style': attributes.bulletStyle }
+            : {},
+      },
+    };
+  },
+});
+
+const StyledOrderedList = OrderedList.extend({
+  addAttributes() {
+    return {
+      ...(this.parent?.() ?? {}),
+      listStyle: {
+        default: 'decimal',
+        parseHTML: (element) => element.getAttribute('data-list-style') ?? 'decimal',
+        renderHTML: (attributes) =>
+          attributes.listStyle && attributes.listStyle !== 'decimal'
+            ? { 'data-list-style': attributes.listStyle }
+            : {},
+      },
+    };
+  },
+});
+
+const ParagraphIndent = Extension.create({
+  name: 'paragraphIndent',
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['paragraph', 'heading'],
+        attributes: {
+          indent: {
+            default: 0,
+            parseHTML: (element) => {
+              const rawValue = element.getAttribute('data-indent');
+              return rawValue ? Number.parseInt(rawValue, 10) || 0 : 0;
+            },
+            renderHTML: (attributes) => {
+              const indent = Number(attributes.indent ?? 0);
+              if (!indent) return {};
+              return {
+                'data-indent': String(indent),
+                style: `margin-left: ${indent * 2}rem;`,
+              };
+            },
+          },
+        },
+      },
+    ];
+  },
+});
 
 function ToolbarButton({ onClick, active, disabled, title, children }: ToolbarButtonProps) {
   return (
@@ -85,6 +197,86 @@ function ToolbarButton({ onClick, active, disabled, title, children }: ToolbarBu
       {children}
     </button>
   );
+}
+
+function SplitToolbarButton({
+  icon,
+  title,
+  active,
+  disabled,
+  onPrimaryClick,
+  children,
+}: SplitToolbarButtonProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <div
+        className={`flex items-center overflow-hidden rounded-[10px] border transition-colors ${
+          active
+            ? 'border-[var(--accent-mint)] bg-[var(--accent-mint)]/10'
+            : 'border-[var(--border-subtle)] bg-transparent'
+        } ${disabled ? 'opacity-30' : ''}`}
+      >
+        <button
+          type="button"
+          onClick={onPrimaryClick}
+          disabled={disabled}
+          title={title}
+          className="inline-flex h-9 w-9 items-center justify-center text-[var(--text-secondary)] transition-colors hover:bg-[var(--hover)] hover:text-[var(--text-primary)] disabled:pointer-events-none"
+        >
+          {icon}
+        </button>
+        <button
+          type="button"
+          onClick={() => !disabled && setIsOpen((open) => !open)}
+          disabled={disabled}
+          title={`Opciones de ${title.toLowerCase()}`}
+          className="inline-flex h-9 w-6 items-center justify-center border-l border-[var(--border-subtle)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--hover)] hover:text-[var(--text-primary)] disabled:pointer-events-none"
+        >
+          <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
+
+      {isOpen && !disabled && (
+        <div className="absolute left-0 top-11 z-[110] min-w-[220px] rounded-xl border border-[var(--border-strong)] bg-[#0E1825] p-2 shadow-2xl shadow-black">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function normalizeEditorHtml(content: string): string {
+  const trimmed = content.trim();
+  if (!trimmed) return '';
+
+  const normalizeBreakMarkup = (html: string) =>
+    html
+      .replace(/<hr\s+data-page-break="true"\s*\/?>/gi, '<hr data-page-break="manual">')
+      .replace(/<hr\s+data-page-break="manual"\s*\/?>/gi, '<hr data-page-break="manual">')
+      .replace(/<hr\s+data-page-break="auto"\s*\/?>/gi, '<hr data-page-break="auto">');
+
+  if (typeof window !== 'undefined' && typeof DOMParser !== 'undefined') {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(`<div>${trimmed}</div>`, 'text/html');
+    const html = doc.body.firstElementChild?.innerHTML ?? '';
+    return normalizeBreakMarkup(html.replace(/>\s+</g, '><').replace(/&nbsp;/g, ' '));
+  }
+
+  return normalizeBreakMarkup(trimmed.replace(/>\s+</g, '><').replace(/&nbsp;/g, ' '));
 }
 
 // Advanced Font Selector using useGoogleFonts
@@ -409,6 +601,8 @@ const MenuBar = ({
     !selection.empty || hasUsableParagraphAtCursor(parentText);
   const inlineUnavailableTitle = 'Coloca el cursor dentro de una palabra o selecciona texto';
   const blockUnavailableTitle = 'Coloca el cursor en un párrafo con texto o selecciona texto';
+  const [currentBulletStyle, setCurrentBulletStyle] = useState<BulletStyle>('disc');
+  const [currentOrderedStyle, setCurrentOrderedStyle] = useState<OrderedStyle>('decimal');
 
   const applyToWordOrSelection: ApplyToSelectionTarget = (command) => {
     const { state, view } = editor;
@@ -493,22 +687,65 @@ const MenuBar = ({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const applyBulletList = (style: BulletStyle = currentBulletStyle) => {
+    setCurrentBulletStyle(style);
+    const chain = editor.chain().focus();
+    if (editor.isActive('orderedList')) {
+      chain.toggleOrderedList();
+    }
+    if (!editor.isActive('bulletList')) {
+      chain.toggleBulletList();
+    }
+    return chain.updateAttributes('bulletList', { bulletStyle: style }).run();
+  };
+
+  const applyOrderedList = (style: OrderedStyle = currentOrderedStyle) => {
+    setCurrentOrderedStyle(style);
+    const chain = editor.chain().focus();
+    if (editor.isActive('bulletList')) {
+      chain.toggleBulletList();
+    }
+    if (!editor.isActive('orderedList')) {
+      chain.toggleOrderedList();
+    }
+    return chain.updateAttributes('orderedList', { listStyle: style }).run();
+  };
+
+  const updateBlockIndent = (delta: number) => {
+    const blockType = editor.state.selection.$from.parent.type.name;
+    if (blockType === 'listItem') {
+      return delta > 0
+        ? editor.chain().focus().sinkListItem('listItem').run()
+        : editor.chain().focus().liftListItem('listItem').run();
+    }
+
+    if (blockType !== 'paragraph' && blockType !== 'heading') {
+      return false;
+    }
+
+    const currentIndent = Number(editor.state.selection.$from.parent.attrs.indent ?? 0);
+    const nextIndent = Math.max(0, Math.min(6, currentIndent + delta));
+
+    return editor.chain().focus().updateAttributes(blockType, { indent: nextIndent }).run();
+  };
+
+  const indentListItem = () => updateBlockIndent(1);
+  const outdentListItem = () => updateBlockIndent(-1);
+
   const removeNextPageBreak = () => {
     const { doc, selection } = editor.state;
     let target: { from: number; to: number } | null = null;
 
-    if (typeof doc.descendants !== 'function') return;
-
     doc.descendants((node, pos) => {
       if (node.type.name !== 'pageBreak') return true;
-      if (pos < selection.to) return true;
+      if (pos + node.nodeSize <= selection.from) return true;
       target = { from: pos, to: pos + node.nodeSize };
       return false;
     });
 
-    if (!target) return;
+    if (!target) return false;
 
-    editor.view.dispatch(editor.state.tr.delete(target.from, target.to));
+    return editor.chain().focus().deleteRange(target).run();
   };
 
   if (!editor) return null;
@@ -651,13 +888,91 @@ const MenuBar = ({
           <Heading3 className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton
-          onClick={() => applyToParagraphOrSelection((chain) => chain.toggleBulletList())}
-          active={editor.isActive('bulletList')}
+          onClick={() => applyToParagraphOrSelection((chain) => chain.toggleHeading({ level: 4 }))}
+          active={editor.isActive('heading', { level: 4 })}
           disabled={!blockTargetAvailable}
-          title={blockTargetAvailable ? 'Lista' : blockUnavailableTitle}
+          title={blockTargetAvailable ? 'Encabezado 4' : blockUnavailableTitle}
         >
-          <List className="h-4 w-4" />
+          <span className="text-[11px] font-bold">H4</span>
         </ToolbarButton>
+        <ToolbarButton
+          onClick={() => applyToParagraphOrSelection((chain) => chain.toggleHeading({ level: 5 }))}
+          active={editor.isActive('heading', { level: 5 })}
+          disabled={!blockTargetAvailable}
+          title={blockTargetAvailable ? 'Encabezado 5' : blockUnavailableTitle}
+        >
+          <span className="text-[11px] font-bold">H5</span>
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => applyToParagraphOrSelection((chain) => chain.toggleHeading({ level: 6 }))}
+          active={editor.isActive('heading', { level: 6 })}
+          disabled={!blockTargetAvailable}
+          title={blockTargetAvailable ? 'Encabezado 6' : blockUnavailableTitle}
+        >
+          <span className="text-[11px] font-bold">H6</span>
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={outdentListItem}
+          title="Tabular a la izquierda"
+        >
+          <IndentDecrease className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={indentListItem}
+          title="Tabular a la derecha"
+        >
+          <IndentIncrease className="h-4 w-4" />
+        </ToolbarButton>
+        <SplitToolbarButton
+          icon={<List className="h-4 w-4" />}
+          title="Lista con viñetas"
+          active={editor.isActive('bulletList')}
+          onPrimaryClick={() => applyBulletList()}
+        >
+          <div className="grid grid-cols-3 gap-2">
+            {BULLET_STYLE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => applyBulletList(option.value)}
+                className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                  currentBulletStyle === option.value
+                    ? 'border-[var(--accent-mint)] bg-[var(--accent-mint)]/10 text-[var(--text-primary)]'
+                    : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--accent-mint)]/50'
+                }`}
+                title={option.label}
+              >
+                <div className="text-lg font-semibold">{option.sample}</div>
+                <div className="mt-1 text-[10px]">{option.label}</div>
+              </button>
+            ))}
+          </div>
+        </SplitToolbarButton>
+        <SplitToolbarButton
+          icon={<ListOrdered className="h-4 w-4" />}
+          title="Lista numerada"
+          active={editor.isActive('orderedList')}
+          onPrimaryClick={() => applyOrderedList()}
+        >
+          <div className="grid grid-cols-2 gap-2">
+            {ORDERED_STYLE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => applyOrderedList(option.value)}
+                className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                  currentOrderedStyle === option.value
+                    ? 'border-[var(--accent-mint)] bg-[var(--accent-mint)]/10 text-[var(--text-primary)]'
+                    : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--accent-mint)]/50'
+                }`}
+                title={option.label}
+              >
+                <div className="text-sm font-semibold">{option.sample}</div>
+                <div className="mt-1 text-[10px]">{option.label}</div>
+              </button>
+            ))}
+          </div>
+        </SplitToolbarButton>
         <ToolbarButton
           onClick={() => fileInputRef.current?.click()}
           title="Insertar Imagen (click para archivo o pegar URL)"
@@ -710,6 +1025,7 @@ export function AdvancedRichTextEditor({
   totalPages?: number;
 }) {
   const { preferences, setPreferences } = useEditorPreferences();
+  const isSyncingExternalContentRef = useRef(false);
   const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop'>(
     (preferences.device as 'mobile' | 'tablet' | 'desktop') || 'desktop'
   );
@@ -721,6 +1037,32 @@ export function AdvancedRichTextEditor({
     preferences.margins || MARGIN_PRESETS.normal
   );
   const [currentFontSize, setCurrentFontSize] = useState<string>(preferences.fontSize || '16px');
+
+  // Calculate words per page based on device, font size, and margins
+  const pageConfig: PageCalculationConfig = {
+    device: device as 'mobile' | 'tablet' | 'desktop',
+    fontSize: currentFontSize,
+    marginTop: margins.top,
+    marginBottom: margins.bottom,
+    marginLeft: margins.left,
+    marginRight: margins.right,
+  };
+
+  const wordsPerPage = calculateWordsPerPage(pageConfig);
+  const totalRenderablePages = Math.max(totalPages ?? 1, 1);
+  const showSecondPage = viewMode === 'double' && currentPage + 1 < totalRenderablePages;
+  const previewFormat = device === 'desktop' ? 'laptop' : device;
+  const previewConfig = useMemo(() => {
+    const baseConfig = DEVICE_PAGINATION_CONFIGS[previewFormat];
+    return {
+      ...baseConfig,
+      fontSize: Number.parseInt(currentFontSize, 10) || baseConfig.fontSize,
+      marginTop: margins.top,
+      marginBottom: margins.bottom,
+      marginLeft: margins.left,
+      marginRight: margins.right,
+    };
+  }, [currentFontSize, margins.bottom, margins.left, margins.right, margins.top, previewFormat]);
 
   const handleUpdate = useCallback(
     (html: string) => {
@@ -767,8 +1109,13 @@ export function AdvancedRichTextEditor({
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
+        heading: { levels: [1, 2, 3, 4, 5, 6] },
+        bulletList: false,
+        orderedList: false,
       }),
+      StyledBulletList,
+      StyledOrderedList,
+      ParagraphIndent,
       Placeholder.configure({
         placeholder: 'Empieza a escribir tu obra maestra...',
       }),
@@ -787,55 +1134,51 @@ export function AdvancedRichTextEditor({
     ],
     content: defaultContent,
     onUpdate: ({ editor: ed }) => {
-      handleUpdate(ed.getHTML());
+      if (isSyncingExternalContentRef.current) {
+        isSyncingExternalContentRef.current = false;
+        return;
+      }
+
+      const currentHtml = ed.getHTML();
+      const reconciledHtml = reconcileOverflowBreaks(currentHtml, previewConfig);
+
+      if (normalizeEditorHtml(reconciledHtml) !== normalizeEditorHtml(currentHtml)) {
+        isSyncingExternalContentRef.current = true;
+        ed.commands.setContent(reconciledHtml, false);
+        handleUpdate(reconciledHtml);
+        return;
+      }
+
+      handleUpdate(currentHtml);
     },
     immediatelyRender: false,
   });
 
   // Update editor content when defaultContent changes (e.g., when switching chapters)
   useEffect(() => {
-    if (editor && defaultContent !== editor.getHTML()) {
-      editor.commands.setContent(defaultContent);
+    if (editor && normalizeEditorHtml(defaultContent) !== normalizeEditorHtml(editor.getHTML())) {
+      isSyncingExternalContentRef.current = true;
+      editor.commands.setContent(defaultContent, false);
     }
   }, [defaultContent, editor]);
-
-  // Calculate words per page based on device, font size, and margins
-  const pageConfig: PageCalculationConfig = {
-    device: device as 'mobile' | 'tablet' | 'desktop',
-    fontSize: currentFontSize,
-    marginTop: margins.top,
-    marginBottom: margins.bottom,
-    marginLeft: margins.left,
-    marginRight: margins.right,
-  };
-
-  const wordsPerPage = calculateWordsPerPage(pageConfig);
-  const showSecondPage = viewMode === 'double' && (totalPages === undefined || currentPage + 1 < totalPages);
-  const secondPageNumber = currentPage + 2;
-  const previewFormat = device === 'desktop' ? 'laptop' : device;
-  const previewConfig = useMemo(() => {
-    const baseConfig = DEVICE_PAGINATION_CONFIGS[previewFormat];
-    return {
-      ...baseConfig,
-      fontSize: Number.parseInt(currentFontSize, 10) || baseConfig.fontSize,
-      marginTop: margins.top,
-      marginBottom: margins.bottom,
-      marginLeft: margins.left,
-      marginRight: margins.right,
-    };
-  }, [currentFontSize, margins.bottom, margins.left, margins.right, margins.top, previewFormat]);
-  const paginatedPages = useMemo(
-    () => paginateContent(defaultContent, previewConfig),
-    [defaultContent, previewConfig],
-  );
-  const currentPreviewHtml = paginatedPages[currentPage]?.html ?? '';
-  const nextPreviewHtml = paginatedPages[currentPage + 1]?.html ?? '';
   const pagePaddingStyle = {
     paddingTop: `${margins.top}px`,
     paddingBottom: `${margins.bottom}px`,
     paddingLeft: `${margins.left}px`,
     paddingRight: `${margins.right}px`,
   };
+  const pageWidth = previewConfig.pageWidth;
+  const pageHeight = previewConfig.pageHeight;
+  const pageGap = 32;
+  const viewportWidth = showSecondPage ? pageWidth * 2 + pageGap : pageWidth;
+  const flowWidth =
+    pageWidth * totalRenderablePages +
+    pageGap * Math.max(totalRenderablePages - 1, 0);
+  const flowOffset = currentPage * (pageWidth + pageGap);
+  const visiblePageIndices = Array.from(
+    { length: showSecondPage ? 2 : 1 },
+    (_, index) => currentPage + index,
+  ).filter((pageIndex) => pageIndex < totalRenderablePages);
 
   if (!editor) return null;
 
@@ -860,11 +1203,10 @@ export function AdvancedRichTextEditor({
       />
 
       <div className="flex-1 overflow-auto bg-[var(--background)] p-6 flex justify-center custom-scrollbar">
-        <div className={`transition-all duration-500 ease-in-out ${deviceClasses[device]} ${showSecondPage ? 'grid grid-cols-2 gap-8 max-w-5xl' : ''}`}>
-          {/* First page or single page */}
+        <div className={`transition-all duration-500 ease-in-out ${deviceClasses[device]}`}>
           <div
-            className="bg-[#111C28] min-h-[1000px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 prose prose-invert max-w-none overflow-x-auto prose-img:rounded-lg prose-img:shadow-md"
-            style={pagePaddingStyle}
+            className="relative overflow-hidden"
+            style={{ width: `${viewportWidth}px`, minHeight: `${pageHeight}px` }}
           >
             <style>{`
               .ProseMirror img {
@@ -875,6 +1217,22 @@ export function AdvancedRichTextEditor({
               .ProseMirror p {
                 overflow-wrap: break-word;
                 word-break: break-word;
+              }
+              .ProseMirror p[data-indent],
+              .preview-page p[data-indent],
+              .ProseMirror h1[data-indent],
+              .preview-page h1[data-indent],
+              .ProseMirror h2[data-indent],
+              .preview-page h2[data-indent],
+              .ProseMirror h3[data-indent],
+              .preview-page h3[data-indent],
+              .ProseMirror h4[data-indent],
+              .preview-page h4[data-indent],
+              .ProseMirror h5[data-indent],
+              .preview-page h5[data-indent],
+              .ProseMirror h6[data-indent],
+              .preview-page h6[data-indent] {
+                transition: margin-left 0.15s ease;
               }
               .ProseMirror {
                 word-wrap: break-word;
@@ -904,6 +1262,24 @@ export function AdvancedRichTextEditor({
                 margin: 0 0 0.75rem 0;
                 color: var(--text-primary);
               }
+              .ProseMirror h4,
+              .preview-page h4 {
+                font-size: 1.05rem;
+                line-height: 1.35;
+                font-weight: 700;
+                margin: 0 0 0.65rem 0;
+                color: var(--text-primary);
+              }
+              .ProseMirror h5,
+              .preview-page h5,
+              .ProseMirror h6,
+              .preview-page h6 {
+                font-size: 0.95rem;
+                line-height: 1.4;
+                font-weight: 700;
+                margin: 0 0 0.6rem 0;
+                color: var(--text-primary);
+              }
               .ProseMirror ul,
               .preview-page ul,
               .ProseMirror ol,
@@ -911,42 +1287,198 @@ export function AdvancedRichTextEditor({
                 margin: 0 0 1rem 1.5rem;
                 padding: 0;
               }
+              .ProseMirror ul:not([data-bullet-style]),
+              .preview-page ul:not([data-bullet-style]) {
+                list-style-type: disc;
+              }
+              .ProseMirror ol:not([data-list-style]),
+              .preview-page ol:not([data-list-style]) {
+                list-style-type: decimal;
+              }
               .ProseMirror li,
               .preview-page li {
                 margin: 0.35rem 0;
               }
+              .ProseMirror ul[data-bullet-style="disc"],
+              .preview-page ul[data-bullet-style="disc"] {
+                list-style-type: disc;
+              }
+              .ProseMirror ul[data-bullet-style="circle"],
+              .preview-page ul[data-bullet-style="circle"] {
+                list-style-type: circle;
+              }
+              .ProseMirror ul[data-bullet-style="square"],
+              .preview-page ul[data-bullet-style="square"] {
+                list-style-type: square;
+              }
+              .ProseMirror ul[data-bullet-style="diamond"],
+              .preview-page ul[data-bullet-style="diamond"],
+              .ProseMirror ul[data-bullet-style="arrow"],
+              .preview-page ul[data-bullet-style="arrow"],
+              .ProseMirror ul[data-bullet-style="check"],
+              .preview-page ul[data-bullet-style="check"] {
+                list-style: none;
+                padding-left: 0;
+              }
+              .ProseMirror ul[data-bullet-style="diamond"] > li,
+              .preview-page ul[data-bullet-style="diamond"] > li,
+              .ProseMirror ul[data-bullet-style="arrow"] > li,
+              .preview-page ul[data-bullet-style="arrow"] > li,
+              .ProseMirror ul[data-bullet-style="check"] > li,
+              .preview-page ul[data-bullet-style="check"] > li {
+                position: relative;
+                padding-left: 1.5rem;
+              }
+              .ProseMirror ul[data-bullet-style="diamond"] > li::before,
+              .preview-page ul[data-bullet-style="diamond"] > li::before {
+                content: "◆";
+              }
+              .ProseMirror ul[data-bullet-style="arrow"] > li::before,
+              .preview-page ul[data-bullet-style="arrow"] > li::before {
+                content: "➤";
+              }
+              .ProseMirror ul[data-bullet-style="check"] > li::before,
+              .preview-page ul[data-bullet-style="check"] > li::before {
+                content: "✓";
+              }
+              .ProseMirror ul[data-bullet-style="diamond"] > li::before,
+              .preview-page ul[data-bullet-style="diamond"] > li::before,
+              .ProseMirror ul[data-bullet-style="arrow"] > li::before,
+              .preview-page ul[data-bullet-style="arrow"] > li::before,
+              .ProseMirror ul[data-bullet-style="check"] > li::before,
+              .preview-page ul[data-bullet-style="check"] > li::before {
+                position: absolute;
+                left: 0;
+                color: var(--text-primary);
+                font-weight: 700;
+              }
+              .ProseMirror ol[data-list-style="decimal"],
+              .preview-page ol[data-list-style="decimal"] {
+                list-style-type: decimal;
+              }
+              .ProseMirror ol[data-list-style="upper-alpha"],
+              .preview-page ol[data-list-style="upper-alpha"] {
+                list-style-type: upper-alpha;
+              }
+              .ProseMirror ol[data-list-style="lower-alpha"],
+              .preview-page ol[data-list-style="lower-alpha"] {
+                list-style-type: lower-alpha;
+              }
+              .ProseMirror ol[data-list-style="upper-roman"],
+              .preview-page ol[data-list-style="upper-roman"] {
+                list-style-type: upper-roman;
+              }
+              .ProseMirror ol[data-list-style="lower-roman"],
+              .preview-page ol[data-list-style="lower-roman"] {
+                list-style-type: lower-roman;
+              }
+              .ProseMirror ol[data-list-style="decimal-parentheses"],
+              .preview-page ol[data-list-style="decimal-parentheses"],
+              .ProseMirror ol[data-list-style="lower-alpha-parentheses"],
+              .preview-page ol[data-list-style="lower-alpha-parentheses"] {
+                list-style: none;
+                counter-reset: custom-list;
+                padding-left: 0;
+              }
+              .ProseMirror ol[data-list-style="decimal-parentheses"] > li,
+              .preview-page ol[data-list-style="decimal-parentheses"] > li,
+              .ProseMirror ol[data-list-style="lower-alpha-parentheses"] > li,
+              .preview-page ol[data-list-style="lower-alpha-parentheses"] > li {
+                position: relative;
+                padding-left: 2rem;
+                counter-increment: custom-list;
+              }
+              .ProseMirror ol[data-list-style="decimal-parentheses"] > li::before,
+              .preview-page ol[data-list-style="decimal-parentheses"] > li::before {
+                content: counter(custom-list) ") ";
+              }
+              .ProseMirror ol[data-list-style="lower-alpha-parentheses"] > li::before,
+              .preview-page ol[data-list-style="lower-alpha-parentheses"] > li::before {
+                content: counter(custom-list, lower-alpha) ") ";
+              }
+              .ProseMirror ol[data-list-style="decimal-parentheses"] > li::before,
+              .preview-page ol[data-list-style="decimal-parentheses"] > li::before,
+              .ProseMirror ol[data-list-style="lower-alpha-parentheses"] > li::before,
+              .preview-page ol[data-list-style="lower-alpha-parentheses"] > li::before {
+                position: absolute;
+                left: 0;
+                color: var(--text-primary);
+                font-weight: 600;
+              }
               .ProseMirror hr[data-page-break="true"],
-              .preview-page hr[data-page-break="true"] {
+              .preview-page hr[data-page-break="true"],
+              .ProseMirror hr[data-page-break="manual"],
+              .preview-page hr[data-page-break="manual"],
+              .ProseMirror hr[data-page-break="auto"],
+              .preview-page hr[data-page-break="auto"] {
                 border: 0;
                 border-top: 2px dashed rgba(196, 154, 36, 0.45);
                 margin: 1.75rem 0;
+                break-after: column;
+                page-break-after: always;
+                -webkit-column-break-after: always;
+              }
+              .multipage-editor-flow {
+                position: absolute;
+                inset: 0;
+                overflow: hidden;
+              }
+              .multipage-editor-flow-track {
+                height: 100%;
+                transition: transform 0.25s ease;
+              }
+              .multipage-editor-flow .ProseMirror {
+                height: ${pageHeight}px;
+                width: ${flowWidth}px;
+                padding: 0;
+                column-width: ${pageWidth}px;
+                column-gap: ${pageGap}px;
+                column-fill: auto;
+                outline: none;
+              }
+              .multipage-editor-flow .ProseMirror > * {
+                break-inside: avoid;
+                page-break-inside: avoid;
+              }
+              .multipage-page-frame {
+                background: #111C28;
+                min-height: ${pageHeight}px;
+                box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+                border-radius: 2px;
+                border: 1px solid rgba(255,255,255,0.05);
+              }
+              .multipage-page-inner {
+                height: 100%;
+                overflow: hidden;
               }
             `}</style>
-            {currentPage === 0 && <EditorContent editor={editor} />}
-            {currentPage > 0 && (
-              <div
-                className="preview-page text-[var(--text-primary)]"
-                dangerouslySetInnerHTML={{ __html: currentPreviewHtml }}
-              />
-            )}
-          </div>
-          {showSecondPage && (
             <div
-              className="preview-page bg-[#111C28] min-h-[1000px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 opacity-90 overflow-x-auto"
-              style={pagePaddingStyle}
+              className="grid"
+              style={{
+                gridTemplateColumns: `repeat(${visiblePageIndices.length}, minmax(0, 1fr))`,
+                gap: `${pageGap}px`,
+              }}
             >
-              {nextPreviewHtml ? (
+              {visiblePageIndices.map((pageIndex) => (
                 <div
-                  className="text-[var(--text-primary)]"
-                  dangerouslySetInnerHTML={{ __html: nextPreviewHtml }}
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center italic text-[var(--text-tertiary)]">
-                  Página {secondPageNumber}
+                  key={pageIndex}
+                  data-testid="editable-page-surface"
+                  data-page-index={pageIndex}
+                  className="multipage-page-frame"
+                >
+                  <div className="multipage-page-inner" style={pagePaddingStyle} />
                 </div>
-              )}
+              ))}
             </div>
-          )}
+            <div className="multipage-editor-flow prose prose-invert max-w-none prose-img:rounded-lg prose-img:shadow-md">
+              <div
+                className="multipage-editor-flow-track"
+                style={{ transform: `translateX(-${flowOffset}px)` }}
+              >
+                <EditorContent editor={editor} />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
