@@ -521,4 +521,72 @@ describe('AdvancedRichTextEditor selection behavior', () => {
     expect(screen.getAllByTestId('advanced-tiptap-content')).toHaveLength(1);
     expect(editor.__commandSelections).toEqual([{ from: 1, to: 8, empty: false }]);
   });
+
+  test('does not replicate page-break separators across the chapter when pressing Enter', () => {
+    const editor = createMockEditor(createSelection('Esto', 2));
+    const onUpdate = vi.fn();
+    const baseChapterHtml = [
+      '<h2>Introducción</h2>',
+      '<p>Esto es lo que se siente</p>',
+      '<p>Estás en la reunión. Llevas tres meses preparando esta idea. Has ensayado las palabras. Has visualizado las caras de asombro. Hoy es el día.</p>',
+      '<p>La directora pregunta si alguien tiene algo que aportar. Es tu momento. Abres la boca. Y entonces pasa.</p>',
+      '<p>Un compañero empieza a hablar al mismo tiempo. Tú te callas. Él no. Diez minutos después, dice exactamente lo que ibas a decir tú. Todos asienten. La directora sonríe. «Brillante», dice. Tú estás ahí. Pero no estás. Eres un mueble con pulso.</p>',
+      '<p>"La invisibilidad no es no ser visto. Es ser visto y descartado antes de que llegues a hablar."</p>',
+      '<p>Esto es lo que no entiende nadie que no lo haya vivido: la invisibilidad no es timidez. No es introversión. No es humildad. Es una jaula de cristal.</p>',
+      '<h2>El Sistema PPP</h2>',
+      '<p>Este libro sigue una metodología que he llamado el Sistema PPP: Percepción, Presencia y Permanencia.</p>',
+      '<h2>PERCEPCIÓN (Días 1-10)</h2>',
+      '<p>Antes de cambiar cómo te ven los demás, necesitas cambiar cómo te ves tú.</p>',
+      '<h2>PRESENCIA (Días 11-20)</h2>',
+      '<p>Una vez que sabes quién eres, aprendes a mostrarlo.</p>',
+      '<h2>PERMANENCIA (Días 21-30)</h2>',
+      '<p>La tercera fase te enseña a mantener lo construido.</p>',
+      '<h2>Cómo usar este libro</h2>',
+      '<p>Lee un capítulo cada mañana. Reflexiona sobre las preguntas a lo largo del día. Ejecuta el reto antes de dormir. No saltes días.</p>',
+    ].join('');
+
+    editor.getHTML = vi.fn(
+      () =>
+        [
+          '<h2>Introducción</h2>',
+          '<p>Esto es lo que se siente</p>',
+          '<p></p>',
+          '<p>Estás en la reunión. Llevas tres meses preparando esta idea. Has ensayado las palabras. Has visualizado las caras de asombro. Hoy es el día.</p>',
+          '<p>La directora pregunta si alguien tiene algo que aportar. Es tu momento. Abres la boca. Y entonces pasa.</p>',
+          '<p>Un compañero empieza a hablar al mismo tiempo. Tú te callas. Él no. Diez minutos después, dice exactamente lo que ibas a decir tú. Todos asienten. La directora sonríe. «Brillante», dice. Tú estás ahí. Pero no estás. Eres un mueble con pulso.</p>',
+          '<p>"La invisibilidad no es no ser visto. Es ser visto y descartado antes de que llegues a hablar."</p>',
+          '<p>Esto es lo que no entiende nadie que no lo haya vivido: la invisibilidad no es timidez. No es introversión. No es humildad. Es una jaula de cristal.</p>',
+          '<h2>El Sistema PPP</h2>',
+          '<p>Este libro sigue una metodología que he llamado el Sistema PPP: Percepción, Presencia y Permanencia.</p>',
+          '<h2>PERCEPCIÓN (Días 1-10)</h2>',
+          '<p>Antes de cambiar cómo te ven los demás, necesitas cambiar cómo te ves tú.</p>',
+          '<h2>PRESENCIA (Días 11-20)</h2>',
+          '<p>Una vez que sabes quién eres, aprendes a mostrarlo.</p>',
+          '<h2>PERMANENCIA (Días 21-30)</h2>',
+          '<p>La tercera fase te enseña a mantener lo construido.</p>',
+          '<h2>Cómo usar este libro</h2>',
+          '<p>Lee un capítulo cada mañana. Reflexiona sobre las preguntas a lo largo del día. Ejecuta el reto antes de dormir. No saltes días.</p>',
+        ].join(''),
+    );
+    useEditorMock.mockReturnValue(editor);
+
+    render(
+      <AdvancedRichTextEditor
+        defaultContent={baseChapterHtml}
+        onUpdate={onUpdate}
+        currentPage={0}
+        totalPages={2}
+      />,
+    );
+
+    const options = useEditorMock.mock.calls[0]?.[0] as {
+      onUpdate?: ({ editor }: { editor: typeof editor }) => void;
+    };
+
+    options.onUpdate?.({ editor });
+    options.onUpdate?.({ editor });
+
+    const latestHtml = onUpdate.mock.calls.at(-1)?.[0] as string;
+    expect((latestHtml.match(/data-page-break=/g) ?? []).length).toBeLessThanOrEqual(1);
+  });
 });

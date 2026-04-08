@@ -27,6 +27,8 @@ type ExtractedImportSource = {
   pageCount?: number;
 };
 
+type TextImportMode = 'default' | 'preserve-lines' | 'pdf';
+
 type OutlineEntry = NonNullable<ImportedDocumentSeed['detectedOutline']>[number];
 
 export function normalizeText(input: string) {
@@ -50,6 +52,26 @@ function splitLines(input: string) {
   return input.replace(/\r\n/g, '\n').split('\n');
 }
 
+function inferTextImportMode(fileName: string, mimeType: string): TextImportMode {
+  const extension = getExtension(fileName);
+
+  if (mimeType === 'application/pdf' || extension === 'pdf') {
+    return 'pdf';
+  }
+
+  if (
+    mimeType.startsWith('text/') ||
+    extension === 'md' ||
+    extension === 'txt' ||
+    extension === 'doc' ||
+    extension === 'docx'
+  ) {
+    return 'preserve-lines';
+  }
+
+  return 'default';
+}
+
 function escapeHtml(input: string) {
   return input
     .replace(/&/g, '&amp;')
@@ -57,6 +79,48 @@ function escapeHtml(input: string) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+function shouldMergePdfLine(current: string, next: string) {
+  const trimmedCurrent = current.trim();
+  const trimmedNext = next.trim();
+
+  if (!trimmedCurrent || !trimmedNext) return false;
+  if (/[.!?:;"”]$/.test(trimmedCurrent)) return false;
+  if (/^[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s]+$/.test(trimmedNext)) return false;
+
+  return /^[a-záéíóúñ0-9(]/.test(trimmedNext);
+}
+
+function mergePdfWrappedLines(lines: string[]) {
+  const merged: string[] = [];
+
+  for (const line of lines.map((item) => item.trim()).filter(Boolean)) {
+    const previous = merged.at(-1);
+    if (previous && shouldMergePdfLine(previous, line)) {
+      merged[merged.length - 1] = `${previous} ${line}`;
+      continue;
+    }
+
+    merged.push(line);
+  }
+
+  return merged;
+}
+
+function buildParagraphContentFromLines(lines: string[], mode: TextImportMode) {
+  const normalizedLines = lines.map((line) => line.trim()).filter(Boolean);
+  if (normalizedLines.length === 0) {
+    return null;
+  }
+
+  const effectiveLines =
+    mode === 'pdf' ? mergePdfWrappedLines(normalizedLines) : normalizedLines;
+
+  return {
+    text: normalizeText(effectiveLines.join('\n')),
+    html: `<p>${effectiveLines.map((line) => escapeHtml(line)).join('<br />')}</p>`,
+  };
 }
 
 function decodeHtmlEntities(input: string) {
@@ -181,6 +245,13 @@ function isLikelyStandaloneHeading(input: string) {
   return trimmed.split(/\s+/).length <= 10 && !/[.!?]$/.test(trimmed);
 }
 
+function isStrongStandaloneHeadingSignal(input: string) {
+  const trimmed = cleanHeadingText(input);
+  if (!trimmed) return false;
+
+  return MAJOR_HEADING_RE.test(trimmed) || MINOR_HEADING_RE.test(trimmed) || ALL_CAPS_RE.test(trimmed);
+}
+
 function isLikelyAuthorName(input: string) {
   const trimmed = input.trim();
   if (!trimmed || COPYRIGHT_RE.test(trimmed) || isDecorativeLine(trimmed)) {
@@ -256,7 +327,7 @@ function listBlocksFromItems(items: string[], ordered = false): ParsedBlock[] {
   }));
 }
 
-function parseTextBlocks(input: string): ParsedBlock[] {
+function parseTextBlocks(input: string, mode: TextImportMode = 'default'): ParsedBlock[] {
   const blocks: ParsedBlock[] = [];
   const lines = splitLines(input);
   let paragraphLines: string[] = [];
@@ -266,8 +337,13 @@ function parseTextBlocks(input: string): ParsedBlock[] {
   const flushParagraph = () => {
     if (paragraphLines.length === 0) return;
 
-    const paragraph = normalizeText(paragraphLines.join(' '));
+    const sourceLines = paragraphLines.map((line) => line.trim()).filter(Boolean);
+    const paragraphContent = buildParagraphContentFromLines(paragraphLines, mode);
     paragraphLines = [];
+
+    if (!paragraphContent) return;
+
+    const paragraph = paragraphContent.text;
 
     if (!paragraph || isDecorativeLine(paragraph)) return;
 
@@ -286,14 +362,19 @@ function parseTextBlocks(input: string): ParsedBlock[] {
         level: explicitHeadingLevel,
         structural: true,
       });
-      return;
-    }
+        return;
+      }
 
-    if (isLikelyStandaloneHeading(paragraph)) {
-      const level = inferHeadingLevel(paragraph) ?? 2;
-      blocks.push({
-        kind: 'heading',
-        text: cleanHeadingText(paragraph),
+      if (
+        sourceLines.length === 1 &&
+        (mode === 'default'
+          ? isLikelyStandaloneHeading(paragraph)
+          : isStrongStandaloneHeadingSignal(paragraph))
+      ) {
+        const level = inferHeadingLevel(paragraph) ?? 2;
+        blocks.push({
+          kind: 'heading',
+          text: cleanHeadingText(paragraph),
         html: `<h${Math.min(level + 1, 3)}>${escapeHtml(cleanHeadingText(paragraph))}</h${Math.min(level + 1, 3)}>`,
         level,
         structural: getHeadingLevel(paragraph) !== null,
@@ -304,7 +385,7 @@ function parseTextBlocks(input: string): ParsedBlock[] {
     blocks.push({
       kind: 'paragraph',
       text: paragraph,
-      html: `<p>${escapeHtml(paragraph)}</p>`,
+      html: paragraphContent.html,
       level: null,
       structural: false,
     });
@@ -355,7 +436,11 @@ function parseTextBlocks(input: string): ParsedBlock[] {
       continue;
     }
 
-    if (isLikelyStandaloneHeading(trimmed)) {
+    if (
+      mode === 'default'
+        ? isLikelyStandaloneHeading(trimmed)
+        : isStrongStandaloneHeadingSignal(trimmed)
+    ) {
       flushParagraph();
       flushList();
       const heading = cleanHeadingText(trimmed);
@@ -483,7 +568,22 @@ function parseHtmlBlocks(input: string) {
       ];
     }
 
-    if (isStrongOnlyParagraph(clean) || isLikelyStandaloneHeading(text)) {
+    if (/<br\s*\/?>/i.test(clean)) {
+      return [
+        {
+          kind: 'paragraph' as const,
+          text,
+          html: clean,
+          level: null,
+          structural: false,
+        },
+      ];
+    }
+
+    if (
+      isStrongOnlyParagraph(clean) ||
+      (!/<br\s*\/?>/i.test(clean) && isStrongStandaloneHeadingSignal(text))
+    ) {
       return [
         {
           kind: 'heading' as const,
@@ -880,10 +980,15 @@ export function buildImportedDocumentSeed({
   const paragraphs = paragraphsFromText(text);
   const fallbackTitle = fileNameToTitle(fileName) || 'Documento importado';
   const rawTitle = paragraphs[0] && paragraphs[0].length <= 120 ? paragraphs[0] : fallbackTitle;
+  const textImportMode = inferTextImportMode(fileName, mimeType);
   const htmlBlocks = html ? parseHtmlBlocks(html) : [];
-  const textBlocks = parseTextBlocks(text);
+  const textBlocks = parseTextBlocks(text, textImportMode);
   const parsedBlocks =
-    scoreParsedBlocks(htmlBlocks) >= scoreParsedBlocks(textBlocks) ? htmlBlocks : textBlocks;
+    htmlBlocks.some((block) => block.html.includes('<br'))
+      ? htmlBlocks
+      : scoreParsedBlocks(htmlBlocks) >= scoreParsedBlocks(textBlocks)
+        ? htmlBlocks
+        : textBlocks;
   const frontMatterSource = buildChaptersFromBlocks(parsedBlocks, fallbackTitle, extractAuthorFromText(text));
   const title = detectTitleFromFrontMatter(frontMatterSource.frontMatter, rawTitle);
   const author = detectAuthorFromFrontMatter(frontMatterSource.frontMatter, text);

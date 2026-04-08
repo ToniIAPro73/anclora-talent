@@ -183,4 +183,62 @@ describe('document import parser isolation', () => {
     expect(result.detectedOutline?.some((entry) => entry.title === 'Índice' && entry.origin === 'generated')).toBe(true);
     expect(result.warnings?.some((warning) => warning.includes('índice sintético editable'))).toBe(true);
   });
+
+  test('docx/rich html preserves soft line breaks as br tags', async () => {
+    vi.doMock('server-only', () => ({}));
+
+    const { buildImportedDocumentSeed } = await import('./import');
+    const result = buildImportedDocumentSeed({
+      fileName: 'demo.docx',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      text: 'texto normalizado',
+      html: '<h1>Capítulo uno</h1><p>Primera línea<br />Segunda línea</p><p>Texto</p>',
+    });
+
+    const chapterHtml = result.chapters?.[0].blocks.map((block) => block.content).join('\n') ?? '';
+    expect(chapterHtml).toContain('<br');
+  });
+
+  test('markdown preserves explicit line breaks as br tags inside paragraphs', async () => {
+    vi.doMock('server-only', () => ({}));
+
+    const { buildImportedDocumentSeed } = await import('./import');
+    const result = buildImportedDocumentSeed({
+      fileName: 'demo.md',
+      mimeType: 'text/markdown',
+      text: ['# Capítulo uno', '', 'Primera línea', 'Segunda línea'].join('\n'),
+    });
+
+    const chapterHtml = result.chapters?.[0].blocks.map((block) => block.content).join('\n') ?? '';
+    expect(chapterHtml).toContain('<br');
+  });
+
+  test('txt preserves explicit line breaks inside imported paragraphs', async () => {
+    vi.doMock('server-only', () => ({}));
+
+    const { buildImportedDocumentSeed } = await import('./import');
+    const result = buildImportedDocumentSeed({
+      fileName: 'demo.txt',
+      mimeType: 'text/plain',
+      text: ['Capítulo uno', '', 'Primera línea', 'Segunda línea'].join('\n'),
+    });
+
+    const chapterHtml = result.chapters?.[0].blocks.map((block) => block.content).join('\n') ?? '';
+    expect(chapterHtml).toContain('<br');
+  });
+
+  test('pdf merges obvious visual wraps while preserving blank-line paragraphs', async () => {
+    vi.doMock('server-only', () => ({}));
+
+    const { buildImportedDocumentSeed } = await import('./import');
+    const result = buildImportedDocumentSeed({
+      fileName: 'demo.pdf',
+      mimeType: 'application/pdf',
+      text: ['Capítulo uno', '', 'Primera línea cortada', 'por ancho de página', '', 'Nuevo párrafo'].join('\n'),
+    });
+
+    const chapterHtml = result.chapters?.[0].blocks.map((block) => block.content).join('\n') ?? '';
+    expect(chapterHtml).toContain('Primera línea cortada por ancho de página');
+    expect(chapterHtml).toContain('Nuevo párrafo');
+  });
 });
