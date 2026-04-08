@@ -124,6 +124,10 @@ function mapRowsToProject(
               fileName: String((documentRow.sourceMetadata as Record<string, unknown>).fileName ?? ''),
               mimeType: String((documentRow.sourceMetadata as Record<string, unknown>).mimeType ?? 'application/octet-stream'),
               importedAt: String((documentRow.sourceMetadata as Record<string, unknown>).importedAt ?? projectRow.createdAt.toISOString()),
+              pageCount:
+                typeof (documentRow.sourceMetadata as Record<string, unknown>).pageCount === 'number'
+                  ? Number((documentRow.sourceMetadata as Record<string, unknown>).pageCount)
+                  : undefined,
               outline: Array.isArray((documentRow.sourceMetadata as Record<string, unknown>).outline)
                 ? ((documentRow.sourceMetadata as Record<string, unknown>).outline as EditorialMapEntry[])
                 : undefined,

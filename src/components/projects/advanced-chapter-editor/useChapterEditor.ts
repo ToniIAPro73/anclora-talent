@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useState, useMemo } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { saveChapterContentAction } from '@/lib/projects/actions';
 import { estimateTotalPages, type PageCalculationConfig } from '@/lib/projects/page-calculator';
+import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
 import type { DocumentChapter } from '@/lib/projects/types';
 
 export interface UseChapterEditorOptions {
@@ -15,12 +16,9 @@ export interface UseChapterEditorOptions {
   margins?: { top: number; bottom: number; left: number; right: number };
 }
 
-// Simple fallback estimate if page config not provided
-const estimatePageCountSimple = (htmlContent: string): number => {
-  const wordCount = htmlContent.split(/\s+/).filter(w => w.length > 0).length;
-  const pageCount = Math.ceil(wordCount / 375); // ~375 words per page
-  return Math.max(1, pageCount);
-};
+function normalizeHtmlContent(content: string): string {
+  return content.trim();
+}
 
 export function useChapterEditor({
   chapters,
@@ -32,16 +30,16 @@ export function useChapterEditor({
   margins = { top: 24, bottom: 24, left: 24, right: 24 },
 }: UseChapterEditorOptions) {
   const initialChapter = chapters[initialChapterIndex];
+  const initialHtmlContent = initialChapter ? chapterBlocksToHtml(initialChapter.blocks) : '';
   const [currentIndex, setCurrentIndex] = useState(initialChapterIndex);
   const [title, setTitle] = useState(initialChapter?.title || '');
-  const [htmlContent, setHtmlContent] = useState(
-    initialChapter?.blocks.map((block) => block.content).join('') || ''
-  );
+  const [htmlContent, setHtmlContent] = useState(initialHtmlContent);
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
+  const savedBaselineRef = useRef(normalizeHtmlContent(initialHtmlContent));
 
   const currentChapter = chapters[currentIndex];
   const canNavigatePrev = currentIndex > 0;
@@ -71,7 +69,9 @@ export function useChapterEditor({
 
   const handleContentChange = useCallback((newContent: string) => {
     setHtmlContent(newContent);
-    setHasChanges(true);
+    setHasChanges(
+      normalizeHtmlContent(newContent) !== savedBaselineRef.current
+    );
     setError(null);
   }, []);
 
@@ -88,12 +88,10 @@ export function useChapterEditor({
       }
 
       const newChapter = chapters[newIndex];
+      const reconstructedHtml = chapterBlocksToHtml(newChapter.blocks);
+      savedBaselineRef.current = normalizeHtmlContent(reconstructedHtml);
       setCurrentIndex(newIndex);
       setTitle(newChapter.title);
-      // Reconstruct HTML content from blocks (includes images embedded as HTML)
-      const reconstructedHtml = newChapter.blocks
-        .map((block) => block.content)
-        .join('');
       setHtmlContent(reconstructedHtml);
       setHasChanges(false);
       setError(null);
@@ -137,6 +135,7 @@ export function useChapterEditor({
       formData.set('htmlContent', htmlContent);
 
       await saveChapterContentAction(formData);
+      savedBaselineRef.current = normalizeHtmlContent(htmlContent);
       setHasChanges(false);
       setLastSaved(new Date());
     } catch (err) {

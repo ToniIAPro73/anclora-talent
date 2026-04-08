@@ -36,6 +36,7 @@ export interface ProjectDocumentSource {
   fileName: string;
   mimeType: string;
   importedAt: string;
+  pageCount?: number;
   outline?: EditorialMapEntry[];
 }
 
@@ -125,6 +126,7 @@ export interface ImportedDocumentSeed {
   title: string;
   subtitle: string;
   author: string;
+  sourcePageCount?: number;
   warnings?: string[];
   detectedOutline?: EditorialMapEntry[];
   chapterTitle: string;

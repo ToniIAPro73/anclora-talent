@@ -24,6 +24,7 @@ type ParsedBlock = {
 type ExtractedImportSource = {
   text: string;
   html: string | null;
+  pageCount?: number;
 };
 
 type OutlineEntry = NonNullable<ImportedDocumentSeed['detectedOutline']>[number];
@@ -753,10 +754,12 @@ function buildChaptersFromBlocks(blocks: ParsedBlock[], title: string, author: s
 
     chapters.push({
       title: currentTitle,
-      blocks:
-        documentBlocks.length > 0
+      blocks: [
+        { type: 'heading', content: currentTitle },
+        ...(documentBlocks.length > 0
           ? documentBlocks
-          : [{ type: 'paragraph', content: currentTitle }],
+          : [{ type: 'paragraph' as const, content: currentTitle }]),
+      ],
     });
   };
 
@@ -866,11 +869,13 @@ export function buildImportedDocumentSeed({
   mimeType,
   text,
   html,
+  sourcePageCount,
 }: {
   fileName: string;
   mimeType: string;
   text: string;
   html?: string | null;
+  sourcePageCount?: number;
 }): ImportedDocumentSeed {
   const paragraphs = paragraphsFromText(text);
   const fallbackTitle = fileNameToTitle(fileName) || 'Documento importado';
@@ -968,6 +973,7 @@ export function buildImportedDocumentSeed({
     title,
     subtitle,
     author,
+    sourcePageCount,
     warnings,
     detectedOutline,
     chapterTitle: detectedChapters[0]?.title || title,
@@ -986,10 +992,11 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
   }
 
   if (extension === 'txt' || extension === 'md' || mimeType.startsWith('text/')) {
-    return {
-      text: buffer.toString('utf8'),
-      html: null,
-    } satisfies ExtractedImportSource;
+      return {
+        text: buffer.toString('utf8'),
+        html: null,
+        pageCount: undefined,
+      } satisfies ExtractedImportSource;
   }
 
   if (extension === 'pdf' || mimeType === 'application/pdf') {
@@ -1000,6 +1007,11 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
     return {
       text: parsed.text,
       html: null,
+      pageCount: typeof (parsed as { total?: number; numpages?: number }).numpages === 'number'
+        ? Number((parsed as { total?: number; numpages?: number }).numpages)
+        : typeof (parsed as { total?: number; numpages?: number }).total === 'number'
+          ? Number((parsed as { total?: number; numpages?: number }).total)
+          : undefined,
     } satisfies ExtractedImportSource;
   }
 
@@ -1026,6 +1038,7 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
         return {
           text: richText,
           html: richHtml,
+          pageCount: await extractDocxPageCount(buffer),
         } satisfies ExtractedImportSource;
       }
     } catch {
@@ -1040,8 +1053,26 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
     return {
       text: document.getBody(),
       html: null,
+      pageCount: extension === 'docx' ? await extractDocxPageCount(buffer) : undefined,
     } satisfies ExtractedImportSource;
   }
 
   throw new Error(`Import format is not supported yet: ${extension}`);
+}
+
+async function extractDocxPageCount(buffer: Buffer): Promise<number | undefined> {
+  try {
+    const { default: JSZip } = await import('jszip');
+    const zip = await JSZip.loadAsync(buffer);
+    const entry = zip.file('docProps/app.xml');
+    if (!entry) return undefined;
+    const appXml = await entry.async('text');
+    const pageMatch = appXml.match(/<Pages>(\d+)<\/Pages>/i);
+    if (!pageMatch) return undefined;
+
+    const pageCount = Number.parseInt(pageMatch[1], 10);
+    return Number.isFinite(pageCount) && pageCount > 0 ? pageCount : undefined;
+  } catch {
+    return undefined;
+  }
 }

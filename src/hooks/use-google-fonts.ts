@@ -13,6 +13,7 @@ export interface GoogleFont {
 }
 
 const GOOGLE_FONTS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_FONTS_API_KEY || '';
+const GOOGLE_FONTS_API_KEY_PATTERN = /^AIza[0-9A-Za-z\-_]{20,}$/;
 
 // Fuentes predeterminadas si la API no está disponible
 const DEFAULT_FONTS: GoogleFont[] = [
@@ -68,8 +69,8 @@ export function useGoogleFonts() {
   // Fetch fuentes de Google Fonts API (opcional, usa defaults si no está configurado)
   useEffect(() => {
     const fetchFonts = async () => {
-      if (!GOOGLE_FONTS_API_KEY) {
-        console.info('[useGoogleFonts] Using default fonts (API key not configured)');
+      if (!GOOGLE_FONTS_API_KEY_PATTERN.test(GOOGLE_FONTS_API_KEY)) {
+        console.info('[useGoogleFonts] Using default fonts (API key missing or invalid)');
         return;
       }
 

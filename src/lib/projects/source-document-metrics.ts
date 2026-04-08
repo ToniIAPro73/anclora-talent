@@ -7,7 +7,7 @@
  */
 
 import type { ProjectRecord } from './types';
-import { getDocumentStats, estimatePageCount, formatNumber } from './document-stats';
+import { getDocumentStats, estimatePageCount } from './document-stats';
 import type { PreviewFormat } from '@/lib/preview/device-configs';
 
 export interface SourceDocumentMetrics {
@@ -70,8 +70,10 @@ export function getSourceDocumentMetrics(
   // Get document stats
   const stats = getDocumentStats(project.document);
 
-  // Estimate pages in source format
-  const estimatedSourcePages = estimateSourceDocumentPages(stats.wordCount);
+  // Prefer explicit source metadata when available; fall back to an estimate.
+  const estimatedSourcePages = source.pageCount && source.pageCount > 0
+    ? source.pageCount
+    : estimateSourceDocumentPages(stats.wordCount);
 
   // Calculate Talent format page counts
   const talentPages: Record<PreviewFormat, number> = {
@@ -110,7 +112,6 @@ export function formatSourceDocumentComparison(
   }
 
   const {
-    fileName,
     fileType,
     estimatedSourcePages,
     talentPages,

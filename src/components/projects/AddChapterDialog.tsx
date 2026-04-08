@@ -16,7 +16,7 @@ interface AddChapterDialogProps {
 
 type InsertPosition = 'end' | 'before' | 'after';
 
-export function AddChapterDialog({ isOpen, projectId, chapters, onClose, onChapterAdded }: AddChapterDialogProps) {
+export function AddChapterDialog({ isOpen, projectId, chapters, onClose }: AddChapterDialogProps) {
   const [title, setTitle] = useState(`Capítulo ${chapters.length + 1}`);
   const [position, setPosition] = useState<InsertPosition>('end');
   const [selectedChapterId, setSelectedChapterId] = useState<string>(chapters[0]?.id || '');
@@ -58,8 +58,6 @@ export function AddChapterDialog({ isOpen, projectId, chapters, onClose, onChapt
   };
 
   if (!isOpen) return null;
-
-  const selectedChapter = chapters.find((ch) => ch.id === selectedChapterId);
 
   return (
     <div

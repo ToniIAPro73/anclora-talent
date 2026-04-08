@@ -120,7 +120,10 @@ export function buildPreviewPages(
     chapterFirstPages.set(chapter.id, globalPageNumber);
 
     // Add chapter heading + content to paginate together
-    const chapterContentHtml = `<h2>${escapeHtml(chapter.title)}</h2>\n${chapter.html}`;
+    const chapterRecord = project.document.chapters.find((item) => item.id === chapter.id);
+    const chapterContentHtml = chapterStartsWithTitle(chapterRecord?.blocks ?? [], chapter.title)
+      ? chapter.html
+      : `<h2>${escapeHtml(chapter.title)}</h2>\n${chapter.html}`;
 
     // Paginate this chapter's content
     const chapterPages = paginateContent(chapterContentHtml, config);
@@ -185,7 +188,7 @@ export function buildPreviewPages(
 /**
  * Convert document blocks to HTML
  */
-function blocksToHtml(blocks: any[]): string {
+function blocksToHtml(blocks: ChapterBlock[]): string {
   return blocks
     .map((block) => {
       const content = block.block?.content || block.content || '';
@@ -201,6 +204,16 @@ function blocksToHtml(blocks: any[]): string {
       return `<p>${escaped}</p>`;
     })
     .join('');
+}
+
+function chapterStartsWithTitle(blocks: ChapterBlock[], title: string): boolean {
+  const firstBlock = blocks[0];
+  if (!firstBlock) return false;
+
+  const firstContent = String(firstBlock.block?.content || firstBlock.content || '').trim();
+  if (!firstContent) return false;
+
+  return firstContent.replace(/<[^>]+>/g, '').trim().toLowerCase() === title.trim().toLowerCase();
 }
 
 /**
@@ -222,7 +235,6 @@ function escapeHtml(text: string): string {
  */
 function generateTOCHtml(
   entries: Array<{ title: string; pageNumber: number; level: number }>,
-  documentTitle: string,
 ): string {
   const tocItems = entries
     .map(
@@ -245,3 +257,4 @@ function generateTOCHtml(
     </div>
   `;
 }
+type ChapterBlock = ProjectRecord['document']['chapters'][number]['blocks'][number];
