@@ -19,24 +19,24 @@ import { paginateContent } from './content-paginator';
 // ==================== TYPES ====================
 
 export interface PreviewPage {
-  type: 'cover' | 'toc' | 'content' | 'back-cover';
+  type: 'cover' | 'content' | 'back-cover';
   content: string | null;
   coverData?: {
     title: string;
     subtitle?: string;
     author: string;
     palette: string;
+    renderedImageUrl?: string | null;
+    backgroundImageUrl?: string | null;
+    showSubtitle?: boolean;
   };
   backCoverData?: {
     title: string;
     body: string;
     authorBio: string;
+    renderedImageUrl?: string | null;
+    backgroundImageUrl?: string | null;
   };
-  tocEntries?: Array<{
-    title: string;
-    pageNumber: number;
-    level: number;
-  }>;
   chapterTitle?: string;
   chapterId?: string;
   pageNumber: number;
@@ -49,8 +49,7 @@ export interface PreviewPage {
  *
  * PAGINATION FLOW:
  * 1. Cover (page 1)
- * 2. TOC (page 2) - holds entry points for chapters
- * 3+ Content pages - each chapter paginated independently with global page numbers
+ * 2+ Content pages - each chapter paginated independently with global page numbers
  * Last: Back-cover
  */
 export function buildPreviewPages(
@@ -70,6 +69,9 @@ export function buildPreviewPages(
       subtitle: project.cover.subtitle,
       author: project.document.author || 'Autor desconocido',
       palette: project.cover.palette,
+      renderedImageUrl: project.cover.renderedImageUrl ?? null,
+      backgroundImageUrl: project.cover.backgroundImageUrl ?? null,
+      showSubtitle: project.cover.showSubtitle ?? true,
     },
     pageNumber: 1,
   });
@@ -106,19 +108,12 @@ export function buildPreviewPages(
   }
 
   // ─────────────────────────────────────────────────────────────
-  // PAGINATE CHAPTERS AND BUILD TOC ENTRIES
+  // PAGINATE CHAPTERS
   // ─────────────────────────────────────────────────────────────
 
-  const tocEntries: Array<{ title: string; pageNumber: number; level: number }> = [];
-  let globalPageNumber = 3; // Content starts at page 3 (after cover and TOC)
-
-  // Track chapter first page for TOC
-  const chapterFirstPages = new Map<string, number>();
+  let globalPageNumber = 2; // Content starts immediately after cover
 
   for (const chapter of chapterSections) {
-    // Record first page of this chapter for TOC
-    chapterFirstPages.set(chapter.id, globalPageNumber);
-
     // Add chapter heading + content to paginate together
     const chapterRecord = project.document.chapters.find((item) => item.id === chapter.id);
     const chapterContentHtml = chapterStartsWithTitle(chapterRecord?.blocks ?? [], chapter.title)
@@ -142,28 +137,6 @@ export function buildPreviewPages(
   }
 
   // ─────────────────────────────────────────────────────────────
-  // PAGE 2: TABLE OF CONTENTS (now with actual page numbers)
-  // ─────────────────────────────────────────────────────────────
-
-  chapterSections.forEach((chapter) => {
-    const firstPageNumber = chapterFirstPages.get(chapter.id) || 3;
-    tocEntries.push({
-      title: chapter.title,
-      pageNumber: firstPageNumber,
-      level: 1,
-    });
-  });
-
-  const tocHtml = generateTOCHtml(tocEntries, project.document.title);
-
-  pages.splice(1, 0, {
-    type: 'toc',
-    content: tocHtml,
-    tocEntries: tocEntries,
-    pageNumber: 2,
-  });
-
-  // ─────────────────────────────────────────────────────────────
   // BACK COVER
   // ─────────────────────────────────────────────────────────────
 
@@ -175,6 +148,8 @@ export function buildPreviewPages(
         title: project.backCover.title || project.document.title,
         body: project.backCover.body,
         authorBio: project.backCover.authorBio,
+        renderedImageUrl: project.backCover.renderedImageUrl ?? null,
+        backgroundImageUrl: project.backCover.backgroundImageUrl ?? null,
       },
       pageNumber: globalPageNumber,
     });
@@ -230,31 +205,4 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (char) => map[char]);
 }
 
-/**
- * Generate TOC HTML
- */
-function generateTOCHtml(
-  entries: Array<{ title: string; pageNumber: number; level: number }>,
-): string {
-  const tocItems = entries
-    .map(
-      (entry) =>
-        `<li style="margin-left: ${entry.level * 20}px; margin-bottom: 8px;">
-        <span>${escapeHtml(entry.title)}</span>
-        <span style="float: right; color: var(--text-tertiary);">p. ${entry.pageNumber}</span>
-      </li>`,
-    )
-    .join('');
-
-  return `
-    <div style="padding: 2rem;">
-      <h2 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 1.5rem; color: var(--text-primary);">
-        Índice
-      </h2>
-      <ul style="list-style: none; padding: 0; margin: 0; color: var(--text-secondary);">
-        ${tocItems}
-      </ul>
-    </div>
-  `;
-}
 type ChapterBlock = ProjectRecord['document']['chapters'][number]['blocks'][number];

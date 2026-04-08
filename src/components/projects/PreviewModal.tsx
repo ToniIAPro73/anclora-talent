@@ -121,6 +121,16 @@ export function PreviewModal({
     return [pages[currentPage], pages[currentPage + 1]].filter(Boolean);
   }, [pages, currentPage, viewMode]);
 
+  const pagePreset = FORMAT_PRESETS[format];
+  const spreadWidth =
+    viewMode === 'spread'
+      ? pagePreset.viewportWidth * visiblePages.length + 24 * Math.max(visiblePages.length - 1, 0)
+      : pagePreset.viewportWidth;
+  const spreadHeight = pagePreset.pagePixelHeight;
+  const zoomScale = zoom / 100;
+  const scaledSpreadWidth = spreadWidth * zoomScale;
+  const scaledSpreadHeight = spreadHeight * zoomScale;
+
   const chapterEntries = useMemo(() => {
     const seenChapters = new Set<string>();
 
@@ -145,10 +155,9 @@ export function PreviewModal({
     if (!viewportRef.current) return;
 
     const viewportRect = viewportRef.current.getBoundingClientRect();
-    const pagePreset = FORMAT_PRESETS[format];
     const spreadWidth =
       viewMode === 'spread'
-        ? pagePreset.viewportWidth * 2 + 24
+        ? pagePreset.viewportWidth * visiblePages.length + 24 * Math.max(visiblePages.length - 1, 0)
         : pagePreset.viewportWidth;
     const spreadHeight = pagePreset.pagePixelHeight;
 
@@ -160,7 +169,7 @@ export function PreviewModal({
     const nextZoom = Math.max(50, Math.min(150, fittedZoom));
 
     setZoom(nextZoom);
-  }, [format, viewMode]);
+  }, [pagePreset.pagePixelHeight, pagePreset.viewportWidth, viewMode, visiblePages.length]);
 
   useEffect(() => {
     if (hasManualZoom) return;
@@ -353,11 +362,21 @@ export function PreviewModal({
           >
             <div className="min-h-full flex items-center justify-center">
               <div
-                className="flex transition-all duration-300"
+                data-testid="preview-spread-frame"
+                className="relative transition-all duration-300"
+                style={{
+                  width: `${scaledSpreadWidth}px`,
+                  height: `${scaledSpreadHeight}px`,
+                }}
+              >
+                <div
+                className="absolute left-0 top-0 flex transition-all duration-300"
                 style={{
                   gap: viewMode === 'spread' ? '1.5rem' : '0',
                   transform: `scale(${zoom / 100})`,
-                  transformOrigin: 'center center',
+                  transformOrigin: 'top left',
+                  width: `${spreadWidth}px`,
+                  height: `${spreadHeight}px`,
                 }}
                 onKeyDown={handleKeyDown}
               >
@@ -374,6 +393,7 @@ export function PreviewModal({
                     <p>No content to display</p>
                   </div>
                 )}
+              </div>
               </div>
             </div>
           </div>
@@ -435,6 +455,23 @@ function PageRenderer({ page, format }: PageRendererProps) {
   };
 
   if (page.type === 'cover' && page.coverData) {
+    if (page.coverData.renderedImageUrl) {
+      return (
+        <div
+          data-testid="preview-page-shell"
+          style={pageStyle}
+          className="overflow-hidden rounded-[8px] border border-[var(--preview-paper-border)] shadow-[var(--shadow-strong)]"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={page.coverData.renderedImageUrl}
+            alt="Preview cover"
+            className="h-full w-full object-cover"
+          />
+        </div>
+      );
+    }
+
     const paletteMap: Record<string, string> = {
       obsidian: 'from-[#0b133f] via-[#0b233f] to-[#07252f] text-[#f2e3b3]',
       teal: 'from-[#124a50] via-[#0b313f] to-[#07252f] text-[#f2e3b3]',
@@ -443,14 +480,23 @@ function PageRenderer({ page, format }: PageRendererProps) {
 
     return (
       <div
+        data-testid="preview-page-shell"
         style={pageStyle}
-        className={`bg-gradient-to-br ${paletteMap[page.coverData.palette]} rounded-[8px] shadow-[var(--shadow-strong)] flex flex-col justify-center border border-white/10`}
+        className={`relative overflow-hidden bg-gradient-to-br ${paletteMap[page.coverData.palette]} rounded-[8px] shadow-[var(--shadow-strong)] flex flex-col justify-center border border-white/10`}
       >
+        {page.coverData.backgroundImageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={page.coverData.backgroundImageUrl}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover opacity-30"
+          />
+        )}
         <div className="px-8 py-8">
           <h1 className="text-4xl font-black tracking-tight mb-4">
             {page.coverData.title}
           </h1>
-          {page.coverData.subtitle && (
+          {page.coverData.subtitle && page.coverData.showSubtitle !== false && (
             <p className="text-lg leading-7 opacity-80 mb-8">
               {page.coverData.subtitle}
             </p>
@@ -462,8 +508,26 @@ function PageRenderer({ page, format }: PageRendererProps) {
   }
 
   if (page.type === 'back-cover' && page.backCoverData) {
+    if (page.backCoverData.renderedImageUrl) {
+      return (
+        <div
+          data-testid="preview-page-shell"
+          style={pageStyle}
+          className="overflow-hidden rounded-[8px] border border-[var(--preview-paper-border)] shadow-[var(--shadow-strong)]"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={page.backCoverData.renderedImageUrl}
+            alt="Preview back cover"
+            className="h-full w-full object-cover"
+          />
+        </div>
+      );
+    }
+
     return (
       <div
+        data-testid="preview-page-shell"
         style={pageStyle}
         className="bg-[var(--preview-paper)] rounded-[8px] shadow-[var(--shadow-strong)] border border-[var(--preview-paper-border)] flex flex-col justify-between p-8"
       >
