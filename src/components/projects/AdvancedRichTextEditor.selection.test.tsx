@@ -382,6 +382,38 @@ describe('AdvancedRichTextEditor selection behavior', () => {
     expect(screen.getByText('Segunda página')).toBeInTheDocument();
   });
 
+  test('renders multiple visible pages as part of the editable flow', () => {
+    const editor = createMockEditor(createSelection('Hello', 0));
+    useEditorMock.mockReturnValue(editor);
+
+    render(
+      <AdvancedRichTextEditor
+        defaultContent={'<p>Uno</p><hr data-page-break="manual" /><p>Dos</p>'}
+        onUpdate={vi.fn()}
+        currentPage={0}
+        totalPages={2}
+      />,
+    );
+
+    expect(screen.getAllByTestId('editable-page-surface')).toHaveLength(2);
+  });
+
+  test('does not render later visible pages as preview-only placeholders', () => {
+    const editor = createMockEditor(createSelection('Hello', 0));
+    useEditorMock.mockReturnValue(editor);
+
+    render(
+      <AdvancedRichTextEditor
+        defaultContent={'<p>Uno</p><hr data-page-break="manual" /><p>Dos</p>'}
+        onUpdate={vi.fn()}
+        currentPage={0}
+        totalPages={2}
+      />,
+    );
+
+    expect(screen.queryByText('Página 2')).not.toBeInTheDocument();
+  });
+
   test('removes the first page break found below the cursor', () => {
     const editor = createMockEditor(createSelection('Hello world', 0));
     useEditorMock.mockReturnValue(editor);
@@ -397,6 +429,17 @@ describe('AdvancedRichTextEditor selection behavior', () => {
 
     expect(editor.state.doc.descendants).toHaveBeenCalledTimes(1);
     expect(editor.__deletedRanges).toEqual([{ from: 12, to: 13 }]);
+  });
+
+  test('inserts manual page breaks by default', () => {
+    const editor = createMockEditor(createSelection('Hello', 0));
+    useEditorMock.mockReturnValue(editor);
+
+    render(<AdvancedRichTextEditor defaultContent="<p>Hello</p>" onUpdate={vi.fn()} />);
+
+    fireEvent.click(screen.getByTitle('Insertar Salto de Página (Ctrl+Shift+Enter)'));
+
+    expect(editor.__insertedContent).toContain('<hr data-page-break="manual" />');
   });
 
   test('shows heading controls up to level 6', () => {

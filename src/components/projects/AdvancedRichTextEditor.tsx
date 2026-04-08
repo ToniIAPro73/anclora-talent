@@ -1188,6 +1188,8 @@ export function AdvancedRichTextEditor({
         <div className={`transition-all duration-500 ease-in-out ${deviceClasses[device]} ${showSecondPage ? 'grid grid-cols-2 gap-8 max-w-5xl' : ''}`}>
           {/* First page or single page */}
           <div
+            data-testid="editable-page-surface"
+            data-page-index={currentPage}
             className="bg-[#111C28] min-h-[1000px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 prose prose-invert max-w-none overflow-x-auto prose-img:rounded-lg prose-img:shadow-md"
             style={pagePaddingStyle}
           >
@@ -1405,6 +1407,8 @@ export function AdvancedRichTextEditor({
           </div>
           {showSecondPage && (
             <div
+              data-testid="editable-page-surface"
+              data-page-index={currentPage + 1}
               className="preview-page bg-[#111C28] min-h-[1000px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 opacity-90 overflow-x-auto"
               style={pagePaddingStyle}
             >
