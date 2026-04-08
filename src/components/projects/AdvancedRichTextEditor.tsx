@@ -28,6 +28,7 @@ import {
   AlignJustify,
   Image as ImageIcon,
   Type,
+  Baseline,
   Palette,
   ChevronDown,
   Search,
