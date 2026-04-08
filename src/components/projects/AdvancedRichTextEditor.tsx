@@ -11,6 +11,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import { Color } from '@tiptap/extension-color';
 import { ResizableImage } from './resizable-image-extension';
 import { PageBreak } from './page-break-extension';
+import { FontSize } from './font-size-extension';
 import {
   Bold,
   Italic,
@@ -18,9 +19,6 @@ import {
   Heading2,
   Heading3,
   List,
-  ListOrdered,
-  Quote,
-  Code,
   Undo2,
   Redo2,
   Strikethrough,
@@ -30,7 +28,7 @@ import {
   AlignJustify,
   Image as ImageIcon,
   Type,
-  Baseline,
+  Palette,
   ChevronDown,
   Search,
   Check,
@@ -247,27 +245,50 @@ const ColorSelector = ({ editor }: { editor: any }) => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <ToolbarButton onClick={() => setIsOpen(!isOpen)} title="Color de texto" active={currentColor !== 'inherit'}>
-        <Baseline className="h-4 w-4" style={{ color: currentColor !== 'inherit' ? currentColor : undefined }} />
-      </ToolbarButton>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-[10px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-mint)] ${
+          currentColor !== 'inherit'
+            ? 'bg-[var(--accent-mint)] text-white shadow-[0_0_15px_rgba(45,212,191,0.5)]'
+            : 'text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]'
+        }`}
+        title="Color de texto"
+      >
+        <Palette className="h-4 w-4" />
+      </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-11 z-[110] grid grid-cols-4 gap-2 rounded-xl border border-[var(--border-strong)] bg-[#0E1825] p-3 shadow-2xl shadow-black animate-in fade-in zoom-in duration-200">
-          {colors.map((color) => (
-            <button
-              key={color.value}
-              onClick={() => {
-                if (color.value === 'inherit') editor.chain().focus().unsetColor().run();
-                else editor.chain().focus().setColor(color.value).run();
-                setIsOpen(false);
-              }}
-              className="h-6 w-6 rounded-full border border-white/10 transition-transform hover:scale-110"
-              style={{ backgroundColor: color.value === 'inherit' ? 'transparent' : color.value }}
-              title={color.name}
-            >
-              {color.value === 'inherit' && <span className="text-[8px] text-white">X</span>}
-            </button>
-          ))}
+        <div className="absolute left-0 top-11 z-[110] rounded-xl border border-[var(--border-strong)] bg-[#0E1825] p-4 shadow-2xl shadow-black animate-in fade-in zoom-in duration-200">
+          <div className="mb-3 text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)]">
+            Colores
+          </div>
+          <div className="grid grid-cols-4 gap-3">
+            {colors.map((color) => (
+              <button
+                key={color.value}
+                onClick={() => {
+                  if (color.value === 'inherit') editor.chain().focus().unsetColor().run();
+                  else editor.chain().focus().setColor(color.value).run();
+                  setIsOpen(false);
+                }}
+                className={`relative h-10 w-10 rounded-lg border-2 transition-all duration-200 hover:scale-110 ${
+                  currentColor === color.value
+                    ? 'border-[var(--accent-mint)] shadow-[0_0_12px_rgba(45,212,191,0.5)]'
+                    : 'border-[var(--border-subtle)] hover:border-[var(--accent-mint)]'
+                }`}
+                style={{ backgroundColor: color.value === 'inherit' ? 'transparent' : color.value }}
+                title={color.name}
+              >
+                {color.value === 'inherit' && (
+                  <span className="absolute inset-0 flex items-center justify-center text-[12px] font-bold text-[var(--text-primary)]">∅</span>
+                )}
+              </button>
+            ))}
+          </div>
+          <div className="mt-3 border-t border-[var(--border-subtle)] pt-3 text-[10px] text-[var(--text-tertiary)] px-1">
+            Selecciona un color para el texto
+          </div>
         </div>
       )}
     </div>
@@ -330,7 +351,12 @@ const MenuBar = ({
           <Monitor className="h-4 w-4" />
         </ToolbarButton>
         <div className="w-px h-4 bg-[var(--border-subtle)] mx-1" />
-        <ToolbarButton onClick={() => setViewMode(viewMode === 'single' ? 'double' : 'single')} active={viewMode === 'double'} title="Modo Dos Hojas">
+        <ToolbarButton
+          onClick={() => setViewMode(viewMode === 'single' ? 'double' : 'single')}
+          active={viewMode === 'double'}
+          disabled={device === 'mobile'}
+          title="Modo Dos Hojas (no disponible en móvil)"
+        >
           <Columns className="h-4 w-4" />
         </ToolbarButton>
       </div>
@@ -486,6 +512,7 @@ export function AdvancedRichTextEditor({
       CharacterCount.configure({ limit: 1000000 }),
       TextStyle,
       FontFamily,
+      FontSize,
       Color,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
