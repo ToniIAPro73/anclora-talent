@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { saveChapterContentAction } from '@/lib/projects/actions';
 import { estimateTotalPages, type PageCalculationConfig } from '@/lib/projects/page-calculator';
 import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
-import { paginateContent } from '@/lib/preview/content-paginator';
+import { countRenderablePages, paginateContent } from '@/lib/preview/content-paginator';
 import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 import { reconcileOverflowBreaks } from '@/lib/preview/editor-page-layout';
 import type { DocumentChapter } from '@/lib/projects/types';
@@ -80,7 +80,7 @@ export function useChapterEditor({
     const reconciledContent = reconcileOverflowBreaks(htmlContent, previewConfig);
 
     if (typeof window !== 'undefined' && typeof DOMParser !== 'undefined') {
-      return paginateContent(reconciledContent, previewConfig).length;
+      return countRenderablePages(paginateContent(reconciledContent, previewConfig));
     }
 
     const pageConfig: PageCalculationConfig = {
@@ -93,6 +93,10 @@ export function useChapterEditor({
     };
     return estimateTotalPages(reconciledContent, pageConfig);
   }, [htmlContent, device, fontSize, margins]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, Math.max(totalPages - 1, 0)));
+  }, [totalPages]);
 
   const canNavigatePagePrev = currentPage > 0;
   const canNavigatePageNext = currentPage < totalPages - 2; // 2 pages visible at a time
