@@ -11,16 +11,38 @@ export const PageBreak = Node.create({
   selectable: true,
   draggable: true,
 
+  addAttributes() {
+    return {
+      breakType: {
+        default: 'manual',
+        parseHTML: (element) => {
+          const raw = element.getAttribute('data-page-break');
+          if (raw === 'auto') return 'auto';
+          return 'manual';
+        },
+        renderHTML: (attributes) => ({
+          'data-page-break': attributes.breakType === 'auto' ? 'auto' : 'manual',
+        }),
+      },
+    };
+  },
+
   parseHTML() {
     return [
+      {
+        tag: 'hr[data-page-break="manual"]',
+      },
+      {
+        tag: 'hr[data-page-break="auto"]',
+      },
       {
         tag: 'hr[data-page-break="true"]',
       },
     ];
   },
 
-  renderHTML() {
-    return ['hr', { 'data-page-break': 'true' }];
+  renderHTML({ HTMLAttributes }) {
+    return ['hr', { 'data-page-break': 'manual', ...HTMLAttributes }];
   },
 
   addNodeView() {
