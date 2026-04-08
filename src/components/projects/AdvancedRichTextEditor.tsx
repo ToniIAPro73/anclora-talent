@@ -1170,10 +1170,13 @@ export function AdvancedRichTextEditor({
   const pageWidth = previewConfig.pageWidth;
   const pageHeight = previewConfig.pageHeight;
   const pageGap = 32;
+  const contentWidth = Math.max(120, pageWidth - margins.left - margins.right);
+  const contentHeight = Math.max(120, pageHeight - margins.top - margins.bottom);
+  const columnGap = pageGap + margins.left + margins.right;
   const viewportWidth = showSecondPage ? pageWidth * 2 + pageGap : pageWidth;
   const flowWidth =
-    pageWidth * totalRenderablePages +
-    pageGap * Math.max(totalRenderablePages - 1, 0);
+    contentWidth * totalRenderablePages +
+    columnGap * Math.max(totalRenderablePages - 1, 0);
   const flowOffset = currentPage * (pageWidth + pageGap);
   const visiblePageIndices = Array.from(
     { length: showSecondPage ? 2 : 1 },
@@ -1205,7 +1208,7 @@ export function AdvancedRichTextEditor({
       <div className="flex-1 overflow-auto bg-[var(--background)] p-6 flex justify-center custom-scrollbar">
         <div className={`transition-all duration-500 ease-in-out ${deviceClasses[device]}`}>
           <div
-            className="relative overflow-hidden"
+            className="relative mx-auto overflow-hidden"
             style={{ width: `${viewportWidth}px`, minHeight: `${pageHeight}px` }}
           >
             <style>{`
@@ -1420,19 +1423,22 @@ export function AdvancedRichTextEditor({
               }
               .multipage-editor-flow {
                 position: absolute;
-                inset: 0;
+                top: ${margins.top}px;
+                left: ${margins.left}px;
+                width: calc(100% - ${margins.left + margins.right}px);
+                height: ${contentHeight}px;
                 overflow: hidden;
               }
               .multipage-editor-flow-track {
-                height: 100%;
+                height: ${contentHeight}px;
                 transition: transform 0.25s ease;
               }
               .multipage-editor-flow .ProseMirror {
-                height: ${pageHeight}px;
+                height: ${contentHeight}px;
                 width: ${flowWidth}px;
                 padding: 0;
-                column-width: ${pageWidth}px;
-                column-gap: ${pageGap}px;
+                column-width: ${contentWidth}px;
+                column-gap: ${columnGap}px;
                 column-fill: auto;
                 outline: none;
               }

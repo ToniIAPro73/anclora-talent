@@ -79,7 +79,62 @@ function paginateSegmentWithOverflow(
     return pages;
   }
 
+  if (!hasOversizedSingleBlock(html, config)) {
+    return pages;
+  }
+
   return splitOversizedBlockSegment(html, config);
+}
+
+function hasOversizedSingleBlock(
+  html: string,
+  config: PaginationConfig,
+): boolean {
+  if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
+    return false;
+  }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
+  const container = doc.body.firstElementChild;
+  if (!container) {
+    return false;
+  }
+
+  const meaningfulChildren = Array.from(container.childNodes).filter((node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return Boolean(node.textContent?.trim());
+    }
+
+    return node.nodeType === Node.ELEMENT_NODE;
+  });
+
+  if (meaningfulChildren.length !== 1) {
+    return false;
+  }
+
+  const onlyChild = meaningfulChildren[0];
+  const text = onlyChild.textContent?.trim() ?? '';
+  if (!text) {
+    return false;
+  }
+
+  const contentWidth =
+    config.pageWidth - config.marginLeft - config.marginRight;
+  const availableHeight =
+    config.pageHeight - config.marginTop - config.marginBottom;
+  const lineHeightPx = config.fontSize * config.lineHeight;
+  const charsPerLine = Math.max(
+    1,
+    Math.floor(contentWidth / (config.fontSize * 0.5)),
+  );
+  const linesPerPage = Math.max(
+    1,
+    Math.floor((availableHeight / lineHeightPx) * 0.7),
+  );
+  const charsPerPage = Math.max(charsPerLine, charsPerLine * linesPerPage);
+
+  return text.length > charsPerPage;
 }
 
 function splitOversizedBlockSegment(
