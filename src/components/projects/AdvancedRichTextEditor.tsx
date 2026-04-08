@@ -280,6 +280,38 @@ function normalizeEditorHtml(content: string): string {
   return normalizeBreakMarkup(trimmed.replace(/>\s+</g, '><').replace(/&nbsp;/g, ' '));
 }
 
+function countMeaningfulTopLevelBlocks(html: string): number {
+  const trimmed = html.trim();
+  if (!trimmed || typeof window === 'undefined' || typeof DOMParser === 'undefined') {
+    return 0;
+  }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div>${trimmed}</div>`, 'text/html');
+  const container = doc.body.firstElementChild;
+  if (!container) {
+    return 0;
+  }
+
+  return Array.from(container.childNodes).filter((node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return Boolean(node.textContent?.trim());
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return false;
+    }
+
+    const element = node as Element;
+    if (element.tagName === 'HR') {
+      return false;
+    }
+
+    const textContent = element.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+    return textContent.length > 0 || element.querySelector('img, video, canvas, svg');
+  }).length;
+}
+
 // Advanced Font Selector using useGoogleFonts
 const AdvancedFontSelector = ({
   editor,
@@ -1144,19 +1176,35 @@ export function AdvancedRichTextEditor({
       PageBreak,
     ],
     content: defaultContent,
-    onUpdate: ({ editor: ed }) => {
-      if (isSyncingExternalContentRef.current) {
-        isSyncingExternalContentRef.current = false;
-        return;
-      }
+      onUpdate: ({ editor: ed }) => {
+        if (isSyncingExternalContentRef.current) {
+          isSyncingExternalContentRef.current = false;
+          return;
+        }
 
-      const currentHtml = ed.getHTML();
-      const reconciledHtml = reconcileOverflowBreaks(currentHtml, previewConfig);
+        const currentHtml = ed.getHTML();
+        const reconciledHtml = reconcileOverflowBreaks(currentHtml, previewConfig);
+        const currentAutoBreakCount =
+          (currentHtml.match(/data-page-break="auto"/g) ?? []).length;
+        const reconciledAutoBreakCount =
+          (reconciledHtml.match(/data-page-break="auto"/g) ?? []).length;
+        const meaningfulBlockCount = countMeaningfulTopLevelBlocks(currentHtml);
 
-      if (normalizeEditorHtml(reconciledHtml) !== normalizeEditorHtml(currentHtml)) {
-        isSyncingExternalContentRef.current = true;
-        ed.commands.setContent(reconciledHtml, false);
-        handleUpdate(reconciledHtml);
+        // Heuristic reconciliation is reliable for oversized single blocks, but it becomes too
+        // aggressive after local paragraph inserts in multi-block chapters.
+        if (
+          currentAutoBreakCount === 0 &&
+          reconciledAutoBreakCount > 1 &&
+          meaningfulBlockCount > 1
+        ) {
+          handleUpdate(currentHtml);
+          return;
+        }
+
+        if (normalizeEditorHtml(reconciledHtml) !== normalizeEditorHtml(currentHtml)) {
+          isSyncingExternalContentRef.current = true;
+          ed.commands.setContent(reconciledHtml, false);
+          handleUpdate(reconciledHtml);
         return;
       }
 
