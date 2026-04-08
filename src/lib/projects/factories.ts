@@ -241,9 +241,15 @@ export function addProjectChapter(
     title: title || `Capítulo ${chapters.length + 1}`,
     blocks: [
       {
+        id: randomUUID(),
+        type: 'heading' as const,
+        order: 1,
+        content: title || `Capítulo ${chapters.length + 1}`,
+      },
+      {
         id: newBlockId,
         type: 'paragraph' as const,
-        order: 1,
+        order: 2,
         content: '',
       },
     ],
