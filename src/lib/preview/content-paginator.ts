@@ -15,6 +15,44 @@ export interface ContentPage {
   pageNumber: number;
 }
 
+export function hasRenderablePageContent(html: string): boolean {
+  const normalized = html
+    .replace(/<hr\s+data-page-break="(?:true|manual|auto)"\s*\/?>/gi, '')
+    .replace(/&nbsp;/gi, ' ')
+    .trim();
+
+  if (!normalized) {
+    return false;
+  }
+
+  if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
+    return normalized.replace(/<[^>]+>/g, '').trim().length > 0;
+  }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div>${normalized}</div>`, 'text/html');
+  const container = doc.body.firstElementChild;
+  if (!container) {
+    return false;
+  }
+
+  const textContent = container.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+  if (textContent.length > 0) {
+    return true;
+  }
+
+  return Boolean(
+    container.querySelector(
+      'img, video, canvas, svg, table, ul li, ol li, blockquote, pre, code',
+    ),
+  );
+}
+
+export function countRenderablePages(pages: ContentPage[]): number {
+  const renderablePages = pages.filter((page) => hasRenderablePageContent(page.html));
+  return Math.max(renderablePages.length, 1);
+}
+
 /**
  * Paginate HTML content into discrete pages
  */

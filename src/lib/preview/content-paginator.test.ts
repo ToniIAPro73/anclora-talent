@@ -3,7 +3,7 @@
  * Tests pagination logic for splitting HTML content into pages
  */
 
-import { paginateContent } from './content-paginator';
+import { countRenderablePages, hasRenderablePageContent, paginateContent } from './content-paginator';
 import { DEVICE_PAGINATION_CONFIGS } from './device-configs';
 import { PAGE_BREAK_HTML } from './page-breaks';
 import { vi } from 'vitest';
@@ -314,6 +314,17 @@ describe('content-paginator', () => {
       expect(pagesEnd.length).toBeGreaterThan(0);
       expect(pagesStart[0].html).toContain('Content');
       expect(pagesEnd[0].html).toContain('Content');
+    });
+
+    it('ignores visually empty pages when counting renderable pages', () => {
+      const pages = [
+        { type: 'content' as const, html: '<p>Visible</p>', pageNumber: 1 },
+        { type: 'content' as const, html: '<p></p><p> </p>', pageNumber: 2 },
+      ];
+
+      expect(hasRenderablePageContent(pages[0].html)).toBe(true);
+      expect(hasRenderablePageContent(pages[1].html)).toBe(false);
+      expect(countRenderablePages(pages)).toBe(1);
     });
   });
 });

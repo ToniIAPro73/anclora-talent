@@ -59,6 +59,7 @@ import {
   MARGIN_PRESETS,
   type PageCalculationConfig,
 } from '@/lib/projects/page-calculator';
+import { countRenderablePages, paginateContent } from '@/lib/preview/content-paginator';
 import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 import { reconcileOverflowBreaks } from '@/lib/preview/editor-page-layout';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
@@ -1049,8 +1050,6 @@ export function AdvancedRichTextEditor({
   };
 
   const wordsPerPage = calculateWordsPerPage(pageConfig);
-  const totalRenderablePages = Math.max(totalPages ?? 1, 1);
-  const showSecondPage = viewMode === 'double' && currentPage + 1 < totalRenderablePages;
   const previewFormat = device === 'desktop' ? 'laptop' : device;
   const previewConfig = useMemo(() => {
     const baseConfig = DEVICE_PAGINATION_CONFIGS[previewFormat];
@@ -1063,6 +1062,15 @@ export function AdvancedRichTextEditor({
       marginRight: margins.right,
     };
   }, [currentFontSize, margins.bottom, margins.left, margins.right, margins.top, previewFormat]);
+  const actualRenderablePages = useMemo(() => {
+    const reconciledHtml = reconcileOverflowBreaks(defaultContent, previewConfig);
+    return countRenderablePages(paginateContent(reconciledHtml, previewConfig));
+  }, [defaultContent, previewConfig]);
+  const totalRenderablePages = Math.max(
+    1,
+    Math.min(totalPages ?? actualRenderablePages, actualRenderablePages),
+  );
+  const showSecondPage = viewMode === 'double' && currentPage + 1 < totalRenderablePages;
 
   const handleUpdate = useCallback(
     (html: string) => {
@@ -1187,7 +1195,7 @@ export function AdvancedRichTextEditor({
 
   const deviceClasses = {
     mobile: 'max-w-[375px]',
-    tablet: 'max-w-[768px]',
+    tablet: 'w-full',
     desktop: 'max-w-none w-full',
   };
 
