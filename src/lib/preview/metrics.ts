@@ -7,6 +7,7 @@
  */
 
 import type { ProjectRecord } from '@/lib/projects/types';
+import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
 import { paginateContent } from './content-paginator';
 import { DEVICE_PAGINATION_CONFIGS, type PreviewFormat } from './device-configs';
 
@@ -21,27 +22,6 @@ export interface ChapterPageMetrics {
 // ==================== HELPERS ====================
 
 type ChapterBlock = ProjectRecord['document']['chapters'][number]['blocks'][number];
-
-/**
- * Convert chapter blocks to HTML (same as in preview-builder)
- */
-function blocksToHtml(blocks: ChapterBlock[]): string {
-  return blocks
-    .map((block) => {
-      const content = block.block?.content || block.content || '';
-      const type = block.block?.type || block.type || 'paragraph';
-
-      if (content.trimStart().startsWith('<')) {
-        return content;
-      }
-
-      const escaped = escapeHtml(content);
-      if (type === 'heading') return `<h3>${escaped}</h3>`;
-      if (type === 'quote') return `<blockquote><p>${escaped}</p></blockquote>`;
-      return `<p>${escaped}</p>`;
-    })
-    .join('');
-}
 
 function chapterStartsWithTitle(blocks: ChapterBlock[], title: string): boolean {
   const firstBlock = blocks[0];
@@ -93,7 +73,7 @@ export function computeChapterPageMetrics(
   // Compute metrics for each chapter
   for (const chapter of sortedChapters) {
     const title = chapter.title?.trim() || `Capítulo`;
-    const chapterHtml = blocksToHtml(chapter.blocks);
+    const chapterHtml = chapterBlocksToHtml(chapter.blocks);
 
     // Combine chapter heading with content for pagination
     const fullHtml = chapterStartsWithTitle(chapter.blocks, title)

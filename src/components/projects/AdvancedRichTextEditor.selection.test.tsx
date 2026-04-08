@@ -124,14 +124,25 @@ function createMockEditor(selection: MockSelection) {
   const commandSelections: Array<{ from: number; to: number; empty: boolean }> = [];
   const headingSelections: Array<{ from: number; to: number; empty: boolean; level: number }> = [];
   const insertedContent: Array<unknown> = [];
+  const deletedRanges: Array<{ from: number; to: number }> = [];
   let currentSelection = selection;
 
   const state = {
-    doc: { type: 'doc' },
+    doc: {
+      type: 'doc',
+      descendants: vi.fn((callback: (node: { type: { name: string }; nodeSize: number }, pos: number) => boolean) => {
+        callback({ type: { name: 'paragraph' }, nodeSize: 5 }, 1);
+        callback({ type: { name: 'pageBreak' }, nodeSize: 1 }, 12);
+      }),
+    },
     selection: currentSelection,
     tr: {
       setSelection(nextSelection: { from: number; to: number }) {
         return { selection: nextSelection };
+      },
+      delete(from: number, to: number) {
+        deletedRanges.push({ from, to });
+        return { selection: state.selection };
       },
     },
   };
@@ -211,6 +222,7 @@ function createMockEditor(selection: MockSelection) {
     __commandSelections: commandSelections,
     __headingSelections: headingSelections,
     __insertedContent: insertedContent,
+    __deletedRanges: deletedRanges,
   };
 }
 
@@ -275,5 +287,38 @@ describe('AdvancedRichTextEditor selection behavior', () => {
     );
 
     expect(screen.queryByText('Página 3')).not.toBeInTheDocument();
+  });
+
+  test('renders second-page content when a manual page break creates another page in double view', () => {
+    const editor = createMockEditor(createSelection('Hello world', 0));
+    useEditorMock.mockReturnValue(editor);
+
+    render(
+      <AdvancedRichTextEditor
+        defaultContent={'<p>Primera página</p><hr data-page-break="true" /><p>Segunda página</p>'}
+        onUpdate={vi.fn()}
+        currentPage={0}
+        totalPages={2}
+      />,
+    );
+
+    expect(screen.getByText('Segunda página')).toBeInTheDocument();
+  });
+
+  test('removes the first page break found below the cursor', () => {
+    const editor = createMockEditor(createSelection('Hello world', 0));
+    useEditorMock.mockReturnValue(editor);
+
+    render(
+      <AdvancedRichTextEditor
+        defaultContent={'<p>Primera página</p><hr data-page-break="true" /><p>Segunda página</p>'}
+        onUpdate={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTitle('Eliminar el primer salto de página por debajo del cursor'));
+
+    expect(editor.state.doc.descendants).toHaveBeenCalledTimes(1);
+    expect(editor.__deletedRanges).toEqual([{ from: 12, to: 13 }]);
   });
 });

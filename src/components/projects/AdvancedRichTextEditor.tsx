@@ -38,7 +38,8 @@ import {
   Monitor,
   Tablet,
   Columns,
-  Minus
+  Minus,
+  X
 } from 'lucide-react';
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
 import { MarginSelector, type MarginConfig } from './MarginSelector';
@@ -52,6 +53,8 @@ import {
   MARGIN_PRESETS,
   type PageCalculationConfig,
 } from '@/lib/projects/page-calculator';
+import { paginateContent } from '@/lib/preview/content-paginator';
+import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { PAGE_BREAK_HTML } from '@/lib/preview/page-breaks';
 
@@ -490,6 +493,24 @@ const MenuBar = ({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const removeNextPageBreak = () => {
+    const { doc, selection } = editor.state;
+    let target: { from: number; to: number } | null = null;
+
+    if (typeof doc.descendants !== 'function') return;
+
+    doc.descendants((node, pos) => {
+      if (node.type.name !== 'pageBreak') return true;
+      if (pos < selection.to) return true;
+      target = { from: pos, to: pos + node.nodeSize };
+      return false;
+    });
+
+    if (!target) return;
+
+    editor.view.dispatch(editor.state.tr.delete(target.from, target.to));
+  };
+
   if (!editor) return null;
 
   return (
@@ -656,6 +677,12 @@ const MenuBar = ({
         >
           <Minus className="h-4 w-4" />
         </ToolbarButton>
+        <ToolbarButton
+          onClick={removeNextPageBreak}
+          title="Eliminar el primer salto de página por debajo del cursor"
+        >
+          <X className="h-4 w-4" />
+        </ToolbarButton>
       </div>
 
       {/* History */}
@@ -772,14 +799,6 @@ export function AdvancedRichTextEditor({
     }
   }, [defaultContent, editor]);
 
-  if (!editor) return null;
-
-  const deviceClasses = {
-    mobile: 'max-w-[375px]',
-    tablet: 'max-w-[768px]',
-    desktop: 'max-w-none w-full',
-  };
-
   // Calculate words per page based on device, font size, and margins
   const pageConfig: PageCalculationConfig = {
     device: device as 'mobile' | 'tablet' | 'desktop',
@@ -793,11 +812,37 @@ export function AdvancedRichTextEditor({
   const wordsPerPage = calculateWordsPerPage(pageConfig);
   const showSecondPage = viewMode === 'double' && (totalPages === undefined || currentPage + 1 < totalPages);
   const secondPageNumber = currentPage + 2;
+  const previewFormat = device === 'desktop' ? 'laptop' : device;
+  const previewConfig = useMemo(() => {
+    const baseConfig = DEVICE_PAGINATION_CONFIGS[previewFormat];
+    return {
+      ...baseConfig,
+      fontSize: Number.parseInt(currentFontSize, 10) || baseConfig.fontSize,
+      marginTop: margins.top,
+      marginBottom: margins.bottom,
+      marginLeft: margins.left,
+      marginRight: margins.right,
+    };
+  }, [currentFontSize, margins.bottom, margins.left, margins.right, margins.top, previewFormat]);
+  const paginatedPages = useMemo(
+    () => paginateContent(defaultContent, previewConfig),
+    [defaultContent, previewConfig],
+  );
+  const currentPreviewHtml = paginatedPages[currentPage]?.html ?? '';
+  const nextPreviewHtml = paginatedPages[currentPage + 1]?.html ?? '';
   const pagePaddingStyle = {
     paddingTop: `${margins.top}px`,
     paddingBottom: `${margins.bottom}px`,
     paddingLeft: `${margins.left}px`,
     paddingRight: `${margins.right}px`,
+  };
+
+  if (!editor) return null;
+
+  const deviceClasses = {
+    mobile: 'max-w-[375px]',
+    tablet: 'max-w-[768px]',
+    desktop: 'max-w-none w-full',
   };
 
   return (
@@ -835,20 +880,71 @@ export function AdvancedRichTextEditor({
                 word-wrap: break-word;
                 overflow-wrap: break-word;
               }
+              .ProseMirror h1,
+              .preview-page h1 {
+                font-size: 2rem;
+                line-height: 1.1;
+                font-weight: 800;
+                margin: 0 0 1rem 0;
+                color: var(--text-primary);
+              }
+              .ProseMirror h2,
+              .preview-page h2 {
+                font-size: 1.5rem;
+                line-height: 1.2;
+                font-weight: 750;
+                margin: 0 0 0.85rem 0;
+                color: var(--text-primary);
+              }
+              .ProseMirror h3,
+              .preview-page h3 {
+                font-size: 1.2rem;
+                line-height: 1.3;
+                font-weight: 700;
+                margin: 0 0 0.75rem 0;
+                color: var(--text-primary);
+              }
+              .ProseMirror ul,
+              .preview-page ul,
+              .ProseMirror ol,
+              .preview-page ol {
+                margin: 0 0 1rem 1.5rem;
+                padding: 0;
+              }
+              .ProseMirror li,
+              .preview-page li {
+                margin: 0.35rem 0;
+              }
+              .ProseMirror hr[data-page-break="true"],
+              .preview-page hr[data-page-break="true"] {
+                border: 0;
+                border-top: 2px dashed rgba(196, 154, 36, 0.45);
+                margin: 1.75rem 0;
+              }
             `}</style>
             {currentPage === 0 && <EditorContent editor={editor} />}
             {currentPage > 0 && (
-              <div className="italic text-[var(--text-tertiary)] text-sm">
-                Página {currentPage + 1}
-              </div>
+              <div
+                className="preview-page text-[var(--text-primary)]"
+                dangerouslySetInnerHTML={{ __html: currentPreviewHtml }}
+              />
             )}
           </div>
           {showSecondPage && (
             <div
-              className="bg-[#111C28] min-h-[1000px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 opacity-50 flex items-center justify-center italic text-[var(--text-tertiary)]"
+              className="preview-page bg-[#111C28] min-h-[1000px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 opacity-90 overflow-x-auto"
               style={pagePaddingStyle}
             >
-              Página {secondPageNumber}
+              {nextPreviewHtml ? (
+                <div
+                  className="text-[var(--text-primary)]"
+                  dangerouslySetInnerHTML={{ __html: nextPreviewHtml }}
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center italic text-[var(--text-tertiary)]">
+                  Página {secondPageNumber}
+                </div>
+              )}
             </div>
           )}
         </div>

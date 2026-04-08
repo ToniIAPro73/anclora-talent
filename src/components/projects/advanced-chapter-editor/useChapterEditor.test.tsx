@@ -21,7 +21,10 @@ describe('useChapterEditor', () => {
       id: 'chapter-2',
       order: 2,
       title: 'Capítulo 2',
-      blocks: [{ id: 'block-2', order: 1, type: 'paragraph' as const, content: '<p>Dos</p>' }],
+      blocks: [
+        { id: 'block-2', order: 1, type: 'heading' as const, content: 'Capítulo 2' },
+        { id: 'block-3', order: 2, type: 'paragraph' as const, content: 'Dos' },
+      ],
     },
   ];
 
@@ -78,5 +81,31 @@ describe('useChapterEditor', () => {
 
     expect(result.current.currentIndex).toBe(0);
     expect(confirmSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('reconstructs semantic chapter blocks into stable editor html when navigating', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm');
+
+    const { result } = renderHook(() =>
+      useChapterEditor({
+        chapters,
+        initialChapterIndex: 0,
+        projectId: 'project-1',
+      }),
+    );
+
+    await act(async () => {
+      await result.current.goToNextChapter();
+    });
+
+    expect(result.current.currentIndex).toBe(1);
+    expect(result.current.htmlContent).toBe('<h2>Capítulo 2</h2>\n<p>Dos</p>');
+
+    act(() => {
+      result.current.setHtmlContent('<h2>Capítulo 2</h2>\n<p>Dos</p>');
+    });
+
+    expect(result.current.hasChanges).toBe(false);
+    expect(confirmSpy).not.toHaveBeenCalled();
   });
 });
