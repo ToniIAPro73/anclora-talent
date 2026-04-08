@@ -14,8 +14,10 @@
 
 import type { ProjectRecord } from '@/lib/projects/types';
 import { createDefaultSurfaceState, normalizeSurfaceState } from '@/lib/projects/cover-surface';
+import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
 import { PaginationConfig } from './device-configs';
-import { paginateContent } from './content-paginator';
+import { hasRenderablePageContent, paginateContent } from './content-paginator';
+import { reconcileOverflowBreaks } from './editor-page-layout';
 
 // ==================== TYPES ====================
 
@@ -99,7 +101,7 @@ export function buildPreviewPages(
 
     sortedChapters.forEach((chapter, index) => {
       const chapterTitle = chapter.title?.trim() || `Capítulo ${index + 1}`;
-      const chapterHtml = blocksToHtml(chapter.blocks);
+      const chapterHtml = chapterBlocksToHtml(chapter.blocks);
 
       chapterSections.push({
         id: chapter.id,
@@ -124,7 +126,10 @@ export function buildPreviewPages(
       : `<h2>${escapeHtml(chapter.title)}</h2>\n${chapter.html}`;
 
     // Paginate this chapter's content
-    const chapterPages = paginateContent(chapterContentHtml, config);
+    const reconciledChapterHtml = reconcileOverflowBreaks(chapterContentHtml, config);
+    const chapterPages = paginateContent(reconciledChapterHtml, config).filter((page) =>
+      hasRenderablePageContent(page.html),
+    );
 
     // Add paginated pages with global numbering and chapter metadata
     for (const page of chapterPages) {
@@ -162,27 +167,6 @@ export function buildPreviewPages(
 }
 
 // ==================== HELPERS ====================
-
-/**
- * Convert document blocks to HTML
- */
-function blocksToHtml(blocks: ChapterBlock[]): string {
-  return blocks
-    .map((block) => {
-      const content = block.block?.content || block.content || '';
-      const type = block.block?.type || block.type || 'paragraph';
-
-      if (content.trimStart().startsWith('<')) {
-        return content;
-      }
-
-      const escaped = escapeHtml(content);
-      if (type === 'heading') return `<h3>${escaped}</h3>`;
-      if (type === 'quote') return `<blockquote><p>${escaped}</p></blockquote>`;
-      return `<p>${escaped}</p>`;
-    })
-    .join('');
-}
 
 function chapterStartsWithTitle(blocks: ChapterBlock[], title: string): boolean {
   const firstBlock = blocks[0];
