@@ -441,6 +441,38 @@ describe('preview-builder', () => {
       expect(firstContentPage?.pageNumber).toBe(2);
     });
 
+    it('reconciles stale automatic page breaks the same way as the chapter editor', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          chapters: [
+            {
+              id: 'toc-chapter',
+              order: 1,
+              title: 'Índice',
+              blocks: [
+                {
+                  id: 'toc-block',
+                  type: 'paragraph',
+                  order: 1,
+                  content: '<p>Uno</p><hr data-page-break="auto" /><p>Dos</p>',
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const pages = buildPreviewPages(project, DEVICE_PAGINATION_CONFIGS.laptop);
+      const contentPages = pages.filter((page) => page.type === 'content');
+
+      expect(contentPages).toHaveLength(1);
+      expect(contentPages[0].content).toContain('<p>Uno</p>');
+      expect(contentPages[0].content).toContain('<p>Dos</p>');
+      expect(contentPages[0].content).not.toContain('data-page-break="auto"');
+    });
+
     it('should produce consistent results', () => {
       const project = createMockProject();
       const config = DEVICE_PAGINATION_CONFIGS.laptop;
