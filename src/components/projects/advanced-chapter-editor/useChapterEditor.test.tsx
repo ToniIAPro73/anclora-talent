@@ -197,4 +197,81 @@ describe('useChapterEditor', () => {
 
     expect(result.current.totalPages).toBe(1);
   });
+
+  test('navigates page by page when a chapter spans multiple pages', () => {
+    const longChapter = [
+      {
+        id: 'chapter-long',
+        order: 1,
+        title: 'Capítulo largo',
+        blocks: [
+          {
+            id: 'block-long',
+            order: 1,
+            type: 'paragraph' as const,
+            content: `<p>${'Lorem ipsum dolor sit amet. '.repeat(800)}</p>`,
+          },
+        ],
+      },
+    ];
+
+    const { result } = renderHook(() =>
+      useChapterEditor({
+        chapters: longChapter,
+        initialChapterIndex: 0,
+        projectId: 'project-1',
+      }),
+    );
+
+    expect(result.current.totalPages).toBeGreaterThan(1);
+    expect(result.current.currentPage).toBe(0);
+    expect(result.current.canNavigatePagePrev).toBe(false);
+    expect(result.current.canNavigatePageNext).toBe(true);
+
+    act(() => {
+      result.current.goToPageNext();
+    });
+
+    expect(result.current.currentPage).toBe(1);
+    expect(result.current.canNavigatePagePrev).toBe(true);
+  });
+
+  test('uses measured page counts to clamp pagination to the visible document', () => {
+    const longChapter = [
+      {
+        id: 'chapter-measured',
+        order: 1,
+        title: 'Capítulo medido',
+        blocks: [
+          {
+            id: 'block-measured',
+            order: 1,
+            type: 'paragraph' as const,
+            content: `<p>${'Lorem ipsum dolor sit amet. '.repeat(800)}</p>`,
+          },
+        ],
+      },
+    ];
+
+    const { result } = renderHook(() =>
+      useChapterEditor({
+        chapters: longChapter,
+        initialChapterIndex: 0,
+        projectId: 'project-1',
+      }),
+    );
+
+    act(() => {
+      result.current.setMeasuredTotalPages(2);
+    });
+
+    expect(result.current.totalPages).toBe(2);
+
+    act(() => {
+      result.current.goToPageNext();
+    });
+
+    expect(result.current.currentPage).toBe(1);
+    expect(result.current.canNavigatePageNext).toBe(false);
+  });
 });

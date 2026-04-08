@@ -4,6 +4,7 @@ import {
   splitHtmlIntoPageSegments,
   stripAutoBreaks,
 } from './editor-page-layout';
+import { countRenderablePages, paginateContent } from './content-paginator';
 import { DEVICE_PAGINATION_CONFIGS } from './device-configs';
 
 describe('editor-page-layout', () => {
@@ -32,5 +33,26 @@ describe('editor-page-layout', () => {
     const result = reconcileOverflowBreaks(html, DEVICE_PAGINATION_CONFIGS.mobile);
 
     expect(result).toContain('data-page-break="auto"');
+  });
+
+  it('does not fabricate an extra page when a multi-block segment already fits its real pagination', () => {
+    const html = [
+      '<h2>Introducción</h2>',
+      `<p>${'Esto es lo que se siente. '.repeat(40)}</p>`,
+      `<p>${'La buena noticia es que esto puede cambiar. '.repeat(28)}</p>`,
+      '<h2>El Sistema PPP</h2>',
+      `<p>${'Percepción, presencia y permanencia. '.repeat(22)}</p>`,
+    ].join('');
+
+    const rawPages = countRenderablePages(
+      paginateContent(html, DEVICE_PAGINATION_CONFIGS.laptop),
+    );
+    const result = reconcileOverflowBreaks(html, DEVICE_PAGINATION_CONFIGS.laptop);
+    const reconciledPages = countRenderablePages(
+      paginateContent(result, DEVICE_PAGINATION_CONFIGS.laptop),
+    );
+
+    expect(rawPages).toBeGreaterThan(1);
+    expect(reconciledPages).toBe(rawPages);
   });
 });
