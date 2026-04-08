@@ -1105,7 +1105,9 @@ export function AdvancedRichTextEditor({
     1,
     Math.min(totalPages ?? actualRenderablePages, actualRenderablePages),
   );
-  const showSecondPage = viewMode === 'double' && currentPage + 1 < totalRenderablePages;
+  const spreadStartPage =
+    viewMode === 'double' ? Math.max(0, currentPage - (currentPage % 2)) : currentPage;
+  const showSecondPage = viewMode === 'double' && spreadStartPage + 1 < totalRenderablePages;
 
   const handleUpdate = useCallback(
     (html: string) => {
@@ -1237,10 +1239,10 @@ export function AdvancedRichTextEditor({
   const flowWidth =
     contentWidth * totalRenderablePages +
     columnGap * Math.max(totalRenderablePages - 1, 0);
-  const flowOffset = currentPage * (pageWidth + pageGap);
+  const flowOffset = spreadStartPage * (pageWidth + pageGap);
   const visiblePageIndices = Array.from(
     { length: showSecondPage ? 2 : 1 },
-    (_, index) => currentPage + index,
+    (_, index) => spreadStartPage + index,
   ).filter((pageIndex) => pageIndex < totalRenderablePages);
 
   const measureRenderablePages = useCallback(() => {
@@ -1288,7 +1290,7 @@ export function AdvancedRichTextEditor({
         return;
       }
 
-      const relativePageIndex = Math.max(0, pageIndex - currentPage);
+      const relativePageIndex = Math.max(0, pageIndex - spreadStartPage);
       const coords = {
         left: flowBounds.left + relativePageIndex * (pageWidth + pageGap) + 8,
         top: flowBounds.top + 8,
@@ -1309,7 +1311,7 @@ export function AdvancedRichTextEditor({
         editor.view.focus();
       }
     },
-    [currentPage, editor, pageGap, pageWidth],
+    [editor, pageGap, pageWidth, spreadStartPage],
   );
 
   useEffect(() => {

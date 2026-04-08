@@ -454,6 +454,27 @@ describe('AdvancedRichTextEditor selection behavior', () => {
     expect(editor.__dispatchCalls.at(-1)).toEqual({ from: 42, to: 42 });
   });
 
+  test('keeps the first spread visible when focusing the adjacent right page in double view', () => {
+    const editor = createMockEditor(createSelection('Hello', 0));
+    useEditorMock.mockReturnValue(editor);
+
+    render(
+      <AdvancedRichTextEditor
+        defaultContent={
+          '<p>Uno</p><hr data-page-break="manual" /><p>Dos</p><hr data-page-break="manual" /><p>Tres</p>'
+        }
+        onUpdate={vi.fn()}
+        currentPage={1}
+        totalPages={3}
+      />,
+    );
+
+    const surfaces = screen.getAllByTestId('editable-page-surface');
+    expect(surfaces).toHaveLength(2);
+    expect(surfaces[0]).toHaveAttribute('data-page-index', '0');
+    expect(surfaces[1]).toHaveAttribute('data-page-index', '1');
+  });
+
   test('removes the first page break found below the cursor', () => {
     const editor = createMockEditor(createSelection('Hello world', 0));
     useEditorMock.mockReturnValue(editor);
