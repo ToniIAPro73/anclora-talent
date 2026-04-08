@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { Settings, ChevronDown } from 'lucide-react';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
-import { MARGIN_PRESETS, defaultEditorPreferences } from '@/lib/ui-preferences/preferences';
+import { MARGIN_PRESETS } from '@/lib/projects/page-calculator';
+import { defaultEditorPreferences } from '@/lib/ui-preferences/preferences';
 
 /**
  * Compact version of EditorPreferencesPanel for the sidebar

@@ -8,24 +8,33 @@ import {
 } from '@/lib/ui-preferences/preferences';
 
 /**
+ * Initialize preferences from localStorage
+ */
+function initializePreferences(): EditorPreferences {
+  try {
+    const stored = localStorage.getItem(EDITOR_PREFERENCES_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return { ...defaultEditorPreferences, ...parsed };
+    }
+  } catch (error) {
+    console.error('Failed to load editor preferences:', error);
+  }
+  return defaultEditorPreferences;
+}
+
+/**
  * Hook to manage editor preferences (font, size, device, margins)
  * Persists to localStorage and syncs between tabs
  */
 export function useEditorPreferences() {
-  const [preferences, setPreferencesState] = useState<EditorPreferences>(defaultEditorPreferences);
+  const [preferences, setPreferencesState] = useState<EditorPreferences>(() =>
+    initializePreferences()
+  );
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load preferences from localStorage on mount
+  // Mark as loaded after mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(EDITOR_PREFERENCES_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setPreferencesState({ ...defaultEditorPreferences, ...parsed });
-      }
-    } catch (error) {
-      console.error('Failed to load editor preferences:', error);
-    }
     setIsLoaded(true);
   }, []);
 

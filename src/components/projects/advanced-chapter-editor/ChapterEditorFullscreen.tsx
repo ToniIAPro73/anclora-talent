@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { X, ChevronLeft, ChevronRight, Loader2, Save, PageDown, PageUp } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp } from 'lucide-react';
 import { AdvancedRichTextEditor } from '../AdvancedRichTextEditor';
 import { premiumPrimaryMintButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { useChapterEditor, type UseChapterEditorOptions } from './useChapterEditor';
@@ -44,6 +44,33 @@ export function ChapterEditorFullscreen({
     fontSize,
     margins,
   });
+
+  // Handle close with unsaved changes check
+  const handleClose = useCallback(async () => {
+    if (editor.hasChanges) {
+      const response = confirm(
+        '⚠️ Tienes cambios sin guardar.\n\n¿Deseas guardarlos antes de cerrar?'
+      );
+
+      if (response) {
+        // User clicked OK - save changes
+        await editor.saveChapter();
+        onSave?.();
+        onClose();
+      } else {
+        // User clicked Cancel - just close without saving
+        onClose();
+      }
+    } else {
+      // No changes, just close
+      onClose();
+    }
+  }, [editor.hasChanges, editor, onSave, onClose]);
+
+  const handleSave = useCallback(async () => {
+    await editor.saveChapter();
+    onSave?.();
+  }, [editor, onSave]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -92,35 +119,7 @@ export function ChapterEditorFullscreen({
 
     window.addEventListener('keydown', handleKeydown);
     return () => window.removeEventListener('keydown', handleKeydown);
-  }, [editor]);
-
-  const handleClose = useCallback(async () => {
-    if (editor.hasChanges) {
-      const response = confirm(
-        '⚠️ Tienes cambios sin guardar.\n\n¿Deseas guardarlos antes de cerrar?'
-      );
-
-      if (response) {
-        // User clicked OK - save changes
-        await editor.saveChapter();
-        onSave?.();
-        onClose();
-      } else {
-        // User clicked Cancel - just close without saving
-        onClose();
-      }
-    } else {
-      // No changes, just close
-      onClose();
-    }
-  }, [editor.hasChanges, editor, onSave, onClose]);
-
-  const handleSave = useCallback(async () => {
-    await editor.saveChapter();
-    onSave?.();
-  }, [editor, onSave]);
-
-  const handleCloseOrSave = handleClose;
+  }, [editor, handleClose]);
 
   if (!editor.currentChapter) return null;
 
@@ -167,7 +166,7 @@ export function ChapterEditorFullscreen({
               className={`${premiumSecondaryLightButton} p-1.5 disabled:opacity-50`}
               title="Página anterior (Alt+↑ o Page Up)"
             >
-              <PageUp className="h-4 w-4" />
+              <ArrowUp className="h-4 w-4" />
             </button>
 
             <span className="text-xs text-[var(--text-secondary)] px-2">
@@ -180,7 +179,7 @@ export function ChapterEditorFullscreen({
               className={`${premiumSecondaryLightButton} p-1.5 disabled:opacity-50`}
               title="Siguiente página (Alt+↓ o Page Down)"
             >
-              <PageDown className="h-4 w-4" />
+              <ArrowDown className="h-4 w-4" />
             </button>
           </div>
         )}

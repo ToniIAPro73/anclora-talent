@@ -38,7 +38,7 @@ import {
   Monitor,
   Tablet,
   Columns,
-  Separator
+  Minus
 } from 'lucide-react';
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
 import { MarginSelector, type MarginConfig } from './MarginSelector';
@@ -402,7 +402,7 @@ const MenuBar = ({
           onClick={() => editor.chain().focus().insertContent({ type: 'pageBreak' }).run()}
           title="Insertar Salto de Página (Ctrl+Shift+Enter)"
         >
-          <Separator className="h-4 w-4" />
+          <Minus className="h-4 w-4" />
         </ToolbarButton>
       </div>
 
