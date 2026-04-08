@@ -1272,6 +1272,46 @@ export function AdvancedRichTextEditor({
     onPageCountChange(measuredPages);
   }, [columnGap, contentWidth, onPageCountChange]);
 
+  const focusVisiblePage = useCallback(
+    (pageIndex: number) => {
+      if (!editor) {
+        return;
+      }
+
+      const flowBounds = multipageFlowRef.current?.getBoundingClientRect();
+      const posAtCoords =
+        typeof editor.view?.posAtCoords === 'function'
+          ? editor.view.posAtCoords.bind(editor.view)
+          : null;
+
+      if (!flowBounds || !posAtCoords) {
+        return;
+      }
+
+      const relativePageIndex = Math.max(0, pageIndex - currentPage);
+      const coords = {
+        left: flowBounds.left + relativePageIndex * (pageWidth + pageGap) + 8,
+        top: flowBounds.top + 8,
+      };
+      const resolved = posAtCoords(coords);
+
+      if (!resolved?.pos) {
+        return;
+      }
+
+      editor.view.dispatch(
+        editor.state.tr.setSelection(
+          TextSelection.create(editor.state.doc, resolved.pos),
+        ),
+      );
+
+      if (typeof editor.view.focus === 'function') {
+        editor.view.focus();
+      }
+    },
+    [currentPage, editor, pageGap, pageWidth],
+  );
+
   useEffect(() => {
     if (!editor || !onPageCountChange) {
       return;
@@ -1290,6 +1330,14 @@ export function AdvancedRichTextEditor({
       window.removeEventListener('resize', scheduleMeasure);
     };
   }, [editor, measureRenderablePages, onPageCountChange]);
+
+  useEffect(() => {
+    if (!editor || totalRenderablePages <= 1) {
+      return;
+    }
+
+    focusVisiblePage(currentPage);
+  }, [currentPage, defaultContent, editor, focusVisiblePage, totalRenderablePages]);
 
   if (!editor) return null;
 
@@ -1516,15 +1564,24 @@ export function AdvancedRichTextEditor({
                 color: var(--text-primary);
                 font-weight: 600;
               }
-              .ProseMirror hr[data-page-break="true"],
-              .preview-page hr[data-page-break="true"],
               .ProseMirror hr[data-page-break="manual"],
               .preview-page hr[data-page-break="manual"],
-              .ProseMirror hr[data-page-break="auto"],
-              .preview-page hr[data-page-break="auto"] {
+              .ProseMirror hr[data-page-break="true"],
+              .preview-page hr[data-page-break="true"] {
                 border: 0;
                 border-top: 2px dashed rgba(196, 154, 36, 0.45);
                 margin: 1.75rem 0;
+                break-after: column;
+                page-break-after: always;
+                -webkit-column-break-after: always;
+              }
+              .ProseMirror hr[data-page-break="auto"],
+              .preview-page hr[data-page-break="auto"] {
+                border: 0;
+                height: 0;
+                margin: 0;
+                opacity: 0;
+                pointer-events: none;
                 break-after: column;
                 page-break-after: always;
                 -webkit-column-break-after: always;
@@ -1579,6 +1636,10 @@ export function AdvancedRichTextEditor({
                   data-testid="editable-page-surface"
                   data-page-index={pageIndex}
                   className="multipage-page-frame"
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    focusVisiblePage(pageIndex);
+                  }}
                 >
                   <div className="multipage-page-inner" style={pagePaddingStyle} />
                 </div>
