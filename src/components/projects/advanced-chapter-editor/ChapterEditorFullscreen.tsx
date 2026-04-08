@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp } from 'lucide-react';
 import { AdvancedRichTextEditor } from '../AdvancedRichTextEditor';
 import { premiumPrimaryMintButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { useChapterEditor } from './useChapterEditor';
@@ -194,10 +194,10 @@ export function ChapterEditorFullscreen({
           <button
             onClick={handleClose}
             disabled={editor.isSaving}
-            className={`${premiumSecondaryLightButton} p-1.5 flex-shrink-0`}
+            className={`${premiumSecondaryLightButton} px-4 py-1.5 flex-shrink-0 text-sm font-semibold`}
             title="Cerrar editor (Esc)"
           >
-            <X className="h-4 w-4" />
+            CERRAR
           </button>
         </div>
       </header>
