@@ -11,7 +11,7 @@
  * - LOCALIZATION_CONTRACT.md (full i18n coverage)
  */
 
-import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import {
   X,
   ChevronLeft,
@@ -24,7 +24,6 @@ import {
   Tablet,
   Smartphone,
   Eye,
-  ChevronDown,
 } from 'lucide-react';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
@@ -35,7 +34,6 @@ import {
   type PreviewFormat,
 } from '@/lib/preview/device-configs';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
-import { DeviceFrame } from './DeviceViewers';
 
 
 interface PreviewModalProps {
@@ -51,11 +49,12 @@ export function PreviewModal({
 }: PreviewModalProps) {
   // View state
   const [currentPage, setCurrentPage] = useState(0);
-  const [viewMode, setViewMode] = useState<'single' | 'spread'>('single');
+  const [viewMode, setViewMode] = useState<'single' | 'spread'>('spread');
   const [format, setFormat] = useState<PreviewFormat>('laptop');
   const [zoom, setZoom] = useState(100);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [hasManualZoom, setHasManualZoom] = useState(false);
   const [showTableOfContents, setShowTableOfContents] = useState(true);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
 
   // Close on Escape key
   useEffect(() => {
@@ -87,14 +86,12 @@ export function PreviewModal({
   );
 
   const nextPage = useCallback(() => {
-    const increment = viewMode === 'spread' ? 2 : 1;
-    goToPage(currentPage + increment);
-  }, [currentPage, viewMode, goToPage]);
+    goToPage(currentPage + 1);
+  }, [currentPage, goToPage]);
 
   const prevPage = useCallback(() => {
-    const decrement = viewMode === 'spread' ? 2 : 1;
-    goToPage(currentPage - decrement);
-  }, [currentPage, viewMode, goToPage]);
+    goToPage(currentPage - 1);
+  }, [currentPage, goToPage]);
 
   // Keyboard navigation
   const handleKeyDown = useCallback(
@@ -121,46 +118,67 @@ export function PreviewModal({
     if (viewMode === 'single') {
       return pages[currentPage] ? [pages[currentPage]] : [];
     }
-    // Spread mode: show two pages side by side
-    const leftIdx = currentPage % 2 === 0 ? currentPage : currentPage - 1;
-    return [pages[leftIdx], pages[leftIdx + 1]].filter(Boolean);
+    return [pages[currentPage], pages[currentPage + 1]].filter(Boolean);
   }, [pages, currentPage, viewMode]);
 
-  const preset = FORMAT_PRESETS[format];
-
-  // Generate table of contents from pages
-  // Commit 2: TOC now uses first page of each chapter (from toc page or first content page of chapter)
-  const tocEntries = useMemo(() => {
-    const entries = [];
+  const chapterEntries = useMemo(() => {
     const seenChapters = new Set<string>();
 
-    for (let i = 0; i < pages.length; i++) {
-      const page = pages[i];
-
-      // Add TOC page entry if present
-      if (page.type === 'toc' && page.tocEntries) {
-        page.tocEntries.forEach(entry => {
-          entries.push({
-            title: entry.title,
-            pageIndex: i,
-            pageNumber: entry.pageNumber,
-          });
-        });
+    return pages.flatMap((page, pageIndex) => {
+      if (page.type !== 'content' || !page.chapterId || seenChapters.has(page.chapterId)) {
+        return [];
       }
 
-      // Add chapter entries (first page of each chapter)
-      if (page.type === 'content' && page.chapterId && !seenChapters.has(page.chapterId)) {
-        seenChapters.add(page.chapterId);
-        entries.push({
-          title: page.chapterTitle || `Capítulo sin título`,
-          pageIndex: i,
+      seenChapters.add(page.chapterId);
+
+      return [
+        {
+          title: page.chapterTitle || 'Capítulo sin título',
+          pageIndex,
           pageNumber: page.pageNumber,
-        });
-      }
-    }
-
-    return entries;
+        },
+      ];
+    });
   }, [pages]);
+
+  const applyAutoFitZoom = useCallback(() => {
+    if (!viewportRef.current) return;
+
+    const viewportRect = viewportRef.current.getBoundingClientRect();
+    const pagePreset = FORMAT_PRESETS[format];
+    const spreadWidth =
+      viewMode === 'spread'
+        ? pagePreset.viewportWidth * 2 + 24
+        : pagePreset.viewportWidth;
+    const spreadHeight = pagePreset.pagePixelHeight;
+
+    const availableWidth = Math.max(viewportRect.width - 32, 200);
+    const availableHeight = Math.max(viewportRect.height - 32, 200);
+    const widthRatio = availableWidth / spreadWidth;
+    const heightRatio = availableHeight / spreadHeight;
+    const fittedZoom = Math.floor(Math.min(widthRatio, heightRatio, 1) * 100);
+    const nextZoom = Math.max(50, Math.min(150, fittedZoom));
+
+    setZoom(nextZoom);
+  }, [format, viewMode]);
+
+  useEffect(() => {
+    if (hasManualZoom) return;
+    applyAutoFitZoom();
+  }, [applyAutoFitZoom, hasManualZoom]);
+
+  useEffect(() => {
+    if (hasManualZoom) return;
+
+    const handleResize = () => applyAutoFitZoom();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [applyAutoFitZoom, hasManualZoom]);
+
+  const handleZoomChange = useCallback((nextZoom: number) => {
+    setHasManualZoom(true);
+    setZoom(nextZoom);
+  }, []);
 
   return (
     <div
@@ -206,6 +224,7 @@ export function PreviewModal({
           <div className="flex items-center gap-1 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-1">
             <button
               onClick={() => setViewMode('single')}
+              data-state={viewMode === 'single' ? 'active' : 'inactive'}
               className={`${
                 viewMode === 'single'
                   ? premiumPrimaryDarkButton
@@ -217,6 +236,7 @@ export function PreviewModal({
             </button>
             <button
               onClick={() => setViewMode('spread')}
+              data-state={viewMode === 'spread' ? 'active' : 'inactive'}
               className={`${
                 viewMode === 'spread'
                   ? premiumPrimaryDarkButton
@@ -243,6 +263,7 @@ export function PreviewModal({
               <button
                 key={fmt}
                 onClick={() => setFormat(fmt)}
+                data-state={format === fmt ? 'active' : 'inactive'}
                 className={`${
                   format === fmt
                     ? premiumPrimaryDarkButton
@@ -259,7 +280,7 @@ export function PreviewModal({
         {/* Zoom and pagination controls */}
         <div className="flex items-center gap-3 ml-auto">
           <button
-            onClick={() => setZoom(Math.max(50, zoom - 10))}
+            onClick={() => handleZoomChange(Math.max(50, zoom - 10))}
             disabled={zoom <= 50}
             className={`${premiumSecondaryLightButton} p-2 text-xs disabled:opacity-50`}
             title="Zoom out"
@@ -273,7 +294,7 @@ export function PreviewModal({
               max={150}
               step={5}
               value={zoom}
-              onChange={(e) => setZoom(Number(e.target.value))}
+              onChange={(e) => handleZoomChange(Number(e.target.value))}
               className="w-24 accent-[var(--button-primary-bg)] cursor-pointer"
             />
             <span className="text-xs text-[var(--text-tertiary)] w-12 text-center">
@@ -281,7 +302,7 @@ export function PreviewModal({
             </span>
           </div>
           <button
-            onClick={() => setZoom(Math.min(150, zoom + 10))}
+            onClick={() => handleZoomChange(Math.min(150, zoom + 10))}
             disabled={zoom >= 150}
             className={`${premiumSecondaryLightButton} p-2 text-xs disabled:opacity-50`}
             title="Zoom in"
@@ -301,8 +322,8 @@ export function PreviewModal({
                 Table of Contents
               </h3>
             </div>
-            <ul className="space-y-1 overflow-y-auto flex-1 p-4">
-              {tocEntries.map((entry, idx) => (
+            <ul data-testid="preview-sidebar-toc" className="space-y-1 overflow-y-auto flex-1 p-4">
+              {chapterEntries.map((entry, idx) => (
                 <li key={idx}>
                   <button
                     onClick={() => setCurrentPage(entry.pageIndex)}
@@ -324,30 +345,36 @@ export function PreviewModal({
         {/* Preview Area */}
         <main className="flex-1 flex flex-col bg-[var(--page-surface-muted)] overflow-hidden">
           {/* Content scrollable area */}
-          <div className="flex-1 flex items-center justify-center overflow-auto p-4">
-            <div
-              className="flex transition-all duration-300"
-              style={{
-                gap: viewMode === 'spread' ? '1.5rem' : '0',
-                transform: `scale(${zoom / 100})`,
-                transformOrigin: 'center center',
-              }}
-              onKeyDown={handleKeyDown}
-            >
-              {visiblePages.length > 0 ? (
-                visiblePages.map((page, idx) => (
+          <div
+            ref={viewportRef}
+            data-preview-viewport="true"
+            data-testid="preview-document-scroll"
+            className="flex-1 overflow-auto p-4"
+          >
+            <div className="min-h-full flex items-center justify-center">
+              <div
+                className="flex transition-all duration-300"
+                style={{
+                  gap: viewMode === 'spread' ? '1.5rem' : '0',
+                  transform: `scale(${zoom / 100})`,
+                  transformOrigin: 'center center',
+                }}
+                onKeyDown={handleKeyDown}
+              >
+                {visiblePages.length > 0 ? (
+                  visiblePages.map((page, idx) => (
                   <PageRenderer
                     key={`page-${currentPage}-${idx}`}
                     page={page}
                     format={format}
-                    project={project}
                   />
                 ))
-              ) : (
-                <div className="flex items-center justify-center text-[var(--text-tertiary)] text-center px-6">
-                  <p>No content to display</p>
-                </div>
-              )}
+                ) : (
+                  <div className="flex items-center justify-center text-[var(--text-tertiary)] text-center px-6">
+                    <p>No content to display</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -395,10 +422,9 @@ export function PreviewModal({
 interface PageRendererProps {
   page: PreviewPage;
   format: PreviewFormat;
-  project: ProjectRecord;
 }
 
-function PageRenderer({ page, format, project }: PageRendererProps) {
+function PageRenderer({ page, format }: PageRendererProps) {
   const config = DEVICE_PAGINATION_CONFIGS[format];
   const preset = FORMAT_PRESETS[format];
 
@@ -461,10 +487,11 @@ function PageRenderer({ page, format, project }: PageRendererProps) {
   // TOC or Content page
   return (
     <div
+      data-testid="preview-page-shell"
       style={pageStyle}
       className="bg-[var(--preview-paper)] rounded-[8px] shadow-[var(--shadow-strong)] border border-[var(--preview-paper-border)] overflow-hidden flex flex-col"
     >
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 min-h-0">
         <div
           className="max-w-none text-[var(--text-secondary)] [&_blockquote]:my-5 [&_blockquote]:rounded-[12px] [&_blockquote]:border-l-4 [&_blockquote]:border-[var(--preview-quote-border)] [&_blockquote]:bg-[var(--preview-quote-bg)] [&_blockquote]:px-5 [&_blockquote]:py-4 [&_h1]:mt-8 [&_h1]:text-3xl [&_h1]:font-black [&_h1]:tracking-tight [&_h1]:text-[var(--text-primary)] [&_h2]:mt-7 [&_h2]:text-2xl [&_h2]:font-black [&_h2]:tracking-tight [&_h2]:text-[var(--text-primary)] [&_h3]:mt-6 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:tracking-tight [&_h3]:text-[var(--text-primary)] [&_hr]:my-8 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-[var(--border-subtle)] [&_li]:mb-2 [&_li]:leading-7 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:space-y-2 [&_ol]:pl-6 [&_p]:leading-8 [&_strong]:font-semibold [&_strong]:text-[var(--text-primary)] [&_ul]:my-4 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6"
           dangerouslySetInnerHTML={{ __html: page.content || '' }}
