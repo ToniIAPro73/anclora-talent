@@ -219,20 +219,22 @@ const FontSizeSelector = ({ editor, onFontSizeChange }: { editor: any; onFontSiz
 
 const ColorSelector = ({ editor }: { editor: any }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [hoveredColor, setHoveredColor] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const colors = [
-    { name: 'Default', value: 'inherit' },
-    { name: 'Primary', value: '#EDF2F8' },
-    { name: 'Secondary', value: '#B0C4D8' },
-    { name: 'Accent', value: '#c49a24' },
-    { name: 'Sky', value: '#4A9FD8' },
-    { name: 'Mint', value: '#2DD4BF' },
-    { name: 'Rose', value: '#FB7185' },
-    { name: 'Amber', value: '#FBBF24' },
+    { name: 'Por Defecto', value: 'inherit', description: 'Color normal del texto' },
+    { name: 'Blanco', value: '#EDF2F8', description: 'Texto claro principal' },
+    { name: 'Gris Azulado', value: '#B0C4D8', description: 'Texto secundario' },
+    { name: 'Dorado Premium', value: '#c49a24', description: 'Énfasis elegante' },
+    { name: 'Azul Cielo', value: '#4A9FD8', description: 'Acento profesional' },
+    { name: 'Menta', value: '#2DD4BF', description: 'Acento moderno' },
+    { name: 'Rosa Coral', value: '#FB7185', description: 'Acento cálido' },
+    { name: 'Ámbar Suave', value: '#FBBF24', description: 'Acento dorado' },
   ];
 
   const currentColor = editor.getAttributes('textStyle').color || 'inherit';
+  const currentColorName = colors.find(c => c.value === currentColor)?.name || 'Por Defecto';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -260,35 +262,65 @@ const ColorSelector = ({ editor }: { editor: any }) => {
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-11 z-[110] rounded-xl border border-[var(--border-strong)] bg-[#0E1825] p-4 shadow-2xl shadow-black animate-in fade-in zoom-in duration-200">
-          <div className="mb-3 text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)]">
-            Colores
+        <div className="absolute left-0 top-11 z-[110] rounded-2xl border border-[var(--border-strong)] bg-gradient-to-br from-[#0E1825] to-[#0B121D] p-4 shadow-2xl shadow-black/50 animate-in fade-in zoom-in duration-200 w-72">
+          {/* Header */}
+          <div className="mb-4">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)] mb-2">
+              Paleta de Colores
+            </div>
+            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-[var(--background)]/50 border border-[var(--border-subtle)]">
+              <div
+                className="w-6 h-6 rounded-lg border border-[var(--border-strong)]"
+                style={{ backgroundColor: currentColor === 'inherit' ? 'var(--text-primary)' : currentColor }}
+              />
+              <span className="text-xs font-semibold text-[var(--text-primary)]">{currentColorName}</span>
+            </div>
           </div>
-          <div className="grid grid-cols-4 gap-3">
+
+          {/* Colors Grid */}
+          <div className="grid grid-cols-2 gap-2.5 mb-4">
             {colors.map((color) => (
               <button
                 key={color.value}
+                onMouseEnter={() => setHoveredColor(color.value)}
+                onMouseLeave={() => setHoveredColor(null)}
                 onClick={() => {
                   if (color.value === 'inherit') editor.chain().focus().unsetColor().run();
                   else editor.chain().focus().setColor(color.value).run();
                   setIsOpen(false);
                 }}
-                className={`relative h-10 w-10 rounded-lg border-2 transition-all duration-200 hover:scale-110 ${
+                className={`relative group p-2.5 rounded-xl border-2 transition-all duration-200 ${
                   currentColor === color.value
-                    ? 'border-[var(--accent-mint)] shadow-[0_0_12px_rgba(45,212,191,0.5)]'
-                    : 'border-[var(--border-subtle)] hover:border-[var(--accent-mint)]'
+                    ? 'border-[var(--accent-mint)] bg-[var(--accent-mint)]/10 shadow-[0_0_12px_rgba(45,212,191,0.5)]'
+                    : 'border-[var(--border-subtle)] hover:border-[var(--accent-mint)]/50 bg-[var(--background)]/30'
                 }`}
-                style={{ backgroundColor: color.value === 'inherit' ? 'transparent' : color.value }}
                 title={color.name}
               >
-                {color.value === 'inherit' && (
-                  <span className="absolute inset-0 flex items-center justify-center text-[12px] font-bold text-[var(--text-primary)]">∅</span>
-                )}
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`w-5 h-5 rounded-lg border border-white/20 transition-transform duration-200 ${
+                      currentColor === color.value ? 'scale-110' : 'group-hover:scale-105'
+                    }`}
+                    style={{ backgroundColor: color.value === 'inherit' ? 'transparent' : color.value }}
+                  >
+                    {color.value === 'inherit' && (
+                      <div className="w-full h-full flex items-center justify-center text-[8px] font-bold">∅</div>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-0.5 text-left">
+                    <div className="text-[11px] font-semibold text-[var(--text-primary)]">{color.name}</div>
+                    <div className="text-[9px] text-[var(--text-tertiary)]">{color.description}</div>
+                  </div>
+                </div>
               </button>
             ))}
           </div>
-          <div className="mt-3 border-t border-[var(--border-subtle)] pt-3 text-[10px] text-[var(--text-tertiary)] px-1">
-            Selecciona un color para el texto
+
+          {/* Footer Info */}
+          <div className="border-t border-[var(--border-subtle)] pt-3">
+            <div className="text-[9px] text-[var(--text-tertiary)] text-center">
+              Haz click para aplicar el color al texto seleccionado
+            </div>
           </div>
         </div>
       )}
