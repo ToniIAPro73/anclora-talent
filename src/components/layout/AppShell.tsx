@@ -10,6 +10,7 @@ import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { LocaleToggle } from './LocaleToggle';
 import { ThemeToggle } from './ThemeToggle';
+import { EditorPreferencesSidebar } from '@/components/projects/EditorPreferencesSidebar';
 
 const SIDEBAR_KEY = 'anclora-sidebar-collapsed';
 
@@ -107,6 +108,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <p className="text-xs uppercase tracking-[0.22em] text-[var(--text-tertiary)]">{messages.stackEyebrow}</p>
               <p className="mt-3 text-lg font-bold text-[var(--text-primary)]">{messages.stackTitle}</p>
               <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">{messages.stackDescription}</p>
+            </div>
+          )}
+
+          {!collapsed && (
+            <div className="mx-6 mt-10 flex-1">
+              <EditorPreferencesSidebar />
             </div>
           )}
         </aside>

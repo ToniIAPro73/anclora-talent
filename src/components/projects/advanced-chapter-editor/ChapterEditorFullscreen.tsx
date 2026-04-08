@@ -1,10 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { X, ChevronLeft, ChevronRight, Loader2, Save } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp } from 'lucide-react';
 import { AdvancedRichTextEditor } from '../AdvancedRichTextEditor';
 import { premiumPrimaryMintButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { useChapterEditor, type UseChapterEditorOptions } from './useChapterEditor';
+import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import type { DocumentChapter } from '@/lib/projects/types';
 
 interface ChapterEditorFullscreenProps {
@@ -13,6 +14,9 @@ interface ChapterEditorFullscreenProps {
   projectId: string;
   onClose: () => void;
   onSave?: () => void;
+  defaultDevice?: 'mobile' | 'tablet' | 'desktop';
+  defaultFontSize?: string;
+  defaultMargins?: { top: number; bottom: number; left: number; right: number };
 }
 
 export function ChapterEditorFullscreen({
@@ -21,41 +25,27 @@ export function ChapterEditorFullscreen({
   projectId,
   onClose,
   onSave,
+  defaultDevice = 'desktop',
+  defaultFontSize = '16px',
+  defaultMargins = { top: 24, bottom: 24, left: 24, right: 24 },
 }: ChapterEditorFullscreenProps) {
+  const { preferences, isLoaded } = useEditorPreferences();
+
+  // Use saved preferences if available, otherwise use passed defaults
+  const device = (preferences.device as 'mobile' | 'tablet' | 'desktop') || defaultDevice;
+  const fontSize = preferences.fontSize || defaultFontSize;
+  const margins = preferences.margins || defaultMargins;
+
   const editor = useChapterEditor({
     chapters,
     initialChapterIndex,
     projectId,
+    device,
+    fontSize,
+    margins,
   });
 
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeydown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleClose();
-      }
-
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        editor.saveChapter();
-      }
-
-      // Chapter navigation with Ctrl/Cmd + arrows
-      if ((e.ctrlKey || e.metaKey) && e.key === 'ArrowLeft') {
-        e.preventDefault();
-        editor.goToPrevChapter();
-      }
-
-      if ((e.ctrlKey || e.metaKey) && e.key === 'ArrowRight') {
-        e.preventDefault();
-        editor.goToNextChapter();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeydown);
-    return () => window.removeEventListener('keydown', handleKeydown);
-  }, [editor]);
-
+  // Handle close with unsaved changes check
   const handleClose = useCallback(async () => {
     if (editor.hasChanges) {
       const response = confirm(
@@ -82,7 +72,54 @@ export function ChapterEditorFullscreen({
     onSave?.();
   }, [editor, onSave]);
 
-  const handleCloseOrSave = handleClose;
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        editor.saveChapter();
+      }
+
+      // Chapter navigation with Ctrl/Cmd + arrows
+      if ((e.ctrlKey || e.metaKey) && e.key === 'ArrowLeft') {
+        e.preventDefault();
+        editor.goToPrevChapter();
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === 'ArrowRight') {
+        e.preventDefault();
+        editor.goToNextChapter();
+      }
+
+      // Page navigation with Alt + arrows or Page Up/Down
+      if ((e.altKey) && e.key === 'ArrowUp') {
+        e.preventDefault();
+        editor.goToPagePrev();
+      }
+
+      if ((e.altKey) && e.key === 'ArrowDown') {
+        e.preventDefault();
+        editor.goToPageNext();
+      }
+
+      if (e.key === 'PageUp') {
+        e.preventDefault();
+        editor.goToPagePrev();
+      }
+
+      if (e.key === 'PageDown') {
+        e.preventDefault();
+        editor.goToPageNext();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, [editor, handleClose]);
 
   if (!editor.currentChapter) return null;
 
@@ -120,6 +157,33 @@ export function ChapterEditorFullscreen({
           </button>
         </div>
 
+        {/* Page Navigation - only show if more than 2 pages */}
+        {editor.totalPages > 2 && (
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <button
+              onClick={editor.goToPagePrev}
+              disabled={!editor.canNavigatePagePrev || editor.isSaving}
+              className={`${premiumSecondaryLightButton} p-1.5 disabled:opacity-50`}
+              title="Página anterior (Alt+↑ o Page Up)"
+            >
+              <ArrowUp className="h-4 w-4" />
+            </button>
+
+            <span className="text-xs text-[var(--text-secondary)] px-2">
+              P.{editor.currentPage + 1}
+            </span>
+
+            <button
+              onClick={editor.goToPageNext}
+              disabled={!editor.canNavigatePageNext || editor.isSaving}
+              className={`${premiumSecondaryLightButton} p-1.5 disabled:opacity-50`}
+              title="Siguiente página (Alt+↓ o Page Down)"
+            >
+              <ArrowDown className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
         {/* Status and Close button */}
         <div className="flex items-center gap-1 flex-shrink-0">
           {editor.lastSaved && (
@@ -139,17 +203,7 @@ export function ChapterEditorFullscreen({
       </header>
 
       {/* ═══════════════════════ CONTENT AREA ═══════════════════════ */}
-      <div className="flex-1 overflow-hidden flex flex-col gap-2 p-3">
-        {/* Chapter Title Input */}
-        <input
-          type="text"
-          value={editor.title}
-          onChange={(e) => editor.setTitle(e.target.value)}
-          disabled={editor.isSaving}
-          className="h-10 rounded-[8px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2 text-sm font-semibold text-[var(--text-primary)] outline-none transition disabled:opacity-50 focus:border-[var(--accent-mint)]"
-          placeholder="Título del capítulo"
-        />
-
+      <div className="flex-1 overflow-hidden flex flex-col gap-1 p-3">
         {/* Error message */}
         {editor.error && (
           <div className="rounded-[8px] border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-400 flex-shrink-0">
@@ -157,11 +211,12 @@ export function ChapterEditorFullscreen({
           </div>
         )}
 
-        {/* Content Editor - Fills available space */}
+        {/* Content Editor - Fills available space - includes chapter title as first line */}
         <div className="flex-1 min-h-0 rounded-[8px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] overflow-hidden">
           <AdvancedRichTextEditor
             defaultContent={editor.htmlContent}
             onUpdate={editor.setHtmlContent}
+            currentPage={editor.currentPage}
           />
         </div>
       </div>

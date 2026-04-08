@@ -10,6 +10,7 @@ import FontFamily from '@tiptap/extension-font-family';
 import TextAlign from '@tiptap/extension-text-align';
 import { Color } from '@tiptap/extension-color';
 import { ResizableImage } from './resizable-image-extension';
+import { PageBreak } from './page-break-extension';
 import {
   Bold,
   Italic,
@@ -36,9 +37,18 @@ import {
   Smartphone,
   Monitor,
   Tablet,
-  Columns
+  Columns,
+  Minus
 } from 'lucide-react';
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
+import { MarginSelector, type MarginConfig } from './MarginSelector';
+import {
+  estimateTotalPages,
+  calculateWordsPerPage,
+  MARGIN_PRESETS,
+  type PageCalculationConfig,
+} from '@/lib/projects/page-calculator';
+import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 
 const DEBOUNCE_MS = 1000;
 
@@ -152,10 +162,66 @@ const AdvancedFontSelector = ({ editor }: { editor: any }) => {
   );
 };
 
+const FontSizeSelector = ({ editor, onFontSizeChange }: { editor: any; onFontSizeChange?: (size: string) => void }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const sizes = [
+    { name: 'Pequeño', value: '12px' },
+    { name: 'Normal', value: '16px' },
+    { name: 'Grande', value: '20px' },
+    { name: 'XL', value: '24px' },
+    { name: '2XL', value: '32px' },
+  ];
+
+  const currentSize = editor.getAttributes('fontSize')?.fontSize || '16px';
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <ToolbarButton onClick={() => setIsOpen(!isOpen)} title="Tamaño de fuente">
+        <Type className="h-4 w-4" />
+      </ToolbarButton>
+
+      {isOpen && (
+        <div className="absolute left-0 top-11 z-[110] flex flex-col gap-0.5 rounded-xl border border-[var(--border-strong)] bg-[#0E1825] p-2 shadow-2xl shadow-black animate-in fade-in zoom-in duration-200">
+          {sizes.map((size) => (
+            <button
+              key={size.value}
+              onClick={() => {
+                editor.chain().focus().setFontSize(size.value).run();
+                onFontSizeChange?.(size.value);
+                setIsOpen(false);
+              }}
+              className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                currentSize === size.value
+                  ? 'bg-[var(--accent-mint)]/20 text-[var(--accent-mint)]'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--hover)]'
+              }`}
+              title={size.name}
+            >
+              {size.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ColorSelector = ({ editor }: { editor: any }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
+
   const colors = [
     { name: 'Default', value: 'inherit' },
     { name: 'Primary', value: '#EDF2F8' },
@@ -208,7 +274,29 @@ const ColorSelector = ({ editor }: { editor: any }) => {
   );
 };
 
-const MenuBar = ({ editor, viewMode, setViewMode, device, setDevice }: { editor: any, viewMode: string, setViewMode: any, device: string, setDevice: any }) => {
+const MenuBar = ({
+  editor,
+  viewMode,
+  setViewMode,
+  device,
+  setDevice,
+  margins,
+  onMarginsChange,
+  currentFontSize,
+  onFontSizeChange,
+  wordsPerPage,
+}: {
+  editor: any;
+  viewMode: string;
+  setViewMode: any;
+  device: string;
+  setDevice: any;
+  margins: MarginConfig;
+  onMarginsChange: (margins: MarginConfig) => void;
+  currentFontSize: string;
+  onFontSizeChange: (size: string) => void;
+  wordsPerPage?: number;
+}) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -217,7 +305,8 @@ const MenuBar = ({ editor, viewMode, setViewMode, device, setDevice }: { editor:
       const reader = new FileReader();
       reader.onload = (event) => {
         const imageUrl = event.target?.result as string;
-        editor.chain().focus().setImage({ src: imageUrl }).run();
+        // Set default size to 45% width, left aligned with text wrapping
+        editor.chain().focus().setImage({ src: imageUrl, width: 350, align: 'left' }).run();
       };
       reader.readAsDataURL(file);
     }
@@ -248,7 +337,9 @@ const MenuBar = ({ editor, viewMode, setViewMode, device, setDevice }: { editor:
 
       <div className="flex items-center gap-2 pr-3 border-r border-[var(--border-subtle)]">
         <AdvancedFontSelector editor={editor} />
+        <FontSizeSelector editor={editor} onFontSizeChange={onFontSizeChange} />
         <ColorSelector editor={editor} />
+        <MarginSelector margins={margins} onMarginsChange={onMarginsChange} wordsPerPage={wordsPerPage} />
       </div>
 
       {/* Text Formatting */}
@@ -282,8 +373,14 @@ const MenuBar = ({ editor, viewMode, setViewMode, device, setDevice }: { editor:
 
       {/* Elements */}
       <div className="flex items-center gap-1 pr-3 border-r border-[var(--border-subtle)]">
-        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} title="Título">
+        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive('heading', { level: 1 })} title="Encabezado 1">
+          <Heading1 className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} title="Encabezado 2">
           <Heading2 className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} title="Encabezado 3">
+          <Heading3 className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Lista">
           <List className="h-4 w-4" />
@@ -301,6 +398,12 @@ const MenuBar = ({ editor, viewMode, setViewMode, device, setDevice }: { editor:
           onChange={handleImageUpload}
           className="hidden"
         />
+        <ToolbarButton
+          onClick={() => editor.chain().focus().insertContent({ type: 'pageBreak' }).run()}
+          title="Insertar Salto de Página (Ctrl+Shift+Enter)"
+        >
+          <Minus className="h-4 w-4" />
+        </ToolbarButton>
       </div>
 
       {/* History */}
@@ -319,12 +422,22 @@ const MenuBar = ({ editor, viewMode, setViewMode, device, setDevice }: { editor:
 export function AdvancedRichTextEditor({
   defaultContent,
   onUpdate,
+  currentPage = 0,
 }: {
   defaultContent: string;
   onUpdate: (html: string) => void;
+  currentPage?: number;
 }) {
-  const [viewMode, setViewMode] = useState<'single' | 'double'>('single');
-  const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
+  const { preferences, isLoaded, setPreferences } = useEditorPreferences();
+  const [viewMode, setViewMode] = useState<'single' | 'double'>('double');
+  const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop'>(
+    (preferences.device as 'mobile' | 'tablet' | 'desktop') || 'desktop'
+  );
+  const [autoPages, setAutoPages] = useState<boolean>(true);
+  const [margins, setMargins] = useState<MarginConfig>(
+    preferences.margins || MARGIN_PRESETS.normal
+  );
+  const [currentFontSize, setCurrentFontSize] = useState<string>(preferences.fontSize || '16px');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleUpdate = useCallback(
@@ -333,6 +446,33 @@ export function AdvancedRichTextEditor({
       debounceRef.current = setTimeout(() => onUpdate(html), DEBOUNCE_MS);
     },
     [onUpdate],
+  );
+
+  // Save preferences when device changes
+  const handleDeviceChange = useCallback(
+    (newDevice: 'mobile' | 'tablet' | 'desktop') => {
+      setDevice(newDevice);
+      setPreferences({ device: newDevice });
+    },
+    [setPreferences]
+  );
+
+  // Save preferences when margins change
+  const handleMarginsChange = useCallback(
+    (newMargins: MarginConfig) => {
+      setMargins(newMargins);
+      setPreferences({ margins: newMargins });
+    },
+    [setPreferences]
+  );
+
+  // Save preferences when font size changes
+  const handleFontSizeChange = useCallback(
+    (newSize: string) => {
+      setCurrentFontSize(newSize);
+      setPreferences({ fontSize: newSize });
+    },
+    [setPreferences]
   );
 
   const editor = useEditor({
@@ -353,6 +493,7 @@ export function AdvancedRichTextEditor({
       ResizableImage.configure({
         allowBase64: true,
       }),
+      PageBreak,
     ],
     content: defaultContent,
     onUpdate: ({ editor: ed }) => {
@@ -382,18 +523,68 @@ export function AdvancedRichTextEditor({
     desktop: 'max-w-none w-full',
   };
 
+  // Calculate words per page based on device, font size, and margins
+  const pageConfig: PageCalculationConfig = {
+    device: device as 'mobile' | 'tablet' | 'desktop',
+    fontSize: currentFontSize,
+    marginTop: margins.top,
+    marginBottom: margins.bottom,
+    marginLeft: margins.left,
+    marginRight: margins.right,
+  };
+
+  const wordsPerPage = calculateWordsPerPage(pageConfig);
+  const estimatedPages = estimateTotalPages(editor.getHTML(), pageConfig);
+
+  // For double mode with page navigation, we show 2 pages at a time
+  // Current page can range from 0 to estimatedPages - 2
+  const displayStartPage = viewMode === 'double' ? currentPage : currentPage;
+  const displayEndPage = viewMode === 'double' ? currentPage + 2 : currentPage + 1;
+
   return (
     <div className="flex flex-col h-full overflow-hidden rounded-[24px] border border-[var(--border-strong)] bg-[#0B121D] shadow-2xl">
-      <MenuBar editor={editor} viewMode={viewMode} setViewMode={setViewMode} device={device} setDevice={setDevice} />
-      
-      <div className="flex-1 overflow-y-auto bg-[var(--background)] p-8 flex justify-center custom-scrollbar">
+      <MenuBar
+        editor={editor}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        device={device}
+        setDevice={handleDeviceChange}
+        margins={margins}
+        onMarginsChange={handleMarginsChange}
+        currentFontSize={currentFontSize}
+        onFontSizeChange={handleFontSizeChange}
+        wordsPerPage={wordsPerPage}
+      />
+
+      <div className="flex-1 overflow-auto bg-[var(--background)] p-6 flex justify-center custom-scrollbar">
         <div className={`transition-all duration-500 ease-in-out ${deviceClasses[device]} ${viewMode === 'double' ? 'grid grid-cols-2 gap-8 max-w-5xl' : ''}`}>
-          <div className="bg-[#111C28] min-h-[1000px] p-12 shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 prose prose-invert max-w-none">
-            <EditorContent editor={editor} />
+          {/* First page or single page */}
+          <div className="bg-[#111C28] min-h-[1000px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 prose prose-invert max-w-none overflow-x-auto prose-img:rounded-lg prose-img:shadow-md">
+            <style>{`
+              .ProseMirror img {
+                max-width: 100%;
+                height: auto;
+                object-fit: cover;
+              }
+              .ProseMirror p {
+                overflow-wrap: break-word;
+                word-break: break-word;
+              }
+              .ProseMirror {
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+              }
+            `}</style>
+            {displayStartPage === 0 && <EditorContent editor={editor} />}
+            {displayStartPage > 0 && (
+              <div className="italic text-[var(--text-tertiary)] text-sm">
+                Página {displayStartPage + 1}
+              </div>
+            )}
           </div>
           {viewMode === 'double' && (
             <div className="bg-[#111C28] min-h-[1000px] p-12 shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-sm border border-white/5 opacity-50 flex items-center justify-center italic text-[var(--text-tertiary)]">
-              Página siguiente
+              Página {displayEndPage + 1}
             </div>
           )}
         </div>
