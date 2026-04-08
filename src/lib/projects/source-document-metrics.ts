@@ -7,7 +7,7 @@
  */
 
 import type { ProjectRecord } from './types';
-import { getDocumentStats, estimatePageCount, formatNumber } from './document-stats';
+import { getDocumentStats, estimatePageCount } from './document-stats';
 import type { PreviewFormat } from '@/lib/preview/device-configs';
 
 export interface SourceDocumentMetrics {
@@ -110,7 +110,6 @@ export function formatSourceDocumentComparison(
   }
 
   const {
-    fileName,
     fileType,
     estimatedSourcePages,
     talentPages,

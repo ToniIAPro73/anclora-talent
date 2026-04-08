@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
@@ -18,18 +18,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { locale } = useUiPreferences();
   const messages = resolveLocaleMessages(locale).shell;
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setCollapsed(localStorage.getItem(SIDEBAR_KEY) === 'true');
-    setMounted(true);
-  }, []);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(SIDEBAR_KEY) === 'true';
+  });
 
   const toggle = () =>
     setCollapsed(prev => {
       const next = !prev;
-      localStorage.setItem(SIDEBAR_KEY, String(next));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(SIDEBAR_KEY, String(next));
+      }
       return next;
     });
 
@@ -45,7 +44,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return pathname.startsWith(href);
   };
 
-  const sidebarCols = mounted && collapsed ? '72px 1fr' : '280px 1fr';
+  const sidebarCols = collapsed ? '72px 1fr' : '280px 1fr';
 
   return (
     <div className="min-h-screen bg-[var(--app-gradient)] text-[var(--text-primary)]">

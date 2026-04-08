@@ -1,5 +1,5 @@
-import type { ProjectDocument, DocumentChapter } from './types';
-import { DEVICE_PAGINATION_CONFIGS, type PreviewFormat } from '@/lib/preview/device-configs';
+import type { ProjectDocument } from './types';
+import type { PreviewFormat } from '@/lib/preview/device-configs';
 
 export interface DocumentStats {
   wordCount: number;
