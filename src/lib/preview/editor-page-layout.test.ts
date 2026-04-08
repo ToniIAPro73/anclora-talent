@@ -1,8 +1,10 @@
 import {
   reconcileAutoBreakMarkup,
+  reconcileOverflowBreaks,
   splitHtmlIntoPageSegments,
   stripAutoBreaks,
 } from './editor-page-layout';
+import { DEVICE_PAGINATION_CONFIGS } from './device-configs';
 
 describe('editor-page-layout', () => {
   it('segments html into pages using manual breaks as hard boundaries', () => {
@@ -22,6 +24,13 @@ describe('editor-page-layout', () => {
     const result = reconcileAutoBreakMarkup(html, ['<p>A</p>', '<p>B</p>', '<p>C</p>']);
 
     expect(result).toContain('data-page-break="manual"');
+    expect(result).toContain('data-page-break="auto"');
+  });
+
+  it('inserts auto page breaks when content overflows a page', () => {
+    const html = '<p>' + 'Lorem ipsum '.repeat(500) + '</p>';
+    const result = reconcileOverflowBreaks(html, DEVICE_PAGINATION_CONFIGS.mobile);
+
     expect(result).toContain('data-page-break="auto"');
   });
 });

@@ -478,4 +478,27 @@ describe('AdvancedRichTextEditor selection behavior', () => {
     expect(styles).toContain('.ProseMirror ul:not([data-bullet-style])');
     expect(styles).toContain('.ProseMirror ol:not([data-list-style])');
   });
+
+  test('re-emits html containing auto breaks after overflow reconciliation', () => {
+    const overflowHtml = '<p>' + 'Texto '.repeat(500) + '</p>';
+    const editor = createMockEditor(createSelection('Texto', 0));
+    const onUpdate = vi.fn();
+
+    editor.getHTML = vi.fn(() => overflowHtml);
+    useEditorMock.mockReturnValue(editor);
+
+    render(<AdvancedRichTextEditor defaultContent={overflowHtml} onUpdate={onUpdate} />);
+
+    const options = useEditorMock.mock.calls[0]?.[0] as {
+      onUpdate?: ({ editor }: { editor: typeof editor }) => void;
+    };
+
+    options.onUpdate?.({ editor });
+
+    expect(editor.commands.setContent).toHaveBeenCalledWith(
+      expect.stringContaining('data-page-break="auto"'),
+      false,
+    );
+    expect(onUpdate).toHaveBeenCalledWith(expect.stringContaining('data-page-break="auto"'));
+  });
 });

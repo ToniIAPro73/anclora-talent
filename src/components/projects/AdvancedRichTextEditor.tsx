@@ -61,6 +61,7 @@ import {
 } from '@/lib/projects/page-calculator';
 import { paginateContent } from '@/lib/preview/content-paginator';
 import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
+import { reconcileOverflowBreaks } from '@/lib/preview/editor-page-layout';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { PAGE_BREAK_HTML } from '@/lib/preview/page-breaks';
 
@@ -263,19 +264,20 @@ function normalizeEditorHtml(content: string): string {
   const trimmed = content.trim();
   if (!trimmed) return '';
 
+  const normalizeBreakMarkup = (html: string) =>
+    html
+      .replace(/<hr\s+data-page-break="true"\s*\/?>/gi, '<hr data-page-break="manual">')
+      .replace(/<hr\s+data-page-break="manual"\s*\/?>/gi, '<hr data-page-break="manual">')
+      .replace(/<hr\s+data-page-break="auto"\s*\/?>/gi, '<hr data-page-break="auto">');
+
   if (typeof window !== 'undefined' && typeof DOMParser !== 'undefined') {
     const parser = new DOMParser();
     const doc = parser.parseFromString(`<div>${trimmed}</div>`, 'text/html');
-    return (
-      doc.body.firstElementChild?.innerHTML
-        .replace(/>\s+</g, '><')
-        .replace(/<hr\s+data-page-break="true"\s*\/?>/gi, '<hr data-page-break="true">') ?? ''
-    );
+    const html = doc.body.firstElementChild?.innerHTML ?? '';
+    return normalizeBreakMarkup(html.replace(/>\s+</g, '><').replace(/&nbsp;/g, ' '));
   }
 
-  return trimmed
-    .replace(/>\s+</g, '><')
-    .replace(/<hr\s+data-page-break="true"\s*\/?>/gi, '<hr data-page-break="true">');
+  return normalizeBreakMarkup(trimmed.replace(/>\s+</g, '><').replace(/&nbsp;/g, ' '));
 }
 
 // Advanced Font Selector using useGoogleFonts
@@ -1037,6 +1039,32 @@ export function AdvancedRichTextEditor({
   );
   const [currentFontSize, setCurrentFontSize] = useState<string>(preferences.fontSize || '16px');
 
+  // Calculate words per page based on device, font size, and margins
+  const pageConfig: PageCalculationConfig = {
+    device: device as 'mobile' | 'tablet' | 'desktop',
+    fontSize: currentFontSize,
+    marginTop: margins.top,
+    marginBottom: margins.bottom,
+    marginLeft: margins.left,
+    marginRight: margins.right,
+  };
+
+  const wordsPerPage = calculateWordsPerPage(pageConfig);
+  const showSecondPage = viewMode === 'double' && (totalPages === undefined || currentPage + 1 < totalPages);
+  const secondPageNumber = currentPage + 2;
+  const previewFormat = device === 'desktop' ? 'laptop' : device;
+  const previewConfig = useMemo(() => {
+    const baseConfig = DEVICE_PAGINATION_CONFIGS[previewFormat];
+    return {
+      ...baseConfig,
+      fontSize: Number.parseInt(currentFontSize, 10) || baseConfig.fontSize,
+      marginTop: margins.top,
+      marginBottom: margins.bottom,
+      marginLeft: margins.left,
+      marginRight: margins.right,
+    };
+  }, [currentFontSize, margins.bottom, margins.left, margins.right, margins.top, previewFormat]);
+
   const handleUpdate = useCallback(
     (html: string) => {
       onUpdate(html);
@@ -1111,7 +1139,18 @@ export function AdvancedRichTextEditor({
         isSyncingExternalContentRef.current = false;
         return;
       }
-      handleUpdate(ed.getHTML());
+
+      const currentHtml = ed.getHTML();
+      const reconciledHtml = reconcileOverflowBreaks(currentHtml, previewConfig);
+
+      if (normalizeEditorHtml(reconciledHtml) !== normalizeEditorHtml(currentHtml)) {
+        isSyncingExternalContentRef.current = true;
+        ed.commands.setContent(reconciledHtml, false);
+        handleUpdate(reconciledHtml);
+        return;
+      }
+
+      handleUpdate(currentHtml);
     },
     immediatelyRender: false,
   });
@@ -1123,32 +1162,6 @@ export function AdvancedRichTextEditor({
       editor.commands.setContent(defaultContent, false);
     }
   }, [defaultContent, editor]);
-
-  // Calculate words per page based on device, font size, and margins
-  const pageConfig: PageCalculationConfig = {
-    device: device as 'mobile' | 'tablet' | 'desktop',
-    fontSize: currentFontSize,
-    marginTop: margins.top,
-    marginBottom: margins.bottom,
-    marginLeft: margins.left,
-    marginRight: margins.right,
-  };
-
-  const wordsPerPage = calculateWordsPerPage(pageConfig);
-  const showSecondPage = viewMode === 'double' && (totalPages === undefined || currentPage + 1 < totalPages);
-  const secondPageNumber = currentPage + 2;
-  const previewFormat = device === 'desktop' ? 'laptop' : device;
-  const previewConfig = useMemo(() => {
-    const baseConfig = DEVICE_PAGINATION_CONFIGS[previewFormat];
-    return {
-      ...baseConfig,
-      fontSize: Number.parseInt(currentFontSize, 10) || baseConfig.fontSize,
-      marginTop: margins.top,
-      marginBottom: margins.bottom,
-      marginLeft: margins.left,
-      marginRight: margins.right,
-    };
-  }, [currentFontSize, margins.bottom, margins.left, margins.right, margins.top, previewFormat]);
   const paginatedPages = useMemo(
     () => paginateContent(defaultContent, previewConfig),
     [defaultContent, previewConfig],
