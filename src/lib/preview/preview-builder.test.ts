@@ -6,6 +6,7 @@
 import { buildPreviewPages } from './preview-builder';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { DEVICE_PAGINATION_CONFIGS } from './device-configs';
+import { createDefaultSurfaceState } from '@/lib/projects/cover-surface';
 
 // Helper to create a mock project
 function createMockProject(overrides?: Partial<ProjectRecord>): ProjectRecord {
@@ -310,6 +311,60 @@ describe('preview-builder', () => {
       if (coverPage?.coverData) {
         expect(coverPage.coverData.title).toBe(project.cover.title);
       }
+    });
+
+    it('does not expose a hidden subtitle from saved cover surface state', () => {
+      const project = createMockProject({
+        cover: {
+          ...createMockProject().cover,
+          subtitle: 'Subtitulo heredado',
+          showSubtitle: true,
+          renderedImageUrl: null,
+          surfaceState: (() => {
+            const state = createDefaultSurfaceState('cover');
+            state.fields.title.value = 'Cover Title';
+            state.fields.title.visible = true;
+            state.fields.subtitle.value = '';
+            state.fields.subtitle.visible = false;
+            state.fields.author.value = 'Test Author';
+            state.fields.author.visible = true;
+            return state;
+          })(),
+        },
+      });
+
+      const pages = buildPreviewPages(project, DEVICE_PAGINATION_CONFIGS.laptop);
+      const coverPage = pages.find((page) => page.type === 'cover');
+
+      expect(coverPage?.coverData?.subtitle).toBe('');
+      expect(coverPage?.coverData?.showSubtitle).toBe(false);
+    });
+
+    it('does not expose hidden back cover body or author bio from saved surface state', () => {
+      const project = createMockProject({
+        backCover: {
+          ...createMockProject().backCover,
+          renderedImageUrl: null,
+          body: 'Texto heredado',
+          authorBio: 'Bio heredada',
+          surfaceState: (() => {
+            const state = createDefaultSurfaceState('back-cover');
+            state.fields.title.value = 'Back Cover';
+            state.fields.title.visible = true;
+            state.fields.body.value = '';
+            state.fields.body.visible = false;
+            state.fields.authorBio.value = '';
+            state.fields.authorBio.visible = false;
+            return state;
+          })(),
+        },
+      });
+
+      const pages = buildPreviewPages(project, DEVICE_PAGINATION_CONFIGS.laptop);
+      const backCoverPage = pages.find((page) => page.type === 'back-cover');
+
+      expect(backCoverPage?.backCoverData?.body).toBe('');
+      expect(backCoverPage?.backCoverData?.authorBio).toBe('');
     });
 
     it('builds cover, chapter content, and back cover in the real preview order', () => {

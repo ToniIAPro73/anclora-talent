@@ -1,8 +1,9 @@
 import 'server-only';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, inArray } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { getDb, hasDatabase } from './index';
-import { backCoverDesigns, coverDesigns, documentBlocks, projectAssets, projectDocuments, projects } from './schema';
+import { backCoverDesigns, coverDesigns, coverLayers, documentBlocks, projectAssets, projectDocuments, projects } from './schema';
+import { normalizeSurfaceState, type SurfaceState } from '@/lib/projects/cover-surface';
 import { createMockProjectStore } from '@/lib/projects/mock-data';
 import {
   createProjectRecord,
@@ -49,6 +50,73 @@ function toSummary(project: ProjectRecord): ProjectSummary {
     documentTitle: project.document.title,
     coverPalette: project.cover.palette,
   };
+}
+
+const COVER_SURFACE_STATE_KIND = 'surface-state-cover';
+const BACK_COVER_SURFACE_STATE_KIND = 'surface-state-back-cover';
+
+function serializeSurfaceStateRows(project: ProjectRecord) {
+  const rows: Array<typeof coverLayers.$inferInsert> = [];
+
+  if (project.cover.surfaceState) {
+    rows.push({
+      id: randomUUID(),
+      coverDesignId: project.cover.id,
+      layerOrder: 0,
+      kind: COVER_SURFACE_STATE_KIND,
+      payload: project.cover.surfaceState,
+    });
+  }
+
+  if (project.backCover.surfaceState) {
+    rows.push({
+      id: randomUUID(),
+      coverDesignId: project.backCover.id,
+      layerOrder: 0,
+      kind: BACK_COVER_SURFACE_STATE_KIND,
+      payload: project.backCover.surfaceState,
+    });
+  }
+
+  return rows;
+}
+
+function parseSurfaceStatePayload(
+  payload: unknown,
+  surface: SurfaceState['surface'],
+): SurfaceState | null {
+  if (!payload || typeof payload !== 'object') {
+    return null;
+  }
+
+  try {
+    return normalizeSurfaceState({
+      ...(payload as Partial<SurfaceState>),
+      surface,
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function replaceSurfaceStateRows(
+  db: Pick<ReturnType<typeof getDb>, 'delete' | 'insert'>,
+  project: ProjectRecord,
+) {
+  const designIds = [project.cover.id, project.backCover.id].filter(Boolean);
+  await db
+    .delete(coverLayers)
+    .where(
+      and(
+        inArray(coverLayers.kind, [COVER_SURFACE_STATE_KIND, BACK_COVER_SURFACE_STATE_KIND]),
+        inArray(coverLayers.coverDesignId, designIds),
+      ),
+    );
+
+  const rows = serializeSurfaceStateRows(project);
+  if (rows.length > 0) {
+    await db.insert(coverLayers).values(rows);
+  }
 }
 
 export function reconstructChaptersFromBlockRows(
@@ -100,8 +168,24 @@ function mapRowsToProject(
   blockRows: Array<typeof documentBlocks.$inferSelect>,
   coverRow: typeof coverDesigns.$inferSelect,
   backCoverRow: typeof backCoverDesigns.$inferSelect | null,
+  layerRows: Array<typeof coverLayers.$inferSelect>,
   assetRows: Array<typeof projectAssets.$inferSelect>,
 ): ProjectRecord {
+  const coverSurfaceState =
+    layerRows.find(
+      (row) =>
+        row.coverDesignId === coverRow.id &&
+        row.kind === COVER_SURFACE_STATE_KIND,
+    )?.payload ?? null;
+  const backCoverSurfaceState =
+    backCoverRow
+      ? layerRows.find(
+          (row) =>
+            row.coverDesignId === backCoverRow.id &&
+            row.kind === BACK_COVER_SURFACE_STATE_KIND,
+        )?.payload ?? null
+      : null;
+
   return {
     id: projectRow.id,
     userId: projectRow.userId,
@@ -146,6 +230,7 @@ function mapRowsToProject(
       accentColor: coverRow.accentColor,
       renderedImageUrl: coverRow.renderedImageUrl,
       showSubtitle: coverRow.showSubtitle ? Boolean(coverRow.showSubtitle) : true,
+      surfaceState: parseSurfaceStatePayload(coverSurfaceState, 'cover'),
     },
     backCover: {
       id: backCoverRow?.id ?? randomUUID(),
@@ -155,6 +240,7 @@ function mapRowsToProject(
       accentColor: backCoverRow?.accentColor ?? null,
       backgroundImageUrl: backCoverRow?.backgroundImageUrl ?? null,
       renderedImageUrl: backCoverRow?.renderedImageUrl ?? null,
+      surfaceState: parseSurfaceStatePayload(backCoverSurfaceState, 'back-cover'),
     },
     assets: assetRows.map((asset) => ({
       id: asset.id,
@@ -243,6 +329,11 @@ export async function persistProjectGraph(db: ProjectGraphWriter, project: Proje
     updatedAt: new Date(project.updatedAt),
   });
 
+  const surfaceRows = serializeSurfaceStateRows(project);
+  if (surfaceRows.length > 0) {
+    await db.insert(coverLayers).values(surfaceRows);
+  }
+
   if (project.assets.length > 0) {
     await db.insert(projectAssets).values(
       project.assets.map((asset) => ({
@@ -323,7 +414,7 @@ export async function persistDocumentUpdate(db: ProjectGraphWriterWithQuery, nex
   } else {
     // Create new back cover with default values if it doesn't exist
     await db.insert(backCoverDesigns).values({
-      id: randomUUID(),
+      id: nextProject.backCover.id,
       projectId: nextProject.id,
       title: nextProject.backCover.title,
       body: nextProject.backCover.body,
@@ -334,6 +425,8 @@ export async function persistDocumentUpdate(db: ProjectGraphWriterWithQuery, nex
       updatedAt: new Date(nextProject.updatedAt),
     });
   }
+
+  await replaceSurfaceStateRows(db, nextProject);
 }
 
 async function listProjectsFromDb(userId: string) {
@@ -401,6 +494,20 @@ async function getProjectFromDb(userId: string, projectId: string) {
       return null;
     });
 
+  const designIds = [coverRow?.id, backCoverRow?.id].filter((id): id is string => Boolean(id));
+  const layerRows =
+    designIds.length > 0
+      ? await db
+          .select()
+          .from(coverLayers)
+          .where(inArray(coverLayers.coverDesignId, designIds))
+          .orderBy(asc(coverLayers.layerOrder))
+          .catch((err) => {
+            console.warn('[projectRepository.getProjectById] cover_layers query failed', err?.message);
+            return [] as typeof coverLayers.$inferSelect[];
+          })
+      : [];
+
   const assetRows = await db
     .select()
     .from(projectAssets)
@@ -423,7 +530,7 @@ async function getProjectFromDb(userId: string, projectId: string) {
     blocks: blockRows.length,
     coverId: coverRow.id,
   });
-  return mapRowsToProject(projectRow, documentRow, blockRows, coverRow, backCoverRow ?? null, assetRows);
+  return mapRowsToProject(projectRow, documentRow, blockRows, coverRow, backCoverRow ?? null, layerRows, assetRows);
 }
 
 async function createProjectInDb(userId: string, input: CreateProjectInput) {
@@ -485,6 +592,8 @@ async function saveCoverInDb(userId: string, projectId: string, input: UpdateCov
       updatedAt: new Date(nextProject.updatedAt),
     })
     .where(eq(coverDesigns.projectId, projectId));
+
+  await replaceSurfaceStateRows(db, nextProject);
 
   return nextProject;
 }
@@ -788,7 +897,7 @@ async function saveBackCoverInDb(
   } else {
     // Create new back cover if it doesn't exist
     await db.insert(backCoverDesigns).values({
-      id: randomUUID(),
+      id: nextProject.backCover.id,
       projectId,
       title: nextProject.backCover.title,
       body: nextProject.backCover.body,
@@ -799,6 +908,8 @@ async function saveBackCoverInDb(
       updatedAt: new Date(nextProject.updatedAt),
     });
   }
+
+  await replaceSurfaceStateRows(db, nextProject);
 
   return nextProject;
 }

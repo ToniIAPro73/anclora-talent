@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
 import { uploadProjectBlob } from '@/lib/blob/client';
+import { normalizeSurfaceState, type SurfaceState } from './cover-surface';
 import type { CoverDesign, UpdateBackCoverInput, UpdateCoverInput, UpdateDocumentInput } from './types';
 
 function parsePalette(value: FormDataEntryValue | null): CoverDesign['palette'] {
@@ -14,6 +15,21 @@ function parsePalette(value: FormDataEntryValue | null): CoverDesign['palette'] 
   }
 
   return 'obsidian';
+}
+
+function parseSurfaceState(
+  value: FormDataEntryValue | null,
+): SurfaceState | null {
+  if (typeof value !== 'string' || !value.trim()) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(value) as Partial<SurfaceState> & { surface: SurfaceState['surface'] };
+    return normalizeSurfaceState(parsed);
+  } catch {
+    return null;
+  }
 }
 
 export async function createProjectAction(formData: FormData) {
@@ -199,7 +215,7 @@ export async function importChapterAction(formData: FormData) {
 
   // Convert blocks to a single HTML content block
   const htmlContent = blocks
-    .map((block: any) => {
+    .map((block) => {
       const content = block.content || '';
       if (content.trimStart().startsWith('<')) {
         return content;
@@ -286,6 +302,7 @@ export async function saveProjectCoverAction(formData: FormData) {
     fontFamily: String(formData.get('fontFamily') ?? '').trim() || null,
     accentColor: String(formData.get('accentColor') ?? '').trim() || null,
     showSubtitle,
+    surfaceState: parseSurfaceState(formData.get('surfaceState')),
   };
 
   await projectRepository.saveCover(userId, projectId, input);
@@ -311,6 +328,7 @@ export async function saveBackCoverAction(formData: FormData) {
     authorBio: String(formData.get('authorBio') ?? '').trim(),
     accentColor: String(formData.get('accentColor') ?? '').trim() || null,
     backgroundImageUrl,
+    surfaceState: parseSurfaceState(formData.get('surfaceState')),
   };
 
   await projectRepository.saveBackCover(userId, projectId, input);
@@ -366,7 +384,7 @@ export async function renderBackCoverImageAction(formData: FormData) {
 }
 
 export async function uploadChapterImagesAction(formData: FormData) {
-  const userId = await requireUserId();
+  await requireUserId();
   const projectId = String(formData.get('projectId') ?? '').trim();
   const chapterId = String(formData.get('chapterId') ?? '').trim();
   const imageDataJson = String(formData.get('imageData') ?? '[]').trim();
@@ -374,16 +392,35 @@ export async function uploadChapterImagesAction(formData: FormData) {
   if (!projectId || !chapterId) return null;
 
   try {
-    let images: any[] = [];
+    type UploadedImageDraft = {
+      id: string;
+      url: string;
+      [key: string]: unknown;
+    };
+
+    let images: UploadedImageDraft[] = [];
     try {
-      images = JSON.parse(imageDataJson);
+      const parsed = JSON.parse(imageDataJson) as unknown;
+      images = Array.isArray(parsed)
+        ? parsed.filter(
+            (image): image is UploadedImageDraft =>
+              Boolean(
+                image &&
+                  typeof image === 'object' &&
+                  'id' in image &&
+                  'url' in image &&
+                  typeof (image as { id: unknown }).id === 'string' &&
+                  typeof (image as { url: unknown }).url === 'string',
+              ),
+          )
+        : [];
     } catch (error) {
       console.error('Error parsing image data:', error);
       return null;
     }
 
     const uploadedImages = await Promise.all(
-      images.map(async (image: any) => {
+      images.map(async (image) => {
         // If image URL is a data URL, convert and upload to blob storage
         if (image.url && image.url.startsWith('data:image/')) {
           try {

@@ -6,17 +6,34 @@ import { SubmitButton } from '@/components/ui/SubmitButton';
 import { useState } from 'react';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
+import {
+  createDefaultSurfaceState,
+  mergePartialSurfaceUpdate,
+  normalizeSurfaceState,
+} from '@/lib/projects/cover-surface';
 
 const ACCENT_PRESETS = ['#d4af37', '#4fd1c5', '#f6a35c', '#a78bfa', '#f87171', '#34d399'];
 
 export function BackCoverForm({ copy, project }: { copy: AppMessages['project']; project: ProjectRecord }) {
   const bc = project.backCover;
+  const initialSurface = normalizeSurfaceState(
+    bc.surfaceState ?? {
+      ...createDefaultSurfaceState('back-cover'),
+      fields: {
+        title: { value: bc.title, visible: Boolean(bc.title.trim()) },
+        body: { value: bc.body, visible: Boolean(bc.body.trim()) },
+        authorBio: { value: bc.authorBio, visible: Boolean(bc.authorBio.trim()) },
+      },
+    },
+  );
+  const [surface, setSurface] = useState(initialSurface);
   const [accentColor, setAccentColor] = useState(bc.accentColor ?? ACCENT_PRESETS[0]);
 
   return (
     <form action={saveBackCoverAction} className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
       <input type="hidden" name="projectId" value={project.id} />
       <input type="hidden" name="currentBackgroundImageUrl" value={bc.backgroundImageUrl ?? ''} />
+      <input type="hidden" name="surfaceState" value={JSON.stringify(surface)} />
 
       {/* Controls */}
       <section className="space-y-5 rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
@@ -28,7 +45,16 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
           <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.backCoverTitleLabel}</span>
           <input
             name="title"
-            defaultValue={bc.title}
+            value={surface.fields.title?.value ?? ''}
+            onChange={(e) =>
+              setSurface((current) =>
+                mergePartialSurfaceUpdate(current, {
+                  fields: {
+                    title: { value: e.target.value, visible: Boolean(e.target.value.trim()) },
+                  },
+                }),
+              )
+            }
             className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
           />
         </label>
@@ -37,7 +63,16 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
           <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.backCoverBodyLabel}</span>
           <textarea
             name="body"
-            defaultValue={bc.body}
+            value={surface.fields.body?.value ?? ''}
+            onChange={(e) =>
+              setSurface((current) =>
+                mergePartialSurfaceUpdate(current, {
+                  fields: {
+                    body: { value: e.target.value, visible: Boolean(e.target.value.trim()) },
+                  },
+                }),
+              )
+            }
             rows={5}
             className="min-h-28 w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
           />
@@ -47,7 +82,16 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
           <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.backCoverAuthorBioLabel}</span>
           <textarea
             name="authorBio"
-            defaultValue={bc.authorBio}
+            value={surface.fields.authorBio?.value ?? ''}
+            onChange={(e) =>
+              setSurface((current) =>
+                mergePartialSurfaceUpdate(current, {
+                  fields: {
+                    authorBio: { value: e.target.value, visible: Boolean(e.target.value.trim()) },
+                  },
+                }),
+              )
+            }
             rows={3}
             className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
           />
@@ -108,21 +152,25 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
           />
         )}
         <div className="relative">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] opacity-60">{copy.backCoverEyebrow}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] opacity-60">{copy.backCoverEyebrow}</p>
           <div className="mt-8 max-w-xs space-y-6">
-            <p className="text-base leading-8 opacity-85">{bc.body || copy.backCoverBodyPlaceholder}</p>
-            {bc.authorBio && (
+            <p className="text-base leading-8 opacity-85">
+              {surface.fields.body?.visible ? surface.fields.body.value : copy.backCoverBodyPlaceholder}
+            </p>
+            {surface.fields.authorBio?.visible && (
               <div
                 className="border-l-4 pl-4 text-sm leading-7 opacity-70"
                 style={{ borderColor: accentColor }}
               >
-                {bc.authorBio}
+                {surface.fields.authorBio?.value}
               </div>
             )}
           </div>
           <div className="mt-10">
             <div className="h-px w-16 opacity-40" style={{ background: accentColor }} />
-            <p className="mt-4 text-xl font-black tracking-tight">{bc.title}</p>
+            {surface.fields.title?.visible && (
+              <p className="mt-4 text-xl font-black tracking-tight">{surface.fields.title.value}</p>
+            )}
           </div>
         </div>
       </section>

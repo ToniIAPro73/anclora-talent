@@ -33,7 +33,7 @@ describe('repository persistence helpers', () => {
 
     await persistProjectGraph(db as never, project);
 
-    expect(db.insert).toHaveBeenCalledTimes(5);
+    expect(db.insert).toHaveBeenCalledTimes(6);
   });
 
   test('persists source assets when the imported project contains them', async () => {
@@ -53,7 +53,7 @@ describe('repository persistence helpers', () => {
 
     await persistProjectGraph(db as never, project);
 
-    expect(db.insert).toHaveBeenCalledTimes(6);
+    expect(db.insert).toHaveBeenCalledTimes(7);
   });
 
   test('persists a document update without relying on transactions', async () => {
@@ -74,8 +74,8 @@ describe('repository persistence helpers', () => {
     await persistDocumentUpdate(db as never, next);
 
     expect(db.update).toHaveBeenCalledTimes(4);
-    expect(db.delete).toHaveBeenCalledTimes(1);
-    expect(db.insert).toHaveBeenCalledTimes(1);
+    expect(db.delete).toHaveBeenCalledTimes(2);
+    expect(db.insert).toHaveBeenCalledTimes(2);
   });
 
   test('reconstructs multiple chapters from flattened block rows', () => {

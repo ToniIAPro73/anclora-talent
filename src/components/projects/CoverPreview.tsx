@@ -1,6 +1,7 @@
 'use client';
 
 import type { CoverDesign } from '@/lib/projects/types';
+import type { SurfaceState } from '@/lib/projects/cover-surface';
 
 const previewGradients: Record<CoverDesign['palette'], string> = {
   obsidian: 'linear-gradient(160deg, #0b133f 0%, #0b233f 50%, #07252f 100%)',
@@ -15,19 +16,19 @@ const previewText: Record<CoverDesign['palette'], { primary: string; secondary: 
 };
 
 export function CoverPreview({
-  title,
-  subtitle,
+  surface,
   palette,
   backgroundImageUrl,
   eyebrow,
 }: {
-  title: string;
-  subtitle: string;
+  surface: SurfaceState;
   palette: CoverDesign['palette'];
   backgroundImageUrl?: string | null;
   eyebrow: string;
 }) {
   const colors = previewText[palette];
+  const title = surface.fields.title?.value || 'Título del proyecto';
+  const subtitle = surface.fields.subtitle?.visible ? surface.fields.subtitle.value : '';
 
   return (
     <section className="space-y-4">
@@ -49,13 +50,15 @@ export function CoverPreview({
           <h2 
             className="text-4xl font-black tracking-tight" 
             style={{ color: colors.primary, lineHeight: 1.1 }}
+            data-testid="cover-preview-title"
           >
-            {title || 'Título del proyecto'}
+            {title}
           </h2>
           {subtitle && (
             <p 
               className="mt-6 text-sm font-medium leading-relaxed" 
               style={{ color: colors.secondary }}
+              data-testid="cover-preview-subtitle"
             >
               {subtitle}
             </p>

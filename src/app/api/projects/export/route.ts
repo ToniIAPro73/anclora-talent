@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
-import type { DocumentBlock, DocumentChapter } from '@/lib/projects/types';
+import { createDefaultSurfaceState, normalizeSurfaceState } from '@/lib/projects/cover-surface';
+import type { DocumentBlock, DocumentChapter, ProjectRecord } from '@/lib/projects/types';
 
 function blockToHtml(block: DocumentBlock): string {
   const isHtml = block.content.trimStart().startsWith('<');
@@ -45,6 +46,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { document, cover } = project;
+    const normalizedCover = normalizeCoverSurface(project);
     const multiChapter = document.chapters.length > 1;
 
     const chaptersHtml = document.chapters
@@ -72,8 +74,12 @@ export async function GET(request: NextRequest) {
 </head>
 <body>
   <header>
-    <h1>${escapeHtml(cover.title || document.title)}</h1>
-    <div class="cover-meta">${escapeHtml(cover.subtitle || document.subtitle)}</div>
+    <h1>${escapeHtml(normalizedCover.fields.title?.value || cover.title || document.title)}</h1>
+    ${
+      normalizedCover.fields.subtitle?.visible
+        ? `<div class="cover-meta">${escapeHtml(normalizedCover.fields.subtitle.value)}</div>`
+        : ''
+    }
   </header>
   <main>
     ${chaptersHtml}
@@ -92,4 +98,22 @@ export async function GET(request: NextRequest) {
     console.error('[export] failed', error);
     return NextResponse.json({ error: 'Export failed' }, { status: 500 });
   }
+}
+
+function normalizeCoverSurface(project: ProjectRecord) {
+  const fallback = createDefaultSurfaceState('cover');
+  fallback.fields.title = {
+    value: project.cover.title || project.document.title,
+    visible: Boolean((project.cover.title || project.document.title).trim()),
+  };
+  fallback.fields.subtitle = {
+    value: project.cover.subtitle || '',
+    visible: Boolean((project.cover.showSubtitle ?? true) && project.cover.subtitle?.trim()),
+  };
+  fallback.fields.author = {
+    value: project.document.author || '',
+    visible: Boolean(project.document.author.trim()),
+  };
+
+  return normalizeSurfaceState(project.cover.surfaceState ?? fallback);
 }

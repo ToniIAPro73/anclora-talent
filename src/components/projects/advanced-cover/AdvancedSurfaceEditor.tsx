@@ -1,0 +1,384 @@
+'use client';
+
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { Check, Loader2, Sparkles } from 'lucide-react';
+import { CoverCanvas } from './Canvas';
+import { CoverToolbar } from './Toolbar';
+import { CoverPropertyPanel } from './PropertyPanel';
+import { renderBackCoverImageAction, renderCoverImageAction } from '@/lib/projects/actions';
+import { useCanvasStore } from '@/lib/canvas-store';
+import { addImageToCanvas, addTextToCanvas } from '@/lib/canvas-utils';
+import { createGuideManager } from '@/lib/canvas-guides';
+import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
+import { createSurfaceSnapshotFromProject } from './advanced-surface-utils';
+import type { SurfaceKind } from '@/lib/projects/cover-surface';
+import type { ProjectRecord } from '@/lib/projects/types';
+import type { AppMessages } from '@/lib/i18n/messages';
+
+type AdvancedSurfaceEditorProps = {
+  surface: SurfaceKind;
+  project: ProjectRecord;
+  copy: AppMessages['project'];
+};
+
+type FabricCanvasLike = {
+  width?: number;
+  height?: number;
+  clear: () => void;
+  set: (props: Record<string, unknown>) => void;
+  on: (event: string, handler: (event: FabricEvent) => void | Promise<void>) => void;
+  requestRenderAll: () => void;
+  setActiveObject: (object: FabricObjectLike) => void;
+  toDataURL: (options: { format: string; quality: number; multiplier: number }) => string;
+};
+
+type FabricObjectLike = {
+  id?: string;
+  width?: number;
+  height?: number;
+  opacity?: number;
+  set: (props: Record<string, unknown>) => void;
+};
+
+type FabricEvent = {
+  selected?: FabricObjectLike[];
+  target?: FabricObjectLike;
+};
+
+type GuideManagerLike = {
+  clearGuides: () => void;
+  hideGuidesWithAnimation: () => void;
+  showGuides: (target: FabricObjectLike) => Promise<void>;
+  snapToGuides: (target: FabricObjectLike) => void;
+  dispose: () => void;
+};
+
+export function AdvancedSurfaceEditor({
+  surface,
+  project,
+  copy,
+}: AdvancedSurfaceEditorProps) {
+  const { canvas, setCanvas, addElement, clear, selectElement } = useCanvasStore();
+  const [isRendering, startRenderTransition] = useTransition();
+  const [rendered, setRendered] = useState(false);
+  const [renderedImageUrl, setRenderedImageUrl] = useState<string | null>(
+    surface === 'cover'
+      ? project.cover.renderedImageUrl ?? null
+      : project.backCover.renderedImageUrl ?? null,
+  );
+  const loadingRef = useRef(false);
+  const listenersAttachedRef = useRef(false);
+  const guideManagerRef = useRef<GuideManagerLike | null>(null);
+
+  const surfaceSnapshot = createSurfaceSnapshotFromProject(surface, project);
+
+  const loadSurfaceData = useCallback(
+    async (fabricCanvas: FabricCanvasLike) => {
+      if (!fabricCanvas || loadingRef.current) return;
+
+      loadingRef.current = true;
+
+      try {
+        clear();
+        if (guideManagerRef.current) {
+          guideManagerRef.current.clearGuides();
+        }
+        fabricCanvas.clear();
+        selectElement(null);
+        listenersAttachedRef.current = false;
+
+        const canvasWidth = fabricCanvas.width || 400;
+        const canvasHeight = fabricCanvas.height || 600;
+        const bgColors: Record<string, string> = {
+          obsidian: '#0b133f',
+          teal: '#124a50',
+          sand: '#f2e3b3',
+        };
+        const palette =
+          surface === 'cover'
+            ? project.cover.palette
+            : 'obsidian';
+
+        fabricCanvas.set({ backgroundColor: bgColors[palette] || '#0b133f' });
+
+        const backgroundImageUrl =
+          surface === 'cover'
+            ? project.cover.backgroundImageUrl
+            : project.backCover.backgroundImageUrl;
+
+        if (backgroundImageUrl) {
+          try {
+            const fabricImg = (await addImageToCanvas(fabricCanvas, backgroundImageUrl, {
+              selectable: true,
+              evented: true,
+              id: `${surface}-background-image`,
+            })) as FabricObjectLike;
+
+            const scaleX = canvasWidth / fabricImg.width;
+            const scaleY = canvasHeight / fabricImg.height;
+            const scale = Math.max(scaleX, scaleY);
+
+            fabricImg.set({
+              scaleX: scale,
+              scaleY: scale,
+              left: canvasWidth / 2,
+              top: canvasHeight / 2,
+              originX: 'center',
+              originY: 'center',
+              opacity: surface === 'back-cover' ? 0.24 : 1,
+            });
+
+            addElement({
+              id: `${surface}-background-image`,
+              type: 'image',
+              object: fabricImg,
+              properties: { opacity: fabricImg.opacity ?? 1 },
+            });
+          } catch (error) {
+            console.error('[AdvancedSurfaceEditor] Error loading background image', error);
+          }
+        }
+
+        const textColor =
+          surface === 'cover'
+            ? project.cover.accentColor || (project.cover.palette === 'sand' ? '#0b313f' : '#f2e3b3')
+            : project.backCover.accentColor || '#f2e3b3';
+
+        const fieldConfigs: Record<string, { top: number; fontSize: number; fontWeight: string | number; textAlign: 'left' | 'center'; width: number; left: number; fill?: string }> = {
+          title: {
+            top: surface === 'cover' ? canvasHeight * 0.34 : canvasHeight * 0.18,
+            fontSize: surface === 'cover' ? 38 : 28,
+            fontWeight: 900,
+            textAlign: surface === 'cover' ? 'center' : 'left',
+            width: canvasWidth * (surface === 'cover' ? 0.82 : 0.72),
+            left: surface === 'cover' ? canvasWidth / 2 : canvasWidth * 0.16,
+          },
+          subtitle: {
+            top: canvasHeight * 0.5,
+            fontSize: 16,
+            fontWeight: 500,
+            textAlign: 'center',
+            width: canvasWidth * 0.82,
+            left: canvasWidth / 2,
+            fill: project.cover.palette === 'sand' ? 'rgba(11,49,63,0.75)' : 'rgba(242,227,179,0.82)',
+          },
+          author: {
+            top: canvasHeight * 0.78,
+            fontSize: 15,
+            fontWeight: 500,
+            textAlign: 'center',
+            width: canvasWidth * 0.82,
+            left: canvasWidth / 2,
+            fill: project.cover.palette === 'sand' ? 'rgba(11,49,63,0.7)' : 'rgba(242,227,179,0.72)',
+          },
+          body: {
+            top: canvasHeight * 0.36,
+            fontSize: 16,
+            fontWeight: 500,
+            textAlign: 'left',
+            width: canvasWidth * 0.72,
+            left: canvasWidth * 0.16,
+          },
+          authorBio: {
+            top: canvasHeight * 0.78,
+            fontSize: 13,
+            fontWeight: 400,
+            textAlign: 'left',
+            width: canvasWidth * 0.62,
+            left: canvasWidth * 0.16,
+            fill: 'rgba(242,227,179,0.78)',
+          },
+        };
+
+        let firstTextElement: { id: string; type: 'text'; object: FabricObjectLike; properties: Record<string, unknown> } | null = null;
+
+        for (const layer of surfaceSnapshot.layers ?? []) {
+          if (layer.type !== 'text' || !layer.fieldKey) continue;
+          const fieldState = surfaceSnapshot.fields[layer.fieldKey];
+          if (!fieldState?.visible) continue;
+
+          const config = fieldConfigs[layer.fieldKey];
+          if (!config) continue;
+
+          const textObject = await addTextToCanvas(fabricCanvas, fieldState.value, {
+            top: config.top,
+            fontSize: config.fontSize,
+            fontWeight: config.fontWeight,
+            fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+            fill: config.fill ?? textColor,
+            textAlign: config.textAlign,
+            id: `${surface}-${layer.fieldKey}-text`,
+            width: config.width,
+            left: config.left,
+            originX: config.textAlign === 'center' ? 'center' : 'left',
+            selectable: true,
+            evented: true,
+            lineHeight: layer.fieldKey === 'body' ? 1.45 : 1.16,
+          });
+
+          const nextElement = {
+            id: `${surface}-${layer.fieldKey}-text`,
+            type: 'text' as const,
+            object: textObject,
+            properties: {
+              fill: config.fill ?? textColor,
+              fontSize: config.fontSize,
+              opacity: 1,
+              fontWeight: config.fontWeight,
+              textAlign: config.textAlign,
+              text: fieldState.value,
+            },
+          };
+
+          addElement(nextElement);
+          firstTextElement ??= nextElement;
+        }
+
+        if (!listenersAttachedRef.current) {
+          if (!guideManagerRef.current) {
+            guideManagerRef.current = createGuideManager(fabricCanvas);
+          }
+
+          fabricCanvas.on('selection:created', (e: FabricEvent) => {
+            if (e.selected?.length > 0) {
+              const selectedFabricObj = e.selected[0];
+              const element = useCanvasStore.getState().elements.find((el) => el.id === selectedFabricObj.id);
+              if (element) selectElement(element);
+            }
+          });
+
+          fabricCanvas.on('selection:updated', (e: FabricEvent) => {
+            if (e.selected?.length > 0) {
+              const selectedFabricObj = e.selected[0];
+              const element = useCanvasStore.getState().elements.find((el) => el.id === selectedFabricObj.id);
+              if (element) selectElement(element);
+            }
+          });
+
+          fabricCanvas.on('selection:cleared', () => {
+            selectElement(null);
+            guideManagerRef.current?.hideGuidesWithAnimation();
+          });
+
+          fabricCanvas.on('object:moving', async (e: FabricEvent) => {
+            if (guideManagerRef.current && e.target) {
+              await guideManagerRef.current.showGuides(e.target);
+              guideManagerRef.current.snapToGuides(e.target);
+            }
+          });
+
+          fabricCanvas.on('object:modified', () => {
+            guideManagerRef.current?.hideGuidesWithAnimation();
+          });
+
+          listenersAttachedRef.current = true;
+        }
+
+        fabricCanvas.requestRenderAll();
+
+        if (firstTextElement) {
+          fabricCanvas.setActiveObject(firstTextElement.object);
+          selectElement(firstTextElement);
+        }
+
+        useCanvasStore.getState().pushHistory();
+      } finally {
+        loadingRef.current = false;
+      }
+    },
+    [addElement, clear, project, selectElement, surface, surfaceSnapshot.fields, surfaceSnapshot.layers],
+  );
+
+  const handleCanvasReady = useCallback(
+    (fabricCanvas: unknown) => {
+      const nextCanvas = fabricCanvas as FabricCanvasLike;
+      setCanvas(nextCanvas);
+      loadSurfaceData(nextCanvas);
+    },
+    [loadSurfaceData, setCanvas],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (guideManagerRef.current) {
+        guideManagerRef.current.dispose();
+        guideManagerRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleSaveAndRender = () => {
+    if (!canvas) return;
+
+    startRenderTransition(async () => {
+      const dataUrl = canvas.toDataURL({
+        format: 'png',
+        quality: 1,
+        multiplier: 2,
+      });
+
+      const formData = new FormData();
+      formData.set('projectId', project.id);
+      formData.set('dataUrl', dataUrl);
+
+      if (surface === 'cover') {
+        await renderCoverImageAction(formData);
+      } else {
+        await renderBackCoverImageAction(formData);
+      }
+
+      setRenderedImageUrl(dataUrl);
+      setRendered(true);
+      setTimeout(() => setRendered(false), 2500);
+    });
+  };
+
+  return (
+    <div className="space-y-6" data-testid={`advanced-${surface}-editor`}>
+      <div className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-4 shadow-[var(--shadow-strong)] flex items-center justify-between">
+        <CoverToolbar />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleSaveAndRender}
+            disabled={isRendering}
+            className={`${premiumPrimaryDarkButton} px-4 py-2 text-xs`}
+          >
+            {isRendering ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5" />}
+            Guardar Diseño Final
+          </button>
+          {rendered && (
+            <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]">
+              <Check className="h-3 w-3" />
+              Guardado
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
+        <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-8 shadow-[var(--shadow-strong)] flex flex-col items-center justify-center min-h-[700px]">
+          <CoverCanvas onCanvasReady={handleCanvasReady} initialPalette={surface === 'cover' ? project.cover.palette : 'obsidian'} />
+
+          {renderedImageUrl && (
+            <div className="mt-8 p-4 rounded-2xl bg-[var(--surface-soft)] border border-[var(--border-subtle)] w-full max-w-md">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)] mb-3">
+                {copy.coverRenderedImageLabel}
+              </p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={renderedImageUrl}
+                alt={copy.coverRenderedImageLabel}
+                className="w-24 rounded-lg shadow-lg border border-white/10"
+              />
+            </div>
+          )}
+        </section>
+
+        <aside className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)] self-start sticky top-8">
+          <CoverPropertyPanel />
+        </aside>
+      </div>
+    </div>
+  );
+}

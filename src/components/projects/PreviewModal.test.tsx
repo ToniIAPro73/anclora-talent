@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { PreviewModal } from './PreviewModal';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { ProjectRecord } from '@/lib/projects/types';
+import { createDefaultSurfaceState } from '@/lib/projects/cover-surface';
 
 const copy = resolveLocaleMessages('es').project;
 
@@ -161,5 +162,34 @@ describe('PreviewModal', () => {
     await waitFor(() => {
       expect(screen.getByTestId('preview-spread-frame')).toHaveStyle({ width: '905.52px' });
     });
+  });
+
+  test('does not re-render a hidden subtitle from saved cover surface state', () => {
+    const project = makeProject();
+    const coverSurface = createDefaultSurfaceState('cover');
+    coverSurface.fields.title.value = 'Nunca mas en la sombra';
+    coverSurface.fields.title.visible = true;
+    coverSurface.fields.subtitle.value = '';
+    coverSurface.fields.subtitle.visible = false;
+    coverSurface.fields.author.value = 'Antonio Ballesteros Alonso';
+    coverSurface.fields.author.visible = true;
+
+    render(
+      <PreviewModal
+        project={{
+          ...project,
+          cover: {
+            ...project.cover,
+            subtitle: 'Subtitulo antiguo',
+            renderedImageUrl: null,
+            surfaceState: coverSurface,
+          },
+        }}
+        copy={copy}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(screen.queryByText('Subtitulo antiguo')).not.toBeInTheDocument();
   });
 });
