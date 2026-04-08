@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useTransition, useState, useMemo, useCallback } from 'react';
-import { Check, Loader2, BookOpen, FileText, Palette, Users, Sparkles, Download, Monitor } from 'lucide-react';
+import { useTransition, useState, useMemo } from 'react';
+import { Check, Loader2, Download } from 'lucide-react';
 import { Stepper, type Step } from '@/components/ui/Stepper';
 import { ChapterOrganizer } from './ChapterOrganizer';
 import { DocumentStatsCard } from './DocumentStatsCard';
@@ -17,32 +17,62 @@ import { ChapterEditorModal } from './ChapterEditorModal';
 import { AddChapterDialog } from './AddChapterDialog';
 import { ImportChapterDialog } from './ImportChapterDialog';
 import { Portal } from '@/components/ui/Portal';
-import { saveProjectDocumentAction, saveProjectCoverAction, saveChapterContentAction } from '@/lib/projects/actions';
+import { saveBackCoverAction, saveProjectDocumentAction, saveProjectCoverAction } from '@/lib/projects/actions';
 import { computeChapterPageMetrics } from '@/lib/preview/metrics';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
+import {
+  BACK_COVER_TEMPLATES,
+  COVER_TEMPLATES,
+  type EditorialTemplate,
+} from '@/lib/projects/cover-templates';
+import {
+  applySurfaceTemplate,
+  createDefaultSurfaceState,
+  normalizeSurfaceState,
+} from '@/lib/projects/cover-surface';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 
-function blocksToHtml(
-  blocks: ProjectRecord['document']['chapters'][number]['blocks'],
-): string {
-  return blocks
-    .filter((block) => block.content.trim()) // Skip empty blocks
-    .map((block) => {
-      if (block.content.trimStart().startsWith('<')) {
-        return block.content;
-      }
+const TEMPLATE_TONE_TO_PALETTE: Record<EditorialTemplate['previewTone'], ProjectRecord['cover']['palette']> = {
+  obsidian: 'obsidian',
+  teal: 'teal',
+  sand: 'sand',
+};
 
-      const escaped = block.content
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-      if (block.type === 'heading') return `<h2>${escaped}</h2>`;
-      if (block.type === 'quote') return `<blockquote><p>${escaped}</p></blockquote>`;
-      return `<p>${escaped}</p>`;
-    })
-    .join('');
+function buildCoverSurface(project: ProjectRecord) {
+  const fallback = createDefaultSurfaceState('cover');
+  fallback.fields.title = { value: project.cover.title, visible: Boolean(project.cover.title.trim()) };
+  fallback.fields.subtitle = {
+    value: project.cover.subtitle,
+    visible: Boolean((project.cover.showSubtitle ?? true) && project.cover.subtitle.trim()),
+  };
+  fallback.fields.author = {
+    value: project.document.author,
+    visible: Boolean(project.document.author.trim()),
+  };
+
+  return normalizeSurfaceState(project.cover.surfaceState ?? fallback);
+}
+
+function buildBackCoverSurface(project: ProjectRecord) {
+  const fallback = createDefaultSurfaceState('back-cover');
+  fallback.fields.title = { value: project.backCover.title, visible: Boolean(project.backCover.title.trim()) };
+  fallback.fields.body = { value: project.backCover.body, visible: Boolean(project.backCover.body.trim()) };
+  fallback.fields.authorBio = {
+    value: project.backCover.authorBio,
+    visible: Boolean(project.backCover.authorBio.trim()),
+  };
+
+  return normalizeSurfaceState(project.backCover.surfaceState ?? fallback);
+}
+
+function inferTemplateId(
+  templates: EditorialTemplate[],
+  layoutKind: string | undefined,
+  fallbackId: string,
+) {
+  return templates.find((template) => template.layout.kind === layoutKind)?.id ?? fallbackId;
 }
 
 type SaveState = 'idle' | 'saving' | 'saved';
@@ -66,12 +96,26 @@ export function ProjectWorkspace({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
-  const [selectedTemplate, setSelectedTemplate] = useState(project.cover.palette);
+  const initialCoverSurface = useMemo(() => buildCoverSurface(project), [project]);
+  const initialBackCoverSurface = useMemo(() => buildBackCoverSurface(project), [project]);
+  const [selectedCoverTemplateId, setSelectedCoverTemplateId] = useState(
+    inferTemplateId(COVER_TEMPLATES, initialCoverSurface.layout.kind, COVER_TEMPLATES[0]?.id ?? ''),
+  );
+  const [selectedBackCoverTemplateId, setSelectedBackCoverTemplateId] = useState(
+    inferTemplateId(
+      BACK_COVER_TEMPLATES,
+      initialBackCoverSurface.layout.kind,
+      BACK_COVER_TEMPLATES[0]?.id ?? '',
+    ),
+  );
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [isPending, startTransition] = useTransition();
 
+  const resolvedActiveChapterId = project.document.chapters.some((chapter) => chapter.id === activeChapterId)
+    ? activeChapterId
+    : (project.document.chapters[0]?.id ?? '');
   const activeChapter =
-    project.document.chapters.find((ch) => ch.id === activeChapterId) ??
+    project.document.chapters.find((ch) => ch.id === resolvedActiveChapterId) ??
     project.document.chapters[0];
 
   const editingChapterIndex = useMemo(
@@ -79,38 +123,59 @@ export function ProjectWorkspace({
     [project.document.chapters, editingChapterId],
   );
 
-  const editingChapter = editingChapterId ? project.document.chapters.find((ch) => ch.id === editingChapterId) : null;
-
-  useEffect(() => {
-    if (!project.document.chapters.some((chapter) => chapter.id === activeChapterId)) {
-      setActiveChapterId(project.document.chapters[0]?.id ?? '');
-    }
-  }, [activeChapterId, project.document.chapters]);
-
   // Compute chapter page metrics (Commit 3)
   const chapterMetricsById = useMemo(() => {
     const metrics = computeChapterPageMetrics(project);
     return Object.fromEntries(metrics.map((m) => [m.chapterId, m]));
   }, [project]);
 
-  const handleTemplateSelect = (templateId: string) => {
-    setSelectedTemplate(templateId as 'obsidian' | 'teal' | 'sand');
+  const handleCoverTemplateSelect = (templateId: string) => {
+    const template = COVER_TEMPLATES.find((item) => item.id === templateId);
+    if (!template) return;
 
+    setSelectedCoverTemplateId(templateId);
+
+    const nextSurface = applySurfaceTemplate(initialCoverSurface, template);
     const formData = new FormData();
     formData.set('projectId', project.id);
-    formData.set('title', project.cover.title);
-    formData.set('subtitle', project.cover.subtitle);
-    formData.set('palette', templateId);
+    formData.set('title', nextSurface.fields.title?.value ?? project.cover.title);
+    formData.set('subtitle', nextSurface.fields.subtitle?.value ?? project.cover.subtitle);
+    formData.set('palette', TEMPLATE_TONE_TO_PALETTE[template.previewTone]);
     formData.set('currentBackgroundImageUrl', project.cover.backgroundImageUrl ?? '');
     formData.set('currentThumbnailUrl', project.cover.thumbnailUrl ?? '');
     formData.set('layout', project.cover.layout || 'centered');
-    formData.set('showSubtitle', String(project.cover.showSubtitle ?? true));
+    formData.set('showSubtitle', String(nextSurface.fields.subtitle?.visible ?? false));
     formData.set('accentColor', project.cover.accentColor ?? '');
     formData.set('fontFamily', project.cover.fontFamily ?? '');
+    formData.set('surfaceState', JSON.stringify(nextSurface));
 
     setSaveState('saving');
     startTransition(async () => {
       await saveProjectCoverAction(formData);
+      setSaveState('saved');
+      setTimeout(() => setSaveState('idle'), 2000);
+    });
+  };
+
+  const handleBackCoverTemplateSelect = (templateId: string) => {
+    const template = BACK_COVER_TEMPLATES.find((item) => item.id === templateId);
+    if (!template) return;
+
+    setSelectedBackCoverTemplateId(templateId);
+
+    const nextSurface = applySurfaceTemplate(initialBackCoverSurface, template);
+    const formData = new FormData();
+    formData.set('projectId', project.id);
+    formData.set('title', nextSurface.fields.title?.value ?? project.backCover.title);
+    formData.set('body', nextSurface.fields.body?.value ?? project.backCover.body);
+    formData.set('authorBio', nextSurface.fields.authorBio?.value ?? project.backCover.authorBio);
+    formData.set('accentColor', project.backCover.accentColor ?? '');
+    formData.set('currentBackgroundImageUrl', project.backCover.backgroundImageUrl ?? '');
+    formData.set('surfaceState', JSON.stringify(nextSurface));
+
+    setSaveState('saving');
+    startTransition(async () => {
+      await saveBackCoverAction(formData);
       setSaveState('saved');
       setTimeout(() => setSaveState('idle'), 2000);
     });
@@ -193,7 +258,7 @@ export function ProjectWorkspace({
             <ChapterOrganizer
               projectId={project.id}
               chapters={project.document.chapters}
-              activeChapterId={activeChapterId}
+              activeChapterId={resolvedActiveChapterId}
               onSelect={setActiveChapterId}
               onEditChapter={setEditingChapterId}
               onAddChapter={() => setIsAddDialogOpen(true)}
@@ -206,8 +271,10 @@ export function ProjectWorkspace({
         return (
           <div className="mx-auto max-w-5xl">
             <TemplateSelector
-              selectedTemplateId={selectedTemplate}
-              onSelect={handleTemplateSelect}
+              selectedCoverTemplateId={selectedCoverTemplateId}
+              selectedBackCoverTemplateId={selectedBackCoverTemplateId}
+              onSelectCover={handleCoverTemplateSelect}
+              onSelectBackCover={handleBackCoverTemplateSelect}
               copy={copy}
             />
           </div>

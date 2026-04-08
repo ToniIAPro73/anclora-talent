@@ -1,3 +1,5 @@
+import type { SurfaceState } from './cover-surface';
+
 export type ProjectStatus = 'draft' | 'active';
 
 export type DocumentBlockType = 'heading' | 'paragraph' | 'quote';
@@ -68,6 +70,7 @@ export interface CoverDesign {
   accentColor?: string | null;
   renderedImageUrl?: string | null;
   showSubtitle?: boolean;
+  surfaceState?: SurfaceState | null;
 }
 
 export interface BackCoverDesign {
@@ -78,6 +81,7 @@ export interface BackCoverDesign {
   accentColor: string | null;
   backgroundImageUrl: string | null;
   renderedImageUrl: string | null;
+  surfaceState?: SurfaceState | null;
 }
 
 export type ProjectAssetUsage =
@@ -173,6 +177,7 @@ export interface UpdateCoverInput {
   fontFamily?: string | null;
   accentColor?: string | null;
   showSubtitle?: boolean;
+  surfaceState?: SurfaceState | null;
 }
 
 export interface UpdateBackCoverInput {
@@ -181,4 +186,5 @@ export interface UpdateBackCoverInput {
   authorBio: string;
   accentColor: string | null;
   backgroundImageUrl: string | null;
+  surfaceState?: SurfaceState | null;
 }

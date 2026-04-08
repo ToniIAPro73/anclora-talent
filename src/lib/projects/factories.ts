@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { createDefaultSurfaceState } from './cover-surface';
 import type {
   CreateProjectInput,
   ProjectRecord,
@@ -113,6 +114,7 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
       accentColor: null,
       renderedImageUrl: null,
       showSubtitle: true,
+      surfaceState: createDefaultSurfaceState('cover'),
     },
     backCover: {
       id: randomUUID(),
@@ -122,6 +124,7 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
       accentColor: null,
       backgroundImageUrl: null,
       renderedImageUrl: null,
+      surfaceState: createDefaultSurfaceState('back-cover'),
     },
     assets: imported
       ? [
@@ -319,6 +322,7 @@ export function updateProjectBackCover(
       authorBio: input.authorBio,
       accentColor: input.accentColor,
       backgroundImageUrl: input.backgroundImageUrl,
+      surfaceState: input.surfaceState ?? project.backCover.surfaceState,
     },
   };
 }

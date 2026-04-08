@@ -3,6 +3,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { ProjectWorkspace } from './ProjectWorkspace';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { ProjectRecord } from '@/lib/projects/types';
+import { createDefaultSurfaceState } from '@/lib/projects/cover-surface';
 
 vi.mock('@/lib/projects/actions', () => ({
   saveChapterContentAction: vi.fn().mockResolvedValue(undefined),
@@ -10,6 +11,7 @@ vi.mock('@/lib/projects/actions', () => ({
   moveChapterAction: vi.fn().mockResolvedValue(undefined),
   deleteChapterAction: vi.fn().mockResolvedValue(undefined),
   saveProjectCoverAction: vi.fn().mockResolvedValue(undefined),
+  saveBackCoverAction: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Tiptap requires a real browser DOM — stub it out for jsdom
@@ -67,6 +69,17 @@ function makeProject(overrides: Partial<ProjectRecord> = {}): ProjectRecord {
       palette: 'obsidian',
       backgroundImageUrl: null,
       thumbnailUrl: null,
+      showSubtitle: true,
+      surfaceState: (() => {
+        const state = createDefaultSurfaceState('cover');
+        state.fields.title.value = 'Mi Proyecto';
+        state.fields.title.visible = true;
+        state.fields.subtitle.value = 'Subtítulo';
+        state.fields.subtitle.visible = true;
+        state.fields.author.value = 'Autor Demo';
+        state.fields.author.visible = true;
+        return state;
+      })(),
     },
     backCover: {
       id: 'bc-1',
@@ -76,6 +89,16 @@ function makeProject(overrides: Partial<ProjectRecord> = {}): ProjectRecord {
       accentColor: null,
       backgroundImageUrl: null,
       renderedImageUrl: null,
+      surfaceState: (() => {
+        const state = createDefaultSurfaceState('back-cover');
+        state.fields.title.value = 'Mi Proyecto';
+        state.fields.title.visible = true;
+        state.fields.body.value = '';
+        state.fields.body.visible = false;
+        state.fields.authorBio.value = '';
+        state.fields.authorBio.visible = false;
+        return state;
+      })(),
     },
     assets: [],
     ...overrides,
@@ -88,9 +111,10 @@ describe('ProjectWorkspace', () => {
     expect(screen.getByText('Mi Proyecto')).toBeInTheDocument();
   });
 
-  test('shows first chapter content in the editor by default (Step 1)', () => {
+  test('shows document metadata form by default in Step 1', () => {
     render(<ProjectWorkspace project={makeProject()} copy={copy} />);
-    expect(screen.getByTestId('rich-text-editor')).toHaveTextContent('<p>Primer párrafo.</p>');
+    expect(screen.getByTestId('project-metadata-form')).toBeInTheDocument();
+    expect(screen.getByTestId('project-document-title-input')).toHaveValue('Mi Proyecto');
   });
 
   test('renders chapter organizer when moving to Step 2', () => {
@@ -134,5 +158,49 @@ describe('ProjectWorkspace', () => {
     fireEvent.click(advancedButton);
 
     expect(screen.getByTestId('advanced-cover-editor')).toBeInTheDocument();
+  });
+
+  test('basic cover does not reintroduce a removed subtitle', () => {
+    const project = makeProject({
+      cover: {
+        ...makeProject().cover,
+        subtitle: 'Subtítulo antiguo',
+        showSubtitle: true,
+        surfaceState: (() => {
+          const state = createDefaultSurfaceState('cover');
+          state.fields.title.value = 'Mi Proyecto';
+          state.fields.title.visible = true;
+          state.fields.subtitle.value = '';
+          state.fields.subtitle.visible = false;
+          state.fields.author.value = 'Autor Demo';
+          state.fields.author.visible = true;
+          return state;
+        })(),
+      },
+    });
+
+    render(<ProjectWorkspace project={project} copy={copy} />);
+
+    const nextButton = screen.getByText('Siguiente paso');
+    fireEvent.click(nextButton);
+    fireEvent.click(nextButton);
+    fireEvent.click(nextButton);
+
+    expect(screen.getByLabelText(copy.coverSubtitleLabel)).toHaveValue('');
+    expect(screen.queryByTestId('cover-preview-subtitle')).not.toBeInTheDocument();
+  });
+
+  test('template step shows separate cover and back cover catalogs', () => {
+    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+
+    const nextButton = screen.getByText('Siguiente paso');
+    fireEvent.click(nextButton);
+    fireEvent.click(nextButton);
+
+    expect(screen.getByText('Plantillas de portada')).toBeInTheDocument();
+    expect(screen.getByText('Plantillas de contraportada')).toBeInTheDocument();
+    expect(screen.getByText('Ficcion literaria')).toBeInTheDocument();
+    expect(screen.getByText('Workbook / guia practica')).toBeInTheDocument();
+    expect(screen.getByText('Statement back')).toBeInTheDocument();
   });
 });

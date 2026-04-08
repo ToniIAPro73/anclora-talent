@@ -8,10 +8,27 @@ import type { ProjectRecord, CoverDesign } from '@/lib/projects/types';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import type { AppMessages } from '@/lib/i18n/messages';
 import { CoverPreview } from './CoverPreview';
+import {
+  createDefaultSurfaceState,
+  mergePartialSurfaceUpdate,
+  normalizeSurfaceState,
+} from '@/lib/projects/cover-surface';
 
 export function CoverForm({ copy, project }: { copy: AppMessages['project']; project: ProjectRecord }) {
-  const [title, setTitle] = useState(project.cover.title);
-  const [subtitle, setSubtitle] = useState(project.cover.subtitle);
+  const initialSurface = normalizeSurfaceState(
+    project.cover.surfaceState ?? {
+      ...createDefaultSurfaceState('cover'),
+      fields: {
+        title: { value: project.cover.title, visible: true },
+        subtitle: {
+          value: project.cover.subtitle,
+          visible: Boolean((project.cover.showSubtitle ?? true) && project.cover.subtitle.trim()),
+        },
+        author: { value: project.document.author, visible: Boolean(project.document.author.trim()) },
+      },
+    },
+  );
+  const [surface, setSurface] = useState(initialSurface);
   const [palette, setPalette] = useState<CoverDesign['palette']>(project.cover.palette);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
@@ -21,11 +38,13 @@ export function CoverForm({ copy, project }: { copy: AppMessages['project']; pro
     e.preventDefault();
     const formData = new FormData();
     formData.set('projectId', project.id);
-    formData.set('title', title);
-    formData.set('subtitle', subtitle);
+    formData.set('title', surface.fields.title?.value ?? '');
+    formData.set('subtitle', surface.fields.subtitle?.value ?? '');
     formData.set('palette', palette);
     formData.set('currentBackgroundImageUrl', project.cover.backgroundImageUrl ?? '');
     formData.set('currentThumbnailUrl', project.cover.thumbnailUrl ?? '');
+    formData.set('showSubtitle', String(surface.fields.subtitle?.visible ?? false));
+    formData.set('surfaceState', JSON.stringify(surface));
 
     const file = fileInputRef.current?.files?.[0];
     if (file) {
@@ -51,16 +70,34 @@ export function CoverForm({ copy, project }: { copy: AppMessages['project']; pro
         <label className="block space-y-2">
           <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverTitleLabel}</span>
           <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            aria-label={copy.coverTitleLabel}
+            value={surface.fields.title?.value ?? ''}
+            onChange={(e) =>
+              setSurface((current) =>
+                mergePartialSurfaceUpdate(current, {
+                  fields: {
+                    title: { value: e.target.value, visible: Boolean(e.target.value.trim()) },
+                  },
+                }),
+              )
+            }
             className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
           />
         </label>
         <label className="block space-y-2">
           <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverSubtitleLabel}</span>
           <textarea
-            value={subtitle}
-            onChange={(e) => setSubtitle(e.target.value)}
+            aria-label={copy.coverSubtitleLabel}
+            value={surface.fields.subtitle?.value ?? ''}
+            onChange={(e) =>
+              setSurface((current) =>
+                mergePartialSurfaceUpdate(current, {
+                  fields: {
+                    subtitle: { value: e.target.value, visible: Boolean(e.target.value.trim()) },
+                  },
+                }),
+              )
+            }
             className="min-h-28 w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
           />
         </label>
@@ -105,8 +142,7 @@ export function CoverForm({ copy, project }: { copy: AppMessages['project']; pro
       </section>
 
       <CoverPreview
-        title={title}
-        subtitle={subtitle}
+        surface={surface}
         palette={palette}
         backgroundImageUrl={project.cover.backgroundImageUrl}
         eyebrow={copy.coverEyebrow}

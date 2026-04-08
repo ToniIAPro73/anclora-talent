@@ -13,6 +13,7 @@
  */
 
 import type { ProjectRecord } from '@/lib/projects/types';
+import { createDefaultSurfaceState, normalizeSurfaceState } from '@/lib/projects/cover-surface';
 import { PaginationConfig } from './device-configs';
 import { paginateContent } from './content-paginator';
 
@@ -57,6 +58,8 @@ export function buildPreviewPages(
   config: PaginationConfig,
 ): PreviewPage[] {
   const pages: PreviewPage[] = [];
+  const normalizedCover = normalizeCoverSurface(project);
+  const normalizedBackCover = normalizeBackCoverSurface(project);
 
   // ─────────────────────────────────────────────────────────────
   // PAGE 1: COVER
@@ -65,13 +68,13 @@ export function buildPreviewPages(
     type: 'cover',
     content: null,
     coverData: {
-      title: project.cover.title || 'Proyecto sin título',
-      subtitle: project.cover.subtitle,
-      author: project.document.author || 'Autor desconocido',
+      title: normalizedCover.fields.title?.value || project.cover.title || 'Proyecto sin título',
+      subtitle: normalizedCover.fields.subtitle?.value ?? '',
+      author: normalizedCover.fields.author?.value || project.document.author || 'Autor desconocido',
       palette: project.cover.palette,
       renderedImageUrl: project.cover.renderedImageUrl ?? null,
       backgroundImageUrl: project.cover.backgroundImageUrl ?? null,
-      showSubtitle: project.cover.showSubtitle ?? true,
+      showSubtitle: normalizedCover.fields.subtitle?.visible ?? false,
     },
     pageNumber: 1,
   });
@@ -145,9 +148,9 @@ export function buildPreviewPages(
       type: 'back-cover',
       content: null,
       backCoverData: {
-        title: project.backCover.title || project.document.title,
-        body: project.backCover.body,
-        authorBio: project.backCover.authorBio,
+        title: normalizedBackCover.fields.title?.value || project.backCover.title || project.document.title,
+        body: normalizedBackCover.fields.body?.visible ? normalizedBackCover.fields.body.value : '',
+        authorBio: normalizedBackCover.fields.authorBio?.visible ? normalizedBackCover.fields.authorBio.value : '',
         renderedImageUrl: project.backCover.renderedImageUrl ?? null,
         backgroundImageUrl: project.backCover.backgroundImageUrl ?? null,
       },
@@ -206,3 +209,39 @@ function escapeHtml(text: string): string {
 }
 
 type ChapterBlock = ProjectRecord['document']['chapters'][number]['blocks'][number];
+
+function normalizeCoverSurface(project: ProjectRecord) {
+  const fallback = createDefaultSurfaceState('cover');
+  fallback.fields.title = {
+    value: project.cover.title || project.document.title,
+    visible: Boolean((project.cover.title || project.document.title).trim()),
+  };
+  fallback.fields.subtitle = {
+    value: project.cover.subtitle || '',
+    visible: Boolean((project.cover.showSubtitle ?? true) && project.cover.subtitle?.trim()),
+  };
+  fallback.fields.author = {
+    value: project.document.author || '',
+    visible: Boolean(project.document.author.trim()),
+  };
+
+  return normalizeSurfaceState(project.cover.surfaceState ?? fallback);
+}
+
+function normalizeBackCoverSurface(project: ProjectRecord) {
+  const fallback = createDefaultSurfaceState('back-cover');
+  fallback.fields.title = {
+    value: project.backCover.title || project.document.title,
+    visible: Boolean((project.backCover.title || project.document.title).trim()),
+  };
+  fallback.fields.body = {
+    value: project.backCover.body || '',
+    visible: Boolean(project.backCover.body.trim()),
+  };
+  fallback.fields.authorBio = {
+    value: project.backCover.authorBio || '',
+    visible: Boolean(project.backCover.authorBio.trim()),
+  };
+
+  return normalizeSurfaceState(project.backCover.surfaceState ?? fallback);
+}
