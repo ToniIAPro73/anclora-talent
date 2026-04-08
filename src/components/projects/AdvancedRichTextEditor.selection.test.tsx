@@ -6,7 +6,7 @@ type MockSelection = {
   from: number;
   to: number;
   $from: {
-    parent: { textContent: string };
+    parent: { textContent: string; type: { name: string }; attrs: { indent?: number } };
     parentOffset: number;
     start: () => number;
     end: () => number;
@@ -33,6 +33,24 @@ vi.mock('@tiptap/pm/state', () => ({
 
 vi.mock('@tiptap/starter-kit', () => ({
   default: { configure: vi.fn(() => ({})) },
+}));
+
+vi.mock('@tiptap/core', () => ({
+  Extension: {
+    create: vi.fn(() => ({})),
+  },
+}));
+
+vi.mock('@tiptap/extension-bullet-list', () => ({
+  default: {
+    extend: vi.fn(() => ({})),
+  },
+}));
+
+vi.mock('@tiptap/extension-ordered-list', () => ({
+  default: {
+    extend: vi.fn(() => ({})),
+  },
 }));
 
 vi.mock('@tiptap/extension-placeholder', () => ({
@@ -104,14 +122,20 @@ vi.mock('@/lib/projects/page-calculator', () => ({
 
 import { AdvancedRichTextEditor } from './AdvancedRichTextEditor';
 
-function createSelection(text: string, parentOffset: number, start = 1): MockSelection {
+function createSelection(
+  text: string,
+  parentOffset: number,
+  start = 1,
+  nodeType = 'paragraph',
+  indent = 0,
+): MockSelection {
   const position = start + parentOffset;
   return {
     empty: true,
     from: position,
     to: position,
     $from: {
-      parent: { textContent: text },
+      parent: { textContent: text, type: { name: nodeType }, attrs: { indent } },
       parentOffset,
       start: () => start,
       end: () => start + text.length,
@@ -123,6 +147,9 @@ function createMockEditor(selection: MockSelection) {
   const dispatchCalls: Array<{ from: number; to: number }> = [];
   const commandSelections: Array<{ from: number; to: number; empty: boolean }> = [];
   const headingSelections: Array<{ from: number; to: number; empty: boolean; level: number }> = [];
+  const bulletListSelections: Array<{ from: number; to: number; empty: boolean }> = [];
+  const orderedListSelections: Array<{ from: number; to: number; empty: boolean }> = [];
+  const updatedAttributes: Array<{ type: string; attributes: Record<string, unknown> }> = [];
   const insertedContent: Array<unknown> = [];
   const deletedRanges: Array<{ from: number; to: number }> = [];
   let currentSelection = selection;
@@ -148,7 +175,10 @@ function createMockEditor(selection: MockSelection) {
   };
 
   const view = {
-    dispatch(transaction: { selection: { from: number; to: number } }) {
+    dispatch(transaction: { selection?: { from: number; to: number } }) {
+      if (!transaction.selection) {
+        return;
+      }
       dispatchCalls.push(transaction.selection);
       currentSelection = {
         empty: transaction.selection.from === transaction.selection.to,
@@ -162,6 +192,9 @@ function createMockEditor(selection: MockSelection) {
 
   const chain = {
     focus: () => chain,
+    command: (callback: ({ tr, state }: { tr: typeof state.tr; state: typeof state }) => boolean) => ({
+      run: () => callback({ tr: state.tr, state }),
+    }),
     toggleBold: () => ({
       run: () => {
         commandSelections.push({
@@ -191,7 +224,40 @@ function createMockEditor(selection: MockSelection) {
         return true;
       },
     }),
-    toggleBulletList: () => ({ run: () => true }),
+    toggleBulletList: () => ({
+      run: () => {
+        bulletListSelections.push({
+          from: state.selection.from,
+          to: state.selection.to,
+          empty: state.selection.empty,
+        });
+        return true;
+      },
+    }),
+    toggleOrderedList: () => ({
+      run: () => {
+        orderedListSelections.push({
+          from: state.selection.from,
+          to: state.selection.to,
+          empty: state.selection.empty,
+        });
+        return true;
+      },
+    }),
+    updateAttributes: (type: string, attributes: Record<string, unknown>) => ({
+      run: () => {
+        updatedAttributes.push({ type, attributes });
+        if (type === 'paragraph' || type === 'heading') {
+          state.selection.$from.parent.attrs = {
+            ...state.selection.$from.parent.attrs,
+            ...attributes,
+          };
+        }
+        return true;
+      },
+    }),
+    sinkListItem: () => ({ run: () => true }),
+    liftListItem: () => ({ run: () => true }),
     setImage: () => ({ run: () => true }),
     insertContent: (content: unknown) => ({
       run: () => {
@@ -221,6 +287,9 @@ function createMockEditor(selection: MockSelection) {
     __dispatchCalls: dispatchCalls,
     __commandSelections: commandSelections,
     __headingSelections: headingSelections,
+    __bulletListSelections: bulletListSelections,
+    __orderedListSelections: orderedListSelections,
+    __updatedAttributes: updatedAttributes,
     __insertedContent: insertedContent,
     __deletedRanges: deletedRanges,
   };
@@ -259,6 +328,8 @@ describe('AdvancedRichTextEditor selection behavior', () => {
     expect(screen.getAllByTitle('Coloca el cursor dentro de una palabra o selecciona texto')[0]).toBeDisabled();
     expect(screen.getAllByTitle('Coloca el cursor en un párrafo con texto o selecciona texto').length).toBeGreaterThan(0);
     expect(screen.getAllByTitle('Coloca el cursor en un párrafo con texto o selecciona texto')[0]).toBeDisabled();
+    expect(screen.getByTitle('Lista con viñetas')).toBeEnabled();
+    expect(screen.getByTitle('Lista numerada')).toBeEnabled();
   });
 
   test('expands a collapsed caret to the current paragraph before applying heading formatting and restores the caret', () => {
@@ -320,5 +391,30 @@ describe('AdvancedRichTextEditor selection behavior', () => {
 
     expect(editor.state.doc.descendants).toHaveBeenCalledTimes(1);
     expect(editor.__deletedRanges).toEqual([{ from: 12, to: 13 }]);
+  });
+
+  test('shows heading controls up to level 6', () => {
+    const editor = createMockEditor(createSelection('Hello world', 0));
+    useEditorMock.mockReturnValue(editor);
+
+    render(<AdvancedRichTextEditor defaultContent="<p>Hello world</p>" onUpdate={vi.fn()} />);
+
+    expect(screen.getByTitle('Encabezado 4')).toBeInTheDocument();
+    expect(screen.getByTitle('Encabezado 5')).toBeInTheDocument();
+    expect(screen.getByTitle('Encabezado 6')).toBeInTheDocument();
+  });
+
+  test('indents a regular paragraph when tabbing right outside a list', () => {
+    const editor = createMockEditor(createSelection('Hola', 0));
+    useEditorMock.mockReturnValue(editor);
+
+    render(<AdvancedRichTextEditor defaultContent="<p>Hola</p>" onUpdate={vi.fn()} />);
+
+    fireEvent.click(screen.getByTitle('Tabular a la derecha'));
+
+    expect(editor.__updatedAttributes).toContainEqual({
+      type: 'paragraph',
+      attributes: { indent: 1 },
+    });
   });
 });

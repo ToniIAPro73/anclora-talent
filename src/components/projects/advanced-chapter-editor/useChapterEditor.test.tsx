@@ -102,7 +102,7 @@ describe('useChapterEditor', () => {
     expect(result.current.htmlContent).toBe('<h2>Capítulo 2</h2>\n<p>Dos</p>');
 
     act(() => {
-      result.current.setHtmlContent('<h2>Capítulo 2</h2>\n<p>Dos</p>');
+      result.current.setHtmlContent('<h2>Capítulo 2</h2><p>Dos</p>');
     });
 
     expect(result.current.hasChanges).toBe(false);

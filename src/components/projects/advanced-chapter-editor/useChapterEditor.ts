@@ -17,7 +17,22 @@ export interface UseChapterEditorOptions {
 }
 
 function normalizeHtmlContent(content: string): string {
-  return content.trim();
+  const trimmed = content.trim();
+  if (!trimmed) return '';
+
+  if (typeof window !== 'undefined' && typeof DOMParser !== 'undefined') {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(`<div>${trimmed}</div>`, 'text/html');
+    return (
+      doc.body.firstElementChild?.innerHTML
+        .replace(/>\s+</g, '><')
+        .replace(/<hr\s+data-page-break="true"\s*\/?>/gi, '<hr data-page-break="true">') ?? ''
+    );
+  }
+
+  return trimmed
+    .replace(/>\s+</g, '><')
+    .replace(/<hr\s+data-page-break="true"\s*\/?>/gi, '<hr data-page-break="true">');
 }
 
 export function useChapterEditor({
