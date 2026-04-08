@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp } from 'lucide-react';
 import { AdvancedRichTextEditor } from '../AdvancedRichTextEditor';
 import { premiumPrimaryMintButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
-import { useChapterEditor, type UseChapterEditorOptions } from './useChapterEditor';
+import { useChapterEditor } from './useChapterEditor';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import type { DocumentChapter } from '@/lib/projects/types';
 
@@ -224,7 +224,7 @@ export function ChapterEditorFullscreen({
       {/* ═══════════════════════ FOOTER ═══════════════════════ */}
       <footer className="shrink-0 flex items-center gap-2 border-t border-[var(--border-subtle)] bg-[#111C28] px-3 py-2">
         <button
-          onClick={handleCloseOrSave}
+          onClick={handleClose}
           disabled={editor.isSaving}
           className={`flex-1 min-w-[100px] h-9 ${premiumSecondaryLightButton}`}
         >
