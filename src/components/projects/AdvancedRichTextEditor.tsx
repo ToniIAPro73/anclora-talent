@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, type Editor } from '@tiptap/react';
+import { TextSelection } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
@@ -42,7 +43,11 @@ import {
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
 import { MarginSelector, type MarginConfig } from './MarginSelector';
 import {
-  estimateTotalPages,
+  findWordRange,
+  hasUsableParagraphAtCursor,
+  hasUsableWordAtCursor,
+} from './editor-selection-utils';
+import {
   calculateWordsPerPage,
   MARGIN_PRESETS,
   type PageCalculationConfig,
@@ -50,6 +55,8 @@ import {
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 
 const DEBOUNCE_MS = 1000;
+type ChainedCommand = ReturnType<Editor['chain']>;
+type ApplyToSelectionTarget = (command: (chain: ChainedCommand) => ChainedCommand) => boolean;
 
 type ToolbarButtonProps = {
   onClick: () => void;
@@ -78,7 +85,17 @@ function ToolbarButton({ onClick, active, disabled, title, children }: ToolbarBu
 }
 
 // Advanced Font Selector using useGoogleFonts
-const AdvancedFontSelector = ({ editor }: { editor: any }) => {
+const AdvancedFontSelector = ({
+  editor,
+  applyToWordOrSelection,
+  isAvailable,
+  unavailableTitle,
+}: {
+  editor: Editor;
+  applyToWordOrSelection: ApplyToSelectionTarget;
+  isAvailable: boolean;
+  unavailableTitle: string;
+}) => {
   const { fonts, loadFont } = useGoogleFonts();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -94,7 +111,7 @@ const AdvancedFontSelector = ({ editor }: { editor: any }) => {
 
   const selectFont = (fontFamily: string) => {
     loadFont(fontFamily);
-    editor.chain().focus().setFontFamily(fontFamily).run();
+    applyToWordOrSelection((chain) => chain.setFontFamily(fontFamily));
     setIsOpen(false);
   };
 
@@ -112,14 +129,16 @@ const AdvancedFontSelector = ({ editor }: { editor: any }) => {
     <div className="relative" ref={dropdownRef}>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex h-9 min-w-[140px] items-center justify-between gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--text-primary)] hover:border-[var(--accent-mint)] transition-colors"
+        onClick={() => isAvailable && setIsOpen(!isOpen)}
+        disabled={!isAvailable}
+        title={isAvailable ? 'Familia tipográfica' : unavailableTitle}
+        className="flex h-9 min-w-[140px] items-center justify-between gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--text-primary)] hover:border-[var(--accent-mint)] transition-colors disabled:pointer-events-none disabled:opacity-30"
       >
         <span className="truncate">{currentFont}</span>
         <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {isOpen && (
+      {isOpen && isAvailable && (
         <div className="absolute left-0 top-11 z-[110] w-[220px] rounded-xl border border-[var(--border-strong)] bg-[#0E1825] p-2 shadow-2xl shadow-black animate-in fade-in zoom-in duration-200">
           <div className="relative mb-2">
             <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[var(--text-tertiary)]" />
@@ -134,8 +153,9 @@ const AdvancedFontSelector = ({ editor }: { editor: any }) => {
           </div>
           <div className="max-h-[250px] overflow-y-auto pr-1 custom-scrollbar">
             <button
+              type="button"
               onClick={() => {
-                editor.chain().focus().unsetFontFamily().run();
+                applyToWordOrSelection((chain) => chain.unsetFontFamily());
                 setIsOpen(false);
               }}
               className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]"
@@ -145,6 +165,7 @@ const AdvancedFontSelector = ({ editor }: { editor: any }) => {
             </button>
             {filteredFonts.map((font) => (
               <button
+                type="button"
                 key={font.family}
                 onClick={() => selectFont(font.family)}
                 style={{ fontFamily: font.family }}
@@ -161,20 +182,38 @@ const AdvancedFontSelector = ({ editor }: { editor: any }) => {
   );
 };
 
-const FontSizeSelector = ({ editor, onFontSizeChange }: { editor: any; onFontSizeChange?: (size: string) => void }) => {
+const FontSizeSelector = ({
+  editor,
+  onFontSizeChange,
+  applyToWordOrSelection,
+  isAvailable,
+  unavailableTitle,
+}: {
+  editor: Editor;
+  onFontSizeChange?: (size: string) => void;
+  applyToWordOrSelection: ApplyToSelectionTarget;
+  isAvailable: boolean;
+  unavailableTitle: string;
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const sizes = [
-    { name: 'Pequeño', value: '12px' },
-    { name: 'Normal', value: '16px' },
-    { name: 'Grande', value: '20px' },
-    { name: 'XL', value: '24px' },
-    { name: '2XL', value: '32px' },
+    { name: '10', value: '10px' },
+    { name: '11', value: '11px' },
+    { name: '12', value: '12px' },
+    { name: '14', value: '14px' },
+    { name: '16', value: '16px' },
+    { name: '18', value: '18px' },
+    { name: '20', value: '20px' },
+    { name: '24', value: '24px' },
+    { name: '28', value: '28px' },
+    { name: '32', value: '32px' },
+    { name: '36', value: '36px' },
+    { name: '48', value: '48px' },
   ];
 
   const currentSize = editor.getAttributes('textStyle')?.fontSize || '16px';
-  const hasSelection = !editor.state.selection.empty;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -189,20 +228,21 @@ const FontSizeSelector = ({ editor, onFontSizeChange }: { editor: any; onFontSiz
   return (
     <div className="relative" ref={dropdownRef}>
       <ToolbarButton
-        onClick={() => setIsOpen(!isOpen)}
-        disabled={!hasSelection}
-        title={hasSelection ? "Tamaño de fuente (selecciona texto)" : "Selecciona texto primero"}
+        onClick={() => isAvailable && setIsOpen(!isOpen)}
+        disabled={!isAvailable}
+        title={isAvailable ? 'Tamaño de fuente' : unavailableTitle}
       >
         <Type className="h-4 w-4" />
       </ToolbarButton>
 
-      {isOpen && hasSelection && (
+      {isOpen && isAvailable && (
         <div className="absolute left-0 top-11 z-[110] flex flex-col gap-0.5 rounded-xl border border-[var(--border-strong)] bg-[#0E1825] p-2 shadow-2xl shadow-black animate-in fade-in zoom-in duration-200">
           {sizes.map((size) => (
             <button
+              type="button"
               key={size.value}
               onClick={() => {
-                editor.chain().focus().setFontSize(size.value).run();
+                applyToWordOrSelection((chain) => chain.setFontSize(size.value));
                 onFontSizeChange?.(size.value);
                 setIsOpen(false);
               }}
@@ -222,25 +262,40 @@ const FontSizeSelector = ({ editor, onFontSizeChange }: { editor: any; onFontSiz
   );
 };
 
-const ColorSelector = ({ editor }: { editor: any }) => {
+const ColorSelector = ({
+  editor,
+  applyToWordOrSelection,
+  isAvailable,
+  unavailableTitle,
+}: {
+  editor: Editor;
+  applyToWordOrSelection: ApplyToSelectionTarget;
+  isAvailable: boolean;
+  unavailableTitle: string;
+}) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [hoveredColor, setHoveredColor] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const colors = [
     { name: 'Por Defecto', value: 'inherit', description: 'Color normal del texto' },
-    { name: 'Blanco', value: '#EDF2F8', description: 'Texto claro principal' },
-    { name: 'Gris Azulado', value: '#B0C4D8', description: 'Texto secundario' },
-    { name: 'Dorado Premium', value: '#c49a24', description: 'Énfasis elegante' },
-    { name: 'Azul Cielo', value: '#4A9FD8', description: 'Acento profesional' },
-    { name: 'Menta', value: '#2DD4BF', description: 'Acento moderno' },
-    { name: 'Rosa Coral', value: '#FB7185', description: 'Acento cálido' },
-    { name: 'Ámbar Suave', value: '#FBBF24', description: 'Acento dorado' },
+    { name: 'Blanco Editorial', value: '#EDF2F8', description: 'Neutral claro más fuerte' },
+    { name: 'Marfil Suave', value: '#E5E7EB', description: 'Neutral claro más suave' },
+    { name: 'Gris Pizarra', value: '#94A3B8', description: 'Gris azulado frío' },
+    { name: 'Tinta Oscura', value: '#0F172A', description: 'Tono ink-style profundo' },
+    { name: 'Oro Premium', value: '#C49A24', description: 'Dorado editorial principal' },
+    { name: 'Oro Cálido', value: '#D4A017', description: 'Variante premium más luminosa' },
+    { name: 'Azul Editorial', value: '#4A9FD8', description: 'Azul profesional' },
+    { name: 'Azul Bruma', value: '#60A5FA', description: 'Azul más vivo y claro' },
+    { name: 'Menta Editorial', value: '#14B8A6', description: 'Acento teal principal' },
+    { name: 'Menta Suave', value: '#2DD4BF', description: 'Variante teal más brillante' },
+    { name: 'Coral Editorial', value: '#FB7185', description: 'Rosa coral cálido' },
+    { name: 'Rojo Rosa', value: '#F43F5E', description: 'Variante rose más intensa' },
+    { name: 'Ámbar Editorial', value: '#F59E0B', description: 'Ámbar principal' },
+    { name: 'Ámbar Profundo', value: '#D97706', description: 'Variante ámbar más cálida' },
   ];
 
   const currentColor = editor.getAttributes('textStyle').color || 'inherit';
   const currentColorName = colors.find(c => c.value === currentColor)?.name || 'Por Defecto';
-  const hasSelection = !editor.state.selection.empty;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -256,21 +311,21 @@ const ColorSelector = ({ editor }: { editor: any }) => {
     <div className="relative" ref={dropdownRef}>
       <button
         type="button"
-        onClick={() => hasSelection && setIsOpen(!isOpen)}
-        disabled={!hasSelection}
+        onClick={() => isAvailable && setIsOpen(!isOpen)}
+        disabled={!isAvailable}
         className={`inline-flex h-9 w-9 items-center justify-center rounded-[10px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-mint)] disabled:opacity-30 disabled:cursor-not-allowed ${
-          hasSelection && currentColor !== 'inherit'
+          isAvailable && currentColor !== 'inherit'
             ? 'bg-[var(--accent-mint)] text-white shadow-[0_0_15px_rgba(45,212,191,0.5)]'
-            : hasSelection
+            : isAvailable
             ? 'text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]'
             : 'text-[var(--text-secondary)]'
         }`}
-        title={hasSelection ? "Color de texto (selecciona texto)" : "Selecciona texto primero"}
+        title={isAvailable ? 'Color de texto' : unavailableTitle}
       >
         <Palette className="h-4 w-4" />
       </button>
 
-      {isOpen && hasSelection && (
+      {isOpen && isAvailable && (
         <div className="absolute left-0 top-11 z-[110] rounded-2xl border border-[var(--border-strong)] bg-gradient-to-br from-[#0E1825] to-[#0B121D] p-4 shadow-2xl shadow-black/50 animate-in fade-in zoom-in duration-200 w-72">
           {/* Header */}
           <div className="mb-4">
@@ -290,12 +345,11 @@ const ColorSelector = ({ editor }: { editor: any }) => {
           <div className="grid grid-cols-2 gap-2.5 mb-4">
             {colors.map((color) => (
               <button
+                type="button"
                 key={color.value}
-                onMouseEnter={() => setHoveredColor(color.value)}
-                onMouseLeave={() => setHoveredColor(null)}
                 onClick={() => {
-                  if (color.value === 'inherit') editor.chain().focus().unsetColor().run();
-                  else editor.chain().focus().setColor(color.value).run();
+                  if (color.value === 'inherit') applyToWordOrSelection((chain) => chain.unsetColor());
+                  else applyToWordOrSelection((chain) => chain.setColor(color.value));
                   setIsOpen(false);
                 }}
                 className={`relative group p-2.5 rounded-xl border-2 transition-all duration-200 ${
@@ -328,7 +382,7 @@ const ColorSelector = ({ editor }: { editor: any }) => {
           {/* Footer Info */}
           <div className="border-t border-[var(--border-subtle)] pt-3">
             <div className="text-[9px] text-[var(--text-tertiary)] text-center">
-              Haz click para aplicar el color al texto seleccionado
+              Haz click para aplicar el color al texto activo
             </div>
           </div>
         </div>
@@ -345,22 +399,78 @@ const MenuBar = ({
   setDevice,
   margins,
   onMarginsChange,
-  currentFontSize,
   onFontSizeChange,
   wordsPerPage,
 }: {
-  editor: any;
+  editor: Editor;
   viewMode: string;
-  setViewMode: any;
+  setViewMode: React.Dispatch<React.SetStateAction<'single' | 'double'>>;
   device: string;
-  setDevice: any;
+  setDevice: (device: 'mobile' | 'tablet' | 'desktop') => void;
   margins: MarginConfig;
   onMarginsChange: (margins: MarginConfig) => void;
-  currentFontSize: string;
   onFontSizeChange: (size: string) => void;
   wordsPerPage?: number;
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const selection = editor.state.selection;
+  const parentText = selection.$from.parent.textContent ?? '';
+  const inlineTargetAvailable =
+    !selection.empty || hasUsableWordAtCursor(parentText, selection.$from.parentOffset);
+  const blockTargetAvailable =
+    !selection.empty || hasUsableParagraphAtCursor(parentText);
+  const inlineUnavailableTitle = 'Coloca el cursor dentro de una palabra o selecciona texto';
+  const blockUnavailableTitle = 'Coloca el cursor en un párrafo con texto o selecciona texto';
+
+  const applyToWordOrSelection: ApplyToSelectionTarget = (command) => {
+    const { state, view } = editor;
+    const { selection } = state;
+
+    if (!selection.empty) {
+      return command(editor.chain().focus()).run();
+    }
+
+    const { $from } = selection;
+    const parentText = $from.parent.textContent ?? '';
+    const wordRange = findWordRange(parentText, $from.parentOffset);
+    const cursorPosition = selection.from;
+
+    if (!wordRange) return false;
+
+    view.dispatch(
+      state.tr.setSelection(
+        TextSelection.create(
+          state.doc,
+          $from.start() + wordRange.from,
+          $from.start() + wordRange.to,
+        ),
+      ),
+    );
+
+    const applied = command(editor.chain().focus()).run();
+
+    if (!applied) return false;
+
+    const nextState = editor.state;
+    editor.view.dispatch(
+      nextState.tr.setSelection(TextSelection.create(nextState.doc, cursorPosition)),
+    );
+
+    return true;
+  };
+
+  const applyToParagraphOrSelection: ApplyToSelectionTarget = (command) => {
+    const { selection } = editor.state;
+
+    if (!selection.empty) {
+      return command(editor.chain().focus()).run();
+    }
+
+    const paragraphText = selection.$from.parent.textContent ?? '';
+    if (!hasUsableParagraphAtCursor(paragraphText)) return false;
+
+    return command(editor.chain().focus()).run();
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -404,53 +514,124 @@ const MenuBar = ({
       </div>
 
       <div className="flex items-center gap-2 pr-3 border-r border-[var(--border-subtle)]">
-        <AdvancedFontSelector editor={editor} />
-        <FontSizeSelector editor={editor} onFontSizeChange={onFontSizeChange} />
-        <ColorSelector editor={editor} />
+        <AdvancedFontSelector
+          editor={editor}
+          applyToWordOrSelection={applyToWordOrSelection}
+          isAvailable={inlineTargetAvailable}
+          unavailableTitle={inlineUnavailableTitle}
+        />
+        <FontSizeSelector
+          editor={editor}
+          onFontSizeChange={onFontSizeChange}
+          applyToWordOrSelection={applyToWordOrSelection}
+          isAvailable={inlineTargetAvailable}
+          unavailableTitle={inlineUnavailableTitle}
+        />
+        <ColorSelector
+          editor={editor}
+          applyToWordOrSelection={applyToWordOrSelection}
+          isAvailable={inlineTargetAvailable}
+          unavailableTitle={inlineUnavailableTitle}
+        />
         <MarginSelector margins={margins} onMarginsChange={onMarginsChange} wordsPerPage={wordsPerPage} />
       </div>
 
       {/* Text Formatting */}
       <div className="flex items-center gap-1 pr-3 border-r border-[var(--border-subtle)]">
-        <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Negrita">
+        <ToolbarButton
+          onClick={() => applyToWordOrSelection((chain) => chain.toggleBold())}
+          active={editor.isActive('bold')}
+          disabled={!inlineTargetAvailable}
+          title={inlineTargetAvailable ? 'Negrita' : inlineUnavailableTitle}
+        >
           <Bold className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Cursiva">
+        <ToolbarButton
+          onClick={() => applyToWordOrSelection((chain) => chain.toggleItalic())}
+          active={editor.isActive('italic')}
+          disabled={!inlineTargetAvailable}
+          title={inlineTargetAvailable ? 'Cursiva' : inlineUnavailableTitle}
+        >
           <Italic className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')} title="Tachado">
+        <ToolbarButton
+          onClick={() => applyToWordOrSelection((chain) => chain.toggleStrike())}
+          active={editor.isActive('strike')}
+          disabled={!inlineTargetAvailable}
+          title={inlineTargetAvailable ? 'Tachado' : inlineUnavailableTitle}
+        >
           <Strikethrough className="h-4 w-4" />
         </ToolbarButton>
       </div>
 
       {/* Alignment */}
       <div className="flex items-center gap-1 pr-3 border-r border-[var(--border-subtle)]">
-        <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('left').run()} active={editor.isActive({ textAlign: 'left' })} title="Alinear izquierda">
+        <ToolbarButton
+          onClick={() => applyToParagraphOrSelection((chain) => chain.setTextAlign('left'))}
+          active={editor.isActive({ textAlign: 'left' })}
+          disabled={!blockTargetAvailable}
+          title={blockTargetAvailable ? 'Alinear izquierda' : blockUnavailableTitle}
+        >
           <AlignLeft className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('center').run()} active={editor.isActive({ textAlign: 'center' })} title="Centrar">
+        <ToolbarButton
+          onClick={() => applyToParagraphOrSelection((chain) => chain.setTextAlign('center'))}
+          active={editor.isActive({ textAlign: 'center' })}
+          disabled={!blockTargetAvailable}
+          title={blockTargetAvailable ? 'Centrar' : blockUnavailableTitle}
+        >
           <AlignCenter className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('right').run()} active={editor.isActive({ textAlign: 'right' })} title="Alinear derecha">
+        <ToolbarButton
+          onClick={() => applyToParagraphOrSelection((chain) => chain.setTextAlign('right'))}
+          active={editor.isActive({ textAlign: 'right' })}
+          disabled={!blockTargetAvailable}
+          title={blockTargetAvailable ? 'Alinear derecha' : blockUnavailableTitle}
+        >
           <AlignRight className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('justify').run()} active={editor.isActive({ textAlign: 'justify' })} title="Justificar">
+        <ToolbarButton
+          onClick={() => applyToParagraphOrSelection((chain) => chain.setTextAlign('justify'))}
+          active={editor.isActive({ textAlign: 'justify' })}
+          disabled={!blockTargetAvailable}
+          title={blockTargetAvailable ? 'Justificar' : blockUnavailableTitle}
+        >
           <AlignJustify className="h-4 w-4" />
         </ToolbarButton>
       </div>
 
       {/* Elements */}
       <div className="flex items-center gap-1 pr-3 border-r border-[var(--border-subtle)]">
-        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive('heading', { level: 1 })} title="Encabezado 1">
+        <ToolbarButton
+          onClick={() => applyToParagraphOrSelection((chain) => chain.toggleHeading({ level: 1 }))}
+          active={editor.isActive('heading', { level: 1 })}
+          disabled={!blockTargetAvailable}
+          title={blockTargetAvailable ? 'Encabezado 1' : blockUnavailableTitle}
+        >
           <Heading1 className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} title="Encabezado 2">
+        <ToolbarButton
+          onClick={() => applyToParagraphOrSelection((chain) => chain.toggleHeading({ level: 2 }))}
+          active={editor.isActive('heading', { level: 2 })}
+          disabled={!blockTargetAvailable}
+          title={blockTargetAvailable ? 'Encabezado 2' : blockUnavailableTitle}
+        >
           <Heading2 className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} title="Encabezado 3">
+        <ToolbarButton
+          onClick={() => applyToParagraphOrSelection((chain) => chain.toggleHeading({ level: 3 }))}
+          active={editor.isActive('heading', { level: 3 })}
+          disabled={!blockTargetAvailable}
+          title={blockTargetAvailable ? 'Encabezado 3' : blockUnavailableTitle}
+        >
           <Heading3 className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Lista">
+        <ToolbarButton
+          onClick={() => applyToParagraphOrSelection((chain) => chain.toggleBulletList())}
+          active={editor.isActive('bulletList')}
+          disabled={!blockTargetAvailable}
+          title={blockTargetAvailable ? 'Lista' : blockUnavailableTitle}
+        >
           <List className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton
@@ -496,7 +677,7 @@ export function AdvancedRichTextEditor({
   onUpdate: (html: string) => void;
   currentPage?: number;
 }) {
-  const { preferences, isLoaded, setPreferences } = useEditorPreferences();
+  const { preferences, setPreferences } = useEditorPreferences();
   const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop'>(
     (preferences.device as 'mobile' | 'tablet' | 'desktop') || 'desktop'
   );
@@ -504,7 +685,6 @@ export function AdvancedRichTextEditor({
   const [viewMode, setViewMode] = useState<'single' | 'double'>(
     device === 'mobile' ? 'single' : 'double'
   );
-  const [autoPages, setAutoPages] = useState<boolean>(true);
   const [margins, setMargins] = useState<MarginConfig>(
     preferences.margins || MARGIN_PRESETS.normal
   );
@@ -614,10 +794,7 @@ export function AdvancedRichTextEditor({
   };
 
   const wordsPerPage = calculateWordsPerPage(pageConfig);
-  const estimatedPages = estimateTotalPages(editor.getHTML(), pageConfig);
-
-  // For double mode with page navigation, we show 2 pages at a time
-  // Current page can range from 0 to estimatedPages - 2
+  // For double mode with page navigation, we show 2 pages at a time.
   const displayStartPage = viewMode === 'double' ? currentPage : currentPage;
   const displayEndPage = viewMode === 'double' ? currentPage + 2 : currentPage + 1;
 
@@ -631,7 +808,6 @@ export function AdvancedRichTextEditor({
         setDevice={handleDeviceChange}
         margins={margins}
         onMarginsChange={handleMarginsChange}
-        currentFontSize={currentFontSize}
         onFontSizeChange={handleFontSizeChange}
         wordsPerPage={wordsPerPage}
       />

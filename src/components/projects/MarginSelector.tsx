@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Settings, ChevronDown } from 'lucide-react';
-import { MARGIN_PRESETS, type MarginPreset } from '@/lib/projects/page-calculator';
+import { MARGIN_PRESETS } from '@/lib/projects/page-calculator';
 
 export interface MarginConfig {
   top: number;
@@ -19,20 +19,18 @@ interface MarginSelectorProps {
 
 export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: MarginSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isCustom, setIsCustom] = useState(false);
   const [customMargins, setCustomMargins] = useState(margins);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isCustom = !Object.entries(MARGIN_PRESETS).some(
+    ([, preset]) =>
+      preset.top === margins.top &&
+      preset.bottom === margins.bottom &&
+      preset.left === margins.left &&
+      preset.right === margins.right,
+  );
 
-  // Auto-detect if current margins match a preset
   useEffect(() => {
-    const matchesPreset = Object.entries(MARGIN_PRESETS).some(
-      ([, preset]) =>
-        preset.top === margins.top &&
-        preset.bottom === margins.bottom &&
-        preset.left === margins.left &&
-        preset.right === margins.right
-    );
-    setIsCustom(!matchesPreset);
+    setCustomMargins(margins);
   }, [margins]);
 
   useEffect(() => {
@@ -48,7 +46,6 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
   const applyPreset = (preset: MarginConfig) => {
     onMarginsChange(preset);
     setCustomMargins(preset);
-    setIsCustom(false);
     setIsOpen(false);
   };
 
@@ -56,7 +53,6 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
     const updated = { ...customMargins, [key]: Math.max(0, value) };
     setCustomMargins(updated);
     onMarginsChange(updated);
-    setIsCustom(true);
   };
 
   return (
@@ -65,6 +61,7 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex h-9 min-w-[100px] items-center justify-between gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--text-primary)] hover:border-[var(--accent-mint)] transition-colors"
+        aria-label="Configuración de márgenes"
         title="Configuración de márgenes"
       >
         <Settings className="h-3.5 w-3.5" />
@@ -73,15 +70,16 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-11 z-[110] w-[300px] rounded-xl border border-[var(--border-strong)] bg-[#0E1825] p-3 shadow-2xl shadow-black animate-in fade-in zoom-in duration-200">
+        <div className="fixed left-1/2 top-[4.25rem] z-[150] w-[min(92vw,420px)] -translate-x-1/2 max-h-[calc(100vh-5rem)] overflow-y-auto overscroll-contain rounded-2xl border border-[var(--border-strong)] bg-[#0E1825] p-4 shadow-2xl shadow-black animate-in fade-in zoom-in duration-200">
           {/* Presets */}
-          <div className="mb-3 flex flex-col gap-1.5">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)] px-2">
+          <div className="mb-4 flex flex-col gap-2">
+            <div className="px-2 text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)]">
               Presets
             </div>
             {Object.entries(MARGIN_PRESETS).map(([key, preset]) => (
               <button
                 key={key}
+                type="button"
                 onClick={() => applyPreset(preset)}
                 className={`text-left px-3 py-2 rounded-lg text-xs transition-colors ${
                   !isCustom &&
@@ -102,17 +100,17 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
           </div>
 
           {/* Divider */}
-          <div className="h-px bg-[var(--border-subtle)] my-2" />
+          <div className="my-3 h-px bg-[var(--border-subtle)]" />
 
           {/* Custom Margins */}
-          <div className="mb-3">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)] px-2 mb-2">
+          <div className="mb-4">
+            <div className="mb-3 px-2 text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)]">
               Márgenes Personalizados
             </div>
 
-            <div className="space-y-1.5 px-2">
-              <div className="flex items-center gap-2">
-                <label className="w-12 text-[10px] font-semibold text-[var(--text-secondary)]">
+            <div className="space-y-2 px-2">
+              <div className="grid grid-cols-[3.5rem_1fr_auto] items-center gap-3">
+                <label className="text-[10px] font-semibold text-[var(--text-secondary)]">
                   Arriba:
                 </label>
                 <input
@@ -121,13 +119,13 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
                   max="100"
                   value={customMargins.top}
                   onChange={(e) => handleCustomChange('top', parseInt(e.target.value) || 0)}
-                  className="w-12 px-2 py-1 rounded-md bg-[var(--background)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--accent-mint)] focus:outline-none"
+                  className="w-full rounded-md border border-[var(--border-subtle)] bg-[var(--background)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--accent-mint)] focus:outline-none"
                 />
                 <span className="text-[9px] text-[var(--text-tertiary)]">px</span>
               </div>
 
-              <div className="flex items-center gap-2">
-                <label className="w-12 text-[10px] font-semibold text-[var(--text-secondary)]">
+              <div className="grid grid-cols-[3.5rem_1fr_auto] items-center gap-3">
+                <label className="text-[10px] font-semibold text-[var(--text-secondary)]">
                   Abajo:
                 </label>
                 <input
@@ -136,13 +134,13 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
                   max="100"
                   value={customMargins.bottom}
                   onChange={(e) => handleCustomChange('bottom', parseInt(e.target.value) || 0)}
-                  className="w-12 px-2 py-1 rounded-md bg-[var(--background)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--accent-mint)] focus:outline-none"
+                  className="w-full rounded-md border border-[var(--border-subtle)] bg-[var(--background)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--accent-mint)] focus:outline-none"
                 />
                 <span className="text-[9px] text-[var(--text-tertiary)]">px</span>
               </div>
 
-              <div className="flex items-center gap-2">
-                <label className="w-12 text-[10px] font-semibold text-[var(--text-secondary)]">
+              <div className="grid grid-cols-[3.5rem_1fr_auto] items-center gap-3">
+                <label className="text-[10px] font-semibold text-[var(--text-secondary)]">
                   Izq:
                 </label>
                 <input
@@ -151,13 +149,13 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
                   max="100"
                   value={customMargins.left}
                   onChange={(e) => handleCustomChange('left', parseInt(e.target.value) || 0)}
-                  className="w-12 px-2 py-1 rounded-md bg-[var(--background)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--accent-mint)] focus:outline-none"
+                  className="w-full rounded-md border border-[var(--border-subtle)] bg-[var(--background)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--accent-mint)] focus:outline-none"
                 />
                 <span className="text-[9px] text-[var(--text-tertiary)]">px</span>
               </div>
 
-              <div className="flex items-center gap-2">
-                <label className="w-12 text-[10px] font-semibold text-[var(--text-secondary)]">
+              <div className="grid grid-cols-[3.5rem_1fr_auto] items-center gap-3">
+                <label className="text-[10px] font-semibold text-[var(--text-secondary)]">
                   Der:
                 </label>
                 <input
@@ -166,7 +164,7 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
                   max="100"
                   value={customMargins.right}
                   onChange={(e) => handleCustomChange('right', parseInt(e.target.value) || 0)}
-                  className="w-12 px-2 py-1 rounded-md bg-[var(--background)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--accent-mint)] focus:outline-none"
+                  className="w-full rounded-md border border-[var(--border-subtle)] bg-[var(--background)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--accent-mint)] focus:outline-none"
                 />
                 <span className="text-[9px] text-[var(--text-tertiary)]">px</span>
               </div>

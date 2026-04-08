@@ -55,9 +55,9 @@ export const FontSize = Extension.create({
     return {
       setFontSize:
         (fontSize: string) =>
-        ({ commands, editor }) => {
-          // Always apply to the current selection
-          // If no selection, Tiptap will apply to the current position
+        ({ commands }) => {
+          // The toolbar resolves the target before calling this command.
+          // This command only persists the size onto the active textStyle mark.
           return commands.setMark('textStyle', { fontSize });
         },
       unsetFontSize:
