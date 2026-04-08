@@ -5,22 +5,44 @@
 
 import {
   PAGE_BREAK_HTML,
+  getPageBreakType,
   isPageBreakMarker,
   isPageBreakElement,
   replacePageBreakMarkers,
   countPageBreaks,
   removePageBreakMarkers,
+  removeAutoPageBreakMarkers,
 } from './page-breaks';
 
 describe('page-breaks', () => {
   describe('PAGE_BREAK_HTML constant', () => {
     it('should have correct format', () => {
       expect(PAGE_BREAK_HTML).toContain('hr');
-      expect(PAGE_BREAK_HTML).toContain('data-page-break="true"');
+      expect(PAGE_BREAK_HTML).toContain('data-page-break="manual"');
     });
 
     it('should be valid HTML', () => {
-      expect(PAGE_BREAK_HTML).toMatch(/^<hr\s+data-page-break="true"\s*\/?>$/);
+      expect(PAGE_BREAK_HTML).toMatch(/^<hr\s+data-page-break="manual"\s*\/?>$/);
+    });
+  });
+
+  describe('typed page break helpers', () => {
+    it('treats legacy true markers as manual page breaks', () => {
+      expect(getPageBreakType('<hr data-page-break="true" />')).toBe('manual');
+    });
+
+    it('recognizes auto page breaks explicitly', () => {
+      expect(getPageBreakType('<hr data-page-break="auto" />')).toBe('auto');
+    });
+
+    it('counts both manual and auto page breaks', () => {
+      const html = '<p>Uno</p><hr data-page-break="manual" /><hr data-page-break="auto" />';
+      expect(countPageBreaks(html)).toBe(2);
+    });
+
+    it('removes only auto page breaks when requested', () => {
+      const html = '<hr data-page-break="manual" /><hr data-page-break="auto" />';
+      expect(removeAutoPageBreakMarkers(html)).toBe('<hr data-page-break="manual" />');
     });
   });
 
@@ -209,7 +231,7 @@ describe('page-breaks', () => {
 
     it('should return 0 for null/empty content', () => {
       expect(countPageBreaks('')).toBe(0);
-      expect(countPageBreaks(null as any)).toBe(0);
+      expect(countPageBreaks(null)).toBe(0);
     });
   });
 
