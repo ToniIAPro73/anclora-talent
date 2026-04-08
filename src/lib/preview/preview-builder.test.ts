@@ -80,25 +80,18 @@ function createMockProject(overrides?: Partial<ProjectRecord>): ProjectRecord {
 
 describe('preview-builder', () => {
   describe('buildPreviewPages', () => {
-    it('should return preview pages with cover, toc, and content', () => {
+    it('should return preview pages with cover and content', () => {
       const project = createMockProject();
       const config = DEVICE_PAGINATION_CONFIGS.laptop;
 
       const pages = buildPreviewPages(project, config);
 
-      // Should have at least: cover (1) + toc (1) + content (2+) + back-cover (1)
-      expect(pages.length).toBeGreaterThanOrEqual(5);
+      // Should have at least: cover (1) + content (2+) + back-cover (1)
+      expect(pages.length).toBeGreaterThanOrEqual(4);
 
       // First page should be cover
       expect(pages[0].type).toBe('cover');
       expect(pages[0].pageNumber).toBe(1);
-
-      // Find TOC page
-      const tocPage = pages.find(p => p.type === 'toc');
-      expect(tocPage).toBeDefined();
-      if (tocPage) {
-        expect(tocPage.pageNumber).toBeGreaterThan(1);
-      }
 
       // Last page should be back cover
       expect(pages[pages.length - 1].type).toBe('back-cover');
@@ -189,8 +182,8 @@ describe('preview-builder', () => {
       const config = DEVICE_PAGINATION_CONFIGS.laptop;
       const pages = buildPreviewPages(project, config);
 
-      // Should still have cover, toc, content, back-cover
-      expect(pages.length).toBeGreaterThanOrEqual(4);
+      // Should still have cover, content, back-cover
+      expect(pages.length).toBeGreaterThanOrEqual(3);
 
       const contentPages = pages.filter(p => p.type === 'content');
       expect(contentPages.length).toBeGreaterThan(0);
@@ -231,40 +224,14 @@ describe('preview-builder', () => {
       expect(pages.length).toBeGreaterThan(0);
     });
 
-    it('should create TOC with chapter references', () => {
+    it('should not create a synthetic toc page', () => {
       const project = createMockProject();
       const config = DEVICE_PAGINATION_CONFIGS.laptop;
 
       const pages = buildPreviewPages(project, config);
 
       const tocPage = pages.find(p => p.type === 'toc');
-      expect(tocPage).toBeDefined();
-
-      if (tocPage) {
-        // TOC should reference chapter titles
-        expect(tocPage.content).toContain('Chapter 1');
-        expect(tocPage.content).toContain('Chapter 2');
-      }
-    });
-
-    it('should assign correct page numbers to TOC entries', () => {
-      const project = createMockProject();
-      const config = DEVICE_PAGINATION_CONFIGS.laptop;
-
-      const pages = buildPreviewPages(project, config);
-
-      // Get the TOC page
-      const tocPage = pages.find(p => p.type === 'toc');
-      expect(tocPage).toBeDefined();
-
-      if (tocPage?.tocEntries) {
-        // TOC entries should have page numbers
-        if (tocPage.tocEntries.length > 0) {
-          tocPage.tocEntries.forEach((entry) => {
-            expect(entry.pageNumber).toBeGreaterThan(0);
-          });
-        }
-      }
+      expect(tocPage).toBeUndefined();
     });
 
     it('should respect chapter order', () => {
@@ -345,7 +312,7 @@ describe('preview-builder', () => {
       }
     });
 
-    it('builds cover, toc, chapter content, and back cover in the real preview order', () => {
+    it('builds cover, chapter content, and back cover in the real preview order', () => {
       const base = createMockProject();
       const project = createMockProject({
         document: {
@@ -384,10 +351,39 @@ describe('preview-builder', () => {
       const pages = buildPreviewPages(project, DEVICE_PAGINATION_CONFIGS.laptop);
 
       expect(pages[0].type).toBe('cover');
-      expect(pages[1].type).toBe('toc');
-      expect(pages.some((page) => page.type === 'content' && page.chapterTitle === 'Índice')).toBe(true);
+      expect(pages[1].type).toBe('content');
+      expect(pages[1].chapterTitle).toBe('Índice');
       expect(pages.some((page) => page.type === 'content' && page.chapterTitle === 'Introducción')).toBe(true);
       expect(pages.at(-1)?.type).toBe('back-cover');
+    });
+
+    it('uses chapter-first page numbers that start immediately after the cover', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          chapters: [
+            {
+              id: 'toc-chapter',
+              order: 0,
+              title: 'Índice',
+              blocks: [
+                {
+                  id: 'toc-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Índice</h2><p>Introducción</p>',
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const pages = buildPreviewPages(project, DEVICE_PAGINATION_CONFIGS.laptop);
+
+      const firstContentPage = pages.find((page) => page.type === 'content');
+      expect(firstContentPage?.pageNumber).toBe(2);
     });
 
     it('should produce consistent results', () => {

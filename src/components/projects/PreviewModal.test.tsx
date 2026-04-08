@@ -60,6 +60,7 @@ function makeProject(): ProjectRecord {
       palette: 'obsidian',
       backgroundImageUrl: null,
       thumbnailUrl: null,
+      renderedImageUrl: 'https://example.com/cover-render.png',
     },
     backCover: {
       id: 'back-1',
@@ -68,7 +69,7 @@ function makeProject(): ProjectRecord {
       authorBio: 'Bio del autor',
       accentColor: null,
       backgroundImageUrl: null,
-      renderedImageUrl: null,
+      renderedImageUrl: 'https://example.com/back-cover-render.png',
     },
     assets: [],
   };
@@ -118,7 +119,7 @@ describe('PreviewModal', () => {
     expect(screen.getByTestId('preview-document-scroll').className).toContain('overflow-auto');
   });
 
-  test('builds chapter navigation from rendered content pages instead of duplicating toc-page entries', () => {
+  test('builds chapter navigation from rendered content pages instead of duplicating toc-page entries', async () => {
     render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
 
     const tocList = screen.getByTestId('preview-sidebar-toc');
@@ -128,9 +129,14 @@ describe('PreviewModal', () => {
     expect(within(chapterButtons[0]).getByText('Índice')).toBeInTheDocument();
     expect(within(chapterButtons[1]).getByText('Introducción')).toBeInTheDocument();
 
+    const introPageLabel = within(chapterButtons[1]).getByText(/p\.\s*\d+/i).textContent ?? '';
+    const expectedPage = Number(introPageLabel.replace(/[^\d]/g, ''));
+
     fireEvent.click(chapterButtons[1]);
 
-    expect(screen.getByDisplayValue('5')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('spinbutton')).toHaveValue(expectedPage);
+    });
   });
 
   test('navigates one page at a time while spread mode stays active', () => {
@@ -146,6 +152,14 @@ describe('PreviewModal', () => {
   test('renders cover and back cover from the built preview structure', () => {
     render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
 
-    expect(screen.getAllByText('Nunca más en la sombra').length).toBeGreaterThan(0);
+    expect(screen.getByAltText('Preview cover')).toHaveAttribute('src', 'https://example.com/cover-render.png');
+  });
+
+  test('uses a scaled spread frame so the fitted preview does not rely on transform-only layout', async () => {
+    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('preview-spread-frame')).toHaveStyle({ width: '905.52px' });
+    });
   });
 });
