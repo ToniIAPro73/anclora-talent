@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Users, Mail, Shield, UserPlus, MoreHorizontal } from 'lucide-react';
-import { premiumSecondaryLightButton, premiumPrimaryDarkButton } from '@/components/ui/button-styles';
+import { Shield, UserPlus, MoreHorizontal } from 'lucide-react';
+import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 
 interface Collaborator {
   id: string;
