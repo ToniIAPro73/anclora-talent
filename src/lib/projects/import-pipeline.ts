@@ -1,7 +1,7 @@
 import type { ImportedDocumentSeed } from './types';
 
 const SUPPORTED_IMPORT_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'txt', 'md']);
-const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote)[^>]*>[\s\S]*?<\/\1>|<hr[^>]*\/?>/gi;
+const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote)[^>]*>[\s\S]*?<\/\1>/gi;
 const ALL_CAPS_RE = /^[^a-z]*[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ0-9 .,·:;()\-–—]+$/;
 const MAJOR_HEADING_RE = /^(?:cap[ií]tulo|chapter|introducci[oó]n|pr[oó]logo|prologo|[íi]ndice|indice|fase\s+\d+|parte\s+\d+|secci[oó]n|ep[ií]logo|cierre|despu[eé]s\s+de|recursos(?:\s+recomendados)?|anexos?)(?:\b|:)/i;
 const MINOR_HEADING_RE = /^(?:d[ií]a\s+\d+|tema\s+\d+|idea\s+clave|reto\s+de\s+acci[oó]n|preguntas?\s+de\s+reflexi[oó]n|ejercicio|caso|las\s+cinco\s+claves|cierre\s+de\s+fase)(?:\b|:)/i;
@@ -522,10 +522,10 @@ function parseHtmlBlocks(input: string) {
 
   return matches.flatMap((fragment) => {
     const clean = normalizeHtmlFragment(fragment);
-    const tag = clean.match(/^<(h[1-6]|p|ul|ol|blockquote|hr)/i)?.[1]?.toLowerCase() ?? 'p';
+    const tag = clean.match(/^<(h[1-6]|p|ul|ol|blockquote)/i)?.[1]?.toLowerCase() ?? 'p';
     const text = textFromHtml(clean);
 
-    if (!text && tag !== 'hr') return [];
+    if (!text) return [];
     if (text && isDecorativeLine(text)) return [];
 
     if (tag.startsWith('h')) {
@@ -550,18 +550,6 @@ function parseHtmlBlocks(input: string) {
           kind: 'quote' as const,
           text,
           html: clean,
-          level: null,
-          structural: true,
-        },
-      ];
-    }
-
-    if (tag === 'hr') {
-      return [
-        {
-          kind: 'rule' as const,
-          text: '',
-          html: '<hr />',
           level: null,
           structural: true,
         },

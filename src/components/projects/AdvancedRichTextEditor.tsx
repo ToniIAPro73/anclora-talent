@@ -266,6 +266,7 @@ function normalizeEditorHtml(content: string): string {
 
   const normalizeBreakMarkup = (html: string) =>
     html
+      .replace(/<hr(?![^>]*data-page-break=)[^>]*\/?>/gi, '')
       .replace(/<hr\s+data-page-break="true"\s*\/?>/gi, '<hr data-page-break="manual">')
       .replace(/<hr\s+data-page-break="manual"\s*\/?>/gi, '<hr data-page-break="manual">')
       .replace(/<hr\s+data-page-break="auto"\s*\/?>/gi, '<hr data-page-break="auto">');

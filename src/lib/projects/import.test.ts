@@ -199,6 +199,23 @@ describe('document import parser isolation', () => {
     expect(chapterHtml).toContain('<br');
   });
 
+  test('docx/rich html ignores plain hr separators instead of importing them as visible rules', async () => {
+    vi.doMock('server-only', () => ({}));
+
+    const { buildImportedDocumentSeed } = await import('./import');
+    const result = buildImportedDocumentSeed({
+      fileName: 'demo.docx',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      text: 'texto normalizado',
+      html: '<h1>Capítulo uno</h1><p>Primera línea</p><hr /><p>Segunda línea</p>',
+    });
+
+    const chapterHtml = result.chapters?.[0].blocks.map((block) => block.content).join('\n') ?? '';
+    expect(chapterHtml).not.toContain('<hr');
+    expect(chapterHtml).toContain('Primera línea');
+    expect(chapterHtml).toContain('Segunda línea');
+  });
+
   test('markdown preserves explicit line breaks as br tags inside paragraphs', async () => {
     vi.doMock('server-only', () => ({}));
 

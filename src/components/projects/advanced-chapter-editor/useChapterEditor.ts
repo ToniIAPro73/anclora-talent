@@ -44,7 +44,9 @@ function normalizeLoadedChapterHtml(
   fontSize: string,
   margins: { top: number; bottom: number; left: number; right: number },
 ) {
-  return reconcileOverflowBreaks(content, buildPreviewConfig(device, fontSize, margins));
+  return normalizeHtmlContent(
+    reconcileOverflowBreaks(content, buildPreviewConfig(device, fontSize, margins)),
+  );
 }
 
 function normalizeHtmlContent(content: string): string {
@@ -53,6 +55,7 @@ function normalizeHtmlContent(content: string): string {
 
   const normalizeBreakMarkup = (html: string) =>
     html
+      .replace(/<hr(?![^>]*data-page-break=)[^>]*\/?>/gi, '')
       .replace(/<hr\s+data-page-break="true"\s*\/?>/gi, '<hr data-page-break="manual">')
       .replace(/<hr\s+data-page-break="manual"\s*\/?>/gi, '<hr data-page-break="manual">')
       .replace(/<hr\s+data-page-break="auto"\s*\/?>/gi, '<hr data-page-break="auto">');
