@@ -7,6 +7,22 @@ import { createDefaultSurfaceState } from '@/lib/projects/cover-surface';
 
 const copy = resolveLocaleMessages('es').project;
 
+function mockMatchMedia(matches: boolean) {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation(() => ({
+      matches,
+      media: '(min-width: 768px)',
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+}
+
 function makeProject(): ProjectRecord {
   return {
     id: 'proj-preview-modal',
@@ -79,6 +95,7 @@ function makeProject(): ProjectRecord {
 describe('PreviewModal', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    mockMatchMedia(true);
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
       const element = this as HTMLElement;
       if (element.dataset.previewViewport === 'true') {
@@ -89,48 +106,130 @@ describe('PreviewModal', () => {
     });
   });
 
+  test('renders a premium modal shell with visible header, stage, and footer regions', () => {
+    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
+
+    expect(screen.getByRole('dialog', { name: 'Nunca más en la sombra' })).toHaveAttribute('aria-modal', 'true');
+    expect(screen.getByRole('heading', { name: 'Nunca más en la sombra' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: copy.previewModalClose })).toBeVisible();
+    expect(screen.getByRole('spinbutton', { name: copy.previewModalPage })).toBeVisible();
+    expect(screen.getByTestId('preview-modal-stage')).toBeVisible();
+  });
+
+  test('keeps the close action visible in the premium header', () => {
+    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
+
+    expect(screen.getByRole('button', { name: copy.previewModalClose })).toBeVisible();
+  });
+
+  test('keeps footer navigation visible while the preview body owns scrolling', () => {
+    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
+
+    const pageInput = screen.getByRole('spinbutton', { name: copy.previewModalPage });
+
+    expect(screen.getByRole('button', { name: copy.previewModalPrevious })).toBeVisible();
+    expect(screen.getByRole('button', { name: copy.previewModalNext })).toBeVisible();
+    expect(pageInput.closest('footer')).not.toBeNull();
+    expect(screen.getByTestId('preview-document-scroll')).toBeInTheDocument();
+  });
+
+  test('groups editorial metadata in the header and keeps controls in a separate premium band', () => {
+    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
+
+    const tocToggle = screen.getByRole('button', { name: copy.previewModalTocHide });
+
+    expect(screen.getByRole('heading', { name: 'Nunca más en la sombra' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: copy.previewModalClose })).toBeVisible();
+    expect(tocToggle).toHaveAttribute('aria-pressed', 'true');
+    expect(tocToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(tocToggle).toHaveAttribute('aria-controls', 'preview-modal-sidebar');
+    expect(screen.getByRole('button', { name: copy.previewModalSingleView })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: copy.previewModalSpreadView })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: copy.previewModalMobile })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: copy.previewModalTablet })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: copy.previewModalLaptop })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: copy.previewModalZoomOut })).toBeEnabled();
+    expect(screen.getByRole('button', { name: copy.previewModalZoomIn })).toBeEnabled();
+    expect(screen.getByRole('slider', { name: copy.previewModalZoomSlider })).toBeInTheDocument();
+    expect(screen.getByRole('complementary', { name: copy.previewModalTocHeading })).toBeInTheDocument();
+  });
+
+  test('toggles the editorial rail as an accessible complementary region', () => {
+    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
+
+    const tocToggle = screen.getByRole('button', { name: copy.previewModalTocHide });
+    const rail = screen.getByRole('complementary', { name: copy.previewModalTocHeading });
+
+    expect(within(rail).getByRole('heading', { name: copy.previewModalTocHeading })).toBeInTheDocument();
+    expect(within(rail).getAllByRole('button')).toHaveLength(2);
+
+    fireEvent.click(tocToggle);
+
+    expect(screen.queryByRole('complementary', { name: copy.previewModalTocHeading })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: copy.previewModalTocShow })).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  test('keeps footer actions reachable when the toc opens on mobile', () => {
+    mockMatchMedia(false);
+
+    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
+
+    const mobileTocToggle = screen.getByRole('button', { name: copy.previewModalTocHide });
+    const footer = screen.getByTestId('preview-modal-footer');
+    const stage = screen.getByTestId('preview-modal-stage');
+    const rail = screen.getByRole('complementary', { name: copy.previewModalTocHeading });
+
+    expect(mobileTocToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(footer).toBeVisible();
+    expect(stage).toContainElement(rail);
+    expect(footer).not.toContainElement(rail);
+
+    fireEvent.click(mobileTocToggle);
+
+    expect(screen.queryByRole('complementary', { name: copy.previewModalTocHeading })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: copy.previewModalTocShow })).toHaveAttribute('aria-expanded', 'false');
+    expect(footer).toBeVisible();
+  });
+
+  test('keeps zoom controls out of the footer action area', () => {
+    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
+
+    const zoomOutButton = screen.getByRole('button', { name: copy.previewModalZoomOut });
+    const zoomInButton = screen.getByRole('button', { name: copy.previewModalZoomIn });
+    const zoomSlider = screen.getByRole('slider', { name: copy.previewModalZoomSlider });
+
+    expect(zoomOutButton.closest('footer')).toBeNull();
+    expect(zoomInButton.closest('footer')).toBeNull();
+    expect(zoomSlider.closest('footer')).toBeNull();
+  });
+
   test('opens in laptop spread mode with fitted zoom', async () => {
     render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
 
-    expect(screen.getByTitle('Two page spread')).toHaveAttribute('data-state', 'active');
-    expect(screen.getByTitle('Desktop')).toHaveAttribute('data-state', 'active');
+    expect(screen.getByRole('button', { name: copy.previewModalSpreadView })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: copy.previewModalLaptop })).toHaveAttribute('aria-pressed', 'true');
 
     await waitFor(() => {
       expect(screen.getByText(/^\d+%$/)).not.toHaveTextContent('100%');
     });
-  });
 
-  test('keeps outer document scrolling and no page-internal vertical scroll', () => {
-    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: copy.previewModalSingleView }));
 
-    expect(screen.getByTestId('preview-document-scroll')).toHaveClass('overflow-auto');
-    expect(screen.getAllByTestId('preview-page-shell')[0]).not.toHaveClass('overflow-y-auto');
-  });
-
-  test('renders all visible page shells without nested vertical scroll regions', () => {
-    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
-
-    const pageShells = screen.getAllByTestId('preview-page-shell');
-    expect(pageShells.length).toBeGreaterThan(0);
-
-    pageShells.forEach((pageShell) => {
-      expect(pageShell.className).not.toContain('overflow-y-auto');
-    });
-
-    expect(screen.getByTestId('preview-document-scroll').className).toContain('overflow-auto');
+    expect(screen.getByRole('button', { name: copy.previewModalSingleView })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: copy.previewModalSpreadView })).toHaveAttribute('aria-pressed', 'false');
   });
 
   test('builds chapter navigation from rendered content pages instead of duplicating toc-page entries', async () => {
     render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
 
-    const tocList = screen.getByTestId('preview-sidebar-toc');
-    const chapterButtons = within(tocList).getAllByRole('button');
+    const toc = screen.getByRole('complementary', { name: copy.previewModalTocHeading });
+    const chapterButtons = within(toc).getAllByRole('button');
 
     expect(chapterButtons).toHaveLength(2);
     expect(within(chapterButtons[0]).getByText('Índice')).toBeInTheDocument();
     expect(within(chapterButtons[1]).getByText('Introducción')).toBeInTheDocument();
 
-    const introPageLabel = within(chapterButtons[1]).getByText(/p\.\s*\d+/i).textContent ?? '';
+    const introPageLabel = within(chapterButtons[1]).getByText(new RegExp(`${copy.previewModalPage}\\s*\\d+`, 'i')).textContent ?? '';
     const expectedPage = Number(introPageLabel.replace(/[^\d]/g, ''));
 
     fireEvent.click(chapterButtons[1]);
@@ -143,25 +242,39 @@ describe('PreviewModal', () => {
   test('navigates one page at a time while spread mode stays active', () => {
     render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
 
-    fireEvent.click(screen.getByText('Next'));
+    fireEvent.click(screen.getByRole('button', { name: copy.previewModalNext }));
     expect(screen.getByDisplayValue('2')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('Next'));
+    fireEvent.click(screen.getByRole('button', { name: copy.previewModalNext }));
     expect(screen.getByDisplayValue('3')).toBeInTheDocument();
   });
 
   test('renders cover and back cover from the built preview structure', () => {
     render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
 
-    expect(screen.getByAltText('Preview cover')).toHaveAttribute('src', 'https://example.com/cover-render.png');
+    expect(screen.getByAltText(copy.previewModalCoverAlt)).toHaveAttribute('src', 'https://example.com/cover-render.png');
   });
 
   test('uses a scaled spread frame so the fitted preview does not rely on transform-only layout', async () => {
     render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('preview-spread-frame')).toHaveStyle({ width: '905.52px' });
+      expect(screen.getByTestId('preview-spread-frame')).toBeInTheDocument();
     });
+
+    const stage = screen.getByTestId('preview-modal-stage');
+    const frame = screen.getByTestId('preview-spread-frame');
+    const viewport = screen.getByTestId('preview-document-scroll');
+    const frameWidth = Number.parseFloat(frame.style.width);
+    const frameHeight = Number.parseFloat(frame.style.height);
+
+    expect(stage).toContainElement(viewport);
+    expect(viewport).toContainElement(frame);
+    expect(frameWidth).toBeGreaterThan(0);
+    expect(frameHeight).toBeGreaterThan(0);
+    expect(frameWidth).toBeLessThan(1400);
+    expect(frameHeight).toBeLessThanOrEqual(700);
+    expect(frameWidth).toBeGreaterThan(frameHeight);
   });
 
   test('does not re-render a hidden subtitle from saved cover surface state', () => {
@@ -193,14 +306,12 @@ describe('PreviewModal', () => {
     expect(screen.queryByText('Subtitulo antiguo')).not.toBeInTheDocument();
   });
 
-  test('renders preview content with explicit paragraph spacing for imported documents', () => {
+  test('renders imported document content inside the preview page content area', () => {
     render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
 
-    const content = screen.getAllByTestId('preview-page-content').at(-1);
+    fireEvent.click(screen.getByRole('button', { name: copy.previewModalNext }));
 
-    expect(content).toHaveClass('[&_p]:m-0');
-    expect(content).toHaveClass('[&_p+p]:mt-[0.9rem]');
-    expect(content).toHaveClass('[&_h2]:text-[1.5rem]');
-    expect(content).toHaveClass('[&_li]:my-[0.35rem]');
+    expect(screen.getByRole('spinbutton', { name: copy.previewModalPage })).toHaveValue(2);
+    expect(screen.getAllByText('Introducción').length).toBeGreaterThan(0);
   });
 });

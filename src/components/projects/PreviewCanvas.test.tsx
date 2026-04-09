@@ -74,7 +74,7 @@ describe('PreviewCanvas', () => {
     render(<PreviewCanvas copy={copy} project={makeProject()} />);
 
     expect(screen.getByRole('button', { name: /open full preview/i })).toBeInTheDocument();
-    expect(screen.queryByTitle('Two page spread')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: copy.previewModalSpreadView })).not.toBeInTheDocument();
   });
 
   test('opens the full preview modal from the launcher button', () => {
@@ -82,8 +82,8 @@ describe('PreviewCanvas', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /open full preview/i }));
 
-    expect(screen.getByTitle('Two page spread')).toBeInTheDocument();
-    expect(screen.getByTitle('Desktop')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: copy.previewModalSpreadView })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: copy.previewModalLaptop })).toBeInTheDocument();
     expect(screen.getByTestId('preview-document-scroll')).toBeInTheDocument();
   });
 
@@ -101,7 +101,7 @@ describe('PreviewCanvas', () => {
     render(<PreviewCanvas copy={copy} project={makeProject()} />);
 
     fireEvent.click(screen.getByRole('button', { name: /open full preview/i }));
-    fireEvent.click(screen.getByTitle('Close preview'));
+    fireEvent.click(screen.getByRole('button', { name: copy.previewModalClose }));
 
     expect(screen.getByRole('button', { name: /open full preview/i })).toBeInTheDocument();
     expect(screen.queryByTestId('preview-document-scroll')).not.toBeInTheDocument();

@@ -207,6 +207,15 @@ export type AppMessages = {
     previewModalOf: string;
     previewModalClose: string;
     previewModalAdvanced: string;
+    previewModalTocShow: string;
+    previewModalTocHide: string;
+    previewModalTocHeading: string;
+    previewModalZoomSlider: string;
+    previewModalEmptyState: string;
+    previewModalUntitledProject: string;
+    previewModalUntitledChapter: string;
+    previewModalCoverAlt: string;
+    previewModalBackCoverAlt: string;
   };
 };
 
@@ -478,6 +487,15 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewModalOf: 'de',
       previewModalClose: 'Cerrar',
       previewModalAdvanced: 'Vista previa avanzada',
+      previewModalTocShow: 'Mostrar índice',
+      previewModalTocHide: 'Ocultar índice',
+      previewModalTocHeading: 'Índice',
+      previewModalZoomSlider: 'Nivel de zoom de la vista previa',
+      previewModalEmptyState: 'Sin contenido para mostrar',
+      previewModalUntitledProject: 'Proyecto sin título',
+      previewModalUntitledChapter: 'Capítulo sin título',
+      previewModalCoverAlt: 'Portada de vista previa',
+      previewModalBackCoverAlt: 'Contraportada de vista previa',
     },
   },
   en: {
@@ -747,6 +765,15 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewModalOf: 'of',
       previewModalClose: 'Close',
       previewModalAdvanced: 'Advanced preview',
+      previewModalTocShow: 'Show table of contents',
+      previewModalTocHide: 'Hide table of contents',
+      previewModalTocHeading: 'Table of contents',
+      previewModalZoomSlider: 'Preview zoom level',
+      previewModalEmptyState: 'No content to display',
+      previewModalUntitledProject: 'Untitled project',
+      previewModalUntitledChapter: 'Untitled chapter',
+      previewModalCoverAlt: 'Preview cover',
+      previewModalBackCoverAlt: 'Preview back cover',
     },
   },
 };
