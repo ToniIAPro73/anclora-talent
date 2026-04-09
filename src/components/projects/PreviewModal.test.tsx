@@ -192,4 +192,13 @@ describe('PreviewModal', () => {
 
     expect(screen.queryByText('Subtitulo antiguo')).not.toBeInTheDocument();
   });
+
+  test('renders preview content with explicit paragraph spacing for imported documents', () => {
+    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
+
+    const content = screen.getAllByTestId('preview-page-content').at(-1);
+
+    expect(content).toHaveClass('[&_p]:mb-4');
+    expect(content).toHaveClass('[&_p:last-child]:mb-0');
+  });
 });

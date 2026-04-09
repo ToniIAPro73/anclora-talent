@@ -543,6 +543,20 @@ describe('AdvancedRichTextEditor selection behavior', () => {
     expect(styles).toContain('opacity: 0');
   });
 
+  test('defines explicit paragraph spacing for imported content', () => {
+    const editor = createMockEditor(createSelection('Hola', 0));
+    useEditorMock.mockReturnValue(editor);
+
+    render(<AdvancedRichTextEditor defaultContent="<p>Uno</p><p>Dos</p>" onUpdate={vi.fn()} />);
+
+    const styles = Array.from(document.querySelectorAll('style'))
+      .map((node) => node.textContent ?? '')
+      .join('\n');
+
+    expect(styles).toContain('.ProseMirror p + p');
+    expect(styles).toContain('margin-top: 0.9rem');
+  });
+
   test('re-emits html containing auto breaks after overflow reconciliation', () => {
     const overflowHtml = '<p>' + 'Texto '.repeat(500) + '</p>';
     const editor = createMockEditor(createSelection('Texto', 0));

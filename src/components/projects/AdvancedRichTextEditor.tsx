@@ -1382,8 +1382,13 @@ export function AdvancedRichTextEditor({
                 object-fit: cover;
               }
               .ProseMirror p {
+                margin: 0;
                 overflow-wrap: break-word;
                 word-break: break-word;
+              }
+              .ProseMirror p + p,
+              .preview-page p + p {
+                margin-top: 0.9rem;
               }
               .ProseMirror p[data-indent],
               .preview-page p[data-indent],
