@@ -30,7 +30,6 @@ import type { AppMessages } from '@/lib/i18n/messages';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { buildPreviewPages, type PreviewPage } from '@/lib/preview/preview-builder';
 import {
-  DEVICE_PAGINATION_CONFIGS,
   FORMAT_PRESETS,
   buildPaginationConfig,
   type PreviewFormat,
@@ -69,9 +68,7 @@ export function PreviewModal({
 
     return window.matchMedia('(min-width: 768px)').matches;
   });
-  const [pageTurnDirection, setPageTurnDirection] = useState<'next' | 'prev' | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
-  const pageTurnTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') {
@@ -87,14 +84,6 @@ export function PreviewModal({
     mediaQuery.addEventListener('change', handleChange);
 
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (pageTurnTimeoutRef.current) {
-        clearTimeout(pageTurnTimeoutRef.current);
-      }
-    };
   }, []);
 
   // Close on Escape key
@@ -238,21 +227,6 @@ export function PreviewModal({
     setZoom(nextZoom);
   }, []);
 
-  const triggerPageTurn = useCallback(
-    (direction: 'next' | 'prev', navigate: () => void) => {
-      if (pageTurnTimeoutRef.current) {
-        clearTimeout(pageTurnTimeoutRef.current);
-      }
-
-      setPageTurnDirection(direction);
-      navigate();
-      pageTurnTimeoutRef.current = setTimeout(() => {
-        setPageTurnDirection(null);
-      }, 320);
-    },
-    [],
-  );
-
   const tableOfContentsPanel = (
     <>
       <div className="flex-shrink-0 border-b border-white/10 px-5 py-4">
@@ -287,7 +261,6 @@ export function PreviewModal({
       </ul>
     </>
   );
-  const showPaperBookAffordance = format !== 'mobile' && visiblePages.length > 0;
   const showSpreadSpine = viewMode === 'spread' && visiblePages.length > 1;
 
   return (
@@ -464,14 +437,14 @@ export function PreviewModal({
               id="preview-modal-sidebar"
               aria-label={copy.previewModalTocHeading}
               data-testid="preview-modal-sidebar"
-              className="w-64 flex-shrink-0 overflow-hidden border-r border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))]"
+              className="w-56 flex-shrink-0 overflow-hidden border-r border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] xl:w-60"
             >
               {tableOfContentsPanel}
             </aside>
           )}
 
           {/* Preview Area */}
-          <section className="flex flex-1 flex-col overflow-hidden px-2 py-2 md:px-4 md:py-4">
+          <section className="flex flex-1 flex-col overflow-hidden px-1.5 py-1.5 md:px-2 md:py-2">
             {/* Content scrollable area */}
             <div className="relative flex-1 min-h-0">
               {!isDesktopViewport && showTableOfContents && (
@@ -488,7 +461,7 @@ export function PreviewModal({
                 ref={viewportRef}
                 data-preview-viewport="true"
                 data-testid="preview-document-scroll"
-                className="flex-1 h-full overflow-auto rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_35%),linear-gradient(180deg,rgba(17,28,40,0.92),rgba(10,16,25,0.96))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:p-4"
+                className={`flex-1 h-full rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_35%),linear-gradient(180deg,rgba(17,28,40,0.92),rgba(10,16,25,0.96))] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:p-2.5 ${hasManualZoom ? 'overflow-auto' : 'overflow-hidden'}`}
               >
                 <div
                   data-testid="preview-stage-surface"
@@ -497,48 +470,15 @@ export function PreviewModal({
                   <div
                     data-testid="preview-spread-frame"
                     className="relative mx-auto transition-all duration-300"
-                    data-page-turn={pageTurnDirection ?? undefined}
                     style={{
                       width: `${scaledSpreadWidth}px`,
                       height: `${scaledSpreadHeight}px`,
                     }}
                   >
-                    {showPaperBookAffordance && (
-                      <>
-                        <button
-                          type="button"
-                          aria-label={copy.previewModalTurnPreviousCorner}
-                          onClick={() => triggerPageTurn('prev', prevPage)}
-                          disabled={currentPage === 0}
-                          title={copy.previewModalTurnPreviousCorner}
-                          className="group absolute bottom-2 left-2 z-30 flex h-24 w-24 items-end justify-start rounded-bl-[30px] transition hover:scale-[1.03] disabled:pointer-events-none disabled:opacity-0"
-                        >
-                          <span className="absolute bottom-0 left-0 h-[70px] w-[70px] rounded-tr-[20px] border border-white/15 bg-[linear-gradient(135deg,rgba(255,255,255,0.26),rgba(255,255,255,0.08)_58%,transparent_58%)] shadow-[0_16px_30px_rgba(0,0,0,0.28)] transition duration-300 group-hover:h-[78px] group-hover:w-[78px] group-hover:border-white/25 group-hover:shadow-[0_24px_40px_rgba(0,0,0,0.38)]" />
-                          <span className="absolute bottom-3 left-3 flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-[rgba(10,16,25,0.78)] text-white/90 shadow-[0_10px_24px_rgba(0,0,0,0.3)] transition group-hover:border-white/30 group-hover:bg-[rgba(12,20,30,0.92)]">
-                            <ChevronLeft className="h-4 w-4" />
-                          </span>
-                          <span className="sr-only">{copy.previewModalTurnPreviousCorner}</span>
-                        </button>
-                        <button
-                          type="button"
-                          aria-label={copy.previewModalTurnNextCorner}
-                          onClick={() => triggerPageTurn('next', nextPage)}
-                          disabled={currentPage >= totalPages - 1}
-                          title={copy.previewModalTurnNextCorner}
-                          className="group absolute bottom-2 right-2 z-30 flex h-24 w-24 items-end justify-end rounded-br-[30px] transition hover:scale-[1.03] disabled:pointer-events-none disabled:opacity-0"
-                        >
-                          <span className="absolute bottom-0 right-0 h-[70px] w-[70px] rounded-tl-[20px] border border-white/15 bg-[linear-gradient(225deg,rgba(255,255,255,0.28),rgba(255,255,255,0.08)_58%,transparent_58%)] shadow-[0_16px_30px_rgba(0,0,0,0.28)] transition duration-300 group-hover:h-[78px] group-hover:w-[78px] group-hover:border-white/25 group-hover:shadow-[0_24px_40px_rgba(0,0,0,0.38)]" />
-                          <span className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-[rgba(10,16,25,0.78)] text-white/90 shadow-[0_10px_24px_rgba(0,0,0,0.3)] transition group-hover:border-white/30 group-hover:bg-[rgba(12,20,30,0.92)]">
-                            <ChevronRight className="h-4 w-4" />
-                          </span>
-                          <span className="sr-only">{copy.previewModalTurnNextCorner}</span>
-                        </button>
-                      </>
-                    )}
                     {showSpreadSpine && (
                       <div
                         aria-hidden="true"
-                        className="pointer-events-none absolute inset-y-5 left-1/2 z-20 hidden w-8 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02),rgba(0,0,0,0.22))] shadow-[inset_0_0_18px_rgba(255,255,255,0.06),0_0_30px_rgba(0,0,0,0.18)] md:block"
+                        className="pointer-events-none absolute inset-y-4 left-1/2 z-20 hidden w-5 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.015),rgba(0,0,0,0.18))] shadow-[inset_0_0_12px_rgba(255,255,255,0.03),0_0_18px_rgba(0,0,0,0.12)] md:block"
                       >
                         <div className="absolute inset-y-2 left-1/2 w-px -translate-x-1/2 bg-white/10" />
                       </div>
@@ -556,46 +496,12 @@ export function PreviewModal({
                     >
                       {visiblePages.length > 0 ? (
                         visiblePages.map((page, idx) => (
-                          <div
-                            key={`page-${currentPage}-${idx}`}
-                            className="relative transition-all duration-500 ease-out"
-                            style={{
-                              transform:
-                                pageTurnDirection === 'next' && idx === visiblePages.length - 1
-                                  ? 'perspective(2000px) rotateY(-24deg) translateX(-18px) scale(0.985)'
-                                  : pageTurnDirection === 'prev' && idx === 0
-                                    ? 'perspective(2000px) rotateY(24deg) translateX(18px) scale(0.985)'
-                                    : 'perspective(1600px) rotateY(0deg) translateX(0px)',
-                              transformOrigin:
-                                pageTurnDirection === 'next' && idx === visiblePages.length - 1
-                                  ? 'right center'
-                                  : pageTurnDirection === 'prev' && idx === 0
-                                    ? 'left center'
-                                    : 'center center',
-                              filter: pageTurnDirection ? 'drop-shadow(0 28px 56px rgba(0,0,0,0.28))' : 'none',
-                              opacity:
-                                pageTurnDirection === 'next' && idx === visiblePages.length - 1
-                                  ? 0.9
-                                  : pageTurnDirection === 'prev' && idx === 0
-                                    ? 0.9
-                                    : 1,
-                              willChange: 'transform, filter, opacity',
-                            }}
-                          >
-                            {showPaperBookAffordance && (
-                              <div
-                                aria-hidden="true"
-                                className={`pointer-events-none absolute inset-y-6 z-10 hidden w-10 rounded-full blur-[10px] md:block ${
-                                  idx === 0
-                                    ? '-right-5 bg-[linear-gradient(90deg,rgba(0,0,0,0.16),transparent)]'
-                                    : '-left-5 bg-[linear-gradient(270deg,rgba(0,0,0,0.16),transparent)]'
-                                }`}
-                              />
-                            )}
+                          <div key={`page-${currentPage}-${idx}`} className="relative">
                             <PageRenderer
                               page={page}
                               format={format}
                               copy={copy}
+                              config={paginationConfig}
                             />
                           </div>
                         ))
@@ -664,10 +570,10 @@ interface PageRendererProps {
   page: PreviewPage;
   format: PreviewFormat;
   copy: AppMessages['project'];
+  config: ReturnType<typeof buildPaginationConfig>;
 }
 
-function PageRenderer({ page, format, copy }: PageRendererProps) {
-  const config = DEVICE_PAGINATION_CONFIGS[format];
+function PageRenderer({ page, format, copy, config }: PageRendererProps) {
   const preset = FORMAT_PRESETS[format];
 
   const pageStyle = {
@@ -775,12 +681,181 @@ function PageRenderer({ page, format, copy }: PageRendererProps) {
     <div
       data-testid="preview-page-shell"
       style={pageStyle}
-      className="bg-[var(--preview-paper)] rounded-[8px] shadow-[var(--shadow-strong)] border border-[var(--preview-paper-border)] overflow-hidden flex flex-col"
+      className="preview-page multipage-page-frame bg-[var(--preview-paper)] rounded-[8px] shadow-[var(--shadow-strong)] border border-[var(--preview-paper-border)] overflow-hidden flex flex-col"
     >
+      <style>{`
+        .preview-page p {
+          margin: 0;
+          overflow-wrap: break-word;
+          word-break: break-word;
+        }
+        .preview-page p + p {
+          margin-top: 0.9rem;
+        }
+        .preview-page p[data-indent],
+        .preview-page h1[data-indent],
+        .preview-page h2[data-indent],
+        .preview-page h3[data-indent],
+        .preview-page h4[data-indent],
+        .preview-page h5[data-indent],
+        .preview-page h6[data-indent] {
+          transition: margin-left 0.15s ease;
+        }
+        .preview-page h1 {
+          font-size: 2rem;
+          line-height: 1.1;
+          font-weight: 800;
+          margin: 0 0 1rem 0;
+          color: var(--text-primary);
+        }
+        .preview-page h2 {
+          font-size: 1.5rem;
+          line-height: 1.2;
+          font-weight: 750;
+          margin: 0 0 0.85rem 0;
+          color: var(--text-primary);
+        }
+        .preview-page h3 {
+          font-size: 1.2rem;
+          line-height: 1.3;
+          font-weight: 700;
+          margin: 0 0 0.75rem 0;
+          color: var(--text-primary);
+        }
+        .preview-page h4 {
+          font-size: 1.05rem;
+          line-height: 1.35;
+          font-weight: 700;
+          margin: 0 0 0.65rem 0;
+          color: var(--text-primary);
+        }
+        .preview-page h5,
+        .preview-page h6 {
+          font-size: 0.95rem;
+          line-height: 1.4;
+          font-weight: 700;
+          margin: 0 0 0.6rem 0;
+          color: var(--text-primary);
+        }
+        .preview-page ul,
+        .preview-page ol {
+          margin: 0 0 1rem 1.5rem;
+          padding: 0;
+        }
+        .preview-page ul:not([data-bullet-style]) {
+          list-style-type: disc;
+        }
+        .preview-page ol:not([data-list-style]) {
+          list-style-type: decimal;
+        }
+        .preview-page li {
+          margin: 0.35rem 0;
+        }
+        .preview-page ul[data-bullet-style="disc"] {
+          list-style-type: disc;
+        }
+        .preview-page ul[data-bullet-style="circle"] {
+          list-style-type: circle;
+        }
+        .preview-page ul[data-bullet-style="square"] {
+          list-style-type: square;
+        }
+        .preview-page ul[data-bullet-style="diamond"],
+        .preview-page ul[data-bullet-style="arrow"],
+        .preview-page ul[data-bullet-style="check"] {
+          list-style: none;
+          padding-left: 0;
+        }
+        .preview-page ul[data-bullet-style="diamond"] > li,
+        .preview-page ul[data-bullet-style="arrow"] > li,
+        .preview-page ul[data-bullet-style="check"] > li {
+          position: relative;
+          padding-left: 1.5rem;
+        }
+        .preview-page ul[data-bullet-style="diamond"] > li::before {
+          content: "◆";
+        }
+        .preview-page ul[data-bullet-style="arrow"] > li::before {
+          content: "➤";
+        }
+        .preview-page ul[data-bullet-style="check"] > li::before {
+          content: "✓";
+        }
+        .preview-page ul[data-bullet-style="diamond"] > li::before,
+        .preview-page ul[data-bullet-style="arrow"] > li::before,
+        .preview-page ul[data-bullet-style="check"] > li::before {
+          position: absolute;
+          left: 0;
+          color: var(--text-primary);
+          font-weight: 700;
+        }
+        .preview-page ol[data-list-style="decimal"] {
+          list-style-type: decimal;
+        }
+        .preview-page ol[data-list-style="upper-alpha"] {
+          list-style-type: upper-alpha;
+        }
+        .preview-page ol[data-list-style="lower-alpha"] {
+          list-style-type: lower-alpha;
+        }
+        .preview-page ol[data-list-style="upper-roman"] {
+          list-style-type: upper-roman;
+        }
+        .preview-page ol[data-list-style="lower-roman"] {
+          list-style-type: lower-roman;
+        }
+        .preview-page ol[data-list-style="decimal-parentheses"],
+        .preview-page ol[data-list-style="lower-alpha-parentheses"] {
+          list-style: none;
+          counter-reset: custom-list;
+          padding-left: 0;
+        }
+        .preview-page ol[data-list-style="decimal-parentheses"] > li,
+        .preview-page ol[data-list-style="lower-alpha-parentheses"] > li {
+          position: relative;
+          padding-left: 2rem;
+          counter-increment: custom-list;
+        }
+        .preview-page ol[data-list-style="decimal-parentheses"] > li::before {
+          content: counter(custom-list) ") ";
+        }
+        .preview-page ol[data-list-style="lower-alpha-parentheses"] > li::before {
+          content: counter(custom-list, lower-alpha) ") ";
+        }
+        .preview-page ol[data-list-style="decimal-parentheses"] > li::before,
+        .preview-page ol[data-list-style="lower-alpha-parentheses"] > li::before {
+          position: absolute;
+          left: 0;
+          color: var(--text-primary);
+          font-weight: 600;
+        }
+        .preview-page hr[data-page-break="manual"],
+        .preview-page hr[data-page-break="true"] {
+          border: 0;
+          border-top: 2px dashed rgba(196, 154, 36, 0.45);
+          margin: 1.75rem 0;
+          break-after: column;
+          page-break-after: always;
+          -webkit-column-break-after: always;
+        }
+        .preview-page hr[data-page-break="auto"] {
+          border: 0;
+          height: 0;
+          margin: 0;
+          opacity: 0;
+          pointer-events: none;
+          break-after: column;
+          page-break-after: always;
+          -webkit-column-break-after: always;
+        }
+        .preview-page hr:not([data-page-break]) {
+          display: none;
+        }
+      `}</style>
       <div className="flex-1 min-h-0">
         <div
           data-testid="preview-page-content"
-          className="max-w-none text-[var(--text-secondary)] [&_blockquote]:my-5 [&_blockquote]:rounded-[12px] [&_blockquote]:border-l-4 [&_blockquote]:border-[var(--preview-quote-border)] [&_blockquote]:bg-[var(--preview-quote-bg)] [&_blockquote]:px-5 [&_blockquote]:py-4 [&_h1]:m-0 [&_h1]:mb-4 [&_h1]:text-[2rem] [&_h1]:font-black [&_h1]:leading-[1.1] [&_h1]:text-[var(--text-primary)] [&_h2]:m-0 [&_h2]:mb-[0.85rem] [&_h2]:text-[1.5rem] [&_h2]:font-[750] [&_h2]:leading-[1.2] [&_h2]:text-[var(--text-primary)] [&_h3]:m-0 [&_h3]:mb-[0.75rem] [&_h3]:text-[1.2rem] [&_h3]:font-bold [&_h3]:leading-[1.3] [&_h3]:text-[var(--text-primary)] [&_h4]:m-0 [&_h4]:mb-[0.65rem] [&_h4]:text-[1.05rem] [&_h4]:font-bold [&_h4]:leading-[1.35] [&_h4]:text-[var(--text-primary)] [&_h5]:m-0 [&_h5]:mb-[0.6rem] [&_h5]:text-[0.95rem] [&_h5]:font-bold [&_h5]:leading-[1.4] [&_h5]:text-[var(--text-primary)] [&_h6]:m-0 [&_h6]:mb-[0.6rem] [&_h6]:text-[0.95rem] [&_h6]:font-bold [&_h6]:leading-[1.4] [&_h6]:text-[var(--text-primary)] [&_hr]:hidden [&_li]:my-[0.35rem] [&_ol]:my-0 [&_ol]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:m-0 [&_p]:leading-[1.65] [&_p+p]:mt-[0.9rem] [&_strong]:font-semibold [&_strong]:text-[var(--text-primary)] [&_ul]:my-0 [&_ul]:mb-4 [&_ul]:list-disc [&_ul]:pl-6"
+          className="max-w-none text-[var(--text-secondary)] [&_blockquote]:my-5 [&_blockquote]:rounded-[12px] [&_blockquote]:border-l-4 [&_blockquote]:border-[var(--preview-quote-border)] [&_blockquote]:bg-[var(--preview-quote-bg)] [&_blockquote]:px-5 [&_blockquote]:py-4 [&_strong]:font-semibold [&_strong]:text-[var(--text-primary)]"
           dangerouslySetInnerHTML={{ __html: page.content || '' }}
         />
       </div>

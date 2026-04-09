@@ -267,22 +267,21 @@ describe('PreviewModal', () => {
     expect(screen.getByDisplayValue('3')).toBeInTheDocument();
   });
 
-  test('renders page-corner targets on non-mobile formats and advances from the right corner', () => {
+  test('renders content pages using the effective editor margins instead of format defaults', () => {
+    window.localStorage.setItem(
+      EDITOR_PREFERENCES_STORAGE_KEY,
+      JSON.stringify({
+        device: 'desktop',
+        fontSize: '16px',
+        margins: { top: 24, bottom: 24, left: 24, right: 24 },
+      }),
+    );
+
     render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
 
-    expect(screen.getByRole('button', { name: copy.previewModalTurnPreviousCorner })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: copy.previewModalTurnNextCorner }));
-
-    expect(screen.getByDisplayValue('2')).toBeInTheDocument();
-  });
-
-  test('hides page-corner affordances on mobile format', () => {
-    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
-
-    fireEvent.click(screen.getByRole('button', { name: copy.previewModalMobile }));
-
-    expect(screen.queryByRole('button', { name: copy.previewModalTurnNextCorner })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: copy.previewModalTurnPreviousCorner })).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('preview-page-shell')[0]).toHaveStyle({
+      padding: '24px 24px 24px 24px',
+    });
   });
 
   test('renders cover and back cover from the built preview structure', () => {
@@ -311,6 +310,12 @@ describe('PreviewModal', () => {
     expect(frameWidth).toBeLessThan(1400);
     expect(frameHeight).toBeLessThanOrEqual(700);
     expect(frameWidth).toBeGreaterThan(frameHeight);
+  });
+
+  test('keeps the preview viewport non-scrollable until the user changes zoom manually', () => {
+    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
+
+    expect(screen.getByTestId('preview-document-scroll')).toHaveClass('overflow-hidden');
   });
 
   test('does not re-render a hidden subtitle from saved cover surface state', () => {
