@@ -126,11 +126,11 @@ function hasOversizedSingleBlock(
   const lineHeightPx = config.fontSize * config.lineHeight;
   const charsPerLine = Math.max(
     1,
-    Math.floor(contentWidth / (config.fontSize * 0.5)),
+    Math.floor(contentWidth / (config.fontSize * 0.48)),
   );
   const linesPerPage = Math.max(
     1,
-    Math.floor((availableHeight / lineHeightPx) * 0.9),
+    Math.floor((availableHeight / lineHeightPx) * 0.98),
   );
   const charsPerPage = Math.max(charsPerLine, charsPerLine * linesPerPage);
 
@@ -157,11 +157,11 @@ function splitOversizedBlockSegment(
   const lineHeightPx = config.fontSize * config.lineHeight;
   const charsPerLine = Math.max(
     1,
-    Math.floor(contentWidth / (config.fontSize * 0.5)),
+    Math.floor(contentWidth / (config.fontSize * 0.48)),
   );
   const linesPerPage = Math.max(
     1,
-    Math.floor((availableHeight / lineHeightPx) * 0.9),
+    Math.floor((availableHeight / lineHeightPx) * 0.98),
   );
   const charsPerPage = Math.max(charsPerLine, charsPerLine * linesPerPage);
 

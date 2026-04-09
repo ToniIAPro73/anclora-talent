@@ -75,11 +75,10 @@ export function paginateContent(
     config.pageHeight - config.marginTop - config.marginBottom;
   const lineHeightPx = config.fontSize * config.lineHeight;
 
-  // Apply 0.95 factor to maximize content density.
-  // Previously 0.75 or 0.9, but now that estimateNodeLines uses CSS-accurate values,
-  // 0.95 is the right margin to better match the editor's column layout.
+  // Apply 0.98 factor to maximize content density.
+  // Matching the editor's CSS columns which utilize 100% of space.
   const approxLinesPerPage = Math.floor(
-    (availableHeight / lineHeightPx) * 0.95,
+    (availableHeight / lineHeightPx) * 0.98,
   );
 
   // Parse HTML into DOM nodes
@@ -226,8 +225,8 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
 
     const contentWidth =
       config.pageWidth - config.marginLeft - config.marginRight;
-    // More accurate character width estimate (0.5 instead of 0.6)
-    const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.5));
+    // More accurate character width estimate (0.48 instead of 0.5)
+    const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.48));
     const textLines = Math.ceil(text.trim().length / charsPerLine);
     return Math.max(1, textLines);
   }

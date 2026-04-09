@@ -1376,6 +1376,11 @@ export function AdvancedRichTextEditor({
             style={{ width: `${viewportWidth}px`, minHeight: `${pageHeight}px` }}
           >
             <style>{`
+              .ProseMirror {
+                font-size: ${previewConfig.fontSize}px;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+              }
               .ProseMirror img {
                 max-width: 100%;
                 height: auto;
@@ -1389,27 +1394,7 @@ export function AdvancedRichTextEditor({
               }
               .ProseMirror p + p,
               .preview-page p + p {
-                margin-top: 0.9rem;
-              }
-              .ProseMirror p[data-indent],
-              .preview-page p[data-indent],
-              .ProseMirror h1[data-indent],
-              .preview-page h1[data-indent],
-              .ProseMirror h2[data-indent],
-              .preview-page h2[data-indent],
-              .ProseMirror h3[data-indent],
-              .preview-page h3[data-indent],
-              .ProseMirror h4[data-indent],
-              .preview-page h4[data-indent],
-              .ProseMirror h5[data-indent],
-              .preview-page h5[data-indent],
-              .ProseMirror h6[data-indent],
-              .preview-page h6[data-indent] {
-                transition: margin-left 0.15s ease;
-              }
-              .ProseMirror {
-                word-wrap: break-word;
-                overflow-wrap: break-word;
+                margin-top: 0.8rem;
               }
               .ProseMirror h1,
               .preview-page h1 {

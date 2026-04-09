@@ -697,6 +697,9 @@ function PageRenderer({ page, format, copy, config }: PageRendererProps) {
       className="preview-page multipage-page-frame bg-[var(--preview-paper)] rounded-[8px] shadow-[var(--shadow-strong)] border border-[var(--preview-paper-border)] overflow-hidden flex flex-col"
     >
       <style>{`
+        .preview-page {
+          font-size: ${config.fontSize}px;
+        }
         .preview-page p {
           margin: 0;
           line-height: ${config.lineHeight};
@@ -704,7 +707,7 @@ function PageRenderer({ page, format, copy, config }: PageRendererProps) {
           word-break: break-word;
         }
         .preview-page p + p {
-          margin-top: 0.9rem;
+          margin-top: 0.8rem;
         }
         .preview-page p[data-indent],
         .preview-page h1[data-indent],
