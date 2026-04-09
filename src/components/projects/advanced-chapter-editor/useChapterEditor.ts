@@ -55,6 +55,10 @@ function normalizeHtmlContent(content: string): string {
 
   const normalizeBreakMarkup = (html: string) =>
     html
+      .replace(
+        /<p[^>]*>\s*(?:<[^>]+>\s*)*[─—–_=*·.\s]{5,}(?:\s*<\/[^>]+>)*\s*<\/p>/gi,
+        '',
+      )
       .replace(/<hr(?![^>]*data-page-break=)[^>]*\/?>/gi, '')
       .replace(/<hr\s+data-page-break="true"\s*\/?>/gi, '<hr data-page-break="manual">')
       .replace(/<hr\s+data-page-break="manual"\s*\/?>/gi, '<hr data-page-break="manual">')

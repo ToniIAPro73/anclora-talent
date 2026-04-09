@@ -539,6 +539,7 @@ describe('AdvancedRichTextEditor selection behavior', () => {
     expect(styles).toContain('.ProseMirror ul:not([data-bullet-style])');
     expect(styles).toContain('.ProseMirror ol:not([data-list-style])');
     expect(styles).toContain('.ProseMirror hr[data-page-break="auto"]');
+    expect(styles).toContain('.ProseMirror hr:not([data-page-break])');
     expect(styles).toContain('opacity: 0');
   });
 

@@ -227,6 +227,34 @@ describe('useChapterEditor', () => {
     expect(result.current.htmlContent).toBe('<p>Índice</p><p>Introducción</p>');
   });
 
+  test('strips decorative separator paragraphs when loading chapter content', () => {
+    const chaptersWithDecorativeParagraphs = [
+      {
+        id: 'chapter-decorative',
+        order: 1,
+        title: 'Capítulo decorativo',
+        blocks: [
+          {
+            id: 'block-decorative',
+            order: 1,
+            type: 'paragraph' as const,
+            content: '<p>Índice</p><p>─────────────────</p><p>Introducción</p>',
+          },
+        ],
+      },
+    ];
+
+    const { result } = renderHook(() =>
+      useChapterEditor({
+        chapters: chaptersWithDecorativeParagraphs,
+        initialChapterIndex: 0,
+        projectId: 'project-1',
+      }),
+    );
+
+    expect(result.current.htmlContent).toBe('<p>Índice</p><p>Introducción</p>');
+  });
+
   test('navigates page by page when a chapter spans multiple pages', () => {
     const longChapter = [
       {
