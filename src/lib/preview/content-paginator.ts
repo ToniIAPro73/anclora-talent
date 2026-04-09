@@ -75,10 +75,11 @@ export function paginateContent(
     config.pageHeight - config.marginTop - config.marginBottom;
   const lineHeightPx = config.fontSize * config.lineHeight;
 
-  // Apply 0.75 factor to account for visual spacing, margins between elements, etc.
-  // This is more conservative and prevents content overflow
+  // Apply 0.9 factor to account for break-inside:avoid waste at column bottoms.
+  // Previously 0.75 but that over-compensated for element height overestimates;
+  // now that estimateNodeLines uses CSS-accurate values, 0.9 is the right margin.
   const approxLinesPerPage = Math.floor(
-    (availableHeight / lineHeightPx) * 0.75,
+    (availableHeight / lineHeightPx) * 0.9,
   );
 
   // Parse HTML into DOM nodes
@@ -235,12 +236,27 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
     const element = node as Element;
     const tagName = element.tagName;
 
-    // Headings take more space
+    // Headings — use actual CSS values from .preview-page h1-h6
     if (/^H[1-6]$/.test(tagName)) {
       const level = parseInt(tagName[1]);
-      // H1 = 4 lines, H2 = 3.5 lines, H3 = 3 lines, etc.
-      const headingLines = 4.5 - level * 0.5;
-      return Math.max(2, headingLines);
+      const text = element.textContent || '';
+      // CSS: font-size, line-height, margin-bottom for H1–H6
+      const headingProps = [
+        { fontMul: 2.0,  lhFactor: 1.1,  mbEm: 1.0  }, // H1
+        { fontMul: 1.5,  lhFactor: 1.2,  mbEm: 0.85 }, // H2
+        { fontMul: 1.2,  lhFactor: 1.3,  mbEm: 0.75 }, // H3
+        { fontMul: 1.05, lhFactor: 1.35, mbEm: 0.65 }, // H4
+        { fontMul: 0.95, lhFactor: 1.4,  mbEm: 0.6  }, // H5/H6
+      ];
+      const { fontMul, lhFactor, mbEm } = headingProps[Math.min(level - 1, 4)];
+      const headingFontPx = config.fontSize * fontMul;
+      const contentWidth = config.pageWidth - config.marginLeft - config.marginRight;
+      const charsPerLine = Math.floor(contentWidth / (headingFontPx * 0.5));
+      const textLines = text.trim().length > 0
+        ? Math.max(1, Math.ceil(text.trim().length / charsPerLine))
+        : 1;
+      const heightPx = textLines * headingFontPx * lhFactor + config.fontSize * mbEm;
+      return heightPx / (config.fontSize * config.lineHeight);
     }
 
     // Images
@@ -248,32 +264,33 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
       return 15; // Images take ~15 lines
     }
 
-    // Lists
+    // Lists — CSS: ul/ol{margin:0 0 1rem 1.5rem}, li{margin:0.35rem 0}
     if (tagName === 'UL' || tagName === 'OL') {
       const items = element.querySelectorAll('li');
-      let totalLines = 1; // List start margin
+      let totalLines = 0; // No list-start margin in CSS (margin-top:0)
       items.forEach((item) => {
         const text = item.textContent || '';
         const contentWidth =
-          config.pageWidth - config.marginLeft - config.marginRight - 24; // Indent
+          config.pageWidth - config.marginLeft - config.marginRight - 24; // 1.5rem indent
         const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.5));
         const itemLines = Math.max(1, Math.ceil(text.length / charsPerLine));
-        totalLines += itemLines + 0.5; // Extra half line between items
+        // li margin: 0.35rem top + 0.35rem bottom = 0.7rem
+        totalLines += itemLines + 0.7 / config.lineHeight;
       });
-      return totalLines + 1; // List end margin
+      return totalLines + 1.0 / config.lineHeight; // list bottom margin: 1rem
     }
 
-    // Paragraphs
+    // Paragraphs — CSS: p{margin:0}, p+p{margin-top:0.9rem}
     if (tagName === 'P') {
       const text = element.textContent || '';
-      if (!text.trim()) return 1; // Empty paragraph still takes space
+      if (!text.trim()) return 0.9 / config.lineHeight; // Empty p = inter-paragraph spacing
 
       const contentWidth =
         config.pageWidth - config.marginLeft - config.marginRight;
       const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.5));
       const textLines = Math.ceil(text.length / charsPerLine);
-      // Add 1.5 lines for paragraph spacing (top + bottom margin)
-      return Math.max(1, textLines) + 1.5;
+      // p+p margin-top: 0.9rem → 0.9/lineHeight algorithm lines of spacing
+      return Math.max(1, textLines) + 0.9 / config.lineHeight;
     }
 
     // Blockquotes
