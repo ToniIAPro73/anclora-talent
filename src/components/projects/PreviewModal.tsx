@@ -699,10 +699,10 @@ function PageRenderer({ page, format, copy, config }: PageRendererProps) {
       <style>{`
         .preview-page {
           font-size: ${config.fontSize}px;
+          line-height: ${config.lineHeight};
         }
         .preview-page p {
           margin: 0;
-          line-height: ${config.lineHeight};
           overflow-wrap: break-word;
           word-break: break-word;
         }

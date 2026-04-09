@@ -75,10 +75,9 @@ export function paginateContent(
     config.pageHeight - config.marginTop - config.marginBottom;
   const lineHeightPx = config.fontSize * config.lineHeight;
 
-  // Apply 0.98 factor to maximize content density.
-  // Matching the editor's CSS columns which utilize 100% of space.
+  // Apply 1.0 factor to match the editor's CSS columns behavior.
   const approxLinesPerPage = Math.floor(
-    (availableHeight / lineHeightPx) * 0.98,
+    (availableHeight / lineHeightPx) * 1.0,
   );
 
   // Parse HTML into DOM nodes
@@ -115,12 +114,12 @@ export function paginateContent(
       continue;
     }
 
-    // Handle BR tags - treat as paragraph break
+    // Handle BR tags - treat as single line
     if (
       node.nodeType === Node.ELEMENT_NODE &&
       (node as Element).tagName === 'BR'
     ) {
-      currentLines += 1.5; // BR adds some vertical space
+      currentLines += 1.0;
       continue;
     }
 
@@ -225,8 +224,8 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
 
     const contentWidth =
       config.pageWidth - config.marginLeft - config.marginRight;
-    // More accurate character width estimate (0.48 instead of 0.5)
-    const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.48));
+    // Tightened character width estimate (0.44 for editorial fonts)
+    const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.44));
     const textLines = Math.ceil(text.trim().length / charsPerLine);
     return Math.max(1, textLines);
   }
@@ -250,7 +249,7 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
       const { fontMul, lhFactor, mbEm } = headingProps[Math.min(level - 1, 4)];
       const headingFontPx = config.fontSize * fontMul;
       const contentWidth = config.pageWidth - config.marginLeft - config.marginRight;
-      const charsPerLine = Math.floor(contentWidth / (headingFontPx * 0.5));
+      const charsPerLine = Math.floor(contentWidth / (headingFontPx * 0.44));
       const textLines = text.trim().length > 0
         ? Math.max(1, Math.ceil(text.trim().length / charsPerLine))
         : 1;
@@ -271,25 +270,25 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
         const text = item.textContent || '';
         const contentWidth =
           config.pageWidth - config.marginLeft - config.marginRight - 24; // 1.5rem indent
-        const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.5));
+        const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.44));
         const itemLines = Math.max(1, Math.ceil(text.length / charsPerLine));
-        // li margin: 0.35rem top + 0.35rem bottom = 0.7rem
-        totalLines += itemLines + 0.7 / config.lineHeight;
+        // li margin: 0.35rem total between items → 0.35/lineHeight lines
+        totalLines += itemLines + 0.35 / config.lineHeight;
       });
-      return totalLines + 1.0 / config.lineHeight; // list bottom margin: 1rem
+      return totalLines + 0.8 / config.lineHeight; // matching p+p margin
     }
 
-    // Paragraphs — CSS: p{margin:0}, p+p{margin-top:0.9rem}
+    // Paragraphs — CSS: p{margin:0}, p+p{margin-top:0.8rem}
     if (tagName === 'P') {
       const text = element.textContent || '';
-      if (!text.trim()) return 0.9 / config.lineHeight; // Empty p = inter-paragraph spacing
+      if (!text.trim()) return 0.8 / config.lineHeight; // Empty p = inter-paragraph spacing
 
       const contentWidth =
         config.pageWidth - config.marginLeft - config.marginRight;
-      const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.5));
+      const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.44));
       const textLines = Math.ceil(text.length / charsPerLine);
-      // p+p margin-top: 0.9rem → 0.9/lineHeight algorithm lines of spacing
-      return Math.max(1, textLines) + 0.9 / config.lineHeight;
+      // p+p margin-top: 0.8rem → 0.8/lineHeight algorithm lines of spacing
+      return Math.max(1, textLines) + 0.8 / config.lineHeight;
     }
 
     // Blockquotes
