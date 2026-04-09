@@ -81,9 +81,7 @@ export function paginateContent(
   );
 
   // Parse HTML into DOM nodes
-  // Check if we're in browser environment
   if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
-    // Server-side: use character-based pagination fallback
     return paginateByCharacters(htmlContent, config);
   }
 
@@ -109,7 +107,6 @@ export function paginateContent(
   let currentChapter = '';
 
   for (const node of nodes) {
-    // Skip empty text nodes and lone br tags
     if (node.nodeType === Node.TEXT_NODE && !node.textContent?.trim()) {
       continue;
     }
@@ -123,12 +120,11 @@ export function paginateContent(
       continue;
     }
 
-    // Handle manual page break markers (Commit 4)
+    // Handle manual page break markers
     if (
       node.nodeType === Node.ELEMENT_NODE &&
       isPageBreakElement(node as Element)
     ) {
-      // Force page break: save current page if it has content
       if (currentPageNodes.length > 0) {
         const pageDiv = document.createElement('div');
         pageDiv.className = 'preview-page-content';
@@ -143,15 +139,12 @@ export function paginateContent(
           pageNumber: pages.length + 1,
         });
 
-        // Start new page
         currentPageNodes = [];
         currentLines = 0;
       }
-      // Don't include the page break marker itself in the output
       continue;
     }
 
-    // Track chapter headings (H1, H2) for TOC/title labelling — no forced break
     if (node.nodeType === Node.ELEMENT_NODE) {
       const element = node as Element;
       if (element.tagName === 'H1' || element.tagName === 'H2') {
@@ -159,15 +152,12 @@ export function paginateContent(
       }
     }
 
-    // Estimate lines for this node
     const nodeLines = estimateNodeLines(node, config);
 
-    // Check if adding this node would exceed page capacity
     if (
       currentLines + nodeLines > approxLinesPerPage &&
       currentPageNodes.length > 0
     ) {
-      // Create a new page with current nodes
       const pageDiv = document.createElement('div');
       pageDiv.className = 'preview-page-content';
       currentPageNodes.forEach((n) => pageDiv.appendChild(n.cloneNode(true)));
@@ -179,7 +169,6 @@ export function paginateContent(
         pageNumber: pages.length + 1,
       });
 
-      // Start new page
       currentPageNodes = [node.cloneNode(true)];
       currentLines = nodeLines;
     } else {
@@ -188,7 +177,6 @@ export function paginateContent(
     }
   }
 
-  // Add remaining nodes as final page
   if (currentPageNodes.length > 0) {
     const pageDiv = document.createElement('div');
     pageDiv.className = 'preview-page-content';
@@ -238,7 +226,6 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
     if (/^H[1-6]$/.test(tagName)) {
       const level = parseInt(tagName[1]);
       const text = element.textContent || '';
-      // CSS: font-size, line-height, margin-bottom for H1–H6
       const headingProps = [
         { fontMul: 2.0,  lhFactor: 1.1,  mbEm: 1.0  }, // H1
         { fontMul: 1.5,  lhFactor: 1.2,  mbEm: 0.85 }, // H2
@@ -259,7 +246,7 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
 
     // Images
     if (tagName === 'IMG') {
-      return 15; // Images take ~15 lines
+      return 15;
     }
 
     // Lists — CSS: ul/ol{margin:0 0 1rem 1.5rem}, li{margin:0.35rem 0}
@@ -287,7 +274,7 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
         config.pageWidth - config.marginLeft - config.marginRight;
       const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.45));
       const textLines = Math.ceil(text.length / charsPerLine);
-      // P+P margin simulation
+      // P+P margin simulation (collapsed)
       return Math.max(1, textLines) + 0.4 / config.lineHeight;
     }
 
@@ -295,22 +282,22 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
     if (tagName === 'BLOCKQUOTE') {
       const text = element.textContent || '';
       const contentWidth =
-        config.pageWidth - config.marginLeft - config.marginRight - 60; // More indent
+        config.pageWidth - config.marginLeft - config.marginRight - 60;
       const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.5));
       const textLines = Math.ceil(text.length / charsPerLine);
-      return Math.max(2, textLines) + 2; // Top and bottom margin
+      return Math.max(2, textLines) + 2;
     }
 
     // Horizontal rules
     if (tagName === 'HR') {
-      return 3; // HR with top/bottom spacing
+      return 3;
     }
 
     // Pre/Code blocks
     if (tagName === 'PRE' || tagName === 'CODE') {
       const text = element.textContent || '';
       const lines = text.split('\n').length;
-      return lines + 2; // Padding
+      return lines + 2;
     }
 
     // Default: count child nodes recursively
@@ -321,26 +308,24 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
     return totalLines || 1;
   }
 
-  return 0; // Unknown node types take no space
+  return 0;
 }
 
 /**
  * Fallback pagination for server-side rendering
- * Uses character counting instead of DOM parsing
  */
 function paginateByCharacters(
   htmlContent: string,
   config: PaginationConfig,
 ): ContentPage[] {
-  // Calculate approximate characters per page
   const contentWidth =
     config.pageWidth - config.marginLeft - config.marginRight;
   const availableHeight =
     config.pageHeight - config.marginTop - config.marginBottom;
   const lineHeightPx = config.fontSize * config.lineHeight;
 
-  const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.5));
-  const linesPerPage = Math.floor((availableHeight / lineHeightPx) * 0.7);
+  const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.45));
+  const linesPerPage = Math.floor((availableHeight / lineHeightPx) * 0.98);
   const charsPerPage = charsPerLine * linesPerPage;
 
   const pages: ContentPage[] = [];

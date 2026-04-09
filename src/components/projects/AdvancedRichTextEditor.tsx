@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import * as React from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Extension } from '@tiptap/core';
 import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import { TextSelection } from '@tiptap/pm/state';
@@ -717,7 +718,7 @@ const MenuBar = ({
       reader.onload = (event) => {
         const imageUrl = event.target?.result as string;
         // Set default size to 45% width, left aligned with text wrapping
-        editor.chain().focus().setImage({ src: imageUrl, width: 350, align: 'left' }).run();
+        editor.chain().focus().insertContent({ type: 'image', attrs: { src: imageUrl, width: 350, align: 'left' } }).run();
       };
       reader.readAsDataURL(file);
     }
@@ -1211,7 +1212,7 @@ export function AdvancedRichTextEditor({
 
         if (normalizeEditorHtml(reconciledHtml) !== normalizeEditorHtml(currentHtml)) {
           isSyncingExternalContentRef.current = true;
-          ed.commands.setContent(reconciledHtml, false);
+          ed.commands.setContent(reconciledHtml, { emitUpdate: false });
           handleUpdate(reconciledHtml);
         return;
       }
@@ -1225,7 +1226,7 @@ export function AdvancedRichTextEditor({
   useEffect(() => {
     if (editor && normalizeEditorHtml(defaultContent) !== normalizeEditorHtml(editor.getHTML())) {
       isSyncingExternalContentRef.current = true;
-      editor.commands.setContent(defaultContent, false);
+      editor.commands.setContent(defaultContent, { emitUpdate: false });
     }
   }, [defaultContent, editor]);
 

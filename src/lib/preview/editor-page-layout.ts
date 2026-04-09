@@ -236,9 +236,6 @@ function splitOversizedBlockSegment(
   return chunks.filter(Boolean);
 }
 
-  return chunks.filter(Boolean);
-}
-
 function chunkTextIntoParagraphs(text: string, charsPerPage: number): string[] {
   return chunkTextIntoWrappedBlocks(text, charsPerPage, 'p');
 }
