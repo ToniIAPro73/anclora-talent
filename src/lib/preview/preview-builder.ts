@@ -119,24 +119,21 @@ export function buildPreviewPages(
   let globalPageNumber = 2; // Content starts immediately after cover
 
   for (const chapter of chapterSections) {
-    // Reconcile auto-breaks (strips stale auto-breaks, respects manual breaks, re-paginates)
-    // then split into discrete page HTML strings.
+    // Instead of manual pagination, we keep the full reconciled HTML.
+    // The PreviewModal will render this using CSS columns to match the editor exactly.
     const reconciledChapterHtml = reconcileOverflowBreaks(chapter.html, config);
-    const chapterPageHtmls = paginateContent(reconciledChapterHtml, config)
-      .filter((page) => hasRenderablePageContent(page.html))
-      .map((page) => page.html);
-
-    // Add paginated pages with global numbering and chapter metadata
-    for (const pageHtml of chapterPageHtmls) {
-      pages.push({
-        type: 'content',
-        content: pageHtml,
-        chapterTitle: chapter.title,
-        chapterId: chapter.id,
-        pageNumber: globalPageNumber,
-      });
-      globalPageNumber++;
-    }
+    
+    pages.push({
+      type: 'content',
+      content: reconciledChapterHtml,
+      chapterTitle: chapter.title,
+      chapterId: chapter.id,
+      pageNumber: globalPageNumber,
+    });
+    
+    // We increment by a heuristic or a fixed amount here, but the actual navigation 
+    // will be handled by column-shifting in the UI.
+    globalPageNumber++;
   }
 
   // ─────────────────────────────────────────────────────────────

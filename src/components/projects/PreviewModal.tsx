@@ -690,16 +690,34 @@ function PageRenderer({ page, format, copy, config }: PageRendererProps) {
   }
 
   // TOC or Content page
+  const contentWidth = config.pageWidth - config.marginLeft - config.marginRight;
+  const contentHeight = config.pageHeight - config.marginTop - config.marginBottom;
+  // Gap must match the editor's gap logic (columnGap = pageGap + margins)
+  const columnGap = 32 + config.marginLeft + config.marginRight;
+
   return (
     <div
       data-testid="preview-page-shell"
       style={pageStyle}
-      className="preview-page multipage-page-frame bg-[var(--preview-paper)] rounded-[8px] shadow-[var(--shadow-strong)] border border-[var(--preview-paper-border)] overflow-hidden flex flex-col"
+      className="preview-page multipage-page-frame bg-[var(--preview-paper)] rounded-[8px] shadow-[var(--shadow-strong)] border border-[var(--preview-paper-border)] overflow-hidden"
     >
       <style>{`
         .preview-page {
           font-size: ${config.fontSize}px;
           line-height: ${config.lineHeight};
+          height: ${preset.pagePixelHeight}px;
+        }
+        .preview-content-flow {
+          column-width: ${contentWidth}px;
+          column-gap: ${columnGap}px;
+          column-fill: auto;
+          height: ${contentHeight}px;
+          width: 100%;
+          outline: none;
+        }
+        .preview-content-flow > * {
+          break-inside: avoid;
+          page-break-inside: avoid;
         }
         .preview-page p {
           margin: 0;
@@ -708,15 +726,6 @@ function PageRenderer({ page, format, copy, config }: PageRendererProps) {
         }
         .preview-page p + p {
           margin-top: 0.8rem;
-        }
-        .preview-page p[data-indent],
-        .preview-page h1[data-indent],
-        .preview-page h2[data-indent],
-        .preview-page h3[data-indent],
-        .preview-page h4[data-indent],
-        .preview-page h5[data-indent],
-        .preview-page h6[data-indent] {
-          transition: margin-left 0.15s ease;
         }
         .preview-page h1 {
           font-size: 2rem;
@@ -759,92 +768,8 @@ function PageRenderer({ page, format, copy, config }: PageRendererProps) {
           margin: 0 0 1rem 1.5rem;
           padding: 0;
         }
-        .preview-page ul:not([data-bullet-style]) {
-          list-style-type: disc;
-        }
-        .preview-page ol:not([data-list-style]) {
-          list-style-type: decimal;
-        }
         .preview-page li {
           margin: 0.35rem 0;
-        }
-        .preview-page ul[data-bullet-style="disc"] {
-          list-style-type: disc;
-        }
-        .preview-page ul[data-bullet-style="circle"] {
-          list-style-type: circle;
-        }
-        .preview-page ul[data-bullet-style="square"] {
-          list-style-type: square;
-        }
-        .preview-page ul[data-bullet-style="diamond"],
-        .preview-page ul[data-bullet-style="arrow"],
-        .preview-page ul[data-bullet-style="check"] {
-          list-style: none;
-          padding-left: 0;
-        }
-        .preview-page ul[data-bullet-style="diamond"] > li,
-        .preview-page ul[data-bullet-style="arrow"] > li,
-        .preview-page ul[data-bullet-style="check"] > li {
-          position: relative;
-          padding-left: 1.5rem;
-        }
-        .preview-page ul[data-bullet-style="diamond"] > li::before {
-          content: "◆";
-        }
-        .preview-page ul[data-bullet-style="arrow"] > li::before {
-          content: "➤";
-        }
-        .preview-page ul[data-bullet-style="check"] > li::before {
-          content: "✓";
-        }
-        .preview-page ul[data-bullet-style="diamond"] > li::before,
-        .preview-page ul[data-bullet-style="arrow"] > li::before,
-        .preview-page ul[data-bullet-style="check"] > li::before {
-          position: absolute;
-          left: 0;
-          color: var(--text-primary);
-          font-weight: 700;
-        }
-        .preview-page ol[data-list-style="decimal"] {
-          list-style-type: decimal;
-        }
-        .preview-page ol[data-list-style="upper-alpha"] {
-          list-style-type: upper-alpha;
-        }
-        .preview-page ol[data-list-style="lower-alpha"] {
-          list-style-type: lower-alpha;
-        }
-        .preview-page ol[data-list-style="upper-roman"] {
-          list-style-type: upper-roman;
-        }
-        .preview-page ol[data-list-style="lower-roman"] {
-          list-style-type: lower-roman;
-        }
-        .preview-page ol[data-list-style="decimal-parentheses"],
-        .preview-page ol[data-list-style="lower-alpha-parentheses"] {
-          list-style: none;
-          counter-reset: custom-list;
-          padding-left: 0;
-        }
-        .preview-page ol[data-list-style="decimal-parentheses"] > li,
-        .preview-page ol[data-list-style="lower-alpha-parentheses"] > li {
-          position: relative;
-          padding-left: 2rem;
-          counter-increment: custom-list;
-        }
-        .preview-page ol[data-list-style="decimal-parentheses"] > li::before {
-          content: counter(custom-list) ") ";
-        }
-        .preview-page ol[data-list-style="lower-alpha-parentheses"] > li::before {
-          content: counter(custom-list, lower-alpha) ") ";
-        }
-        .preview-page ol[data-list-style="decimal-parentheses"] > li::before,
-        .preview-page ol[data-list-style="lower-alpha-parentheses"] > li::before {
-          position: absolute;
-          left: 0;
-          color: var(--text-primary);
-          font-weight: 600;
         }
         .preview-page hr[data-page-break="manual"],
         .preview-page hr[data-page-break="true"] {
@@ -852,24 +777,16 @@ function PageRenderer({ page, format, copy, config }: PageRendererProps) {
           border-top: 2px dashed rgba(196, 154, 36, 0.45);
           margin: 1.75rem 0;
           break-after: column;
-          page-break-after: always;
-          -webkit-column-break-after: always;
         }
         .preview-page hr[data-page-break="auto"] {
           border: 0;
           height: 0;
           margin: 0;
           opacity: 0;
-          pointer-events: none;
           break-after: column;
-          page-break-after: always;
-          -webkit-column-break-after: always;
-        }
-        .preview-page hr:not([data-page-break]) {
-          display: none;
         }
       `}</style>
-      <div className="flex-1 min-h-0">
+      <div className="preview-content-flow">
         <div
           data-testid="preview-page-content"
           className="max-w-none text-[var(--text-secondary)] [&_blockquote]:my-5 [&_blockquote]:rounded-[12px] [&_blockquote]:border-l-4 [&_blockquote]:border-[var(--preview-quote-border)] [&_blockquote]:bg-[var(--preview-quote-bg)] [&_blockquote]:px-5 [&_blockquote]:py-4 [&_strong]:font-semibold [&_strong]:text-[var(--text-primary)]"
