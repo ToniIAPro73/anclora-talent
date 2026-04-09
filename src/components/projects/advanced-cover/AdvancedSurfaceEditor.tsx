@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Check, Loader2, Sparkles } from 'lucide-react';
 import { CoverCanvas } from './Canvas';
 import { CoverToolbar } from './Toolbar';
@@ -58,6 +59,7 @@ export function AdvancedSurfaceEditor({
   project,
   copy,
 }: AdvancedSurfaceEditorProps) {
+  const router = useRouter();
   const { canvas, setCanvas, addElement, clear, selectElement } = useCanvasStore();
   const [isRendering, startRenderTransition] = useTransition();
   const [rendered, setRendered] = useState(false);
@@ -327,6 +329,7 @@ export function AdvancedSurfaceEditor({
         await renderBackCoverImageAction(formData);
       }
 
+      router.refresh();
       setRenderedImageUrl(dataUrl);
       setRendered(true);
       setTimeout(() => setRendered(false), 2500);

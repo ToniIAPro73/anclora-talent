@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Check, Loader2 } from 'lucide-react';
 import { saveProjectCoverAction } from '@/lib/projects/actions';
 import { resizeImage } from '@/lib/ui/images';
@@ -15,6 +16,7 @@ import {
 } from '@/lib/projects/cover-surface';
 
 export function CoverForm({ copy, project }: { copy: AppMessages['project']; project: ProjectRecord }) {
+  const router = useRouter();
   const initialSurface = normalizeSurfaceState(
     project.cover.surfaceState ?? {
       ...createDefaultSurfaceState('cover'),
@@ -58,6 +60,7 @@ export function CoverForm({ copy, project }: { copy: AppMessages['project']; pro
 
     startTransition(async () => {
       await saveProjectCoverAction(formData);
+      router.refresh();
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     });

@@ -198,7 +198,9 @@ describe('PreviewModal', () => {
 
     const content = screen.getAllByTestId('preview-page-content').at(-1);
 
-    expect(content).toHaveClass('[&_p]:mb-4');
-    expect(content).toHaveClass('[&_p:last-child]:mb-0');
+    expect(content).toHaveClass('[&_p]:m-0');
+    expect(content).toHaveClass('[&_p+p]:mt-[0.9rem]');
+    expect(content).toHaveClass('[&_h2]:text-[1.5rem]');
+    expect(content).toHaveClass('[&_li]:my-[0.35rem]');
   });
 });
