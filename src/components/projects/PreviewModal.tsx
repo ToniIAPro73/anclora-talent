@@ -58,60 +58,69 @@ export function PreviewModal({
   const [hasManualZoom, setHasManualZoom] = useState(false);
   const [showTableOfContents, setShowTableOfContents] = useState(true);
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-
-    if (typeof window.matchMedia !== 'function') {
-      return true;
-    }
-
+    if (typeof window === 'undefined') return false;
     return window.matchMedia('(min-width: 768px)').matches;
   });
-  const viewportRef = useRef<HTMLDivElement | null>(null);
+  
+  // MEASUREMENT STATE
+  const [chapterPageCounts, setChapterPageCounts] = useState<Record<string, number>>({});
+  const measurerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function') {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia('(min-width: 768px)');
-    const handleChange = (event: MediaQueryListEvent | MediaQueryList) => {
-      setIsDesktopViewport(event.matches);
-    };
-
-    handleChange(mediaQuery);
-    mediaQuery.addEventListener('change', handleChange);
-
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
-
-  // Close on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
-  // Generate pages based on selected format
-  // Commit 2: buildPreviewPages now returns fully paginated pages (per-chapter pagination with global numbering)
-  // No need for duplicate pagination here - use pages directly
   const paginationConfig = useMemo(
-    () =>
-      buildPaginationConfig(format, {
-        fontSize: preferences.fontSize,
-        margins: preferences.margins,
-      }),
+    () => buildPaginationConfig(format, {
+      fontSize: preferences.fontSize,
+      margins: preferences.margins,
+    }),
     [format, preferences.fontSize, preferences.margins],
   );
 
+  const rawChapters = useMemo(() => buildPreviewPages(project, paginationConfig), [paginationConfig, project]);
+
+  // EFFECT: Measure actual pages for each chapter
+  useEffect(() => {
+    if (!measurerRef.current) return;
+    
+    const pageGap = 32;
+    const contentWidth = paginationConfig.pageWidth - paginationConfig.marginLeft - paginationConfig.marginRight;
+    const columnGap = pageGap + paginationConfig.marginLeft + paginationConfig.marginRight;
+    const pageWidthWithGap = contentWidth + columnGap;
+
+    const counts: Record<string, number> = {};
+    const flows = measurerRef.current.querySelectorAll('[data-measurement-chapter-id]');
+    
+    flows.forEach((flow) => {
+      const id = flow.getAttribute('data-measurement-chapter-id')!;
+      // Use scrollWidth to see how far the columns extend
+      const measuredWidth = flow.scrollWidth;
+      const pages = Math.max(1, Math.ceil((measuredWidth + 1) / pageWidthWithGap));
+      counts[id] = pages;
+    });
+
+    setChapterPageCounts(counts);
+  }, [rawChapters, paginationConfig]);
+
+  // EXPAND: Transform raw chapters into discrete virtual pages
   const pages = useMemo(() => {
-    return buildPreviewPages(project, paginationConfig);
-  }, [paginationConfig, project]);
+    const result: Array<PreviewPage & { subPageIndex?: number }> = [];
+    
+    rawChapters.forEach((chapter) => {
+      if (chapter.type !== 'content' || !chapter.chapterId) {
+        result.push(chapter);
+        return;
+      }
+
+      const count = chapterPageCounts[chapter.chapterId] || 1;
+      for (let i = 0; i < count; i++) {
+        result.push({
+          ...chapter,
+          subPageIndex: i,
+          pageNumber: result.length + 1,
+        });
+      }
+    });
+
+    return result;
+  }, [rawChapters, chapterPageCounts]);
 
   const totalPages = pages.length;
 
@@ -444,6 +453,27 @@ export function PreviewModal({
           data-testid="preview-modal-stage"
           className="relative flex min-h-0 flex-1 overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_42%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))]"
         >
+          {/* MEASUREMENT LAYER (Hidden) */}
+          <div 
+            ref={measurerRef}
+            className="pointer-events-none absolute inset-0 -z-50 opacity-0 overflow-hidden"
+            aria-hidden="true"
+          >
+            {rawChapters.map((chapter) => chapter.type === 'content' && (
+              <div 
+                key={chapter.chapterId}
+                data-measurement-chapter-id={chapter.chapterId}
+                style={{
+                  columnWidth: `${paginationConfig.pageWidth - paginationConfig.marginLeft - paginationConfig.marginRight}px`,
+                  columnGap: `${32 + paginationConfig.marginLeft + paginationConfig.marginRight}px`,
+                  height: `${paginationConfig.pageHeight - paginationConfig.marginTop - paginationConfig.marginBottom}px`,
+                }}
+              >
+                <div dangerouslySetInnerHTML={{ __html: chapter.content || '' }} />
+              </div>
+            ))}
+          </div>
+
           {/* Table of Contents Sidebar */}
           {isDesktopViewport && showTableOfContents && (
             <aside
@@ -584,10 +614,15 @@ interface PageRendererProps {
   format: PreviewFormat;
   copy: AppMessages['project'];
   config: ReturnType<typeof buildPaginationConfig>;
+  subPageIndex?: number;
 }
 
-function PageRenderer({ page, format, copy, config }: PageRendererProps) {
+function PageRenderer({ page, format, copy, config, subPageIndex = 0 }: PageRendererProps) {
   const preset = FORMAT_PRESETS[format];
+  const pageGap = 32;
+  const contentWidth = config.pageWidth - config.marginLeft - config.marginRight;
+  const contentHeight = config.pageHeight - config.marginTop - config.marginBottom;
+  const columnGap = pageGap + config.marginLeft + config.marginRight;
 
   const pageStyle = {
     width: `${preset.viewportWidth}px`,
@@ -596,52 +631,25 @@ function PageRenderer({ page, format, copy, config }: PageRendererProps) {
   };
 
   if (page.type === 'cover' && page.coverData) {
+    // ... (rest of cover logic remains the same)
     if (page.coverData.renderedImageUrl) {
       return (
-        <div
-          data-testid="preview-page-shell"
-          style={pageStyle}
-          className="overflow-hidden rounded-[8px] border border-[var(--preview-paper-border)] shadow-[var(--shadow-strong)]"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={page.coverData.renderedImageUrl}
-            alt={copy.previewModalCoverAlt}
-            className="h-full w-full object-cover"
-          />
+        <div style={pageStyle} className="overflow-hidden rounded-[8px] border border-[var(--preview-paper-border)] shadow-[var(--shadow-strong)]">
+          <img src={page.coverData.renderedImageUrl} alt={copy.previewModalCoverAlt} className="h-full w-full object-cover" />
         </div>
       );
     }
-
     const paletteMap: Record<string, string> = {
       obsidian: 'from-[#0b133f] via-[#0b233f] to-[#07252f] text-[#f2e3b3]',
       teal: 'from-[#124a50] via-[#0b313f] to-[#07252f] text-[#f2e3b3]',
       sand: 'from-[#f2e3b3] via-[#e7d4a0] to-[#d4af37] text-[#0b313f]',
     };
-
     return (
-      <div
-        data-testid="preview-page-shell"
-        style={pageStyle}
-        className={`relative overflow-hidden bg-gradient-to-br ${paletteMap[page.coverData.palette]} rounded-[8px] shadow-[var(--shadow-strong)] flex flex-col justify-center border border-white/10`}
-      >
-        {page.coverData.backgroundImageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={page.coverData.backgroundImageUrl}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover opacity-30"
-          />
-        )}
+      <div style={pageStyle} className={`relative overflow-hidden bg-gradient-to-br ${paletteMap[page.coverData.palette]} rounded-[8px] shadow-[var(--shadow-strong)] flex flex-col justify-center border border-white/10`}>
+        {page.coverData.backgroundImageUrl && <img src={page.coverData.backgroundImageUrl} alt="" className="absolute inset-0 h-full w-full object-cover opacity-30" />}
         <div className="px-8 py-8">
-          <h1 className="text-4xl font-black tracking-tight mb-4">
-            {page.coverData.title}
-          </h1>
-          {page.coverData.subtitle && page.coverData.showSubtitle !== false && (
-            <p className="text-lg leading-7 opacity-80 mb-8">
-              {page.coverData.subtitle}
-            </p>
-          )}
+          <h1 className="text-4xl font-black tracking-tight mb-4">{page.coverData.title}</h1>
+          {page.coverData.subtitle && page.coverData.showSubtitle !== false && <p className="text-lg leading-7 opacity-80 mb-8">{page.coverData.subtitle}</p>}
           <p className="text-sm opacity-70">— {page.coverData.author}</p>
         </div>
       </div>
@@ -651,49 +659,26 @@ function PageRenderer({ page, format, copy, config }: PageRendererProps) {
   if (page.type === 'back-cover' && page.backCoverData) {
     if (page.backCoverData.renderedImageUrl) {
       return (
-        <div
-          data-testid="preview-page-shell"
-          style={pageStyle}
-          className="overflow-hidden rounded-[8px] border border-[var(--preview-paper-border)] shadow-[var(--shadow-strong)]"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={page.backCoverData.renderedImageUrl}
-            alt={copy.previewModalBackCoverAlt}
-            className="h-full w-full object-cover"
-          />
+        <div style={pageStyle} className="overflow-hidden rounded-[8px] border border-[var(--preview-paper-border)] shadow-[var(--shadow-strong)]">
+          <img src={page.backCoverData.renderedImageUrl} alt={copy.previewModalBackCoverAlt} className="h-full w-full object-cover" />
         </div>
       );
     }
-
     return (
-      <div
-        data-testid="preview-page-shell"
-        style={pageStyle}
-        className="bg-[var(--preview-paper)] rounded-[8px] shadow-[var(--shadow-strong)] border border-[var(--preview-paper-border)] flex flex-col justify-between p-8"
-      >
+      <div style={pageStyle} className="bg-[var(--preview-paper)] rounded-[8px] shadow-[var(--shadow-strong)] border border-[var(--preview-paper-border)] flex flex-col justify-between p-8">
         <div>
-          <h2 className="text-2xl font-black text-[var(--text-primary)] mb-4">
-            {page.backCoverData.title}
-          </h2>
-          <p className="text-[var(--text-secondary)] leading-7 mb-6">
-            {page.backCoverData.body}
-          </p>
+          <h2 className="text-2xl font-black text-[var(--text-primary)] mb-4">{page.backCoverData.title}</h2>
+          <p className="text-[var(--text-secondary)] leading-7 mb-6">{page.backCoverData.body}</p>
         </div>
         <div className="border-t border-[var(--border-subtle)] pt-4">
-          <p className="text-sm text-[var(--text-tertiary)]">
-            {page.backCoverData.authorBio}
-          </p>
+          <p className="text-sm text-[var(--text-tertiary)]">{page.backCoverData.authorBio}</p>
         </div>
       </div>
     );
   }
 
-  // TOC or Content page
-  const contentWidth = config.pageWidth - config.marginLeft - config.marginRight;
-  const contentHeight = config.pageHeight - config.marginTop - config.marginBottom;
-  // Gap must match the editor's gap logic (columnGap = pageGap + margins)
-  const columnGap = 32 + config.marginLeft + config.marginRight;
+  // CONTENT PAGE with Shifted Flow
+  const flowOffset = subPageIndex * (contentWidth + columnGap);
 
   return (
     <div
@@ -705,93 +690,39 @@ function PageRenderer({ page, format, copy, config }: PageRendererProps) {
         .preview-page {
           font-size: ${config.fontSize}px;
           line-height: ${config.lineHeight};
-          height: ${preset.pagePixelHeight}px;
+        }
+        .preview-content-flow-track {
+          width: 10000px; /* Huge width to accommodate columns */
+          transform: translateX(-${flowOffset}px);
+          transition: transform 0.2s ease-out;
         }
         .preview-content-flow {
           column-width: ${contentWidth}px;
           column-gap: ${columnGap}px;
           column-fill: auto;
           height: ${contentHeight}px;
-          width: 100%;
           outline: none;
         }
         .preview-content-flow > * {
           break-inside: avoid;
           page-break-inside: avoid;
         }
-        .preview-page p {
-          margin: 0;
-          overflow-wrap: break-word;
-          word-break: break-word;
-        }
-        .preview-page p + p {
-          margin-top: 0.8rem;
-        }
-        .preview-page h1 {
-          font-size: 2rem;
-          line-height: 1.1;
-          font-weight: 800;
-          margin: 0 0 1rem 0;
-          color: var(--text-primary);
-        }
-        .preview-page h2 {
-          font-size: 1.5rem;
-          line-height: 1.2;
-          font-weight: 750;
-          margin: 0 0 0.85rem 0;
-          color: var(--text-primary);
-        }
-        .preview-page h3 {
-          font-size: 1.2rem;
-          line-height: 1.3;
-          font-weight: 700;
-          margin: 0 0 0.75rem 0;
-          color: var(--text-primary);
-        }
-        .preview-page h4 {
-          font-size: 1.05rem;
-          line-height: 1.35;
-          font-weight: 700;
-          margin: 0 0 0.65rem 0;
-          color: var(--text-primary);
-        }
-        .preview-page h5,
-        .preview-page h6 {
-          font-size: 0.95rem;
-          line-height: 1.4;
-          font-weight: 700;
-          margin: 0 0 0.6rem 0;
-          color: var(--text-primary);
-        }
-        .preview-page ul,
-        .preview-page ol {
-          margin: 0 0 1rem 1.5rem;
-          padding: 0;
-        }
-        .preview-page li {
-          margin: 0.35rem 0;
-        }
-        .preview-page hr[data-page-break="manual"],
-        .preview-page hr[data-page-break="true"] {
-          border: 0;
-          border-top: 2px dashed rgba(196, 154, 36, 0.45);
-          margin: 1.75rem 0;
-          break-after: column;
-        }
-        .preview-page hr[data-page-break="auto"] {
-          border: 0;
-          height: 0;
-          margin: 0;
-          opacity: 0;
-          break-after: column;
-        }
+        .preview-page p { margin: 0; overflow-wrap: break-word; }
+        .preview-page p + p { margin-top: 0.8rem; }
+        .preview-page h1 { font-size: 2rem; line-height: 1.1; margin: 0 0 1rem 0; }
+        .preview-page h2 { font-size: 1.5rem; line-height: 1.2; margin: 0 0 0.85rem 0; }
+        .preview-page h3 { font-size: 1.2rem; line-height: 1.3; margin: 0 0 0.75rem 0; }
+        .preview-page ul, .preview-page ol { margin: 0 0 1rem 1.5rem; padding: 0; }
+        .preview-page li { margin: 0.35rem 0; }
       `}</style>
-      <div className="preview-content-flow">
-        <div
-          data-testid="preview-page-content"
-          className="max-w-none text-[var(--text-secondary)] [&_blockquote]:my-5 [&_blockquote]:rounded-[12px] [&_blockquote]:border-l-4 [&_blockquote]:border-[var(--preview-quote-border)] [&_blockquote]:bg-[var(--preview-quote-bg)] [&_blockquote]:px-5 [&_blockquote]:py-4 [&_strong]:font-semibold [&_strong]:text-[var(--text-primary)]"
-          dangerouslySetInnerHTML={{ __html: page.content || '' }}
-        />
+      <div className="preview-content-flow-track">
+        <div className="preview-content-flow">
+          <div
+            data-testid="preview-page-content"
+            className="max-w-none text-[var(--text-secondary)]"
+            dangerouslySetInnerHTML={{ __html: page.content || '' }}
+          />
+        </div>
       </div>
     </div>
   );
