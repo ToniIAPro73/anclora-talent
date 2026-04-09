@@ -75,9 +75,9 @@ export function paginateContent(
     config.pageHeight - config.marginTop - config.marginBottom;
   const lineHeightPx = config.fontSize * config.lineHeight;
 
-  // Apply 1.05 factor to match the editor's aggressive CSS columns behavior.
+  // Apply 1.1 factor to match the editor's aggressive CSS columns behavior.
   const approxLinesPerPage = Math.floor(
-    (availableHeight / lineHeightPx) * 1.05,
+    (availableHeight / lineHeightPx) * 1.1,
   );
 
   // Parse HTML into DOM nodes

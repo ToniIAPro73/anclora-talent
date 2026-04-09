@@ -876,11 +876,6 @@ function PageRenderer({ page, format, copy, config }: PageRendererProps) {
           dangerouslySetInnerHTML={{ __html: page.content || '' }}
         />
       </div>
-      {page.pageNumber !== undefined && (
-        <div className="border-t border-[var(--border-subtle)] pt-3 text-center text-xs text-[var(--text-tertiary)]">
-          {copy.previewModalPage} {page.pageNumber}
-        </div>
-      )}
     </div>
   );
 }
