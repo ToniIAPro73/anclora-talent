@@ -118,32 +118,13 @@ export function buildPreviewPages(
 
   let globalPageNumber = 2; // Content starts immediately after cover
 
-  // Regex to detect any stored page-break marker (manual or auto) from the chapter editor.
-  const PAGE_BREAK_RE = /<hr\s+data-page-break="(?:true|manual|auto)"\s*\/?>/gi;
-
   for (const chapter of chapterSections) {
-    // Determine page splits.
-    // Priority: use the page-break markers already stored in the chapter HTML by the chapter
-    // editor (source of truth). Only fall back to the estimation algorithm when no markers exist
-    // (e.g. chapters that have never been opened in the advanced editor).
-    PAGE_BREAK_RE.lastIndex = 0;
-    const hasStoredBreaks = PAGE_BREAK_RE.test(chapter.html);
-
-    let chapterPageHtmls: string[];
-
-    if (hasStoredBreaks) {
-      // Split on every stored break marker and discard empty segments.
-      chapterPageHtmls = chapter.html
-        .split(/<hr\s+data-page-break="(?:true|manual|auto)"\s*\/?>/gi)
-        .map((s) => s.trim())
-        .filter((s) => hasRenderablePageContent(s));
-    } else {
-      // Fallback: compute pagination from scratch (character-counting approximation).
-      const reconciledChapterHtml = reconcileOverflowBreaks(chapter.html, config);
-      chapterPageHtmls = paginateContent(reconciledChapterHtml, config)
-        .filter((page) => hasRenderablePageContent(page.html))
-        .map((page) => page.html);
-    }
+    // Reconcile auto-breaks (strips stale auto-breaks, respects manual breaks, re-paginates)
+    // then split into discrete page HTML strings.
+    const reconciledChapterHtml = reconcileOverflowBreaks(chapter.html, config);
+    const chapterPageHtmls = paginateContent(reconciledChapterHtml, config)
+      .filter((page) => hasRenderablePageContent(page.html))
+      .map((page) => page.html);
 
     // Add paginated pages with global numbering and chapter metadata
     for (const pageHtml of chapterPageHtmls) {
