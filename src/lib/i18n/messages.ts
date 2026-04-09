@@ -216,6 +216,8 @@ export type AppMessages = {
     previewModalUntitledChapter: string;
     previewModalCoverAlt: string;
     previewModalBackCoverAlt: string;
+    previewModalTurnNextCorner: string;
+    previewModalTurnPreviousCorner: string;
   };
 };
 
@@ -496,6 +498,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewModalUntitledChapter: 'Capítulo sin título',
       previewModalCoverAlt: 'Portada de vista previa',
       previewModalBackCoverAlt: 'Contraportada de vista previa',
+      previewModalTurnNextCorner: 'Pasar página desde la esquina derecha',
+      previewModalTurnPreviousCorner: 'Volver página desde la esquina izquierda',
     },
   },
   en: {
@@ -774,6 +778,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewModalUntitledChapter: 'Untitled chapter',
       previewModalCoverAlt: 'Preview cover',
       previewModalBackCoverAlt: 'Preview back cover',
+      previewModalTurnNextCorner: 'Turn page from the right corner',
+      previewModalTurnPreviousCorner: 'Turn page from the left corner',
     },
   },
 };

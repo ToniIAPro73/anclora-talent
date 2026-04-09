@@ -69,7 +69,9 @@ export function PreviewModal({
 
     return window.matchMedia('(min-width: 768px)').matches;
   });
+  const [pageTurnDirection, setPageTurnDirection] = useState<'next' | 'prev' | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
+  const pageTurnTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') {
@@ -85,6 +87,14 @@ export function PreviewModal({
     mediaQuery.addEventListener('change', handleChange);
 
     return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (pageTurnTimeoutRef.current) {
+        clearTimeout(pageTurnTimeoutRef.current);
+      }
+    };
   }, []);
 
   // Close on Escape key
@@ -228,6 +238,21 @@ export function PreviewModal({
     setZoom(nextZoom);
   }, []);
 
+  const triggerPageTurn = useCallback(
+    (direction: 'next' | 'prev', navigate: () => void) => {
+      if (pageTurnTimeoutRef.current) {
+        clearTimeout(pageTurnTimeoutRef.current);
+      }
+
+      setPageTurnDirection(direction);
+      navigate();
+      pageTurnTimeoutRef.current = setTimeout(() => {
+        setPageTurnDirection(null);
+      }, 320);
+    },
+    [],
+  );
+
   const tableOfContentsPanel = (
     <>
       <div className="flex-shrink-0 border-b border-white/10 px-5 py-4">
@@ -262,6 +287,8 @@ export function PreviewModal({
       </ul>
     </>
   );
+  const showPaperBookAffordance = format !== 'mobile' && visiblePages.length > 0;
+  const showSpreadSpine = viewMode === 'spread' && visiblePages.length > 1;
 
   return (
     <div
@@ -470,11 +497,52 @@ export function PreviewModal({
                   <div
                     data-testid="preview-spread-frame"
                     className="relative mx-auto transition-all duration-300"
+                    data-page-turn={pageTurnDirection ?? undefined}
                     style={{
                       width: `${scaledSpreadWidth}px`,
                       height: `${scaledSpreadHeight}px`,
                     }}
                   >
+                    {showPaperBookAffordance && (
+                      <>
+                        <button
+                          type="button"
+                          aria-label={copy.previewModalTurnPreviousCorner}
+                          onClick={() => triggerPageTurn('prev', prevPage)}
+                          disabled={currentPage === 0}
+                          title={copy.previewModalTurnPreviousCorner}
+                          className="group absolute bottom-2 left-2 z-30 flex h-24 w-24 items-end justify-start rounded-bl-[30px] transition hover:scale-[1.03] disabled:pointer-events-none disabled:opacity-0"
+                        >
+                          <span className="absolute bottom-0 left-0 h-[70px] w-[70px] rounded-tr-[20px] border border-white/15 bg-[linear-gradient(135deg,rgba(255,255,255,0.26),rgba(255,255,255,0.08)_58%,transparent_58%)] shadow-[0_16px_30px_rgba(0,0,0,0.28)] transition duration-300 group-hover:h-[78px] group-hover:w-[78px] group-hover:border-white/25 group-hover:shadow-[0_24px_40px_rgba(0,0,0,0.38)]" />
+                          <span className="absolute bottom-3 left-3 flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-[rgba(10,16,25,0.78)] text-white/90 shadow-[0_10px_24px_rgba(0,0,0,0.3)] transition group-hover:border-white/30 group-hover:bg-[rgba(12,20,30,0.92)]">
+                            <ChevronLeft className="h-4 w-4" />
+                          </span>
+                          <span className="sr-only">{copy.previewModalTurnPreviousCorner}</span>
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={copy.previewModalTurnNextCorner}
+                          onClick={() => triggerPageTurn('next', nextPage)}
+                          disabled={currentPage >= totalPages - 1}
+                          title={copy.previewModalTurnNextCorner}
+                          className="group absolute bottom-2 right-2 z-30 flex h-24 w-24 items-end justify-end rounded-br-[30px] transition hover:scale-[1.03] disabled:pointer-events-none disabled:opacity-0"
+                        >
+                          <span className="absolute bottom-0 right-0 h-[70px] w-[70px] rounded-tl-[20px] border border-white/15 bg-[linear-gradient(225deg,rgba(255,255,255,0.28),rgba(255,255,255,0.08)_58%,transparent_58%)] shadow-[0_16px_30px_rgba(0,0,0,0.28)] transition duration-300 group-hover:h-[78px] group-hover:w-[78px] group-hover:border-white/25 group-hover:shadow-[0_24px_40px_rgba(0,0,0,0.38)]" />
+                          <span className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-[rgba(10,16,25,0.78)] text-white/90 shadow-[0_10px_24px_rgba(0,0,0,0.3)] transition group-hover:border-white/30 group-hover:bg-[rgba(12,20,30,0.92)]">
+                            <ChevronRight className="h-4 w-4" />
+                          </span>
+                          <span className="sr-only">{copy.previewModalTurnNextCorner}</span>
+                        </button>
+                      </>
+                    )}
+                    {showSpreadSpine && (
+                      <div
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-y-5 left-1/2 z-20 hidden w-8 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02),rgba(0,0,0,0.22))] shadow-[inset_0_0_18px_rgba(255,255,255,0.06),0_0_30px_rgba(0,0,0,0.18)] md:block"
+                      >
+                        <div className="absolute inset-y-2 left-1/2 w-px -translate-x-1/2 bg-white/10" />
+                      </div>
+                    )}
                     <div
                       className="absolute left-0 top-0 flex transition-all duration-300"
                       style={{
@@ -488,12 +556,48 @@ export function PreviewModal({
                     >
                       {visiblePages.length > 0 ? (
                         visiblePages.map((page, idx) => (
-                          <PageRenderer
+                          <div
                             key={`page-${currentPage}-${idx}`}
-                            page={page}
-                            format={format}
-                            copy={copy}
-                          />
+                            className="relative transition-all duration-500 ease-out"
+                            style={{
+                              transform:
+                                pageTurnDirection === 'next' && idx === visiblePages.length - 1
+                                  ? 'perspective(2000px) rotateY(-24deg) translateX(-18px) scale(0.985)'
+                                  : pageTurnDirection === 'prev' && idx === 0
+                                    ? 'perspective(2000px) rotateY(24deg) translateX(18px) scale(0.985)'
+                                    : 'perspective(1600px) rotateY(0deg) translateX(0px)',
+                              transformOrigin:
+                                pageTurnDirection === 'next' && idx === visiblePages.length - 1
+                                  ? 'right center'
+                                  : pageTurnDirection === 'prev' && idx === 0
+                                    ? 'left center'
+                                    : 'center center',
+                              filter: pageTurnDirection ? 'drop-shadow(0 28px 56px rgba(0,0,0,0.28))' : 'none',
+                              opacity:
+                                pageTurnDirection === 'next' && idx === visiblePages.length - 1
+                                  ? 0.9
+                                  : pageTurnDirection === 'prev' && idx === 0
+                                    ? 0.9
+                                    : 1,
+                              willChange: 'transform, filter, opacity',
+                            }}
+                          >
+                            {showPaperBookAffordance && (
+                              <div
+                                aria-hidden="true"
+                                className={`pointer-events-none absolute inset-y-6 z-10 hidden w-10 rounded-full blur-[10px] md:block ${
+                                  idx === 0
+                                    ? '-right-5 bg-[linear-gradient(90deg,rgba(0,0,0,0.16),transparent)]'
+                                    : '-left-5 bg-[linear-gradient(270deg,rgba(0,0,0,0.16),transparent)]'
+                                }`}
+                              />
+                            )}
+                            <PageRenderer
+                              page={page}
+                              format={format}
+                              copy={copy}
+                            />
+                          </div>
                         ))
                       ) : (
                         <div className="flex items-center justify-center text-[var(--text-tertiary)] text-center px-6">

@@ -267,6 +267,24 @@ describe('PreviewModal', () => {
     expect(screen.getByDisplayValue('3')).toBeInTheDocument();
   });
 
+  test('renders page-corner targets on non-mobile formats and advances from the right corner', () => {
+    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
+
+    expect(screen.getByRole('button', { name: copy.previewModalTurnPreviousCorner })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: copy.previewModalTurnNextCorner }));
+
+    expect(screen.getByDisplayValue('2')).toBeInTheDocument();
+  });
+
+  test('hides page-corner affordances on mobile format', () => {
+    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
+
+    fireEvent.click(screen.getByRole('button', { name: copy.previewModalMobile }));
+
+    expect(screen.queryByRole('button', { name: copy.previewModalTurnNextCorner })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: copy.previewModalTurnPreviousCorner })).not.toBeInTheDocument();
+  });
+
   test('renders cover and back cover from the built preview structure', () => {
     render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
 
