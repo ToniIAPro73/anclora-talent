@@ -75,9 +75,9 @@ export function paginateContent(
     config.pageHeight - config.marginTop - config.marginBottom;
   const lineHeightPx = config.fontSize * config.lineHeight;
 
-  // Apply 1.1 factor to match the editor's aggressive CSS columns behavior.
+  // Apply 0.98 factor to match the editor's behavior while keeping a small safety margin.
   const approxLinesPerPage = Math.floor(
-    (availableHeight / lineHeightPx) * 1.1,
+    (availableHeight / lineHeightPx) * 0.98,
   );
 
   // Parse HTML into DOM nodes
@@ -224,8 +224,8 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
 
     const contentWidth =
       config.pageWidth - config.marginLeft - config.marginRight;
-    // High-density character width estimate (0.4 for premium editorial fonts)
-    const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.4));
+    // Accurate character width estimate (0.45 for premium editorial fonts)
+    const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.45));
     const textLines = Math.ceil(text.trim().length / charsPerLine);
     return Math.max(1, textLines);
   }
@@ -249,7 +249,7 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
       const { fontMul, lhFactor, mbEm } = headingProps[Math.min(level - 1, 4)];
       const headingFontPx = config.fontSize * fontMul;
       const contentWidth = config.pageWidth - config.marginLeft - config.marginRight;
-      const charsPerLine = Math.floor(contentWidth / (headingFontPx * 0.44));
+      const charsPerLine = Math.floor(contentWidth / (headingFontPx * 0.45));
       const textLines = text.trim().length > 0
         ? Math.max(1, Math.ceil(text.trim().length / charsPerLine))
         : 1;
@@ -270,9 +270,9 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
         const text = item.textContent || '';
         const contentWidth =
           config.pageWidth - config.marginLeft - config.marginRight - 24; // 1.5rem indent
-        const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.4));
+        const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.45));
         const itemLines = Math.max(1, Math.ceil(text.length / charsPerLine));
-        // Account for margin collapsing by only adding half the margin per item
+        // li margin: 0.35rem total between items (collapsed)
         totalLines += itemLines + 0.35 / config.lineHeight;
       });
       return totalLines + 0.5 / config.lineHeight; // list bottom margin
@@ -285,9 +285,9 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
 
       const contentWidth =
         config.pageWidth - config.marginLeft - config.marginRight;
-      const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.4));
+      const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.45));
       const textLines = Math.ceil(text.length / charsPerLine);
-      // Only add half margin (0.4) to simulate collapsing in a greedy sum
+      // P+P margin simulation
       return Math.max(1, textLines) + 0.4 / config.lineHeight;
     }
 

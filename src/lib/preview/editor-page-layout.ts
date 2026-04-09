@@ -126,11 +126,11 @@ function hasOversizedSingleBlock(
   const lineHeightPx = config.fontSize * config.lineHeight;
   const charsPerLine = Math.max(
     1,
-    Math.floor(contentWidth / (config.fontSize * 0.44)),
+    Math.floor(contentWidth / (config.fontSize * 0.45)),
   );
   const linesPerPage = Math.max(
     1,
-    Math.floor((availableHeight / lineHeightPx) * 1.0),
+    Math.floor((availableHeight / lineHeightPx) * 0.98),
   );
   const charsPerPage = Math.max(charsPerLine, charsPerLine * linesPerPage);
 
@@ -157,11 +157,11 @@ function splitOversizedBlockSegment(
   const lineHeightPx = config.fontSize * config.lineHeight;
   const charsPerLine = Math.max(
     1,
-    Math.floor(contentWidth / (config.fontSize * 0.44)),
+    Math.floor(contentWidth / (config.fontSize * 0.45)),
   );
   const linesPerPage = Math.max(
     1,
-    Math.floor((availableHeight / lineHeightPx) * 1.0),
+    Math.floor((availableHeight / lineHeightPx) * 0.98),
   );
   const charsPerPage = Math.max(charsPerLine, charsPerLine * linesPerPage);
 
@@ -188,28 +188,32 @@ function splitOversizedBlockSegment(
       return;
     }
 
-    // Special handling for lists to preserve structure
+    // Special handling for lists to preserve structure and split by LINE count
     if (tagName === 'ul' || tagName === 'ol') {
       const items = Array.from(element.children);
       let currentListItems: string[] = [];
-      let currentListChars = 0;
+      let currentListLines = 0;
 
       items.forEach((item) => {
         const itemText = item.textContent?.trim() ?? '';
         const itemHtml = item.outerHTML;
+        
+        // Estimate lines for this item (text + padding + margins)
+        const itemCharsPerLine = Math.floor((contentWidth - 24) / (config.fontSize * 0.45));
+        const itemLines = Math.max(1, Math.ceil(itemText.length / itemCharsPerLine)) + (0.35 / config.lineHeight);
 
         if (
-          currentListChars + itemText.length > charsPerPage &&
+          currentListLines + itemLines > linesPerPage &&
           currentListItems.length > 0
         ) {
           chunks.push(
             `<${tagName}>${currentListItems.join('')}</${tagName}>`,
           );
           currentListItems = [itemHtml];
-          currentListChars = itemText.length;
+          currentListLines = itemLines;
         } else {
           currentListItems.push(itemHtml);
-          currentListChars += itemText.length;
+          currentListLines += itemLines;
         }
       });
 
@@ -228,6 +232,9 @@ function splitOversizedBlockSegment(
 
     chunks.push(...chunkTextIntoWrappedBlocks(text, charsPerPage, tagName));
   });
+
+  return chunks.filter(Boolean);
+}
 
   return chunks.filter(Boolean);
 }
