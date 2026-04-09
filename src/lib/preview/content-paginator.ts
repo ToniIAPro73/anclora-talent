@@ -152,32 +152,11 @@ export function paginateContent(
       continue;
     }
 
-    // Detect chapter headings (H1, H2)
+    // Track chapter headings (H1, H2) for TOC/title labelling — no forced break
     if (node.nodeType === Node.ELEMENT_NODE) {
       const element = node as Element;
       if (element.tagName === 'H1' || element.tagName === 'H2') {
         currentChapter = element.textContent || '';
-
-        // Force page break before major headings (except at page start)
-        if (currentPageNodes.length > 0 && currentLines > 3) {
-          // Create page with current content
-          const pageDiv = document.createElement('div');
-          pageDiv.className = 'preview-page-content';
-          currentPageNodes.forEach((n) =>
-            pageDiv.appendChild(n.cloneNode(true)),
-          );
-
-          pages.push({
-            type: 'content',
-            html: pageDiv.innerHTML,
-            chapterTitle: currentChapter,
-            pageNumber: pages.length + 1,
-          });
-
-          // Start new page with the heading
-          currentPageNodes = [];
-          currentLines = 0;
-        }
       }
     }
 
