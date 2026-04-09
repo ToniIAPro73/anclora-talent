@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Loader2, Sparkles } from 'lucide-react';
 import { CoverCanvas } from './Canvas';
@@ -72,7 +72,10 @@ export function AdvancedSurfaceEditor({
   const listenersAttachedRef = useRef(false);
   const guideManagerRef = useRef<GuideManagerLike | null>(null);
 
-  const surfaceSnapshot = createSurfaceSnapshotFromProject(surface, project);
+  const surfaceSnapshot = useMemo(
+    () => createSurfaceSnapshotFromProject(surface, project),
+    [surface, project],
+  );
 
   const loadSurfaceData = useCallback(
     async (fabricCanvas: FabricCanvasLike) => {
