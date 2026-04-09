@@ -1378,6 +1378,7 @@ export function AdvancedRichTextEditor({
             <style>{`
               .ProseMirror {
                 font-size: ${previewConfig.fontSize}px;
+                line-height: ${previewConfig.lineHeight};
                 word-wrap: break-word;
                 overflow-wrap: break-word;
               }
@@ -1388,7 +1389,6 @@ export function AdvancedRichTextEditor({
               }
               .ProseMirror p {
                 margin: 0;
-                line-height: ${previewConfig.lineHeight};
                 overflow-wrap: break-word;
                 word-break: break-word;
               }

@@ -75,9 +75,9 @@ export function paginateContent(
     config.pageHeight - config.marginTop - config.marginBottom;
   const lineHeightPx = config.fontSize * config.lineHeight;
 
-  // Apply 1.0 factor to match the editor's CSS columns behavior.
+  // Apply 1.05 factor to match the editor's aggressive CSS columns behavior.
   const approxLinesPerPage = Math.floor(
-    (availableHeight / lineHeightPx) * 1.0,
+    (availableHeight / lineHeightPx) * 1.05,
   );
 
   // Parse HTML into DOM nodes
@@ -224,8 +224,8 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
 
     const contentWidth =
       config.pageWidth - config.marginLeft - config.marginRight;
-    // Tightened character width estimate (0.44 for editorial fonts)
-    const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.44));
+    // High-density character width estimate (0.4 for premium editorial fonts)
+    const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.4));
     const textLines = Math.ceil(text.trim().length / charsPerLine);
     return Math.max(1, textLines);
   }
@@ -265,30 +265,30 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
     // Lists — CSS: ul/ol{margin:0 0 1rem 1.5rem}, li{margin:0.35rem 0}
     if (tagName === 'UL' || tagName === 'OL') {
       const items = element.querySelectorAll('li');
-      let totalLines = 0; // No list-start margin in CSS (margin-top:0)
+      let totalLines = 0; 
       items.forEach((item) => {
         const text = item.textContent || '';
         const contentWidth =
           config.pageWidth - config.marginLeft - config.marginRight - 24; // 1.5rem indent
-        const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.44));
+        const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.4));
         const itemLines = Math.max(1, Math.ceil(text.length / charsPerLine));
-        // li margin: 0.35rem total between items → 0.35/lineHeight lines
+        // Account for margin collapsing by only adding half the margin per item
         totalLines += itemLines + 0.35 / config.lineHeight;
       });
-      return totalLines + 0.8 / config.lineHeight; // matching p+p margin
+      return totalLines + 0.5 / config.lineHeight; // list bottom margin
     }
 
     // Paragraphs — CSS: p{margin:0}, p+p{margin-top:0.8rem}
     if (tagName === 'P') {
       const text = element.textContent || '';
-      if (!text.trim()) return 0.8 / config.lineHeight; // Empty p = inter-paragraph spacing
+      if (!text.trim()) return 0.4 / config.lineHeight; 
 
       const contentWidth =
         config.pageWidth - config.marginLeft - config.marginRight;
-      const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.44));
+      const charsPerLine = Math.floor(contentWidth / (config.fontSize * 0.4));
       const textLines = Math.ceil(text.length / charsPerLine);
-      // p+p margin-top: 0.8rem → 0.8/lineHeight algorithm lines of spacing
-      return Math.max(1, textLines) + 0.8 / config.lineHeight;
+      // Only add half margin (0.4) to simulate collapsing in a greedy sum
+      return Math.max(1, textLines) + 0.4 / config.lineHeight;
     }
 
     // Blockquotes
