@@ -6,7 +6,7 @@ import { saveChapterContentAction } from '@/lib/projects/actions';
 import { estimateTotalPages, type PageCalculationConfig } from '@/lib/projects/page-calculator';
 import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
 import { countRenderablePages, paginateContent } from '@/lib/preview/content-paginator';
-import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
+import { buildPaginationConfig } from '@/lib/preview/device-configs';
 import { reconcileOverflowBreaks } from '@/lib/preview/editor-page-layout';
 import type { DocumentChapter } from '@/lib/projects/types';
 
@@ -26,17 +26,7 @@ function buildPreviewConfig(
   margins: { top: number; bottom: number; left: number; right: number },
 ) {
   const previewFormat = device === 'desktop' ? 'laptop' : device;
-  const previewBaseConfig = DEVICE_PAGINATION_CONFIGS[previewFormat];
-  const parsedFontSize = Number.parseInt(fontSize, 10);
-
-  return {
-    ...previewBaseConfig,
-    fontSize: Number.isFinite(parsedFontSize) ? parsedFontSize : previewBaseConfig.fontSize,
-    marginTop: margins.top,
-    marginBottom: margins.bottom,
-    marginLeft: margins.left,
-    marginRight: margins.right,
-  };
+  return buildPaginationConfig(previewFormat, { fontSize, margins });
 }
 
 function normalizeLoadedChapterHtml(

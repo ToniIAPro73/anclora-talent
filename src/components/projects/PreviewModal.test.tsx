@@ -4,6 +4,7 @@ import { PreviewModal } from './PreviewModal';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { createDefaultSurfaceState } from '@/lib/projects/cover-surface';
+import { EDITOR_PREFERENCES_STORAGE_KEY } from '@/lib/ui-preferences/preferences';
 
 const copy = resolveLocaleMessages('es').project;
 
@@ -95,6 +96,7 @@ function makeProject(): ProjectRecord {
 describe('PreviewModal', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    window.localStorage.clear();
     mockMatchMedia(true);
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
       const element = this as HTMLElement;
@@ -217,6 +219,22 @@ describe('PreviewModal', () => {
 
     expect(screen.getByRole('button', { name: copy.previewModalSingleView })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: copy.previewModalSpreadView })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  test('initializes preview format from saved editor preferences', () => {
+    window.localStorage.setItem(
+      EDITOR_PREFERENCES_STORAGE_KEY,
+      JSON.stringify({
+        device: 'tablet',
+        fontSize: '16px',
+        margins: { top: 24, bottom: 24, left: 24, right: 24 },
+      }),
+    );
+
+    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
+
+    expect(screen.getByRole('button', { name: copy.previewModalTablet })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: copy.previewModalLaptop })).toHaveAttribute('aria-pressed', 'false');
   });
 
   test('builds chapter navigation from rendered content pages instead of duplicating toc-page entries', async () => {

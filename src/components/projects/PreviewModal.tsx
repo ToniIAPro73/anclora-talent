@@ -27,10 +27,12 @@ import {
 } from 'lucide-react';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
+import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { buildPreviewPages, type PreviewPage } from '@/lib/preview/preview-builder';
 import {
   DEVICE_PAGINATION_CONFIGS,
   FORMAT_PRESETS,
+  buildPaginationConfig,
   type PreviewFormat,
 } from '@/lib/preview/device-configs';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
@@ -47,10 +49,12 @@ export function PreviewModal({
   copy,
   onClose,
 }: PreviewModalProps) {
+  const { preferences } = useEditorPreferences();
+  const preferredFormat = preferences.device === 'desktop' ? 'laptop' : preferences.device;
   // View state
   const [currentPage, setCurrentPage] = useState(0);
   const [viewMode, setViewMode] = useState<'single' | 'spread'>('spread');
-  const [format, setFormat] = useState<PreviewFormat>('laptop');
+  const [format, setFormat] = useState<PreviewFormat>(preferredFormat || 'laptop');
   const [zoom, setZoom] = useState(100);
   const [hasManualZoom, setHasManualZoom] = useState(false);
   const [showTableOfContents, setShowTableOfContents] = useState(true);
@@ -97,10 +101,18 @@ export function PreviewModal({
   // Generate pages based on selected format
   // Commit 2: buildPreviewPages now returns fully paginated pages (per-chapter pagination with global numbering)
   // No need for duplicate pagination here - use pages directly
+  const paginationConfig = useMemo(
+    () =>
+      buildPaginationConfig(format, {
+        fontSize: preferences.fontSize,
+        margins: preferences.margins,
+      }),
+    [format, preferences.fontSize, preferences.margins],
+  );
+
   const pages = useMemo(() => {
-    const config = DEVICE_PAGINATION_CONFIGS[format];
-    return buildPreviewPages(project, config);
-  }, [project, format]);
+    return buildPreviewPages(project, paginationConfig);
+  }, [paginationConfig, project]);
 
   const totalPages = pages.length;
 
@@ -188,8 +200,8 @@ export function PreviewModal({
         : pagePreset.viewportWidth;
     const spreadHeight = pagePreset.pagePixelHeight;
 
-    const availableWidth = Math.max(viewportRect.width - 32, 200);
-    const availableHeight = Math.max(viewportRect.height - 32, 200);
+    const availableWidth = Math.max(viewportRect.width - 16, 200);
+    const availableHeight = Math.max(viewportRect.height - 16, 200);
     const widthRatio = availableWidth / spreadWidth;
     const heightRatio = availableHeight / spreadHeight;
     const fittedZoom = Math.floor(Math.min(widthRatio, heightRatio, 1) * 100);
@@ -267,7 +279,7 @@ export function PreviewModal({
         {/* ═══════════════════════ HEADER ═══════════════════════ */}
         <header
           data-testid="preview-modal-header"
-          className="shrink-0 border-b border-white/10 bg-[rgba(255,255,255,0.02)] px-6 py-4"
+          className="shrink-0 border-b border-white/10 bg-[rgba(255,255,255,0.02)] px-5 py-3 md:px-6 md:py-4"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
@@ -299,7 +311,7 @@ export function PreviewModal({
         {/* ═══════════════════════ CONTROLS BAND ═══════════════════════ */}
         <div
           data-testid="preview-modal-controls"
-          className="shrink-0 flex items-center justify-between gap-4 border-b border-white/10 bg-[rgba(255,255,255,0.03)] px-6 py-3 flex-wrap"
+          className="shrink-0 flex items-center justify-between gap-4 border-b border-white/10 bg-[rgba(255,255,255,0.03)] px-4 py-2.5 md:px-6 md:py-3 flex-wrap"
         >
           <div data-testid="preview-modal-view-controls" className="flex items-center gap-2">
             <button
@@ -425,14 +437,14 @@ export function PreviewModal({
               id="preview-modal-sidebar"
               aria-label={copy.previewModalTocHeading}
               data-testid="preview-modal-sidebar"
-              className="w-72 flex-shrink-0 overflow-hidden border-r border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))]"
+              className="w-64 flex-shrink-0 overflow-hidden border-r border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))]"
             >
               {tableOfContentsPanel}
             </aside>
           )}
 
           {/* Preview Area */}
-          <section className="flex flex-1 flex-col overflow-hidden px-3 py-3 md:px-6 md:py-6">
+          <section className="flex flex-1 flex-col overflow-hidden px-2 py-2 md:px-4 md:py-4">
             {/* Content scrollable area */}
             <div className="relative flex-1 min-h-0">
               {!isDesktopViewport && showTableOfContents && (
@@ -449,7 +461,7 @@ export function PreviewModal({
                 ref={viewportRef}
                 data-preview-viewport="true"
                 data-testid="preview-document-scroll"
-                className="flex-1 h-full overflow-auto rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_35%),linear-gradient(180deg,rgba(17,28,40,0.92),rgba(10,16,25,0.96))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:p-6"
+                className="flex-1 h-full overflow-auto rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_35%),linear-gradient(180deg,rgba(17,28,40,0.92),rgba(10,16,25,0.96))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:p-4"
               >
                 <div
                   data-testid="preview-stage-surface"
@@ -497,7 +509,7 @@ export function PreviewModal({
             {/* Pagination Bar */}
             <footer
               data-testid="preview-modal-footer"
-              className="shrink-0 border-t border-white/10 bg-[rgba(7,12,20,0.92)] px-4 py-3 backdrop-blur-sm md:px-6"
+              className="shrink-0 border-t border-white/10 bg-[rgba(7,12,20,0.92)] px-4 py-2.5 backdrop-blur-sm md:px-6 md:py-3"
             >
               <div className="flex w-full items-center justify-between gap-3">
                 <button

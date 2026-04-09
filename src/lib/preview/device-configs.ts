@@ -27,6 +27,16 @@ export interface PaginationConfig {
   lineHeight: number; // unitless multiplier
 }
 
+export interface PaginationConfigOverrides {
+  fontSize?: string | number;
+  margins?: {
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+  };
+}
+
 // ==================== FORMAT PRESETS ====================
 
 export const FORMAT_PRESETS: Record<PreviewFormat, FormatPreset> = {
@@ -134,4 +144,27 @@ export function getApproxLinesPerPage(format: PreviewFormat): number {
   const contentHeight = config.pageHeight - config.marginTop - config.marginBottom;
   const lineHeight = config.fontSize * config.lineHeight;
   return Math.floor(contentHeight / lineHeight);
+}
+
+export function buildPaginationConfig(
+  format: PreviewFormat,
+  overrides?: PaginationConfigOverrides,
+): PaginationConfig {
+  const baseConfig = DEVICE_PAGINATION_CONFIGS[format];
+  const parsedFontSize =
+    typeof overrides?.fontSize === 'string'
+      ? Number.parseInt(overrides.fontSize, 10)
+      : overrides?.fontSize;
+
+  return {
+    ...baseConfig,
+    fontSize:
+      typeof parsedFontSize === 'number' && Number.isFinite(parsedFontSize)
+        ? parsedFontSize
+        : baseConfig.fontSize,
+    marginTop: overrides?.margins?.top ?? baseConfig.marginTop,
+    marginBottom: overrides?.margins?.bottom ?? baseConfig.marginBottom,
+    marginLeft: overrides?.margins?.left ?? baseConfig.marginLeft,
+    marginRight: overrides?.margins?.right ?? baseConfig.marginRight,
+  };
 }
