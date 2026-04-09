@@ -1383,6 +1383,7 @@ export function AdvancedRichTextEditor({
               }
               .ProseMirror p {
                 margin: 0;
+                line-height: ${previewConfig.lineHeight};
                 overflow-wrap: break-word;
                 word-break: break-word;
               }

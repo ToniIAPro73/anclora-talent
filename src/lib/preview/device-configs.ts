@@ -77,7 +77,7 @@ export const DEVICE_PAGINATION_CONFIGS: Record<PreviewFormat, PaginationConfig> 
     marginLeft: 72, // 0.75in
     marginRight: 72, // 0.75in
     fontSize: 16,
-    lineHeight: 1.6,
+    lineHeight: 1.4,
   },
   tablet: {
     pageWidth: 528,
@@ -87,7 +87,7 @@ export const DEVICE_PAGINATION_CONFIGS: Record<PreviewFormat, PaginationConfig> 
     marginLeft: 48, // 0.5in
     marginRight: 48,
     fontSize: 15,
-    lineHeight: 1.5,
+    lineHeight: 1.35,
   },
   mobile: {
     pageWidth: 355,
@@ -97,7 +97,7 @@ export const DEVICE_PAGINATION_CONFIGS: Record<PreviewFormat, PaginationConfig> 
     marginLeft: 32, // 0.33in
     marginRight: 32,
     fontSize: 14,
-    lineHeight: 1.5,
+    lineHeight: 1.35,
   },
   ereader: {
     pageWidth: 480,
@@ -107,7 +107,7 @@ export const DEVICE_PAGINATION_CONFIGS: Record<PreviewFormat, PaginationConfig> 
     marginLeft: 40, // 0.42in
     marginRight: 40,
     fontSize: 16,
-    lineHeight: 1.7,
+    lineHeight: 1.5,
   },
 };
 

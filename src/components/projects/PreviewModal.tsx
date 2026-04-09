@@ -124,12 +124,20 @@ export function PreviewModal({
   );
 
   const nextPage = useCallback(() => {
-    goToPage(currentPage + 1);
-  }, [currentPage, goToPage]);
+    if (viewMode === 'spread') {
+      goToPage(currentPage === 0 ? 1 : currentPage + 2);
+    } else {
+      goToPage(currentPage + 1);
+    }
+  }, [currentPage, goToPage, viewMode]);
 
   const prevPage = useCallback(() => {
-    goToPage(currentPage - 1);
-  }, [currentPage, goToPage]);
+    if (viewMode === 'spread') {
+      goToPage(currentPage <= 1 ? 0 : currentPage - 2);
+    } else {
+      goToPage(currentPage - 1);
+    }
+  }, [currentPage, goToPage, viewMode]);
 
   // Keyboard navigation
   const handleKeyDown = useCallback(
@@ -155,6 +163,11 @@ export function PreviewModal({
   const visiblePages = useMemo(() => {
     if (viewMode === 'single') {
       return pages[currentPage] ? [pages[currentPage]] : [];
+    }
+    // In spread mode, if we are at page 0 (cover), we only show the cover.
+    // Otherwise, we show the pair [currentPage, currentPage + 1].
+    if (currentPage === 0) {
+      return [pages[0]].filter(Boolean);
     }
     return [pages[currentPage], pages[currentPage + 1]].filter(Boolean);
   }, [pages, currentPage, viewMode]);
@@ -686,6 +699,7 @@ function PageRenderer({ page, format, copy, config }: PageRendererProps) {
       <style>{`
         .preview-page p {
           margin: 0;
+          line-height: ${config.lineHeight};
           overflow-wrap: break-word;
           word-break: break-word;
         }

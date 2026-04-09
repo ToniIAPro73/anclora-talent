@@ -75,11 +75,11 @@ export function paginateContent(
     config.pageHeight - config.marginTop - config.marginBottom;
   const lineHeightPx = config.fontSize * config.lineHeight;
 
-  // Apply 0.9 factor to account for break-inside:avoid waste at column bottoms.
-  // Previously 0.75 but that over-compensated for element height overestimates;
-  // now that estimateNodeLines uses CSS-accurate values, 0.9 is the right margin.
+  // Apply 0.95 factor to maximize content density.
+  // Previously 0.75 or 0.9, but now that estimateNodeLines uses CSS-accurate values,
+  // 0.95 is the right margin to better match the editor's column layout.
   const approxLinesPerPage = Math.floor(
-    (availableHeight / lineHeightPx) * 0.9,
+    (availableHeight / lineHeightPx) * 0.95,
   );
 
   // Parse HTML into DOM nodes
