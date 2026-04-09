@@ -5,9 +5,9 @@
  * Adapts Press preview architecture to Talent's ProjectRecord model
  * while maintaining premium UI contract compliance
  *
- * PAGINATION ARCHITECTURE (Commit 1):
- * - Each chapter is paginated independently using paginateContent
- * - Global page numbering across all chapters (cover=1, toc=2, content=3+)
+ * PAGINATION ARCHITECTURE:
+ * - Each chapter is paginated independently using the chapter HTML as source of truth
+ * - Global page numbering across all chapters (cover=1, content=2+)
  * - TOC reflects actual first-page numbers per chapter (not estimates)
  * - Back-cover numbered after all content pages
  */
@@ -119,14 +119,8 @@ export function buildPreviewPages(
   let globalPageNumber = 2; // Content starts immediately after cover
 
   for (const chapter of chapterSections) {
-    // Add chapter heading + content to paginate together
-    const chapterRecord = project.document.chapters.find((item) => item.id === chapter.id);
-    const chapterContentHtml = chapterStartsWithTitle(chapterRecord?.blocks ?? [], chapter.title)
-      ? chapter.html
-      : `<h2>${escapeHtml(chapter.title)}</h2>\n${chapter.html}`;
-
-    // Paginate this chapter's content
-    const reconciledChapterHtml = reconcileOverflowBreaks(chapterContentHtml, config);
+    // Paginate the canonical chapter HTML without injecting synthetic headings.
+    const reconciledChapterHtml = reconcileOverflowBreaks(chapter.html, config);
     const chapterPages = paginateContent(reconciledChapterHtml, config).filter((page) =>
       hasRenderablePageContent(page.html),
     );
@@ -167,32 +161,6 @@ export function buildPreviewPages(
 }
 
 // ==================== HELPERS ====================
-
-function chapterStartsWithTitle(blocks: ChapterBlock[], title: string): boolean {
-  const firstBlock = blocks[0];
-  if (!firstBlock) return false;
-
-  const firstContent = String(firstBlock.block?.content || firstBlock.content || '').trim();
-  if (!firstContent) return false;
-
-  return firstContent.replace(/<[^>]+>/g, '').trim().toLowerCase() === title.trim().toLowerCase();
-}
-
-/**
- * Escape HTML special characters
- */
-function escapeHtml(text: string): string {
-  const map: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
-  };
-  return text.replace(/[&<>"']/g, (char) => map[char]);
-}
-
-type ChapterBlock = ProjectRecord['document']['chapters'][number]['blocks'][number];
 
 function normalizeCoverSurface(project: ProjectRecord) {
   const fallback = createDefaultSurfaceState('cover');

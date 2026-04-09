@@ -4,6 +4,7 @@ import { PreviewModal } from './PreviewModal';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { createDefaultSurfaceState } from '@/lib/projects/cover-surface';
+import { EDITOR_PREFERENCES_STORAGE_KEY } from '@/lib/ui-preferences/preferences';
 
 const copy = resolveLocaleMessages('es').project;
 
@@ -95,6 +96,7 @@ function makeProject(): ProjectRecord {
 describe('PreviewModal', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    window.localStorage.clear();
     mockMatchMedia(true);
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
       const element = this as HTMLElement;
@@ -219,6 +221,22 @@ describe('PreviewModal', () => {
     expect(screen.getByRole('button', { name: copy.previewModalSpreadView })).toHaveAttribute('aria-pressed', 'false');
   });
 
+  test('initializes preview format from saved editor preferences', () => {
+    window.localStorage.setItem(
+      EDITOR_PREFERENCES_STORAGE_KEY,
+      JSON.stringify({
+        device: 'tablet',
+        fontSize: '16px',
+        margins: { top: 24, bottom: 24, left: 24, right: 24 },
+      }),
+    );
+
+    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
+
+    expect(screen.getByRole('button', { name: copy.previewModalTablet })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: copy.previewModalLaptop })).toHaveAttribute('aria-pressed', 'false');
+  });
+
   test('builds chapter navigation from rendered content pages instead of duplicating toc-page entries', async () => {
     render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
 
@@ -249,6 +267,23 @@ describe('PreviewModal', () => {
     expect(screen.getByDisplayValue('3')).toBeInTheDocument();
   });
 
+  test('renders content pages using the effective editor margins instead of format defaults', () => {
+    window.localStorage.setItem(
+      EDITOR_PREFERENCES_STORAGE_KEY,
+      JSON.stringify({
+        device: 'desktop',
+        fontSize: '16px',
+        margins: { top: 24, bottom: 24, left: 24, right: 24 },
+      }),
+    );
+
+    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
+
+    expect(screen.getAllByTestId('preview-page-shell')[0]).toHaveStyle({
+      padding: '24px 24px 24px 24px',
+    });
+  });
+
   test('renders cover and back cover from the built preview structure', () => {
     render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
 
@@ -275,6 +310,12 @@ describe('PreviewModal', () => {
     expect(frameWidth).toBeLessThan(1400);
     expect(frameHeight).toBeLessThanOrEqual(700);
     expect(frameWidth).toBeGreaterThan(frameHeight);
+  });
+
+  test('keeps the preview viewport non-scrollable until the user changes zoom manually', () => {
+    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
+
+    expect(screen.getByTestId('preview-document-scroll')).toHaveClass('overflow-hidden');
   });
 
   test('does not re-render a hidden subtitle from saved cover surface state', () => {

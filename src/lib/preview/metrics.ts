@@ -19,34 +19,6 @@ export interface ChapterPageMetrics {
   pagesByFormat: Record<PreviewFormat, number>;
 }
 
-// ==================== HELPERS ====================
-
-type ChapterBlock = ProjectRecord['document']['chapters'][number]['blocks'][number];
-
-function chapterStartsWithTitle(blocks: ChapterBlock[], title: string): boolean {
-  const firstBlock = blocks[0];
-  if (!firstBlock) return false;
-
-  const firstContent = String(firstBlock.block?.content || firstBlock.content || '').trim();
-  if (!firstContent) return false;
-
-  return firstContent.replace(/<[^>]+>/g, '').trim().toLowerCase() === title.trim().toLowerCase();
-}
-
-/**
- * Escape HTML special characters
- */
-function escapeHtml(text: string): string {
-  const map: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
-  };
-  return text.replace(/[&<>"']/g, (char) => map[char]);
-}
-
 // ==================== METRICS COMPUTATION ====================
 
 /**
@@ -75,11 +47,6 @@ export function computeChapterPageMetrics(
     const title = chapter.title?.trim() || `Capítulo`;
     const chapterHtml = chapterBlocksToHtml(chapter.blocks);
 
-    // Combine chapter heading with content for pagination
-    const fullHtml = chapterStartsWithTitle(chapter.blocks, title)
-      ? chapterHtml
-      : `<h2>${escapeHtml(title)}</h2>\n${chapterHtml}`;
-
     const pagesByFormat: Record<PreviewFormat, number> = {
       mobile: 0,
       tablet: 0,
@@ -90,7 +57,7 @@ export function computeChapterPageMetrics(
     // Paginate for each format
     for (const format of formats) {
       const config = DEVICE_PAGINATION_CONFIGS[format];
-      const pages = paginateContent(fullHtml, config);
+      const pages = paginateContent(chapterHtml, config);
       pagesByFormat[format] = pages.length;
     }
 

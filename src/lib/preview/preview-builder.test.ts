@@ -7,6 +7,9 @@ import { buildPreviewPages } from './preview-builder';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { DEVICE_PAGINATION_CONFIGS } from './device-configs';
 import { createDefaultSurfaceState } from '@/lib/projects/cover-surface';
+import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
+import { paginateContent } from './content-paginator';
+import { reconcileOverflowBreaks } from './editor-page-layout';
 
 // Helper to create a mock project
 function createMockProject(overrides?: Partial<ProjectRecord>): ProjectRecord {
@@ -471,6 +474,85 @@ describe('preview-builder', () => {
       expect(contentPages[0].content).toContain('<p>Uno</p>');
       expect(contentPages[0].content).toContain('<p>Dos</p>');
       expect(contentPages[0].content).not.toContain('data-page-break="auto"');
+    });
+
+    it('does not inject a synthetic chapter heading that is not present in the chapter html', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          chapters: [
+            {
+              id: 'intro-chapter',
+              order: 1,
+              title: 'Introducción',
+              blocks: [
+                {
+                  id: 'intro-block',
+                  type: 'paragraph',
+                  order: 1,
+                  content: '<p>Primer párrafo real del capítulo.</p>',
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const pages = buildPreviewPages(project, DEVICE_PAGINATION_CONFIGS.laptop);
+      const firstContentPage = pages.find((page) => page.type === 'content');
+
+      expect(firstContentPage?.content).toContain('Primer párrafo real del capítulo.');
+      expect(firstContentPage?.content).not.toContain('<h2>Introducción</h2>');
+    });
+
+    it('paginates chapter content from the same canonical html used by the chapter editor', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          chapters: [
+            {
+              id: 'intro-chapter',
+              order: 1,
+              title: 'Introducción',
+              blocks: [
+                {
+                  id: 'intro-block-1',
+                  type: 'paragraph',
+                  order: 1,
+                  content: '<p>Uno</p>',
+                },
+                {
+                  id: 'intro-block-2',
+                  type: 'paragraph',
+                  order: 2,
+                  content: '<hr data-page-break="manual" />',
+                },
+                {
+                  id: 'intro-block-3',
+                  type: 'paragraph',
+                  order: 3,
+                  content: '<p>Dos</p>',
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const chapterHtml = chapterBlocksToHtml(project.document.chapters[0].blocks);
+      const expectedPages = paginateContent(
+        reconcileOverflowBreaks(chapterHtml, DEVICE_PAGINATION_CONFIGS.laptop),
+        DEVICE_PAGINATION_CONFIGS.laptop,
+      );
+      const previewPages = buildPreviewPages(project, DEVICE_PAGINATION_CONFIGS.laptop).filter(
+        (page) => page.type === 'content',
+      );
+
+      expect(previewPages).toHaveLength(expectedPages.length);
+      expect(previewPages[0].content).toContain('<p>Uno</p>');
+      expect(previewPages.at(-1)?.content).toContain('<p>Dos</p>');
     });
 
     it('should produce consistent results', () => {
