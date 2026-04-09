@@ -12,19 +12,23 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<unknown>(null);
+  // Keep a ref to the latest callback so we can call it without re-initializing the canvas
+  const onCanvasReadyRef = useRef(onCanvasReady);
+  useEffect(() => {
+    onCanvasReadyRef.current = onCanvasReady;
+  });
 
   useEffect(() => {
     const initializeCanvas = async () => {
       if (!canvasRef.current) return;
 
       try {
-        // Create the Fabric.js canvas
+        // Create the Fabric.js canvas once — never recreate on callback changes
         const fabricCanvas = await createFabricCanvas(canvasRef.current);
         fabricCanvasRef.current = fabricCanvas;
 
-        // Notify parent that canvas is ready
-        if (onCanvasReady) {
-          onCanvasReady(fabricCanvas);
+        if (onCanvasReadyRef.current) {
+          onCanvasReadyRef.current(fabricCanvas);
         }
       } catch (error) {
         console.error('[CoverCanvas] Error initializing Fabric.js canvas:', error);
@@ -37,13 +41,14 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
     return () => {
       if (fabricCanvasRef.current) {
         try {
-          fabricCanvasRef.current.dispose();
+          (fabricCanvasRef.current as { dispose: () => void }).dispose();
         } catch (e) {
           console.warn('[CoverCanvas] Error disposing canvas:', e);
         }
       }
     };
-  }, [onCanvasReady]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally empty — canvas is initialized once, callback tracked via ref
 
   void initialPalette;
 
