@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { saveChapterContentAction } from '@/lib/projects/actions';
 import { estimateTotalPages, type PageCalculationConfig } from '@/lib/projects/page-calculator';
 import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
@@ -44,7 +45,9 @@ function normalizeLoadedChapterHtml(
   fontSize: string,
   margins: { top: number; bottom: number; left: number; right: number },
 ) {
-  return reconcileOverflowBreaks(content, buildPreviewConfig(device, fontSize, margins));
+  return normalizeHtmlContent(
+    reconcileOverflowBreaks(content, buildPreviewConfig(device, fontSize, margins)),
+  );
 }
 
 function normalizeHtmlContent(content: string): string {
@@ -53,6 +56,11 @@ function normalizeHtmlContent(content: string): string {
 
   const normalizeBreakMarkup = (html: string) =>
     html
+      .replace(
+        /<p[^>]*>\s*(?:<[^>]+>\s*)*[─—–_=*·.\s]{5,}(?:\s*<\/[^>]+>)*\s*<\/p>/gi,
+        '',
+      )
+      .replace(/<hr(?![^>]*data-page-break=)[^>]*\/?>/gi, '')
       .replace(/<hr\s+data-page-break="true"\s*\/?>/gi, '<hr data-page-break="manual">')
       .replace(/<hr\s+data-page-break="manual"\s*\/?>/gi, '<hr data-page-break="manual">')
       .replace(/<hr\s+data-page-break="auto"\s*\/?>/gi, '<hr data-page-break="auto">');
@@ -76,6 +84,7 @@ export function useChapterEditor({
   fontSize = '16px',
   margins = { top: 24, bottom: 24, left: 24, right: 24 },
 }: UseChapterEditorOptions) {
+  const router = useRouter();
   const initialChapter = chapters[initialChapterIndex];
   const initialHtmlContent = initialChapter
     ? normalizeLoadedChapterHtml(
@@ -85,6 +94,7 @@ export function useChapterEditor({
         margins,
       )
     : '';
+  const [localChapters, setLocalChapters] = useState(chapters);
   const [currentIndex, setCurrentIndex] = useState(initialChapterIndex);
   const [title, setTitle] = useState(initialChapter?.title || '');
   const [htmlContent, setHtmlContent] = useState(initialHtmlContent);
@@ -96,9 +106,9 @@ export function useChapterEditor({
   const [measuredTotalPages, setMeasuredTotalPages] = useState<number | null>(null);
   const savedBaselineRef = useRef(normalizeHtmlContent(initialHtmlContent));
 
-  const currentChapter = chapters[currentIndex];
+  const currentChapter = localChapters[currentIndex];
   const canNavigatePrev = currentIndex > 0;
-  const canNavigateNext = currentIndex < chapters.length - 1;
+  const canNavigateNext = currentIndex < localChapters.length - 1;
   const previewConfig = useMemo(
     () => buildPreviewConfig(device, fontSize, margins),
     [device, fontSize, margins],
@@ -133,6 +143,10 @@ export function useChapterEditor({
   }, [currentIndex, htmlContent, device, fontSize, margins.bottom, margins.left, margins.right, margins.top]);
 
   useEffect(() => {
+    setLocalChapters(chapters);
+  }, [chapters]);
+
+  useEffect(() => {
     setCurrentPage((page) => Math.min(page, Math.max(totalPages - 1, 0)));
   }, [totalPages]);
 
@@ -156,19 +170,69 @@ export function useChapterEditor({
     setError(null);
   }, [previewConfig]);
 
+  const persistCurrentChapter = useCallback(async () => {
+    if (!currentChapter) return false;
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      formData.set('projectId', projectId);
+      formData.set('chapterId', currentChapter.id);
+      formData.set('chapterTitle', title);
+      formData.set('htmlContent', htmlContent);
+
+      await saveChapterContentAction(formData);
+      setLocalChapters((current) =>
+        current.map((chapter, index) =>
+          index === currentIndex
+            ? {
+                ...chapter,
+                title,
+                blocks: [
+                  {
+                    id: chapter.blocks[0]?.id ?? `${chapter.id}-content`,
+                    order: 0,
+                    type: 'paragraph',
+                    content: htmlContent,
+                  },
+                ],
+              }
+            : chapter,
+        ),
+      );
+      savedBaselineRef.current = normalizeHtmlContent(htmlContent);
+      setHasChanges(false);
+      setLastSaved(new Date());
+      router.refresh();
+      return true;
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Error al guardar el capítulo'
+      );
+      console.error('Failed to save chapter:', err);
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [currentChapter, currentIndex, htmlContent, projectId, router, title]);
+
   const navigateToChapter = useCallback(
     async (newIndex: number) => {
-      if (newIndex < 0 || newIndex >= chapters.length) return;
+      if (newIndex < 0 || newIndex >= localChapters.length) return;
 
-      // Only prompt if there are actual changes
       if (hasChanges) {
         const confirmed = confirm(
-          'Tienes cambios sin guardar. ¿Deseas cambiar de capítulo sin guardar?'
+          'Tienes cambios sin guardar. ¿Deseas guardarlos antes de cambiar de capítulo?'
         );
         if (!confirmed) return;
+
+        const saved = await persistCurrentChapter();
+        if (!saved) return;
       }
 
-      const newChapter = chapters[newIndex];
+      const newChapter = localChapters[newIndex];
       const reconstructedHtml = normalizeLoadedChapterHtml(
         chapterBlocksToHtml(newChapter.blocks),
         device,
@@ -184,7 +248,7 @@ export function useChapterEditor({
       setCurrentPage(0); // Reset to first page when changing chapters
       onChapterChange?.(newIndex);
     },
-    [chapters, device, fontSize, hasChanges, margins, onChapterChange]
+    [device, fontSize, hasChanges, localChapters, margins, onChapterChange, persistCurrentChapter]
   );
 
   const goToPagePrev = useCallback(() => {
@@ -208,37 +272,14 @@ export function useChapterEditor({
   }, [currentIndex, navigateToChapter]);
 
   const saveChapter = useCallback(async () => {
-    if (!currentChapter) return;
-
-    setIsSaving(true);
-    setError(null);
-
-    try {
-      const formData = new FormData();
-      formData.set('projectId', projectId);
-      formData.set('chapterId', currentChapter.id);
-      formData.set('chapterTitle', title);
-      formData.set('htmlContent', htmlContent);
-
-      await saveChapterContentAction(formData);
-      savedBaselineRef.current = normalizeHtmlContent(htmlContent);
-      setHasChanges(false);
-      setLastSaved(new Date());
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Error al guardar el capítulo'
-      );
-      console.error('Failed to save chapter:', err);
-    } finally {
-    setIsSaving(false);
-  }
-}, [projectId, currentChapter, title, htmlContent]);
+    await persistCurrentChapter();
+  }, [persistCurrentChapter]);
 
   return {
     // Current state
     currentIndex,
     currentChapter,
-    totalChapters: chapters.length,
+    totalChapters: localChapters.length,
     title,
     htmlContent,
     hasChanges,

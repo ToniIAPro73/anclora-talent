@@ -2,9 +2,16 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const saveChapterContentActionMock = vi.fn();
+const routerRefreshMock = vi.fn();
 
 vi.mock('@/lib/projects/actions', () => ({
   saveChapterContentAction: (...args: unknown[]) => saveChapterContentActionMock(...args),
+}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    refresh: routerRefreshMock,
+  }),
 }));
 
 import { useChapterEditor } from './useChapterEditor';
@@ -30,6 +37,7 @@ describe('useChapterEditor', () => {
 
   beforeEach(() => {
     saveChapterContentActionMock.mockReset();
+    routerRefreshMock.mockReset();
     vi.restoreAllMocks();
   });
 
@@ -199,6 +207,62 @@ describe('useChapterEditor', () => {
     expect(result.current.htmlContent).toBe('<p>Fase 1: Percepción</p><p>Días 1 al 10</p>');
   });
 
+  test('strips legacy plain hr separators when loading chapter content', () => {
+    const chaptersWithLegacyRules = [
+      {
+        id: 'chapter-rules',
+        order: 1,
+        title: 'Capítulo con reglas',
+        blocks: [
+          {
+            id: 'block-rules',
+            order: 1,
+            type: 'paragraph' as const,
+            content: '<p>Índice</p><hr /><p>Introducción</p>',
+          },
+        ],
+      },
+    ];
+
+    const { result } = renderHook(() =>
+      useChapterEditor({
+        chapters: chaptersWithLegacyRules,
+        initialChapterIndex: 0,
+        projectId: 'project-1',
+      }),
+    );
+
+    expect(result.current.htmlContent).toBe('<p>Índice</p><p>Introducción</p>');
+  });
+
+  test('strips decorative separator paragraphs when loading chapter content', () => {
+    const chaptersWithDecorativeParagraphs = [
+      {
+        id: 'chapter-decorative',
+        order: 1,
+        title: 'Capítulo decorativo',
+        blocks: [
+          {
+            id: 'block-decorative',
+            order: 1,
+            type: 'paragraph' as const,
+            content: '<p>Índice</p><p>─────────────────</p><p>Introducción</p>',
+          },
+        ],
+      },
+    ];
+
+    const { result } = renderHook(() =>
+      useChapterEditor({
+        chapters: chaptersWithDecorativeParagraphs,
+        initialChapterIndex: 0,
+        projectId: 'project-1',
+      }),
+    );
+
+    expect(result.current.htmlContent).toBe('<p>Índice</p><p>Introducción</p>');
+  });
+
   test('navigates page by page when a chapter spans multiple pages', () => {
     const longChapter = [
       {
@@ -306,5 +370,59 @@ describe('useChapterEditor', () => {
     });
 
     expect(result.current.totalPages).toBe(1);
+  });
+
+  test('refreshes the editor route after saving chapter content so preview reads persisted content', async () => {
+    saveChapterContentActionMock.mockResolvedValue(undefined);
+
+    const { result } = renderHook(() =>
+      useChapterEditor({
+        chapters,
+        initialChapterIndex: 0,
+        projectId: 'project-1',
+      }),
+    );
+
+    act(() => {
+      result.current.setHtmlContent('<p>Uno editado</p>');
+    });
+
+    await act(async () => {
+      await result.current.saveChapter();
+    });
+
+    expect(saveChapterContentActionMock).toHaveBeenCalledTimes(1);
+    expect(routerRefreshMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('saves pending changes before navigating to another chapter when the user confirms', async () => {
+    saveChapterContentActionMock.mockResolvedValue(undefined);
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    const { result } = renderHook(() =>
+      useChapterEditor({
+        chapters,
+        initialChapterIndex: 0,
+        projectId: 'project-1',
+      }),
+    );
+
+    act(() => {
+      result.current.setHtmlContent('<p>Uno editado</p>');
+    });
+
+    await act(async () => {
+      await result.current.goToNextChapter();
+    });
+
+    expect(saveChapterContentActionMock).toHaveBeenCalledTimes(1);
+    expect(result.current.currentIndex).toBe(1);
+
+    await act(async () => {
+      await result.current.goToPrevChapter();
+    });
+
+    expect(result.current.currentIndex).toBe(0);
+    expect(result.current.htmlContent).toBe('<p>Uno editado</p>');
   });
 });

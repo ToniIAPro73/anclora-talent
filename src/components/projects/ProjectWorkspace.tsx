@@ -1,6 +1,7 @@
 'use client';
 
 import { useTransition, useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { Check, Loader2, Download } from 'lucide-react';
 import { Stepper, type Step } from '@/components/ui/Stepper';
 import { ChapterOrganizer } from './ChapterOrganizer';
@@ -84,6 +85,7 @@ export function ProjectWorkspace({
   project: ProjectRecord;
   copy: AppMessages['project'];
 }) {
+  const router = useRouter();
   const [activeStep, setActiveStep] = useState(1);
   const [isAdvancedCover, setIsAdvancedCover] = useState(false);
   const [isAdvancedBackCover, setIsAdvancedBackCover] = useState(false);
@@ -152,6 +154,7 @@ export function ProjectWorkspace({
     setSaveState('saving');
     startTransition(async () => {
       await saveProjectCoverAction(formData);
+      router.refresh();
       setSaveState('saved');
       setTimeout(() => setSaveState('idle'), 2000);
     });
@@ -176,6 +179,7 @@ export function ProjectWorkspace({
     setSaveState('saving');
     startTransition(async () => {
       await saveBackCoverAction(formData);
+      router.refresh();
       setSaveState('saved');
       setTimeout(() => setSaveState('idle'), 2000);
     });

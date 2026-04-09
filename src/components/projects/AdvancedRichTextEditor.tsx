@@ -266,6 +266,11 @@ function normalizeEditorHtml(content: string): string {
 
   const normalizeBreakMarkup = (html: string) =>
     html
+      .replace(
+        /<p[^>]*>\s*(?:<[^>]+>\s*)*[─—–_=*·.\s]{5,}(?:\s*<\/[^>]+>)*\s*<\/p>/gi,
+        '',
+      )
+      .replace(/<hr(?![^>]*data-page-break=)[^>]*\/?>/gi, '')
       .replace(/<hr\s+data-page-break="true"\s*\/?>/gi, '<hr data-page-break="manual">')
       .replace(/<hr\s+data-page-break="manual"\s*\/?>/gi, '<hr data-page-break="manual">')
       .replace(/<hr\s+data-page-break="auto"\s*\/?>/gi, '<hr data-page-break="auto">');
@@ -1157,6 +1162,7 @@ export function AdvancedRichTextEditor({
         heading: { levels: [1, 2, 3, 4, 5, 6] },
         bulletList: false,
         orderedList: false,
+        horizontalRule: false,
       }),
       StyledBulletList,
       StyledOrderedList,
@@ -1376,8 +1382,13 @@ export function AdvancedRichTextEditor({
                 object-fit: cover;
               }
               .ProseMirror p {
+                margin: 0;
                 overflow-wrap: break-word;
                 word-break: break-word;
+              }
+              .ProseMirror p + p,
+              .preview-page p + p {
+                margin-top: 0.9rem;
               }
               .ProseMirror p[data-indent],
               .preview-page p[data-indent],
@@ -1587,6 +1598,10 @@ export function AdvancedRichTextEditor({
                 break-after: column;
                 page-break-after: always;
                 -webkit-column-break-after: always;
+              }
+              .ProseMirror hr:not([data-page-break]),
+              .preview-page hr:not([data-page-break]) {
+                display: none;
               }
               .multipage-editor-flow {
                 position: absolute;
