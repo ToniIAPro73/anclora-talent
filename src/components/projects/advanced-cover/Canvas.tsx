@@ -22,11 +22,9 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
   useEffect(() => {
     const initializeCanvas = async () => {
       if (!canvasRef.current) return;
-
       try {
         const fabricCanvas = await createFabricCanvas(canvasRef.current);
         fabricCanvasRef.current = fabricCanvas;
-
         if (onCanvasReadyRef.current) {
           onCanvasReadyRef.current(fabricCanvas);
         }
@@ -51,35 +49,32 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
 
   // ResizeObserver — reescala el canvas cuando el contenedor cambia de tamaño
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const inner = canvasRef.current?.parentElement;
+    if (!inner) return;
 
     const observer = new ResizeObserver((entries) => {
-      const canvas = fabricCanvasRef.current as {
-        setZoom: (zoom: number) => void;
+      const fc = fabricCanvasRef.current as {
+        setZoom: (z: number) => void;
         setWidth: (w: number) => void;
         setHeight: (h: number) => void;
         requestRenderAll?: () => void;
         renderAll?: () => void;
       } | null;
-
-      if (!canvas) return;
+      if (!fc) return;
 
       for (const entry of entries) {
         const newWidth = entry.contentRect.width;
-        if (newWidth < 10) continue; // ignorar valores espurios durante el montaje
-
+        if (newWidth < 10) continue;
         const scale = newWidth / CANVAS_WIDTH;
-        canvas.setZoom(scale);
-        canvas.setWidth(newWidth);
-        canvas.setHeight(CANVAS_HEIGHT * scale);
-
-        if (canvas.requestRenderAll) canvas.requestRenderAll();
-        else canvas.renderAll?.();
+        fc.setZoom(scale);
+        fc.setWidth(newWidth);
+        fc.setHeight(CANVAS_HEIGHT * scale);
+        if (fc.requestRenderAll) fc.requestRenderAll();
+        else fc.renderAll?.();
       }
     });
 
-    observer.observe(container);
+    observer.observe(inner);
     return () => observer.disconnect();
   }, []);
 
@@ -97,6 +92,7 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
         minHeight: '100%',
       }}
     >
+      {/* Sin padding para que el canvas ocupe exactamente el área 2:3 */}
       <div
         style={{
           width: '100%',
@@ -104,7 +100,7 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
           aspectRatio: '2 / 3',
           border: '1px solid var(--border-subtle)',
           borderRadius: '24px',
-          overflow: 'hidden',       /* recorta el canvas a los bordes redondeados */
+          overflow: 'hidden',
           boxShadow: 'var(--shadow-strong)',
         }}
       >
@@ -112,9 +108,9 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
           ref={canvasRef}
           data-testid="fabric-canvas"
           style={{
+            display: 'block',
             width: '100%',
             height: '100%',
-            display: 'block',
           }}
         />
       </div>
