@@ -213,6 +213,7 @@ export function PreviewModal({
                 <div 
                   className={currentPage >= firstContentIndex && currentPage <= lastContentIndex ? 'visible opacity-100' : 'invisible opacity-0 pointer-events-none absolute inset-0'}
                 >
+                  console.log(contentHtml)
                   <MultipageFlow
                     html={contentHtml}
                     config={paginationConfig}
