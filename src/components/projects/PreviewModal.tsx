@@ -33,6 +33,7 @@ import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/compone
 import { MultipageFlow } from '@/components/projects/MultipageFlow';
 import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
 import { normalizeDocumentHtml } from '@/lib/preview/html-normalize';
+import { reconcileOverflowBreaks } from '@/lib/preview/editor-page-layout';
 
 interface PreviewModalProps {
   project: ProjectRecord;
@@ -84,12 +85,13 @@ export function PreviewModal({
     const sorted = [...project.document.chapters].sort((a, b) => a.order - b.order);
     const fragments = sorted.map((chapter) => {
       const html = chapterBlocksToHtml(chapter.blocks);
-      return normalizeDocumentHtml(html);
+      const normalized = normalizeDocumentHtml(html);
+      return reconcileOverflowBreaks(normalized, paginationConfig);
     });
 
     // Join chapters with a manual page break to preserve chapter separation truth
     return fragments.join('<hr data-page-break="manual">');
-  }, [project.document.chapters]);
+  }, [project.document.chapters, paginationConfig]);
 
   // LOGICAL PAGE INDEXING
   const firstContentIndex = 1;
