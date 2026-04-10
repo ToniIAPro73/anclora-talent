@@ -119,8 +119,24 @@ export function MultipageFlow({
         .flow-content-root h3 { font-size: 1.2rem; line-height: 1.3; margin: 0 0 0.75rem 0; font-weight: 700; }
         .flow-content-root ul, .flow-content-root ol { margin: 0 0 1rem 1.5rem; padding: 0; }
         .flow-content-root li { margin: 0.35rem 0; }
-        .flow-content-root hr[data-page-break="manual"] { border: 0; border-top: 2px dashed rgba(196, 154, 36, 0.3); margin: 1.5rem 0; break-after: column; }
-        .flow-content-root hr[data-page-break="auto"] { border: 0; height: 0; margin: 0; opacity: 0; break-after: column; }
+        .flow-content-root hr[data-page-break="manual"] { 
+          border: 0; 
+          height: 0; 
+          margin: 0; 
+          opacity: 0; 
+          break-after: column; 
+          page-break-after: always; 
+          -webkit-column-break-after: always; 
+        }
+        .flow-content-root hr[data-page-break="auto"] { 
+          border: 0; 
+          height: 0; 
+          margin: 0; 
+          opacity: 0; 
+          break-after: column; 
+          page-break-after: always; 
+          -webkit-column-break-after: always; 
+        }
       `}</style>
 
       <div

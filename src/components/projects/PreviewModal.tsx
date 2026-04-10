@@ -13,7 +13,6 @@ import {
   ChevronRight,
   ZoomIn,
   ZoomOut,
-  List,
   BookOpen,
   Monitor,
   Tablet,
@@ -55,16 +54,10 @@ export function PreviewModal({
   const [format, setFormat] = useState<PreviewFormat>(preferredFormat || 'laptop');
   const [zoom, setZoom] = useState(100);
   const [hasManualZoom, setHasManualZoom] = useState(false);
-  const [showTableOfContents, setShowTableOfContents] = useState(true);
-  const [isDesktopViewport, setIsDesktopViewport] = useState(true);
   
   // CONTENT FLOW STATE
   const [totalContentPages, setTotalContentPages] = useState(1);
   const viewportRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    setIsDesktopViewport(window.matchMedia('(min-width: 768px)').matches);
-  }, []);
 
   // Generate pages based on selected format
   const paginationConfig = useMemo(
@@ -142,7 +135,6 @@ export function PreviewModal({
   
   // Spread width logic
   const isSpreadContent = viewMode === 'spread' && currentPage >= firstContentIndex && currentPage <= lastContentIndex;
-  const showSecondPage = isSpreadContent && (currentPage - firstContentIndex + 1) < totalContentPages;
   
   const spreadWidth = viewMode === 'spread' && (currentPage > 0 && currentPage < backCoverIndex)
       ? pagePreset.viewportWidth * 2 + 24
@@ -213,26 +205,28 @@ export function PreviewModal({
               className="relative transition-all duration-300"
             >
               <div className="absolute inset-0" style={{ transform: `scale(${zoomScale})`, transformOrigin: 'top left' }}>
-                {/* 1. COVER */}
-                {currentPage === 0 && cover && (
-                  <PageRenderer page={cover} format={format} copy={copy} config={paginationConfig} />
-                )}
-
-                {/* 2. CONTENT FLOW */}
-                {currentPage >= firstContentIndex && currentPage <= lastContentIndex && (
+                {/* 2. CONTENT FLOW - ALWAYS MOUNTED FOR MEASUREMENT */}
+                <div 
+                  className={currentPage >= firstContentIndex && currentPage <= lastContentIndex ? 'visible opacity-100' : 'invisible opacity-0 pointer-events-none absolute inset-0'}
+                >
                   <MultipageFlow
                     html={contentHtml}
                     config={paginationConfig}
-                    currentPage={currentPage - firstContentIndex}
+                    currentPage={currentPage >= firstContentIndex && currentPage <= lastContentIndex ? currentPage - firstContentIndex : 0}
                     viewMode={viewMode}
                     margins={preferences.margins!}
                     onPageCountChange={setTotalContentPages}
                   />
+                </div>
+
+                {/* 1. COVER */}
+                {currentPage === 0 && cover && (
+                  <PageRenderer page={cover} format={format} copy={copy} config={paginationConfig} project={project} />
                 )}
 
                 {/* 3. BACK COVER */}
                 {backCover && currentPage === backCoverIndex && (
-                  <PageRenderer page={backCover} format={format} copy={copy} config={paginationConfig} />
+                  <PageRenderer page={backCover} format={format} copy={copy} config={paginationConfig} project={project} />
                 )}
               </div>
             </div>
@@ -255,7 +249,10 @@ export function PreviewModal({
   );
 }
 
-function PageRenderer({ page, format, copy, config }: { page: PreviewPage, format: PreviewFormat, copy: any, config: PaginationConfig }) {
+import { CoverPreview } from './CoverPreview';
+import { createDefaultSurfaceState, normalizeSurfaceState } from '@/lib/projects/cover-surface';
+
+function PageRenderer({ page, format, copy, config, project }: { page: PreviewPage, format: PreviewFormat, copy: any, config: PaginationConfig, project: ProjectRecord }) {
   const preset = FORMAT_PRESETS[format];
   const pageStyle = {
     width: `${preset.viewportWidth}px`,
@@ -264,28 +261,71 @@ function PageRenderer({ page, format, copy, config }: { page: PreviewPage, forma
   };
 
   if (page.type === 'cover' && page.coverData) {
-    const paletteMap: Record<string, string> = {
-      obsidian: 'from-[#0b133f] via-[#0b233f] to-[#07252f] text-[#f2e3b3]',
-      teal: 'from-[#124a50] via-[#0b313f] to-[#07252f] text-[#f2e3b3]',
-      sand: 'from-[#f2e3b3] via-[#e7d4a0] to-[#d4af37] text-[#0b313f]',
-    };
-    return (
-      <div style={pageStyle} className={`relative overflow-hidden bg-gradient-to-br ${paletteMap[page.coverData.palette]} rounded-[8px] shadow-[var(--shadow-strong)] flex flex-col justify-center border border-white/10`}>
-        <div className="px-8 py-8">
-          <h1 className="text-4xl font-black tracking-tight mb-4">{page.coverData.title}</h1>
-          <p className="text-sm opacity-70">— {page.coverData.author}</p>
+    // 1. If we have a rendered image (from Canvas/Advanced editor), show it
+    if (page.coverData.renderedImageUrl) {
+      return (
+        <div style={pageStyle} className="relative overflow-hidden bg-[#070c14] rounded-[8px] shadow-[var(--shadow-strong)] border border-white/10">
+          <img 
+            src={page.coverData.renderedImageUrl} 
+            alt={copy.previewModalCoverAlt}
+            className="w-full h-full object-cover"
+          />
         </div>
+      );
+    }
+
+    // 2. Otherwise, use the standard CoverPreview component for coherence with basic editor
+    const surface = normalizeSurfaceState(
+      project.cover.surfaceState ?? {
+        ...createDefaultSurfaceState('cover'),
+        fields: {
+          title: { value: project.cover.title, visible: true },
+          subtitle: {
+            value: project.cover.subtitle,
+            visible: Boolean((project.cover.showSubtitle ?? true) && project.cover.subtitle.trim()),
+          },
+          author: { value: project.document.author, visible: true },
+        },
+      }
+    );
+
+    return (
+      <div style={{ width: preset.viewportWidth, height: preset.pagePixelHeight }} className="rounded-[8px] overflow-hidden shadow-[var(--shadow-strong)] border border-white/10">
+        <CoverPreview
+          surface={surface}
+          palette={project.cover.palette}
+          backgroundImageUrl={project.cover.backgroundImageUrl}
+          eyebrow={copy.coverEyebrow}
+        />
       </div>
     );
   }
 
   if (page.type === 'back-cover' && page.backCoverData) {
+    // 1. If we have a rendered image (from Advanced back cover editor), show it
+    if (page.backCoverData.renderedImageUrl) {
+      return (
+        <div style={pageStyle} className="relative overflow-hidden bg-[#070c14] rounded-[8px] shadow-[var(--shadow-strong)] border border-white/10">
+          <img 
+            src={page.backCoverData.renderedImageUrl} 
+            alt={copy.previewModalBackCoverAlt}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      );
+    }
+
     return (
       <div style={pageStyle} className="bg-[var(--preview-paper)] rounded-[8px] shadow-[var(--shadow-strong)] border border-[var(--preview-paper-border)] flex flex-col justify-between p-8">
         <div>
           <h2 className="text-2xl font-black text-[var(--text-primary)] mb-4">{page.backCoverData.title}</h2>
           <p className="text-[var(--text-secondary)] leading-7">{page.backCoverData.body}</p>
         </div>
+        {page.backCoverData.authorBio && (
+          <div className="mt-8 pt-8 border-t border-[var(--preview-paper-border)]">
+            <p className="text-sm text-[var(--text-tertiary)] italic">{page.backCoverData.authorBio}</p>
+          </div>
+        )}
       </div>
     );
   }
