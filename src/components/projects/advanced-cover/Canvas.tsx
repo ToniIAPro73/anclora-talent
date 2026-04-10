@@ -9,15 +9,15 @@ type CoverCanvasProps = {
 };
 
 export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: CoverCanvasProps) => {
-  const outerRef   = useRef<HTMLDivElement>(null); // div externo que mide el espacio disponible
-  const scalerRef  = useRef<HTMLDivElement>(null); // div que recibe transform: scale()
+  const outerRef   = useRef<HTMLDivElement>(null);  // div externo que mide el espacio disponible
+  const scalerRef  = useRef<HTMLDivElement>(null);  // div que recibe transform: scale()
   const canvasRef  = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<unknown>(null);
   const onCanvasReadyRef = useRef(onCanvasReady);
 
   useEffect(() => { onCanvasReadyRef.current = onCanvasReady; });
 
-  // Inicializar Fabric una sola vez — siempre a 400×600 fijos
+  // Inicializar Fabric una sola vez — siempre 400×600 fijos internamente
   useEffect(() => {
     const init = async () => {
       if (!canvasRef.current) return;
@@ -37,22 +37,21 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ResizeObserver — solo ajusta transform: scale() en el div escalador
-  // Fabric nunca cambia de tamaño: siempre 400×600
+  // ResizeObserver — solo ajusta CSS transform:scale() en el div escalador.
+  // Fabric NUNCA cambia de tamaño: siempre 400×600.
   useEffect(() => {
-    const outer = outerRef.current;
+    const outer  = outerRef.current;
     const scaler = scalerRef.current;
     if (!outer || !scaler) return;
 
     const applyScale = (availableWidth: number) => {
       const scale = availableWidth / CANVAS_WIDTH;
-      scaler.style.transform = `scale(${scale})`;
+      scaler.style.transform       = `scale(${scale})`;
       scaler.style.transformOrigin = 'top left';
       // El outer necesita altura explícita para que el flow no colapse
-      outer.style.height = `${CANVAS_HEIGHT * scale}px`;
+      outer.style.height           = `${CANVAS_HEIGHT * scale}px`;
     };
 
-    // Aplicar escala inicial
     applyScale(outer.clientWidth || CANVAS_WIDTH);
 
     const ro = new ResizeObserver((entries) => {
@@ -76,10 +75,7 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
         maxWidth: '680px',
       }}
     >
-      {/*
-        outerRef: define el ancho máximo disponible y la altura calculada por JS.
-        overflow: hidden para que el canvas 400×600 no desborde mientras escala.
-      */}
+      {/* outerRef: define el ancho máximo disponible y la altura calculada por JS */}
       <div
         ref={outerRef}
         style={{
@@ -91,14 +87,11 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
           boxShadow: 'var(--shadow-strong)',
         }}
       >
-        {/*
-          scalerRef: siempre 400×600 px, escalado con transform: scale().
-          Fabric ve siempre 400×600 — sin zoom, sin setDimensions.
-        */}
+        {/* scalerRef: siempre 400×600 px, escalado con transform:scale() */}
         <div
           ref={scalerRef}
           style={{
-            width: `${CANVAS_WIDTH}px`,
+            width:  `${CANVAS_WIDTH}px`,
             height: `${CANVAS_HEIGHT}px`,
           }}
         >
