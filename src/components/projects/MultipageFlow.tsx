@@ -269,34 +269,32 @@ export function MultipageFlow({
           font-weight: 600;
         }
 
-        /* Page breaks: mismo comportamiento que el editor, pero invisibles */
-      .flow-content-root.ProseMirror hr[data-page-break="manual"],
-      .flow-content-root.ProseMirror hr[data-page-break="true"] {
-        border: 0;
-        height: 0;
-        margin: 0;
-        opacity: 0;
-        pointer-events: none;
-        break-after: column;
-        page-break-after: always;
-        -webkit-column-break-after: always;
-      }
+        /* Page breaks: manuales sí cortan, autos no fuerzan salto */
+        .flow-content-root.ProseMirror hr[data-page-break="manual"],
+        .flow-content-root.ProseMirror hr[data-page-break="true"] {
+          border: 0;
+          height: 0;
+          margin: 0;
+          opacity: 0;
+          pointer-events: none;
+          break-after: column;
+          page-break-after: always;
+          -webkit-column-break-after: always;
+        }
 
-      .flow-content-root.ProseMirror hr[data-page-break="auto"] {
-        border: 0;
-        height: 0;
-        margin: 0;
-        opacity: 0;
-        pointer-events: none;
-        break-after: column;
-        page-break-after: always;
-        -webkit-column-break-after: always;
-      }
+        .flow-content-root.ProseMirror hr[data-page-break="auto"] {
+          border: 0;
+          height: 0;
+          margin: 0;
+          opacity: 0;
+          pointer-events: none;
+          /* sin break-after: permiten que el flujo natural de columnas decida */
+        }
 
-      /* Por seguridad, cualquier <hr> sin data-page-break se oculta completamente */
-      .flow-content-root.ProseMirror hr:not([data-page-break]) {
-        display: none;
-      }
+        /* Por seguridad, cualquier <hr> sin data-page-break se oculta completamente */
+        .flow-content-root.ProseMirror hr:not([data-page-break]) {
+          display: none;
+        }
       `}</style>
 
       {/* Marcos de página (idénticos al editor) */}
