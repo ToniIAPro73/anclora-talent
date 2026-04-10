@@ -212,7 +212,7 @@ export function ProjectWorkspace({
                   Máx. 50MB
                 </span>
               </div>
-              <form action={saveProjectDocumentAction} className="space-y-6" data-testid="project-metadata-form">
+              <form key={project.updatedAt} action={saveProjectDocumentAction} className="space-y-6" data-testid="project-metadata-form">
                 <input type="hidden" name="projectId" value={project.id} />
                 <input type="hidden" name="chapterId" value={activeChapter.id} />
                 <input type="hidden" name="chapterTitle" value={activeChapter.title} />

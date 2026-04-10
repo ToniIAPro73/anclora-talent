@@ -93,43 +93,52 @@ export async function addTextToCanvas(
   return fabricText;
 }
 
-export async function addImageToCanvas(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  canvas: any,
-  imageUrl: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  options?: any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): Promise<any> {
+export async function addImageToCanvas(canvas: any, imageUrl: string, options?: any) {
   const fabric = await getFabric();
+
   console.info('[addImageToCanvas] Starting with URL:', imageUrl);
   console.info('[addImageToCanvas] Fabric Image class:', fabric.Image);
+
   try {
     const result = fabric.Image.fromURL(imageUrl, { crossOrigin: 'anonymous' });
     console.info('[addImageToCanvas] fromURL returned:', result);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const img: any = result instanceof Promise ? await result : result;
+
+    const img = result instanceof Promise ? await result : result;
     console.info('[addImageToCanvas] Image loaded, img:', img);
-    // Siempre relativo al espacio interno 400×600
-    const maxWidth  = CANVAS_WIDTH  * 0.8;
-    const maxHeight = CANVAS_HEIGHT * 0.8;
-    const scale = Math.min(maxWidth / (img.width ?? CANVAS_WIDTH), maxHeight / (img.height ?? CANVAS_HEIGHT));
+
+    // ── FIX: en Fabric 7 las dimensiones están en el HTMLImageElement subyacente,
+    //         no en img.width / img.height (que son undefined antes de set()).
+    const el: HTMLImageElement | null = typeof img.getElement === 'function'
+      ? img.getElement()
+      : null;
+
+    const naturalW = el?.naturalWidth  ?? img.width  ?? CANVAS_WIDTH;
+    const naturalH = el?.naturalHeight ?? img.height ?? CANVAS_HEIGHT;
+
+    console.info('[addImageToCanvas] natural dimensions:', naturalW, naturalH);
+
+    const maxWidth  = CANVAS_WIDTH  * 0.9;
+    const maxHeight = CANVAS_HEIGHT * 0.9;
+    const scale = Math.min(maxWidth / naturalW, maxHeight / naturalH);
+
     img.set({
-      left: CANVAS_WIDTH / 2,
-      top: CANVAS_HEIGHT / 2,
-      scaleX: scale,
-      scaleY: scale,
+      left:    CANVAS_WIDTH  / 2,
+      top:     CANVAS_HEIGHT / 2,
+      scaleX:  scale,
+      scaleY:  scale,
       originX: 'center',
       originY: 'center',
       ...options,
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if (options?.id) (img as any).id = options.id;
+
     canvas.add(img);
     canvas.setActiveObject(img);
     if (canvas.requestRenderAll) canvas.requestRenderAll();
     else canvas.renderAll();
-    console.info('[addImageToCanvas] Image added and rendered');
+
+    console.info('[addImageToCanvas] Image added and rendered, scale:', scale);
     return img;
   } catch (error) {
     console.error('[addImageToCanvas] Error:', error);
