@@ -21,12 +21,17 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
     bc.surfaceState ?? {
       ...createDefaultSurfaceState('back-cover'),
       fields: {
-        title: { value: bc.title, visible: Boolean(bc.title.trim()) },
+        title: { value: bc.title || project.document.author, visible: Boolean((bc.title || project.document.author).trim()) },
         body: { value: bc.body, visible: Boolean(bc.body.trim()) },
         authorBio: { value: bc.authorBio, visible: Boolean(bc.authorBio.trim()) },
       },
     },
   );
+
+  // Fallback to document author if title is empty in surfaceState
+  if (bc.surfaceState && !initialSurface.fields.title?.value && project.document.author) {
+    initialSurface.fields.title = { value: project.document.author, visible: true };
+  }
   const [surface, setSurface] = useState(initialSurface);
   const [accentColor, setAccentColor] = useState(bc.accentColor ?? ACCENT_PRESETS[0]);
 

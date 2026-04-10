@@ -295,9 +295,9 @@ export function ProjectWorkspace({
               </button>
             </div>
             {isAdvancedCover ? (
-              <AdvancedCoverEditor project={project} copy={copy} />
+              <AdvancedCoverEditor key={project.updatedAt} project={project} copy={copy} />
             ) : (
-              <CoverForm project={project} copy={copy} />
+              <CoverForm key={project.updatedAt} project={project} copy={copy} />
             )}
           </div>
         );
@@ -313,9 +313,9 @@ export function ProjectWorkspace({
               </button>
             </div>
             {isAdvancedBackCover ? (
-              <AdvancedBackCoverEditor project={project} copy={copy} />
+              <AdvancedBackCoverEditor key={project.updatedAt} project={project} copy={copy} />
             ) : (
-              <BackCoverForm project={project} copy={copy} />
+              <BackCoverForm key={project.updatedAt} project={project} copy={copy} />
             )}
           </div>
         );
