@@ -91,6 +91,11 @@ export function PreviewModal({
     return reconcileOverflowBreaks(normalized, paginationConfig);
   });
 
+  useEffect(() => {
+  // OJO: evita loguear millones de caracteres, recortamos a 2000 para inspección
+  console.log('[Preview] contentHtml (truncated):', contentHtml.slice(0, 2000));
+}, [contentHtml]);
+
   // Separar capítulos con un salto manual, igual que antes
   return fragments.join('<hr data-page-break="manual">');
 }, [project.document.chapters, paginationConfig]);
@@ -213,7 +218,6 @@ export function PreviewModal({
                 <div 
                   className={currentPage >= firstContentIndex && currentPage <= lastContentIndex ? 'visible opacity-100' : 'invisible opacity-0 pointer-events-none absolute inset-0'}
                 >
-                  console.log(contentHtml)
                   <MultipageFlow
                     html={contentHtml}
                     config={paginationConfig}
