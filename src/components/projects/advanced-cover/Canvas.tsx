@@ -22,17 +22,35 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
     const initializeCanvas = async () => {
       if (!canvasRef.current || !wrapperRef.current) return;
       try {
-        const fabricCanvas = await createFabricCanvas(canvasRef.current);
+        // Medir el ancho real del contenedor y derivar el alto con ratio 2:3
+        const containerW = wrapperRef.current.clientWidth || 400;
+        const containerH = Math.round(containerW * (CANVAS_HEIGHT / CANVAS_WIDTH)); // ratio 2:3
 
-        // Fabric 7 envuelve el <canvas> en un div generado. Forzar que ocupe el 100% del wrapper
-        const fabricWrapper = canvasRef.current.parentElement;
+        // Aplicar esas dimensiones al div wrapper y al <canvas> ANTES de que Fabric lo inicialice
+        wrapperRef.current.style.height = `${containerH}px`;
+        canvasRef.current.width = containerW;
+        canvasRef.current.height = containerH;
+
+        // Escalar el zoom de Fabric para que las coordenadas internas (400×600)
+        // se mapeen al tamaño real del contenedor
+        const zoom = containerW / CANVAS_WIDTH;
+
+        const fabricCanvas = await createFabricCanvas(canvasRef.current, {
+          width: containerW,
+          height: containerH,
+        });
+
+        // Aplicar zoom para que los objetos internos usen coordenadas 400×600
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (fabricCanvas as any).setZoom(zoom);
+
+        // Parchear el div.canvas-container que genera Fabric internamente
+        const fabricWrapper = canvasRef.current?.parentElement;
         if (fabricWrapper && fabricWrapper !== wrapperRef.current) {
-          fabricWrapper.style.cssText =
-            'width:100% !important; height:100% !important; position:absolute; inset:0;';
-          fabricWrapper.querySelectorAll('canvas').forEach((c) => {
-            c.style.cssText =
-              'position:absolute !important; inset:0 !important; width:100% !important; height:100% !important;';
-          });
+          fabricWrapper.style.width = `${containerW}px`;
+          fabricWrapper.style.height = `${containerH}px`;
+          fabricWrapper.style.position = 'absolute';
+          fabricWrapper.style.inset = '0';
         }
 
         fabricCanvasRef.current = fabricCanvas;
@@ -58,40 +76,6 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ResizeObserver — Fabric 7 usa setDimensions({ width, height }) en vez de setWidth/setHeight
-  useEffect(() => {
-    if (!wrapperRef.current) return;
-
-    const observer = new ResizeObserver((entries) => {
-      const fc = fabricCanvasRef.current as {
-        setZoom: (z: number) => void;
-        setDimensions: (dims: { width: number; height: number }) => void;
-        requestRenderAll?: () => void;
-        renderAll?: () => void;
-      } | null;
-      if (!fc) return;
-
-      for (const entry of entries) {
-        const newW = entry.contentRect.width;
-        const newH = entry.contentRect.height;
-        if (newW < 10) continue;
-
-        const scale = newW / CANVAS_WIDTH;
-        fc.setZoom(scale);
-        fc.setDimensions({
-          width: newW,
-          height: newH > 10 ? newH : CANVAS_HEIGHT * scale,
-        });
-
-        if (fc.requestRenderAll) fc.requestRenderAll();
-        else fc.renderAll?.();
-      }
-    });
-
-    observer.observe(wrapperRef.current);
-    return () => observer.disconnect();
-  }, []);
-
   void initialPalette;
 
   return (
@@ -104,23 +88,27 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
         maxWidth: '680px',
       }}
     >
+      {/*
+        Sin aspectRatio CSS — el alto lo fija JS en el useEffect.
+        position: relative + overflow: hidden para contener el div.canvas-container de Fabric.
+      */}
       <div
         ref={wrapperRef}
         style={{
           width: '100%',
           maxWidth: '420px',
-          aspectRatio: '2 / 3',
           position: 'relative',
           overflow: 'hidden',
           border: '1px solid var(--border-subtle)',
           borderRadius: '24px',
           boxShadow: 'var(--shadow-strong)',
+          backgroundColor: '#0b133f', // fallback mientras carga Fabric
         }}
       >
         <canvas
           ref={canvasRef}
           data-testid="fabric-canvas"
-          style={{ display: 'block', position: 'absolute', inset: 0 }}
+          style={{ display: 'block' }}
         />
       </div>
     </div>

@@ -9,12 +9,12 @@ export async function getFabric(): Promise<any> {
     const mod = await import('fabric');
     console.info('[getFabric] Fabric module imported:', Object.keys(mod));
 
-    // Castear a any para evitar TS2339 — los tipos de Fabric 7 no declaran .fabric
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const m = mod as any;
-    fabricModule = (m.fabric || (m.default && m.default.fabric))
-      ? (m.fabric || m.default?.fabric)
-      : m;
+    fabricModule =
+      m.fabric || (m.default && m.default.fabric)
+        ? m.fabric || m.default?.fabric
+        : m;
 
     if (fabricModule.default && (fabricModule.default.Canvas || fabricModule.default.Textbox)) {
       fabricModule = fabricModule.default;
@@ -27,6 +27,7 @@ export async function getFabric(): Promise<any> {
   }
 }
 
+// Dimensiones internas del canvas (espacio de coordenadas de Fabric)
 export const CANVAS_WIDTH = 400;
 export const CANVAS_HEIGHT = 600;
 export const GRID_SIZE = 10;
@@ -34,9 +35,13 @@ export const SNAP_THRESHOLD = 10;
 
 /**
  * Crear un canvas con Fabric.js.
- * Las dimensiones internas siempre son CANVAS_WIDTH × CANVAS_HEIGHT (400×600).
- * Si el contenedor visual es más estrecho, se aplica zoom proporcional para que
- * el canvas llene el espacio sin cortarse.
+ *
+ * Si se pasan `options.width` y `options.height` se usan como dimensiones
+ * visuales del canvas (tamaño del contenedor real en pantalla). El zoom de
+ * Fabric se ajusta automáticamente para que el espacio de coordenadas interno
+ * siga siendo CANVAS_WIDTH × CANVAS_HEIGHT (400 × 600).
+ *
+ * Si NO se pasan, el canvas se crea en tamaño 1:1 (400 × 600 px).
  */
 export async function createFabricCanvas(
   canvasElement: HTMLCanvasElement,
@@ -48,14 +53,30 @@ export async function createFabricCanvas(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const CanvasClass = fabric.Canvas || (fabric as any).default?.Canvas;
 
+  // Dimensiones visuales: si el caller las pasa, las respetamos; si no, usamos los defaults.
+  const visualWidth  = options?.width  ?? CANVAS_WIDTH;
+  const visualHeight = options?.height ?? CANVAS_HEIGHT;
+
+  // Zoom para mapear el espacio interno (400×600) al espacio visual real
+  const zoom = visualWidth / CANVAS_WIDTH;
+
+  // Crear canvas con las dimensiones visuales reales
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { width: _w, height: _h, ...restOptions } = (options ?? {}) as any;
   const canvas = new CanvasClass(canvasElement, {
-    width: CANVAS_WIDTH,
-    height: CANVAS_HEIGHT,
     backgroundColor: '#ffffff',
     preserveObjectStacking: true,
-    ...options,
+    ...restOptions,
+    width: visualWidth,
+    height: visualHeight,
   });
 
+  // Aplicar zoom para que los objetos sigan usando coordenadas 400×600
+  if (zoom !== 1) {
+    canvas.setZoom(zoom);
+  }
+
+  // clipPath en coordenadas INTERNAS (antes del zoom) para que Fabric lo escale bien
   canvas.clipPath = new fabric.Rect({
     left: 0,
     top: 0,
@@ -64,11 +85,12 @@ export async function createFabricCanvas(
     absolutePositioned: true,
   });
 
-  return canvas;  // <-- sin el bloque de escalado. El resize lo gestiona Canvas.tsx
+  return canvas;
 }
 
 /**
- * Agregar texto al canvas
+ * Agregar texto al canvas.
+ * Las coordenadas se expresan en el espacio interno (400×600); el zoom se encarga del escalado.
  */
 export async function addTextToCanvas(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -86,10 +108,11 @@ export async function addTextToCanvas(
     throw new Error('Fabric Textbox class not found');
   }
 
+  // Posicionar en el centro del espacio interno (400×600), no del visual
   const fabricText = new TextboxClass(text, {
-    left: canvas.width / 2,
-    top: canvas.height / 2,
-    width: canvas.width * 0.8,
+    left: CANVAS_WIDTH / 2,
+    top: CANVAS_HEIGHT / 2,
+    width: CANVAS_WIDTH * 0.8,
     fontSize: 24,
     fontFamily: 'Arial',
     fill: '#000000',
@@ -112,7 +135,8 @@ export async function addTextToCanvas(
 }
 
 /**
- * Agregar imagen al canvas
+ * Agregar imagen al canvas.
+ * El escalado se calcula respecto al espacio interno (400×600).
  */
 export async function addImageToCanvas(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -137,13 +161,14 @@ export async function addImageToCanvas(
 
     console.info('[addImageToCanvas] Image loaded, img:', img);
 
-    const maxWidth = canvas.width * 0.8;
-    const maxHeight = canvas.height * 0.8;
+    // Escalar respecto al espacio interno (400×600), no al visual
+    const maxWidth  = CANVAS_WIDTH  * 0.8;
+    const maxHeight = CANVAS_HEIGHT * 0.8;
     const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
 
     img.set({
-      left: canvas.width / 2,
-      top: canvas.height / 2,
+      left: CANVAS_WIDTH / 2,
+      top: CANVAS_HEIGHT / 2,
       scaleX: scale,
       scaleY: scale,
       originX: 'center',
@@ -156,6 +181,7 @@ export async function addImageToCanvas(
 
     canvas.add(img);
     canvas.setActiveObject(img);
+
     if (canvas.requestRenderAll) canvas.requestRenderAll();
     else canvas.renderAll();
 
@@ -168,7 +194,8 @@ export async function addImageToCanvas(
 }
 
 /**
- * Exportar canvas a imagen
+ * Exportar canvas a imagen.
+ * multiplier: 2 para exportar a 800×1200 px (calidad retina).
  */
 export function exportCanvasToImage(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
