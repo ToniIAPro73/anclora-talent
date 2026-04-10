@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { createFabricCanvas } from '@/lib/canvas-utils';
+import { createFabricCanvas, CANVAS_WIDTH, CANVAS_HEIGHT } from '@/lib/canvas-utils';
 
 type CoverCanvasProps = {
   onCanvasReady?: (canvas: unknown) => void;
@@ -12,18 +12,18 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<unknown>(null);
-  // Keep a ref to the latest callback so we can call it without re-initializing the canvas
   const onCanvasReadyRef = useRef(onCanvasReady);
+
   useEffect(() => {
     onCanvasReadyRef.current = onCanvasReady;
   });
 
+  // Inicialización del canvas Fabric — solo una vez
   useEffect(() => {
     const initializeCanvas = async () => {
       if (!canvasRef.current) return;
 
       try {
-        // Create the Fabric.js canvas once — never recreate on callback changes
         const fabricCanvas = await createFabricCanvas(canvasRef.current);
         fabricCanvasRef.current = fabricCanvas;
 
@@ -37,7 +37,6 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
 
     initializeCanvas();
 
-    // Cleanup
     return () => {
       if (fabricCanvasRef.current) {
         try {
@@ -48,7 +47,41 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // intentionally empty — canvas is initialized once, callback tracked via ref
+  }, []);
+
+  // ResizeObserver — reescala el canvas cuando el contenedor cambia de tamaño
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const canvas = fabricCanvasRef.current as {
+        setZoom: (zoom: number) => void;
+        setWidth: (w: number) => void;
+        setHeight: (h: number) => void;
+        requestRenderAll?: () => void;
+        renderAll?: () => void;
+      } | null;
+
+      if (!canvas) return;
+
+      for (const entry of entries) {
+        const newWidth = entry.contentRect.width;
+        if (newWidth < 10) continue; // ignorar valores espurios durante el montaje
+
+        const scale = newWidth / CANVAS_WIDTH;
+        canvas.setZoom(scale);
+        canvas.setWidth(newWidth);
+        canvas.setHeight(CANVAS_HEIGHT * scale);
+
+        if (canvas.requestRenderAll) canvas.requestRenderAll();
+        else canvas.renderAll?.();
+      }
+    });
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   void initialPalette;
 
@@ -67,15 +100,11 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
       <div
         style={{
           width: '100%',
-          maxWidth: '460px',
+          maxWidth: '420px',
           aspectRatio: '2 / 3',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px',
           border: '1px solid var(--border-subtle)',
           borderRadius: '24px',
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))',
+          overflow: 'hidden',       /* recorta el canvas a los bordes redondeados */
           boxShadow: 'var(--shadow-strong)',
         }}
       >
@@ -85,7 +114,6 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
           style={{
             width: '100%',
             height: '100%',
-            borderRadius: '12px',
             display: 'block',
           }}
         />
