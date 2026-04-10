@@ -34,32 +34,33 @@ export function MultipageFlow({
 
   const spreadStartPage =
     viewMode === 'spread' ? Math.max(0, currentPage - (currentPage % 2)) : currentPage;
-  
+
   const showSecondPage = viewMode === 'spread' && spreadStartPage + 1 < measuredTotalPages;
   const viewportWidth = showSecondPage ? pageWidth * 2 + pageGap : pageWidth;
-  
+
   const flowWidth =
     contentWidth * measuredTotalPages +
     columnGap * Math.max(measuredTotalPages - 1, 0);
-    
+
   const flowOffset = spreadStartPage * (pageWidth + pageGap);
 
   const visiblePageIndices = Array.from(
     { length: showSecondPage ? 2 : 1 },
     (_, index) => spreadStartPage + index,
-  );
+  ).filter((pageIndex) => pageIndex < measuredTotalPages);
 
   const measureRenderablePages = useCallback(() => {
     if (!multipageFlowRef.current || !onPageCountChange) return;
 
-    const contentArea = multipageFlowRef.current.querySelector('.flow-content-root') as HTMLElement | null;
+    const contentArea = multipageFlowRef.current.querySelector(
+      '.flow-content-root',
+    ) as HTMLElement | null;
     if (!contentArea) return;
 
     const measuredWidth = contentArea.scrollWidth;
-    // Use snap to nearest integer to avoid sub-pixel issues (off-by-one errors)
     const pages = Math.max(
       1,
-      Math.round(measuredWidth / (contentWidth + columnGap)),
+      Math.ceil((measuredWidth + 1) / (contentWidth + columnGap)),
     );
 
     setMeasuredTotalPages(pages);
@@ -67,8 +68,6 @@ export function MultipageFlow({
   }, [columnGap, contentWidth, onPageCountChange]);
 
   useEffect(() => {
-    // Shorter timeout and immediate call for faster measurement
-    measureRenderablePages();
     const timeoutId = setTimeout(measureRenderablePages, 50);
     window.addEventListener('resize', measureRenderablePages);
     return () => {
@@ -90,6 +89,7 @@ export function MultipageFlow({
       style={{ width: `${viewportWidth}px`, height: `${pageHeight}px` }}
     >
       <style>{`
+        /* Contenedor de columnas: réplica del editor */
         .multipage-flow-container {
           position: absolute;
           top: ${margins.top}px;
@@ -100,10 +100,8 @@ export function MultipageFlow({
         }
         .multipage-flow-track {
           height: ${contentHeight}px;
-          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: transform 0.25s ease;
         }
-        
-        /* 1:1 CSS Mapping from AdvancedRichTextEditor.tsx */
         .flow-content-root.ProseMirror {
           height: ${contentHeight}px;
           width: ${flowWidth}px;
@@ -118,12 +116,17 @@ export function MultipageFlow({
           overflow-wrap: break-word;
           color: var(--text-primary);
         }
-
         .flow-content-root.ProseMirror > * {
           break-inside: avoid;
           page-break-inside: avoid;
         }
 
+        /* Tipografía y bloques: copia 1:1 del editor */
+        .flow-content-root.ProseMirror img {
+          max-width: 100%;
+          height: auto;
+          object-fit: cover;
+        }
         .flow-content-root.ProseMirror p {
           margin: 0;
           overflow-wrap: break-word;
@@ -132,7 +135,6 @@ export function MultipageFlow({
         .flow-content-root.ProseMirror p + p {
           margin-top: 0.8rem;
         }
-
         .flow-content-root.ProseMirror h1 {
           font-size: 2rem;
           line-height: 1.1;
@@ -175,8 +177,99 @@ export function MultipageFlow({
           margin: 0 0 1rem 1.5rem;
           padding: 0;
         }
+        .flow-content-root.ProseMirror ul:not([data-bullet-style]) {
+          list-style-type: disc;
+        }
+        .flow-content-root.ProseMirror ol:not([data-list-style]) {
+          list-style-type: decimal;
+        }
+        .flow-content-root.ProseMirror li {
+          margin: 0.35rem 0;
+        }
 
-        /* 1:1 Page Break Rules from Editor */
+        .flow-content-root.ProseMirror ul[data-bullet-style="disc"] {
+          list-style-type: disc;
+        }
+        .flow-content-root.ProseMirror ul[data-bullet-style="circle"] {
+          list-style-type: circle;
+        }
+        .flow-content-root.ProseMirror ul[data-bullet-style="square"] {
+          list-style-type: square;
+        }
+
+        .flow-content-root.ProseMirror ul[data-bullet-style="diamond"],
+        .flow-content-root.ProseMirror ul[data-bullet-style="arrow"],
+        .flow-content-root.ProseMirror ul[data-bullet-style="check"] {
+          list-style: none;
+          padding-left: 0;
+        }
+        .flow-content-root.ProseMirror ul[data-bullet-style="diamond"] > li,
+        .flow-content-root.ProseMirror ul[data-bullet-style="arrow"] > li,
+        .flow-content-root.ProseMirror ul[data-bullet-style="check"] > li {
+          position: relative;
+          padding-left: 1.5rem;
+        }
+        .flow-content-root.ProseMirror ul[data-bullet-style="diamond"] > li::before {
+          content: "◆";
+        }
+        .flow-content-root.ProseMirror ul[data-bullet-style="arrow"] > li::before {
+          content: "➤";
+        }
+        .flow-content-root.ProseMirror ul[data-bullet-style="check"] > li::before {
+          content: "✓";
+        }
+        .flow-content-root.ProseMirror ul[data-bullet-style="diamond"] > li::before,
+        .flow-content-root.ProseMirror ul[data-bullet-style="arrow"] > li::before,
+        .flow-content-root.ProseMirror ul[data-bullet-style="check"] > li::before {
+          position: absolute;
+          left: 0;
+          color: var(--text-primary);
+          font-weight: 700;
+        }
+
+        .flow-content-root.ProseMirror ol[data-list-style="decimal"] {
+          list-style-type: decimal;
+        }
+        .flow-content-root.ProseMirror ol[data-list-style="upper-alpha"] {
+          list-style-type: upper-alpha;
+        }
+        .flow-content-root.ProseMirror ol[data-list-style="lower-alpha"] {
+          list-style-type: lower-alpha;
+        }
+        .flow-content-root.ProseMirror ol[data-list-style="upper-roman"] {
+          list-style-type: upper-roman;
+        }
+        .flow-content-root.ProseMirror ol[data-list-style="lower-roman"] {
+          list-style-type: lower-roman;
+        }
+
+        .flow-content-root.ProseMirror ol[data-list-style="decimal-parentheses"],
+        .flow-content-root.ProseMirror ol[data-list-style="lower-alpha-parentheses"] {
+          list-style: none;
+          counter-reset: custom-list;
+          padding-left: 0;
+        }
+        .flow-content-root.ProseMirror ol[data-list-style="decimal-parentheses"] > li,
+        .flow-content-root.ProseMirror ol[data-list-style="lower-alpha-parentheses"] > li {
+          position: relative;
+          padding-left: 2rem;
+          counter-increment: custom-list;
+        }
+        .flow-content-root.ProseMirror ol[data-list-style="decimal-parentheses"] > li::before {
+          content: counter(custom-list) ") ";
+        }
+        .flow-content-root.ProseMirror ol[data-list-style="lower-alpha-parentheses"] > li::before {
+          content: counter(custom-list, lower-alpha) ") ";
+        }
+        .flow-content-root.ProseMirror ol[data-list-style="decimal-parentheses"] > li::before,
+        .flow-content-root.ProseMirror ol[data-list-style="lower-alpha-parentheses"] > li::before {
+          position: absolute;
+          left: 0;
+          color: var(--text-primary);
+          font-weight: 600;
+        }
+
+        /* Page breaks: igual que en el editor */
         .flow-content-root.ProseMirror hr[data-page-break="manual"],
         .flow-content-root.ProseMirror hr[data-page-break="true"] {
           border: 0;
@@ -185,11 +278,7 @@ export function MultipageFlow({
           break-after: column;
           page-break-after: always;
           -webkit-column-break-after: always;
-          display: block;
-          visibility: visible;
-          opacity: 0; /* Keep it invisible in preview but preserve layout space */
         }
-
         .flow-content-root.ProseMirror hr[data-page-break="auto"] {
           border: 0;
           height: 0;
@@ -199,15 +288,10 @@ export function MultipageFlow({
           break-after: column;
           page-break-after: always;
           -webkit-column-break-after: always;
-          display: block;
-          visibility: visible;
-        }
-
-        .flow-content-root.ProseMirror hr:not([data-page-break]) {
-          display: none;
         }
       `}</style>
 
+      {/* Marcos de página (idénticos al editor) */}
       <div
         className="grid absolute inset-0 pointer-events-none"
         style={{
@@ -226,7 +310,11 @@ export function MultipageFlow({
         ))}
       </div>
 
-      <div ref={multipageFlowRef} className="multipage-flow-container prose prose-invert max-w-none">
+      {/* Flujo de columnas real */}
+      <div
+        ref={multipageFlowRef}
+        className="multipage-flow-container prose prose-invert max-w-none prose-img:rounded-lg prose-img:shadow-md"
+      >
         <div
           className="multipage-flow-track"
           style={{ transform: `translateX(-${flowOffset}px)` }}
