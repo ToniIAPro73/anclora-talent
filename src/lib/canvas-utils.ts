@@ -56,7 +56,6 @@ export async function createFabricCanvas(
     ...options,
   });
 
-  // Clip para que ningún objeto sobresalga del área de portada
   canvas.clipPath = new fabric.Rect({
     left: 0,
     top: 0,
@@ -65,16 +64,7 @@ export async function createFabricCanvas(
     absolutePositioned: true,
   });
 
-  // Escalar el canvas al ancho real del contenedor CSS para evitar cortes
-  const containerWidth = canvasElement.parentElement?.clientWidth ?? CANVAS_WIDTH;
-  if (containerWidth > 0 && Math.abs(containerWidth - CANVAS_WIDTH) > 2) {
-    const scale = containerWidth / CANVAS_WIDTH;
-    canvas.setZoom(scale);
-    canvas.setWidth(containerWidth);
-    canvas.setHeight(CANVAS_HEIGHT * scale);
-  }
-
-  return canvas;
+  return canvas;  // <-- sin el bloque de escalado. El resize lo gestiona Canvas.tsx
 }
 
 /**
