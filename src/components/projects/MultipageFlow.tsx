@@ -99,7 +99,7 @@ export function MultipageFlow({
           height: ${contentHeight}px;
           transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .flow-content-root {
+        .flow-content-root.ProseMirror {
           height: ${contentHeight}px;
           width: ${flowWidth}px;
           padding: 0;
@@ -108,35 +108,26 @@ export function MultipageFlow({
           column-fill: auto;
           outline: none;
         }
-        .flow-content-root p { margin: 0; line-height: ${config.lineHeight}; font-size: ${config.fontSize}px; }
-        .flow-content-root p + p { margin-top: 0.8rem; }
-        .flow-content-root h1 { font-size: 2rem; line-height: 1.1; margin: 0 0 1rem 0; font-weight: 800; }
-        .flow-content-root h2 { font-size: 1.5rem; line-height: 1.2; margin: 0 0 0.85rem 0; font-weight: 750; }
-        .flow-content-root h3 { font-size: 1.2rem; line-height: 1.3; margin: 0 0 0.75rem 0; font-weight: 700; }
-        .flow-content-root ul, .flow-content-root ol { margin: 0 0 1rem 1.5rem; padding: 0; }
-        .flow-content-root > *:not(hr) {
+        .flow-content-root.ProseMirror > * {
           break-inside: avoid;
           page-break-inside: avoid;
         }
-        .flow-content-root hr[data-page-break="manual"] { 
-          display: block;
-          border: 0; 
-          height: 1px; 
-          margin: -1px 0 0 0; 
-          opacity: 0; 
-          break-after: column; 
-          page-break-after: always; 
-          -webkit-column-break-after: always; 
-        }
-        .flow-content-root hr[data-page-break="auto"] { 
-          display: block;
-          border: 0; 
-          height: 1px; 
-          margin: -1px 0 0 0; 
-          opacity: 0; 
-          break-after: column; 
-          page-break-after: always; 
-          -webkit-column-break-after: always; 
+        .flow-content-root.ProseMirror p { margin: 0; line-height: ${config.lineHeight}; font-size: ${config.fontSize}px; }
+        .flow-content-root.ProseMirror p + p { margin-top: 0.8rem; }
+        .flow-content-root.ProseMirror h1 { font-size: 2rem; line-height: 1.1; margin: 0 0 1rem 0; font-weight: 800; }
+        .flow-content-root.ProseMirror h2 { font-size: 1.5rem; line-height: 1.2; margin: 0 0 0.85rem 0; font-weight: 750; }
+        .flow-content-root.ProseMirror h3 { font-size: 1.2rem; line-height: 1.3; margin: 0 0 0.75rem 0; font-weight: 700; }
+        .flow-content-root.ProseMirror ul, .flow-content-root.ProseMirror ol { margin: 0 0 1rem 1.5rem; padding: 0; }
+        .flow-content-root.ProseMirror hr[data-page-break="manual"],
+        .flow-content-root.ProseMirror hr[data-page-break="auto"] { 
+          display: block !important;
+          border: 0 !important; 
+          border-top: 2px dashed rgba(196, 154, 36, 0) !important;
+          height: 0 !important;
+          margin: 1.75rem 0 !important; 
+          break-after: column !important; 
+          page-break-after: always !important; 
+          -webkit-column-break-after: always !important; 
         }
       `}</style>
 
@@ -164,7 +155,7 @@ export function MultipageFlow({
           style={{ transform: `translateX(-${flowOffset}px)` }}
         >
           <div
-            className="flow-content-root"
+            className="flow-content-root ProseMirror"
             dangerouslySetInnerHTML={{ __html: html }}
           />
         </div>
