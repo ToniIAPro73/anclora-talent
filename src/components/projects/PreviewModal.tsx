@@ -78,27 +78,27 @@ export function PreviewModal({
   const cover = useMemo(() => metaPages.find(p => p.type === 'cover'), [metaPages]);
   const backCover = useMemo(() => metaPages.find(p => p.type === 'back-cover'), [metaPages]);
 
-  // COMBINED CONTENT HTML
-  const contentHtml = useMemo(() => {
+// COMBINED CONTENT HTML
+const contentHtml = useMemo(() => {
   if (!project.document.chapters?.length) return '';
   
   const sorted = [...project.document.chapters].sort((a, b) => a.order - b.order);
 
   const fragments = sorted.map((chapter) => {
     const rawHtml = chapterBlocksToHtml(chapter.blocks);
-    // Misma normalización que el editor de capítulos
     const normalized = normalizeHtmlContent(rawHtml);
     return reconcileOverflowBreaks(normalized, paginationConfig);
   });
 
-  useEffect(() => {
-  // OJO: evita loguear millones de caracteres, recortamos a 2000 para inspección
-  console.log('[Preview] contentHtml (truncated):', contentHtml.slice(0, 2000));
-}, [contentHtml]);
-
   // Separar capítulos con un salto manual, igual que antes
   return fragments.join('<hr data-page-break="manual">');
 }, [project.document.chapters, paginationConfig]);
+
+// LOG de depuración (fuera del useMemo)
+useEffect(() => {
+  // Recortamos para no petar la consola
+  console.log('[Preview] contentHtml (truncated):', contentHtml.slice(0, 2000));
+}, [contentHtml]);
 
   // LOGICAL PAGE INDEXING
   const firstContentIndex = 1;
