@@ -56,9 +56,10 @@ export function MultipageFlow({
     if (!contentArea) return;
 
     const measuredWidth = contentArea.scrollWidth;
+    // Use snap to nearest integer to avoid sub-pixel issues (off-by-one errors)
     const pages = Math.max(
       1,
-      Math.ceil((measuredWidth + 1) / (contentWidth + columnGap)),
+      Math.round(measuredWidth / (contentWidth + columnGap)),
     );
 
     setMeasuredTotalPages(pages);
@@ -66,6 +67,8 @@ export function MultipageFlow({
   }, [columnGap, contentWidth, onPageCountChange]);
 
   useEffect(() => {
+    // Shorter timeout and immediate call for faster measurement
+    measureRenderablePages();
     const timeoutId = setTimeout(measureRenderablePages, 50);
     window.addEventListener('resize', measureRenderablePages);
     return () => {
@@ -99,6 +102,8 @@ export function MultipageFlow({
           height: ${contentHeight}px;
           transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        
+        /* 1:1 CSS Mapping from AdvancedRichTextEditor.tsx */
         .flow-content-root.ProseMirror {
           height: ${contentHeight}px;
           width: ${flowWidth}px;
@@ -113,30 +118,93 @@ export function MultipageFlow({
           overflow-wrap: break-word;
           color: var(--text-primary);
         }
-        .flow-content-root.ProseMirror > *:not(hr) {
+
+        .flow-content-root.ProseMirror > * {
           break-inside: avoid;
           page-break-inside: avoid;
         }
-        .flow-content-root.ProseMirror p { margin: 0; overflow-wrap: break-word; word-break: break-word; }
-        .flow-content-root.ProseMirror p + p { margin-top: 0.8rem; }
-        .flow-content-root.ProseMirror h1 { font-size: 2rem; line-height: 1.1; margin: 0 0 1rem 0; font-weight: 800; color: var(--text-primary); }
-        .flow-content-root.ProseMirror h2 { font-size: 1.5rem; line-height: 1.2; margin: 0 0 0.85rem 0; font-weight: 750; color: var(--text-primary); }
-        .flow-content-root.ProseMirror h3 { font-size: 1.2rem; line-height: 1.3; margin: 0 0 0.75rem 0; font-weight: 700; color: var(--text-primary); }
-        .flow-content-root.ProseMirror h4 { font-size: 1.05rem; line-height: 1.35; margin: 0 0 0.65rem 0; font-weight: 700; color: var(--text-primary); }
-        .flow-content-root.ProseMirror h5, .flow-content-root.ProseMirror h6 { font-size: 0.95rem; line-height: 1.4; margin: 0 0 0.6rem 0; font-weight: 700; color: var(--text-primary); }
-        .flow-content-root.ProseMirror ul, .flow-content-root.ProseMirror ol { margin: 0 0 1rem 1.5rem; padding: 0; }
-        
-        .flow-content-root.ProseMirror hr[data-page-break] { 
-          display: block !important;
-          border: 0 !important;
-          border-top: 2px dashed transparent !important;
-          height: 0 !important;
-          margin: 1.75rem 0 !important;
-          padding: 0 !important;
-          break-after: column !important; 
-          -webkit-column-break-after: always !important; 
-          page-break-after: always !important;
-          visibility: visible !important;
+
+        .flow-content-root.ProseMirror p {
+          margin: 0;
+          overflow-wrap: break-word;
+          word-break: break-word;
+        }
+        .flow-content-root.ProseMirror p + p {
+          margin-top: 0.8rem;
+        }
+
+        .flow-content-root.ProseMirror h1 {
+          font-size: 2rem;
+          line-height: 1.1;
+          font-weight: 800;
+          margin: 0 0 1rem 0;
+          color: var(--text-primary);
+        }
+        .flow-content-root.ProseMirror h2 {
+          font-size: 1.5rem;
+          line-height: 1.2;
+          font-weight: 750;
+          margin: 0 0 0.85rem 0;
+          color: var(--text-primary);
+        }
+        .flow-content-root.ProseMirror h3 {
+          font-size: 1.2rem;
+          line-height: 1.3;
+          font-weight: 700;
+          margin: 0 0 0.75rem 0;
+          color: var(--text-primary);
+        }
+        .flow-content-root.ProseMirror h4 {
+          font-size: 1.05rem;
+          line-height: 1.35;
+          font-weight: 700;
+          margin: 0 0 0.65rem 0;
+          color: var(--text-primary);
+        }
+        .flow-content-root.ProseMirror h5,
+        .flow-content-root.ProseMirror h6 {
+          font-size: 0.95rem;
+          line-height: 1.4;
+          font-weight: 700;
+          margin: 0 0 0.6rem 0;
+          color: var(--text-primary);
+        }
+
+        .flow-content-root.ProseMirror ul,
+        .flow-content-root.ProseMirror ol {
+          margin: 0 0 1rem 1.5rem;
+          padding: 0;
+        }
+
+        /* 1:1 Page Break Rules from Editor */
+        .flow-content-root.ProseMirror hr[data-page-break="manual"],
+        .flow-content-root.ProseMirror hr[data-page-break="true"] {
+          border: 0;
+          border-top: 2px dashed rgba(196, 154, 36, 0.45);
+          margin: 1.75rem 0;
+          break-after: column;
+          page-break-after: always;
+          -webkit-column-break-after: always;
+          display: block;
+          visibility: visible;
+          opacity: 0; /* Keep it invisible in preview but preserve layout space */
+        }
+
+        .flow-content-root.ProseMirror hr[data-page-break="auto"] {
+          border: 0;
+          height: 0;
+          margin: 0;
+          opacity: 0;
+          pointer-events: none;
+          break-after: column;
+          page-break-after: always;
+          -webkit-column-break-after: always;
+          display: block;
+          visibility: visible;
+        }
+
+        .flow-content-root.ProseMirror hr:not([data-page-break]) {
+          display: none;
         }
       `}</style>
 
