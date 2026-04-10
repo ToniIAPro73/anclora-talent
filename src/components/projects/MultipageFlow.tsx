@@ -107,33 +107,35 @@ export function MultipageFlow({
           column-gap: ${columnGap}px;
           column-fill: auto;
           outline: none;
+          font-size: ${config.fontSize}px;
+          line-height: ${config.lineHeight};
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          color: var(--text-primary);
         }
-        .flow-content-root.ProseMirror p { margin: 0; line-height: ${config.lineHeight}; font-size: ${config.fontSize}px; }
+        .flow-content-root.ProseMirror > * {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+        .flow-content-root.ProseMirror p { margin: 0; overflow-wrap: break-word; word-break: break-word; }
         .flow-content-root.ProseMirror p + p { margin-top: 0.8rem; }
         .flow-content-root.ProseMirror h1 { font-size: 2rem; line-height: 1.1; margin: 0 0 1rem 0; font-weight: 800; }
         .flow-content-root.ProseMirror h2 { font-size: 1.5rem; line-height: 1.2; margin: 0 0 0.85rem 0; font-weight: 750; }
         .flow-content-root.ProseMirror h3 { font-size: 1.2rem; line-height: 1.3; margin: 0 0 0.75rem 0; font-weight: 700; }
+        .flow-content-root.ProseMirror h4 { font-size: 1.05rem; line-height: 1.35; margin: 0 0 0.65rem 0; font-weight: 700; }
+        .flow-content-root.ProseMirror h5, .flow-content-root.ProseMirror h6 { font-size: 0.95rem; line-height: 1.4; margin: 0 0 0.6rem 0; font-weight: 700; }
         .flow-content-root.ProseMirror ul, .flow-content-root.ProseMirror ol { margin: 0 0 1rem 1.5rem; padding: 0; }
         
-        .flow-content-root.ProseMirror > *:not(hr) {
-          break-inside: avoid;
-          page-break-inside: avoid;
-        }
-
         .flow-content-root.ProseMirror hr[data-page-break] { 
           display: block !important;
-          clear: both !important;
-          width: 100% !important;
-          border: none !important;
-          height: 1px !important;
+          border: 0 !important;
+          height: 0 !important;
           margin: 0 !important;
           padding: 0 !important;
-          background: transparent !important;
+          visibility: hidden !important;
           break-after: column !important; 
           -webkit-column-break-after: always !important; 
           page-break-after: always !important;
-          visibility: visible !important;
-          opacity: 0 !important;
         }
       `}</style>
 
