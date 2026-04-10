@@ -34,3 +34,36 @@ export function normalizeDocumentHtml(content: string): string {
 
   return normalized;
 }
+
+/**
+ * Editor/Preview HTML normalization used for pagination.
+ * Copiado de useChapterEditor para compartir la misma “verdad” visual.
+ */
+export function normalizeHtmlContent(content: string): string {
+  const trimmed = content.trim();
+  if (!trimmed) return '';
+
+  const normalizeBreakMarkup = (html: string) =>
+    html
+      // Decorative separators
+      .replace(
+        /<p[^>]*>\s*(?:<[^>]+>\s*)*[─—–_=*·.\s]{5,}(?:\s*<\/[^>]+>)*\s*<\/p>/gi,
+        '',
+      )
+      // <hr> que no son page-breaks
+      .replace(/<hr(?![^>]*data-page-break=)[^>]*\/?>/gi, '')
+      // true/manual → manual
+      .replace(/<hr\s+data-page-break="true"\s*\/?>/gi, '<hr data-page-break="manual">')
+      .replace(/<hr\s+data-page-break="manual"\s*\/?>/gi, '<hr data-page-break="manual">')
+      // auto se preserva
+      .replace(/<hr\s+data-page-break="auto"\s*\/?>/gi, '<hr data-page-break="auto">');
+
+  if (typeof window !== 'undefined' && typeof DOMParser !== 'undefined') {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(`<div>${trimmed}</div>`, 'text/html');
+    const html = doc.body.firstElementChild?.innerHTML ?? '';
+    return normalizeBreakMarkup(html.replace(/>\s+</g, '><').replace(/&nbsp;/g, ' '));
+  }
+
+  return normalizeBreakMarkup(trimmed.replace(/>\s+</g, '><').replace(/&nbsp;/g, ' '));
+}

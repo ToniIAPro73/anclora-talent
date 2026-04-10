@@ -1,5 +1,6 @@
 'use client';
 
+import { normalizeHtmlContent } from '@/lib/preview/html-normalize';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { saveChapterContentAction } from '@/lib/projects/actions';
@@ -40,30 +41,6 @@ function normalizeLoadedChapterHtml(
   );
 }
 
-function normalizeHtmlContent(content: string): string {
-  const trimmed = content.trim();
-  if (!trimmed) return '';
-
-  const normalizeBreakMarkup = (html: string) =>
-    html
-      .replace(
-        /<p[^>]*>\s*(?:<[^>]+>\s*)*[─—–_=*·.\s]{5,}(?:\s*<\/[^>]+>)*\s*<\/p>/gi,
-        '',
-      )
-      .replace(/<hr(?![^>]*data-page-break=)[^>]*\/?>/gi, '')
-      .replace(/<hr\s+data-page-break="true"\s*\/?>/gi, '<hr data-page-break="manual">')
-      .replace(/<hr\s+data-page-break="manual"\s*\/?>/gi, '<hr data-page-break="manual">')
-      .replace(/<hr\s+data-page-break="auto"\s*\/?>/gi, '<hr data-page-break="auto">');
-
-  if (typeof window !== 'undefined' && typeof DOMParser !== 'undefined') {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(`<div>${trimmed}</div>`, 'text/html');
-    const html = doc.body.firstElementChild?.innerHTML ?? '';
-    return normalizeBreakMarkup(html.replace(/>\s+</g, '><').replace(/&nbsp;/g, ' '));
-  }
-
-  return normalizeBreakMarkup(trimmed.replace(/>\s+</g, '><').replace(/&nbsp;/g, ' '));
-}
 
 export function useChapterEditor({
   chapters,
