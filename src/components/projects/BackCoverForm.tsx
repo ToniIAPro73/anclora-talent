@@ -28,9 +28,26 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
     },
   );
 
-  // Fallback to document author if title is empty in surfaceState
-  if (bc.surfaceState && !initialSurface.fields.title?.value && project.document.author) {
-    initialSurface.fields.title = { value: project.document.author, visible: true };
+  // Sync back cover surfaceState with document metadata
+  if (bc.surfaceState) {
+    const fields = { ...initialSurface.fields };
+    let changed = false;
+
+    // In back cover, title usually maps to Author Name
+    if (project.document.author && (!fields.title?.value || fields.title.value !== project.document.author)) {
+      fields.title = { value: project.document.author, visible: true };
+      changed = true;
+    }
+
+    // In back cover, body usually maps to document subtitle (blurb)
+    if (project.document.subtitle && (!fields.body?.value || fields.body.value !== project.document.subtitle)) {
+      fields.body = { value: project.document.subtitle, visible: true };
+      changed = true;
+    }
+
+    if (changed) {
+      initialSurface.fields = fields;
+    }
   }
   const [surface, setSurface] = useState(initialSurface);
   const [accentColor, setAccentColor] = useState(bc.accentColor ?? ACCENT_PRESETS[0]);

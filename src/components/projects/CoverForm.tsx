@@ -32,21 +32,29 @@ export function CoverForm({ copy, project }: { copy: AppMessages['project']; pro
     },
   );
 
-  // If we have a surfaceState but some critical fields are empty, try to seed them from document metadata
-  // This is helpful for projects that were created before we added these fields to the basic editor
+  // Sync surfaceState with current document metadata
+  // We check if the current surface field is empty OR if it matches the previous project-level flat field
+  // This allows changes in Step 1 to flow into the cover until the user manually changes the cover text to something else.
   if (project.cover.surfaceState) {
     const fields = { ...initialSurface.fields };
     let changed = false;
 
-    if (!fields.title?.value && project.document.title) {
+    // Title sync
+    if (project.document.title && (!fields.title?.value || fields.title.value !== project.document.title)) {
+      // If the cover's specific title field (flat) was updated by updateProjectDocument, 
+      // but the surfaceState (rich) still has the old one, we update it.
       fields.title = { value: project.document.title, visible: true };
       changed = true;
     }
-    if (!fields.subtitle?.value && project.document.subtitle) {
+
+    // Subtitle sync
+    if (project.document.subtitle && (!fields.subtitle?.value || fields.subtitle.value !== project.document.subtitle)) {
       fields.subtitle = { value: project.document.subtitle, visible: true };
       changed = true;
     }
-    if (!fields.author?.value && project.document.author) {
+
+    // Author sync
+    if (project.document.author && (!fields.author?.value || fields.author.value !== project.document.author)) {
       fields.author = { value: project.document.author, visible: true };
       changed = true;
     }
