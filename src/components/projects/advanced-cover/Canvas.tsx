@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { createFabricCanvas } from '@/lib/canvas-utils';
+import { createFabricCanvas, CANVAS_WIDTH, CANVAS_HEIGHT } from '@/lib/canvas-utils';
 
 type CoverCanvasProps = {
   onCanvasReady?: (canvas: unknown) => void;
@@ -9,86 +9,97 @@ type CoverCanvasProps = {
 };
 
 export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: CoverCanvasProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const outerRef   = useRef<HTMLDivElement>(null);
+  const scalerRef  = useRef<HTMLDivElement>(null);
+  const canvasRef  = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<unknown>(null);
-  // Keep a ref to the latest callback so we can call it without re-initializing the canvas
   const onCanvasReadyRef = useRef(onCanvasReady);
-  useEffect(() => {
-    onCanvasReadyRef.current = onCanvasReady;
-  });
 
+  useEffect(() => { onCanvasReadyRef.current = onCanvasReady; });
+
+  // Inicializar Fabric una sola vez — siempre 400×600 fijos internamente
   useEffect(() => {
-    const initializeCanvas = async () => {
+    const init = async () => {
       if (!canvasRef.current) return;
-
       try {
-        // Create the Fabric.js canvas once — never recreate on callback changes
-        const fabricCanvas = await createFabricCanvas(canvasRef.current);
-        fabricCanvasRef.current = fabricCanvas;
-
-        if (onCanvasReadyRef.current) {
-          onCanvasReadyRef.current(fabricCanvas);
-        }
-      } catch (error) {
-        console.error('[CoverCanvas] Error initializing Fabric.js canvas:', error);
+        const fc = await createFabricCanvas(canvasRef.current);
+        fabricCanvasRef.current = fc;
+        if (onCanvasReadyRef.current) onCanvasReadyRef.current(fc);
+      } catch (e) {
+        console.error('[CoverCanvas] Error initializing Fabric.js canvas:', e);
       }
     };
-
-    initializeCanvas();
-
-    // Cleanup
+    init();
     return () => {
-      if (fabricCanvasRef.current) {
-        try {
-          (fabricCanvasRef.current as { dispose: () => void }).dispose();
-        } catch (e) {
-          console.warn('[CoverCanvas] Error disposing canvas:', e);
-        }
-      }
+      try { (fabricCanvasRef.current as { dispose: () => void } | null)?.dispose(); }
+      catch (e) { console.warn('[CoverCanvas] dispose error:', e); }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // intentionally empty — canvas is initialized once, callback tracked via ref
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ResizeObserver — solo ajusta CSS transform:scale() en el div escalador.
+  // Fabric NUNCA cambia de tamaño: siempre 400×600.
+  useEffect(() => {
+    const outer  = outerRef.current;
+    const scaler = scalerRef.current;
+    if (!outer || !scaler) return;
+
+    const applyScale = (availableWidth: number) => {
+      const scale = availableWidth / CANVAS_WIDTH;
+      scaler.style.transform       = `scale(${scale})`;
+      scaler.style.transformOrigin = 'top left';
+      outer.style.height           = `${CANVAS_HEIGHT * scale}px`;
+    };
+
+    applyScale(outer.clientWidth || CANVAS_WIDTH);
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        applyScale(entry.contentRect.width);
+      }
+    });
+    ro.observe(outer);
+    return () => ro.disconnect();
+  }, []);
 
   void initialPalette;
 
   return (
     <div
-      ref={containerRef}
       style={{
         display: 'flex',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         width: '100%',
         maxWidth: '680px',
-        minHeight: '100%',
       }}
     >
+      {/* outerRef: mide el ancho disponible y recibe la altura calculada por JS */}
       <div
+        ref={outerRef}
         style={{
           width: '100%',
-          maxWidth: '460px',
-          aspectRatio: '2 / 3',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px',
+          maxWidth: '420px',
+          overflow: 'hidden',
           border: '1px solid var(--border-subtle)',
           borderRadius: '24px',
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))',
           boxShadow: 'var(--shadow-strong)',
         }}
       >
-        <canvas
-          ref={canvasRef}
-          data-testid="fabric-canvas"
+        {/* scalerRef: siempre 400×600 px, escalado con transform:scale() */}
+        <div
+          ref={scalerRef}
           style={{
-            width: '100%',
-            height: '100%',
-            borderRadius: '12px',
-            display: 'block',
+            width:  `${CANVAS_WIDTH}px`,
+            height: `${CANVAS_HEIGHT}px`,
           }}
-        />
+        >
+          <canvas
+            ref={canvasRef}
+            data-testid="fabric-canvas"
+            style={{ display: 'block' }}
+          />
+        </div>
       </div>
     </div>
   );
