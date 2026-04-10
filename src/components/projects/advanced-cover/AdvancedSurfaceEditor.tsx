@@ -12,6 +12,7 @@ import { addImageToCanvas, addTextToCanvas } from '@/lib/canvas-utils';
 import { createGuideManager } from '@/lib/canvas-guides';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import { createSurfaceSnapshotFromProject } from './advanced-surface-utils';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from '@/lib/canvas-utils';
 import type { SurfaceKind } from '@/lib/projects/cover-surface';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
@@ -92,8 +93,8 @@ export function AdvancedSurfaceEditor({
         selectElement(null);
         listenersAttachedRef.current = false;
 
-        const canvasWidth = fabricCanvas.width || 400;
-        const canvasHeight = fabricCanvas.height || 600;
+        const canvasWidth = CANVAS_WIDTH;   // 400
+        const canvasHeight = CANVAS_HEIGHT; // 600
         const bgColors: Record<string, string> = {
           obsidian: '#0b133f',
           teal: '#124a50',
@@ -119,8 +120,8 @@ export function AdvancedSurfaceEditor({
               id: `${surface}-background-image`,
             })) as FabricObjectLike;
 
-            const scaleX = canvasWidth / fabricImg.width;
-            const scaleY = canvasHeight / fabricImg.height;
+            const scaleX = canvasWidth / (fabricImg.width ?? canvasWidth);
+            const scaleY = canvasHeight / (fabricImg.height ?? canvasHeight);
             const scale = Math.max(scaleX, scaleY);
 
             fabricImg.set({
@@ -244,17 +245,18 @@ export function AdvancedSurfaceEditor({
             guideManagerRef.current = createGuideManager(fabricCanvas);
           }
 
+          // DESPUÉS
           fabricCanvas.on('selection:created', (e: FabricEvent) => {
-            if (e.selected?.length > 0) {
-              const selectedFabricObj = e.selected[0];
+            if ((e.selected?.length ?? 0) > 0) {
+              const selectedFabricObj = e.selected![0];
               const element = useCanvasStore.getState().elements.find((el) => el.id === selectedFabricObj.id);
               if (element) selectElement(element);
             }
           });
 
           fabricCanvas.on('selection:updated', (e: FabricEvent) => {
-            if (e.selected?.length > 0) {
-              const selectedFabricObj = e.selected[0];
+            if ((e.selected?.length ?? 0) > 0) {
+              const selectedFabricObj = e.selected![0];
               const element = useCanvasStore.getState().elements.find((el) => el.id === selectedFabricObj.id);
               if (element) selectElement(element);
             }

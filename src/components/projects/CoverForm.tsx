@@ -31,6 +31,30 @@ export function CoverForm({ copy, project }: { copy: AppMessages['project']; pro
       },
     },
   );
+
+  // If we have a surfaceState but some critical fields are empty, try to seed them from document metadata
+  // This is helpful for projects that were created before we added these fields to the basic editor
+  if (project.cover.surfaceState) {
+    const fields = { ...initialSurface.fields };
+    let changed = false;
+
+    if (!fields.title?.value && project.document.title) {
+      fields.title = { value: project.document.title, visible: true };
+      changed = true;
+    }
+    if (!fields.subtitle?.value && project.document.subtitle) {
+      fields.subtitle = { value: project.document.subtitle, visible: true };
+      changed = true;
+    }
+    if (!fields.author?.value && project.document.author) {
+      fields.author = { value: project.document.author, visible: true };
+      changed = true;
+    }
+
+    if (changed) {
+      initialSurface.fields = fields;
+    }
+  }
   const [surface, setSurface] = useState(initialSurface);
   const [palette, setPalette] = useState<CoverDesign['palette']>(project.cover.palette);
   const [isPending, startTransition] = useTransition();
