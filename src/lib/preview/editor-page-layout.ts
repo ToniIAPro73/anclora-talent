@@ -126,11 +126,11 @@ function hasOversizedSingleBlock(
   const lineHeightPx = config.fontSize * config.lineHeight;
   const charsPerLine = Math.max(
     1,
-    Math.floor(contentWidth / (config.fontSize * 0.5)),
+    Math.floor(contentWidth / (config.fontSize * 0.45)),
   );
   const linesPerPage = Math.max(
     1,
-    Math.floor((availableHeight / lineHeightPx) * 0.7),
+    Math.floor((availableHeight / lineHeightPx) * 0.98),
   );
   const charsPerPage = Math.max(charsPerLine, charsPerLine * linesPerPage);
 
@@ -155,8 +155,14 @@ function splitOversizedBlockSegment(
   const contentWidth = config.pageWidth - config.marginLeft - config.marginRight;
   const availableHeight = config.pageHeight - config.marginTop - config.marginBottom;
   const lineHeightPx = config.fontSize * config.lineHeight;
-  const charsPerLine = Math.max(1, Math.floor(contentWidth / (config.fontSize * 0.5)));
-  const linesPerPage = Math.max(1, Math.floor((availableHeight / lineHeightPx) * 0.7));
+  const charsPerLine = Math.max(
+    1,
+    Math.floor(contentWidth / (config.fontSize * 0.45)),
+  );
+  const linesPerPage = Math.max(
+    1,
+    Math.floor((availableHeight / lineHeightPx) * 0.98),
+  );
   const charsPerPage = Math.max(charsPerLine, charsPerLine * linesPerPage);
 
   const chunks: string[] = [];
@@ -171,11 +177,50 @@ function splitOversizedBlockSegment(
     }
 
     const element = node as Element;
+    const tagName = element.tagName.toLowerCase();
     const text = element.textContent?.trim() ?? '';
+
     if (!text) {
       const htmlChunk = element.outerHTML.trim();
       if (htmlChunk) {
         chunks.push(htmlChunk);
+      }
+      return;
+    }
+
+    // Special handling for lists to preserve structure and split by LINE count
+    if (tagName === 'ul' || tagName === 'ol') {
+      const items = Array.from(element.children);
+      let currentListItems: string[] = [];
+      let currentListLines = 0;
+
+      items.forEach((item) => {
+        const itemText = item.textContent?.trim() ?? '';
+        const itemHtml = item.outerHTML;
+        
+        // Estimate lines for this item (text + padding + margins)
+        const itemCharsPerLine = Math.floor((contentWidth - 24) / (config.fontSize * 0.45));
+        const itemLines = Math.max(1, Math.ceil(itemText.length / itemCharsPerLine)) + (0.35 / config.lineHeight);
+
+        if (
+          currentListLines + itemLines > linesPerPage &&
+          currentListItems.length > 0
+        ) {
+          chunks.push(
+            `<${tagName}>${currentListItems.join('')}</${tagName}>`,
+          );
+          currentListItems = [itemHtml];
+          currentListLines = itemLines;
+        } else {
+          currentListItems.push(itemHtml);
+          currentListLines += itemLines;
+        }
+      });
+
+      if (currentListItems.length > 0) {
+        chunks.push(
+          `<${tagName}>${currentListItems.join('')}</${tagName}>`,
+        );
       }
       return;
     }
@@ -185,7 +230,6 @@ function splitOversizedBlockSegment(
       return;
     }
 
-    const tagName = element.tagName.toLowerCase();
     chunks.push(...chunkTextIntoWrappedBlocks(text, charsPerPage, tagName));
   });
 

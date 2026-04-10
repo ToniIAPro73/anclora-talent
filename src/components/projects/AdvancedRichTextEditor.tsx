@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import * as React from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Extension } from '@tiptap/core';
 import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import { TextSelection } from '@tiptap/pm/state';
@@ -717,7 +718,7 @@ const MenuBar = ({
       reader.onload = (event) => {
         const imageUrl = event.target?.result as string;
         // Set default size to 45% width, left aligned with text wrapping
-        editor.chain().focus().setImage({ src: imageUrl, width: 350, align: 'left' }).run();
+        editor.chain().focus().insertContent({ type: 'image', attrs: { src: imageUrl, width: 350, align: 'left' } }).run();
       };
       reader.readAsDataURL(file);
     }
@@ -1211,7 +1212,7 @@ export function AdvancedRichTextEditor({
 
         if (normalizeEditorHtml(reconciledHtml) !== normalizeEditorHtml(currentHtml)) {
           isSyncingExternalContentRef.current = true;
-          ed.commands.setContent(reconciledHtml, false);
+          ed.commands.setContent(reconciledHtml, { emitUpdate: false });
           handleUpdate(reconciledHtml);
         return;
       }
@@ -1225,7 +1226,7 @@ export function AdvancedRichTextEditor({
   useEffect(() => {
     if (editor && normalizeEditorHtml(defaultContent) !== normalizeEditorHtml(editor.getHTML())) {
       isSyncingExternalContentRef.current = true;
-      editor.commands.setContent(defaultContent, false);
+      editor.commands.setContent(defaultContent, { emitUpdate: false });
     }
   }, [defaultContent, editor]);
 
@@ -1376,6 +1377,12 @@ export function AdvancedRichTextEditor({
             style={{ width: `${viewportWidth}px`, minHeight: `${pageHeight}px` }}
           >
             <style>{`
+              .ProseMirror {
+                font-size: ${previewConfig.fontSize}px;
+                line-height: ${previewConfig.lineHeight};
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+              }
               .ProseMirror img {
                 max-width: 100%;
                 height: auto;
@@ -1388,27 +1395,7 @@ export function AdvancedRichTextEditor({
               }
               .ProseMirror p + p,
               .preview-page p + p {
-                margin-top: 0.9rem;
-              }
-              .ProseMirror p[data-indent],
-              .preview-page p[data-indent],
-              .ProseMirror h1[data-indent],
-              .preview-page h1[data-indent],
-              .ProseMirror h2[data-indent],
-              .preview-page h2[data-indent],
-              .ProseMirror h3[data-indent],
-              .preview-page h3[data-indent],
-              .ProseMirror h4[data-indent],
-              .preview-page h4[data-indent],
-              .ProseMirror h5[data-indent],
-              .preview-page h5[data-indent],
-              .ProseMirror h6[data-indent],
-              .preview-page h6[data-indent] {
-                transition: margin-left 0.15s ease;
-              }
-              .ProseMirror {
-                word-wrap: break-word;
-                overflow-wrap: break-word;
+                margin-top: 0.8rem;
               }
               .ProseMirror h1,
               .preview-page h1 {
