@@ -6,6 +6,7 @@ import { SubmitButton } from '@/components/ui/SubmitButton';
 import { useState } from 'react';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
+import { Slider } from '@/components/ui/slider';
 import {
   createDefaultSurfaceState,
   mergePartialSurfaceUpdate,
@@ -132,6 +133,20 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
           />
         </label>
 
+        <div className="space-y-4 pt-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverOpacityLabel}</span>
+            <span className="text-[10px] font-mono text-[var(--text-tertiary)]">{Math.round((surface.opacity ?? 1) * 100)}%</span>
+          </div>
+          <Slider
+            value={[(surface.opacity ?? 1) * 100]}
+            min={0}
+            max={100}
+            step={1}
+            onValueChange={(val) => setSurface(s => ({ ...s, opacity: val[0] / 100 }))}
+          />
+        </div>
+
         <SubmitButton className={`${premiumPrimaryDarkButton} px-5`}>
           {copy.backCoverSave}
         </SubmitButton>
@@ -148,7 +163,8 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
             src={bc.backgroundImageUrl}
             alt=""
             aria-hidden
-            className="absolute inset-0 h-full w-full object-cover opacity-25"
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ opacity: surface.opacity ?? 0.24 }}
           />
         )}
         <div className="relative">

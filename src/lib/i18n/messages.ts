@@ -137,8 +137,10 @@ export type AppMessages = {
     coverFormEyebrow: string;
     coverTitleLabel: string;
     coverSubtitleLabel: string;
+    coverAuthorLabel: string;
     coverPaletteLabel: string;
     coverBackgroundLabel: string;
+    coverOpacityLabel: string;
     coverSave: string;
     coverNoImage: string;
     paletteObsidian: string;
@@ -417,8 +419,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverFormEyebrow: 'Portada persistente',
       coverTitleLabel: 'Título',
       coverSubtitleLabel: 'Subtítulo',
+      coverAuthorLabel: 'Autor',
       coverPaletteLabel: 'Paleta',
       coverBackgroundLabel: 'Imagen de fondo',
+      coverOpacityLabel: 'Opacidad de imagen',
       coverSave: 'Guardar portada',
       coverNoImage: 'Sin imagen subida',
       paletteObsidian: 'Obsidian',
@@ -695,8 +699,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverFormEyebrow: 'Persistent cover',
       coverTitleLabel: 'Title',
       coverSubtitleLabel: 'Subtitle',
+      coverAuthorLabel: 'Author',
       coverPaletteLabel: 'Palette',
       coverBackgroundLabel: 'Background image',
+      coverOpacityLabel: 'Image opacity',
       coverSave: 'Save cover',
       coverNoImage: 'No uploaded image',
       paletteObsidian: 'Obsidian',
