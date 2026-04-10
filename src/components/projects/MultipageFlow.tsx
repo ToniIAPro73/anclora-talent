@@ -113,29 +113,30 @@ export function MultipageFlow({
           overflow-wrap: break-word;
           color: var(--text-primary);
         }
-        .flow-content-root.ProseMirror > * {
+        .flow-content-root.ProseMirror > *:not(hr) {
           break-inside: avoid;
           page-break-inside: avoid;
         }
         .flow-content-root.ProseMirror p { margin: 0; overflow-wrap: break-word; word-break: break-word; }
         .flow-content-root.ProseMirror p + p { margin-top: 0.8rem; }
-        .flow-content-root.ProseMirror h1 { font-size: 2rem; line-height: 1.1; margin: 0 0 1rem 0; font-weight: 800; }
-        .flow-content-root.ProseMirror h2 { font-size: 1.5rem; line-height: 1.2; margin: 0 0 0.85rem 0; font-weight: 750; }
-        .flow-content-root.ProseMirror h3 { font-size: 1.2rem; line-height: 1.3; margin: 0 0 0.75rem 0; font-weight: 700; }
-        .flow-content-root.ProseMirror h4 { font-size: 1.05rem; line-height: 1.35; margin: 0 0 0.65rem 0; font-weight: 700; }
-        .flow-content-root.ProseMirror h5, .flow-content-root.ProseMirror h6 { font-size: 0.95rem; line-height: 1.4; margin: 0 0 0.6rem 0; font-weight: 700; }
+        .flow-content-root.ProseMirror h1 { font-size: 2rem; line-height: 1.1; margin: 0 0 1rem 0; font-weight: 800; color: var(--text-primary); }
+        .flow-content-root.ProseMirror h2 { font-size: 1.5rem; line-height: 1.2; margin: 0 0 0.85rem 0; font-weight: 750; color: var(--text-primary); }
+        .flow-content-root.ProseMirror h3 { font-size: 1.2rem; line-height: 1.3; margin: 0 0 0.75rem 0; font-weight: 700; color: var(--text-primary); }
+        .flow-content-root.ProseMirror h4 { font-size: 1.05rem; line-height: 1.35; margin: 0 0 0.65rem 0; font-weight: 700; color: var(--text-primary); }
+        .flow-content-root.ProseMirror h5, .flow-content-root.ProseMirror h6 { font-size: 0.95rem; line-height: 1.4; margin: 0 0 0.6rem 0; font-weight: 700; color: var(--text-primary); }
         .flow-content-root.ProseMirror ul, .flow-content-root.ProseMirror ol { margin: 0 0 1rem 1.5rem; padding: 0; }
         
         .flow-content-root.ProseMirror hr[data-page-break] { 
           display: block !important;
           border: 0 !important;
+          border-top: 2px dashed transparent !important;
           height: 0 !important;
-          margin: 0 !important;
+          margin: 1.75rem 0 !important;
           padding: 0 !important;
-          visibility: hidden !important;
           break-after: column !important; 
           -webkit-column-break-after: always !important; 
           page-break-after: always !important;
+          visibility: visible !important;
         }
       `}</style>
 
