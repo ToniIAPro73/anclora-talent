@@ -44,7 +44,7 @@ export function createSurfaceSnapshotFromProject(
           ...createDefaultSurfaceState('cover'),
           fields: {
             title: field(project.cover.title || project.document.title),
-            subtitle: field(project.cover.subtitle, project.cover.showSubtitle ?? true),
+            subtitle: field(project.cover.subtitle || project.document.subtitle, project.cover.showSubtitle ?? true),
             author: field(project.document.author),
           },
         },
@@ -52,14 +52,14 @@ export function createSurfaceSnapshotFromProject(
 
     const fields = { ...state.fields };
 
-    if (project.cover.title && fields.title && fields.title.value !== project.cover.title) {
-      fields.title = { value: project.cover.title, visible: true };
+    if (project.document.title && fields.title && fields.title.value !== project.document.title) {
+      fields.title = { value: project.document.title, visible: true };
     }
 
-    if (project.cover.subtitle && fields.subtitle && fields.subtitle.value !== project.cover.subtitle) {
+    if (project.document.subtitle && fields.subtitle && fields.subtitle.value !== project.document.subtitle) {
       fields.subtitle = {
-        value: project.cover.subtitle,
-        visible: Boolean((project.cover.showSubtitle ?? true) && project.cover.subtitle.trim()),
+        value: project.document.subtitle,
+        visible: Boolean((project.cover.showSubtitle ?? true) && project.document.subtitle.trim()),
       };
     }
 
@@ -88,12 +88,12 @@ export function createSurfaceSnapshotFromProject(
 
   const fields = { ...state.fields };
 
-  if (project.backCover.title && fields.title && fields.title.value !== project.backCover.title) {
-    fields.title = { value: project.backCover.title, visible: true };
+  if (project.document.author && fields.title && fields.title.value !== project.document.author) {
+    fields.title = { value: project.document.author, visible: true };
   }
 
-  if (project.backCover.body && fields.body && fields.body.value !== project.backCover.body) {
-    fields.body = { value: project.backCover.body, visible: true };
+  if (project.document.subtitle && fields.body && fields.body.value !== project.document.subtitle) {
+    fields.body = { value: project.document.subtitle, visible: true };
   }
 
   if (project.backCover.authorBio && fields.authorBio && fields.authorBio.value !== project.backCover.authorBio) {

@@ -68,7 +68,7 @@ describe('advanced-surface-utils', () => {
       document: { author: 'Toni', title: 'Titulo documento' },
       cover: {
         title: 'NUNCA MAS EN LA SOMBRA',
-        subtitle: '',
+        subtitle: 'Subtitulo cover viejo',
         showSubtitle: false,
         surfaceState: {
           surface: 'cover',
@@ -90,8 +90,39 @@ describe('advanced-surface-utils', () => {
       },
     });
 
-    expect(snapshot.fields.title?.value).toBe('NUNCA MAS EN LA SOMBRA');
+    expect(snapshot.fields.title?.value).toBe('Titulo documento');
     expect(snapshot.fields.author?.value).toBe('Toni');
     expect(snapshot.fields.author?.visible).toBe(true);
+  });
+
+  it('matches the basic cover editor by prioritizing document subtitle over stale cover subtitle', () => {
+    const snapshot = createSurfaceSnapshotFromProject('cover', {
+      document: { author: 'Toni', title: 'Titulo documento', subtitle: 'Subtitulo documento' },
+      cover: {
+        title: 'Titulo viejo de cover',
+        subtitle: 'Subtitulo viejo de cover',
+        showSubtitle: true,
+        surfaceState: {
+          surface: 'cover',
+          layout: { kind: 'stacked-center' },
+          fields: {
+            title: { value: 'Titulo viejo de surface', visible: true },
+            subtitle: { value: 'Subtitulo viejo de surface', visible: true },
+            author: { value: '', visible: false },
+          },
+          layers: [],
+          opacity: 0.47,
+        },
+      },
+      backCover: {
+        title: 'Contra',
+        body: 'Texto de contra',
+        authorBio: 'Bio',
+        surfaceState: undefined,
+      },
+    });
+
+    expect(snapshot.fields.subtitle?.value).toBe('Subtitulo documento');
+    expect(snapshot.fields.subtitle?.visible).toBe(true);
   });
 });
