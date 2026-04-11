@@ -25,6 +25,7 @@ export interface SurfaceState {
   fields: Partial<Record<SurfaceFieldKey, SurfaceFieldState>>;
   layout: { kind: string };
   layers?: SurfaceLayer[];
+  opacity?: number;
 }
 
 const EMPTY_FIELD: SurfaceFieldState = { value: '', visible: false };
@@ -40,6 +41,7 @@ export function createDefaultSurfaceState(surface: SurfaceKind): SurfaceState {
       body: { value: '', visible: surface === 'back-cover' },
       authorBio: { value: '', visible: surface === 'back-cover' },
     },
+    opacity: surface === 'back-cover' ? 0.24 : 1,
   };
 }
 
@@ -65,6 +67,7 @@ export function normalizeSurfaceState(
     layout: input.layout ?? base.layout,
     fields,
     layers: input.layers ?? [],
+    opacity: input.opacity ?? base.opacity ?? (input.surface === 'back-cover' ? 0.24 : 1),
   };
 }
 

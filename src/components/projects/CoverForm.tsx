@@ -9,6 +9,7 @@ import type { ProjectRecord, CoverDesign } from '@/lib/projects/types';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import type { AppMessages } from '@/lib/i18n/messages';
 import { CoverPreview } from './CoverPreview';
+import { Slider } from '@/components/ui/slider';
 import {
   createDefaultSurfaceState,
   mergePartialSurfaceUpdate,
@@ -21,15 +22,47 @@ export function CoverForm({ copy, project }: { copy: AppMessages['project']; pro
     project.cover.surfaceState ?? {
       ...createDefaultSurfaceState('cover'),
       fields: {
-        title: { value: project.cover.title, visible: true },
+        title: { value: project.cover.title || project.document.title, visible: true },
         subtitle: {
-          value: project.cover.subtitle,
-          visible: Boolean((project.cover.showSubtitle ?? true) && project.cover.subtitle.trim()),
+          value: project.cover.subtitle || project.document.subtitle,
+          visible: Boolean((project.cover.showSubtitle ?? true) && (project.cover.subtitle || project.document.subtitle).trim()),
         },
         author: { value: project.document.author, visible: Boolean(project.document.author.trim()) },
       },
     },
   );
+
+  // Sync surfaceState with current document metadata
+  // We check if the current surface field is empty OR if it matches the previous project-level flat field
+  // This allows changes in Step 1 to flow into the cover until the user manually changes the cover text to something else.
+  if (project.cover.surfaceState) {
+    const fields = { ...initialSurface.fields };
+    let changed = false;
+
+    // Title sync
+    if (project.document.title && (!fields.title?.value || fields.title.value !== project.document.title)) {
+      // If the cover's specific title field (flat) was updated by updateProjectDocument, 
+      // but the surfaceState (rich) still has the old one, we update it.
+      fields.title = { value: project.document.title, visible: true };
+      changed = true;
+    }
+
+    // Subtitle sync
+    if (project.document.subtitle && (!fields.subtitle?.value || fields.subtitle.value !== project.document.subtitle)) {
+      fields.subtitle = { value: project.document.subtitle, visible: true };
+      changed = true;
+    }
+
+    // Author sync
+    if (project.document.author && (!fields.author?.value || fields.author.value !== project.document.author)) {
+      fields.author = { value: project.document.author, visible: true };
+      changed = true;
+    }
+
+    if (changed) {
+      initialSurface.fields = fields;
+    }
+  }
   const [surface, setSurface] = useState(initialSurface);
   const [palette, setPalette] = useState<CoverDesign['palette']>(project.cover.palette);
   const [isPending, startTransition] = useTransition();
@@ -105,6 +138,23 @@ export function CoverForm({ copy, project }: { copy: AppMessages['project']; pro
           />
         </label>
         <label className="block space-y-2">
+          <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverAuthorLabel}</span>
+          <input
+            aria-label={copy.coverAuthorLabel}
+            value={surface.fields.author?.value ?? ''}
+            onChange={(e) =>
+              setSurface((current) =>
+                mergePartialSurfaceUpdate(current, {
+                  fields: {
+                    author: { value: e.target.value, visible: Boolean(e.target.value.trim()) },
+                  },
+                }),
+              )
+            }
+            className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+          />
+        </label>
+        <label className="block space-y-2">
           <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverPaletteLabel}</span>
           <select
             value={palette}
@@ -126,7 +176,21 @@ export function CoverForm({ copy, project }: { copy: AppMessages['project']; pro
           />
         </label>
 
-        <div className="flex items-center gap-3">
+        <div className="space-y-4 pt-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverOpacityLabel}</span>
+            <span className="text-[10px] font-mono text-[var(--text-tertiary)]">{Math.round((surface.opacity ?? 1) * 100)}%</span>
+          </div>
+          <Slider
+            value={[(surface.opacity ?? 1) * 100]}
+            min={0}
+            max={100}
+            step={1}
+            onValueChange={(val) => setSurface(s => ({ ...s, opacity: val[0] / 100 }))}
+          />
+        </div>
+
+        <div className="flex items-center gap-3 pt-4">
           <button
             type="submit"
             disabled={isPending}

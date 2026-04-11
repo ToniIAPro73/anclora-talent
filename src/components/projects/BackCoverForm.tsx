@@ -6,6 +6,7 @@ import { SubmitButton } from '@/components/ui/SubmitButton';
 import { useState } from 'react';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
+import { Slider } from '@/components/ui/slider';
 import {
   createDefaultSurfaceState,
   mergePartialSurfaceUpdate,
@@ -20,12 +21,34 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
     bc.surfaceState ?? {
       ...createDefaultSurfaceState('back-cover'),
       fields: {
-        title: { value: bc.title, visible: Boolean(bc.title.trim()) },
+        title: { value: bc.title || project.document.author, visible: Boolean((bc.title || project.document.author).trim()) },
         body: { value: bc.body, visible: Boolean(bc.body.trim()) },
         authorBio: { value: bc.authorBio, visible: Boolean(bc.authorBio.trim()) },
       },
     },
   );
+
+  // Sync back cover surfaceState with document metadata
+  if (bc.surfaceState) {
+    const fields = { ...initialSurface.fields };
+    let changed = false;
+
+    // In back cover, title usually maps to Author Name
+    if (project.document.author && (!fields.title?.value || fields.title.value !== project.document.author)) {
+      fields.title = { value: project.document.author, visible: true };
+      changed = true;
+    }
+
+    // In back cover, body usually maps to document subtitle (blurb)
+    if (project.document.subtitle && (!fields.body?.value || fields.body.value !== project.document.subtitle)) {
+      fields.body = { value: project.document.subtitle, visible: true };
+      changed = true;
+    }
+
+    if (changed) {
+      initialSurface.fields = fields;
+    }
+  }
   const [surface, setSurface] = useState(initialSurface);
   const [accentColor, setAccentColor] = useState(bc.accentColor ?? ACCENT_PRESETS[0]);
 
@@ -132,6 +155,20 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
           />
         </label>
 
+        <div className="space-y-4 pt-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverOpacityLabel}</span>
+            <span className="text-[10px] font-mono text-[var(--text-tertiary)]">{Math.round((surface.opacity ?? 1) * 100)}%</span>
+          </div>
+          <Slider
+            value={[(surface.opacity ?? 1) * 100]}
+            min={0}
+            max={100}
+            step={1}
+            onValueChange={(val) => setSurface(s => ({ ...s, opacity: val[0] / 100 }))}
+          />
+        </div>
+
         <SubmitButton className={`${premiumPrimaryDarkButton} px-5`}>
           {copy.backCoverSave}
         </SubmitButton>
@@ -148,7 +185,8 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
             src={bc.backgroundImageUrl}
             alt=""
             aria-hidden
-            className="absolute inset-0 h-full w-full object-cover opacity-25"
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ opacity: surface.opacity ?? 0.24 }}
           />
         )}
         <div className="relative">

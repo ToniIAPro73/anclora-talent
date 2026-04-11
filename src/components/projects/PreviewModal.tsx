@@ -32,7 +32,7 @@ import {
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { MultipageFlow } from '@/components/projects/MultipageFlow';
 import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
-import { normalizeDocumentHtml } from '@/lib/preview/html-normalize';
+import { normalizeHtmlContent } from '@/lib/preview/html-normalize';
 import { reconcileOverflowBreaks } from '@/lib/preview/editor-page-layout';
 
 interface PreviewModalProps {
@@ -78,20 +78,27 @@ export function PreviewModal({
   const cover = useMemo(() => metaPages.find(p => p.type === 'cover'), [metaPages]);
   const backCover = useMemo(() => metaPages.find(p => p.type === 'back-cover'), [metaPages]);
 
-  // COMBINED CONTENT HTML
-  const contentHtml = useMemo(() => {
-    if (!project.document.chapters?.length) return '';
-    
-    const sorted = [...project.document.chapters].sort((a, b) => a.order - b.order);
-    const fragments = sorted.map((chapter) => {
-      const html = chapterBlocksToHtml(chapter.blocks);
-      const normalized = normalizeDocumentHtml(html);
-      return reconcileOverflowBreaks(normalized, paginationConfig);
-    });
+// COMBINED CONTENT HTML
+const contentHtml = useMemo(() => {
+  if (!project.document.chapters?.length) return '';
+  
+  const sorted = [...project.document.chapters].sort((a, b) => a.order - b.order);
 
-    // Join chapters with a manual page break to preserve chapter separation truth
-    return fragments.join('<hr data-page-break="manual">');
-  }, [project.document.chapters, paginationConfig]);
+  const fragments = sorted.map((chapter) => {
+    const rawHtml = chapterBlocksToHtml(chapter.blocks);
+    const normalized = normalizeHtmlContent(rawHtml);
+    return reconcileOverflowBreaks(normalized, paginationConfig);
+  });
+
+  // Separar capítulos con un salto manual, igual que antes
+  return fragments.join('<hr data-page-break="manual">');
+}, [project.document.chapters, paginationConfig]);
+
+// LOG de depuración (fuera del useMemo)
+useEffect(() => {
+  // Recortamos para no petar la consola
+  console.log('[Preview] contentHtml (truncated):', contentHtml.slice(0, 2000));
+}, [contentHtml]);
 
   // LOGICAL PAGE INDEXING
   const firstContentIndex = 1;

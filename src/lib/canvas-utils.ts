@@ -1,21 +1,21 @@
-// Importación dinámica de Fabric.js para compatibilidad con Next.js
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let fabricModule: any = null;
 
-// Función para obtener la instancia de Fabric.js
-export async function getFabric() {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getFabric(): Promise<any> {
   if (fabricModule) return fabricModule;
   try {
     const mod = await import('fabric');
     console.info('[getFabric] Fabric module imported:', Object.keys(mod));
-    // En Fabric 7 ESM, las clases están en el módulo directamente.
-    // Algunos bundlers podrían poner todo en .default
-    fabricModule = mod.fabric || (mod.default && mod.default.fabric) ? (mod.fabric || mod.default.fabric) : mod;
-    
-    // Si fabricModule.default existe y tiene lo que necesitamos, usarlo (común en algunos entornos Next.js)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const m = mod as any;
+    fabricModule =
+      m.fabric || (m.default && m.default.fabric)
+        ? m.fabric || m.default?.fabric
+        : m;
     if (fabricModule.default && (fabricModule.default.Canvas || fabricModule.default.Textbox)) {
       fabricModule = fabricModule.default;
     }
-    
     return fabricModule;
   } catch (error) {
     console.error('[getFabric] Error importing fabric:', error);
@@ -28,25 +28,25 @@ export const CANVAS_HEIGHT = 600;
 export const GRID_SIZE = 10;
 export const SNAP_THRESHOLD = 10;
 
-/**
- * Crear un canvas con Fabric.js
- */
 export async function createFabricCanvas(
   canvasElement: HTMLCanvasElement,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   options?: any
-) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<any> {
   const fabric = await getFabric();
-  // Intentar usar fabric.Canvas o fabric.Canvas (clase)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const CanvasClass = fabric.Canvas || (fabric as any).default?.Canvas;
+
+  // Siempre 400×600 internamente — el escalado visual lo hace CSS en Canvas.tsx
   const canvas = new CanvasClass(canvasElement, {
-    width: CANVAS_WIDTH,
-    height: CANVAS_HEIGHT,
     backgroundColor: '#ffffff',
     preserveObjectStacking: true,
     ...options,
+    width: CANVAS_WIDTH,
+    height: CANVAS_HEIGHT,
   });
 
-  // Enable object clipping to canvas boundaries
   canvas.clipPath = new fabric.Rect({
     left: 0,
     top: 0,
@@ -58,23 +58,24 @@ export async function createFabricCanvas(
   return canvas;
 }
 
-/**
- * Agregar texto al canvas
- */
-export async function addTextToCanvas(canvas: any, text: string, options?: any) {
+export async function addTextToCanvas(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  canvas: any,
+  text: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  options?: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<any> {
   const fabric = await getFabric();
-  // En Fabric 7, Textbox es el nombre preferido
   const TextboxClass = fabric.Textbox || fabric.IText || fabric.Text;
-  
   if (!TextboxClass) {
     console.error('[addTextToCanvas] Textbox class not found in fabric module', fabric);
     throw new Error('Fabric Textbox class not found');
   }
-
   const fabricText = new TextboxClass(text, {
-    left: canvas.width / 2,
-    top: canvas.height / 2,
-    width: canvas.width * 0.8,
+    left: CANVAS_WIDTH / 2,
+    top: CANVAS_HEIGHT / 2,
+    width: CANVAS_WIDTH * 0.8,
     fontSize: 24,
     fontFamily: 'Arial',
     fill: '#000000',
@@ -83,21 +84,15 @@ export async function addTextToCanvas(canvas: any, text: string, options?: any) 
     textAlign: 'center',
     ...options,
   });
-  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (options?.id) (fabricText as any).id = options.id;
-
   canvas.add(fabricText);
   canvas.setActiveObject(fabricText);
-  
   if (canvas.requestRenderAll) canvas.requestRenderAll();
   else canvas.renderAll();
-
   return fabricText;
 }
 
-/**
- * Agregar imagen al canvas
- */
 export async function addImageToCanvas(canvas: any, imageUrl: string, options?: any) {
   const fabric = await getFabric();
 
@@ -105,28 +100,32 @@ export async function addImageToCanvas(canvas: any, imageUrl: string, options?: 
   console.info('[addImageToCanvas] Fabric Image class:', fabric.Image);
 
   try {
-    // Fabric.js 7+ uses Promise-based API
-    const result = fabric.Image.fromURL(
-      imageUrl,
-      { crossOrigin: 'anonymous' }
-    );
-
+    const result = fabric.Image.fromURL(imageUrl, { crossOrigin: 'anonymous' });
     console.info('[addImageToCanvas] fromURL returned:', result);
 
-    // Handle both Promise and callback-based returns
     const img = result instanceof Promise ? await result : result;
-
     console.info('[addImageToCanvas] Image loaded, img:', img);
 
-    const maxWidth = canvas.width * 0.8;
-    const maxHeight = canvas.height * 0.8;
-    const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
+    // ── FIX: en Fabric 7 las dimensiones están en el HTMLImageElement subyacente,
+    //         no en img.width / img.height (que son undefined antes de set()).
+    const el: HTMLImageElement | null = typeof img.getElement === 'function'
+      ? img.getElement()
+      : null;
+
+    const naturalW = el?.naturalWidth  ?? img.width  ?? CANVAS_WIDTH;
+    const naturalH = el?.naturalHeight ?? img.height ?? CANVAS_HEIGHT;
+
+    console.info('[addImageToCanvas] natural dimensions:', naturalW, naturalH);
+
+    const maxWidth  = CANVAS_WIDTH  * 0.9;
+    const maxHeight = CANVAS_HEIGHT * 0.9;
+    const scale = Math.min(maxWidth / naturalW, maxHeight / naturalH);
 
     img.set({
-      left: canvas.width / 2,
-      top: canvas.height / 2,
-      scaleX: scale,
-      scaleY: scale,
+      left:    CANVAS_WIDTH  / 2,
+      top:     CANVAS_HEIGHT / 2,
+      scaleX:  scale,
+      scaleY:  scale,
       originX: 'center',
       originY: 'center',
       ...options,
@@ -138,7 +137,8 @@ export async function addImageToCanvas(canvas: any, imageUrl: string, options?: 
     canvas.setActiveObject(img);
     if (canvas.requestRenderAll) canvas.requestRenderAll();
     else canvas.renderAll();
-    console.info('[addImageToCanvas] Image added and rendered');
+
+    console.info('[addImageToCanvas] Image added and rendered, scale:', scale);
     return img;
   } catch (error) {
     console.error('[addImageToCanvas] Error:', error);
@@ -146,27 +146,17 @@ export async function addImageToCanvas(canvas: any, imageUrl: string, options?: 
   }
 }
 
-/**
- * Exportar canvas a imagen
- */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function exportCanvasToImage(canvas: any, format: 'png' | 'jpg' = 'png'): string {
-  return canvas.toDataURL({
-    format,
-    quality: 0.95,
-    multiplier: 2,
-  });
+  return canvas.toDataURL({ format, quality: 0.95, multiplier: 2 });
 }
 
-/**
- * Exportar canvas a JSON
- */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function exportCanvasToJSON(canvas: any): string {
   return JSON.stringify(canvas.toJSON());
 }
 
-/**
- * Cargar canvas desde JSON
- */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function loadCanvasFromJSON(canvas: any, json: string): Promise<void> {
   return new Promise((resolve) => {
     canvas.loadFromJSON(json, () => {
@@ -177,14 +167,8 @@ export function loadCanvasFromJSON(canvas: any, json: string): Promise<void> {
   });
 }
 
-/**
- * Limpiar y descartar el canvas
- */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function disposeCanvas(canvas: any): void {
   if (!canvas) return;
-  try {
-    canvas.dispose();
-  } catch (error) {
-    console.warn('Error disposing canvas:', error);
-  }
+  try { canvas.dispose(); } catch (error) { console.warn('Error disposing canvas:', error); }
 }

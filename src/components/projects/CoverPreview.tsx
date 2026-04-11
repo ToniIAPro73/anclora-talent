@@ -29,6 +29,8 @@ export function CoverPreview({
   const colors = previewText[palette];
   const title = surface.fields.title?.value || 'Título del proyecto';
   const subtitle = surface.fields.subtitle?.visible ? surface.fields.subtitle.value : '';
+  const author = surface.fields.author?.visible ? surface.fields.author.value : '';
+  const opacity = surface.opacity ?? 0.4;
 
   return (
     <section className="space-y-4">
@@ -42,7 +44,8 @@ export function CoverPreview({
           <img 
             src={backgroundImageUrl} 
             alt="" 
-            className="absolute inset-0 h-full w-full object-cover opacity-40" 
+            className="absolute inset-0 h-full w-full object-cover" 
+            style={{ opacity }}
           />
         )}
         
@@ -61,6 +64,14 @@ export function CoverPreview({
               data-testid="cover-preview-subtitle"
             >
               {subtitle}
+            </p>
+          )}
+          {author && (
+            <p 
+              className="mt-8 text-xs font-bold uppercase tracking-[0.2em]" 
+              style={{ color: colors.primary }}
+            >
+              {author}
             </p>
           )}
         </div>

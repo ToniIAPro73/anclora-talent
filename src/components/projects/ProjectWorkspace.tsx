@@ -212,7 +212,7 @@ export function ProjectWorkspace({
                   Máx. 50MB
                 </span>
               </div>
-              <form action={saveProjectDocumentAction} className="space-y-6" data-testid="project-metadata-form">
+              <form key={project.updatedAt} action={saveProjectDocumentAction} className="space-y-6" data-testid="project-metadata-form">
                 <input type="hidden" name="projectId" value={project.id} />
                 <input type="hidden" name="chapterId" value={activeChapter.id} />
                 <input type="hidden" name="chapterTitle" value={activeChapter.title} />
@@ -295,9 +295,9 @@ export function ProjectWorkspace({
               </button>
             </div>
             {isAdvancedCover ? (
-              <AdvancedCoverEditor project={project} copy={copy} />
+              <AdvancedCoverEditor key={project.updatedAt} project={project} copy={copy} />
             ) : (
-              <CoverForm project={project} copy={copy} />
+              <CoverForm key={project.updatedAt} project={project} copy={copy} />
             )}
           </div>
         );
@@ -313,9 +313,9 @@ export function ProjectWorkspace({
               </button>
             </div>
             {isAdvancedBackCover ? (
-              <AdvancedBackCoverEditor project={project} copy={copy} />
+              <AdvancedBackCoverEditor key={project.updatedAt} project={project} copy={copy} />
             ) : (
-              <BackCoverForm project={project} copy={copy} />
+              <BackCoverForm key={project.updatedAt} project={project} copy={copy} />
             )}
           </div>
         );
