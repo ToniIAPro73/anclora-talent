@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { forwardRef } from 'react';
 import { describe, expect, test, vi, beforeEach } from 'vitest';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
@@ -9,11 +10,12 @@ const mocks = vi.hoisted(() => {
   const renderCoverImageActionMock = vi.fn();
   const renderBackCoverImageActionMock = vi.fn();
   const routerRefreshMock = vi.fn();
+  const toPngMock = vi.fn(async () => 'data:image/png;base64,dom-preview');
   const addElementMock = vi.fn();
   const clearStoreMock = vi.fn();
   const selectElementMock = vi.fn();
   const setCanvasMock = vi.fn();
-  const addImageToCanvasMock = vi.fn();
+  const coverCanvasPropsMock = vi.fn();
   const fakeCanvas = {
     width: 400,
     height: 600,
@@ -45,11 +47,12 @@ const mocks = vi.hoisted(() => {
     renderCoverImageActionMock,
     renderBackCoverImageActionMock,
     routerRefreshMock,
+    toPngMock,
     addElementMock,
     clearStoreMock,
     selectElementMock,
     setCanvasMock,
-    addImageToCanvasMock,
+    coverCanvasPropsMock,
     fakeCanvas,
     canvasStoreState,
     useCanvasStoreMock,
@@ -74,15 +77,11 @@ vi.mock('@/lib/canvas-store', () => ({
 vi.mock('@/lib/canvas-utils', () => ({
   CANVAS_WIDTH: 400,
   CANVAS_HEIGHT: 600,
-  addImageToCanvas: (...args: unknown[]) => mocks.addImageToCanvasMock(...args),
   addTextToCanvas: vi.fn(),
-  getFabricImageNaturalSize: (image: { getElement?: () => HTMLImageElement | null; width?: number; height?: number }) => {
-    const element = typeof image.getElement === 'function' ? image.getElement() : null;
-    return {
-      width: element?.naturalWidth ?? image.width ?? 400,
-      height: element?.naturalHeight ?? image.height ?? 600,
-    };
-  },
+}));
+
+vi.mock('html-to-image', () => ({
+  toPng: (...args: unknown[]) => mocks.toPngMock(...args),
 }));
 
 vi.mock('@/lib/canvas-guides', () => ({
@@ -108,10 +107,14 @@ vi.mock('./advanced-surface-utils', () => ({
 }));
 
 vi.mock('./Canvas', () => ({
-  CoverCanvas: ({ onCanvasReady }: { onCanvasReady: (canvas: typeof mocks.fakeCanvas) => void }) => {
+  CoverCanvas: forwardRef(function CoverCanvasMock(
+    { onCanvasReady, ...props }: { onCanvasReady: (canvas: typeof mocks.fakeCanvas) => void },
+    ref: unknown,
+  ) {
+    mocks.coverCanvasPropsMock(props);
     onCanvasReady(mocks.fakeCanvas);
-    return <div data-testid="cover-canvas" />;
-  },
+    return <div ref={ref} data-testid="cover-canvas" />;
+  }),
 }));
 
 vi.mock('./Toolbar', () => ({
@@ -179,11 +182,12 @@ describe('AdvancedSurfaceEditor', () => {
     mocks.renderCoverImageActionMock.mockReset();
     mocks.renderBackCoverImageActionMock.mockReset();
     mocks.routerRefreshMock.mockReset();
+    mocks.toPngMock.mockReset();
     mocks.addElementMock.mockReset();
     mocks.clearStoreMock.mockReset();
     mocks.selectElementMock.mockReset();
     mocks.setCanvasMock.mockReset();
-    mocks.addImageToCanvasMock.mockReset();
+    mocks.coverCanvasPropsMock.mockReset();
     mocks.fakeCanvas.clear.mockClear();
     mocks.fakeCanvas.set.mockClear();
     mocks.fakeCanvas.on.mockClear();
@@ -193,16 +197,7 @@ describe('AdvancedSurfaceEditor', () => {
     mocks.canvasStoreState.pushHistory.mockClear();
   });
 
-  test('requests a cover-fit background image so the canvas fills edge to edge', async () => {
-    const backgroundObject = {
-      id: 'cover-background-image',
-      width: undefined,
-      height: undefined,
-      opacity: 1,
-      set: vi.fn(),
-    };
-    mocks.addImageToCanvasMock.mockResolvedValue(backgroundObject);
-
+  test('passes the persisted cover background to the DOM canvas layer with cover-like semantics', async () => {
     const project = makeProject();
     project.cover.backgroundImageUrl = 'https://example.com/cover.jpg';
     project.cover.surfaceState = {
@@ -213,37 +208,19 @@ describe('AdvancedSurfaceEditor', () => {
     render(<AdvancedSurfaceEditor surface="cover" project={project} copy={copy} />);
 
     await waitFor(() => {
-      expect(mocks.addImageToCanvasMock).toHaveBeenCalledTimes(1);
+      expect(mocks.coverCanvasPropsMock).toHaveBeenCalledTimes(1);
     });
 
-    expect(mocks.addImageToCanvasMock).toHaveBeenCalledWith(
-      mocks.fakeCanvas,
-      'https://example.com/cover.jpg',
+    expect(mocks.coverCanvasPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        attachToCanvas: false,
-        id: 'cover-background-image',
-        fit: 'cover',
-        targetWidth: 400,
-        targetHeight: 600,
-        left: 200,
-        top: 300,
-        originX: 'center',
-        originY: 'center',
-        opacity: 0.58,
+        backgroundImageUrl: 'https://example.com/cover.jpg',
+        backgroundImageOpacity: 0.58,
+        backgroundColor: '#0b133f',
       }),
     );
   });
 
-  test('uses the persisted back-cover background opacity instead of the old hardcoded value', async () => {
-    const backgroundObject = {
-      id: 'back-cover-background-image',
-      width: undefined,
-      height: undefined,
-      opacity: 0.41,
-      set: vi.fn(),
-    };
-    mocks.addImageToCanvasMock.mockResolvedValue(backgroundObject);
-
+  test('passes the persisted back-cover background opacity to the DOM canvas layer', async () => {
     const project = makeProject();
     project.backCover.backgroundImageUrl = 'https://example.com/back-cover.jpg';
     project.backCover.surfaceState = {
@@ -254,19 +231,14 @@ describe('AdvancedSurfaceEditor', () => {
     render(<AdvancedSurfaceEditor surface="back-cover" project={project} copy={copy} />);
 
     await waitFor(() => {
-      expect(mocks.addImageToCanvasMock).toHaveBeenCalledTimes(1);
+      expect(mocks.coverCanvasPropsMock).toHaveBeenCalledTimes(1);
     });
 
-    expect(mocks.addImageToCanvasMock).toHaveBeenCalledWith(
-      mocks.fakeCanvas,
-      'https://example.com/back-cover.jpg',
+    expect(mocks.coverCanvasPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        attachToCanvas: false,
-        id: 'back-cover-background-image',
-        fit: 'cover',
-        targetWidth: 400,
-        targetHeight: 600,
-        opacity: 0.41,
+        backgroundImageUrl: 'https://example.com/back-cover.jpg',
+        backgroundImageOpacity: 0.41,
+        backgroundColor: '#0b133f',
       }),
     );
   });
@@ -282,6 +254,7 @@ describe('AdvancedSurfaceEditor', () => {
       expect(mocks.renderCoverImageActionMock).toHaveBeenCalledTimes(1);
     });
 
+    expect(mocks.toPngMock).toHaveBeenCalledTimes(1);
     expect(mocks.routerRefreshMock).toHaveBeenCalledTimes(1);
   });
 
@@ -296,6 +269,7 @@ describe('AdvancedSurfaceEditor', () => {
       expect(mocks.renderBackCoverImageActionMock).toHaveBeenCalledTimes(1);
     });
 
+    expect(mocks.toPngMock).toHaveBeenCalledTimes(1);
     expect(mocks.routerRefreshMock).toHaveBeenCalledTimes(1);
   });
 });

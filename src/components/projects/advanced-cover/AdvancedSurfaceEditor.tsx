@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Loader2, Sparkles } from 'lucide-react';
+import { toPng } from 'html-to-image';
 import { CoverCanvas } from './Canvas';
 import { CoverToolbar } from './Toolbar';
 import { CoverPropertyPanel } from './PropertyPanel';
 import { renderBackCoverImageAction, renderCoverImageAction } from '@/lib/projects/actions';
 import { useCanvasStore } from '@/lib/canvas-store';
-import { addImageToCanvas, addTextToCanvas } from '@/lib/canvas-utils';
+import { addTextToCanvas } from '@/lib/canvas-utils';
 import { createGuideManager } from '@/lib/canvas-guides';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import { createSurfaceSnapshotFromProject } from './advanced-surface-utils';
@@ -26,7 +27,6 @@ type AdvancedSurfaceEditorProps = {
 type FabricCanvasLike = {
   width?: number;
   height?: number;
-  backgroundImage?: FabricObjectLike | null;
   clear: () => void;
   set: (props: Record<string, unknown>) => void;
   on: (event: string, handler: (event: FabricEvent) => void | Promise<void>) => void;
@@ -73,6 +73,7 @@ export function AdvancedSurfaceEditor({
   const loadingRef = useRef(false);
   const listenersAttachedRef = useRef(false);
   const guideManagerRef = useRef<GuideManagerLike | null>(null);
+  const surfaceNodeRef = useRef<HTMLDivElement>(null);
 
   const surfaceSnapshot = useMemo(
     () => createSurfaceSnapshotFromProject(surface, project),
@@ -90,53 +91,13 @@ export function AdvancedSurfaceEditor({
         if (guideManagerRef.current) {
           guideManagerRef.current.clearGuides();
         }
-        fabricCanvas.backgroundImage = null;
         fabricCanvas.clear();
         selectElement(null);
         listenersAttachedRef.current = false;
 
         const canvasWidth = CANVAS_WIDTH;   // 400
         const canvasHeight = CANVAS_HEIGHT; // 600
-        const bgColors: Record<string, string> = {
-          obsidian: '#0b133f',
-          teal: '#124a50',
-          sand: '#f2e3b3',
-        };
-        const palette =
-          surface === 'cover'
-            ? project.cover.palette
-            : 'obsidian';
-
-        fabricCanvas.set({ backgroundColor: bgColors[palette] || '#0b133f' });
-
-        const backgroundImageUrl =
-          surface === 'cover'
-            ? project.cover.backgroundImageUrl
-            : project.backCover.backgroundImageUrl;
-
-        if (backgroundImageUrl) {
-          try {
-            const backgroundOpacity = surfaceSnapshot.opacity ?? (surface === 'back-cover' ? 0.24 : 1);
-            const fabricImg = await addImageToCanvas(fabricCanvas, backgroundImageUrl, {
-              attachToCanvas: false,
-              selectable: false,
-              evented: false,
-              id: `${surface}-background-image`,
-              left: canvasWidth / 2,
-              top: canvasHeight / 2,
-              originX: 'center',
-              originY: 'center',
-              fit: 'cover',
-              targetWidth: canvasWidth,
-              targetHeight: canvasHeight,
-              opacity: backgroundOpacity,
-            });
-            fabricCanvas.backgroundImage = fabricImg;
-            fabricCanvas.requestRenderAll();
-          } catch (error) {
-            console.error('[AdvancedSurfaceEditor] Error loading background image', error);
-          }
-        }
+        fabricCanvas.set({ backgroundColor: 'rgba(0,0,0,0)' });
 
         const textColor =
           surface === 'cover'
@@ -286,7 +247,7 @@ export function AdvancedSurfaceEditor({
         loadingRef.current = false;
       }
     },
-    [addElement, clear, project, selectElement, surface, surfaceSnapshot.fields, surfaceSnapshot.layers, surfaceSnapshot.opacity],
+    [addElement, clear, project, selectElement, surface, surfaceSnapshot.fields, surfaceSnapshot.layers],
   );
 
   const handleCanvasReady = useCallback(
@@ -311,11 +272,18 @@ export function AdvancedSurfaceEditor({
     if (!canvas) return;
 
     startRenderTransition(async () => {
-      const dataUrl = canvas.toDataURL({
-        format: 'png',
-        quality: 1,
-        multiplier: 2,
-      });
+      const dataUrl = surfaceNodeRef.current
+        ? await toPng(surfaceNodeRef.current, {
+            cacheBust: true,
+            pixelRatio: 2,
+            width: CANVAS_WIDTH,
+            height: CANVAS_HEIGHT,
+          })
+        : canvas.toDataURL({
+            format: 'png',
+            quality: 1,
+            multiplier: 2,
+          });
 
       const formData = new FormData();
       formData.set('projectId', project.id);
@@ -359,7 +327,20 @@ export function AdvancedSurfaceEditor({
 
       <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
         <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-8 shadow-[var(--shadow-strong)] flex flex-col items-center justify-center min-h-[700px]">
-          <CoverCanvas onCanvasReady={handleCanvasReady} initialPalette={surface === 'cover' ? project.cover.palette : 'obsidian'} />
+          <CoverCanvas
+            ref={surfaceNodeRef}
+            onCanvasReady={handleCanvasReady}
+            initialPalette={surface === 'cover' ? project.cover.palette : 'obsidian'}
+            backgroundColor={(surface === 'cover'
+              ? {
+                  obsidian: '#0b133f',
+                  teal: '#124a50',
+                  sand: '#f2e3b3',
+                }[project.cover.palette]
+              : '#0b133f') ?? '#0b133f'}
+            backgroundImageUrl={surface === 'cover' ? project.cover.backgroundImageUrl : project.backCover.backgroundImageUrl}
+            backgroundImageOpacity={surfaceSnapshot.opacity ?? (surface === 'back-cover' ? 0.24 : 1)}
+          />
 
           {renderedImageUrl && (
             <div className="mt-8 p-4 rounded-2xl bg-[var(--surface-soft)] border border-[var(--border-subtle)] w-full max-w-md">
