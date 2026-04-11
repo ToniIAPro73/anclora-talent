@@ -74,11 +74,36 @@ export function AdvancedSurfaceEditor({
   const listenersAttachedRef = useRef(false);
   const guideManagerRef = useRef<GuideManagerLike | null>(null);
   const surfaceNodeRef = useRef<HTMLDivElement>(null);
-
   const surfaceSnapshot = useMemo(
     () => createSurfaceSnapshotFromProject(surface, project),
     [surface, project],
   );
+  const backgroundElementRef = useRef<{
+    id: string;
+    type: 'image';
+    object: {
+      id: string;
+      type: string;
+      opacity: number;
+      isBackgroundProxy: boolean;
+      set: (props: Record<string, unknown>) => void;
+      removeFromCanvas: () => void;
+      bringForward: () => void;
+      sendBackwards: () => void;
+    };
+    properties: Record<string, unknown>;
+  } | null>(null);
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(
+    surface === 'cover' ? project.cover.backgroundImageUrl : project.backCover.backgroundImageUrl,
+  );
+  const [backgroundOpacity, setBackgroundOpacity] = useState<number>(
+    surfaceSnapshot.opacity ?? (surface === 'back-cover' ? 0.24 : 1),
+  );
+
+  useEffect(() => {
+    setBackgroundImageUrl(surface === 'cover' ? project.cover.backgroundImageUrl : project.backCover.backgroundImageUrl);
+    setBackgroundOpacity(surfaceSnapshot.opacity ?? (surface === 'back-cover' ? 0.24 : 1));
+  }, [project, surface, surfaceSnapshot.opacity]);
 
   const loadSurfaceData = useCallback(
     async (fabricCanvas: FabricCanvasLike) => {
@@ -94,10 +119,41 @@ export function AdvancedSurfaceEditor({
         fabricCanvas.clear();
         selectElement(null);
         listenersAttachedRef.current = false;
+        backgroundElementRef.current = null;
 
         const canvasWidth = CANVAS_WIDTH;   // 400
         const canvasHeight = CANVAS_HEIGHT; // 600
         fabricCanvas.set({ backgroundColor: 'rgba(0,0,0,0)' });
+
+        if (backgroundImageUrl) {
+          const backgroundId = `${surface}-background-image`;
+          const backgroundElement = {
+            id: backgroundId,
+            type: 'image' as const,
+            object: {
+              id: backgroundId,
+              type: 'image',
+              opacity: backgroundOpacity,
+              isBackgroundProxy: true,
+              set: (props: Record<string, unknown>) => {
+                if (typeof props.opacity === 'number') {
+                  setBackgroundOpacity(props.opacity);
+                  backgroundElement.object.opacity = props.opacity;
+                }
+              },
+              removeFromCanvas: () => {
+                setBackgroundImageUrl(null);
+                backgroundElementRef.current = null;
+              },
+              bringForward: () => {},
+              sendBackwards: () => {},
+            },
+            properties: { opacity: backgroundOpacity },
+          };
+
+          backgroundElementRef.current = backgroundElement;
+          addElement(backgroundElement);
+        }
 
         const textColor =
           surface === 'cover'
@@ -217,7 +273,11 @@ export function AdvancedSurfaceEditor({
           });
 
           fabricCanvas.on('selection:cleared', () => {
-            selectElement(null);
+            if (backgroundElementRef.current) {
+              selectElement(backgroundElementRef.current);
+            } else {
+              selectElement(null);
+            }
             guideManagerRef.current?.hideGuidesWithAnimation();
           });
 
@@ -240,6 +300,8 @@ export function AdvancedSurfaceEditor({
         if (firstTextElement) {
           fabricCanvas.setActiveObject(firstTextElement.object);
           selectElement(firstTextElement);
+        } else if (backgroundElementRef.current) {
+          selectElement(backgroundElementRef.current);
         }
 
         useCanvasStore.getState().pushHistory();
@@ -247,7 +309,7 @@ export function AdvancedSurfaceEditor({
         loadingRef.current = false;
       }
     },
-    [addElement, clear, project, selectElement, surface, surfaceSnapshot.fields, surfaceSnapshot.layers],
+    [addElement, backgroundImageUrl, backgroundOpacity, clear, project, selectElement, surface, surfaceSnapshot.fields, surfaceSnapshot.layers],
   );
 
   const handleCanvasReady = useCallback(
@@ -338,8 +400,8 @@ export function AdvancedSurfaceEditor({
                   sand: '#f2e3b3',
                 }[project.cover.palette]
               : '#0b133f') ?? '#0b133f'}
-            backgroundImageUrl={surface === 'cover' ? project.cover.backgroundImageUrl : project.backCover.backgroundImageUrl}
-            backgroundImageOpacity={surfaceSnapshot.opacity ?? (surface === 'back-cover' ? 0.24 : 1)}
+            backgroundImageUrl={backgroundImageUrl}
+            backgroundImageOpacity={backgroundOpacity}
           />
 
           {renderedImageUrl && (

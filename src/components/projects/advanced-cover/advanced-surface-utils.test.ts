@@ -32,4 +32,34 @@ describe('advanced-surface-utils', () => {
     expect(snapshot.fields.body?.value).toBe('Texto de contra');
     expect(snapshot.fields.authorBio?.value).toBe('Bio');
   });
+
+  it('rebuilds visible cover layers when a persisted surface state contains an empty layers array', () => {
+    const snapshot = createSurfaceSnapshotFromProject('cover', {
+      document: { author: 'Toni', title: 'Libro' },
+      cover: {
+        title: 'Nunca mas en la sombra',
+        subtitle: '',
+        surfaceState: {
+          surface: 'cover',
+          layout: { kind: 'stacked-center' },
+          fields: {
+            title: { value: 'Nunca mas en la sombra', visible: true },
+            subtitle: { value: '', visible: false },
+            author: { value: 'Toni', visible: true },
+          },
+          layers: [],
+          opacity: 0.47,
+        },
+      },
+      backCover: {
+        title: 'Contra',
+        body: 'Texto de contra',
+        authorBio: 'Bio',
+        surfaceState: undefined,
+      },
+    });
+
+    expect(snapshot.layers?.some((layer) => layer.fieldKey === 'title')).toBe(true);
+    expect(snapshot.layers?.some((layer) => layer.fieldKey === 'author')).toBe(true);
+  });
 });

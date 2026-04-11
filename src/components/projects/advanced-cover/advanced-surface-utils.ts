@@ -50,7 +50,7 @@ export function createSurfaceSnapshotFromProject(
 
     return {
       ...state,
-      layers: state.layers ?? buildInitialSurfaceLayers('cover', state.fields),
+      layers: state.layers && state.layers.length > 0 ? state.layers : buildInitialSurfaceLayers('cover', state.fields),
     };
   }
 
@@ -67,6 +67,6 @@ export function createSurfaceSnapshotFromProject(
 
   return {
     ...state,
-    layers: state.layers ?? buildInitialSurfaceLayers('back-cover', state.fields),
+    layers: state.layers && state.layers.length > 0 ? state.layers : buildInitialSurfaceLayers('back-cover', state.fields),
   };
 }
