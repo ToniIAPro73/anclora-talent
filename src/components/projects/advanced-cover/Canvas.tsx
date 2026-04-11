@@ -1,14 +1,23 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { forwardRef, useEffect, useRef } from 'react';
 import { createFabricCanvas, CANVAS_WIDTH, CANVAS_HEIGHT } from '@/lib/canvas-utils';
 
 type CoverCanvasProps = {
   onCanvasReady?: (canvas: unknown) => void;
   initialPalette?: string;
+  backgroundColor?: string;
+  backgroundImageUrl?: string | null;
+  backgroundImageOpacity?: number;
 };
 
-export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: CoverCanvasProps) => {
+export const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(function CoverCanvas({
+  onCanvasReady,
+  initialPalette = 'obsidian',
+  backgroundColor = '#0b133f',
+  backgroundImageUrl,
+  backgroundImageOpacity = 1,
+}, surfaceRef) {
   const outerRef        = useRef<HTMLDivElement>(null);
   const scalerRef       = useRef<HTMLDivElement>(null);
   const canvasRef       = useRef<HTMLCanvasElement>(null);
@@ -52,7 +61,6 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
       try { (fabricCanvasRef.current as { dispose: () => void } | null)?.dispose(); }
       catch (e) { console.warn('[CoverCanvas] dispose error:', e); }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ResizeObserver — reescala cuando el contenedor cambia de ancho.
@@ -70,7 +78,6 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
     });
     ro.observe(outer);
     return () => ro.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   void initialPalette;
@@ -105,13 +112,42 @@ export const CoverCanvas = ({ onCanvasReady, initialPalette = 'obsidian' }: Cove
             height: `${CANVAS_HEIGHT}px`,
           }}
         >
-          <canvas
-            ref={canvasRef}
-            data-testid="fabric-canvas"
-            style={{ display: 'block' }}
-          />
+          <div
+            ref={surfaceRef}
+            style={{
+              position: 'relative',
+              width: '100%',
+              height: '100%',
+              overflow: 'hidden',
+              background: backgroundColor,
+            }}
+          >
+            {backgroundImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={backgroundImageUrl}
+                alt=""
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  opacity: backgroundImageOpacity,
+                }}
+              />
+            ) : null}
+            <canvas
+              ref={canvasRef}
+              data-testid="fabric-canvas"
+              style={{ display: 'block', position: 'relative', zIndex: 1, background: 'transparent' }}
+            />
+          </div>
         </div>
       </div>
     </div>
   );
-};
+});
+
+CoverCanvas.displayName = 'CoverCanvas';

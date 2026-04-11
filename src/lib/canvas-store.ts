@@ -66,8 +66,12 @@ export const useCanvasStore = create<CanvasStore>((set: any, get: any) => ({
     const state = get();
     const element = state.elements.find((el: CanvasElement) => el.id === id);
     if (element && state.canvas) {
-      state.canvas.remove(element.object);
-      state.canvas.renderAll();
+      if (typeof element.object?.removeFromCanvas === 'function') {
+        element.object.removeFromCanvas();
+      } else {
+        state.canvas.remove(element.object);
+        state.canvas.renderAll();
+      }
       set((state: CanvasStore) => ({
         elements: state.elements.filter((el: CanvasElement) => el.id !== id),
         selectedElement: state.selectedElement?.id === id ? null : state.selectedElement,
@@ -86,12 +90,12 @@ export const useCanvasStore = create<CanvasStore>((set: any, get: any) => ({
       };
       
       // Apply properties to fabric object directly
-      element.object.set(properties);
-      element.object.set('dirty', true);
+      element.object.set?.(properties);
+      element.object.set?.('dirty', true);
       
       // Special handling for text related properties that might need re-render or re-calc
       if (properties.fontSize || properties.fontFamily || properties.fontWeight || properties.text || properties.textAlign) {
-        element.object.setCoords();
+        element.object.setCoords?.();
       }
       
       state.canvas?.requestRenderAll();

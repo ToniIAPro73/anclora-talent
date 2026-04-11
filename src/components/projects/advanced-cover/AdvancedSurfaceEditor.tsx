@@ -3,17 +3,23 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Loader2, Sparkles } from 'lucide-react';
+import { toPng } from 'html-to-image';
 import { CoverCanvas } from './Canvas';
 import { CoverToolbar } from './Toolbar';
 import { CoverPropertyPanel } from './PropertyPanel';
-import { renderBackCoverImageAction, renderCoverImageAction } from '@/lib/projects/actions';
+import {
+  renderBackCoverImageAction,
+  renderCoverImageAction,
+  saveBackCoverAction,
+  saveProjectCoverAction,
+} from '@/lib/projects/actions';
 import { useCanvasStore } from '@/lib/canvas-store';
-import { addImageToCanvas, addTextToCanvas } from '@/lib/canvas-utils';
+import { addTextToCanvas } from '@/lib/canvas-utils';
 import { createGuideManager } from '@/lib/canvas-guides';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import { createSurfaceSnapshotFromProject } from './advanced-surface-utils';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '@/lib/canvas-utils';
-import type { SurfaceKind } from '@/lib/projects/cover-surface';
+import { normalizeSurfaceState, type SurfaceKind, type SurfaceState } from '@/lib/projects/cover-surface';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 
@@ -72,11 +78,37 @@ export function AdvancedSurfaceEditor({
   const loadingRef = useRef(false);
   const listenersAttachedRef = useRef(false);
   const guideManagerRef = useRef<GuideManagerLike | null>(null);
-
+  const surfaceNodeRef = useRef<HTMLDivElement>(null);
   const surfaceSnapshot = useMemo(
     () => createSurfaceSnapshotFromProject(surface, project),
     [surface, project],
   );
+  const backgroundElementRef = useRef<{
+    id: string;
+    type: 'image';
+    object: {
+      id: string;
+      type: string;
+      opacity: number;
+      isBackgroundProxy: boolean;
+      set: (props: Record<string, unknown>) => void;
+      removeFromCanvas: () => void;
+      bringForward: () => void;
+      sendBackwards: () => void;
+    };
+    properties: Record<string, unknown>;
+  } | null>(null);
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(
+    surface === 'cover' ? project.cover.backgroundImageUrl : project.backCover.backgroundImageUrl,
+  );
+  const [backgroundOpacity, setBackgroundOpacity] = useState<number>(
+    surfaceSnapshot.opacity ?? (surface === 'back-cover' ? 0.24 : 1),
+  );
+
+  useEffect(() => {
+    setBackgroundImageUrl(surface === 'cover' ? project.cover.backgroundImageUrl : project.backCover.backgroundImageUrl);
+    setBackgroundOpacity(surfaceSnapshot.opacity ?? (surface === 'back-cover' ? 0.24 : 1));
+  }, [project, surface, surfaceSnapshot.opacity]);
 
   const loadSurfaceData = useCallback(
     async (fabricCanvas: FabricCanvasLike) => {
@@ -92,57 +124,40 @@ export function AdvancedSurfaceEditor({
         fabricCanvas.clear();
         selectElement(null);
         listenersAttachedRef.current = false;
+        backgroundElementRef.current = null;
 
         const canvasWidth = CANVAS_WIDTH;   // 400
         const canvasHeight = CANVAS_HEIGHT; // 600
-        const bgColors: Record<string, string> = {
-          obsidian: '#0b133f',
-          teal: '#124a50',
-          sand: '#f2e3b3',
-        };
-        const palette =
-          surface === 'cover'
-            ? project.cover.palette
-            : 'obsidian';
-
-        fabricCanvas.set({ backgroundColor: bgColors[palette] || '#0b133f' });
-
-        const backgroundImageUrl =
-          surface === 'cover'
-            ? project.cover.backgroundImageUrl
-            : project.backCover.backgroundImageUrl;
+        fabricCanvas.set({ backgroundColor: 'rgba(0,0,0,0)' });
 
         if (backgroundImageUrl) {
-          try {
-            const fabricImg = (await addImageToCanvas(fabricCanvas, backgroundImageUrl, {
-              selectable: true,
-              evented: true,
-              id: `${surface}-background-image`,
-            })) as FabricObjectLike;
-
-            const scaleX = canvasWidth / (fabricImg.width ?? canvasWidth);
-            const scaleY = canvasHeight / (fabricImg.height ?? canvasHeight);
-            const scale = Math.max(scaleX, scaleY);
-
-            fabricImg.set({
-              scaleX: scale,
-              scaleY: scale,
-              left: canvasWidth / 2,
-              top: canvasHeight / 2,
-              originX: 'center',
-              originY: 'center',
-              opacity: surface === 'back-cover' ? 0.24 : 1,
-            });
-
-            addElement({
-              id: `${surface}-background-image`,
+          const backgroundId = `${surface}-background-image`;
+          const backgroundElement = {
+            id: backgroundId,
+            type: 'image' as const,
+            object: {
+              id: backgroundId,
               type: 'image',
-              object: fabricImg,
-              properties: { opacity: fabricImg.opacity ?? 1 },
-            });
-          } catch (error) {
-            console.error('[AdvancedSurfaceEditor] Error loading background image', error);
-          }
+              opacity: backgroundOpacity,
+              isBackgroundProxy: true,
+              set: (props: Record<string, unknown>) => {
+                if (typeof props.opacity === 'number') {
+                  setBackgroundOpacity(props.opacity);
+                  backgroundElement.object.opacity = props.opacity;
+                }
+              },
+              removeFromCanvas: () => {
+                setBackgroundImageUrl(null);
+                backgroundElementRef.current = null;
+              },
+              bringForward: () => {},
+              sendBackwards: () => {},
+            },
+            properties: { opacity: backgroundOpacity },
+          };
+
+          backgroundElementRef.current = backgroundElement;
+          addElement(backgroundElement);
         }
 
         const textColor =
@@ -150,13 +165,18 @@ export function AdvancedSurfaceEditor({
             ? project.cover.accentColor || (project.cover.palette === 'sand' ? '#0b313f' : '#f2e3b3')
             : project.backCover.accentColor || '#f2e3b3';
 
+        // NOTA: Fabric.js solo acepta un nombre de fuente único (no stacks CSS).
+        // Usar 'Arial' garantiza métricas consistentes en todos los sistemas operativos
+        // y evita que el texto se trunque por fallback a Times New Roman.
+        const CANVAS_FONT = 'Arial';
+
         const fieldConfigs: Record<string, { top: number; fontSize: number; fontWeight: string | number; textAlign: 'left' | 'center'; width: number; left: number; fill?: string }> = {
           title: {
-            top: surface === 'cover' ? canvasHeight * 0.34 : canvasHeight * 0.18,
-            fontSize: surface === 'cover' ? 38 : 28,
+            top: surface === 'cover' ? canvasHeight * 0.28 : canvasHeight * 0.18,
+            fontSize: surface === 'cover' ? 32 : 28,
             fontWeight: 900,
             textAlign: surface === 'cover' ? 'center' : 'left',
-            width: canvasWidth * (surface === 'cover' ? 0.82 : 0.72),
+            width: canvasWidth * (surface === 'cover' ? 0.88 : 0.72),
             left: surface === 'cover' ? canvasWidth / 2 : canvasWidth * 0.16,
           },
           subtitle: {
@@ -210,7 +230,8 @@ export function AdvancedSurfaceEditor({
             top: config.top,
             fontSize: config.fontSize,
             fontWeight: config.fontWeight,
-            fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+            // FIX: nombre de fuente único — Fabric no soporta stacks CSS tipo 'ui-sans-serif, system-ui'
+            fontFamily: CANVAS_FONT,
             fill: config.fill ?? textColor,
             textAlign: config.textAlign,
             id: `${surface}-${layer.fieldKey}-text`,
@@ -219,7 +240,8 @@ export function AdvancedSurfaceEditor({
             originX: config.textAlign === 'center' ? 'center' : 'left',
             selectable: true,
             evented: true,
-            lineHeight: layer.fieldKey === 'body' ? 1.45 : 1.16,
+            splitByGrapheme: false,
+            lineHeight: layer.fieldKey === 'body' ? 1.45 : 1.25,
           });
 
           const nextElement = {
@@ -245,7 +267,6 @@ export function AdvancedSurfaceEditor({
             guideManagerRef.current = createGuideManager(fabricCanvas);
           }
 
-          // DESPUÉS
           fabricCanvas.on('selection:created', (e: FabricEvent) => {
             if ((e.selected?.length ?? 0) > 0) {
               const selectedFabricObj = e.selected![0];
@@ -263,7 +284,11 @@ export function AdvancedSurfaceEditor({
           });
 
           fabricCanvas.on('selection:cleared', () => {
-            selectElement(null);
+            if (backgroundElementRef.current) {
+              selectElement(backgroundElementRef.current);
+            } else {
+              selectElement(null);
+            }
             guideManagerRef.current?.hideGuidesWithAnimation();
           });
 
@@ -286,6 +311,8 @@ export function AdvancedSurfaceEditor({
         if (firstTextElement) {
           fabricCanvas.setActiveObject(firstTextElement.object);
           selectElement(firstTextElement);
+        } else if (backgroundElementRef.current) {
+          selectElement(backgroundElementRef.current);
         }
 
         useCanvasStore.getState().pushHistory();
@@ -293,7 +320,7 @@ export function AdvancedSurfaceEditor({
         loadingRef.current = false;
       }
     },
-    [addElement, clear, project, selectElement, surface, surfaceSnapshot.fields, surfaceSnapshot.layers],
+    [addElement, backgroundImageUrl, backgroundOpacity, clear, project, selectElement, surface, surfaceSnapshot.fields, surfaceSnapshot.layers],
   );
 
   const handleCanvasReady = useCallback(
@@ -318,11 +345,64 @@ export function AdvancedSurfaceEditor({
     if (!canvas) return;
 
     startRenderTransition(async () => {
-      const dataUrl = canvas.toDataURL({
-        format: 'png',
-        quality: 1,
-        multiplier: 2,
+      const currentElements = useCanvasStore.getState().elements;
+      const nextFields: SurfaceState['fields'] = { ...surfaceSnapshot.fields };
+
+      for (const fieldKey of Object.keys(surfaceSnapshot.fields) as Array<keyof SurfaceState['fields']>) {
+        const textElement = currentElements.find((element) => element.id === `${surface}-${fieldKey}-text`);
+        const nextValue =
+          typeof textElement?.object?.text === 'string'
+            ? textElement.object.text
+            : surfaceSnapshot.fields[fieldKey]?.value ?? '';
+
+        nextFields[fieldKey] = {
+          value: nextValue,
+          visible: Boolean(textElement ? nextValue.trim() : surfaceSnapshot.fields[fieldKey]?.visible),
+        };
+      }
+
+      const nextSurfaceState = normalizeSurfaceState({
+        ...surfaceSnapshot,
+        fields: nextFields,
+        opacity: backgroundOpacity,
       });
+
+      const persistenceData = new FormData();
+      persistenceData.set('projectId', project.id);
+      persistenceData.set('surfaceState', JSON.stringify(nextSurfaceState));
+
+      if (surface === 'cover') {
+        persistenceData.set('title', nextSurfaceState.fields.title?.value ?? project.cover.title);
+        persistenceData.set('subtitle', nextSurfaceState.fields.subtitle?.value ?? project.cover.subtitle);
+        persistenceData.set('palette', project.cover.palette);
+        persistenceData.set('currentBackgroundImageUrl', backgroundImageUrl ?? '');
+        persistenceData.set('currentThumbnailUrl', project.cover.thumbnailUrl ?? '');
+        persistenceData.set('showSubtitle', String(nextSurfaceState.fields.subtitle?.visible ?? false));
+        persistenceData.set('layout', project.cover.layout ?? 'centered');
+        persistenceData.set('fontFamily', project.cover.fontFamily ?? '');
+        persistenceData.set('accentColor', project.cover.accentColor ?? '');
+        await saveProjectCoverAction(persistenceData);
+      } else {
+        persistenceData.set('title', nextSurfaceState.fields.title?.value ?? project.backCover.title);
+        persistenceData.set('body', nextSurfaceState.fields.body?.value ?? project.backCover.body);
+        persistenceData.set('authorBio', nextSurfaceState.fields.authorBio?.value ?? project.backCover.authorBio);
+        persistenceData.set('accentColor', project.backCover.accentColor ?? '');
+        persistenceData.set('currentBackgroundImageUrl', backgroundImageUrl ?? '');
+        await saveBackCoverAction(persistenceData);
+      }
+
+      const dataUrl = surfaceNodeRef.current
+        ? await toPng(surfaceNodeRef.current, {
+            cacheBust: true,
+            pixelRatio: 2,
+            width: CANVAS_WIDTH,
+            height: CANVAS_HEIGHT,
+          })
+        : canvas.toDataURL({
+            format: 'png',
+            quality: 1,
+            multiplier: 2,
+          });
 
       const formData = new FormData();
       formData.set('projectId', project.id);
@@ -366,7 +446,20 @@ export function AdvancedSurfaceEditor({
 
       <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
         <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-8 shadow-[var(--shadow-strong)] flex flex-col items-center justify-center min-h-[700px]">
-          <CoverCanvas onCanvasReady={handleCanvasReady} initialPalette={surface === 'cover' ? project.cover.palette : 'obsidian'} />
+          <CoverCanvas
+            ref={surfaceNodeRef}
+            onCanvasReady={handleCanvasReady}
+            initialPalette={surface === 'cover' ? project.cover.palette : 'obsidian'}
+            backgroundColor={(surface === 'cover'
+              ? {
+                  obsidian: '#0b133f',
+                  teal: '#124a50',
+                  sand: '#f2e3b3',
+                }[project.cover.palette]
+              : '#0b133f') ?? '#0b133f'}
+            backgroundImageUrl={backgroundImageUrl}
+            backgroundImageOpacity={backgroundOpacity}
+          />
 
           {renderedImageUrl && (
             <div className="mt-8 p-4 rounded-2xl bg-[var(--surface-soft)] border border-[var(--border-subtle)] w-full max-w-md">

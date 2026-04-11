@@ -28,6 +28,59 @@ export const CANVAS_HEIGHT = 600;
 export const GRID_SIZE = 10;
 export const SNAP_THRESHOLD = 10;
 
+type FabricImageLike = {
+  getElement?: () => HTMLImageElement | null;
+  width?: number;
+  height?: number;
+  set?: (props: Record<string, unknown>) => void;
+  setCoords?: () => void;
+};
+
+type AddImageOptions = {
+  id?: string;
+  attachToCanvas?: boolean;
+  left?: number;
+  top?: number;
+  originX?: string;
+  originY?: string;
+  selectable?: boolean;
+  evented?: boolean;
+  opacity?: number;
+  scaleX?: number;
+  scaleY?: number;
+  fit?: 'contain' | 'cover';
+  targetWidth?: number;
+  targetHeight?: number;
+  [key: string]: unknown;
+};
+
+export function getFabricImageSourceSize(image: FabricImageLike): { width: number; height: number } {
+  const element = typeof image.getElement === 'function' ? image.getElement() : null;
+
+  return {
+    width: element?.naturalWidth ?? image.width ?? CANVAS_WIDTH,
+    height: element?.naturalHeight ?? image.height ?? CANVAS_HEIGHT,
+  };
+}
+
+export function getImageScaleForFit({
+  imageWidth,
+  imageHeight,
+  targetWidth,
+  targetHeight,
+  fit = 'contain',
+}: {
+  imageWidth: number;
+  imageHeight: number;
+  targetWidth: number;
+  targetHeight: number;
+  fit?: 'contain' | 'cover';
+}): number {
+  const widthRatio = targetWidth / imageWidth;
+  const heightRatio = targetHeight / imageHeight;
+  return fit === 'cover' ? Math.max(widthRatio, heightRatio) : Math.min(widthRatio, heightRatio);
+}
+
 export async function createFabricCanvas(
   canvasElement: HTMLCanvasElement,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -93,7 +146,12 @@ export async function addTextToCanvas(
   return fabricText;
 }
 
-export async function addImageToCanvas(canvas: any, imageUrl: string, options?: any) {
+export async function addImageToCanvas(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  canvas: any,
+  imageUrl: string,
+  options: AddImageOptions = {},
+) {
   const fabric = await getFabric();
 
   console.info('[addImageToCanvas] Starting with URL:', imageUrl);
@@ -108,37 +166,56 @@ export async function addImageToCanvas(canvas: any, imageUrl: string, options?: 
 
     // ── FIX: en Fabric 7 las dimensiones están en el HTMLImageElement subyacente,
     //         no en img.width / img.height (que son undefined antes de set()).
-    const el: HTMLImageElement | null = typeof img.getElement === 'function'
-      ? img.getElement()
-      : null;
+    const { width: sourceW, height: sourceH } = getFabricImageSourceSize(img);
 
-    const naturalW = el?.naturalWidth  ?? img.width  ?? CANVAS_WIDTH;
-    const naturalH = el?.naturalHeight ?? img.height ?? CANVAS_HEIGHT;
+    console.info('[addImageToCanvas] source dimensions:', sourceW, sourceH);
+    console.info('[addImageToCanvas] fabric dimensions before normalization:', img.width, img.height);
 
-    console.info('[addImageToCanvas] natural dimensions:', naturalW, naturalH);
+    img.set?.({
+      width: sourceW,
+      height: sourceH,
+    });
 
-    const maxWidth  = CANVAS_WIDTH  * 0.9;
-    const maxHeight = CANVAS_HEIGHT * 0.9;
-    const scale = Math.min(maxWidth / naturalW, maxHeight / naturalH);
+  const fit = options.fit ?? 'contain';
+  const attachToCanvas = options.attachToCanvas ?? true;
+  const targetWidth = options.targetWidth ?? CANVAS_WIDTH * 0.9;
+    const targetHeight = options.targetHeight ?? CANVAS_HEIGHT * 0.9;
+    const scale = getImageScaleForFit({
+      imageWidth: sourceW,
+      imageHeight: sourceH,
+      targetWidth,
+      targetHeight,
+      fit,
+    });
 
     img.set({
-      left:    CANVAS_WIDTH  / 2,
-      top:     CANVAS_HEIGHT / 2,
-      scaleX:  scale,
-      scaleY:  scale,
+      left: options.left ?? CANVAS_WIDTH / 2,
+      top: options.top ?? CANVAS_HEIGHT / 2,
+      scaleX: options.scaleX ?? scale,
+      scaleY: options.scaleY ?? scale,
       originX: 'center',
       originY: 'center',
       ...options,
     });
+    if (typeof img.setCoords === 'function') {
+      img.setCoords();
+    }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (options?.id) (img as any).id = options.id;
 
-    canvas.add(img);
-    canvas.setActiveObject(img);
-    if (canvas.requestRenderAll) canvas.requestRenderAll();
-    else canvas.renderAll();
+    if (attachToCanvas) {
+      canvas.add(img);
+      if (typeof img.setCoords === 'function') {
+        img.setCoords();
+      }
+      canvas.setActiveObject(img);
+      if (canvas.requestRenderAll) canvas.requestRenderAll();
+      else canvas.renderAll();
+    }
 
     console.info('[addImageToCanvas] Image added and rendered, scale:', scale);
+    console.info('[addImageToCanvas] fabric dimensions after normalization:', img.width, img.height);
     return img;
   } catch (error) {
     console.error('[addImageToCanvas] Error:', error);

@@ -28,7 +28,9 @@ vi.mock('./RichTextEditor', () => ({
 }));
 
 vi.mock('./advanced-cover/AdvancedCoverEditor', () => ({
-  AdvancedCoverEditor: () => <div data-testid="advanced-cover-editor" />,
+  AdvancedCoverEditor: ({ project }: { project: ProjectRecord }) => (
+    <div data-testid="advanced-cover-editor">{project.cover.title}</div>
+  ),
 }));
 
 vi.mock('./advanced-back-cover/AdvancedBackCoverEditor', () => ({
@@ -164,6 +166,23 @@ describe('ProjectWorkspace', () => {
     fireEvent.click(advancedButton);
 
     expect(screen.getByTestId('advanced-cover-editor')).toBeInTheDocument();
+  });
+
+  test('preserves the basic cover draft when switching to the advanced cover editor', () => {
+    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+
+    const nextButton = screen.getByText('Siguiente paso');
+    fireEvent.click(nextButton);
+    fireEvent.click(nextButton);
+    fireEvent.click(nextButton);
+
+    fireEvent.change(screen.getByLabelText(copy.coverTitleLabel), {
+      target: { value: 'NUNCA MAS EN LA SOMBRA' },
+    });
+
+    fireEvent.click(screen.getByText(copy.coverSwitchToAdvanced));
+
+    expect(screen.getByTestId('advanced-cover-editor')).toHaveTextContent('NUNCA MAS EN LA SOMBRA');
   });
 
   test('basic cover does not reintroduce a removed subtitle', () => {

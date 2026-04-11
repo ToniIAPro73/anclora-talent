@@ -70,6 +70,7 @@ export function CoverPropertyPanel() {
 
   const fabricObject = selectedElement.object;
   const isText = fabricObject.type.includes('text');
+  const isBackgroundProxy = Boolean((fabricObject as { isBackgroundProxy?: boolean }).isBackgroundProxy);
 
   const updateProperties = (props: any) => {
     updateElement(selectedElement.id, props);
@@ -96,16 +97,19 @@ export function CoverPropertyPanel() {
   };
 
   const handleBringForward = () => {
+    if (isBackgroundProxy) return;
     fabricObject.bringForward();
     canvas.renderAll();
   };
 
   const handleSendBackward = () => {
+    if (isBackgroundProxy) return;
     fabricObject.sendBackwards();
     canvas.renderAll();
   };
 
   const handleDuplicate = async () => {
+    if (isBackgroundProxy) return;
     try {
       const cloned = await fabricObject.clone();
       cloned.set({
@@ -256,6 +260,7 @@ export function CoverPropertyPanel() {
             <Slider value={[localProps.opacity]} min={0} max={100} step={1} onValueChange={handleOpacityChange} />
           </div>
 
+          {!isBackgroundProxy && (
           <div className="space-y-2">
             <Label className="text-xs font-semibold">Capas (Orden)</Label>
             <div className="flex gap-2">
@@ -267,10 +272,12 @@ export function CoverPropertyPanel() {
               </Button>
             </div>
           </div>
+          )}
         </div>
       </div>
 
       <div className="pt-6 border-t border-[var(--border-subtle)] flex flex-col gap-3">
+        {!isBackgroundProxy && (
         <Button
           variant="outline"
           className="w-full justify-start gap-2 bg-[var(--surface-soft)] border-[var(--border-subtle)] hover:bg-[var(--surface-highlight)]"
@@ -279,6 +286,7 @@ export function CoverPropertyPanel() {
           <Copy className="h-4 w-4" />
           <span>Duplicar elemento</span>
         </Button>
+        )}
         <Button
           variant="outline"
           className="w-full justify-start gap-2 text-red-500 bg-red-500/5 border-red-500/20 hover:bg-red-500/10 hover:border-red-500/40"
