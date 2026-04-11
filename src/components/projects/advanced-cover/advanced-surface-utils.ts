@@ -9,6 +9,10 @@ import {
 import type { ProjectRecord } from '@/lib/projects/types';
 
 type SurfaceFields = SurfaceState['fields'];
+const FIELD_ORDER: Record<SurfaceKind, Array<keyof SurfaceFields>> = {
+  cover: ['title', 'subtitle', 'author'],
+  'back-cover': ['title', 'body', 'authorBio'],
+};
 
 export function buildInitialSurfaceLayers(
   surface: SurfaceKind,
@@ -33,6 +37,32 @@ function field(value: string | null | undefined, visible = true): SurfaceFieldSt
   };
 }
 
+function reconcileLayers(
+  surface: SurfaceKind,
+  fields: SurfaceFields,
+  layers: SurfaceLayer[] | undefined,
+): SurfaceLayer[] {
+  const visibleKeys = new Set(
+    FIELD_ORDER[surface].filter((key) => fields[key]?.visible),
+  );
+
+  const preserved = (layers ?? []).filter((layer) => {
+    if (layer.type !== 'text' || !layer.fieldKey) return false;
+    return visibleKeys.has(layer.fieldKey);
+  });
+
+  const seen = new Set(preserved.map((layer) => layer.fieldKey));
+  const missing = FIELD_ORDER[surface]
+    .filter((key) => visibleKeys.has(key) && !seen.has(key))
+    .map((fieldKey) => ({
+      id: `${surface}-${fieldKey}`,
+      type: 'text' as const,
+      fieldKey,
+    }));
+
+  return [...preserved, ...missing];
+}
+
 export function createSurfaceSnapshotFromProject(
   surface: SurfaceKind,
   project: Pick<ProjectRecord, 'document' | 'cover' | 'backCover'>,
@@ -50,27 +80,23 @@ export function createSurfaceSnapshotFromProject(
         },
     );
 
-    const fields = { ...state.fields };
-
-    if (project.document.title && fields.title && fields.title.value !== project.document.title) {
-      fields.title = { value: project.document.title, visible: true };
-    }
-
-    if (project.document.subtitle && fields.subtitle && fields.subtitle.value !== project.document.subtitle) {
-      fields.subtitle = {
-        value: project.document.subtitle,
-        visible: Boolean((project.cover.showSubtitle ?? true) && project.document.subtitle.trim()),
-      };
-    }
-
-    if (project.document.author && fields.author && fields.author.value !== project.document.author) {
-      fields.author = { value: project.document.author, visible: true };
-    }
+    const canonicalTitle = project.cover.title || project.document.title || state.fields.title?.value || '';
+    const canonicalSubtitle = project.cover.subtitle || project.document.subtitle || state.fields.subtitle?.value || '';
+    const canonicalAuthor = project.document.author || state.fields.author?.value || '';
+    const fields = {
+      ...state.fields,
+      title: field(canonicalTitle, state.fields.title?.visible ?? true),
+      subtitle: field(
+        canonicalSubtitle,
+        state.fields.subtitle?.visible ?? (project.cover.showSubtitle ?? true),
+      ),
+      author: field(canonicalAuthor, Boolean(canonicalAuthor.trim())),
+    };
 
     return {
       ...state,
       fields,
-      layers: state.layers && state.layers.length > 0 ? state.layers : buildInitialSurfaceLayers('cover', fields),
+      layers: reconcileLayers('cover', fields, state.layers),
     };
   }
 
@@ -86,23 +112,22 @@ export function createSurfaceSnapshotFromProject(
       },
   );
 
-  const fields = { ...state.fields };
-
-  if (project.document.author && fields.title && fields.title.value !== project.document.author) {
-    fields.title = { value: project.document.author, visible: true };
-  }
-
-  if (project.document.subtitle && fields.body && fields.body.value !== project.document.subtitle) {
-    fields.body = { value: project.document.subtitle, visible: true };
-  }
-
-  if (project.backCover.authorBio && fields.authorBio && fields.authorBio.value !== project.backCover.authorBio) {
-    fields.authorBio = { value: project.backCover.authorBio, visible: true };
-  }
+  const canonicalTitle = project.backCover.title || project.document.author || state.fields.title?.value || '';
+  const canonicalBody = project.backCover.body || project.document.subtitle || state.fields.body?.value || '';
+  const canonicalAuthorBio = project.backCover.authorBio || state.fields.authorBio?.value || '';
+  const fields = {
+    ...state.fields,
+    title: field(canonicalTitle, state.fields.title?.visible ?? Boolean(canonicalTitle.trim())),
+    body: field(canonicalBody, state.fields.body?.visible ?? Boolean(canonicalBody.trim())),
+    authorBio: field(
+      canonicalAuthorBio,
+      Boolean(canonicalAuthorBio.trim()),
+    ),
+  };
 
   return {
     ...state,
     fields,
-    layers: state.layers && state.layers.length > 0 ? state.layers : buildInitialSurfaceLayers('back-cover', fields),
+    layers: reconcileLayers('back-cover', fields, state.layers),
   };
 }

@@ -7,14 +7,19 @@ import { toPng } from 'html-to-image';
 import { CoverCanvas } from './Canvas';
 import { CoverToolbar } from './Toolbar';
 import { CoverPropertyPanel } from './PropertyPanel';
-import { renderBackCoverImageAction, renderCoverImageAction } from '@/lib/projects/actions';
+import {
+  renderBackCoverImageAction,
+  renderCoverImageAction,
+  saveBackCoverAction,
+  saveProjectCoverAction,
+} from '@/lib/projects/actions';
 import { useCanvasStore } from '@/lib/canvas-store';
 import { addTextToCanvas } from '@/lib/canvas-utils';
 import { createGuideManager } from '@/lib/canvas-guides';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import { createSurfaceSnapshotFromProject } from './advanced-surface-utils';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '@/lib/canvas-utils';
-import type { SurfaceKind } from '@/lib/projects/cover-surface';
+import { normalizeSurfaceState, type SurfaceKind, type SurfaceState } from '@/lib/projects/cover-surface';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 
@@ -334,6 +339,52 @@ export function AdvancedSurfaceEditor({
     if (!canvas) return;
 
     startRenderTransition(async () => {
+      const currentElements = useCanvasStore.getState().elements;
+      const nextFields: SurfaceState['fields'] = { ...surfaceSnapshot.fields };
+
+      for (const fieldKey of Object.keys(surfaceSnapshot.fields) as Array<keyof SurfaceState['fields']>) {
+        const textElement = currentElements.find((element) => element.id === `${surface}-${fieldKey}-text`);
+        const nextValue =
+          typeof textElement?.object?.text === 'string'
+            ? textElement.object.text
+            : surfaceSnapshot.fields[fieldKey]?.value ?? '';
+
+        nextFields[fieldKey] = {
+          value: nextValue,
+          visible: Boolean(textElement ? nextValue.trim() : surfaceSnapshot.fields[fieldKey]?.visible),
+        };
+      }
+
+      const nextSurfaceState = normalizeSurfaceState({
+        ...surfaceSnapshot,
+        fields: nextFields,
+        opacity: backgroundOpacity,
+      });
+
+      const persistenceData = new FormData();
+      persistenceData.set('projectId', project.id);
+      persistenceData.set('surfaceState', JSON.stringify(nextSurfaceState));
+
+      if (surface === 'cover') {
+        persistenceData.set('title', nextSurfaceState.fields.title?.value ?? project.cover.title);
+        persistenceData.set('subtitle', nextSurfaceState.fields.subtitle?.value ?? project.cover.subtitle);
+        persistenceData.set('palette', project.cover.palette);
+        persistenceData.set('currentBackgroundImageUrl', backgroundImageUrl ?? '');
+        persistenceData.set('currentThumbnailUrl', project.cover.thumbnailUrl ?? '');
+        persistenceData.set('showSubtitle', String(nextSurfaceState.fields.subtitle?.visible ?? false));
+        persistenceData.set('layout', project.cover.layout ?? 'centered');
+        persistenceData.set('fontFamily', project.cover.fontFamily ?? '');
+        persistenceData.set('accentColor', project.cover.accentColor ?? '');
+        await saveProjectCoverAction(persistenceData);
+      } else {
+        persistenceData.set('title', nextSurfaceState.fields.title?.value ?? project.backCover.title);
+        persistenceData.set('body', nextSurfaceState.fields.body?.value ?? project.backCover.body);
+        persistenceData.set('authorBio', nextSurfaceState.fields.authorBio?.value ?? project.backCover.authorBio);
+        persistenceData.set('accentColor', project.backCover.accentColor ?? '');
+        persistenceData.set('currentBackgroundImageUrl', backgroundImageUrl ?? '');
+        await saveBackCoverAction(persistenceData);
+      }
+
       const dataUrl = surfaceNodeRef.current
         ? await toPng(surfaceNodeRef.current, {
             cacheBust: true,
