@@ -26,6 +26,7 @@ type AdvancedSurfaceEditorProps = {
 type FabricCanvasLike = {
   width?: number;
   height?: number;
+  backgroundImage?: FabricObjectLike | null;
   clear: () => void;
   set: (props: Record<string, unknown>) => void;
   on: (event: string, handler: (event: FabricEvent) => void | Promise<void>) => void;
@@ -89,6 +90,7 @@ export function AdvancedSurfaceEditor({
         if (guideManagerRef.current) {
           guideManagerRef.current.clearGuides();
         }
+        fabricCanvas.backgroundImage = null;
         fabricCanvas.clear();
         selectElement(null);
         listenersAttachedRef.current = false;
@@ -116,8 +118,9 @@ export function AdvancedSurfaceEditor({
           try {
             const backgroundOpacity = surfaceSnapshot.opacity ?? (surface === 'back-cover' ? 0.24 : 1);
             const fabricImg = await addImageToCanvas(fabricCanvas, backgroundImageUrl, {
-              selectable: true,
-              evented: true,
+              attachToCanvas: false,
+              selectable: false,
+              evented: false,
               id: `${surface}-background-image`,
               left: canvasWidth / 2,
               top: canvasHeight / 2,
@@ -128,13 +131,8 @@ export function AdvancedSurfaceEditor({
               targetHeight: canvasHeight,
               opacity: backgroundOpacity,
             });
-
-            addElement({
-              id: `${surface}-background-image`,
-              type: 'image',
-              object: fabricImg,
-              properties: { opacity: fabricImg.opacity ?? backgroundOpacity },
-            });
+            fabricCanvas.backgroundImage = fabricImg;
+            fabricCanvas.requestRenderAll();
           } catch (error) {
             console.error('[AdvancedSurfaceEditor] Error loading background image', error);
           }

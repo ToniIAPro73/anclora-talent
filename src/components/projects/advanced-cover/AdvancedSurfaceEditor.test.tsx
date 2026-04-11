@@ -220,6 +220,7 @@ describe('AdvancedSurfaceEditor', () => {
       mocks.fakeCanvas,
       'https://example.com/cover.jpg',
       expect.objectContaining({
+        attachToCanvas: false,
         id: 'cover-background-image',
         fit: 'cover',
         targetWidth: 400,
@@ -260,6 +261,7 @@ describe('AdvancedSurfaceEditor', () => {
       mocks.fakeCanvas,
       'https://example.com/back-cover.jpg',
       expect.objectContaining({
+        attachToCanvas: false,
         id: 'back-cover-background-image',
         fit: 'cover',
         targetWidth: 400,

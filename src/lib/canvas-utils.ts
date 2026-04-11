@@ -38,6 +38,7 @@ type FabricImageLike = {
 
 type AddImageOptions = {
   id?: string;
+  attachToCanvas?: boolean;
   left?: number;
   top?: number;
   originX?: string;
@@ -175,8 +176,9 @@ export async function addImageToCanvas(
       height: sourceH,
     });
 
-    const fit = options.fit ?? 'contain';
-    const targetWidth = options.targetWidth ?? CANVAS_WIDTH * 0.9;
+  const fit = options.fit ?? 'contain';
+  const attachToCanvas = options.attachToCanvas ?? true;
+  const targetWidth = options.targetWidth ?? CANVAS_WIDTH * 0.9;
     const targetHeight = options.targetHeight ?? CANVAS_HEIGHT * 0.9;
     const scale = getImageScaleForFit({
       imageWidth: sourceW,
@@ -202,13 +204,15 @@ export async function addImageToCanvas(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (options?.id) (img as any).id = options.id;
 
-    canvas.add(img);
-    if (typeof img.setCoords === 'function') {
-      img.setCoords();
+    if (attachToCanvas) {
+      canvas.add(img);
+      if (typeof img.setCoords === 'function') {
+        img.setCoords();
+      }
+      canvas.setActiveObject(img);
+      if (canvas.requestRenderAll) canvas.requestRenderAll();
+      else canvas.renderAll();
     }
-    canvas.setActiveObject(img);
-    if (canvas.requestRenderAll) canvas.requestRenderAll();
-    else canvas.renderAll();
 
     console.info('[addImageToCanvas] Image added and rendered, scale:', scale);
     console.info('[addImageToCanvas] fabric dimensions after normalization:', img.width, img.height);
