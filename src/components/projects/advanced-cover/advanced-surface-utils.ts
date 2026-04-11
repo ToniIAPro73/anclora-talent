@@ -1,5 +1,6 @@
 import {
   createDefaultSurfaceState,
+  normalizeSurfaceState,
   type SurfaceFieldState,
   type SurfaceKind,
   type SurfaceLayer,
@@ -37,36 +38,71 @@ export function createSurfaceSnapshotFromProject(
   project: Pick<ProjectRecord, 'document' | 'cover' | 'backCover'>,
 ): SurfaceState {
   if (surface === 'cover') {
-    const state =
+    const state = normalizeSurfaceState(
       project.cover.surfaceState ??
-      {
-        ...createDefaultSurfaceState('cover'),
-        fields: {
-          title: field(project.cover.title),
-          subtitle: field(project.cover.subtitle, project.cover.showSubtitle ?? true),
-          author: field(project.document.author),
+        {
+          ...createDefaultSurfaceState('cover'),
+          fields: {
+            title: field(project.cover.title || project.document.title),
+            subtitle: field(project.cover.subtitle, project.cover.showSubtitle ?? true),
+            author: field(project.document.author),
+          },
         },
+    );
+
+    const fields = { ...state.fields };
+
+    if (project.cover.title && fields.title && fields.title.value !== project.cover.title) {
+      fields.title = { value: project.cover.title, visible: true };
+    }
+
+    if (project.cover.subtitle && fields.subtitle && fields.subtitle.value !== project.cover.subtitle) {
+      fields.subtitle = {
+        value: project.cover.subtitle,
+        visible: Boolean((project.cover.showSubtitle ?? true) && project.cover.subtitle.trim()),
       };
+    }
+
+    if (project.document.author && fields.author && fields.author.value !== project.document.author) {
+      fields.author = { value: project.document.author, visible: true };
+    }
 
     return {
       ...state,
-      layers: state.layers && state.layers.length > 0 ? state.layers : buildInitialSurfaceLayers('cover', state.fields),
+      fields,
+      layers: state.layers && state.layers.length > 0 ? state.layers : buildInitialSurfaceLayers('cover', fields),
     };
   }
 
-  const state =
+  const state = normalizeSurfaceState(
     project.backCover.surfaceState ??
-    {
-      ...createDefaultSurfaceState('back-cover'),
-      fields: {
-        title: field(project.backCover.title),
-        body: field(project.backCover.body),
-        authorBio: field(project.backCover.authorBio),
+      {
+        ...createDefaultSurfaceState('back-cover'),
+        fields: {
+          title: field(project.backCover.title),
+          body: field(project.backCover.body),
+          authorBio: field(project.backCover.authorBio),
+        },
       },
-    };
+  );
+
+  const fields = { ...state.fields };
+
+  if (project.backCover.title && fields.title && fields.title.value !== project.backCover.title) {
+    fields.title = { value: project.backCover.title, visible: true };
+  }
+
+  if (project.backCover.body && fields.body && fields.body.value !== project.backCover.body) {
+    fields.body = { value: project.backCover.body, visible: true };
+  }
+
+  if (project.backCover.authorBio && fields.authorBio && fields.authorBio.value !== project.backCover.authorBio) {
+    fields.authorBio = { value: project.backCover.authorBio, visible: true };
+  }
 
   return {
     ...state,
-    layers: state.layers && state.layers.length > 0 ? state.layers : buildInitialSurfaceLayers('back-cover', state.fields),
+    fields,
+    layers: state.layers && state.layers.length > 0 ? state.layers : buildInitialSurfaceLayers('back-cover', fields),
   };
 }

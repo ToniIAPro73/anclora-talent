@@ -62,4 +62,36 @@ describe('advanced-surface-utils', () => {
     expect(snapshot.layers?.some((layer) => layer.fieldKey === 'title')).toBe(true);
     expect(snapshot.layers?.some((layer) => layer.fieldKey === 'author')).toBe(true);
   });
+
+  it('syncs cover text fields with persisted flat project values so advanced editor matches the basic editor', () => {
+    const snapshot = createSurfaceSnapshotFromProject('cover', {
+      document: { author: 'Toni', title: 'Titulo documento' },
+      cover: {
+        title: 'NUNCA MAS EN LA SOMBRA',
+        subtitle: '',
+        showSubtitle: false,
+        surfaceState: {
+          surface: 'cover',
+          layout: { kind: 'stacked-center' },
+          fields: {
+            title: { value: 'Titulo antiguo', visible: true },
+            subtitle: { value: '', visible: false },
+            author: { value: '', visible: false },
+          },
+          layers: [],
+          opacity: 0.47,
+        },
+      },
+      backCover: {
+        title: 'Contra',
+        body: 'Texto de contra',
+        authorBio: 'Bio',
+        surfaceState: undefined,
+      },
+    });
+
+    expect(snapshot.fields.title?.value).toBe('NUNCA MAS EN LA SOMBRA');
+    expect(snapshot.fields.author?.value).toBe('Toni');
+    expect(snapshot.fields.author?.visible).toBe(true);
+  });
 });
