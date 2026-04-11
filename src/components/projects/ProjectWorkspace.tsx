@@ -100,6 +100,15 @@ export function ProjectWorkspace({
 
   const initialCoverSurface = useMemo(() => buildCoverSurface(project), [project]);
   const initialBackCoverSurface = useMemo(() => buildBackCoverSurface(project), [project]);
+  const [coverDraft, setCoverDraft] = useState<{
+    updatedAt: string;
+    surface: ReturnType<typeof buildCoverSurface>;
+    palette: ProjectRecord['cover']['palette'];
+  }>({
+    updatedAt: project.updatedAt,
+    surface: initialCoverSurface,
+    palette: project.cover.palette,
+  });
   const [selectedCoverTemplateId, setSelectedCoverTemplateId] = useState(
     inferTemplateId(COVER_TEMPLATES, initialCoverSurface.layout.kind, COVER_TEMPLATES[0]?.id ?? ''),
   );
@@ -112,6 +121,18 @@ export function ProjectWorkspace({
   );
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [isPending, startTransition] = useTransition();
+
+  const activeCoverDraft = useMemo(
+    () =>
+      coverDraft.updatedAt === project.updatedAt
+        ? coverDraft
+        : {
+            updatedAt: project.updatedAt,
+            surface: initialCoverSurface,
+            palette: project.cover.palette,
+          },
+    [coverDraft, initialCoverSurface, project.cover.palette, project.updatedAt],
+  );
 
   const resolvedActiveChapterId = project.document.chapters.some((chapter) => chapter.id === activeChapterId)
     ? activeChapterId
@@ -130,6 +151,17 @@ export function ProjectWorkspace({
     const metrics = computeChapterPageMetrics(project);
     return Object.fromEntries(metrics.map((m) => [m.chapterId, m]));
   }, [project]);
+
+  const coverDraftProject = useMemo<ProjectRecord>(() => ({
+    ...project,
+    cover: {
+      ...project.cover,
+      title: activeCoverDraft.surface.fields.title?.value ?? project.cover.title,
+      subtitle: activeCoverDraft.surface.fields.subtitle?.value ?? project.cover.subtitle,
+      palette: activeCoverDraft.palette,
+      surfaceState: activeCoverDraft.surface,
+    },
+  }), [project, activeCoverDraft]);
 
   const handleCoverTemplateSelect = (templateId: string) => {
     const template = COVER_TEMPLATES.find((item) => item.id === templateId);
@@ -295,9 +327,36 @@ export function ProjectWorkspace({
               </button>
             </div>
             {isAdvancedCover ? (
-              <AdvancedCoverEditor key={project.updatedAt} project={project} copy={copy} />
+              <AdvancedCoverEditor key={project.updatedAt} project={coverDraftProject} copy={copy} />
             ) : (
-              <CoverForm key={project.updatedAt} project={project} copy={copy} />
+              <CoverForm
+                key={project.updatedAt}
+                project={project}
+                copy={copy}
+                surface={activeCoverDraft.surface}
+                palette={activeCoverDraft.palette}
+                onSurfaceChange={(surfaceUpdate) =>
+                  setCoverDraft((current) => {
+                    const currentSurface =
+                      current.updatedAt === project.updatedAt ? current.surface : initialCoverSurface;
+                    const nextSurface =
+                      typeof surfaceUpdate === 'function' ? surfaceUpdate(currentSurface) : surfaceUpdate;
+
+                    return {
+                      updatedAt: project.updatedAt,
+                      surface: nextSurface,
+                      palette: current.updatedAt === project.updatedAt ? current.palette : project.cover.palette,
+                    };
+                  })
+                }
+                onPaletteChange={(palette) =>
+                  setCoverDraft((current) => ({
+                    updatedAt: project.updatedAt,
+                    surface: current.updatedAt === project.updatedAt ? current.surface : initialCoverSurface,
+                    palette,
+                  }))
+                }
+              />
             )}
           </div>
         );

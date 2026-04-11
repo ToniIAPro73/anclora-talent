@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useTransition } from 'react';
+import { useRef, useState, useTransition, type Dispatch, type SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Loader2 } from 'lucide-react';
 import { saveProjectCoverAction } from '@/lib/projects/actions';
@@ -14,9 +14,24 @@ import {
   createDefaultSurfaceState,
   mergePartialSurfaceUpdate,
   normalizeSurfaceState,
+  type SurfaceState,
 } from '@/lib/projects/cover-surface';
 
-export function CoverForm({ copy, project }: { copy: AppMessages['project']; project: ProjectRecord }) {
+export function CoverForm({
+  copy,
+  project,
+  surface: controlledSurface,
+  palette: controlledPalette,
+  onSurfaceChange,
+  onPaletteChange,
+}: {
+  copy: AppMessages['project'];
+  project: ProjectRecord;
+  surface?: SurfaceState;
+  palette?: CoverDesign['palette'];
+  onSurfaceChange?: Dispatch<SetStateAction<SurfaceState>>;
+  onPaletteChange?: (palette: CoverDesign['palette']) => void;
+}) {
   const router = useRouter();
   const initialSurface = normalizeSurfaceState(
     project.cover.surfaceState ?? {
@@ -63,8 +78,12 @@ export function CoverForm({ copy, project }: { copy: AppMessages['project']; pro
       initialSurface.fields = fields;
     }
   }
-  const [surface, setSurface] = useState(initialSurface);
-  const [palette, setPalette] = useState<CoverDesign['palette']>(project.cover.palette);
+  const [internalSurface, setInternalSurface] = useState(initialSurface);
+  const [internalPalette, setInternalPalette] = useState<CoverDesign['palette']>(project.cover.palette);
+  const surface = controlledSurface ?? internalSurface;
+  const palette = controlledPalette ?? internalPalette;
+  const setSurface = onSurfaceChange ?? setInternalSurface;
+  const setPalette = onPaletteChange ?? setInternalPalette;
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
