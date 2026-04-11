@@ -114,6 +114,7 @@ export function AdvancedSurfaceEditor({
 
         if (backgroundImageUrl) {
           try {
+            const backgroundOpacity = surfaceSnapshot.opacity ?? (surface === 'back-cover' ? 0.24 : 1);
             const fabricImg = await addImageToCanvas(fabricCanvas, backgroundImageUrl, {
               selectable: true,
               evented: true,
@@ -125,14 +126,14 @@ export function AdvancedSurfaceEditor({
               fit: 'cover',
               targetWidth: canvasWidth,
               targetHeight: canvasHeight,
-              opacity: surface === 'back-cover' ? 0.24 : 1,
+              opacity: backgroundOpacity,
             });
 
             addElement({
               id: `${surface}-background-image`,
               type: 'image',
               object: fabricImg,
-              properties: { opacity: fabricImg.opacity ?? 1 },
+              properties: { opacity: fabricImg.opacity ?? backgroundOpacity },
             });
           } catch (error) {
             console.error('[AdvancedSurfaceEditor] Error loading background image', error);
@@ -287,7 +288,7 @@ export function AdvancedSurfaceEditor({
         loadingRef.current = false;
       }
     },
-    [addElement, clear, project, selectElement, surface, surfaceSnapshot.fields, surfaceSnapshot.layers],
+    [addElement, clear, project, selectElement, surface, surfaceSnapshot.fields, surfaceSnapshot.layers, surfaceSnapshot.opacity],
   );
 
   const handleCanvasReady = useCallback(

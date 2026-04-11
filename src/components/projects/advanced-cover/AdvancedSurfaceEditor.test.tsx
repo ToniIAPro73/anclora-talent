@@ -96,10 +96,14 @@ vi.mock('@/lib/canvas-guides', () => ({
 }));
 
 vi.mock('./advanced-surface-utils', () => ({
-  createSurfaceSnapshotFromProject: vi.fn(() => ({
-    surface: 'cover',
+  createSurfaceSnapshotFromProject: vi.fn((surface: 'cover' | 'back-cover', project: ProjectRecord) => ({
+    surface,
     fields: {},
     layers: [],
+    opacity:
+      surface === 'cover'
+        ? project.cover.surfaceState?.opacity ?? 1
+        : project.backCover.surfaceState?.opacity ?? 0.24,
   })),
 }));
 
@@ -201,6 +205,10 @@ describe('AdvancedSurfaceEditor', () => {
 
     const project = makeProject();
     project.cover.backgroundImageUrl = 'https://example.com/cover.jpg';
+    project.cover.surfaceState = {
+      ...project.cover.surfaceState!,
+      opacity: 0.58,
+    };
 
     render(<AdvancedSurfaceEditor surface="cover" project={project} copy={copy} />);
 
@@ -220,7 +228,43 @@ describe('AdvancedSurfaceEditor', () => {
         top: 300,
         originX: 'center',
         originY: 'center',
-        opacity: 1,
+        opacity: 0.58,
+      }),
+    );
+  });
+
+  test('uses the persisted back-cover background opacity instead of the old hardcoded value', async () => {
+    const backgroundObject = {
+      id: 'back-cover-background-image',
+      width: undefined,
+      height: undefined,
+      opacity: 0.41,
+      set: vi.fn(),
+    };
+    mocks.addImageToCanvasMock.mockResolvedValue(backgroundObject);
+
+    const project = makeProject();
+    project.backCover.backgroundImageUrl = 'https://example.com/back-cover.jpg';
+    project.backCover.surfaceState = {
+      ...project.backCover.surfaceState!,
+      opacity: 0.41,
+    };
+
+    render(<AdvancedSurfaceEditor surface="back-cover" project={project} copy={copy} />);
+
+    await waitFor(() => {
+      expect(mocks.addImageToCanvasMock).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mocks.addImageToCanvasMock).toHaveBeenCalledWith(
+      mocks.fakeCanvas,
+      'https://example.com/back-cover.jpg',
+      expect.objectContaining({
+        id: 'back-cover-background-image',
+        fit: 'cover',
+        targetWidth: 400,
+        targetHeight: 600,
+        opacity: 0.41,
       }),
     );
   });

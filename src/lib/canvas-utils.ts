@@ -32,6 +32,7 @@ type FabricImageLike = {
   getElement?: () => HTMLImageElement | null;
   width?: number;
   height?: number;
+  set?: (props: Record<string, unknown>) => void;
   setCoords?: () => void;
 };
 
@@ -52,7 +53,7 @@ type AddImageOptions = {
   [key: string]: unknown;
 };
 
-export function getFabricImageNaturalSize(image: FabricImageLike): { width: number; height: number } {
+export function getFabricImageSourceSize(image: FabricImageLike): { width: number; height: number } {
   const element = typeof image.getElement === 'function' ? image.getElement() : null;
 
   return {
@@ -164,16 +165,22 @@ export async function addImageToCanvas(
 
     // ── FIX: en Fabric 7 las dimensiones están en el HTMLImageElement subyacente,
     //         no en img.width / img.height (que son undefined antes de set()).
-    const { width: naturalW, height: naturalH } = getFabricImageNaturalSize(img);
+    const { width: sourceW, height: sourceH } = getFabricImageSourceSize(img);
 
-    console.info('[addImageToCanvas] natural dimensions:', naturalW, naturalH);
+    console.info('[addImageToCanvas] source dimensions:', sourceW, sourceH);
+    console.info('[addImageToCanvas] fabric dimensions before normalization:', img.width, img.height);
+
+    img.set?.({
+      width: sourceW,
+      height: sourceH,
+    });
 
     const fit = options.fit ?? 'contain';
     const targetWidth = options.targetWidth ?? CANVAS_WIDTH * 0.9;
     const targetHeight = options.targetHeight ?? CANVAS_HEIGHT * 0.9;
     const scale = getImageScaleForFit({
-      imageWidth: naturalW,
-      imageHeight: naturalH,
+      imageWidth: sourceW,
+      imageHeight: sourceH,
       targetWidth,
       targetHeight,
       fit,
@@ -204,6 +211,7 @@ export async function addImageToCanvas(
     else canvas.renderAll();
 
     console.info('[addImageToCanvas] Image added and rendered, scale:', scale);
+    console.info('[addImageToCanvas] fabric dimensions after normalization:', img.width, img.height);
     return img;
   } catch (error) {
     console.error('[addImageToCanvas] Error:', error);
