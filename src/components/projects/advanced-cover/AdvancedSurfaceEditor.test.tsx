@@ -9,6 +9,11 @@ const mocks = vi.hoisted(() => {
   const renderCoverImageActionMock = vi.fn();
   const renderBackCoverImageActionMock = vi.fn();
   const routerRefreshMock = vi.fn();
+  const addElementMock = vi.fn();
+  const clearStoreMock = vi.fn();
+  const selectElementMock = vi.fn();
+  const setCanvasMock = vi.fn();
+  const addImageToCanvasMock = vi.fn();
   const fakeCanvas = {
     width: 400,
     height: 600,
@@ -26,10 +31,10 @@ const mocks = vi.hoisted(() => {
   const useCanvasStoreMock = Object.assign(
     vi.fn(() => ({
       canvas: fakeCanvas,
-      setCanvas: vi.fn(),
-      addElement: vi.fn(),
-      clear: vi.fn(),
-      selectElement: vi.fn(),
+      setCanvas: setCanvasMock,
+      addElement: addElementMock,
+      clear: clearStoreMock,
+      selectElement: selectElementMock,
     })),
     {
       getState: () => canvasStoreState,
@@ -40,6 +45,11 @@ const mocks = vi.hoisted(() => {
     renderCoverImageActionMock,
     renderBackCoverImageActionMock,
     routerRefreshMock,
+    addElementMock,
+    clearStoreMock,
+    selectElementMock,
+    setCanvasMock,
+    addImageToCanvasMock,
     fakeCanvas,
     canvasStoreState,
     useCanvasStoreMock,
@@ -62,8 +72,15 @@ vi.mock('@/lib/canvas-store', () => ({
 }));
 
 vi.mock('@/lib/canvas-utils', () => ({
-  addImageToCanvas: vi.fn(),
+  addImageToCanvas: (...args: unknown[]) => mocks.addImageToCanvasMock(...args),
   addTextToCanvas: vi.fn(),
+  getFabricImageNaturalSize: (image: { getElement?: () => HTMLImageElement | null; width?: number; height?: number }) => {
+    const element = typeof image.getElement === 'function' ? image.getElement() : null;
+    return {
+      width: element?.naturalWidth ?? image.width ?? 400,
+      height: element?.naturalHeight ?? image.height ?? 600,
+    };
+  },
 }));
 
 vi.mock('@/lib/canvas-guides', () => ({
@@ -156,6 +173,11 @@ describe('AdvancedSurfaceEditor', () => {
     mocks.renderCoverImageActionMock.mockReset();
     mocks.renderBackCoverImageActionMock.mockReset();
     mocks.routerRefreshMock.mockReset();
+    mocks.addElementMock.mockReset();
+    mocks.clearStoreMock.mockReset();
+    mocks.selectElementMock.mockReset();
+    mocks.setCanvasMock.mockReset();
+    mocks.addImageToCanvasMock.mockReset();
     mocks.fakeCanvas.clear.mockClear();
     mocks.fakeCanvas.set.mockClear();
     mocks.fakeCanvas.on.mockClear();
@@ -163,6 +185,36 @@ describe('AdvancedSurfaceEditor', () => {
     mocks.fakeCanvas.setActiveObject.mockClear();
     mocks.fakeCanvas.toDataURL.mockClear();
     mocks.canvasStoreState.pushHistory.mockClear();
+  });
+
+  test('uses the natural background image dimensions so cover backgrounds fill the full canvas', async () => {
+    const backgroundObject = {
+      id: 'cover-background-image',
+      width: undefined,
+      height: undefined,
+      opacity: 1,
+      getElement: () => ({ naturalWidth: 995, naturalHeight: 1600 } as HTMLImageElement),
+      set: vi.fn(),
+    };
+    mocks.addImageToCanvasMock.mockResolvedValue(backgroundObject);
+
+    const project = makeProject();
+    project.cover.backgroundImageUrl = 'https://example.com/cover.jpg';
+
+    render(<AdvancedSurfaceEditor surface="cover" project={project} copy={copy} />);
+
+    await waitFor(() => {
+      expect(mocks.addImageToCanvasMock).toHaveBeenCalledTimes(1);
+    });
+
+    const backgroundSetArgs = backgroundObject.set.mock.calls[0]?.[0];
+    expect(backgroundSetArgs.left).toBe(200);
+    expect(backgroundSetArgs.top).toBe(300);
+    expect(backgroundSetArgs.originX).toBe('center');
+    expect(backgroundSetArgs.originY).toBe('center');
+    expect(backgroundSetArgs.opacity).toBe(1);
+    expect(backgroundSetArgs.scaleX).toBeCloseTo(400 / 995, 5);
+    expect(backgroundSetArgs.scaleY).toBeCloseTo(400 / 995, 5);
   });
 
   test('refreshes the route after saving the rendered cover so preview reads the latest persisted asset', async () => {

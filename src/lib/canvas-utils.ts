@@ -28,6 +28,19 @@ export const CANVAS_HEIGHT = 600;
 export const GRID_SIZE = 10;
 export const SNAP_THRESHOLD = 10;
 
+export function getFabricImageNaturalSize(image: {
+  getElement?: () => HTMLImageElement | null;
+  width?: number;
+  height?: number;
+}): { width: number; height: number } {
+  const element = typeof image.getElement === 'function' ? image.getElement() : null;
+
+  return {
+    width: element?.naturalWidth ?? image.width ?? CANVAS_WIDTH,
+    height: element?.naturalHeight ?? image.height ?? CANVAS_HEIGHT,
+  };
+}
+
 export async function createFabricCanvas(
   canvasElement: HTMLCanvasElement,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -93,7 +106,13 @@ export async function addTextToCanvas(
   return fabricText;
 }
 
-export async function addImageToCanvas(canvas: any, imageUrl: string, options?: any) {
+export async function addImageToCanvas(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  canvas: any,
+  imageUrl: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  options?: any,
+) {
   const fabric = await getFabric();
 
   console.info('[addImageToCanvas] Starting with URL:', imageUrl);
@@ -108,12 +127,7 @@ export async function addImageToCanvas(canvas: any, imageUrl: string, options?: 
 
     // ── FIX: en Fabric 7 las dimensiones están en el HTMLImageElement subyacente,
     //         no en img.width / img.height (que son undefined antes de set()).
-    const el: HTMLImageElement | null = typeof img.getElement === 'function'
-      ? img.getElement()
-      : null;
-
-    const naturalW = el?.naturalWidth  ?? img.width  ?? CANVAS_WIDTH;
-    const naturalH = el?.naturalHeight ?? img.height ?? CANVAS_HEIGHT;
+    const { width: naturalW, height: naturalH } = getFabricImageNaturalSize(img);
 
     console.info('[addImageToCanvas] natural dimensions:', naturalW, naturalH);
 
@@ -131,6 +145,7 @@ export async function addImageToCanvas(canvas: any, imageUrl: string, options?: 
       ...options,
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (options?.id) (img as any).id = options.id;
 
     canvas.add(img);

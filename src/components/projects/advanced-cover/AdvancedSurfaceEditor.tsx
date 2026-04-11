@@ -8,7 +8,7 @@ import { CoverToolbar } from './Toolbar';
 import { CoverPropertyPanel } from './PropertyPanel';
 import { renderBackCoverImageAction, renderCoverImageAction } from '@/lib/projects/actions';
 import { useCanvasStore } from '@/lib/canvas-store';
-import { addImageToCanvas, addTextToCanvas } from '@/lib/canvas-utils';
+import { addImageToCanvas, addTextToCanvas, getFabricImageNaturalSize } from '@/lib/canvas-utils';
 import { createGuideManager } from '@/lib/canvas-guides';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import { createSurfaceSnapshotFromProject } from './advanced-surface-utils';
@@ -39,6 +39,7 @@ type FabricObjectLike = {
   width?: number;
   height?: number;
   opacity?: number;
+  getElement?: () => HTMLImageElement | null;
   set: (props: Record<string, unknown>) => void;
 };
 
@@ -120,8 +121,9 @@ export function AdvancedSurfaceEditor({
               id: `${surface}-background-image`,
             })) as FabricObjectLike;
 
-            const scaleX = canvasWidth / (fabricImg.width ?? canvasWidth);
-            const scaleY = canvasHeight / (fabricImg.height ?? canvasHeight);
+            const { width: naturalWidth, height: naturalHeight } = getFabricImageNaturalSize(fabricImg);
+            const scaleX = canvasWidth / naturalWidth;
+            const scaleY = canvasHeight / naturalHeight;
             const scale = Math.max(scaleX, scaleY);
 
             fabricImg.set({
