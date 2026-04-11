@@ -72,6 +72,8 @@ vi.mock('@/lib/canvas-store', () => ({
 }));
 
 vi.mock('@/lib/canvas-utils', () => ({
+  CANVAS_WIDTH: 400,
+  CANVAS_HEIGHT: 600,
   addImageToCanvas: (...args: unknown[]) => mocks.addImageToCanvasMock(...args),
   addTextToCanvas: vi.fn(),
   getFabricImageNaturalSize: (image: { getElement?: () => HTMLImageElement | null; width?: number; height?: number }) => {
@@ -187,13 +189,12 @@ describe('AdvancedSurfaceEditor', () => {
     mocks.canvasStoreState.pushHistory.mockClear();
   });
 
-  test('uses the natural background image dimensions so cover backgrounds fill the full canvas', async () => {
+  test('requests a cover-fit background image so the canvas fills edge to edge', async () => {
     const backgroundObject = {
       id: 'cover-background-image',
       width: undefined,
       height: undefined,
       opacity: 1,
-      getElement: () => ({ naturalWidth: 995, naturalHeight: 1600 } as HTMLImageElement),
       set: vi.fn(),
     };
     mocks.addImageToCanvasMock.mockResolvedValue(backgroundObject);
@@ -207,14 +208,21 @@ describe('AdvancedSurfaceEditor', () => {
       expect(mocks.addImageToCanvasMock).toHaveBeenCalledTimes(1);
     });
 
-    const backgroundSetArgs = backgroundObject.set.mock.calls[0]?.[0];
-    expect(backgroundSetArgs.left).toBe(200);
-    expect(backgroundSetArgs.top).toBe(300);
-    expect(backgroundSetArgs.originX).toBe('center');
-    expect(backgroundSetArgs.originY).toBe('center');
-    expect(backgroundSetArgs.opacity).toBe(1);
-    expect(backgroundSetArgs.scaleX).toBeCloseTo(400 / 995, 5);
-    expect(backgroundSetArgs.scaleY).toBeCloseTo(400 / 995, 5);
+    expect(mocks.addImageToCanvasMock).toHaveBeenCalledWith(
+      mocks.fakeCanvas,
+      'https://example.com/cover.jpg',
+      expect.objectContaining({
+        id: 'cover-background-image',
+        fit: 'cover',
+        targetWidth: 400,
+        targetHeight: 600,
+        left: 200,
+        top: 300,
+        originX: 'center',
+        originY: 'center',
+        opacity: 1,
+      }),
+    );
   });
 
   test('refreshes the route after saving the rendered cover so preview reads the latest persisted asset', async () => {

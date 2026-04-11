@@ -28,17 +28,55 @@ export const CANVAS_HEIGHT = 600;
 export const GRID_SIZE = 10;
 export const SNAP_THRESHOLD = 10;
 
-export function getFabricImageNaturalSize(image: {
+type FabricImageLike = {
   getElement?: () => HTMLImageElement | null;
   width?: number;
   height?: number;
-}): { width: number; height: number } {
+  setCoords?: () => void;
+};
+
+type AddImageOptions = {
+  id?: string;
+  left?: number;
+  top?: number;
+  originX?: string;
+  originY?: string;
+  selectable?: boolean;
+  evented?: boolean;
+  opacity?: number;
+  scaleX?: number;
+  scaleY?: number;
+  fit?: 'contain' | 'cover';
+  targetWidth?: number;
+  targetHeight?: number;
+  [key: string]: unknown;
+};
+
+export function getFabricImageNaturalSize(image: FabricImageLike): { width: number; height: number } {
   const element = typeof image.getElement === 'function' ? image.getElement() : null;
 
   return {
     width: element?.naturalWidth ?? image.width ?? CANVAS_WIDTH,
     height: element?.naturalHeight ?? image.height ?? CANVAS_HEIGHT,
   };
+}
+
+export function getImageScaleForFit({
+  imageWidth,
+  imageHeight,
+  targetWidth,
+  targetHeight,
+  fit = 'contain',
+}: {
+  imageWidth: number;
+  imageHeight: number;
+  targetWidth: number;
+  targetHeight: number;
+  fit?: 'contain' | 'cover';
+}): number {
+  const widthRatio = targetWidth / imageWidth;
+  const heightRatio = targetHeight / imageHeight;
+  return fit === 'cover' ? Math.max(widthRatio, heightRatio) : Math.min(widthRatio, heightRatio);
 }
 
 export async function createFabricCanvas(
@@ -110,8 +148,7 @@ export async function addImageToCanvas(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   canvas: any,
   imageUrl: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  options?: any,
+  options: AddImageOptions = {},
 ) {
   const fabric = await getFabric();
 
@@ -131,24 +168,37 @@ export async function addImageToCanvas(
 
     console.info('[addImageToCanvas] natural dimensions:', naturalW, naturalH);
 
-    const maxWidth  = CANVAS_WIDTH  * 0.9;
-    const maxHeight = CANVAS_HEIGHT * 0.9;
-    const scale = Math.min(maxWidth / naturalW, maxHeight / naturalH);
+    const fit = options.fit ?? 'contain';
+    const targetWidth = options.targetWidth ?? CANVAS_WIDTH * 0.9;
+    const targetHeight = options.targetHeight ?? CANVAS_HEIGHT * 0.9;
+    const scale = getImageScaleForFit({
+      imageWidth: naturalW,
+      imageHeight: naturalH,
+      targetWidth,
+      targetHeight,
+      fit,
+    });
 
     img.set({
-      left:    CANVAS_WIDTH  / 2,
-      top:     CANVAS_HEIGHT / 2,
-      scaleX:  scale,
-      scaleY:  scale,
+      left: options.left ?? CANVAS_WIDTH / 2,
+      top: options.top ?? CANVAS_HEIGHT / 2,
+      scaleX: options.scaleX ?? scale,
+      scaleY: options.scaleY ?? scale,
       originX: 'center',
       originY: 'center',
       ...options,
     });
+    if (typeof img.setCoords === 'function') {
+      img.setCoords();
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (options?.id) (img as any).id = options.id;
 
     canvas.add(img);
+    if (typeof img.setCoords === 'function') {
+      img.setCoords();
+    }
     canvas.setActiveObject(img);
     if (canvas.requestRenderAll) canvas.requestRenderAll();
     else canvas.renderAll();
