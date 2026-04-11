@@ -165,8 +165,11 @@ export function AdvancedSurfaceEditor({
             ? project.cover.accentColor || (project.cover.palette === 'sand' ? '#0b313f' : '#f2e3b3')
             : project.backCover.accentColor || '#f2e3b3';
 
-        // FIX: fontSize reducido (38→32) y width ampliado (0.82→0.88) para el título,
-        // evitando que títulos largos se corten o solapen con el subtítulo.
+        // NOTA: Fabric.js solo acepta un nombre de fuente único (no stacks CSS).
+        // Usar 'Arial' garantiza métricas consistentes en todos los sistemas operativos
+        // y evita que el texto se trunque por fallback a Times New Roman.
+        const CANVAS_FONT = 'Arial';
+
         const fieldConfigs: Record<string, { top: number; fontSize: number; fontWeight: string | number; textAlign: 'left' | 'center'; width: number; left: number; fill?: string }> = {
           title: {
             top: surface === 'cover' ? canvasHeight * 0.28 : canvasHeight * 0.18,
@@ -227,7 +230,8 @@ export function AdvancedSurfaceEditor({
             top: config.top,
             fontSize: config.fontSize,
             fontWeight: config.fontWeight,
-            fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+            // FIX: nombre de fuente único — Fabric no soporta stacks CSS tipo 'ui-sans-serif, system-ui'
+            fontFamily: CANVAS_FONT,
             fill: config.fill ?? textColor,
             textAlign: config.textAlign,
             id: `${surface}-${layer.fieldKey}-text`,
@@ -236,7 +240,6 @@ export function AdvancedSurfaceEditor({
             originX: config.textAlign === 'center' ? 'center' : 'left',
             selectable: true,
             evented: true,
-            // FIX: splitByGrapheme:false fuerza word-wrap por palabras (no por carácter)
             splitByGrapheme: false,
             lineHeight: layer.fieldKey === 'body' ? 1.45 : 1.25,
           });
