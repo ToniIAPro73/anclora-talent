@@ -165,13 +165,15 @@ export function AdvancedSurfaceEditor({
             ? project.cover.accentColor || (project.cover.palette === 'sand' ? '#0b313f' : '#f2e3b3')
             : project.backCover.accentColor || '#f2e3b3';
 
+        // FIX: fontSize reducido (38→32) y width ampliado (0.82→0.88) para el título,
+        // evitando que títulos largos se corten o solapen con el subtítulo.
         const fieldConfigs: Record<string, { top: number; fontSize: number; fontWeight: string | number; textAlign: 'left' | 'center'; width: number; left: number; fill?: string }> = {
           title: {
-            top: surface === 'cover' ? canvasHeight * 0.34 : canvasHeight * 0.18,
-            fontSize: surface === 'cover' ? 38 : 28,
+            top: surface === 'cover' ? canvasHeight * 0.28 : canvasHeight * 0.18,
+            fontSize: surface === 'cover' ? 32 : 28,
             fontWeight: 900,
             textAlign: surface === 'cover' ? 'center' : 'left',
-            width: canvasWidth * (surface === 'cover' ? 0.82 : 0.72),
+            width: canvasWidth * (surface === 'cover' ? 0.88 : 0.72),
             left: surface === 'cover' ? canvasWidth / 2 : canvasWidth * 0.16,
           },
           subtitle: {
@@ -234,7 +236,9 @@ export function AdvancedSurfaceEditor({
             originX: config.textAlign === 'center' ? 'center' : 'left',
             selectable: true,
             evented: true,
-            lineHeight: layer.fieldKey === 'body' ? 1.45 : 1.16,
+            // FIX: splitByGrapheme:false fuerza word-wrap por palabras (no por carácter)
+            splitByGrapheme: false,
+            lineHeight: layer.fieldKey === 'body' ? 1.45 : 1.25,
           });
 
           const nextElement = {
@@ -260,7 +264,6 @@ export function AdvancedSurfaceEditor({
             guideManagerRef.current = createGuideManager(fabricCanvas);
           }
 
-          // DESPUÉS
           fabricCanvas.on('selection:created', (e: FabricEvent) => {
             if ((e.selected?.length ?? 0) > 0) {
               const selectedFabricObj = e.selected![0];
