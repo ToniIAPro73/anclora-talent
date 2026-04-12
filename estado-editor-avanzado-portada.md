@@ -270,6 +270,47 @@ La siguiente intervención debería ser:
 4. Verificar si otra parte del editor está reescribiendo dimensiones después del montaje.
 5. Solo después de esa observación, aplicar una corrección final dirigida.
 
+## Intervención realizada: instrumentación + carga de fuentes
+
+Se ha implementado la instrumentación recomendada en `src/lib/canvas-utils.ts`:
+
+### Cambios aplicados
+
+1. **Función `waitForFont`**: espera a que la fuente esté cargada en el navegador antes de crear el objeto de texto, usando la Font Loading API del navegador.
+
+2. **Instrumentación en tres fases**:
+   - **Antes de initDimensions**: registra todos los valores iniciales del objeto (tipo, text, rawText, width, minWidth, height, scaleX, scaleY, lines, lineCount, coordenadas, origen, fontSize, fontFamily).
+   - **Después de initDimensions**: verifica width, minWidth, height, scaleX, scaleY, lines y lineCount tras el recálculo de dimensiones.
+   - **Después de render** (100ms timeout): verifica width, height, scaleX, scaleY, oCoords y aCoords tras añadir al canvas.
+
+3. **Corrección proactiva de ancho**: si el ancho calculado es menor al 90% del `wrapWidth` esperado, se fuerza explícitamente el ancho y se vuelve a llamar a `initDimensions()`.
+
+4. **Reset explícito de escalado**: se asegura `scaleX: 1` y `scaleY: 1` para evitar distorsión por escalado acumulado.
+
+### Archivos afectados
+
+- `src/lib/canvas-utils.ts`
+
+### Resultado esperado
+
+Esta instrumentación permitirá:
+- Identificar si el problema está en la medición inicial de dimensiones.
+- Detectar si hay un problema de escalado posterior.
+- Verificar si las líneas internas se calculan correctamente.
+- Confirmar si el ancho real coincide con el `wrapWidth` especificado.
+- Obtener evidencia concreta del comportamiento en staging para dirigir la corrección final.
+
+### Próximos pasos
+
+1. Desplegar a staging.
+2. Abrir consola del navegador y editar una portada en el editor avanzado.
+3. Recopilar los logs de `[addTextToCanvas]` para analizar:
+   - Si `width` es significativamente menor que `wrapWidth`.
+   - Si `lines` tiene el número esperado de líneas.
+   - Si `scaleX` o `scaleY` son diferentes de 1.
+   - Si hay discrepancia entre las medidas antes y después del render.
+4. Con esos datos, aplicar la corrección específica que resuelva el recorte.
+
 ## Archivos más implicados hasta ahora
 
 - `src/components/projects/CoverForm.tsx`
