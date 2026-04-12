@@ -36,6 +36,13 @@ type FabricImageLike = {
   setCoords?: () => void;
 };
 
+type FabricTextLike = {
+  id?: string;
+  set?: (props: Record<string, unknown> | string, value?: unknown) => void;
+  setCoords?: () => void;
+  initDimensions?: () => void;
+};
+
 type AddImageOptions = {
   id?: string;
   attachToCanvas?: boolean;
@@ -135,10 +142,21 @@ export async function addTextToCanvas(
     originX: 'center',
     originY: 'center',
     textAlign: 'center',
+    scaleX: 1,
+    scaleY: 1,
+    objectCaching: false,
+    noScaleCache: true,
     ...options,
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (options?.id) (fabricText as any).id = options.id;
+
+  // Fabric 7 can keep stale text dimensions/caches if the textbox is created
+  // before the final font metrics settle. Force a fresh measurement up front.
+  (fabricText as FabricTextLike).initDimensions?.();
+  (fabricText as FabricTextLike).set?.('dirty', true);
+  (fabricText as FabricTextLike).setCoords?.();
+
   canvas.add(fabricText);
   canvas.setActiveObject(fabricText);
   if (canvas.requestRenderAll) canvas.requestRenderAll();

@@ -95,6 +95,7 @@ export const useCanvasStore = create<CanvasStore>((set: any, get: any) => ({
       
       // Special handling for text related properties that might need re-render or re-calc
       if (properties.fontSize || properties.fontFamily || properties.fontWeight || properties.text || properties.textAlign) {
+        element.object.initDimensions?.();
         element.object.setCoords?.();
       }
       
