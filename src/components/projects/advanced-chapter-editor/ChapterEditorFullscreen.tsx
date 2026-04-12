@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp, ZoomIn, ZoomOut } from 'lucide-react';
 import { AdvancedRichTextEditor } from '../AdvancedRichTextEditor';
 import { premiumPrimaryMintButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { useChapterEditor } from './useChapterEditor';
@@ -30,6 +30,7 @@ export function ChapterEditorFullscreen({
   defaultMargins = { top: 24, bottom: 24, left: 24, right: 24 },
 }: ChapterEditorFullscreenProps) {
   const { preferences } = useEditorPreferences();
+  const [zoom, setZoom] = useState(100);
 
   // Use saved preferences if available, otherwise use passed defaults
   const device = (preferences.device as 'mobile' | 'tablet' | 'desktop') || defaultDevice;
@@ -71,6 +72,10 @@ export function ChapterEditorFullscreen({
     await editor.saveChapter();
     onSave?.();
   }, [editor, onSave]);
+
+  const handleZoomChange = useCallback((nextZoom: number) => {
+    setZoom(Math.max(50, Math.min(150, nextZoom)));
+  }, []);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -125,23 +130,22 @@ export function ChapterEditorFullscreen({
 
   return (
     <div
-      className="flex flex-col h-screen w-full bg-[#111C28] rounded-none overflow-hidden"
+      className="flex h-screen w-full flex-col overflow-hidden rounded-none bg-[#111C28]"
       onClick={(e) => e.stopPropagation()}
     >
       {/* ═══════════════════════ HEADER ═══════════════════════ */}
-      <header className="shrink-0 flex items-center justify-between border-b border-[var(--border-subtle)] px-4 py-3 gap-3">
+      <header className="shrink-0 flex items-center justify-between gap-2 border-b border-[var(--border-subtle)] px-3 py-1.5">
         <div className="flex-1 min-w-0">
-          <h2 className="text-sm font-black tracking-tight text-[var(--text-primary)]">
+          <h2 className="text-[13px] font-black tracking-tight text-[var(--text-primary)]">
             Capítulo {editor.currentIndex + 1}/{editor.totalChapters}
           </h2>
         </div>
 
-        {/* Chapter Navigation */}
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex flex-shrink-0 items-center gap-1 rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-1.5 py-1">
           <button
             onClick={editor.goToPrevChapter}
             disabled={!editor.canNavigatePrev || editor.isSaving}
-            className={`${premiumSecondaryLightButton} p-1.5 disabled:opacity-50`}
+            className={`${premiumSecondaryLightButton} px-2.5 py-1.5 disabled:opacity-50`}
             title="Capítulo anterior (Ctrl+←)"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -150,51 +154,75 @@ export function ChapterEditorFullscreen({
           <button
             onClick={editor.goToNextChapter}
             disabled={!editor.canNavigateNext || editor.isSaving}
-            className={`${premiumSecondaryLightButton} p-1.5 disabled:opacity-50`}
+            className={`${premiumSecondaryLightButton} px-2.5 py-1.5 disabled:opacity-50`}
             title="Siguiente capítulo (Ctrl+→)"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
+
+          <div className="mx-1 h-5 w-px bg-[var(--border-subtle)]" />
+
+          {/* Page Navigation */}
+          {editor.totalPages > 1 && (
+            <>
+              <button
+                onClick={editor.goToPagePrev}
+                disabled={!editor.canNavigatePagePrev || editor.isSaving}
+                className={`${premiumSecondaryLightButton} px-2.5 py-1.5 disabled:opacity-50`}
+                title="Página anterior (Alt+↑ o Page Up)"
+              >
+                <ArrowUp className="h-4 w-4" />
+              </button>
+
+              <span className="min-w-[2.5rem] px-1 text-center text-xs text-[var(--text-secondary)]">
+                P.{editor.currentPage + 1}
+              </span>
+
+              <button
+                onClick={editor.goToPageNext}
+                disabled={!editor.canNavigatePageNext || editor.isSaving}
+                className={`${premiumSecondaryLightButton} px-2.5 py-1.5 disabled:opacity-50`}
+                title="Siguiente página (Alt+↓ o Page Down)"
+              >
+                <ArrowDown className="h-4 w-4" />
+              </button>
+
+              <div className="mx-1 h-5 w-px bg-[var(--border-subtle)]" />
+            </>
+          )}
+
+          <button
+            type="button"
+            onClick={() => handleZoomChange(zoom - 10)}
+            className={`${premiumSecondaryLightButton} p-1.5`}
+            title="Reducir zoom"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </button>
+          <span className="w-9 text-center text-xs text-[var(--text-secondary)]">
+            {zoom}%
+          </span>
+          <button
+            type="button"
+            onClick={() => handleZoomChange(zoom + 10)}
+            className={`${premiumSecondaryLightButton} p-1.5`}
+            title="Aumentar zoom"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </button>
         </div>
 
-        {/* Page Navigation */}
-        {editor.totalPages > 1 && (
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <button
-              onClick={editor.goToPagePrev}
-              disabled={!editor.canNavigatePagePrev || editor.isSaving}
-              className={`${premiumSecondaryLightButton} p-1.5 disabled:opacity-50`}
-              title="Página anterior (Alt+↑ o Page Up)"
-            >
-              <ArrowUp className="h-4 w-4" />
-            </button>
-
-            <span className="text-xs text-[var(--text-secondary)] px-2">
-              P.{editor.currentPage + 1}
-            </span>
-
-            <button
-              onClick={editor.goToPageNext}
-              disabled={!editor.canNavigatePageNext || editor.isSaving}
-              className={`${premiumSecondaryLightButton} p-1.5 disabled:opacity-50`}
-              title="Siguiente página (Alt+↓ o Page Down)"
-            >
-              <ArrowDown className="h-4 w-4" />
-            </button>
-          </div>
-        )}
-
         {/* Status and Close button */}
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex flex-shrink-0 items-center gap-1">
           {editor.lastSaved && (
-            <span className="text-xs text-[var(--accent-mint)] opacity-70 px-2">
+            <span className="px-1 text-xs text-[var(--accent-mint)] opacity-70">
               ✓ Guardado
             </span>
           )}
           <button
             onClick={handleClose}
             disabled={editor.isSaving}
-            className={`${premiumSecondaryLightButton} px-4 py-1.5 flex-shrink-0 text-sm font-semibold`}
+            className={`${premiumSecondaryLightButton} flex-shrink-0 px-3.5 py-1.5 text-sm font-semibold`}
             title="Cerrar editor (Esc)"
           >
             CERRAR
@@ -203,7 +231,7 @@ export function ChapterEditorFullscreen({
       </header>
 
       {/* ═══════════════════════ CONTENT AREA ═══════════════════════ */}
-      <div className="flex-1 overflow-hidden flex flex-col gap-1 p-3">
+      <div className="flex flex-1 flex-col gap-1 overflow-hidden p-2">
         {/* Error message */}
         {editor.error && (
           <div className="rounded-[8px] border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-400 flex-shrink-0">
@@ -212,13 +240,14 @@ export function ChapterEditorFullscreen({
         )}
 
         {/* Content Editor - Fills available space - includes chapter title as first line */}
-        <div className="flex-1 min-h-0 rounded-[8px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-auto overflow-x-hidden rounded-[8px] border border-[var(--border-subtle)] bg-[var(--surface-soft)]">
           <AdvancedRichTextEditor
             defaultContent={editor.htmlContent}
             onUpdate={editor.setHtmlContent}
             currentPage={editor.currentPage}
             totalPages={editor.totalPages}
             onPageCountChange={editor.setMeasuredTotalPages}
+            contentZoom={zoom}
           />
         </div>
       </div>

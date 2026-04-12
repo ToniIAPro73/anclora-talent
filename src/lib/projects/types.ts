@@ -108,6 +108,7 @@ export interface ProjectRecord {
   slug: string;
   title: string;
   status: ProjectStatus;
+  workflowStep: number;
   createdAt: string;
   updatedAt: string;
   document: ProjectDocument;

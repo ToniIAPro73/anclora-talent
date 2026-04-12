@@ -1058,12 +1058,14 @@ export function AdvancedRichTextEditor({
   currentPage = 0,
   totalPages,
   onPageCountChange,
+  contentZoom = 100,
 }: {
   defaultContent: string;
   onUpdate: (html: string) => void;
   currentPage?: number;
   totalPages?: number;
   onPageCountChange?: (pages: number) => void;
+  contentZoom?: number;
 }) {
   const { preferences, setPreferences } = useEditorPreferences();
   const isSyncingExternalContentRef = useRef(false);
@@ -1114,12 +1116,118 @@ export function AdvancedRichTextEditor({
   const spreadStartPage =
     viewMode === 'double' ? Math.max(0, currentPage - (currentPage % 2)) : currentPage;
   const showSecondPage = viewMode === 'double' && spreadStartPage + 1 < totalRenderablePages;
+  const lastPublishedContentRef = useRef(normalizeEditorHtml(defaultContent));
 
   const handleUpdate = useCallback(
     (html: string) => {
+      lastPublishedContentRef.current = normalizeEditorHtml(html);
       onUpdate(html);
     },
     [onUpdate],
+  );
+
+  const syncEditorContent = useCallback(
+    (targetEditor: Editor, nextHtml: string) => {
+      const previousSelection = targetEditor.state.selection;
+      const coordsAtPos =
+        typeof targetEditor.view?.coordsAtPos === 'function'
+          ? targetEditor.view.coordsAtPos.bind(targetEditor.view)
+          : null;
+      const posAtCoords =
+        typeof targetEditor.view?.posAtCoords === 'function'
+          ? targetEditor.view.posAtCoords.bind(targetEditor.view)
+          : null;
+      const previousAnchorCoords =
+        previousSelection && coordsAtPos
+          ? (() => {
+              try {
+                return coordsAtPos(previousSelection.from);
+              } catch {
+                return null;
+              }
+            })()
+          : null;
+      const previousHeadCoords =
+        previousSelection && !previousSelection.empty && coordsAtPos
+          ? (() => {
+              try {
+                return coordsAtPos(previousSelection.to);
+              } catch {
+                return null;
+              }
+            })()
+          : null;
+
+      isSyncingExternalContentRef.current = true;
+      targetEditor.commands.setContent(nextHtml, { emitUpdate: false });
+
+      if (!previousSelection || typeof targetEditor.view?.dispatch !== 'function') {
+        return;
+      }
+
+      if (previousAnchorCoords && posAtCoords) {
+        try {
+          const resolvedAnchor = posAtCoords({
+            left: previousAnchorCoords.left,
+            top: Math.max(previousAnchorCoords.top + 1, previousAnchorCoords.bottom - 1),
+          });
+          const resolvedHead =
+            previousHeadCoords && !previousSelection.empty
+              ? posAtCoords({
+                  left: previousHeadCoords.left,
+                  top: Math.max(previousHeadCoords.top + 1, previousHeadCoords.bottom - 1),
+                })
+              : null;
+
+          if (resolvedAnchor?.pos) {
+            const visualFrom = resolvedAnchor.pos;
+            const visualTo =
+              resolvedHead?.pos && !previousSelection.empty
+                ? resolvedHead.pos
+                : visualFrom;
+
+            targetEditor.view.dispatch(
+              targetEditor.state.tr.setSelection(
+                TextSelection.create(
+                  targetEditor.state.doc,
+                  Math.min(visualFrom, visualTo),
+                  Math.max(visualFrom, visualTo),
+                ),
+              ),
+            );
+            return;
+          }
+        } catch {
+          // Fall through to positional restoration below if coordinate-based restoration fails.
+        }
+      }
+
+      const maxSelectionPos =
+        typeof (targetEditor.state.doc as { content?: { size?: number } })?.content?.size === 'number'
+          ? Math.max(1, (targetEditor.state.doc as { content: { size: number } }).content.size)
+          : null;
+
+      const safeFrom =
+        maxSelectionPos === null
+          ? previousSelection.from
+          : Math.min(Math.max(1, previousSelection.from), maxSelectionPos);
+      const safeTo =
+        maxSelectionPos === null
+          ? previousSelection.to
+          : Math.min(Math.max(1, previousSelection.to), maxSelectionPos);
+
+      try {
+        targetEditor.view.dispatch(
+          targetEditor.state.tr.setSelection(
+            TextSelection.create(targetEditor.state.doc, safeFrom, safeTo),
+          ),
+        );
+      } catch {
+        // If the reconciled document shape invalidates the old selection, keep the editor stable
+        // and let the browser/ProseMirror resolve the next valid caret position naturally.
+      }
+    },
+    [],
   );
 
   // Save preferences when device changes
@@ -1211,8 +1319,7 @@ export function AdvancedRichTextEditor({
         }
 
         if (normalizeEditorHtml(reconciledHtml) !== normalizeEditorHtml(currentHtml)) {
-          isSyncingExternalContentRef.current = true;
-          ed.commands.setContent(reconciledHtml, { emitUpdate: false });
+          syncEditorContent(ed, reconciledHtml);
           handleUpdate(reconciledHtml);
         return;
       }
@@ -1224,11 +1331,20 @@ export function AdvancedRichTextEditor({
 
   // Update editor content when defaultContent changes (e.g., when switching chapters)
   useEffect(() => {
-    if (editor && normalizeEditorHtml(defaultContent) !== normalizeEditorHtml(editor.getHTML())) {
-      isSyncingExternalContentRef.current = true;
-      editor.commands.setContent(defaultContent, { emitUpdate: false });
+    if (!editor) {
+      return;
     }
-  }, [defaultContent, editor]);
+
+    const normalizedIncomingContent = normalizeEditorHtml(defaultContent);
+    if (normalizedIncomingContent === lastPublishedContentRef.current) {
+      return;
+    }
+
+    if (normalizedIncomingContent !== normalizeEditorHtml(editor.getHTML())) {
+      syncEditorContent(editor, defaultContent);
+      lastPublishedContentRef.current = normalizedIncomingContent;
+    }
+  }, [defaultContent, editor, syncEditorContent]);
 
   const pagePaddingStyle = {
     paddingTop: `${margins.top}px`,
@@ -1238,6 +1354,7 @@ export function AdvancedRichTextEditor({
   };
   const pageWidth = previewConfig.pageWidth;
   const pageHeight = previewConfig.pageHeight;
+  const zoomScale = Math.max(0.5, Math.min(1.5, contentZoom / 100));
   const pageGap = 32;
   const contentWidth = Math.max(120, pageWidth - margins.left - margins.right);
   const contentHeight = Math.max(120, pageHeight - margins.top - margins.bottom);
@@ -1346,7 +1463,7 @@ export function AdvancedRichTextEditor({
     }
 
     focusVisiblePage(currentPage);
-  }, [currentPage, defaultContent, editor, focusVisiblePage, totalRenderablePages]);
+  }, [currentPage, editor, focusVisiblePage, totalRenderablePages]);
 
   if (!editor) return null;
 
@@ -1370,11 +1487,22 @@ export function AdvancedRichTextEditor({
         wordsPerPage={wordsPerPage}
       />
 
-      <div className="flex-1 overflow-auto bg-[var(--background)] p-6 flex justify-center custom-scrollbar">
-        <div className={`transition-all duration-500 ease-in-out ${deviceClasses[device]}`}>
+      <div className="flex flex-1 justify-center overflow-auto bg-[var(--background)] p-4 custom-scrollbar">
+        <div
+          className={`transition-all duration-500 ease-in-out ${deviceClasses[device]}`}
+          style={{
+            width: `${viewportWidth * zoomScale}px`,
+            minHeight: `${pageHeight * zoomScale}px`,
+          }}
+        >
           <div
             className="relative mx-auto overflow-hidden"
-            style={{ width: `${viewportWidth}px`, minHeight: `${pageHeight}px` }}
+            style={{
+              width: `${viewportWidth}px`,
+              minHeight: `${pageHeight}px`,
+              transform: `scale(${zoomScale})`,
+              transformOrigin: 'top left',
+            }}
           >
             <style>{`
               .ProseMirror {

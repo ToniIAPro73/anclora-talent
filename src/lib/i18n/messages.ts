@@ -175,6 +175,7 @@ export type AppMessages = {
     previewExportButton: string;
     previewExportFilename: string;
     previewExportPdfButton: string;
+    previewExportDocxButton: string;
     coverRenderImage: string;
     coverRenderImageDone: string;
     coverRenderedImageLabel: string;
@@ -461,6 +462,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewExportButton: 'Exportar HTML',
       previewExportFilename: 'proyecto',
       previewExportPdfButton: 'Exportar PDF',
+      previewExportDocxButton: 'Exportar Word (.docx)',
       coverRenderImage: 'Generar imagen',
       coverRenderImageDone: 'Imagen guardada',
       coverRenderedImageLabel: 'Imagen renderizada',
@@ -745,6 +747,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewExportButton: 'Export HTML',
       previewExportFilename: 'project',
       previewExportPdfButton: 'Export PDF',
+      previewExportDocxButton: 'Export Word (.docx)',
       coverRenderImage: 'Generate image',
       coverRenderImageDone: 'Image saved',
       coverRenderedImageLabel: 'Rendered image',

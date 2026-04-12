@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition, useState, useMemo } from 'react';
+import { useEffect, useTransition, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Loader2, Download } from 'lucide-react';
 import { Stepper, type Step } from '@/components/ui/Stepper';
@@ -76,6 +76,48 @@ function inferTemplateId(
 }
 
 type SaveState = 'idle' | 'saving' | 'saved';
+const PROJECT_WORKFLOW_STEP_STORAGE_KEY = 'anclora-project-workflow-step';
+
+function normalizeWorkflowStep(step: number | undefined) {
+  if (!Number.isFinite(step)) {
+    return 1;
+  }
+
+  return Math.min(9, Math.max(1, Math.trunc(step ?? 1)));
+}
+
+function readStoredWorkflowStep(projectId: string) {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(PROJECT_WORKFLOW_STEP_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Record<string, number>;
+    return typeof parsed[projectId] === 'number' ? normalizeWorkflowStep(parsed[projectId]) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredWorkflowStep(projectId: string, step: number) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(PROJECT_WORKFLOW_STEP_STORAGE_KEY);
+    const parsed = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+    parsed[projectId] = normalizeWorkflowStep(step);
+    window.localStorage.setItem(PROJECT_WORKFLOW_STEP_STORAGE_KEY, JSON.stringify(parsed));
+  } catch {
+    // Ignore storage failures so they never block the editor.
+  }
+}
 
 export function ProjectWorkspace({
   project,
@@ -85,7 +127,13 @@ export function ProjectWorkspace({
   copy: AppMessages['project'];
 }) {
   const router = useRouter();
-  const [activeStep, setActiveStep] = useState(1);
+  const [activeStep, setActiveStep] = useState(() => {
+    const persistedStep = readStoredWorkflowStep(project.id);
+    return Math.max(
+      normalizeWorkflowStep(project.workflowStep),
+      persistedStep ?? 1,
+    );
+  });
   const [isAdvancedCover, setIsAdvancedCover] = useState(false);
   const [isAdvancedBackCover, setIsAdvancedBackCover] = useState(false);
   const [activeChapterId, setActiveChapterId] = useState(
@@ -120,6 +168,20 @@ export function ProjectWorkspace({
   );
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    const persistedStep = readStoredWorkflowStep(project.id);
+    setActiveStep(
+      Math.max(
+        normalizeWorkflowStep(project.workflowStep),
+        persistedStep ?? 1,
+      ),
+    );
+  }, [project.id, project.updatedAt, project.workflowStep]);
+
+  useEffect(() => {
+    writeStoredWorkflowStep(project.id, activeStep);
+  }, [activeStep, project.id]);
 
   const activeCoverDraft = useMemo(
     () =>
@@ -394,12 +456,30 @@ export function ProjectWorkspace({
             <div className="mt-8 flex flex-wrap justify-center gap-4">
                <button
                  onClick={() => {
+                   const htmlUrl = `/api/projects/export?projectId=${project.id}`;
+                   window.open(htmlUrl, '_blank');
+                 }}
+                 className={`${premiumSecondaryLightButton} px-8 cursor-pointer hover:cursor-pointer`}
+               >
+                  {copy.previewExportButton}
+               </button>
+               <button
+                 onClick={() => {
                    const pdfUrl = `/api/projects/export/pdf?projectId=${project.id}`;
                    window.open(pdfUrl, '_blank');
                  }}
                  className={`${premiumPrimaryDarkButton} px-8 cursor-pointer hover:cursor-pointer`}
                >
-                  Exportar formato PDF
+                  {copy.previewExportPdfButton}
+               </button>
+               <button
+                 onClick={() => {
+                   const docxUrl = `/api/projects/export/docx?projectId=${project.id}`;
+                   window.open(docxUrl, '_blank');
+                 }}
+                 className={`${premiumSecondaryLightButton} px-8 cursor-pointer hover:cursor-pointer`}
+               >
+                  {copy.previewExportDocxButton}
                </button>
                <button className={`${premiumSecondaryLightButton} px-8 opacity-30 cursor-default`} disabled>
                   Exportar EPUB (Próximamente)
