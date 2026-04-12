@@ -18,7 +18,12 @@ import { ChapterEditorModal } from './ChapterEditorModal';
 import { AddChapterDialog } from './AddChapterDialog';
 import { ImportChapterDialog } from './ImportChapterDialog';
 import { Portal } from '@/components/ui/Portal';
-import { saveBackCoverAction, saveProjectDocumentAction, saveProjectCoverAction } from '@/lib/projects/actions';
+import {
+  saveBackCoverAction,
+  saveProjectCoverAction,
+  saveProjectDocumentAction,
+  saveProjectWorkflowStepAction,
+} from '@/lib/projects/actions';
 import { computeChapterPageMetrics } from '@/lib/preview/metrics';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
@@ -129,10 +134,9 @@ export function ProjectWorkspace({
   const router = useRouter();
   const [activeStep, setActiveStep] = useState(() => {
     const persistedStep = readStoredWorkflowStep(project.id);
-    return Math.max(
-      normalizeWorkflowStep(project.workflowStep),
-      persistedStep ?? 1,
-    );
+    return Number.isFinite(project.workflowStep)
+      ? normalizeWorkflowStep(project.workflowStep)
+      : (persistedStep ?? 1);
   });
   const [isAdvancedCover, setIsAdvancedCover] = useState(false);
   const [isAdvancedBackCover, setIsAdvancedBackCover] = useState(false);
@@ -170,18 +174,25 @@ export function ProjectWorkspace({
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    const persistedStep = readStoredWorkflowStep(project.id);
-    setActiveStep(
-      Math.max(
-        normalizeWorkflowStep(project.workflowStep),
-        persistedStep ?? 1,
-      ),
-    );
+    setActiveStep(normalizeWorkflowStep(project.workflowStep));
   }, [project.id, project.updatedAt, project.workflowStep]);
 
   useEffect(() => {
     writeStoredWorkflowStep(project.id, activeStep);
   }, [activeStep, project.id]);
+
+  useEffect(() => {
+    if (normalizeWorkflowStep(project.workflowStep) === activeStep) {
+      return;
+    }
+
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.set('projectId', project.id);
+      formData.set('workflowStep', String(activeStep));
+      await saveProjectWorkflowStepAction(formData);
+    });
+  }, [activeStep, project.id, project.workflowStep, startTransition]);
 
   const activeCoverDraft = useMemo(
     () =>

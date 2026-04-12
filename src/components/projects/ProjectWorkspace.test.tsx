@@ -4,6 +4,7 @@ import { ProjectWorkspace } from './ProjectWorkspace';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { createDefaultSurfaceState } from '@/lib/projects/cover-surface';
+import { saveProjectWorkflowStepAction } from '@/lib/projects/actions';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -14,6 +15,7 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/lib/projects/actions', () => ({
   saveChapterContentAction: vi.fn().mockResolvedValue(undefined),
   saveProjectDocumentAction: vi.fn().mockResolvedValue(undefined),
+  saveProjectWorkflowStepAction: vi.fn().mockResolvedValue(undefined),
   moveChapterAction: vi.fn().mockResolvedValue(undefined),
   deleteChapterAction: vi.fn().mockResolvedValue(undefined),
   saveProjectCoverAction: vi.fn().mockResolvedValue(undefined),
@@ -149,19 +151,27 @@ describe('ProjectWorkspace', () => {
     expect(stepper.querySelectorAll('svg.lucide-check')).toHaveLength(6);
   });
 
-  test('restores the last visited step for the project from local storage', () => {
+  test('prioritizes the persisted database workflow step over local storage', () => {
     window.localStorage.setItem(
       'anclora-project-workflow-step',
       JSON.stringify({
-        'proj-1': 5,
+        'proj-1': 2,
       }),
     );
 
-    render(<ProjectWorkspace project={makeProject({ workflowStep: 1 })} copy={copy} />);
+    render(<ProjectWorkspace project={makeProject({ workflowStep: 5 })} copy={copy} />);
 
     expect(screen.getByText('de 9 pasos')).toBeInTheDocument();
     expect(screen.getAllByText('5').length).toBeGreaterThan(0);
     expect(screen.getAllByText(copy.stepBackCover).length).toBeGreaterThan(0);
+  });
+
+  test('persists the workflow step when navigating', async () => {
+    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+
+    fireEvent.click(screen.getByText('Siguiente paso'));
+
+    expect(saveProjectWorkflowStepAction).toHaveBeenCalledTimes(1);
   });
 
   test('renders chapter organizer when moving to Step 2', () => {

@@ -1,5 +1,7 @@
 import sharp from 'sharp';
 import type { ProjectRecord, CoverDesign } from './types';
+import type { PreviewPage } from '@/lib/preview/preview-builder';
+import type { PaginationConfig } from '@/lib/preview/device-configs';
 import {
   createDefaultSurfaceState,
   normalizeSurfaceState,
@@ -27,6 +29,11 @@ const COVER_TEXT_COLORS: Record<CoverDesign['palette'], { primary: string; secon
 
 const BACK_COVER_BACKGROUND =
   'linear-gradient(160deg, #0b133f 0%, #0b233f 50%, #07252f 100%)';
+const PREVIEW_PAGE_BACKGROUND = '#0C141E';
+const PREVIEW_PAGE_BORDER = 'rgba(74, 159, 216, 0.14)';
+const PREVIEW_TEXT_PRIMARY = '#EDF2F8';
+const PREVIEW_TEXT_TERTIARY = '#7090A8';
+const PREVIEW_QUOTE_BORDER = '#4A9FD8';
 
 function escapeXml(value: string) {
   return value
@@ -217,6 +224,10 @@ async function rasterizeSvg(svg: string) {
   return `data:image/png;base64,${png.toString('base64')}`;
 }
 
+function wrapForeignObjectMarkup(markup: string) {
+  return markup.replace(/&nbsp;/g, '&#160;');
+}
+
 function buildSvgShell({
   background,
   backgroundImage,
@@ -386,6 +397,142 @@ export async function buildBackCoverExportImageDataUrl(project: ProjectRecord) {
     children,
     accentColor: null,
   });
+
+  return rasterizeSvg(svg);
+}
+
+export async function buildContentPageExportImageDataUrl(
+  page: PreviewPage,
+  config: PaginationConfig,
+) {
+  if (page.type !== 'content') {
+    return null;
+  }
+
+  const html = (page.content ?? '').trim();
+  if (!html) {
+    return null;
+  }
+
+  const width = config.pageWidth;
+  const height = config.pageHeight;
+  const innerWidth = width - config.marginLeft - config.marginRight;
+  const innerHeight = height - config.marginTop - config.marginBottom;
+
+  const foreignHtml = wrapForeignObjectMarkup(html);
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+      <rect x="0" y="0" width="${width}" height="${height}" rx="8" ry="8" fill="${PREVIEW_PAGE_BACKGROUND}" stroke="${PREVIEW_PAGE_BORDER}" />
+      <foreignObject x="${config.marginLeft}" y="${config.marginTop}" width="${innerWidth}" height="${innerHeight}">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="
+          width:${innerWidth}px;
+          height:${innerHeight}px;
+          overflow:hidden;
+          color:${PREVIEW_TEXT_PRIMARY};
+          font-family: Arial, Helvetica, sans-serif;
+          font-size:${config.fontSize}px;
+          line-height:${config.lineHeight};
+          word-wrap:break-word;
+          overflow-wrap:break-word;
+        ">
+          <style>
+            * { box-sizing: border-box; }
+            body { margin: 0; }
+            p {
+              margin: 0;
+              color: ${PREVIEW_TEXT_PRIMARY};
+              word-break: break-word;
+              overflow-wrap: break-word;
+            }
+            p + p { margin-top: 0.8rem; }
+            h1, h2, h3, h4, h5, h6 {
+              margin-top: 0;
+              color: ${PREVIEW_TEXT_PRIMARY};
+              font-family: Arial, Helvetica, sans-serif;
+            }
+            h1 { font-size: 2rem; line-height: 1.1; font-weight: 800; margin-bottom: 1rem; }
+            h2 { font-size: 1.5rem; line-height: 1.2; font-weight: 750; margin-bottom: 0.85rem; }
+            h3 { font-size: 1.2rem; line-height: 1.3; font-weight: 700; margin-bottom: 0.75rem; }
+            h4 { font-size: 1.05rem; line-height: 1.35; font-weight: 700; margin-bottom: 0.65rem; }
+            h5, h6 { font-size: 0.95rem; line-height: 1.4; font-weight: 700; margin-bottom: 0.6rem; }
+            ul, ol { margin: 0 0 1rem 1.5rem; padding: 0; color: ${PREVIEW_TEXT_PRIMARY}; }
+            ul:not([data-bullet-style]) { list-style-type: disc; }
+            ol:not([data-list-style]) { list-style-type: decimal; }
+            li { margin: 0.35rem 0; color: ${PREVIEW_TEXT_PRIMARY}; }
+            ul[data-bullet-style="disc"] { list-style-type: disc; }
+            ul[data-bullet-style="circle"] { list-style-type: circle; }
+            ul[data-bullet-style="square"] { list-style-type: square; }
+            ul[data-bullet-style="diamond"],
+            ul[data-bullet-style="arrow"],
+            ul[data-bullet-style="check"] {
+              list-style: none;
+              padding-left: 0;
+            }
+            ul[data-bullet-style="diamond"] > li,
+            ul[data-bullet-style="arrow"] > li,
+            ul[data-bullet-style="check"] > li {
+              position: relative;
+              padding-left: 1.5rem;
+            }
+            ul[data-bullet-style="diamond"] > li::before { content: "◆"; }
+            ul[data-bullet-style="arrow"] > li::before { content: "➤"; }
+            ul[data-bullet-style="check"] > li::before { content: "✓"; }
+            ul[data-bullet-style="diamond"] > li::before,
+            ul[data-bullet-style="arrow"] > li::before,
+            ul[data-bullet-style="check"] > li::before {
+              position: absolute;
+              left: 0;
+              color: ${PREVIEW_TEXT_PRIMARY};
+              font-weight: 700;
+            }
+            ol[data-list-style="decimal"] { list-style-type: decimal; }
+            ol[data-list-style="upper-alpha"] { list-style-type: upper-alpha; }
+            ol[data-list-style="lower-alpha"] { list-style-type: lower-alpha; }
+            ol[data-list-style="upper-roman"] { list-style-type: upper-roman; }
+            ol[data-list-style="lower-roman"] { list-style-type: lower-roman; }
+            ol[data-list-style="decimal-parentheses"],
+            ol[data-list-style="lower-alpha-parentheses"] {
+              list-style: none;
+              counter-reset: custom-list;
+              padding-left: 0;
+            }
+            ol[data-list-style="decimal-parentheses"] > li,
+            ol[data-list-style="lower-alpha-parentheses"] > li {
+              position: relative;
+              padding-left: 2rem;
+              counter-increment: custom-list;
+            }
+            ol[data-list-style="decimal-parentheses"] > li::before { content: counter(custom-list) ") "; }
+            ol[data-list-style="lower-alpha-parentheses"] > li::before { content: counter(custom-list, lower-alpha) ") "; }
+            ol[data-list-style="decimal-parentheses"] > li::before,
+            ol[data-list-style="lower-alpha-parentheses"] > li::before {
+              position: absolute;
+              left: 0;
+              color: ${PREVIEW_TEXT_PRIMARY};
+              font-weight: 600;
+            }
+            blockquote {
+              margin: 1.25rem 0 0;
+              padding-left: 1rem;
+              border-left: 4px solid ${PREVIEW_QUOTE_BORDER};
+              color: ${PREVIEW_TEXT_TERTIARY};
+              font-style: italic;
+            }
+            img {
+              max-width: 100%;
+              height: auto;
+              object-fit: cover;
+            }
+            hr[data-page-break] {
+              display: none;
+            }
+          </style>
+          <div>${foreignHtml}</div>
+        </div>
+      </foreignObject>
+    </svg>
+  `;
 
   return rasterizeSvg(svg);
 }

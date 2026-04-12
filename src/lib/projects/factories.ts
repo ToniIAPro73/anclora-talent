@@ -83,6 +83,7 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
     slug: slugify(input.title),
     title: input.title,
     status: 'draft',
+    workflowStep: 1,
     createdAt: now,
     updatedAt: now,
     document: {
@@ -324,5 +325,13 @@ export function updateProjectBackCover(
       backgroundImageUrl: input.backgroundImageUrl,
       surfaceState: input.surfaceState ?? project.backCover.surfaceState,
     },
+  };
+}
+
+export function updateProjectWorkflowStep(project: ProjectRecord, workflowStep: number): ProjectRecord {
+  return {
+    ...project,
+    workflowStep: Math.min(9, Math.max(1, Math.trunc(workflowStep))),
+    updatedAt: new Date().toISOString(),
   };
 }

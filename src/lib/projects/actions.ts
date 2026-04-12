@@ -111,6 +111,19 @@ export async function saveProjectDocumentAction(formData: FormData) {
   revalidatePath(`/projects/${projectId}/preview`);
 }
 
+export async function saveProjectWorkflowStepAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '').trim();
+  const workflowStep = Number(formData.get('workflowStep') ?? 1);
+
+  if (!projectId || !Number.isFinite(workflowStep)) {
+    return;
+  }
+
+  await projectRepository.saveWorkflowStep(userId, projectId, workflowStep);
+  revalidatePath(`/projects/${projectId}/editor`);
+}
+
 export async function saveChapterContentAction(formData: FormData) {
   const userId = await requireUserId();
   const projectId = String(formData.get('projectId') ?? '').trim();

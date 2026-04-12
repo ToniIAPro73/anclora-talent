@@ -20,6 +20,7 @@ import { buildPreviewPages, type PreviewPage } from '@/lib/preview/preview-build
 import type { ProjectRecord } from './types';
 import {
   buildBackCoverExportImageDataUrl,
+  buildContentPageExportImageDataUrl,
   buildCoverExportImageDataUrl,
 } from './export-surface-image';
 
@@ -560,6 +561,9 @@ export async function buildProjectPdf(project: ProjectRecord) {
   const palette = COVER_PALETTE_COLORS[project.cover.palette] ?? COVER_PALETTE_COLORS.obsidian;
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
+  const contentImageUrls = await Promise.all(
+    pages.map((page) => buildContentPageExportImageDataUrl(page, EXPORT_CONFIG)),
+  );
 
   return (
     <Document
@@ -620,6 +624,14 @@ export async function buildProjectPdf(project: ProjectRecord) {
                   <Text style={pdfStyles.backCoverBio}>{page.backCoverData.authorBio}</Text>
                 ) : null}
               </View>
+            </Page>
+          );
+        }
+
+        if (contentImageUrls[pageIndex]) {
+          return (
+            <Page key={`pdf-content-${pageIndex}`} size={[PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT]} style={pdfStyles.page}>
+              <Image src={contentImageUrls[pageIndex]!} style={pdfStyles.fullImage} />
             </Page>
           );
         }
@@ -794,14 +806,17 @@ export async function buildProjectDocxBuffer(project: ProjectRecord) {
   const pages = buildExportPreview(project);
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
+  const contentImageUrls = await Promise.all(
+    pages.map((page) => buildContentPageExportImageDataUrl(page, EXPORT_CONFIG)),
+  );
   const pageImagePayloads = await Promise.all(
-    pages.map(async (page) => {
+    pages.map(async (page, index) => {
       const imageUrl =
         page.type === 'cover'
           ? coverImageUrl
           : page.type === 'back-cover'
             ? backCoverImageUrl
-            : null;
+            : contentImageUrls[index] ?? null;
 
       return imageUrl ? loadImageBytes(imageUrl) : null;
     }),
@@ -815,10 +830,10 @@ export async function buildProjectDocxBuffer(project: ProjectRecord) {
           height: 12960,
         },
         margin: {
-          top: 1080,
-          bottom: 1080,
-          left: 1080,
-          right: 1080,
+          top: pageImagePayloads[index] != null ? 0 : 1080,
+          bottom: pageImagePayloads[index] != null ? 0 : 1080,
+          left: pageImagePayloads[index] != null ? 0 : 1080,
+          right: pageImagePayloads[index] != null ? 0 : 1080,
         },
       },
     },
