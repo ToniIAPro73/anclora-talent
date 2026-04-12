@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const slug = project.slug || 'proyecto';
     const filename = `${slug}.html`;
     // HTML shell starts with <!DOCTYPE html>, includes <html> and </html> tags in the generated payload.
-    const html = renderProjectExportHtml(project);
+    const html = await renderProjectExportHtml(project);
 
     return new NextResponse(html, {
       status: 200,

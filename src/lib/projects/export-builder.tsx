@@ -18,6 +18,10 @@ import {
 import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 import { buildPreviewPages, type PreviewPage } from '@/lib/preview/preview-builder';
 import type { ProjectRecord } from './types';
+import {
+  buildBackCoverExportImageDataUrl,
+  buildCoverExportImageDataUrl,
+} from './export-surface-image';
 
 type ParsedContentBlock =
   | { type: 'heading'; level: number; text: string }
@@ -110,7 +114,23 @@ function parsePageContent(html: string | null | undefined): ParsedContentBlock[]
     .map((text) => ({ type: 'paragraph' as const, text }));
 }
 
-function renderCoverPageHtml(page: PreviewPage, project: ProjectRecord) {
+function renderCoverPageHtml(imageUrl: string) {
+  return `
+    <section class="export-page export-cover export-image-only-page">
+      <img class="export-full-image" src="${escapeHtml(imageUrl)}" alt="" />
+    </section>
+  `;
+}
+
+function renderBackCoverPageHtml(imageUrl: string) {
+  return `
+    <section class="export-page export-back-cover export-image-only-page">
+      <img class="export-full-image" src="${escapeHtml(imageUrl)}" alt="" />
+    </section>
+  `;
+}
+
+function renderLegacyCoverPageHtml(page: PreviewPage, project: ProjectRecord) {
   const cover = page.coverData;
   if (!cover) return '';
 
@@ -141,7 +161,7 @@ function renderCoverPageHtml(page: PreviewPage, project: ProjectRecord) {
   `;
 }
 
-function renderBackCoverPageHtml(page: PreviewPage) {
+function renderLegacyBackCoverPageHtml(page: PreviewPage) {
   const backCover = page.backCoverData;
   if (!backCover) return '';
   const renderedImageUrl = backCover.renderedImageUrl || '';
@@ -182,12 +202,22 @@ export function buildExportPreview(project: ProjectRecord) {
   return buildPreviewPages(project, EXPORT_CONFIG);
 }
 
-export function renderProjectExportHtml(project: ProjectRecord) {
+export async function renderProjectExportHtml(project: ProjectRecord) {
   const pages = buildExportPreview(project);
+  const coverImageUrl = await buildCoverExportImageDataUrl(project);
+  const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
   const sections = pages
     .map((page) => {
-      if (page.type === 'cover') return renderCoverPageHtml(page, project);
-      if (page.type === 'back-cover') return renderBackCoverPageHtml(page);
+      if (page.type === 'cover') {
+        return coverImageUrl
+          ? renderCoverPageHtml(coverImageUrl)
+          : renderLegacyCoverPageHtml(page, project);
+      }
+      if (page.type === 'back-cover') {
+        return backCoverImageUrl
+          ? renderBackCoverPageHtml(backCoverImageUrl)
+          : renderLegacyBackCoverPageHtml(page);
+      }
       return renderContentPageHtml(page);
     })
     .join('\n');
@@ -525,9 +555,11 @@ function renderPdfContentBlock(block: ParsedContentBlock, index: number) {
   );
 }
 
-export function buildProjectPdf(project: ProjectRecord) {
+export async function buildProjectPdf(project: ProjectRecord) {
   const pages = buildExportPreview(project);
   const palette = COVER_PALETTE_COLORS[project.cover.palette] ?? COVER_PALETTE_COLORS.obsidian;
+  const coverImageUrl = await buildCoverExportImageDataUrl(project);
+  const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
 
   return (
     <Document
@@ -537,10 +569,10 @@ export function buildProjectPdf(project: ProjectRecord) {
     >
       {pages.map((page, pageIndex) => {
         if (page.type === 'cover' && page.coverData) {
-          if (page.coverData.renderedImageUrl) {
+          if (coverImageUrl) {
             return (
               <Page key={`pdf-cover-${pageIndex}`} size={[PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT]} style={pdfStyles.page}>
-                <Image src={page.coverData.renderedImageUrl} style={pdfStyles.fullImage} />
+                <Image src={coverImageUrl} style={pdfStyles.fullImage} />
               </Page>
             );
           }
@@ -566,10 +598,10 @@ export function buildProjectPdf(project: ProjectRecord) {
         }
 
         if (page.type === 'back-cover' && page.backCoverData) {
-          if (page.backCoverData.renderedImageUrl) {
+          if (backCoverImageUrl) {
             return (
               <Page key={`pdf-back-cover-${pageIndex}`} size={[PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT]} style={pdfStyles.page}>
-                <Image src={page.backCoverData.renderedImageUrl} style={pdfStyles.fullImage} />
+                <Image src={backCoverImageUrl} style={pdfStyles.fullImage} />
               </Page>
             );
           }
@@ -760,13 +792,15 @@ async function loadImageBytes(imageUrl: string): Promise<DocxImagePayload | null
 
 export async function buildProjectDocxBuffer(project: ProjectRecord) {
   const pages = buildExportPreview(project);
+  const coverImageUrl = await buildCoverExportImageDataUrl(project);
+  const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
   const pageImagePayloads = await Promise.all(
     pages.map(async (page) => {
       const imageUrl =
         page.type === 'cover'
-          ? page.coverData?.renderedImageUrl ?? null
+          ? coverImageUrl
           : page.type === 'back-cover'
-            ? page.backCoverData?.renderedImageUrl ?? null
+            ? backCoverImageUrl
             : null;
 
       return imageUrl ? loadImageBytes(imageUrl) : null;

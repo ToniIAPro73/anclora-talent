@@ -1696,12 +1696,32 @@ export function AdvancedRichTextEditor({
               .preview-page hr[data-page-break="manual"],
               .ProseMirror hr[data-page-break="true"],
               .preview-page hr[data-page-break="true"] {
+                position: relative;
+                display: block;
+                width: 100%;
                 border: 0;
                 border-top: 2px dashed rgba(196, 154, 36, 0.45);
-                margin: 1.75rem 0;
+                margin: 1.75rem 0 2.25rem;
                 break-after: column;
                 page-break-after: always;
                 -webkit-column-break-after: always;
+              }
+              .ProseMirror hr[data-page-break="manual"]::after,
+              .preview-page hr[data-page-break="manual"]::after,
+              .ProseMirror hr[data-page-break="true"]::after,
+              .preview-page hr[data-page-break="true"]::after {
+                content: "SALTO DE PÁGINA";
+                position: absolute;
+                left: 50%;
+                bottom: -0.95rem;
+                transform: translateX(-50%);
+                padding: 0 0.45rem;
+                background: #111C28;
+                color: var(--text-tertiary);
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                white-space: nowrap;
               }
               .ProseMirror hr[data-page-break="auto"],
               .preview-page hr[data-page-break="auto"] {

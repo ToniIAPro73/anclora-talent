@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    const pdfDoc = buildProjectPdf(project);
+    const pdfDoc = await buildProjectPdf(project);
     const buffer = await renderToBuffer(pdfDoc);
 
     const slug = project.slug || 'proyecto';

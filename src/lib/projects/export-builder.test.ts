@@ -40,8 +40,8 @@ describe('export-builder', () => {
     expect(pages.some((page) => page.type === 'content')).toBe(true);
   });
 
-  test('renders HTML export with the preview page shell and rendered assets', () => {
-    const html = renderProjectExportHtml(makeProject());
+  test('renders HTML export with the preview page shell and rendered assets', async () => {
+    const html = await renderProjectExportHtml(makeProject());
 
     expect(html).toContain('<!DOCTYPE html>');
     expect(html).toContain('export-document');
@@ -50,8 +50,8 @@ describe('export-builder', () => {
     expect(html).not.toContain('Anclora Talent');
   });
 
-  test('builds a PDF document object', () => {
-    const pdfDoc = buildProjectPdf(makeProject());
+  test('builds a PDF document object', async () => {
+    const pdfDoc = await buildProjectPdf(makeProject());
     expect(pdfDoc).toBeTruthy();
   });
 
