@@ -165,13 +165,18 @@ export function AdvancedSurfaceEditor({
             ? project.cover.accentColor || (project.cover.palette === 'sand' ? '#0b313f' : '#f2e3b3')
             : project.backCover.accentColor || '#f2e3b3';
 
+        // NOTA: Fabric.js solo acepta un nombre de fuente único (no stacks CSS).
+        // Usar 'Arial' garantiza métricas consistentes en todos los sistemas operativos
+        // y evita que el texto se trunque por fallback a Times New Roman.
+        const CANVAS_FONT = 'Arial';
+
         const fieldConfigs: Record<string, { top: number; fontSize: number; fontWeight: string | number; textAlign: 'left' | 'center'; width: number; left: number; fill?: string }> = {
           title: {
-            top: surface === 'cover' ? canvasHeight * 0.34 : canvasHeight * 0.18,
-            fontSize: surface === 'cover' ? 38 : 28,
+            top: surface === 'cover' ? canvasHeight * 0.28 : canvasHeight * 0.18,
+            fontSize: surface === 'cover' ? 32 : 28,
             fontWeight: 900,
             textAlign: surface === 'cover' ? 'center' : 'left',
-            width: canvasWidth * (surface === 'cover' ? 0.82 : 0.72),
+            width: canvasWidth * (surface === 'cover' ? 0.88 : 0.72),
             left: surface === 'cover' ? canvasWidth / 2 : canvasWidth * 0.16,
           },
           subtitle: {
@@ -225,7 +230,8 @@ export function AdvancedSurfaceEditor({
             top: config.top,
             fontSize: config.fontSize,
             fontWeight: config.fontWeight,
-            fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+            // FIX: nombre de fuente único — Fabric no soporta stacks CSS tipo 'ui-sans-serif, system-ui'
+            fontFamily: CANVAS_FONT,
             fill: config.fill ?? textColor,
             textAlign: config.textAlign,
             id: `${surface}-${layer.fieldKey}-text`,
@@ -234,7 +240,8 @@ export function AdvancedSurfaceEditor({
             originX: config.textAlign === 'center' ? 'center' : 'left',
             selectable: true,
             evented: true,
-            lineHeight: layer.fieldKey === 'body' ? 1.45 : 1.16,
+            splitByGrapheme: false,
+            lineHeight: layer.fieldKey === 'body' ? 1.45 : 1.25,
           });
 
           const nextElement = {
@@ -260,7 +267,6 @@ export function AdvancedSurfaceEditor({
             guideManagerRef.current = createGuideManager(fabricCanvas);
           }
 
-          // DESPUÉS
           fabricCanvas.on('selection:created', (e: FabricEvent) => {
             if ((e.selected?.length ?? 0) > 0) {
               const selectedFabricObj = e.selected![0];
