@@ -20,6 +20,7 @@ import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import { createSurfaceSnapshotFromProject } from './advanced-surface-utils';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '@/lib/canvas-utils';
 import { normalizeSurfaceState, type SurfaceKind, type SurfaceState } from '@/lib/projects/cover-surface';
+import { COVER_TEXT_LAYOUT } from '@/lib/projects/cover-layout';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 
@@ -172,28 +173,28 @@ export function AdvancedSurfaceEditor({
 
         const fieldConfigs: Record<string, { top: number; fontSize: number; fontWeight: string | number; textAlign: 'left' | 'center'; width: number; left: number; fill?: string }> = {
           title: {
-            top: surface === 'cover' ? canvasHeight * 0.28 : canvasHeight * 0.18,
-            fontSize: surface === 'cover' ? 32 : 28,
+            top: surface === 'cover' ? canvasHeight * COVER_TEXT_LAYOUT.titleTop : canvasHeight * 0.18,
+            fontSize: surface === 'cover' ? COVER_TEXT_LAYOUT.titleFontSize : 28,
             fontWeight: 900,
             textAlign: surface === 'cover' ? 'center' : 'left',
-            width: canvasWidth * (surface === 'cover' ? 0.88 : 0.72),
+            width: canvasWidth * (surface === 'cover' ? COVER_TEXT_LAYOUT.titleWidth : 0.72),
             left: surface === 'cover' ? canvasWidth / 2 : canvasWidth * 0.16,
           },
           subtitle: {
-            top: canvasHeight * 0.5,
-            fontSize: 16,
+            top: canvasHeight * COVER_TEXT_LAYOUT.subtitleTop,
+            fontSize: COVER_TEXT_LAYOUT.subtitleFontSize,
             fontWeight: 500,
             textAlign: 'center',
-            width: canvasWidth * 0.82,
+            width: canvasWidth * COVER_TEXT_LAYOUT.subtitleWidth,
             left: canvasWidth / 2,
             fill: project.cover.palette === 'sand' ? 'rgba(11,49,63,0.75)' : 'rgba(242,227,179,0.82)',
           },
           author: {
-            top: canvasHeight * 0.72,
-            fontSize: 15,
+            top: canvasHeight * COVER_TEXT_LAYOUT.authorTop,
+            fontSize: COVER_TEXT_LAYOUT.authorFontSize,
             fontWeight: 500,
             textAlign: 'center',
-            width: canvasWidth * 0.82,
+            width: canvasWidth * COVER_TEXT_LAYOUT.authorWidth,
             left: canvasWidth / 2,
             fill: project.cover.palette === 'sand' ? 'rgba(11,49,63,0.7)' : 'rgba(242,227,179,0.72)',
           },
@@ -241,7 +242,7 @@ export function AdvancedSurfaceEditor({
             selectable: true,
             evented: true,
             splitByGrapheme: false,
-            lineHeight: layer.fieldKey === 'body' ? 1.45 : 1.1,
+            lineHeight: layer.fieldKey === 'body' ? 1.45 : COVER_TEXT_LAYOUT.titleLineHeight,
           });
 
           const nextElement = {

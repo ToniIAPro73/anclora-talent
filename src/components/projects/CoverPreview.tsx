@@ -2,6 +2,7 @@
 
 import type { CoverDesign } from '@/lib/projects/types';
 import type { SurfaceState } from '@/lib/projects/cover-surface';
+import { COVER_TEXT_LAYOUT } from '@/lib/projects/cover-layout';
 
 const previewGradients: Record<CoverDesign['palette'], string> = {
   obsidian: 'linear-gradient(160deg, #0b133f 0%, #0b233f 50%, #07252f 100%)',
@@ -51,16 +52,28 @@ export function CoverPreview({
         
         <div className="absolute inset-0 p-10 text-center">
           <h2
-            className="absolute left-1/2 w-[88%] -translate-x-1/2 -translate-y-1/2 text-4xl font-black tracking-tight"
-            style={{ top: '28%', color: colors.primary, lineHeight: 1.1 }}
+            className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 font-black tracking-tight"
+            style={{
+              top: `${COVER_TEXT_LAYOUT.titleTop * 100}%`,
+              width: `${COVER_TEXT_LAYOUT.titleWidth * 100}%`,
+              color: colors.primary,
+              lineHeight: COVER_TEXT_LAYOUT.titleLineHeight,
+              fontSize: `${COVER_TEXT_LAYOUT.titleFontSize}px`,
+            }}
             data-testid="cover-preview-title"
           >
             {title}
           </h2>
           {subtitle && (
             <p
-              className="absolute left-1/2 w-[82%] -translate-x-1/2 -translate-y-1/2 text-sm font-medium leading-relaxed"
-              style={{ top: '50%', color: colors.secondary }}
+              className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 font-medium"
+              style={{
+                top: `${COVER_TEXT_LAYOUT.subtitleTop * 100}%`,
+                width: `${COVER_TEXT_LAYOUT.subtitleWidth * 100}%`,
+                color: colors.secondary,
+                fontSize: `${COVER_TEXT_LAYOUT.subtitleFontSize}px`,
+                lineHeight: 1.45,
+              }}
               data-testid="cover-preview-subtitle"
             >
               {subtitle}
@@ -68,8 +81,14 @@ export function CoverPreview({
           )}
           {author && (
             <p
-              className="absolute left-1/2 w-[82%] -translate-x-1/2 -translate-y-1/2 text-xs font-bold uppercase tracking-[0.2em]"
-              style={{ top: '72%', color: colors.primary }}
+              className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 font-medium uppercase tracking-[0.2em]"
+              style={{
+                top: `${COVER_TEXT_LAYOUT.authorTop * 100}%`,
+                width: `${COVER_TEXT_LAYOUT.authorWidth * 100}%`,
+                color: colors.primary,
+                fontSize: `${COVER_TEXT_LAYOUT.authorFontSize}px`,
+                lineHeight: COVER_TEXT_LAYOUT.titleLineHeight,
+              }}
             >
               {author}
             </p>
