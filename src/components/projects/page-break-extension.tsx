@@ -8,6 +8,12 @@ import {
 } from '@tiptap/react';
 import { PAGE_BREAK_HTML } from '@/lib/preview/page-breaks';
 
+const PAGE_BREAK_LAYOUT_STYLE = {
+  breakAfter: 'column',
+  pageBreakAfter: 'always',
+  WebkitColumnBreakAfter: 'always',
+} as const;
+
 export const PageBreak = Node.create({
   name: 'pageBreak',
   group: 'block',
@@ -68,18 +74,26 @@ export function PageBreakComponent({ node }: NodeViewProps) {
       <NodeViewWrapper
         as="div"
         data-page-break-visual="auto"
-        className="pointer-events-none h-0 overflow-hidden opacity-0"
+        className="pointer-events-none block h-0 overflow-hidden opacity-0"
+        style={PAGE_BREAK_LAYOUT_STYLE}
       />
     );
   }
 
   return (
-    <NodeViewWrapper as="div" className="relative my-2 flex items-center gap-3 py-4">
-      <div className="flex-1 h-px bg-[var(--border-strong)]" />
-      <span className="text-xs text-[var(--text-tertiary)] font-semibold uppercase">
-        Salto de Página
-      </span>
-      <div className="flex-1 h-px bg-[var(--border-strong)]" />
+    <NodeViewWrapper
+      as="div"
+      data-page-break-visual="manual"
+      className="relative my-2 block py-4"
+      style={PAGE_BREAK_LAYOUT_STYLE}
+    >
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-[var(--border-strong)]" />
+        <span className="text-xs font-semibold uppercase text-[var(--text-tertiary)]">
+          Salto de Página
+        </span>
+        <div className="h-px flex-1 bg-[var(--border-strong)]" />
+      </div>
     </NodeViewWrapper>
   );
 }
