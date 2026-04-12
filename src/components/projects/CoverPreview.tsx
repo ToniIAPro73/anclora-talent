@@ -3,6 +3,7 @@
 import type { CoverDesign } from '@/lib/projects/types';
 import type { SurfaceState } from '@/lib/projects/cover-surface';
 import { COVER_TEXT_LAYOUT } from '@/lib/projects/cover-layout';
+import { fabricCharSpacingToCss, findSurfaceTextLayer } from '@/lib/projects/cover-layer-style';
 
 const previewGradients: Record<CoverDesign['palette'], string> = {
   obsidian: 'linear-gradient(160deg, #0b133f 0%, #0b233f 50%, #07252f 100%)',
@@ -32,6 +33,9 @@ export function CoverPreview({
   const subtitle = surface.fields.subtitle?.visible ? surface.fields.subtitle.value : '';
   const author = surface.fields.author?.visible ? surface.fields.author.value : '';
   const opacity = surface.opacity ?? 0.4;
+  const titleLayer = findSurfaceTextLayer(surface.layers, 'title');
+  const subtitleLayer = findSurfaceTextLayer(surface.layers, 'subtitle');
+  const authorLayer = findSurfaceTextLayer(surface.layers, 'author');
 
   return (
     <section className="space-y-4">
@@ -55,10 +59,15 @@ export function CoverPreview({
             className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 font-black tracking-tight"
             style={{
               top: `${COVER_TEXT_LAYOUT.titleTop * 100}%`,
-              width: `${COVER_TEXT_LAYOUT.titleWidth * 100}%`,
-              color: colors.primary,
-              lineHeight: COVER_TEXT_LAYOUT.titleLineHeight,
-              fontSize: `${COVER_TEXT_LAYOUT.titleFontSize}px`,
+              width: `${((titleLayer?.width ?? (COVER_TEXT_LAYOUT.titleWidth * 400)) / 400) * 100}%`,
+              color: titleLayer?.fill ?? colors.primary,
+              lineHeight: titleLayer?.lineHeight ?? COVER_TEXT_LAYOUT.titleLineHeight,
+              fontSize: `${titleLayer?.fontSize ?? COVER_TEXT_LAYOUT.titleFontSize}px`,
+              fontFamily: titleLayer?.fontFamily ?? undefined,
+              fontWeight: titleLayer?.fontWeight ?? 900,
+              fontStyle: titleLayer?.fontStyle ?? 'normal',
+              letterSpacing: fabricCharSpacingToCss(titleLayer?.charSpacing, titleLayer?.fontSize ?? COVER_TEXT_LAYOUT.titleFontSize),
+              opacity: titleLayer?.opacity ?? 1,
             }}
             data-testid="cover-preview-title"
           >
@@ -69,10 +78,15 @@ export function CoverPreview({
               className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 font-medium"
               style={{
                 top: `${COVER_TEXT_LAYOUT.subtitleTop * 100}%`,
-                width: `${COVER_TEXT_LAYOUT.subtitleWidth * 100}%`,
-                color: colors.secondary,
-                fontSize: `${COVER_TEXT_LAYOUT.subtitleFontSize}px`,
-                lineHeight: 1.45,
+                width: `${((subtitleLayer?.width ?? (COVER_TEXT_LAYOUT.subtitleWidth * 400)) / 400) * 100}%`,
+                color: subtitleLayer?.fill ?? colors.secondary,
+                fontSize: `${subtitleLayer?.fontSize ?? COVER_TEXT_LAYOUT.subtitleFontSize}px`,
+                lineHeight: subtitleLayer?.lineHeight ?? 1.45,
+                fontFamily: subtitleLayer?.fontFamily ?? undefined,
+                fontWeight: subtitleLayer?.fontWeight ?? 500,
+                fontStyle: subtitleLayer?.fontStyle ?? 'normal',
+                letterSpacing: fabricCharSpacingToCss(subtitleLayer?.charSpacing, subtitleLayer?.fontSize ?? COVER_TEXT_LAYOUT.subtitleFontSize),
+                opacity: subtitleLayer?.opacity ?? 1,
               }}
               data-testid="cover-preview-subtitle"
             >
@@ -84,10 +98,15 @@ export function CoverPreview({
               className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 font-medium uppercase tracking-[0.2em]"
               style={{
                 top: `${COVER_TEXT_LAYOUT.authorTop * 100}%`,
-                width: `${COVER_TEXT_LAYOUT.authorWidth * 100}%`,
-                color: colors.primary,
-                fontSize: `${COVER_TEXT_LAYOUT.authorFontSize}px`,
-                lineHeight: COVER_TEXT_LAYOUT.titleLineHeight,
+                width: `${((authorLayer?.width ?? (COVER_TEXT_LAYOUT.authorWidth * 400)) / 400) * 100}%`,
+                color: authorLayer?.fill ?? colors.primary,
+                fontSize: `${authorLayer?.fontSize ?? COVER_TEXT_LAYOUT.authorFontSize}px`,
+                lineHeight: authorLayer?.lineHeight ?? COVER_TEXT_LAYOUT.titleLineHeight,
+                fontFamily: authorLayer?.fontFamily ?? undefined,
+                fontWeight: authorLayer?.fontWeight ?? 500,
+                fontStyle: authorLayer?.fontStyle ?? 'normal',
+                letterSpacing: fabricCharSpacingToCss(authorLayer?.charSpacing, authorLayer?.fontSize ?? COVER_TEXT_LAYOUT.authorFontSize),
+                opacity: authorLayer?.opacity ?? 1,
               }}
             >
               {author}

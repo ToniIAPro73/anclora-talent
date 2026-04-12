@@ -227,22 +227,44 @@ export function AdvancedSurfaceEditor({
           const config = fieldConfigs[layer.fieldKey];
           if (!config) continue;
 
+          const layerTop = typeof layer.top === 'number' ? layer.top : config.top;
+          const layerFontSize = typeof layer.fontSize === 'number' ? layer.fontSize : config.fontSize;
+          const layerFontWeight = typeof layer.fontWeight !== 'undefined' ? layer.fontWeight : config.fontWeight;
+          const layerFontFamily = typeof layer.fontFamily === 'string' && layer.fontFamily.trim() ? layer.fontFamily : CANVAS_FONT;
+          const layerFill = typeof layer.fill === 'string' && layer.fill.trim() ? layer.fill : (config.fill ?? textColor);
+          const layerTextAlign = layer.textAlign ?? config.textAlign;
+          const layerWidth = typeof layer.width === 'number' ? layer.width : config.width;
+          const layerLeft = typeof layer.left === 'number' ? layer.left : config.left;
+          const layerOriginX = layer.originX ?? (layerTextAlign === 'center' ? 'center' : 'left');
+          const layerLineHeight =
+            typeof layer.lineHeight === 'number'
+              ? layer.lineHeight
+              : layer.fieldKey === 'body'
+                ? 1.45
+                : COVER_TEXT_LAYOUT.titleLineHeight;
+          const layerCharSpacing = typeof layer.charSpacing === 'number' ? layer.charSpacing : 0;
+          const layerOpacity = typeof layer.opacity === 'number' ? layer.opacity : 1;
+          const layerFontStyle = typeof layer.fontStyle === 'string' ? layer.fontStyle : 'normal';
+
           const textObject = await addTextToCanvas(fabricCanvas, fieldState.value, {
-            top: config.top,
-            fontSize: config.fontSize,
-            fontWeight: config.fontWeight,
+            top: layerTop,
+            fontSize: layerFontSize,
+            fontWeight: layerFontWeight,
             // FIX: nombre de fuente único — Fabric no soporta stacks CSS tipo 'ui-sans-serif, system-ui'
             fontFamily: CANVAS_FONT,
-            fill: config.fill ?? textColor,
-            textAlign: config.textAlign,
+            fill: layerFill,
+            opacity: layerOpacity,
+            textAlign: layerTextAlign,
+            fontStyle: layerFontStyle,
+            charSpacing: layerCharSpacing,
             id: `${surface}-${layer.fieldKey}-text`,
-            wrapWidth: config.width,
-            left: config.left,
-            originX: config.textAlign === 'center' ? 'center' : 'left',
+            wrapWidth: layerWidth,
+            left: layerLeft,
+            originX: layerOriginX,
             selectable: true,
             evented: true,
             splitByGrapheme: false,
-            lineHeight: layer.fieldKey === 'body' ? 1.45 : COVER_TEXT_LAYOUT.titleLineHeight,
+            lineHeight: layerLineHeight,
           });
 
           const nextElement = {
@@ -250,11 +272,15 @@ export function AdvancedSurfaceEditor({
             type: 'text' as const,
             object: textObject,
             properties: {
-              fill: config.fill ?? textColor,
-              fontSize: config.fontSize,
-              opacity: 1,
-              fontWeight: config.fontWeight,
-              textAlign: config.textAlign,
+              fill: layerFill,
+              fontSize: layerFontSize,
+              opacity: layerOpacity,
+              fontWeight: layerFontWeight,
+              fontStyle: layerFontStyle,
+              fontFamily: layerFontFamily,
+              textAlign: layerTextAlign,
+              lineHeight: layerLineHeight,
+              charSpacing: layerCharSpacing,
               text: fieldState.value,
             },
           };
@@ -348,6 +374,30 @@ export function AdvancedSurfaceEditor({
     startRenderTransition(async () => {
       const currentElements = useCanvasStore.getState().elements;
       const nextFields: SurfaceState['fields'] = { ...surfaceSnapshot.fields };
+      const nextLayers = (surfaceSnapshot.layers ?? []).map((layer) => {
+        if (layer.type !== 'text' || !layer.fieldKey) return layer;
+        const textElement = currentElements.find((element) => element.id === `${surface}-${layer.fieldKey}-text`);
+        const obj = textElement?.object;
+        if (!obj) return layer;
+
+        return {
+          ...layer,
+          left: typeof obj.left === 'number' ? obj.left : layer.left,
+          top: typeof obj.top === 'number' ? obj.top : layer.top,
+          width: typeof obj.width === 'number' ? obj.width : layer.width,
+          fill: typeof obj.fill === 'string' ? obj.fill : layer.fill,
+          opacity: typeof obj.opacity === 'number' ? obj.opacity : layer.opacity,
+          fontSize: typeof obj.fontSize === 'number' ? obj.fontSize : layer.fontSize,
+          fontFamily: typeof obj.fontFamily === 'string' ? obj.fontFamily : layer.fontFamily,
+          fontWeight: typeof obj.fontWeight !== 'undefined' ? obj.fontWeight : layer.fontWeight,
+          fontStyle: typeof obj.fontStyle === 'string' ? obj.fontStyle : layer.fontStyle,
+          textAlign: obj.textAlign ?? layer.textAlign,
+          lineHeight: typeof obj.lineHeight === 'number' ? obj.lineHeight : layer.lineHeight,
+          charSpacing: typeof obj.charSpacing === 'number' ? obj.charSpacing : layer.charSpacing,
+          originX: typeof obj.originX === 'string' ? obj.originX : layer.originX,
+          originY: typeof obj.originY === 'string' ? obj.originY : layer.originY,
+        };
+      });
 
       for (const fieldKey of Object.keys(surfaceSnapshot.fields) as Array<keyof SurfaceState['fields']>) {
         const textElement = currentElements.find((element) => element.id === `${surface}-${fieldKey}-text`);
@@ -365,6 +415,7 @@ export function AdvancedSurfaceEditor({
       const nextSurfaceState = normalizeSurfaceState({
         ...surfaceSnapshot,
         fields: nextFields,
+        layers: nextLayers,
         opacity: backgroundOpacity,
       });
 
