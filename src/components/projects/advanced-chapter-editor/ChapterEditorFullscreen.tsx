@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp, ZoomIn, ZoomOut } from 'lucide-react';
 import { AdvancedRichTextEditor } from '../AdvancedRichTextEditor';
 import { premiumPrimaryMintButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
@@ -134,19 +134,18 @@ export function ChapterEditorFullscreen({
       onClick={(e) => e.stopPropagation()}
     >
       {/* ═══════════════════════ HEADER ═══════════════════════ */}
-      <header className="shrink-0 flex items-center justify-between gap-2 border-b border-[var(--border-subtle)] px-3 py-2">
+      <header className="shrink-0 flex items-center justify-between gap-2 border-b border-[var(--border-subtle)] px-3 py-1.5">
         <div className="flex-1 min-w-0">
           <h2 className="text-[13px] font-black tracking-tight text-[var(--text-primary)]">
             Capítulo {editor.currentIndex + 1}/{editor.totalChapters}
           </h2>
         </div>
 
-        {/* Chapter Navigation */}
-        <div className="flex flex-shrink-0 items-center gap-1">
+        <div className="flex flex-shrink-0 items-center gap-1 rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-1.5 py-1">
           <button
             onClick={editor.goToPrevChapter}
             disabled={!editor.canNavigatePrev || editor.isSaving}
-            className={`${premiumSecondaryLightButton} px-3 py-1.5 disabled:opacity-50`}
+            className={`${premiumSecondaryLightButton} px-2.5 py-1.5 disabled:opacity-50`}
             title="Capítulo anterior (Ctrl+←)"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -155,41 +154,43 @@ export function ChapterEditorFullscreen({
           <button
             onClick={editor.goToNextChapter}
             disabled={!editor.canNavigateNext || editor.isSaving}
-            className={`${premiumSecondaryLightButton} px-3 py-1.5 disabled:opacity-50`}
+            className={`${premiumSecondaryLightButton} px-2.5 py-1.5 disabled:opacity-50`}
             title="Siguiente capítulo (Ctrl+→)"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
-        </div>
 
-        {/* Page Navigation */}
-        {editor.totalPages > 1 && (
-          <div className="flex flex-shrink-0 items-center gap-1">
-            <button
-              onClick={editor.goToPagePrev}
-              disabled={!editor.canNavigatePagePrev || editor.isSaving}
-              className={`${premiumSecondaryLightButton} px-3 py-1.5 disabled:opacity-50`}
-              title="Página anterior (Alt+↑ o Page Up)"
-            >
-              <ArrowUp className="h-4 w-4" />
-            </button>
+          <div className="mx-1 h-5 w-px bg-[var(--border-subtle)]" />
 
-            <span className="px-1.5 text-xs text-[var(--text-secondary)]">
-              P.{editor.currentPage + 1}
-            </span>
+          {/* Page Navigation */}
+          {editor.totalPages > 1 && (
+            <>
+              <button
+                onClick={editor.goToPagePrev}
+                disabled={!editor.canNavigatePagePrev || editor.isSaving}
+                className={`${premiumSecondaryLightButton} px-2.5 py-1.5 disabled:opacity-50`}
+                title="Página anterior (Alt+↑ o Page Up)"
+              >
+                <ArrowUp className="h-4 w-4" />
+              </button>
 
-            <button
-              onClick={editor.goToPageNext}
-              disabled={!editor.canNavigatePageNext || editor.isSaving}
-              className={`${premiumSecondaryLightButton} px-3 py-1.5 disabled:opacity-50`}
-              title="Siguiente página (Alt+↓ o Page Down)"
-            >
-              <ArrowDown className="h-4 w-4" />
-            </button>
-          </div>
-        )}
+              <span className="min-w-[2.5rem] px-1 text-center text-xs text-[var(--text-secondary)]">
+                P.{editor.currentPage + 1}
+              </span>
 
-        <div className="flex flex-shrink-0 items-center gap-1.5 rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-1.5 py-1">
+              <button
+                onClick={editor.goToPageNext}
+                disabled={!editor.canNavigatePageNext || editor.isSaving}
+                className={`${premiumSecondaryLightButton} px-2.5 py-1.5 disabled:opacity-50`}
+                title="Siguiente página (Alt+↓ o Page Down)"
+              >
+                <ArrowDown className="h-4 w-4" />
+              </button>
+
+              <div className="mx-1 h-5 w-px bg-[var(--border-subtle)]" />
+            </>
+          )}
+
           <button
             type="button"
             onClick={() => handleZoomChange(zoom - 10)}
@@ -198,7 +199,7 @@ export function ChapterEditorFullscreen({
           >
             <ZoomOut className="h-4 w-4" />
           </button>
-          <span className="w-10 text-center text-xs text-[var(--text-secondary)]">
+          <span className="w-9 text-center text-xs text-[var(--text-secondary)]">
             {zoom}%
           </span>
           <button
@@ -221,7 +222,7 @@ export function ChapterEditorFullscreen({
           <button
             onClick={handleClose}
             disabled={editor.isSaving}
-            className={`${premiumSecondaryLightButton} flex-shrink-0 px-4 py-1.5 text-sm font-semibold`}
+            className={`${premiumSecondaryLightButton} flex-shrink-0 px-3.5 py-1.5 text-sm font-semibold`}
             title="Cerrar editor (Esc)"
           >
             CERRAR
@@ -240,18 +241,14 @@ export function ChapterEditorFullscreen({
 
         {/* Content Editor - Fills available space - includes chapter title as first line */}
         <div className="flex-1 min-h-0 overflow-auto overflow-x-hidden rounded-[8px] border border-[var(--border-subtle)] bg-[var(--surface-soft)]">
-          <div
-            className="h-full w-full min-w-0"
-            style={{ zoom: `${zoom}%` } as CSSProperties}
-          >
-            <AdvancedRichTextEditor
-              defaultContent={editor.htmlContent}
-              onUpdate={editor.setHtmlContent}
-              currentPage={editor.currentPage}
-              totalPages={editor.totalPages}
-              onPageCountChange={editor.setMeasuredTotalPages}
-            />
-          </div>
+          <AdvancedRichTextEditor
+            defaultContent={editor.htmlContent}
+            onUpdate={editor.setHtmlContent}
+            currentPage={editor.currentPage}
+            totalPages={editor.totalPages}
+            onPageCountChange={editor.setMeasuredTotalPages}
+            contentZoom={zoom}
+          />
         </div>
       </div>
 

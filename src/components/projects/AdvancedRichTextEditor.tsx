@@ -1058,12 +1058,14 @@ export function AdvancedRichTextEditor({
   currentPage = 0,
   totalPages,
   onPageCountChange,
+  contentZoom = 100,
 }: {
   defaultContent: string;
   onUpdate: (html: string) => void;
   currentPage?: number;
   totalPages?: number;
   onPageCountChange?: (pages: number) => void;
+  contentZoom?: number;
 }) {
   const { preferences, setPreferences } = useEditorPreferences();
   const isSyncingExternalContentRef = useRef(false);
@@ -1352,6 +1354,7 @@ export function AdvancedRichTextEditor({
   };
   const pageWidth = previewConfig.pageWidth;
   const pageHeight = previewConfig.pageHeight;
+  const zoomScale = Math.max(0.5, Math.min(1.5, contentZoom / 100));
   const pageGap = 32;
   const contentWidth = Math.max(120, pageWidth - margins.left - margins.right);
   const contentHeight = Math.max(120, pageHeight - margins.top - margins.bottom);
@@ -1484,11 +1487,22 @@ export function AdvancedRichTextEditor({
         wordsPerPage={wordsPerPage}
       />
 
-      <div className="flex-1 overflow-auto bg-[var(--background)] p-6 flex justify-center custom-scrollbar">
-        <div className={`transition-all duration-500 ease-in-out ${deviceClasses[device]}`}>
+      <div className="flex flex-1 justify-center overflow-auto bg-[var(--background)] p-4 custom-scrollbar">
+        <div
+          className={`transition-all duration-500 ease-in-out ${deviceClasses[device]}`}
+          style={{
+            width: `${viewportWidth * zoomScale}px`,
+            minHeight: `${pageHeight * zoomScale}px`,
+          }}
+        >
           <div
             className="relative mx-auto overflow-hidden"
-            style={{ width: `${viewportWidth}px`, minHeight: `${pageHeight}px` }}
+            style={{
+              width: `${viewportWidth}px`,
+              minHeight: `${pageHeight}px`,
+              transform: `scale(${zoomScale})`,
+              transformOrigin: 'top left',
+            }}
           >
             <style>{`
               .ProseMirror {
