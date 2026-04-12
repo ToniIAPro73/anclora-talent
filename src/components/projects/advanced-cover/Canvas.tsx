@@ -35,7 +35,12 @@ export const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(function
     const scale = availableWidth / CANVAS_WIDTH;
     scaler.style.transform       = `scale(${scale})`;
     scaler.style.transformOrigin = 'top left';
+    // Ajustar altura del outer considerando el escalado + margen de seguridad
     outer.style.height           = `${CANVAS_HEIGHT * scale}px`;
+    // IMPORTANTE: El scaler necesita espacio físico para el contenido escalado
+    // Sin esto, el overflow hidden corta el contenido
+    scaler.style.width         = `${CANVAS_WIDTH * scale}px`;
+    scaler.style.height        = `${CANVAS_HEIGHT * scale}px`;
   };
 
   // Inicializar Fabric una sola vez — siempre 400x600 internamente.
@@ -110,6 +115,7 @@ export const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(function
           style={{
             width:  `${CANVAS_WIDTH}px`,
             height: `${CANVAS_HEIGHT}px`,
+            // Estos valores serán sobrescritos por applyScale, pero los dejamos como fallback
           }}
         >
           <div
@@ -118,7 +124,7 @@ export const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(function
               position: 'relative',
               width: '100%',
               height: '100%',
-              overflow: 'hidden',
+              overflow: 'visible', // CAMBIADO: permitir que el contenido escalado se vea completo
               background: backgroundColor,
             }}
           >
