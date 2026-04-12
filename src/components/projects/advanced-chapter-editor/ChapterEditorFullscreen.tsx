@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp } from 'lucide-react';
+import { useCallback, useEffect, useState, type CSSProperties } from 'react';
+import { ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp, ZoomIn, ZoomOut } from 'lucide-react';
 import { AdvancedRichTextEditor } from '../AdvancedRichTextEditor';
 import { premiumPrimaryMintButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { useChapterEditor } from './useChapterEditor';
@@ -30,6 +30,7 @@ export function ChapterEditorFullscreen({
   defaultMargins = { top: 24, bottom: 24, left: 24, right: 24 },
 }: ChapterEditorFullscreenProps) {
   const { preferences } = useEditorPreferences();
+  const [zoom, setZoom] = useState(100);
 
   // Use saved preferences if available, otherwise use passed defaults
   const device = (preferences.device as 'mobile' | 'tablet' | 'desktop') || defaultDevice;
@@ -71,6 +72,10 @@ export function ChapterEditorFullscreen({
     await editor.saveChapter();
     onSave?.();
   }, [editor, onSave]);
+
+  const handleZoomChange = useCallback((nextZoom: number) => {
+    setZoom(Math.max(50, Math.min(150, nextZoom)));
+  }, []);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -184,6 +189,28 @@ export function ChapterEditorFullscreen({
           </div>
         )}
 
+        <div className="flex items-center gap-2 rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-2 py-1 flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => handleZoomChange(zoom - 10)}
+            className={`${premiumSecondaryLightButton} p-1.5`}
+            title="Reducir zoom"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </button>
+          <span className="w-12 text-center text-xs text-[var(--text-secondary)]">
+            {zoom}%
+          </span>
+          <button
+            type="button"
+            onClick={() => handleZoomChange(zoom + 10)}
+            className={`${premiumSecondaryLightButton} p-1.5`}
+            title="Aumentar zoom"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </button>
+        </div>
+
         {/* Status and Close button */}
         <div className="flex items-center gap-1 flex-shrink-0">
           {editor.lastSaved && (
@@ -212,14 +239,19 @@ export function ChapterEditorFullscreen({
         )}
 
         {/* Content Editor - Fills available space - includes chapter title as first line */}
-        <div className="flex-1 min-h-0 rounded-[8px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] overflow-hidden">
-          <AdvancedRichTextEditor
-            defaultContent={editor.htmlContent}
-            onUpdate={editor.setHtmlContent}
-            currentPage={editor.currentPage}
-            totalPages={editor.totalPages}
-            onPageCountChange={editor.setMeasuredTotalPages}
-          />
+        <div className="flex-1 min-h-0 overflow-auto rounded-[8px] border border-[var(--border-subtle)] bg-[var(--surface-soft)]">
+          <div
+            className="h-full min-w-max"
+            style={{ zoom: `${zoom}%` } as CSSProperties}
+          >
+            <AdvancedRichTextEditor
+              defaultContent={editor.htmlContent}
+              onUpdate={editor.setHtmlContent}
+              currentPage={editor.currentPage}
+              totalPages={editor.totalPages}
+              onPageCountChange={editor.setMeasuredTotalPages}
+            />
+          </div>
         </div>
       </div>
 

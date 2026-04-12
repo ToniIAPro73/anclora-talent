@@ -2,8 +2,8 @@ import {
   AlignmentType,
   Document as DocxDocument,
   HeadingLevel,
+  ImageRun,
   Packer,
-  PageBreak,
   Paragraph,
   TextRun,
 } from 'docx';
@@ -115,7 +115,16 @@ function renderCoverPageHtml(page: PreviewPage, project: ProjectRecord) {
   if (!cover) return '';
 
   const palette = COVER_PALETTE_COLORS[project.cover.palette] ?? COVER_PALETTE_COLORS.obsidian;
-  const imageUrl = cover.renderedImageUrl || cover.backgroundImageUrl || '';
+  const renderedImageUrl = cover.renderedImageUrl || '';
+  const imageUrl = renderedImageUrl || cover.backgroundImageUrl || '';
+
+  if (renderedImageUrl) {
+    return `
+      <section class="export-page export-cover export-image-only-page">
+        <img class="export-full-image" src="${escapeHtml(renderedImageUrl)}" alt="" />
+      </section>
+    `;
+  }
 
   return `
     <section class="export-page export-cover" style="background:${palette.bg}; color:${palette.text};">
@@ -135,7 +144,16 @@ function renderCoverPageHtml(page: PreviewPage, project: ProjectRecord) {
 function renderBackCoverPageHtml(page: PreviewPage) {
   const backCover = page.backCoverData;
   if (!backCover) return '';
-  const imageUrl = backCover.renderedImageUrl || backCover.backgroundImageUrl || '';
+  const renderedImageUrl = backCover.renderedImageUrl || '';
+  const imageUrl = renderedImageUrl || backCover.backgroundImageUrl || '';
+
+  if (renderedImageUrl) {
+    return `
+      <section class="export-page export-back-cover export-image-only-page">
+        <img class="export-full-image" src="${escapeHtml(renderedImageUrl)}" alt="" />
+      </section>
+    `;
+  }
 
   return `
     <section class="export-page export-back-cover">
@@ -219,6 +237,9 @@ export function renderProjectExportHtml(project: ProjectRecord) {
       box-shadow: 0 24px 60px rgba(0,0,0,0.25);
       page-break-after: always;
       break-after: page;
+    }
+    .export-image-only-page {
+      background: #000;
     }
     .export-page-inner {
       position: relative;
@@ -516,7 +537,15 @@ export function buildProjectPdf(project: ProjectRecord) {
     >
       {pages.map((page, pageIndex) => {
         if (page.type === 'cover' && page.coverData) {
-          const imageUrl = page.coverData.renderedImageUrl || page.coverData.backgroundImageUrl || '';
+          if (page.coverData.renderedImageUrl) {
+            return (
+              <Page key={`pdf-cover-${pageIndex}`} size={[PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT]} style={pdfStyles.page}>
+                <Image src={page.coverData.renderedImageUrl} style={pdfStyles.fullImage} />
+              </Page>
+            );
+          }
+
+          const imageUrl = page.coverData.backgroundImageUrl || '';
           return (
             <Page key={`pdf-cover-${pageIndex}`} size={[PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT]} style={[pdfStyles.page, { backgroundColor: palette.bg }]}>
               {imageUrl ? <Image src={imageUrl} style={pdfStyles.fullImage} /> : null}
@@ -537,7 +566,15 @@ export function buildProjectPdf(project: ProjectRecord) {
         }
 
         if (page.type === 'back-cover' && page.backCoverData) {
-          const imageUrl = page.backCoverData.renderedImageUrl || page.backCoverData.backgroundImageUrl || '';
+          if (page.backCoverData.renderedImageUrl) {
+            return (
+              <Page key={`pdf-back-cover-${pageIndex}`} size={[PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT]} style={pdfStyles.page}>
+                <Image src={page.backCoverData.renderedImageUrl} style={pdfStyles.fullImage} />
+              </Page>
+            );
+          }
+
+          const imageUrl = page.backCoverData.backgroundImageUrl || '';
           return (
             <Page key={`pdf-back-cover-${pageIndex}`} size={[PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT]} style={[pdfStyles.page, { backgroundColor: '#0b133f' }]}>
               {imageUrl ? <Image src={imageUrl} style={pdfStyles.fullImage} /> : null}
@@ -676,8 +713,66 @@ function buildDocxPageChildren(page: PreviewPage) {
   });
 }
 
+type DocxImagePayload = {
+  data: Uint8Array;
+  type: 'png' | 'jpg' | 'gif' | 'bmp';
+};
+
+function inferImageType(imageUrl: string): DocxImagePayload['type'] {
+  const lowerUrl = imageUrl.toLowerCase();
+  if (lowerUrl.includes('image/jpeg') || lowerUrl.endsWith('.jpeg')) return 'jpg';
+  if (lowerUrl.includes('image/jpg') || lowerUrl.endsWith('.jpg')) return 'jpg';
+  if (lowerUrl.includes('image/gif') || lowerUrl.endsWith('.gif')) return 'gif';
+  if (lowerUrl.includes('image/bmp') || lowerUrl.endsWith('.bmp')) return 'bmp';
+  return 'png';
+}
+
+async function loadImageBytes(imageUrl: string): Promise<DocxImagePayload | null> {
+  if (!imageUrl.trim()) {
+    return null;
+  }
+
+  if (imageUrl.startsWith('data:')) {
+    const [, base64 = ''] = imageUrl.split(',', 2);
+    return base64
+      ? {
+          data: Uint8Array.from(Buffer.from(base64, 'base64')),
+          type: inferImageType(imageUrl),
+        }
+      : null;
+  }
+
+  try {
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      return null;
+    }
+
+    const buffer = await response.arrayBuffer();
+    return {
+      data: new Uint8Array(buffer),
+      type: inferImageType(response.headers.get('content-type') || imageUrl),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function buildProjectDocxBuffer(project: ProjectRecord) {
   const pages = buildExportPreview(project);
+  const pageImagePayloads = await Promise.all(
+    pages.map(async (page) => {
+      const imageUrl =
+        page.type === 'cover'
+          ? page.coverData?.renderedImageUrl ?? null
+          : page.type === 'back-cover'
+            ? page.backCoverData?.renderedImageUrl ?? null
+            : null;
+
+      return imageUrl ? loadImageBytes(imageUrl) : null;
+    }),
+  );
+
   const sections = pages.map((page, index) => ({
     properties: {
       page: {
@@ -693,10 +788,24 @@ export async function buildProjectDocxBuffer(project: ProjectRecord) {
         },
       },
     },
-    children: [
-      ...(index > 0 ? [new Paragraph({ children: [new PageBreak()] })] : []),
-      ...buildDocxPageChildren(page),
-    ],
+    children:
+      pageImagePayloads[index] != null
+        ? [
+            new Paragraph({
+              children: [
+                new ImageRun({
+                  data: pageImagePayloads[index]!.data,
+                  type: pageImagePayloads[index]!.type,
+                  transformation: {
+                    width: 432,
+                    height: 648,
+                  },
+                }),
+              ],
+              spacing: { before: 0, after: 0 },
+            }),
+          ]
+        : buildDocxPageChildren(page),
   }));
 
   const doc = new DocxDocument({
