@@ -103,7 +103,7 @@ export const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(function
         style={{
           width: '100%',
           maxWidth: '420px',
-          overflow: 'hidden',
+          overflow: 'visible', // CAMBIADO: permitir que el contenido escalado se vea completo
           border: '1px solid var(--border-subtle)',
           borderRadius: '24px',
           boxShadow: 'var(--shadow-strong)',
