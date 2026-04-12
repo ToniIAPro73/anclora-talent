@@ -32,6 +32,8 @@ import {
   createDefaultSurfaceState,
   normalizeSurfaceState,
 } from '@/lib/projects/cover-surface';
+import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface-resolver';
+import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 
@@ -43,29 +45,26 @@ const TEMPLATE_TONE_TO_PALETTE: Record<EditorialTemplate['previewTone'], Project
 
 function buildCoverSurface(project: ProjectRecord) {
   const fallback = createDefaultSurfaceState('cover');
-  fallback.fields.title = { value: project.cover.title, visible: Boolean(project.cover.title.trim()) };
-  fallback.fields.subtitle = {
-    value: project.cover.subtitle,
-    visible: Boolean((project.cover.showSubtitle ?? true) && project.cover.subtitle.trim()),
+  const baseState = normalizeSurfaceState(project.cover.surfaceState ?? fallback);
+  return {
+    ...baseState,
+    fields: {
+      ...baseState.fields,
+      ...resolveCoverSurfaceFields(project, baseState),
+    },
   };
-  fallback.fields.author = {
-    value: project.document.author,
-    visible: Boolean(project.document.author.trim()),
-  };
-
-  return normalizeSurfaceState(project.cover.surfaceState ?? fallback);
 }
 
 function buildBackCoverSurface(project: ProjectRecord) {
   const fallback = createDefaultSurfaceState('back-cover');
-  fallback.fields.title = { value: project.backCover.title, visible: Boolean(project.backCover.title.trim()) };
-  fallback.fields.body = { value: project.backCover.body, visible: Boolean(project.backCover.body.trim()) };
-  fallback.fields.authorBio = {
-    value: project.backCover.authorBio,
-    visible: Boolean(project.backCover.authorBio.trim()),
+  const baseState = normalizeSurfaceState(project.backCover.surfaceState ?? fallback);
+  return {
+    ...baseState,
+    fields: {
+      ...baseState.fields,
+      ...resolveBackCoverSurfaceFields(project, baseState),
+    },
   };
-
-  return normalizeSurfaceState(project.backCover.surfaceState ?? fallback);
 }
 
 function inferTemplateId(

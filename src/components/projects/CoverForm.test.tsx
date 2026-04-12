@@ -3,6 +3,12 @@ import { describe, expect, test, vi } from 'vitest';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { ProjectRecord } from '@/lib/projects/types';
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    refresh: vi.fn(),
+  }),
+}));
+
 vi.mock('@/lib/projects/actions', () => ({
   saveProjectCoverAction: vi.fn(),
   saveBackCoverAction: vi.fn(),
@@ -72,6 +78,35 @@ function makeProject(): ProjectRecord {
     assets: [],
   };
 }
+
+describe('CoverForm advanced sync notice', () => {
+  test('shows a sync notice when an advanced cover already exists', async () => {
+    const { CoverForm } = await import('@/components/projects/CoverForm');
+    const project = makeProject();
+    project.cover.surfaceState = {
+      surface: 'cover',
+      layout: { kind: 'stacked-center' },
+      fields: {
+        title: { value: 'Test Project', visible: true },
+        subtitle: { value: '', visible: false },
+        author: { value: 'Author Demo', visible: true },
+      },
+      layers: [{ id: 'cover-title', type: 'text', fieldKey: 'title', fill: '#f2e3b3', fontSize: 32 }],
+      opacity: 1,
+    };
+
+    render(<CoverForm project={project} copy={copy} />);
+
+    expect(screen.getByText(copy.coverAdvancedSyncNotice)).toBeInTheDocument();
+  });
+
+  test('does not show the sync notice when there is no advanced cover state yet', async () => {
+    const { CoverForm } = await import('@/components/projects/CoverForm');
+    render(<CoverForm project={makeProject()} copy={copy} />);
+
+    expect(screen.queryByText(copy.coverAdvancedSyncNotice)).not.toBeInTheDocument();
+  });
+});
 
 describe('AdvancedCoverEditor (stub)', () => {
   test('renders with cover title', async () => {

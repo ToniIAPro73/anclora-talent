@@ -18,6 +18,20 @@ export interface SurfaceLayer {
   id: string;
   type: 'text' | 'image';
   fieldKey?: SurfaceFieldKey;
+  left?: number;
+  top?: number;
+  width?: number;
+  fill?: string;
+  opacity?: number;
+  fontSize?: number;
+  fontFamily?: string;
+  fontWeight?: string | number;
+  fontStyle?: string;
+  textAlign?: 'left' | 'center' | 'right';
+  lineHeight?: number;
+  charSpacing?: number;
+  originX?: string;
+  originY?: string;
 }
 
 export interface SurfaceState {

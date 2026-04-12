@@ -2,63 +2,64 @@
 
 import { saveBackCoverAction } from '@/lib/projects/actions';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
-import { SubmitButton } from '@/components/ui/SubmitButton';
-import { useState } from 'react';
+import { BackCoverPreview } from './BackCoverPreview';
+import { Check, Loader2 } from 'lucide-react';
+import { resizeImage } from '@/lib/ui/images';
+import { useRouter } from 'next/navigation';
+import { useRef, useState, useTransition } from 'react';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 import { Slider } from '@/components/ui/slider';
 import {
-  createDefaultSurfaceState,
   mergePartialSurfaceUpdate,
-  normalizeSurfaceState,
 } from '@/lib/projects/cover-surface';
+import { createSurfaceSnapshotFromProject } from '@/components/projects/advanced-cover/advanced-surface-utils';
 
 const ACCENT_PRESETS = ['#d4af37', '#4fd1c5', '#f6a35c', '#a78bfa', '#f87171', '#34d399'];
 
 export function BackCoverForm({ copy, project }: { copy: AppMessages['project']; project: ProjectRecord }) {
+  const router = useRouter();
   const bc = project.backCover;
-  const initialSurface = normalizeSurfaceState(
-    bc.surfaceState ?? {
-      ...createDefaultSurfaceState('back-cover'),
-      fields: {
-        title: { value: bc.title || project.document.author, visible: Boolean((bc.title || project.document.author).trim()) },
-        body: { value: bc.body, visible: Boolean(bc.body.trim()) },
-        authorBio: { value: bc.authorBio, visible: Boolean(bc.authorBio.trim()) },
-      },
-    },
-  );
-
-  // Sync back cover surfaceState with document metadata
-  if (bc.surfaceState) {
-    const fields = { ...initialSurface.fields };
-    let changed = false;
-
-    // In back cover, title usually maps to Author Name
-    if (project.document.author && (!fields.title?.value || fields.title.value !== project.document.author)) {
-      fields.title = { value: project.document.author, visible: true };
-      changed = true;
-    }
-
-    // In back cover, body usually maps to document subtitle (blurb)
-    if (project.document.subtitle && (!fields.body?.value || fields.body.value !== project.document.subtitle)) {
-      fields.body = { value: project.document.subtitle, visible: true };
-      changed = true;
-    }
-
-    if (changed) {
-      initialSurface.fields = fields;
-    }
-  }
+  const initialSurface = createSurfaceSnapshotFromProject('back-cover', project);
   const [surface, setSurface] = useState(initialSurface);
   const [accentColor, setAccentColor] = useState(bc.accentColor ?? ACCENT_PRESETS[0]);
+  const hasAdvancedBackCover =
+    Boolean(project.backCover.surfaceState?.layers?.some((layer) => layer.type === 'text' && layer.fieldKey));
+  const [isPending, startTransition] = useTransition();
+  const [saved, setSaved] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.set('projectId', project.id);
+    formData.set('title', surface.fields.title?.value ?? '');
+    formData.set('body', surface.fields.body?.value ?? '');
+    formData.set('authorBio', surface.fields.authorBio?.value ?? '');
+    formData.set('accentColor', accentColor);
+    formData.set('currentBackgroundImageUrl', project.backCover.backgroundImageUrl ?? '');
+    formData.set('surfaceState', JSON.stringify(surface));
+
+    const file = fileInputRef.current?.files?.[0];
+    if (file) {
+      if (file.size > 4 * 1024 * 1024) {
+        const compressed = await resizeImage(file);
+        formData.set('backgroundImage', compressed, 'back-cover.jpg');
+      } else {
+        formData.set('backgroundImage', file);
+      }
+    }
+
+    startTransition(async () => {
+      await saveBackCoverAction(formData);
+      router.refresh();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    });
+  };
 
   return (
-    <form action={saveBackCoverAction} className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-      <input type="hidden" name="projectId" value={project.id} />
-      <input type="hidden" name="currentBackgroundImageUrl" value={bc.backgroundImageUrl ?? ''} />
-      <input type="hidden" name="surfaceState" value={JSON.stringify(surface)} />
-
-      {/* Controls */}
+    <form onSubmit={handleSubmit} className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
       <section className="space-y-5 rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
           {copy.backCoverFormEyebrow}
@@ -148,12 +149,19 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
         <label className="block space-y-2">
           <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverBackgroundLabel}</span>
           <input
+            ref={fileInputRef}
             type="file"
             name="backgroundImage"
             accept="image/*"
             className="block w-full text-sm text-[var(--text-secondary)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--button-highlight-bg)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--button-highlight-fg)]"
           />
         </label>
+
+        {hasAdvancedBackCover ? (
+          <div className="rounded-[18px] border border-[rgba(92,194,255,0.24)] bg-[rgba(92,194,255,0.08)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+            {copy.backCoverAdvancedSyncNotice}
+          </div>
+        ) : null}
 
         <div className="space-y-4 pt-2">
           <div className="flex items-center justify-between">
@@ -169,49 +177,30 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
           />
         </div>
 
-        <SubmitButton className={`${premiumPrimaryDarkButton} px-5`}>
-          {copy.backCoverSave}
-        </SubmitButton>
-      </section>
-
-      {/* Preview */}
-      <section
-        className="relative overflow-hidden rounded-[32px] border border-[var(--border-subtle)] bg-[#0b133f] p-8 text-[#f2e3b3] shadow-[var(--shadow-soft)]"
-        style={{ minHeight: '400px' }}
-      >
-        {bc.backgroundImageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={bc.backgroundImageUrl}
-            alt=""
-            aria-hidden
-            className="absolute inset-0 h-full w-full object-cover"
-            style={{ opacity: surface.opacity ?? 0.24 }}
-          />
-        )}
-        <div className="relative">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] opacity-60">{copy.backCoverEyebrow}</p>
-          <div className="mt-8 max-w-xs space-y-6">
-            <p className="text-base leading-8 opacity-85">
-              {surface.fields.body?.visible ? surface.fields.body.value : copy.backCoverBodyPlaceholder}
-            </p>
-            {surface.fields.authorBio?.visible && (
-              <div
-                className="border-l-4 pl-4 text-sm leading-7 opacity-70"
-                style={{ borderColor: accentColor }}
-              >
-                {surface.fields.authorBio?.value}
-              </div>
-            )}
-          </div>
-          <div className="mt-10">
-            <div className="h-px w-16 opacity-40" style={{ background: accentColor }} />
-            {surface.fields.title?.visible && (
-              <p className="mt-4 text-xl font-black tracking-tight">{surface.fields.title.value}</p>
-            )}
-          </div>
+        <div className="flex items-center gap-3 pt-4">
+          <button
+            type="submit"
+            disabled={isPending}
+            className={`${premiumPrimaryDarkButton} px-5 disabled:opacity-60`}
+          >
+            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {copy.backCoverSave}
+          </button>
+          {saved && !isPending ? (
+            <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]">
+              <Check className="h-3 w-3" />
+              Guardado
+            </span>
+          ) : null}
         </div>
       </section>
+
+      <BackCoverPreview
+        surface={surface}
+        backgroundImageUrl={project.backCover.backgroundImageUrl}
+        accentColor={accentColor}
+        eyebrow={copy.backCoverEyebrow}
+      />
     </form>
   );
 }

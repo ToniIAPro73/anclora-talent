@@ -14,6 +14,8 @@
 
 import type { ProjectRecord } from '@/lib/projects/types';
 import { createDefaultSurfaceState, normalizeSurfaceState } from '@/lib/projects/cover-surface';
+import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface-resolver';
+import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
 import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
 import { PaginationConfig } from './device-configs';
 import { hasRenderablePageContent, paginateContent } from './content-paginator';
@@ -165,36 +167,24 @@ export function buildPreviewPages(
 
 function normalizeCoverSurface(project: ProjectRecord) {
   const fallback = createDefaultSurfaceState('cover');
-  fallback.fields.title = {
-    value: project.cover.title || project.document.title,
-    visible: Boolean((project.cover.title || project.document.title).trim()),
+  const baseState = normalizeSurfaceState(project.cover.surfaceState ?? fallback);
+  return {
+    ...baseState,
+    fields: {
+      ...baseState.fields,
+      ...resolveCoverSurfaceFields(project, baseState),
+    },
   };
-  fallback.fields.subtitle = {
-    value: project.cover.subtitle || '',
-    visible: Boolean((project.cover.showSubtitle ?? true) && project.cover.subtitle?.trim()),
-  };
-  fallback.fields.author = {
-    value: project.document.author || '',
-    visible: Boolean(project.document.author.trim()),
-  };
-
-  return normalizeSurfaceState(project.cover.surfaceState ?? fallback);
 }
 
 function normalizeBackCoverSurface(project: ProjectRecord) {
   const fallback = createDefaultSurfaceState('back-cover');
-  fallback.fields.title = {
-    value: project.backCover.title || project.document.title,
-    visible: Boolean((project.backCover.title || project.document.title).trim()),
+  const baseState = normalizeSurfaceState(project.backCover.surfaceState ?? fallback);
+  return {
+    ...baseState,
+    fields: {
+      ...baseState.fields,
+      ...resolveBackCoverSurfaceFields(project, baseState),
+    },
   };
-  fallback.fields.body = {
-    value: project.backCover.body || '',
-    visible: Boolean(project.backCover.body.trim()),
-  };
-  fallback.fields.authorBio = {
-    value: project.backCover.authorBio || '',
-    visible: Boolean(project.backCover.authorBio.trim()),
-  };
-
-  return normalizeSurfaceState(project.backCover.surfaceState ?? fallback);
 }

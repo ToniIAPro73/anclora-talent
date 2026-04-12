@@ -37,6 +37,33 @@ describe('advanced-surface-utils', () => {
     expect(snapshot.fields.authorBio?.value).toBe('Bio');
   });
 
+  it('prioritizes persisted flat back-cover values over stale surface fields', () => {
+    const snapshot = createSurfaceSnapshotFromProject('back-cover', makeSurfaceProject({
+      document: { author: 'Antonio', title: 'Libro', subtitle: 'Resumen documento' },
+      cover: { title: 'Portada', subtitle: 'Sub', surfaceState: undefined },
+      backCover: {
+        title: 'Antonio',
+        body: 'Texto sincronizado',
+        authorBio: 'Bio sincronizada',
+        surfaceState: {
+          surface: 'back-cover',
+          layout: { kind: 'stacked-center' },
+          fields: {
+            title: { value: 'Autor viejo', visible: true },
+            body: { value: 'Texto viejo', visible: true },
+            authorBio: { value: 'Bio vieja', visible: true },
+          },
+          layers: [],
+          opacity: 0.24,
+        },
+      },
+    }));
+
+    expect(snapshot.fields.title?.value).toBe('Antonio');
+    expect(snapshot.fields.body?.value).toBe('Texto sincronizado');
+    expect(snapshot.fields.authorBio?.value).toBe('Bio sincronizada');
+  });
+
   it('rebuilds visible cover layers when a persisted surface state contains an empty layers array', () => {
     const snapshot = createSurfaceSnapshotFromProject('cover', makeSurfaceProject({
       document: { author: 'Toni', title: 'Libro' },
@@ -96,6 +123,37 @@ describe('advanced-surface-utils', () => {
 
     expect(snapshot.fields.title?.value).toBe('NUNCA MAS EN LA SOMBRA');
     expect(snapshot.fields.author?.value).toBe('Toni');
+    expect(snapshot.fields.author?.visible).toBe(true);
+  });
+
+  it('uses the saved cover author from surface state so advanced editor reflects basic editor changes', () => {
+    const snapshot = createSurfaceSnapshotFromProject('cover', makeSurfaceProject({
+      document: { author: 'Toni', title: 'Titulo documento' },
+      cover: {
+        title: 'NUNCA MAS EN LA SOMBRA',
+        subtitle: '',
+        showSubtitle: false,
+        surfaceState: {
+          surface: 'cover',
+          layout: { kind: 'stacked-center' },
+          fields: {
+            title: { value: 'NUNCA MAS EN LA SOMBRA', visible: true },
+            subtitle: { value: '', visible: false },
+            author: { value: 'Antonio', visible: true },
+          },
+          layers: [],
+          opacity: 0.47,
+        },
+      },
+      backCover: {
+        title: 'Contra',
+        body: 'Texto de contra',
+        authorBio: 'Bio',
+        surfaceState: undefined,
+      },
+    }));
+
+    expect(snapshot.fields.author?.value).toBe('Antonio');
     expect(snapshot.fields.author?.visible).toBe(true);
   });
 

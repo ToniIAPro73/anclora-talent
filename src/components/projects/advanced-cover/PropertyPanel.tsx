@@ -38,7 +38,7 @@ export function CoverPropertyPanel() {
       });
       
       setLocalProps({
-        text: obj.text || '',
+        text: obj.rawText || obj.text || '',
         fill: typeof obj.fill === 'string' ? obj.fill : '#ffffff',
         fontSize: obj.fontSize || 24,
         fontFamily: obj.fontFamily || 'ui-sans-serif, system-ui, sans-serif',

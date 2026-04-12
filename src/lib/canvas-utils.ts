@@ -36,6 +36,13 @@ type FabricImageLike = {
   setCoords?: () => void;
 };
 
+type FabricTextLike = {
+  id?: string;
+  set?: (props: Record<string, unknown> | string, value?: unknown) => void;
+  setCoords?: () => void;
+  initDimensions?: () => void;
+};
+
 type AddImageOptions = {
   id?: string;
   attachToCanvas?: boolean;
@@ -53,6 +60,64 @@ type AddImageOptions = {
   targetHeight?: number;
   [key: string]: unknown;
 };
+
+function estimateTextWidth(text: string, fontSize: number) {
+  return text.length * fontSize * 0.58;
+}
+
+export function wrapTextToWidth({
+  text,
+  maxWidth,
+  fontSize,
+  fontFamily,
+  fontWeight,
+}: {
+  text: string;
+  maxWidth: number;
+  fontSize: number;
+  fontFamily?: string;
+  fontWeight?: string | number;
+}) {
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  if (!normalized) return '';
+
+  const words = normalized.split(' ');
+  const lines: string[] = [];
+
+  const measure = (input: string) => {
+    if (typeof document !== 'undefined') {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      if (context) {
+        const weight = fontWeight ? `${fontWeight} ` : '';
+        const family = fontFamily || 'sans-serif';
+        context.font = `${weight}${fontSize}px ${family}`;
+        return context.measureText(input).width;
+      }
+    }
+
+    return estimateTextWidth(input, fontSize);
+  };
+
+  let currentLine = '';
+
+  for (const word of words) {
+    const nextLine = currentLine ? `${currentLine} ${word}` : word;
+    if (!currentLine || measure(nextLine) <= maxWidth) {
+      currentLine = nextLine;
+      continue;
+    }
+
+    lines.push(currentLine);
+    currentLine = word;
+  }
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines.join('\n');
+}
 
 export function getFabricImageSourceSize(image: FabricImageLike): { width: number; height: number } {
   const element = typeof image.getElement === 'function' ? image.getElement() : null;
@@ -100,15 +165,26 @@ export async function createFabricCanvas(
     height: CANVAS_HEIGHT,
   });
 
-  canvas.clipPath = new fabric.Rect({
-    left: 0,
-    top: 0,
-    width: CANVAS_WIDTH,
-    height: CANVAS_HEIGHT,
-    absolutePositioned: true,
-  });
+  // NOTA: Sin clipPath para evitar recortes del contenido escalado
+  // El overflow: visible en el contenedor CSS ya protege contra desbordamientos
 
   return canvas;
+}
+
+// Helper para esperar que una fuente esté disponible en el navegador
+async function waitForFont(fontFamily: string, fontSize: number): Promise<void> {
+  if (typeof document === 'undefined' || !('fonts' in document)) {
+    // Fallback: esperar un tick si no hay Font Loading API
+    return new Promise(resolve => setTimeout(resolve, 50));
+  }
+  
+  try {
+    const fontSpec = `${fontSize}px ${fontFamily}`;
+    await (document as any).fonts.ready;
+    await (document as any).fonts.load(fontSpec);
+  } catch (e) {
+    console.warn('[waitForFont] Font loading failed, continuing anyway:', e);
+  }
 }
 
 export async function addTextToCanvas(
@@ -120,29 +196,138 @@ export async function addTextToCanvas(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
   const fabric = await getFabric();
-  const TextboxClass = fabric.Textbox || fabric.IText || fabric.Text;
-  if (!TextboxClass) {
-    console.error('[addTextToCanvas] Textbox class not found in fabric module', fabric);
-    throw new Error('Fabric Textbox class not found');
+  const wrapWidth = typeof options?.wrapWidth === 'number' ? options.wrapWidth : null;
+  const fontSize = options?.fontSize ?? 24;
+  const fontFamily = options?.fontFamily ?? 'Arial';
+  
+  // Esperar a que la fuente esté cargada antes de medir texto
+  await waitForFont(fontFamily, fontSize);
+  
+  const displayText =
+    wrapWidth
+      ? wrapTextToWidth({
+          text,
+          maxWidth: wrapWidth,
+          fontSize,
+          fontFamily,
+          fontWeight: options?.fontWeight,
+        })
+      : text;
+
+  const TextClass =
+    wrapWidth
+      ? fabric.Textbox || fabric.IText || fabric.Text
+      : fabric.IText || fabric.Text || fabric.Textbox;
+
+  if (!TextClass) {
+    console.error('[addTextToCanvas] Text class not found in fabric module', fabric);
+    throw new Error('Fabric Text class not found');
   }
-  const fabricText = new TextboxClass(text, {
+
+  const baseOptions = {
     left: CANVAS_WIDTH / 2,
     top: CANVAS_HEIGHT / 2,
-    width: CANVAS_WIDTH * 0.8,
-    fontSize: 24,
-    fontFamily: 'Arial',
+    fontSize,
+    fontFamily,
     fill: '#000000',
     originX: 'center',
     originY: 'center',
     textAlign: 'center',
+    scaleX: 1,
+    scaleY: 1,
+    objectCaching: false,
+    noScaleCache: true,
+    splitByGrapheme: false,
     ...options,
-  });
+  };
+
+  // Si hay wrapWidth, usar Textbox y establecer width explícitamente ANTES de crear el objeto
+  if (wrapWidth) {
+    Object.assign(baseOptions, {
+      width: wrapWidth,
+      minWidth: wrapWidth,
+      splitByGrapheme: false,
+    });
+  } else {
+    Object.assign(baseOptions, {
+      width: CANVAS_WIDTH * 0.8,
+      minWidth: options?.width ?? CANVAS_WIDTH * 0.8,
+    });
+  }
+
+  const fabricText = new TextClass(displayText, baseOptions);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (options?.id) (fabricText as any).id = options.id;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (fabricText as any).rawText = text;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (wrapWidth) (fabricText as any).wrapWidth = wrapWidth;
+
+  // INSTRUMENTACIÓN: registrar valores reales del objeto de texto
+  console.info('[addTextToCanvas] Texto creado:', {
+    id: (fabricText as any).id,
+    tipo: fabricText.type,
+    text: fabricText.text,
+    rawText: (fabricText as any).rawText,
+    wrapWidth: (fabricText as any).wrapWidth,
+    width: fabricText.width,
+    minWidth: fabricText.minWidth,
+    height: fabricText.height,
+    scaleX: fabricText.scaleX,
+    scaleY: fabricText.scaleY,
+    lines: (fabricText as any).lines,
+    lineCount: (fabricText as any).lines?.length,
+    left: fabricText.left,
+    top: fabricText.top,
+    originX: fabricText.originX,
+    originY: fabricText.originY,
+    fontSize: fabricText.fontSize,
+    fontFamily: fabricText.fontFamily,
+  });
+
+  // Forzar recálculo de dimensiones DESPUÉS de que la fuente esté disponible
+  // Esto es crítico: initDimensions() mide el texto con la fuente real
+  (fabricText as FabricTextLike).initDimensions?.();
+  
+  // Resetear escalado a 1 para evitar distorsión
+  (fabricText as FabricTextLike).set?.({
+    scaleX: 1,
+    scaleY: 1,
+    dirty: true,
+  });
+  
+  (fabricText as FabricTextLike).setCoords?.();
+
+  // SEGUNDA INSTRUMENTACIÓN: verificar valores después de initDimensions
+  console.info('[addTextToCanvas] Después de initDimensions:', {
+    id: (fabricText as any).id,
+    width: fabricText.width,
+    minWidth: fabricText.minWidth,
+    height: fabricText.height,
+    scaleX: fabricText.scaleX,
+    scaleY: fabricText.scaleY,
+    lines: (fabricText as any).lines,
+    lineCount: (fabricText as any).lines?.length,
+  });
+
   canvas.add(fabricText);
   canvas.setActiveObject(fabricText);
   if (canvas.requestRenderAll) canvas.requestRenderAll();
   else canvas.renderAll();
+  
+  // TERCERA INSTRUMENTACIÓN: verificar después de añadir al canvas
+  setTimeout(() => {
+    console.info('[addTextToCanvas] Después de render:', {
+      id: (fabricText as any).id,
+      width: fabricText.width,
+      height: fabricText.height,
+      scaleX: fabricText.scaleX,
+      scaleY: fabricText.scaleY,
+      oCoords: fabricText.oCoords,
+      aCoords: fabricText.aCoords,
+    });
+  }, 100);
+  
   return fabricText;
 }
 
