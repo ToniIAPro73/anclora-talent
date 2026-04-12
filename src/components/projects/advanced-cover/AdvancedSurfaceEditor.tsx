@@ -470,8 +470,9 @@ export function AdvancedSurfaceEditor({
       setRendered(true);
       setTimeout(() => setRendered(false), 2500);
 
-      // Navigate back to basic editor to load updated data
-      router.push(`/projects/${project.id}/editor`);
+      // Refresh the current editor route so basic and advanced views rehydrate
+      // from the persisted advanced design, which is the source of truth.
+      router.refresh();
     });
   };
 

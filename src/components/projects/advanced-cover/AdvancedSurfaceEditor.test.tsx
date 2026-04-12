@@ -273,7 +273,8 @@ describe('AdvancedSurfaceEditor', () => {
 
     expect(mocks.saveProjectCoverActionMock).toHaveBeenCalledTimes(1);
     expect(mocks.toPngMock).toHaveBeenCalledTimes(1);
-    expect(mocks.routerPushMock).toHaveBeenCalledTimes(1);
+    expect(mocks.routerRefreshMock).toHaveBeenCalledTimes(1);
+    expect(mocks.routerPushMock).not.toHaveBeenCalled();
   });
 
   test('refreshes the route after saving the rendered back cover so preview reads the latest persisted asset', async () => {
@@ -290,6 +291,7 @@ describe('AdvancedSurfaceEditor', () => {
 
     expect(mocks.saveBackCoverActionMock).toHaveBeenCalledTimes(1);
     expect(mocks.toPngMock).toHaveBeenCalledTimes(1);
-    expect(mocks.routerPushMock).toHaveBeenCalledTimes(1);
+    expect(mocks.routerRefreshMock).toHaveBeenCalledTimes(1);
+    expect(mocks.routerPushMock).not.toHaveBeenCalled();
   });
 });

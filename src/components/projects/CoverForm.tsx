@@ -48,6 +48,8 @@ export function CoverForm({
   const palette = controlledPalette ?? internalPalette;
   const setSurface = onSurfaceChange ?? setInternalSurface;
   const setPalette = onPaletteChange ?? setInternalPalette;
+  const hasAdvancedCover =
+    Boolean(project.cover.surfaceState?.layers?.some((layer) => layer.type === 'text' && layer.fieldKey));
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -158,6 +160,12 @@ export function CoverForm({
             className="block w-full text-sm text-[var(--text-secondary)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--button-highlight-bg)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--button-highlight-fg)]"
           />
         </label>
+
+        {hasAdvancedCover ? (
+          <div className="rounded-[18px] border border-[rgba(92,194,255,0.24)] bg-[rgba(92,194,255,0.08)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+            {copy.coverAdvancedSyncNotice}
+          </div>
+        ) : null}
 
         <div className="space-y-4 pt-2">
           <div className="flex items-center justify-between">
