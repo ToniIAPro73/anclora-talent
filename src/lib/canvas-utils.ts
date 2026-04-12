@@ -61,6 +61,64 @@ type AddImageOptions = {
   [key: string]: unknown;
 };
 
+function estimateTextWidth(text: string, fontSize: number) {
+  return text.length * fontSize * 0.58;
+}
+
+export function wrapTextToWidth({
+  text,
+  maxWidth,
+  fontSize,
+  fontFamily,
+  fontWeight,
+}: {
+  text: string;
+  maxWidth: number;
+  fontSize: number;
+  fontFamily?: string;
+  fontWeight?: string | number;
+}) {
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  if (!normalized) return '';
+
+  const words = normalized.split(' ');
+  const lines: string[] = [];
+
+  const measure = (input: string) => {
+    if (typeof document !== 'undefined') {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      if (context) {
+        const weight = fontWeight ? `${fontWeight} ` : '';
+        const family = fontFamily || 'sans-serif';
+        context.font = `${weight}${fontSize}px ${family}`;
+        return context.measureText(input).width;
+      }
+    }
+
+    return estimateTextWidth(input, fontSize);
+  };
+
+  let currentLine = '';
+
+  for (const word of words) {
+    const nextLine = currentLine ? `${currentLine} ${word}` : word;
+    if (!currentLine || measure(nextLine) <= maxWidth) {
+      currentLine = nextLine;
+      continue;
+    }
+
+    lines.push(currentLine);
+    currentLine = word;
+  }
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines.join('\n');
+}
+
 export function getFabricImageSourceSize(image: FabricImageLike): { width: number; height: number } {
   const element = typeof image.getElement === 'function' ? image.getElement() : null;
 
@@ -127,16 +185,31 @@ export async function addTextToCanvas(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
   const fabric = await getFabric();
-  const TextboxClass = fabric.Textbox || fabric.IText || fabric.Text;
-  if (!TextboxClass) {
-    console.error('[addTextToCanvas] Textbox class not found in fabric module', fabric);
-    throw new Error('Fabric Textbox class not found');
+  const wrapWidth = typeof options?.wrapWidth === 'number' ? options.wrapWidth : null;
+  const displayText =
+    wrapWidth
+      ? wrapTextToWidth({
+          text,
+          maxWidth: wrapWidth,
+          fontSize: options?.fontSize ?? 24,
+          fontFamily: options?.fontFamily,
+          fontWeight: options?.fontWeight,
+        })
+      : text;
+
+  const TextClass =
+    wrapWidth
+      ? fabric.IText || fabric.Text || fabric.Textbox
+      : fabric.Textbox || fabric.IText || fabric.Text;
+
+  if (!TextClass) {
+    console.error('[addTextToCanvas] Text class not found in fabric module', fabric);
+    throw new Error('Fabric Text class not found');
   }
-  const fabricText = new TextboxClass(text, {
+
+  const baseOptions = {
     left: CANVAS_WIDTH / 2,
     top: CANVAS_HEIGHT / 2,
-    width: CANVAS_WIDTH * 0.8,
-    minWidth: options?.width ?? CANVAS_WIDTH * 0.8,
     fontSize: 24,
     fontFamily: 'Arial',
     fill: '#000000',
@@ -149,13 +222,26 @@ export async function addTextToCanvas(
     noScaleCache: true,
     splitByGrapheme: false,
     ...options,
-  });
+  };
+
+  if (!wrapWidth) {
+    Object.assign(baseOptions, {
+      width: CANVAS_WIDTH * 0.8,
+      minWidth: options?.width ?? CANVAS_WIDTH * 0.8,
+    });
+  }
+
+  const fabricText = new TextClass(displayText, baseOptions);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (options?.id) (fabricText as any).id = options.id;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (fabricText as any).rawText = text;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (wrapWidth) (fabricText as any).wrapWidth = wrapWidth;
 
   // Fabric 7 can keep stale text dimensions/caches if the textbox is created
   // before the final font metrics settle. Force a fresh measurement up front.
-  if (typeof options?.width === 'number') {
+  if (!wrapWidth && typeof options?.width === 'number') {
     (fabricText as FabricTextLike).set?.({
       width: options.width,
       minWidth: options.width,
@@ -164,7 +250,7 @@ export async function addTextToCanvas(
     });
   }
   (fabricText as FabricTextLike).initDimensions?.();
-  if (typeof options?.width === 'number') {
+  if (!wrapWidth && typeof options?.width === 'number') {
     (fabricText as FabricTextLike).set?.({
       width: options.width,
       minWidth: options.width,

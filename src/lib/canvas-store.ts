@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { getFabric } from './canvas-utils';
+import { wrapTextToWidth } from './canvas-utils';
 
 export interface CanvasElement {
   id: string;
@@ -88,9 +88,34 @@ export const useCanvasStore = create<CanvasStore>((set: any, get: any) => ({
         ...element,
         properties: { ...element.properties, ...properties },
       };
-      
+
+      const wrapWidth = typeof element.object.wrapWidth === 'number' ? element.object.wrapWidth : null;
+      const rawText =
+        typeof properties.text === 'string'
+          ? properties.text
+          : typeof element.object.rawText === 'string'
+            ? element.object.rawText
+            : element.object.text;
+
+      const nextFontSize = typeof properties.fontSize === 'number' ? properties.fontSize : element.object.fontSize;
+      const nextFontFamily = typeof properties.fontFamily === 'string' ? properties.fontFamily : element.object.fontFamily;
+      const nextFontWeight =
+        typeof properties.fontWeight !== 'undefined' ? properties.fontWeight : element.object.fontWeight;
+
+      const nextProperties = { ...properties } as Record<string, unknown>;
+      if (wrapWidth && typeof rawText === 'string') {
+        nextProperties.text = wrapTextToWidth({
+          text: rawText,
+          maxWidth: wrapWidth,
+          fontSize: typeof nextFontSize === 'number' ? nextFontSize : 24,
+          fontFamily: typeof nextFontFamily === 'string' ? nextFontFamily : undefined,
+          fontWeight: typeof nextFontWeight === 'string' || typeof nextFontWeight === 'number' ? nextFontWeight : undefined,
+        });
+        nextProperties.rawText = rawText;
+      }
+
       // Apply properties to fabric object directly
-      element.object.set?.(properties);
+      element.object.set?.(nextProperties);
       element.object.set?.('dirty', true);
       
       // Special handling for text related properties that might need re-render or re-calc

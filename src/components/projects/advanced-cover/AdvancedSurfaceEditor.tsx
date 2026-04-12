@@ -235,7 +235,7 @@ export function AdvancedSurfaceEditor({
             fill: config.fill ?? textColor,
             textAlign: config.textAlign,
             id: `${surface}-${layer.fieldKey}-text`,
-            width: config.width,
+            wrapWidth: config.width,
             left: config.left,
             originX: config.textAlign === 'center' ? 'center' : 'left',
             selectable: true,
