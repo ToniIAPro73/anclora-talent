@@ -37,6 +37,33 @@ describe('advanced-surface-utils', () => {
     expect(snapshot.fields.authorBio?.value).toBe('Bio');
   });
 
+  it('prioritizes persisted flat back-cover values over stale surface fields', () => {
+    const snapshot = createSurfaceSnapshotFromProject('back-cover', makeSurfaceProject({
+      document: { author: 'Antonio', title: 'Libro', subtitle: 'Resumen documento' },
+      cover: { title: 'Portada', subtitle: 'Sub', surfaceState: undefined },
+      backCover: {
+        title: 'Antonio',
+        body: 'Texto sincronizado',
+        authorBio: 'Bio sincronizada',
+        surfaceState: {
+          surface: 'back-cover',
+          layout: { kind: 'stacked-center' },
+          fields: {
+            title: { value: 'Autor viejo', visible: true },
+            body: { value: 'Texto viejo', visible: true },
+            authorBio: { value: 'Bio vieja', visible: true },
+          },
+          layers: [],
+          opacity: 0.24,
+        },
+      },
+    }));
+
+    expect(snapshot.fields.title?.value).toBe('Antonio');
+    expect(snapshot.fields.body?.value).toBe('Texto sincronizado');
+    expect(snapshot.fields.authorBio?.value).toBe('Bio sincronizada');
+  });
+
   it('rebuilds visible cover layers when a persisted surface state contains an empty layers array', () => {
     const snapshot = createSurfaceSnapshotFromProject('cover', makeSurfaceProject({
       document: { author: 'Toni', title: 'Libro' },

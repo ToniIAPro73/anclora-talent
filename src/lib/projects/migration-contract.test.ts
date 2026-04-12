@@ -45,6 +45,7 @@ describe('i18n completeness contract', () => {
       const copy = resolveLocaleMessages(locale).project;
       expect(copy.backCoverEyebrow).toBeTruthy();
       expect(copy.backCoverTitle).toBeTruthy();
+      expect(copy.backCoverAdvancedSyncNotice).toBeTruthy();
       expect(copy.backCoverSave).toBeTruthy();
       expect(copy.backCoverBackToCover).toBeTruthy();
     }

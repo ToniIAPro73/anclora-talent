@@ -10,3 +10,21 @@ export const COVER_TEXT_LAYOUT = {
   authorFontSize: 15,
   titleLineHeight: 1.1,
 } as const;
+
+export const BACK_COVER_TEXT_LAYOUT = {
+  titleTop: 0.18,
+  bodyTop: 0.36,
+  authorBioTop: 0.78,
+  titleWidth: 0.72,
+  bodyWidth: 0.72,
+  authorBioWidth: 0.62,
+  titleLeft: 0.16,
+  bodyLeft: 0.16,
+  authorBioLeft: 0.16,
+  titleFontSize: 28,
+  bodyFontSize: 16,
+  authorBioFontSize: 13,
+  titleLineHeight: 1.1,
+  bodyLineHeight: 1.45,
+  authorBioLineHeight: 1.35,
+} as const;

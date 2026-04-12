@@ -20,7 +20,7 @@ import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import { createSurfaceSnapshotFromProject } from './advanced-surface-utils';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '@/lib/canvas-utils';
 import { normalizeSurfaceState, type SurfaceKind, type SurfaceState } from '@/lib/projects/cover-surface';
-import { COVER_TEXT_LAYOUT } from '@/lib/projects/cover-layout';
+import { BACK_COVER_TEXT_LAYOUT, COVER_TEXT_LAYOUT } from '@/lib/projects/cover-layout';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 
@@ -173,12 +173,12 @@ export function AdvancedSurfaceEditor({
 
         const fieldConfigs: Record<string, { top: number; fontSize: number; fontWeight: string | number; textAlign: 'left' | 'center'; width: number; left: number; fill?: string }> = {
           title: {
-            top: surface === 'cover' ? canvasHeight * COVER_TEXT_LAYOUT.titleTop : canvasHeight * 0.18,
-            fontSize: surface === 'cover' ? COVER_TEXT_LAYOUT.titleFontSize : 28,
+            top: surface === 'cover' ? canvasHeight * COVER_TEXT_LAYOUT.titleTop : canvasHeight * BACK_COVER_TEXT_LAYOUT.titleTop,
+            fontSize: surface === 'cover' ? COVER_TEXT_LAYOUT.titleFontSize : BACK_COVER_TEXT_LAYOUT.titleFontSize,
             fontWeight: 900,
             textAlign: surface === 'cover' ? 'center' : 'left',
-            width: canvasWidth * (surface === 'cover' ? COVER_TEXT_LAYOUT.titleWidth : 0.72),
-            left: surface === 'cover' ? canvasWidth / 2 : canvasWidth * 0.16,
+            width: canvasWidth * (surface === 'cover' ? COVER_TEXT_LAYOUT.titleWidth : BACK_COVER_TEXT_LAYOUT.titleWidth),
+            left: surface === 'cover' ? canvasWidth / 2 : canvasWidth * BACK_COVER_TEXT_LAYOUT.titleLeft,
           },
           subtitle: {
             top: canvasHeight * COVER_TEXT_LAYOUT.subtitleTop,
@@ -199,20 +199,20 @@ export function AdvancedSurfaceEditor({
             fill: project.cover.palette === 'sand' ? 'rgba(11,49,63,0.7)' : 'rgba(242,227,179,0.72)',
           },
           body: {
-            top: canvasHeight * 0.36,
-            fontSize: 16,
+            top: canvasHeight * BACK_COVER_TEXT_LAYOUT.bodyTop,
+            fontSize: BACK_COVER_TEXT_LAYOUT.bodyFontSize,
             fontWeight: 500,
             textAlign: 'left',
-            width: canvasWidth * 0.72,
-            left: canvasWidth * 0.16,
+            width: canvasWidth * BACK_COVER_TEXT_LAYOUT.bodyWidth,
+            left: canvasWidth * BACK_COVER_TEXT_LAYOUT.bodyLeft,
           },
           authorBio: {
-            top: canvasHeight * 0.78,
-            fontSize: 13,
+            top: canvasHeight * BACK_COVER_TEXT_LAYOUT.authorBioTop,
+            fontSize: BACK_COVER_TEXT_LAYOUT.authorBioFontSize,
             fontWeight: 400,
             textAlign: 'left',
-            width: canvasWidth * 0.62,
-            left: canvasWidth * 0.16,
+            width: canvasWidth * BACK_COVER_TEXT_LAYOUT.authorBioWidth,
+            left: canvasWidth * BACK_COVER_TEXT_LAYOUT.authorBioLeft,
             fill: 'rgba(242,227,179,0.78)',
           },
         };
@@ -240,8 +240,10 @@ export function AdvancedSurfaceEditor({
             typeof layer.lineHeight === 'number'
               ? layer.lineHeight
               : layer.fieldKey === 'body'
-                ? 1.45
-                : COVER_TEXT_LAYOUT.titleLineHeight;
+              ? 1.45
+                : surface === 'back-cover' && layer.fieldKey === 'authorBio'
+                  ? BACK_COVER_TEXT_LAYOUT.authorBioLineHeight
+                  : COVER_TEXT_LAYOUT.titleLineHeight;
           const layerCharSpacing = typeof layer.charSpacing === 'number' ? layer.charSpacing : 0;
           const layerOpacity = typeof layer.opacity === 'number' ? layer.opacity : 1;
           const layerFontStyle = typeof layer.fontStyle === 'string' ? layer.fontStyle : 'normal';

@@ -14,6 +14,7 @@
 
 import type { ProjectRecord } from '@/lib/projects/types';
 import { createDefaultSurfaceState, normalizeSurfaceState } from '@/lib/projects/cover-surface';
+import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface-resolver';
 import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
 import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
 import { PaginationConfig } from './device-configs';
@@ -178,18 +179,12 @@ function normalizeCoverSurface(project: ProjectRecord) {
 
 function normalizeBackCoverSurface(project: ProjectRecord) {
   const fallback = createDefaultSurfaceState('back-cover');
-  fallback.fields.title = {
-    value: project.backCover.title || project.document.title,
-    visible: Boolean((project.backCover.title || project.document.title).trim()),
+  const baseState = normalizeSurfaceState(project.backCover.surfaceState ?? fallback);
+  return {
+    ...baseState,
+    fields: {
+      ...baseState.fields,
+      ...resolveBackCoverSurfaceFields(project, baseState),
+    },
   };
-  fallback.fields.body = {
-    value: project.backCover.body || '',
-    visible: Boolean(project.backCover.body.trim()),
-  };
-  fallback.fields.authorBio = {
-    value: project.backCover.authorBio || '',
-    visible: Boolean(project.backCover.authorBio.trim()),
-  };
-
-  return normalizeSurfaceState(project.backCover.surfaceState ?? fallback);
 }

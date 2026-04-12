@@ -142,6 +142,7 @@ export type AppMessages = {
     coverBackgroundLabel: string;
     coverOpacityLabel: string;
     coverAdvancedSyncNotice: string;
+    backCoverAdvancedSyncNotice: string;
     coverSave: string;
     coverNoImage: string;
     paletteObsidian: string;
@@ -426,6 +427,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverOpacityLabel: 'Opacidad de imagen',
       coverAdvancedSyncNotice:
         'Existe una portada avanzada asociada. Si guardas cambios aquí en título, subtítulo o autor, ese contenido también se actualizará en el editor avanzado, manteniendo su estilo actual: color, tamaño, espaciado y demás ajustes visuales.',
+      backCoverAdvancedSyncNotice:
+        'Existe una contraportada avanzada asociada. Si guardas cambios aquí en título, texto o biografía, ese contenido también se actualizará en el editor avanzado, manteniendo su estilo actual: color, tamaño, espaciado y demás ajustes visuales.',
       coverSave: 'Guardar portada',
       coverNoImage: 'Sin imagen subida',
       paletteObsidian: 'Obsidian',
@@ -708,6 +711,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverOpacityLabel: 'Image opacity',
       coverAdvancedSyncNotice:
         'An advanced cover already exists. If you save title, subtitle, or author changes here, that content will also update in the advanced editor while preserving its current styling: color, size, spacing, and other visual settings.',
+      backCoverAdvancedSyncNotice:
+        'An advanced back cover already exists. If you save title, body, or author bio changes here, that content will also update in the advanced editor while preserving its current styling: color, size, spacing, and other visual settings.',
       coverSave: 'Save cover',
       coverNoImage: 'No uploaded image',
       paletteObsidian: 'Obsidian',

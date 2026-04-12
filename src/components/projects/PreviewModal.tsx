@@ -259,7 +259,9 @@ useEffect(() => {
 }
 
 import { CoverPreview } from './CoverPreview';
+import { BackCoverPreview } from './BackCoverPreview';
 import { createDefaultSurfaceState, normalizeSurfaceState } from '@/lib/projects/cover-surface';
+import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface-resolver';
 import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
 
 function PageRenderer({ page, format, copy, config, project }: { page: PreviewPage, format: PreviewFormat, copy: any, config: PaginationConfig, project: ProjectRecord }) {
@@ -324,17 +326,27 @@ function PageRenderer({ page, format, copy, config, project }: { page: PreviewPa
       );
     }
 
+    const baseSurface = normalizeSurfaceState(
+      project.backCover.surfaceState ?? {
+        ...createDefaultSurfaceState('back-cover'),
+      },
+    );
+    const surface = {
+      ...baseSurface,
+      fields: {
+        ...baseSurface.fields,
+        ...resolveBackCoverSurfaceFields(project, baseSurface),
+      },
+    };
+
     return (
-      <div style={pageStyle} className="bg-[var(--preview-paper)] rounded-[8px] shadow-[var(--shadow-strong)] border border-[var(--preview-paper-border)] flex flex-col justify-between p-8">
-        <div>
-          <h2 className="text-2xl font-black text-[var(--text-primary)] mb-4">{page.backCoverData.title}</h2>
-          <p className="text-[var(--text-secondary)] leading-7">{page.backCoverData.body}</p>
-        </div>
-        {page.backCoverData.authorBio && (
-          <div className="mt-8 pt-8 border-t border-[var(--preview-paper-border)]">
-            <p className="text-sm text-[var(--text-tertiary)] italic">{page.backCoverData.authorBio}</p>
-          </div>
-        )}
+      <div style={{ width: preset.viewportWidth, height: preset.pagePixelHeight }} className="rounded-[8px] overflow-hidden shadow-[var(--shadow-strong)] border border-white/10">
+        <BackCoverPreview
+          surface={surface}
+          backgroundImageUrl={project.backCover.backgroundImageUrl}
+          accentColor={project.backCover.accentColor}
+          eyebrow={copy.backCoverEyebrow}
+        />
       </div>
     );
   }

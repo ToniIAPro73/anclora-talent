@@ -32,6 +32,7 @@ import {
   createDefaultSurfaceState,
   normalizeSurfaceState,
 } from '@/lib/projects/cover-surface';
+import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface-resolver';
 import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
@@ -56,14 +57,14 @@ function buildCoverSurface(project: ProjectRecord) {
 
 function buildBackCoverSurface(project: ProjectRecord) {
   const fallback = createDefaultSurfaceState('back-cover');
-  fallback.fields.title = { value: project.backCover.title, visible: Boolean(project.backCover.title.trim()) };
-  fallback.fields.body = { value: project.backCover.body, visible: Boolean(project.backCover.body.trim()) };
-  fallback.fields.authorBio = {
-    value: project.backCover.authorBio,
-    visible: Boolean(project.backCover.authorBio.trim()),
+  const baseState = normalizeSurfaceState(project.backCover.surfaceState ?? fallback);
+  return {
+    ...baseState,
+    fields: {
+      ...baseState.fields,
+      ...resolveBackCoverSurfaceFields(project, baseState),
+    },
   };
-
-  return normalizeSurfaceState(project.backCover.surfaceState ?? fallback);
 }
 
 function inferTemplateId(
