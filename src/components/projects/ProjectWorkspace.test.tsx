@@ -47,6 +47,7 @@ function makeProject(overrides: Partial<ProjectRecord> = {}): ProjectRecord {
     slug: 'proyecto-1',
     title: 'Mi Proyecto',
     status: 'draft',
+    workflowStep: 1,
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-01-01T00:00:00Z',
     document: {
@@ -123,6 +124,25 @@ describe('ProjectWorkspace', () => {
     render(<ProjectWorkspace project={makeProject()} copy={copy} />);
     expect(screen.getByTestId('project-metadata-form')).toBeInTheDocument();
     expect(screen.getByTestId('project-document-title-input')).toHaveValue('Mi Proyecto');
+  });
+
+  test('restores the persisted workflow step and marks previous steps as completed', () => {
+    const { container } = render(
+      <ProjectWorkspace
+        project={makeProject({ workflowStep: 7 })}
+        copy={copy}
+      />,
+    );
+
+    expect(screen.getByText('Colaborar')).toBeInTheDocument();
+    expect(screen.getByText('de 9 pasos')).toBeInTheDocument();
+    expect(screen.getAllByText('7').length).toBeGreaterThan(0);
+
+    const activeStepButton = container.querySelector('[aria-current="step"]');
+    expect(activeStepButton).not.toBeNull();
+
+    const stepper = screen.getByRole('navigation', { name: 'Progress' });
+    expect(stepper.querySelectorAll('svg.lucide-check')).toHaveLength(6);
   });
 
   test('renders chapter organizer when moving to Step 2', () => {

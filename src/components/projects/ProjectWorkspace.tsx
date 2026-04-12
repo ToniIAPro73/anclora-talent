@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition, useState, useMemo } from 'react';
+import { useEffect, useTransition, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Loader2, Download } from 'lucide-react';
 import { Stepper, type Step } from '@/components/ui/Stepper';
@@ -77,6 +77,14 @@ function inferTemplateId(
 
 type SaveState = 'idle' | 'saving' | 'saved';
 
+function normalizeWorkflowStep(step: number | undefined) {
+  if (!Number.isFinite(step)) {
+    return 1;
+  }
+
+  return Math.min(9, Math.max(1, Math.trunc(step ?? 1)));
+}
+
 export function ProjectWorkspace({
   project,
   copy,
@@ -85,7 +93,7 @@ export function ProjectWorkspace({
   copy: AppMessages['project'];
 }) {
   const router = useRouter();
-  const [activeStep, setActiveStep] = useState(1);
+  const [activeStep, setActiveStep] = useState(() => normalizeWorkflowStep(project.workflowStep));
   const [isAdvancedCover, setIsAdvancedCover] = useState(false);
   const [isAdvancedBackCover, setIsAdvancedBackCover] = useState(false);
   const [activeChapterId, setActiveChapterId] = useState(
@@ -120,6 +128,10 @@ export function ProjectWorkspace({
   );
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setActiveStep(normalizeWorkflowStep(project.workflowStep));
+  }, [project.id, project.updatedAt, project.workflowStep]);
 
   const activeCoverDraft = useMemo(
     () =>

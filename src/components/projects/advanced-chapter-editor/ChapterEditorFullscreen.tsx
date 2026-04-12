@@ -130,23 +130,23 @@ export function ChapterEditorFullscreen({
 
   return (
     <div
-      className="flex flex-col h-screen w-full bg-[#111C28] rounded-none overflow-hidden"
+      className="flex h-screen w-full flex-col overflow-hidden rounded-none bg-[#111C28]"
       onClick={(e) => e.stopPropagation()}
     >
       {/* ═══════════════════════ HEADER ═══════════════════════ */}
-      <header className="shrink-0 flex items-center justify-between border-b border-[var(--border-subtle)] px-4 py-3 gap-3">
+      <header className="shrink-0 flex items-center justify-between gap-2 border-b border-[var(--border-subtle)] px-3 py-2">
         <div className="flex-1 min-w-0">
-          <h2 className="text-sm font-black tracking-tight text-[var(--text-primary)]">
+          <h2 className="text-[13px] font-black tracking-tight text-[var(--text-primary)]">
             Capítulo {editor.currentIndex + 1}/{editor.totalChapters}
           </h2>
         </div>
 
         {/* Chapter Navigation */}
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex flex-shrink-0 items-center gap-1">
           <button
             onClick={editor.goToPrevChapter}
             disabled={!editor.canNavigatePrev || editor.isSaving}
-            className={`${premiumSecondaryLightButton} p-1.5 disabled:opacity-50`}
+            className={`${premiumSecondaryLightButton} px-3 py-1.5 disabled:opacity-50`}
             title="Capítulo anterior (Ctrl+←)"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -155,7 +155,7 @@ export function ChapterEditorFullscreen({
           <button
             onClick={editor.goToNextChapter}
             disabled={!editor.canNavigateNext || editor.isSaving}
-            className={`${premiumSecondaryLightButton} p-1.5 disabled:opacity-50`}
+            className={`${premiumSecondaryLightButton} px-3 py-1.5 disabled:opacity-50`}
             title="Siguiente capítulo (Ctrl+→)"
           >
             <ChevronRight className="h-4 w-4" />
@@ -164,24 +164,24 @@ export function ChapterEditorFullscreen({
 
         {/* Page Navigation */}
         {editor.totalPages > 1 && (
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex flex-shrink-0 items-center gap-1">
             <button
               onClick={editor.goToPagePrev}
               disabled={!editor.canNavigatePagePrev || editor.isSaving}
-              className={`${premiumSecondaryLightButton} p-1.5 disabled:opacity-50`}
+              className={`${premiumSecondaryLightButton} px-3 py-1.5 disabled:opacity-50`}
               title="Página anterior (Alt+↑ o Page Up)"
             >
               <ArrowUp className="h-4 w-4" />
             </button>
 
-            <span className="text-xs text-[var(--text-secondary)] px-2">
+            <span className="px-1.5 text-xs text-[var(--text-secondary)]">
               P.{editor.currentPage + 1}
             </span>
 
             <button
               onClick={editor.goToPageNext}
               disabled={!editor.canNavigatePageNext || editor.isSaving}
-              className={`${premiumSecondaryLightButton} p-1.5 disabled:opacity-50`}
+              className={`${premiumSecondaryLightButton} px-3 py-1.5 disabled:opacity-50`}
               title="Siguiente página (Alt+↓ o Page Down)"
             >
               <ArrowDown className="h-4 w-4" />
@@ -189,7 +189,7 @@ export function ChapterEditorFullscreen({
           </div>
         )}
 
-        <div className="flex items-center gap-2 rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-2 py-1 flex-shrink-0">
+        <div className="flex flex-shrink-0 items-center gap-1.5 rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-1.5 py-1">
           <button
             type="button"
             onClick={() => handleZoomChange(zoom - 10)}
@@ -198,7 +198,7 @@ export function ChapterEditorFullscreen({
           >
             <ZoomOut className="h-4 w-4" />
           </button>
-          <span className="w-12 text-center text-xs text-[var(--text-secondary)]">
+          <span className="w-10 text-center text-xs text-[var(--text-secondary)]">
             {zoom}%
           </span>
           <button
@@ -212,16 +212,16 @@ export function ChapterEditorFullscreen({
         </div>
 
         {/* Status and Close button */}
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex flex-shrink-0 items-center gap-1">
           {editor.lastSaved && (
-            <span className="text-xs text-[var(--accent-mint)] opacity-70 px-2">
+            <span className="px-1 text-xs text-[var(--accent-mint)] opacity-70">
               ✓ Guardado
             </span>
           )}
           <button
             onClick={handleClose}
             disabled={editor.isSaving}
-            className={`${premiumSecondaryLightButton} px-4 py-1.5 flex-shrink-0 text-sm font-semibold`}
+            className={`${premiumSecondaryLightButton} flex-shrink-0 px-4 py-1.5 text-sm font-semibold`}
             title="Cerrar editor (Esc)"
           >
             CERRAR
@@ -230,7 +230,7 @@ export function ChapterEditorFullscreen({
       </header>
 
       {/* ═══════════════════════ CONTENT AREA ═══════════════════════ */}
-      <div className="flex-1 overflow-hidden flex flex-col gap-1 p-3">
+      <div className="flex flex-1 flex-col gap-1 overflow-hidden p-2">
         {/* Error message */}
         {editor.error && (
           <div className="rounded-[8px] border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-400 flex-shrink-0">
@@ -239,9 +239,9 @@ export function ChapterEditorFullscreen({
         )}
 
         {/* Content Editor - Fills available space - includes chapter title as first line */}
-        <div className="flex-1 min-h-0 overflow-auto rounded-[8px] border border-[var(--border-subtle)] bg-[var(--surface-soft)]">
+        <div className="flex-1 min-h-0 overflow-auto overflow-x-hidden rounded-[8px] border border-[var(--border-subtle)] bg-[var(--surface-soft)]">
           <div
-            className="h-full min-w-max"
+            className="h-full w-full min-w-0"
             style={{ zoom: `${zoom}%` } as CSSProperties}
           >
             <AdvancedRichTextEditor
