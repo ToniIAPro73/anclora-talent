@@ -394,12 +394,30 @@ export function ProjectWorkspace({
             <div className="mt-8 flex flex-wrap justify-center gap-4">
                <button
                  onClick={() => {
+                   const htmlUrl = `/api/projects/export?projectId=${project.id}`;
+                   window.open(htmlUrl, '_blank');
+                 }}
+                 className={`${premiumSecondaryLightButton} px-8 cursor-pointer hover:cursor-pointer`}
+               >
+                  {copy.previewExportButton}
+               </button>
+               <button
+                 onClick={() => {
                    const pdfUrl = `/api/projects/export/pdf?projectId=${project.id}`;
                    window.open(pdfUrl, '_blank');
                  }}
                  className={`${premiumPrimaryDarkButton} px-8 cursor-pointer hover:cursor-pointer`}
                >
-                  Exportar formato PDF
+                  {copy.previewExportPdfButton}
+               </button>
+               <button
+                 onClick={() => {
+                   const docxUrl = `/api/projects/export/docx?projectId=${project.id}`;
+                   window.open(docxUrl, '_blank');
+                 }}
+                 className={`${premiumSecondaryLightButton} px-8 cursor-pointer hover:cursor-pointer`}
+               >
+                  {copy.previewExportDocxButton}
                </button>
                <button className={`${premiumSecondaryLightButton} px-8 opacity-30 cursor-default`} disabled>
                   Exportar EPUB (Próximamente)

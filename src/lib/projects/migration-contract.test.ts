@@ -37,6 +37,8 @@ describe('i18n completeness contract', () => {
       const copy = resolveLocaleMessages(locale).project;
       expect(copy.previewExportButton).toBeTruthy();
       expect(copy.previewExportFilename).toBeTruthy();
+      expect(copy.previewExportPdfButton).toBeTruthy();
+      expect(copy.previewExportDocxButton).toBeTruthy();
     }
   });
 
@@ -113,5 +115,15 @@ describe('export route contract', () => {
     expect(src).toContain('<!DOCTYPE html>');
     expect(src).toContain('<html');
     expect(src).toContain('</html>');
+  });
+
+  test('docx export route file exists and exports a GET handler', () => {
+    const src = readFileSync(
+      resolve(process.cwd(), 'src/app/api/projects/export/docx/route.ts'),
+      'utf8',
+    );
+    expect(src).toContain('export async function GET');
+    expect(src).toContain('Content-Disposition');
+    expect(src).toContain('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
   });
 });

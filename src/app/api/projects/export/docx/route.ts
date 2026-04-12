@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
-import { renderProjectExportHtml } from '@/lib/projects/export-builder';
+import { buildProjectDocxBuffer } from '@/lib/projects/export-builder';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,20 +17,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
+    const buffer = await buildProjectDocxBuffer(project);
     const slug = project.slug || 'proyecto';
-    const filename = `${slug}.html`;
-    // HTML shell starts with <!DOCTYPE html>, includes <html> and </html> tags in the generated payload.
-    const html = renderProjectExportHtml(project);
+    const filename = `${slug}.docx`;
 
-    return new NextResponse(html, {
+    return new NextResponse(buffer, {
       status: 200,
       headers: {
-        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'Content-Disposition': `attachment; filename="${filename}"`,
       },
     });
   } catch (error) {
-    console.error('[export] failed', error);
-    return NextResponse.json({ error: 'Export failed' }, { status: 500 });
+    console.error('[export/docx] failed', error);
+    return NextResponse.json({ error: 'DOCX export failed' }, { status: 500 });
   }
 }

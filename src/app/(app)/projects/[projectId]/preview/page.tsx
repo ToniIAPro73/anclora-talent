@@ -47,6 +47,13 @@ export default async function ProjectPreviewPage({
           >
             {projectCopy.previewExportPdfButton}
           </a>
+          <a
+            href={`/api/projects/export/docx?projectId=${project.id}`}
+            download={`${project.slug || projectCopy.previewExportFilename}.docx`}
+            className={`${premiumSecondaryLightButton} px-5`}
+          >
+            {projectCopy.previewExportDocxButton}
+          </a>
           <Link href={`/projects/${project.id}/cover`} className={`${premiumPrimaryDarkButton} px-5`}>
             {projectCopy.previewOpenCover}
           </Link>
