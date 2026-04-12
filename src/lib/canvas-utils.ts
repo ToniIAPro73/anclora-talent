@@ -221,8 +221,8 @@ export async function addTextToCanvas(
 
   const TextClass =
     wrapWidth
-      ? fabric.IText || fabric.Text || fabric.Textbox
-      : fabric.Textbox || fabric.IText || fabric.Text;
+      ? fabric.Textbox || fabric.IText || fabric.Text
+      : fabric.IText || fabric.Text || fabric.Textbox;
 
   if (!TextClass) {
     console.error('[addTextToCanvas] Text class not found in fabric module', fabric);
@@ -246,7 +246,14 @@ export async function addTextToCanvas(
     ...options,
   };
 
-  if (!wrapWidth) {
+  // Si hay wrapWidth, usar Textbox y establecer width explícitamente ANTES de crear el objeto
+  if (wrapWidth) {
+    Object.assign(baseOptions, {
+      width: wrapWidth,
+      minWidth: wrapWidth,
+      splitByGrapheme: false,
+    });
+  } else {
     Object.assign(baseOptions, {
       width: CANVAS_WIDTH * 0.8,
       minWidth: options?.width ?? CANVAS_WIDTH * 0.8,
@@ -286,23 +293,6 @@ export async function addTextToCanvas(
   // Forzar recálculo de dimensiones DESPUÉS de que la fuente esté disponible
   // Esto es crítico: initDimensions() mide el texto con la fuente real
   (fabricText as FabricTextLike).initDimensions?.();
-  
-  // Asegurar que el ancho sea al menos el wrapWidth especificado
-  if (wrapWidth && typeof wrapWidth === 'number') {
-    const currentWidth = fabricText.width ?? 0;
-    if (currentWidth < wrapWidth * 0.9) {
-      console.warn('[addTextToCanvas] Ancho calculado menor que wrapWidth, ajustando:', {
-        currentWidth,
-        wrapWidth,
-        ratio: currentWidth / wrapWidth,
-      });
-      (fabricText as FabricTextLike).set?.({
-        width: wrapWidth,
-        minWidth: wrapWidth,
-      });
-      (fabricText as FabricTextLike).initDimensions?.();
-    }
-  }
   
   // Resetear escalado a 1 para evitar distorsión
   (fabricText as FabricTextLike).set?.({
