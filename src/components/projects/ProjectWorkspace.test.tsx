@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { ProjectWorkspace } from './ProjectWorkspace';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { ProjectRecord } from '@/lib/projects/types';
@@ -115,6 +115,10 @@ function makeProject(overrides: Partial<ProjectRecord> = {}): ProjectRecord {
 }
 
 describe('ProjectWorkspace', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
   test('renders the project title in the header', () => {
     render(<ProjectWorkspace project={makeProject()} copy={copy} />);
     expect(screen.getByText('Mi Proyecto')).toBeInTheDocument();
@@ -143,6 +147,21 @@ describe('ProjectWorkspace', () => {
 
     const stepper = screen.getByRole('navigation', { name: 'Progress' });
     expect(stepper.querySelectorAll('svg.lucide-check')).toHaveLength(6);
+  });
+
+  test('restores the last visited step for the project from local storage', () => {
+    window.localStorage.setItem(
+      'anclora-project-workflow-step',
+      JSON.stringify({
+        'proj-1': 5,
+      }),
+    );
+
+    render(<ProjectWorkspace project={makeProject({ workflowStep: 1 })} copy={copy} />);
+
+    expect(screen.getByText('de 9 pasos')).toBeInTheDocument();
+    expect(screen.getAllByText('5').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(copy.stepBackCover).length).toBeGreaterThan(0);
   });
 
   test('renders chapter organizer when moving to Step 2', () => {

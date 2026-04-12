@@ -76,6 +76,7 @@ function inferTemplateId(
 }
 
 type SaveState = 'idle' | 'saving' | 'saved';
+const PROJECT_WORKFLOW_STEP_STORAGE_KEY = 'anclora-project-workflow-step';
 
 function normalizeWorkflowStep(step: number | undefined) {
   if (!Number.isFinite(step)) {
@@ -83,6 +84,39 @@ function normalizeWorkflowStep(step: number | undefined) {
   }
 
   return Math.min(9, Math.max(1, Math.trunc(step ?? 1)));
+}
+
+function readStoredWorkflowStep(projectId: string) {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(PROJECT_WORKFLOW_STEP_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Record<string, number>;
+    return typeof parsed[projectId] === 'number' ? normalizeWorkflowStep(parsed[projectId]) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredWorkflowStep(projectId: string, step: number) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(PROJECT_WORKFLOW_STEP_STORAGE_KEY);
+    const parsed = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+    parsed[projectId] = normalizeWorkflowStep(step);
+    window.localStorage.setItem(PROJECT_WORKFLOW_STEP_STORAGE_KEY, JSON.stringify(parsed));
+  } catch {
+    // Ignore storage failures so they never block the editor.
+  }
 }
 
 export function ProjectWorkspace({
@@ -93,7 +127,13 @@ export function ProjectWorkspace({
   copy: AppMessages['project'];
 }) {
   const router = useRouter();
-  const [activeStep, setActiveStep] = useState(() => normalizeWorkflowStep(project.workflowStep));
+  const [activeStep, setActiveStep] = useState(() => {
+    const persistedStep = readStoredWorkflowStep(project.id);
+    return Math.max(
+      normalizeWorkflowStep(project.workflowStep),
+      persistedStep ?? 1,
+    );
+  });
   const [isAdvancedCover, setIsAdvancedCover] = useState(false);
   const [isAdvancedBackCover, setIsAdvancedBackCover] = useState(false);
   const [activeChapterId, setActiveChapterId] = useState(
@@ -130,8 +170,18 @@ export function ProjectWorkspace({
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    setActiveStep(normalizeWorkflowStep(project.workflowStep));
+    const persistedStep = readStoredWorkflowStep(project.id);
+    setActiveStep(
+      Math.max(
+        normalizeWorkflowStep(project.workflowStep),
+        persistedStep ?? 1,
+      ),
+    );
   }, [project.id, project.updatedAt, project.workflowStep]);
+
+  useEffect(() => {
+    writeStoredWorkflowStep(project.id, activeStep);
+  }, [activeStep, project.id]);
 
   const activeCoverDraft = useMemo(
     () =>
