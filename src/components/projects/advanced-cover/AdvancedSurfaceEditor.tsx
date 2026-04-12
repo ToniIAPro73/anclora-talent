@@ -414,10 +414,12 @@ export function AdvancedSurfaceEditor({
         await renderBackCoverImageAction(formData);
       }
 
-      router.refresh();
       setRenderedImageUrl(dataUrl);
       setRendered(true);
       setTimeout(() => setRendered(false), 2500);
+
+      // Navigate back to basic editor to load updated data
+      router.push(`/projects/${project.id}/editor`);
     });
   };
 
