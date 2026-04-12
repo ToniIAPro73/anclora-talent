@@ -165,13 +165,8 @@ export async function createFabricCanvas(
     height: CANVAS_HEIGHT,
   });
 
-  canvas.clipPath = new fabric.Rect({
-    left: 0,
-    top: 0,
-    width: CANVAS_WIDTH,
-    height: CANVAS_HEIGHT,
-    absolutePositioned: true,
-  });
+  // NOTA: Sin clipPath para evitar recortes del contenido escalado
+  // El overflow: visible en el contenedor CSS ya protege contra desbordamientos
 
   return canvas;
 }
