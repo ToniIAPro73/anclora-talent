@@ -44,6 +44,11 @@ dist/
 build/
 target/
 .gradle/
+.next/
+.vercel/
+output/
+next-env.d.ts
+*.tsbuildinfo
 
 # Python specific
 .mypy_cache/
