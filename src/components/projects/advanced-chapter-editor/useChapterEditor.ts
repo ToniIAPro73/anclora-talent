@@ -100,7 +100,12 @@ export function useChapterEditor({
     return estimateTotalPages(reconciledContent, pageConfig);
   }, [htmlContent, device, fontSize, margins, previewConfig]);
 
-  const totalPages = Math.max(1, estimatedTotalPages);
+  const totalPages = Math.max(
+    1,
+    measuredTotalPages == null
+      ? estimatedTotalPages
+      : Math.min(estimatedTotalPages, measuredTotalPages),
+  );
 
   useEffect(() => {
     setMeasuredTotalPages(null);
