@@ -176,6 +176,22 @@ export async function createFabricCanvas(
   return canvas;
 }
 
+// Helper para esperar que una fuente esté disponible en el navegador
+async function waitForFont(fontFamily: string, fontSize: number): Promise<void> {
+  if (typeof document === 'undefined' || !('fonts' in document)) {
+    // Fallback: esperar un tick si no hay Font Loading API
+    return new Promise(resolve => setTimeout(resolve, 50));
+  }
+  
+  try {
+    const fontSpec = `${fontSize}px ${fontFamily}`;
+    await (document as any).fonts.ready;
+    await (document as any).fonts.load(fontSpec);
+  } catch (e) {
+    console.warn('[waitForFont] Font loading failed, continuing anyway:', e);
+  }
+}
+
 export async function addTextToCanvas(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   canvas: any,
@@ -186,13 +202,19 @@ export async function addTextToCanvas(
 ): Promise<any> {
   const fabric = await getFabric();
   const wrapWidth = typeof options?.wrapWidth === 'number' ? options.wrapWidth : null;
+  const fontSize = options?.fontSize ?? 24;
+  const fontFamily = options?.fontFamily ?? 'Arial';
+  
+  // Esperar a que la fuente esté cargada antes de medir texto
+  await waitForFont(fontFamily, fontSize);
+  
   const displayText =
     wrapWidth
       ? wrapTextToWidth({
           text,
           maxWidth: wrapWidth,
-          fontSize: options?.fontSize ?? 24,
-          fontFamily: options?.fontFamily,
+          fontSize,
+          fontFamily,
           fontWeight: options?.fontWeight,
         })
       : text;
@@ -210,8 +232,8 @@ export async function addTextToCanvas(
   const baseOptions = {
     left: CANVAS_WIDTH / 2,
     top: CANVAS_HEIGHT / 2,
-    fontSize: 24,
-    fontFamily: 'Arial',
+    fontSize,
+    fontFamily,
     fill: '#000000',
     originX: 'center',
     originY: 'center',
@@ -239,30 +261,88 @@ export async function addTextToCanvas(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (wrapWidth) (fabricText as any).wrapWidth = wrapWidth;
 
-  // Fabric 7 can keep stale text dimensions/caches if the textbox is created
-  // before the final font metrics settle. Force a fresh measurement up front.
-  if (!wrapWidth && typeof options?.width === 'number') {
-    (fabricText as FabricTextLike).set?.({
-      width: options.width,
-      minWidth: options.width,
-      scaleX: 1,
-      scaleY: 1,
-    });
-  }
+  // INSTRUMENTACIÓN: registrar valores reales del objeto de texto
+  console.info('[addTextToCanvas] Texto creado:', {
+    id: (fabricText as any).id,
+    tipo: fabricText.type,
+    text: fabricText.text,
+    rawText: (fabricText as any).rawText,
+    wrapWidth: (fabricText as any).wrapWidth,
+    width: fabricText.width,
+    minWidth: fabricText.minWidth,
+    height: fabricText.height,
+    scaleX: fabricText.scaleX,
+    scaleY: fabricText.scaleY,
+    lines: (fabricText as any).lines,
+    lineCount: (fabricText as any).lines?.length,
+    left: fabricText.left,
+    top: fabricText.top,
+    originX: fabricText.originX,
+    originY: fabricText.originY,
+    fontSize: fabricText.fontSize,
+    fontFamily: fabricText.fontFamily,
+  });
+
+  // Forzar recálculo de dimensiones DESPUÉS de que la fuente esté disponible
+  // Esto es crítico: initDimensions() mide el texto con la fuente real
   (fabricText as FabricTextLike).initDimensions?.();
-  if (!wrapWidth && typeof options?.width === 'number') {
-    (fabricText as FabricTextLike).set?.({
-      width: options.width,
-      minWidth: options.width,
-    });
+  
+  // Asegurar que el ancho sea al menos el wrapWidth especificado
+  if (wrapWidth && typeof wrapWidth === 'number') {
+    const currentWidth = fabricText.width ?? 0;
+    if (currentWidth < wrapWidth * 0.9) {
+      console.warn('[addTextToCanvas] Ancho calculado menor que wrapWidth, ajustando:', {
+        currentWidth,
+        wrapWidth,
+        ratio: currentWidth / wrapWidth,
+      });
+      (fabricText as FabricTextLike).set?.({
+        width: wrapWidth,
+        minWidth: wrapWidth,
+      });
+      (fabricText as FabricTextLike).initDimensions?.();
+    }
   }
-  (fabricText as FabricTextLike).set?.('dirty', true);
+  
+  // Resetear escalado a 1 para evitar distorsión
+  (fabricText as FabricTextLike).set?.({
+    scaleX: 1,
+    scaleY: 1,
+    dirty: true,
+  });
+  
   (fabricText as FabricTextLike).setCoords?.();
+
+  // SEGUNDA INSTRUMENTACIÓN: verificar valores después de initDimensions
+  console.info('[addTextToCanvas] Después de initDimensions:', {
+    id: (fabricText as any).id,
+    width: fabricText.width,
+    minWidth: fabricText.minWidth,
+    height: fabricText.height,
+    scaleX: fabricText.scaleX,
+    scaleY: fabricText.scaleY,
+    lines: (fabricText as any).lines,
+    lineCount: (fabricText as any).lines?.length,
+  });
 
   canvas.add(fabricText);
   canvas.setActiveObject(fabricText);
   if (canvas.requestRenderAll) canvas.requestRenderAll();
   else canvas.renderAll();
+  
+  // TERCERA INSTRUMENTACIÓN: verificar después de añadir al canvas
+  setTimeout(() => {
+    console.info('[addTextToCanvas] Después de render:', {
+      id: (fabricText as any).id,
+      width: fabricText.width,
+      height: fabricText.height,
+      scaleX: fabricText.scaleX,
+      scaleY: fabricText.scaleY,
+      oCoords: fabricText.oCoords,
+      aCoords: fabricText.aCoords,
+    });
+  }, 100);
+  
   return fabricText;
 }
 
