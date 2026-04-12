@@ -49,27 +49,27 @@ export function CoverPreview({
           />
         )}
         
-        <div className="absolute inset-0 flex flex-col justify-center p-10 text-center">
-          <h2 
-            className="text-4xl font-black tracking-tight" 
-            style={{ color: colors.primary, lineHeight: 1.1 }}
+        <div className="absolute inset-0 p-10 text-center">
+          <h2
+            className="absolute left-1/2 w-[88%] -translate-x-1/2 -translate-y-1/2 text-4xl font-black tracking-tight"
+            style={{ top: '28%', color: colors.primary, lineHeight: 1.1 }}
             data-testid="cover-preview-title"
           >
             {title}
           </h2>
           {subtitle && (
-            <p 
-              className="mt-6 text-sm font-medium leading-relaxed" 
-              style={{ color: colors.secondary }}
+            <p
+              className="absolute left-1/2 w-[82%] -translate-x-1/2 -translate-y-1/2 text-sm font-medium leading-relaxed"
+              style={{ top: '50%', color: colors.secondary }}
               data-testid="cover-preview-subtitle"
             >
               {subtitle}
             </p>
           )}
           {author && (
-            <p 
-              className="mt-8 text-xs font-bold uppercase tracking-[0.2em]" 
-              style={{ color: colors.primary }}
+            <p
+              className="absolute left-1/2 w-[82%] -translate-x-1/2 -translate-y-1/2 text-xs font-bold uppercase tracking-[0.2em]"
+              style={{ top: '72%', color: colors.primary }}
             >
               {author}
             </p>
