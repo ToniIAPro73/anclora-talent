@@ -454,6 +454,34 @@ describe('AdvancedRichTextEditor selection behavior', () => {
     expect(editor.__dispatchCalls.at(-1)).toEqual({ from: 42, to: 42 });
   });
 
+  test('does not force the caret back to the page start when content changes within the same page', () => {
+    const editor = createMockEditor(createSelection('Hello', 0));
+    useEditorMock.mockReturnValue(editor);
+
+    const { rerender } = render(
+      <AdvancedRichTextEditor
+        defaultContent={'<p>Uno</p><hr data-page-break="manual" /><p>Dos</p>'}
+        onUpdate={vi.fn()}
+        currentPage={0}
+        totalPages={2}
+      />,
+    );
+
+    expect(editor.__dispatchCalls).toHaveLength(1);
+    expect(editor.__posAtCoords).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <AdvancedRichTextEditor
+        defaultContent={'<p>Uno actualizado</p><hr data-page-break="manual" /><p>Dos</p>'}
+        onUpdate={vi.fn()}
+        currentPage={0}
+        totalPages={2}
+      />,
+    );
+
+    expect(editor.__posAtCoords).toHaveBeenCalledTimes(1);
+  });
+
   test('keeps the first spread visible when focusing the adjacent right page in double view', () => {
     const editor = createMockEditor(createSelection('Hello', 0));
     useEditorMock.mockReturnValue(editor);
@@ -554,7 +582,7 @@ describe('AdvancedRichTextEditor selection behavior', () => {
       .join('\n');
 
     expect(styles).toContain('.ProseMirror p + p');
-    expect(styles).toContain('margin-top: 0.9rem');
+    expect(styles).toContain('margin-top: 0.8rem');
   });
 
   test('re-emits html containing auto breaks after overflow reconciliation', () => {
@@ -575,7 +603,7 @@ describe('AdvancedRichTextEditor selection behavior', () => {
 
     expect(editor.commands.setContent).toHaveBeenCalledWith(
       expect.stringContaining('data-page-break="auto"'),
-      false,
+      { emitUpdate: false },
     );
     expect(onUpdate).toHaveBeenCalledWith(expect.stringContaining('data-page-break="auto"'));
   });
