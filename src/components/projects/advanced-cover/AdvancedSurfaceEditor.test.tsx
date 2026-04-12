@@ -106,8 +106,14 @@ vi.mock('@/lib/canvas-guides', () => ({
 vi.mock('./advanced-surface-utils', () => ({
   createSurfaceSnapshotFromProject: vi.fn((surface: 'cover' | 'back-cover', project: ProjectRecord) => ({
     surface,
-    fields: {},
-    layers: [],
+    fields:
+      surface === 'cover'
+        ? (project.cover.surfaceState?.fields ?? {})
+        : (project.backCover.surfaceState?.fields ?? {}),
+    layers:
+      surface === 'cover'
+        ? (project.cover.surfaceState?.layers ?? [])
+        : (project.backCover.surfaceState?.layers ?? []),
     opacity:
       surface === 'cover'
         ? project.cover.surfaceState?.opacity ?? 1
@@ -142,6 +148,14 @@ function makeProject(): ProjectRecord {
     coverSurface.fields.title.value = 'Mi portada';
     coverSurface.fields.title.visible = true;
   }
+  if (coverSurface.fields.author) {
+    coverSurface.fields.author.value = 'Autor Demo';
+    coverSurface.fields.author.visible = true;
+  }
+  coverSurface.layers = [
+    { id: 'cover-title', type: 'text', fieldKey: 'title' },
+    { id: 'cover-author', type: 'text', fieldKey: 'author' },
+  ];
 
   const backCoverSurface = createDefaultSurfaceState('back-cover');
   if (backCoverSurface.fields.title) {
@@ -263,6 +277,29 @@ describe('AdvancedSurfaceEditor', () => {
     mocks.saveProjectCoverActionMock.mockResolvedValue(undefined);
     mocks.renderCoverImageActionMock.mockResolvedValue(undefined);
 
+    mocks.canvasStoreState.elements = [
+      {
+        id: 'cover-author-text',
+        object: {
+          text: 'Antonio',
+          left: 200,
+          top: 540,
+          width: 260,
+          fill: '#E0AA09',
+          opacity: 1,
+          fontSize: 15,
+          fontFamily: 'Arial',
+          fontWeight: 'bold',
+          fontStyle: 'italic',
+          textAlign: 'center',
+          lineHeight: 1.1,
+          charSpacing: 650,
+          originX: 'center',
+          originY: 'center',
+        },
+      },
+    ] as Array<{ id: string }>;
+
     render(<AdvancedSurfaceEditor surface="cover" project={makeProject()} copy={copy} />);
 
     fireEvent.click(screen.getByRole('button', { name: /guardar diseño final/i }));
@@ -275,6 +312,17 @@ describe('AdvancedSurfaceEditor', () => {
     expect(mocks.toPngMock).toHaveBeenCalledTimes(1);
     expect(mocks.routerRefreshMock).toHaveBeenCalledTimes(1);
     expect(mocks.routerPushMock).not.toHaveBeenCalled();
+
+    const savedFormData = mocks.saveProjectCoverActionMock.mock.calls[0]?.[0] as FormData;
+    const savedSurfaceState = JSON.parse(String(savedFormData.get('surfaceState')));
+    const savedAuthorLayer = savedSurfaceState.layers.find((layer: { fieldKey?: string }) => layer.fieldKey === 'author');
+    expect(savedAuthorLayer).toEqual(expect.objectContaining({
+      top: 540,
+      fill: '#E0AA09',
+      fontWeight: 'bold',
+      fontStyle: 'italic',
+      charSpacing: 650,
+    }));
   });
 
   test('refreshes the route after saving the rendered back cover so preview reads the latest persisted asset', async () => {

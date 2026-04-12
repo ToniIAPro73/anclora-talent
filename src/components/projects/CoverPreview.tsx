@@ -36,6 +36,24 @@ export function CoverPreview({
   const titleLayer = findSurfaceTextLayer(surface.layers, 'title');
   const subtitleLayer = findSurfaceTextLayer(surface.layers, 'subtitle');
   const authorLayer = findSurfaceTextLayer(surface.layers, 'author');
+  const canvasWidth = 400;
+  const canvasHeight = 600;
+
+  const toPercent = (value: number | undefined, base: number, fallback: number) =>
+    `${(((typeof value === 'number' ? value : fallback) / base) * 100).toFixed(4)}%`;
+
+  const titleTop = toPercent(titleLayer?.top, canvasHeight, COVER_TEXT_LAYOUT.titleTop * canvasHeight);
+  const subtitleTop = toPercent(subtitleLayer?.top, canvasHeight, COVER_TEXT_LAYOUT.subtitleTop * canvasHeight);
+  const authorTop = toPercent(authorLayer?.top, canvasHeight, COVER_TEXT_LAYOUT.authorTop * canvasHeight);
+  const titleLeft = toPercent(titleLayer?.left, canvasWidth, canvasWidth / 2);
+  const subtitleLeft = toPercent(subtitleLayer?.left, canvasWidth, canvasWidth / 2);
+  const authorLeft = toPercent(authorLayer?.left, canvasWidth, canvasWidth / 2);
+  const titleTranslateX = titleLayer?.originX === 'left' ? '0' : '-50%';
+  const subtitleTranslateX = subtitleLayer?.originX === 'left' ? '0' : '-50%';
+  const authorTranslateX = authorLayer?.originX === 'left' ? '0' : '-50%';
+  const titleTextAlign = titleLayer?.textAlign ?? 'center';
+  const subtitleTextAlign = subtitleLayer?.textAlign ?? 'center';
+  const authorTextAlign = authorLayer?.textAlign ?? 'center';
 
   return (
     <section className="space-y-4">
@@ -56,9 +74,11 @@ export function CoverPreview({
         
         <div className="absolute inset-0 p-10 text-center">
           <h2
-            className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 font-black tracking-tight"
+            className="absolute -translate-y-1/2 font-black tracking-tight"
             style={{
-              top: `${COVER_TEXT_LAYOUT.titleTop * 100}%`,
+              top: titleTop,
+              left: titleLeft,
+              transform: `translate(${titleTranslateX}, -50%)`,
               width: `${((titleLayer?.width ?? (COVER_TEXT_LAYOUT.titleWidth * 400)) / 400) * 100}%`,
               color: titleLayer?.fill ?? colors.primary,
               lineHeight: titleLayer?.lineHeight ?? COVER_TEXT_LAYOUT.titleLineHeight,
@@ -68,6 +88,7 @@ export function CoverPreview({
               fontStyle: titleLayer?.fontStyle ?? 'normal',
               letterSpacing: fabricCharSpacingToCss(titleLayer?.charSpacing, titleLayer?.fontSize ?? COVER_TEXT_LAYOUT.titleFontSize),
               opacity: titleLayer?.opacity ?? 1,
+              textAlign: titleTextAlign,
             }}
             data-testid="cover-preview-title"
           >
@@ -75,9 +96,11 @@ export function CoverPreview({
           </h2>
           {subtitle && (
             <p
-              className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 font-medium"
+              className="absolute -translate-y-1/2 font-medium"
               style={{
-                top: `${COVER_TEXT_LAYOUT.subtitleTop * 100}%`,
+                top: subtitleTop,
+                left: subtitleLeft,
+                transform: `translate(${subtitleTranslateX}, -50%)`,
                 width: `${((subtitleLayer?.width ?? (COVER_TEXT_LAYOUT.subtitleWidth * 400)) / 400) * 100}%`,
                 color: subtitleLayer?.fill ?? colors.secondary,
                 fontSize: `${subtitleLayer?.fontSize ?? COVER_TEXT_LAYOUT.subtitleFontSize}px`,
@@ -87,6 +110,7 @@ export function CoverPreview({
                 fontStyle: subtitleLayer?.fontStyle ?? 'normal',
                 letterSpacing: fabricCharSpacingToCss(subtitleLayer?.charSpacing, subtitleLayer?.fontSize ?? COVER_TEXT_LAYOUT.subtitleFontSize),
                 opacity: subtitleLayer?.opacity ?? 1,
+                textAlign: subtitleTextAlign,
               }}
               data-testid="cover-preview-subtitle"
             >
@@ -95,9 +119,11 @@ export function CoverPreview({
           )}
           {author && (
             <p
-              className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 font-medium uppercase tracking-[0.2em]"
+              className="absolute -translate-y-1/2 font-medium uppercase"
               style={{
-                top: `${COVER_TEXT_LAYOUT.authorTop * 100}%`,
+                top: authorTop,
+                left: authorLeft,
+                transform: `translate(${authorTranslateX}, -50%)`,
                 width: `${((authorLayer?.width ?? (COVER_TEXT_LAYOUT.authorWidth * 400)) / 400) * 100}%`,
                 color: authorLayer?.fill ?? colors.primary,
                 fontSize: `${authorLayer?.fontSize ?? COVER_TEXT_LAYOUT.authorFontSize}px`,
@@ -107,6 +133,7 @@ export function CoverPreview({
                 fontStyle: authorLayer?.fontStyle ?? 'normal',
                 letterSpacing: fabricCharSpacingToCss(authorLayer?.charSpacing, authorLayer?.fontSize ?? COVER_TEXT_LAYOUT.authorFontSize),
                 opacity: authorLayer?.opacity ?? 1,
+                textAlign: authorTextAlign,
               }}
             >
               {author}
