@@ -16,6 +16,7 @@ import {
   normalizeSurfaceState,
   type SurfaceState,
 } from '@/lib/projects/cover-surface';
+import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
 
 export function CoverForm({
   copy,
@@ -33,51 +34,14 @@ export function CoverForm({
   onPaletteChange?: (palette: CoverDesign['palette']) => void;
 }) {
   const router = useRouter();
-  const initialSurface = normalizeSurfaceState(
-    project.cover.surfaceState ?? {
-      ...createDefaultSurfaceState('cover'),
-      fields: {
-        title: { value: project.cover.title || project.document.title, visible: true },
-        subtitle: {
-          value: project.cover.subtitle || project.document.subtitle,
-          visible: Boolean((project.cover.showSubtitle ?? true) && (project.cover.subtitle || project.document.subtitle).trim()),
-        },
-        author: { value: project.document.author, visible: Boolean(project.document.author.trim()) },
-      },
+  const baseSurface = normalizeSurfaceState(project.cover.surfaceState ?? createDefaultSurfaceState('cover'));
+  const initialSurface = {
+    ...baseSurface,
+    fields: {
+      ...baseSurface.fields,
+      ...resolveCoverSurfaceFields(project, baseSurface),
     },
-  );
-
-  // Sync surfaceState with current document metadata
-  // We check if the current surface field is empty OR if it matches the previous project-level flat field
-  // This allows changes in Step 1 to flow into the cover until the user manually changes the cover text to something else.
-  if (project.cover.surfaceState) {
-    const fields = { ...initialSurface.fields };
-    let changed = false;
-
-    // Title sync
-    if (project.document.title && (!fields.title?.value || fields.title.value !== project.document.title)) {
-      // If the cover's specific title field (flat) was updated by updateProjectDocument, 
-      // but the surfaceState (rich) still has the old one, we update it.
-      fields.title = { value: project.document.title, visible: true };
-      changed = true;
-    }
-
-    // Subtitle sync
-    if (project.document.subtitle && (!fields.subtitle?.value || fields.subtitle.value !== project.document.subtitle)) {
-      fields.subtitle = { value: project.document.subtitle, visible: true };
-      changed = true;
-    }
-
-    // Author sync
-    if (project.document.author && (!fields.author?.value || fields.author.value !== project.document.author)) {
-      fields.author = { value: project.document.author, visible: true };
-      changed = true;
-    }
-
-    if (changed) {
-      initialSurface.fields = fields;
-    }
-  }
+  };
   const [internalSurface, setInternalSurface] = useState(initialSurface);
   const [internalPalette, setInternalPalette] = useState<CoverDesign['palette']>(project.cover.palette);
   const surface = controlledSurface ?? internalSurface;

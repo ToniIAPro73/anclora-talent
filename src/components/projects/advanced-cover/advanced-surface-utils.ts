@@ -6,6 +6,7 @@ import {
   type SurfaceLayer,
   type SurfaceState,
 } from '@/lib/projects/cover-surface';
+import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
 import type { ProjectRecord } from '@/lib/projects/types';
 
 type SurfaceFields = SurfaceState['fields'];
@@ -80,17 +81,9 @@ export function createSurfaceSnapshotFromProject(
         },
     );
 
-    const canonicalTitle = project.cover.title || project.document.title || state.fields.title?.value || '';
-    const canonicalSubtitle = project.cover.subtitle || project.document.subtitle || state.fields.subtitle?.value || '';
-    const canonicalAuthor = project.document.author || state.fields.author?.value || '';
     const fields = {
       ...state.fields,
-      title: field(canonicalTitle, state.fields.title?.visible ?? true),
-      subtitle: field(
-        canonicalSubtitle,
-        state.fields.subtitle?.visible ?? (project.cover.showSubtitle ?? true),
-      ),
-      author: field(canonicalAuthor, Boolean(canonicalAuthor.trim())),
+      ...resolveCoverSurfaceFields(project, state),
     };
 
     return {

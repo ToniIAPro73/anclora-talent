@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => {
   const saveProjectCoverActionMock = vi.fn();
   const saveBackCoverActionMock = vi.fn();
   const routerRefreshMock = vi.fn();
+  const routerPushMock = vi.fn();
   const toPngMock = vi.fn(async () => 'data:image/png;base64,dom-preview');
   const addElementMock = vi.fn();
   const clearStoreMock = vi.fn();
@@ -51,6 +52,7 @@ const mocks = vi.hoisted(() => {
     saveProjectCoverActionMock,
     saveBackCoverActionMock,
     routerRefreshMock,
+    routerPushMock,
     toPngMock,
     addElementMock,
     clearStoreMock,
@@ -73,6 +75,7 @@ vi.mock('@/lib/projects/actions', () => ({
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     refresh: mocks.routerRefreshMock,
+    push: mocks.routerPushMock,
   }),
 }));
 
@@ -192,6 +195,7 @@ describe('AdvancedSurfaceEditor', () => {
     mocks.renderCoverImageActionMock.mockReset();
     mocks.renderBackCoverImageActionMock.mockReset();
     mocks.routerRefreshMock.mockReset();
+    mocks.routerPushMock.mockReset();
     mocks.saveProjectCoverActionMock.mockReset();
     mocks.saveBackCoverActionMock.mockReset();
     mocks.toPngMock.mockReset();
@@ -269,7 +273,7 @@ describe('AdvancedSurfaceEditor', () => {
 
     expect(mocks.saveProjectCoverActionMock).toHaveBeenCalledTimes(1);
     expect(mocks.toPngMock).toHaveBeenCalledTimes(1);
-    expect(mocks.routerRefreshMock).toHaveBeenCalledTimes(1);
+    expect(mocks.routerPushMock).toHaveBeenCalledTimes(1);
   });
 
   test('refreshes the route after saving the rendered back cover so preview reads the latest persisted asset', async () => {
@@ -286,6 +290,6 @@ describe('AdvancedSurfaceEditor', () => {
 
     expect(mocks.saveBackCoverActionMock).toHaveBeenCalledTimes(1);
     expect(mocks.toPngMock).toHaveBeenCalledTimes(1);
-    expect(mocks.routerRefreshMock).toHaveBeenCalledTimes(1);
+    expect(mocks.routerPushMock).toHaveBeenCalledTimes(1);
   });
 });

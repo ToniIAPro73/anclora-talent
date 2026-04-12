@@ -260,6 +260,7 @@ useEffect(() => {
 
 import { CoverPreview } from './CoverPreview';
 import { createDefaultSurfaceState, normalizeSurfaceState } from '@/lib/projects/cover-surface';
+import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
 
 function PageRenderer({ page, format, copy, config, project }: { page: PreviewPage, format: PreviewFormat, copy: any, config: PaginationConfig, project: ProjectRecord }) {
   const preset = FORMAT_PRESETS[format];
@@ -284,19 +285,18 @@ function PageRenderer({ page, format, copy, config, project }: { page: PreviewPa
     }
 
     // 2. Otherwise, use the standard CoverPreview component for coherence with basic editor
-    const surface = normalizeSurfaceState(
+    const baseSurface = normalizeSurfaceState(
       project.cover.surfaceState ?? {
         ...createDefaultSurfaceState('cover'),
-        fields: {
-          title: { value: project.cover.title, visible: true },
-          subtitle: {
-            value: project.cover.subtitle,
-            visible: Boolean((project.cover.showSubtitle ?? true) && project.cover.subtitle.trim()),
-          },
-          author: { value: project.document.author, visible: true },
-        },
-      }
+      },
     );
+    const surface = {
+      ...baseSurface,
+      fields: {
+        ...baseSurface.fields,
+        ...resolveCoverSurfaceFields(project, baseSurface),
+      },
+    };
 
     return (
       <div style={{ width: preset.viewportWidth, height: preset.pagePixelHeight }} className="rounded-[8px] overflow-hidden shadow-[var(--shadow-strong)] border border-white/10">
