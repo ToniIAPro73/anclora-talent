@@ -1127,12 +1127,77 @@ export function AdvancedRichTextEditor({
   const syncEditorContent = useCallback(
     (targetEditor: Editor, nextHtml: string) => {
       const previousSelection = targetEditor.state.selection;
+      const coordsAtPos =
+        typeof targetEditor.view?.coordsAtPos === 'function'
+          ? targetEditor.view.coordsAtPos.bind(targetEditor.view)
+          : null;
+      const posAtCoords =
+        typeof targetEditor.view?.posAtCoords === 'function'
+          ? targetEditor.view.posAtCoords.bind(targetEditor.view)
+          : null;
+      const previousAnchorCoords =
+        previousSelection && coordsAtPos
+          ? (() => {
+              try {
+                return coordsAtPos(previousSelection.from);
+              } catch {
+                return null;
+              }
+            })()
+          : null;
+      const previousHeadCoords =
+        previousSelection && !previousSelection.empty && coordsAtPos
+          ? (() => {
+              try {
+                return coordsAtPos(previousSelection.to);
+              } catch {
+                return null;
+              }
+            })()
+          : null;
 
       isSyncingExternalContentRef.current = true;
       targetEditor.commands.setContent(nextHtml, { emitUpdate: false });
 
       if (!previousSelection || typeof targetEditor.view?.dispatch !== 'function') {
         return;
+      }
+
+      if (previousAnchorCoords && posAtCoords) {
+        try {
+          const resolvedAnchor = posAtCoords({
+            left: previousAnchorCoords.left,
+            top: Math.max(previousAnchorCoords.top + 1, previousAnchorCoords.bottom - 1),
+          });
+          const resolvedHead =
+            previousHeadCoords && !previousSelection.empty
+              ? posAtCoords({
+                  left: previousHeadCoords.left,
+                  top: Math.max(previousHeadCoords.top + 1, previousHeadCoords.bottom - 1),
+                })
+              : null;
+
+          if (resolvedAnchor?.pos) {
+            const visualFrom = resolvedAnchor.pos;
+            const visualTo =
+              resolvedHead?.pos && !previousSelection.empty
+                ? resolvedHead.pos
+                : visualFrom;
+
+            targetEditor.view.dispatch(
+              targetEditor.state.tr.setSelection(
+                TextSelection.create(
+                  targetEditor.state.doc,
+                  Math.min(visualFrom, visualTo),
+                  Math.max(visualFrom, visualTo),
+                ),
+              ),
+            );
+            return;
+          }
+        } catch {
+          // Fall through to positional restoration below if coordinate-based restoration fails.
+        }
       }
 
       const maxSelectionPos =
