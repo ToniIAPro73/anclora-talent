@@ -43,8 +43,8 @@ export function resolveCoverSurfaceFields(
     '';
 
   const canonicalAuthor =
-    project.document.author ||
     state.fields.author?.value ||
+    project.document.author ||
     '';
 
   const subtitleExplicitlyRemoved =

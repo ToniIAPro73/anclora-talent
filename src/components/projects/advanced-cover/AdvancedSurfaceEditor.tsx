@@ -189,7 +189,7 @@ export function AdvancedSurfaceEditor({
             fill: project.cover.palette === 'sand' ? 'rgba(11,49,63,0.75)' : 'rgba(242,227,179,0.82)',
           },
           author: {
-            top: canvasHeight * 0.78,
+            top: canvasHeight * 0.72,
             fontSize: 15,
             fontWeight: 500,
             textAlign: 'center',
@@ -241,7 +241,7 @@ export function AdvancedSurfaceEditor({
             selectable: true,
             evented: true,
             splitByGrapheme: false,
-            lineHeight: layer.fieldKey === 'body' ? 1.45 : 1.25,
+            lineHeight: layer.fieldKey === 'body' ? 1.45 : 1.1,
           });
 
           const nextElement = {

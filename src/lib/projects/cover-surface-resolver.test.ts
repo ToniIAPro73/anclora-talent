@@ -72,4 +72,36 @@ describe('resolveCoverSurfaceFields', () => {
     expect(fields.subtitle.value).toBe('Subtítulo correcto');
     expect(fields.subtitle.visible).toBe(true);
   });
+
+  it('prioritizes a saved cover author from surface state over the document author', () => {
+    const state = createDefaultSurfaceState('cover');
+    if (state.fields.author) state.fields.author = { value: 'Antonio', visible: true };
+
+    const fields = resolveCoverSurfaceFields(
+      {
+        document: {
+          id: 'doc-1',
+          title: 'Título documento',
+          subtitle: '',
+          author: 'Toni',
+          language: 'es',
+          chapters: [],
+        },
+        cover: {
+          id: 'cover-1',
+          title: 'Título portada',
+          subtitle: '',
+          palette: 'teal',
+          backgroundImageUrl: null,
+          thumbnailUrl: null,
+          showSubtitle: false,
+          surfaceState: state,
+        },
+      },
+      state,
+    );
+
+    expect(fields.author.value).toBe('Antonio');
+    expect(fields.author.visible).toBe(true);
+  });
 });

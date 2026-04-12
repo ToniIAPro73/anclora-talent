@@ -99,6 +99,37 @@ describe('advanced-surface-utils', () => {
     expect(snapshot.fields.author?.visible).toBe(true);
   });
 
+  it('uses the saved cover author from surface state so advanced editor reflects basic editor changes', () => {
+    const snapshot = createSurfaceSnapshotFromProject('cover', makeSurfaceProject({
+      document: { author: 'Toni', title: 'Titulo documento' },
+      cover: {
+        title: 'NUNCA MAS EN LA SOMBRA',
+        subtitle: '',
+        showSubtitle: false,
+        surfaceState: {
+          surface: 'cover',
+          layout: { kind: 'stacked-center' },
+          fields: {
+            title: { value: 'NUNCA MAS EN LA SOMBRA', visible: true },
+            subtitle: { value: '', visible: false },
+            author: { value: 'Antonio', visible: true },
+          },
+          layers: [],
+          opacity: 0.47,
+        },
+      },
+      backCover: {
+        title: 'Contra',
+        body: 'Texto de contra',
+        authorBio: 'Bio',
+        surfaceState: undefined,
+      },
+    }));
+
+    expect(snapshot.fields.author?.value).toBe('Antonio');
+    expect(snapshot.fields.author?.visible).toBe(true);
+  });
+
   it('matches the basic cover editor by prioritizing persisted cover subtitle over stale surface subtitle', () => {
     const snapshot = createSurfaceSnapshotFromProject('cover', makeSurfaceProject({
       document: { author: 'Toni', title: 'Titulo documento', subtitle: 'Subtitulo documento' },
