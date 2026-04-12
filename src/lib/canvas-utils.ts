@@ -136,6 +136,7 @@ export async function addTextToCanvas(
     left: CANVAS_WIDTH / 2,
     top: CANVAS_HEIGHT / 2,
     width: CANVAS_WIDTH * 0.8,
+    minWidth: options?.width ?? CANVAS_WIDTH * 0.8,
     fontSize: 24,
     fontFamily: 'Arial',
     fill: '#000000',
@@ -146,6 +147,7 @@ export async function addTextToCanvas(
     scaleY: 1,
     objectCaching: false,
     noScaleCache: true,
+    splitByGrapheme: false,
     ...options,
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -153,7 +155,21 @@ export async function addTextToCanvas(
 
   // Fabric 7 can keep stale text dimensions/caches if the textbox is created
   // before the final font metrics settle. Force a fresh measurement up front.
+  if (typeof options?.width === 'number') {
+    (fabricText as FabricTextLike).set?.({
+      width: options.width,
+      minWidth: options.width,
+      scaleX: 1,
+      scaleY: 1,
+    });
+  }
   (fabricText as FabricTextLike).initDimensions?.();
+  if (typeof options?.width === 'number') {
+    (fabricText as FabricTextLike).set?.({
+      width: options.width,
+      minWidth: options.width,
+    });
+  }
   (fabricText as FabricTextLike).set?.('dirty', true);
   (fabricText as FabricTextLike).setCoords?.();
 
