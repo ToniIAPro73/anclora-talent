@@ -1,55 +1,59 @@
-```gitignore
-# Compiled and binary files
-*.pyc
-__pycache__/
-*.o
-*.obj
-*.exe
-*.dll
-*.so
-*.class
-
 # Dependencies
 node_modules/
-venv/
-.venv/
-.env
-.env.local
-*.env.*
 
 # Build artifacts
 dist/
 build/
 target/
 
-# Editors and IDEs
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.ENV
+.ENV.*
+.venv.bak
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Logs
+*.log
+
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# Logs and temporary files
-*.log
-*.tmp
-
-# System files
+# OS
 .DS_Store
 Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*
+!.env.example
 
 # Coverage
 coverage/
 htmlcov/
 .coverage
+*.coveragerc
 
-# Python specific
-.mypy_cache/
-.pytest_cache/
-*.pyd
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
 
-# Java/Gradle
-.gradle/
-
-# Compressed files
+# Archives
 *.zip
 *.gz
 *.tar
@@ -72,4 +76,75 @@ htmlcov/
 *.tar.bz2
 *.tar.xz
 *.tar.zst
-```
+
+# Gradle
+.gradle/
+build/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# PyTest
+.pytest_cache/
+
+# Sphinx documentation
+docs/_build/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Compressed files
+*.jar
+*.war
+*.ear
+
+# Rust
+Cargo.lock
+target/
+
+# Go
+*.out
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.hprof
+*.jprof
+*.dynlib
+*.so
+*.dll
+*.a
+*.lib
+
+# C/C++
+*.o
+*.obj
+*.exe
+*.bin
+*.out
+*.app
+*.dylib
+*.dll
+*.so
+*.a
+*.lib
+*.pdb
+*.ilk
+
+# Zig
+zig-cache/
+zig-out/
+
+# Julia
+julia-*/
+.JuliaUserPrefs.toml
+
+# Temporary build outputs
+tmp/
+temp/
+.out/
