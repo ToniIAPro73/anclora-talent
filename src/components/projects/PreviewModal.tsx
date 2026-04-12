@@ -55,6 +55,7 @@ export function PreviewModal({
   const [format, setFormat] = useState<PreviewFormat>(preferredFormat || 'laptop');
   const [zoom, setZoom] = useState(100);
   const [hasManualZoom, setHasManualZoom] = useState(false);
+  const [pageInput, setPageInput] = useState('1');
   
   // CONTENT FLOW STATE
   const [totalContentPages, setTotalContentPages] = useState(1);
@@ -93,12 +94,6 @@ const contentHtml = useMemo(() => {
   // Separar capítulos con un salto manual, igual que antes
   return fragments.join('<hr data-page-break="manual">');
 }, [project.document.chapters, paginationConfig]);
-
-// LOG de depuración (fuera del useMemo)
-useEffect(() => {
-  // Recortamos para no petar la consola
-  console.log('[Preview] contentHtml (truncated):', contentHtml.slice(0, 2000));
-}, [contentHtml]);
 
   // LOGICAL PAGE INDEXING
   const firstContentIndex = 1;
@@ -167,49 +162,109 @@ useEffect(() => {
 
   const handleZoomChange = (nextZoom: number) => {
     setHasManualZoom(true);
-    setZoom(nextZoom);
+    setZoom(Math.max(50, Math.min(150, nextZoom)));
   };
+
+  useEffect(() => {
+    setPageInput(String(currentPage + 1));
+  }, [currentPage]);
+
+  const commitPageInput = useCallback(() => {
+    const parsed = Number.parseInt(pageInput, 10);
+    if (Number.isNaN(parsed)) {
+      setPageInput(String(currentPage + 1));
+      return;
+    }
+
+    const clamped = Math.min(logicalTotalPages, Math.max(1, parsed));
+    setPageInput(String(clamped));
+    goToPage(clamped - 1);
+  }, [currentPage, goToPage, logicalTotalPages, pageInput]);
 
   return (
     <div
+      aria-label={project.document.title || 'Vista previa'}
       role="dialog" aria-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[rgba(4,6,12,0.78)] backdrop-blur-md px-0 md:px-4"
       onKeyDown={handleKeyDown} tabIndex={0}
     >
       <div className="mx-auto flex h-[100dvh] w-full max-w-[1800px] flex-col overflow-hidden border border-white/10 bg-[#111c28] shadow-[0_30px_120px_rgba(0,0,0,0.45)] md:mt-4 md:h-[calc(100dvh-32px)] md:rounded-[28px]">
-        {/* HEADER */}
-        <header className="shrink-0 border-b border-white/10 bg-[rgba(255,255,255,0.02)] px-5 py-3 md:px-6 md:py-4 flex justify-between items-center">
-          <h2 className="text-lg font-black flex items-center gap-2 text-[var(--text-primary)] truncate text-white">
+        <header className="shrink-0 border-b border-white/10 bg-[rgba(255,255,255,0.02)] px-4 py-2.5 md:px-5 md:py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="min-w-0 text-base font-black flex items-center gap-2 truncate text-[var(--text-primary)] text-white md:text-lg">
             <Eye className="w-4 h-4" /> {project.document.title || 'Vista Previa'}
-          </h2>
-          <button onClick={onClose} className={`${premiumSecondaryLightButton} p-3`}><X className="h-4 w-4" /></button>
+            </h2>
+
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-[rgba(255,255,255,0.03)] p-1">
+                <button
+                  aria-label={copy.previewModalSingleView}
+                  aria-pressed={viewMode === 'single'}
+                  onClick={() => setViewMode('single')}
+                  className={`${viewMode === 'single' ? premiumPrimaryDarkButton : premiumSecondaryLightButton} px-2 py-1.5 text-xs`}
+                >
+                  <Eye className="h-4 w-4" />
+                </button>
+                <button
+                  aria-label={copy.previewModalSpreadView}
+                  aria-pressed={viewMode === 'spread'}
+                  onClick={() => setViewMode('spread')}
+                  className={`${viewMode === 'spread' ? premiumPrimaryDarkButton : premiumSecondaryLightButton} px-2 py-1.5 text-xs`}
+                >
+                  <BookOpen className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-[rgba(255,255,255,0.03)] p-1">
+                {(['mobile', 'tablet', 'laptop'] as const).map(fmt => (
+                  <button
+                    key={fmt}
+                    aria-label={fmt === 'mobile' ? copy.previewModalMobile : fmt === 'tablet' ? copy.previewModalTablet : copy.previewModalLaptop}
+                    aria-pressed={format === fmt}
+                    onClick={() => setFormat(fmt)}
+                    className={`${format === fmt ? premiumPrimaryDarkButton : premiumSecondaryLightButton} px-2 py-1.5 text-xs`}
+                  >
+                    {fmt === 'mobile' ? <Smartphone className="h-4 w-4" /> : fmt === 'tablet' ? <Tablet className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-[rgba(255,255,255,0.03)] px-2 py-1">
+                <button
+                  aria-label={copy.previewModalZoomOut}
+                  onClick={() => handleZoomChange(zoom - 10)}
+                  className={`${premiumSecondaryLightButton} p-2`}
+                >
+                  <ZoomOut className="h-4 w-4" />
+                </button>
+                <span className="text-xs text-white w-10 text-center">{zoom}%</span>
+                <button
+                  aria-label={copy.previewModalZoomIn}
+                  onClick={() => handleZoomChange(zoom + 10)}
+                  className={`${premiumSecondaryLightButton} p-2`}
+                >
+                  <ZoomIn className="h-4 w-4" />
+                </button>
+              </div>
+              <button
+                aria-label={copy.previewModalClose}
+                onClick={onClose}
+                className={`${premiumSecondaryLightButton} px-4 py-1.5 flex-shrink-0 text-sm font-semibold min-w-[120px]`}
+                title={copy.previewModalClose}
+              >
+                CERRAR
+              </button>
+            </div>
+          </div>
         </header>
 
-        {/* CONTROLS */}
-        <div className="shrink-0 flex items-center justify-between gap-4 border-b border-white/10 bg-[rgba(255,255,255,0.03)] px-4 py-2.5 md:px-6 md:py-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-[rgba(255,255,255,0.03)] p-1">
-              <button onClick={() => setViewMode('single')} className={`${viewMode === 'single' ? premiumPrimaryDarkButton : premiumSecondaryLightButton} px-2 py-1.5 text-xs`}><Eye className="h-4 w-4" /></button>
-              <button onClick={() => setViewMode('spread')} className={`${viewMode === 'spread' ? premiumPrimaryDarkButton : premiumSecondaryLightButton} px-2 py-1.5 text-xs`}><BookOpen className="h-4 w-4" /></button>
-            </div>
-            <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-[rgba(255,255,255,0.03)] p-1">
-              {(['mobile', 'tablet', 'laptop'] as const).map(fmt => (
-                <button key={fmt} onClick={() => setFormat(fmt)} className={`${format === fmt ? premiumPrimaryDarkButton : premiumSecondaryLightButton} px-2 py-1.5 text-xs`}>
-                  {fmt === 'mobile' ? <Smartphone className="h-4 w-4" /> : fmt === 'tablet' ? <Tablet className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <button onClick={() => handleZoomChange(zoom - 10)} className={`${premiumSecondaryLightButton} p-2`}><ZoomOut className="h-4 w-4" /></button>
-            <span className="text-xs text-white w-12 text-center">{zoom}%</span>
-            <button onClick={() => handleZoomChange(zoom + 10)} className={`${premiumSecondaryLightButton} p-2`}><ZoomIn className="h-4 w-4" /></button>
-          </div>
-        </div>
-
         <main className="relative flex min-h-0 flex-1 overflow-hidden bg-[#070c14]">
-          <section ref={viewportRef} className="flex-1 flex flex-col items-center justify-center p-4 overflow-auto custom-scrollbar">
+          <section
+            data-testid="preview-modal-stage"
+            data-preview-viewport="true"
+            ref={viewportRef}
+            className="flex-1 flex flex-col items-center justify-center p-3 overflow-auto custom-scrollbar"
+          >
             <div 
+              data-testid="preview-spread-frame"
               style={{ width: `${spreadWidth * zoomScale}px`, height: `${spreadHeight * zoomScale}px` }} 
               className="relative transition-all duration-300"
             >
@@ -241,16 +296,53 @@ useEffect(() => {
             </div>
           </section>
 
-          {/* FOOTER */}
-          <footer className="absolute bottom-0 inset-x-0 h-16 border-t border-white/10 bg-[rgba(7,12,20,0.92)] px-6 flex items-center justify-between backdrop-blur-md">
-            <button onClick={prevPage} disabled={currentPage === 0} className={`${premiumSecondaryLightButton} px-4 py-2 disabled:opacity-30`}><ChevronLeft /></button>
-            <div className="text-white text-sm font-medium flex items-center gap-4">
-              <span>Página {currentPage + 1} de {logicalTotalPages}</span>
-              {currentPage >= firstContentIndex && currentPage <= lastContentIndex && (
-                <span className="text-[var(--text-tertiary)] opacity-60">| Contenido P.{currentPage - firstContentIndex + 1}</span>
-              )}
+          <footer data-testid="preview-modal-footer" className="absolute bottom-0 inset-x-0 h-14 border-t border-white/10 bg-[rgba(7,12,20,0.92)] px-4 backdrop-blur-md">
+            <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center">
+              <div />
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-[rgba(255,255,255,0.03)] px-2 py-1">
+                <button
+                  aria-label={copy.previewModalPrevious}
+                  onClick={prevPage}
+                  disabled={currentPage === 0}
+                  className={`${premiumSecondaryLightButton} h-10 w-10 p-0 disabled:opacity-30`}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <label className="flex items-center gap-2 px-1 text-sm font-medium text-white">
+                  <span className="sr-only">{copy.previewModalPage}</span>
+                  <span className="text-white/75">Página</span>
+                  <input
+                    aria-label={copy.previewModalPage}
+                    type="number"
+                    min={1}
+                    max={logicalTotalPages}
+                    value={pageInput}
+                    onChange={(e) => setPageInput(e.target.value)}
+                    onFocus={(e) => e.currentTarget.select()}
+                    onBlur={commitPageInput}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        commitPageInput();
+                      } else if (e.key === 'Escape') {
+                        setPageInput(String(currentPage + 1));
+                      }
+                    }}
+                    className="w-16 rounded-[12px] border border-white/10 bg-[#0f1825] px-2 py-1.5 text-center text-sm font-semibold text-white outline-none transition focus:border-[var(--accent-mint)]"
+                  />
+                  <span className="text-white/55">de {logicalTotalPages}</span>
+                </label>
+                <button
+                  aria-label={copy.previewModalNext}
+                  onClick={nextPage}
+                  disabled={currentPage >= logicalTotalPages - 1}
+                  className={`${premiumSecondaryLightButton} h-10 w-10 p-0 disabled:opacity-30`}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+              <div />
             </div>
-            <button onClick={nextPage} disabled={currentPage >= logicalTotalPages - 1} className={`${premiumSecondaryLightButton} px-4 py-2 disabled:opacity-30`}><ChevronRight /></button>
           </footer>
         </main>
       </div>
