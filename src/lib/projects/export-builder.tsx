@@ -91,7 +91,6 @@ function renderLegacyCoverPageHtml(page: PreviewPage, project: ProjectRecord) {
       <div class="export-cover-overlay"></div>
       <div class="export-page-inner export-cover-inner">
         <div class="export-accent-bar" style="background:${palette.accent};"></div>
-        <p class="export-eyebrow">Anclora Talent</p>
         <h1 class="export-cover-title">${escapeHtml(cover.title)}</h1>
         ${cover.showSubtitle && cover.subtitle ? `<p class="export-cover-subtitle">${escapeHtml(cover.subtitle)}</p>` : ''}
         ${cover.author ? `<p class="export-cover-author">${escapeHtml(cover.author)}</p>` : ''}
@@ -437,7 +436,6 @@ const pdfStyles = StyleSheet.create({
     marginLeft: 10,
     paddingLeft: 10,
     borderLeftWidth: 3,
-    borderLeftStyle: 'solid',
     borderLeftColor: '#d4af37',
     color: '#5f6b7a',
     fontStyle: 'italic',
@@ -453,14 +451,14 @@ const pdfStyles = StyleSheet.create({
     marginTop: 16,
     fontSize: 12,
     lineHeight: 1.6,
-    width: '72%',
+    width: PDF_PAGE_WIDTH * 0.72,
     color: '#f2e3b3',
   },
   backCoverBio: {
     marginTop: 20,
     fontSize: 10,
     lineHeight: 1.4,
-    width: '62%',
+    width: PDF_PAGE_WIDTH * 0.62,
     color: 'rgba(242,227,179,0.78)',
   },
 });
@@ -505,9 +503,9 @@ export async function buildProjectPdf(project: ProjectRecord) {
 
   return (
     <Document
-      title={project.document.title}
+      title={project.document.title || 'Proyecto'}
       author={project.document.author || 'Anclora Talent'}
-      subject={project.document.subtitle || project.title}
+      subject={project.document.subtitle || project.title || ''}
     >
       {pages.map((page, pageIndex) => {
         if (page.type === 'cover' && page.coverData) {
@@ -526,7 +524,6 @@ export async function buildProjectPdf(project: ProjectRecord) {
               {imageUrl ? <View style={pdfStyles.coverOverlay} /> : null}
               <View style={[pdfStyles.accentBar, { backgroundColor: palette.accent }]} />
               <View style={[pdfStyles.pageInner, pdfStyles.coverInner]}>
-                <Text style={[pdfStyles.eyebrow, { color: palette.accent }]}>Anclora Talent</Text>
                 <Text style={[pdfStyles.coverTitle, { color: palette.text }]}>{page.coverData.title}</Text>
                 {page.coverData.showSubtitle && page.coverData.subtitle ? (
                   <Text style={[pdfStyles.coverSubtitle, { color: palette.text }]}>{page.coverData.subtitle}</Text>
@@ -554,7 +551,7 @@ export async function buildProjectPdf(project: ProjectRecord) {
               {imageUrl ? <Image src={imageUrl} style={pdfStyles.fullImage} /> : null}
               {imageUrl ? <View style={pdfStyles.coverOverlay} /> : null}
               <View style={[pdfStyles.pageInner, pdfStyles.coverInner]}>
-                <Text style={[pdfStyles.coverTitle, { color: '#f2e3b3', maxWidth: '75%' }]}>{page.backCoverData.title}</Text>
+                <Text style={[pdfStyles.coverTitle, { color: '#f2e3b3', maxWidth: PDF_PAGE_WIDTH * 0.75 }]}>{page.backCoverData.title}</Text>
                 {page.backCoverData.body ? (
                   <Text style={pdfStyles.backCoverBody}>{stripInlineHtml(page.backCoverData.body)}</Text>
                 ) : null}
@@ -599,15 +596,9 @@ function toDocxHeadingLevel(level: number) {
       return HeadingLevel.HEADING_4;
   }
 }
-
 function buildDocxPageChildren(page: PreviewPage) {
   if (page.type === 'cover' && page.coverData) {
     return [
-      new Paragraph({
-        text: 'Anclora Talent',
-        alignment: AlignmentType.CENTER,
-        spacing: { after: 240 },
-      }),
       new Paragraph({
         text: page.coverData.title,
         heading: HeadingLevel.TITLE,
