@@ -95,6 +95,10 @@ export function countRenderablePages(pages: ContentPage[]): number {
   return Math.max(renderablePages.length, 1);
 }
 
+export function getPaginationDomRuntime() {
+  return getDomRuntime();
+}
+
 /**
  * Paginate HTML content into discrete pages
  */
@@ -195,7 +199,7 @@ export function paginateContent(
       }
     }
 
-    const nodeLines = estimateNodeLines(node, config);
+    const nodeLines = estimateNodeLines(node, config, runtime);
 
     if (
       currentLines + nodeLines > approxLinesPerPage &&
@@ -248,8 +252,12 @@ export function paginateContent(
  * Estimate number of lines a DOM node will take
  * More accurate estimations with spacing
  */
-function estimateNodeLines(node: Node, config: PaginationConfig): number {
-  if (node.nodeType === Node.TEXT_NODE) {
+function estimateNodeLines(
+  node: Node,
+  config: PaginationConfig,
+  runtime: DomRuntime,
+): number {
+  if (node.nodeType === runtime.Node.TEXT_NODE) {
     const text = node.textContent || '';
     if (!text.trim()) return 0;
 
@@ -261,7 +269,7 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
     return Math.max(1, textLines);
   }
 
-  if (node.nodeType === Node.ELEMENT_NODE) {
+  if (node.nodeType === runtime.Node.ELEMENT_NODE) {
     const element = node as Element;
     const tagName = element.tagName;
 
@@ -346,7 +354,7 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
     // Default: count child nodes recursively
     let totalLines = 0;
     element.childNodes.forEach((child) => {
-      totalLines += estimateNodeLines(child, config);
+      totalLines += estimateNodeLines(child, config, runtime);
     });
     return totalLines || 1;
   }

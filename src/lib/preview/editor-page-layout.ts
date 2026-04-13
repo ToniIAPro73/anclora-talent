@@ -1,4 +1,4 @@
-import { paginateContent } from './content-paginator';
+import { getPaginationDomRuntime, paginateContent } from './content-paginator';
 import { PaginationConfig } from './device-configs';
 import { removeAutoPageBreakMarkers } from './page-breaks';
 
@@ -90,11 +90,12 @@ function hasOversizedSingleBlock(
   html: string,
   config: PaginationConfig,
 ): boolean {
-  if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
+  const runtime = getPaginationDomRuntime();
+  if (!runtime) {
     return false;
   }
 
-  const parser = new DOMParser();
+  const parser = new runtime.DOMParser();
   const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
   const container = doc.body.firstElementChild;
   if (!container) {
@@ -102,11 +103,11 @@ function hasOversizedSingleBlock(
   }
 
   const meaningfulChildren = Array.from(container.childNodes).filter((node) => {
-    if (node.nodeType === Node.TEXT_NODE) {
+    if (node.nodeType === runtime.Node.TEXT_NODE) {
       return Boolean(node.textContent?.trim());
     }
 
-    return node.nodeType === Node.ELEMENT_NODE;
+    return node.nodeType === runtime.Node.ELEMENT_NODE;
   });
 
   if (meaningfulChildren.length !== 1) {
@@ -141,11 +142,12 @@ function splitOversizedBlockSegment(
   html: string,
   config: PaginationConfig,
 ): string[] {
-  if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
+  const runtime = getPaginationDomRuntime();
+  if (!runtime) {
     return [html.trim()].filter(Boolean);
   }
 
-  const parser = new DOMParser();
+  const parser = new runtime.DOMParser();
   const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
   const container = doc.body.firstElementChild;
   if (!container) {
@@ -168,7 +170,7 @@ function splitOversizedBlockSegment(
   const chunks: string[] = [];
 
   Array.from(container.childNodes).forEach((node) => {
-    if (node.nodeType !== Node.ELEMENT_NODE) {
+    if (node.nodeType !== runtime.Node.ELEMENT_NODE) {
       const text = node.textContent?.trim();
       if (text) {
         chunks.push(...chunkTextIntoParagraphs(text, charsPerPage));
