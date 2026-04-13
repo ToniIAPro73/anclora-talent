@@ -424,13 +424,13 @@ const pdfStyles = StyleSheet.create({
     color: '#111827',
   },
   paragraph: {
-    fontSize: 11,
+    fontSize: 10.5,
     lineHeight: 1.65,
     marginBottom: 8,
     color: '#2b3442',
   },
   quote: {
-    fontSize: 11,
+    fontSize: 10.5,
     lineHeight: 1.6,
     marginBottom: 8,
     marginLeft: 10,
@@ -441,7 +441,7 @@ const pdfStyles = StyleSheet.create({
     fontStyle: 'italic',
   },
   listItem: {
-    fontSize: 11,
+    fontSize: 10.5,
     lineHeight: 1.65,
     marginBottom: 6,
     marginLeft: 12,

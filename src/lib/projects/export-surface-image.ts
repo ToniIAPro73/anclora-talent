@@ -381,161 +381,25 @@ export async function buildCoverExportImageDataUrl(project: ProjectRecord) {
   if (project.cover.renderedImageUrl?.trim()) {
     return project.cover.renderedImageUrl;
   }
-
-  const surface = normalizeCoverSurface(project);
-  const colors = COVER_TEXT_COLORS[project.cover.palette];
-  const backgroundImage = await fetchImageAsDataUrl(project.cover.backgroundImageUrl);
-  const titleLayer = findSurfaceTextLayer(surface.layers, 'title');
-  const subtitleLayer = findSurfaceTextLayer(surface.layers, 'subtitle');
-  const authorLayer = findSurfaceTextLayer(surface.layers, 'author');
-
-  const title = surface.fields.title?.value || project.cover.title || project.document.title || '';
-  const subtitle = surface.fields.subtitle?.visible ? surface.fields.subtitle.value : '';
-  const author = surface.fields.author?.visible ? surface.fields.author.value : '';
-
-  const children = [
-    renderTextLayer({
-      value: title,
-      layer: titleLayer,
-      fallbackTop: COVER_TEXT_LAYOUT.titleTop * CANVAS_HEIGHT,
-      fallbackLeft: CANVAS_WIDTH / 2,
-      fallbackWidth: COVER_TEXT_LAYOUT.titleWidth * CANVAS_WIDTH,
-      fallbackFontSize: COVER_TEXT_LAYOUT.titleFontSize,
-      fallbackLineHeight: COVER_TEXT_LAYOUT.titleLineHeight,
-      fallbackColor: colors.primary,
-    }),
-    subtitle
-      ? renderTextLayer({
-          value: subtitle,
-          layer: subtitleLayer,
-          fallbackTop: COVER_TEXT_LAYOUT.subtitleTop * CANVAS_HEIGHT,
-          fallbackLeft: CANVAS_WIDTH / 2,
-          fallbackWidth: COVER_TEXT_LAYOUT.subtitleWidth * CANVAS_WIDTH,
-          fallbackFontSize: COVER_TEXT_LAYOUT.subtitleFontSize,
-          fallbackLineHeight: 1.45,
-          fallbackColor: colors.secondary,
-        })
-      : '',
-    author
-      ? renderTextLayer({
-          value: author,
-          layer: authorLayer,
-          fallbackTop: COVER_TEXT_LAYOUT.authorTop * CANVAS_HEIGHT,
-          fallbackLeft: CANVAS_WIDTH / 2,
-          fallbackWidth: COVER_TEXT_LAYOUT.authorWidth * CANVAS_WIDTH,
-          fallbackFontSize: COVER_TEXT_LAYOUT.authorFontSize,
-          fallbackLineHeight: COVER_TEXT_LAYOUT.titleLineHeight,
-          fallbackColor: colors.primary,
-          uppercase: true,
-        })
-      : '',
-  ].join('');
-
-  const svg = buildSvgShell({
-    background: COVER_GRADIENTS[project.cover.palette],
-    backgroundImage,
-    overlayOpacity: surface.opacity ?? 1,
-    children,
-    accentColor: project.cover.palette === 'sand' ? '#0b313f' : '#d4af37',
-  });
-
-  return rasterizeSvg(svg);
+  // Desactivado para evitar tofu de fontconfig.
+  return null;
 }
 
 export async function buildBackCoverExportImageDataUrl(project: ProjectRecord) {
   if (project.backCover.renderedImageUrl?.trim()) {
     return project.backCover.renderedImageUrl;
   }
-
-  const surface = normalizeBackCoverSurface(project);
-  const backgroundImage = await fetchImageAsDataUrl(project.backCover.backgroundImageUrl);
-  const titleLayer = findSurfaceTextLayer(surface.layers, 'title');
-  const bodyLayer = findSurfaceTextLayer(surface.layers, 'body');
-  const authorBioLayer = findSurfaceTextLayer(surface.layers, 'authorBio');
-  const primaryColor = project.backCover.accentColor || '#f2e3b3';
-  const secondaryColor = 'rgba(242,227,179,0.78)';
-
-  const title = surface.fields.title?.visible ? surface.fields.title.value : '';
-  const body = surface.fields.body?.visible ? surface.fields.body.value : '';
-  const authorBio = surface.fields.authorBio?.visible ? surface.fields.authorBio.value : '';
-
-  const children = [
-    title
-      ? renderTextLayer({
-          value: title,
-          layer: titleLayer,
-          fallbackTop: BACK_COVER_TEXT_LAYOUT.titleTop * CANVAS_HEIGHT,
-          fallbackLeft: BACK_COVER_TEXT_LAYOUT.titleLeft * CANVAS_WIDTH,
-          fallbackWidth: BACK_COVER_TEXT_LAYOUT.titleWidth * CANVAS_WIDTH,
-          fallbackFontSize: BACK_COVER_TEXT_LAYOUT.titleFontSize,
-          fallbackLineHeight: BACK_COVER_TEXT_LAYOUT.titleLineHeight,
-          fallbackColor: primaryColor,
-        })
-      : '',
-    body
-      ? renderTextLayer({
-          value: body,
-          layer: bodyLayer,
-          fallbackTop: BACK_COVER_TEXT_LAYOUT.bodyTop * CANVAS_HEIGHT,
-          fallbackLeft: BACK_COVER_TEXT_LAYOUT.bodyLeft * CANVAS_WIDTH,
-          fallbackWidth: BACK_COVER_TEXT_LAYOUT.bodyWidth * CANVAS_WIDTH,
-          fallbackFontSize: BACK_COVER_TEXT_LAYOUT.bodyFontSize,
-          fallbackLineHeight: BACK_COVER_TEXT_LAYOUT.bodyLineHeight,
-          fallbackColor: primaryColor,
-        })
-      : '',
-    authorBio
-      ? renderTextLayer({
-          value: authorBio,
-          layer: authorBioLayer,
-          fallbackTop: BACK_COVER_TEXT_LAYOUT.authorBioTop * CANVAS_HEIGHT,
-          fallbackLeft: BACK_COVER_TEXT_LAYOUT.authorBioLeft * CANVAS_WIDTH,
-          fallbackWidth: BACK_COVER_TEXT_LAYOUT.authorBioWidth * CANVAS_WIDTH,
-          fallbackFontSize: BACK_COVER_TEXT_LAYOUT.authorBioFontSize,
-          fallbackLineHeight: BACK_COVER_TEXT_LAYOUT.authorBioLineHeight,
-          fallbackColor: secondaryColor,
-        })
-      : '',
-  ].join('');
-
-  const svg = buildSvgShell({
-    background: BACK_COVER_BACKGROUND,
-    backgroundImage,
-    overlayOpacity: surface.opacity ?? 0.24,
-    children,
-    accentColor: null,
-  });
-
-  return rasterizeSvg(svg);
+  // Desactivado para evitar tofu de fontconfig.
+  return null;
 }
 
 export async function buildContentPageExportImageDataUrl(
   page: PreviewPage,
   config: PaginationConfig,
 ) {
-  if (page.type !== 'content') {
-    return null;
-  }
-
-  const html = (page.content ?? '').trim();
-  if (!html) {
-    return null;
-  }
-
-  const width = config.pageWidth;
-  const height = config.pageHeight;
-  const blocks = parsePageContent(html);
-  if (blocks.length === 0) {
-    return null;
-  }
-  const bodyMarkup = renderContentBlocksSvg(blocks, config);
-
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-      <rect x="0" y="0" width="${width}" height="${height}" rx="8" ry="8" fill="${PREVIEW_PAGE_BACKGROUND}" stroke="${PREVIEW_PAGE_BORDER}" />
-      ${bodyMarkup}
-    </svg>
-  `;
-
-  return rasterizeSvg(svg);
+  // Desactivado para evitar cuadrados (tofu) de sharp en entornos sin fuentes.
+  // Al retornar null, export-builder.tsx usará el render nativo de react-pdf y docx.
+  // Como el array de 'pages' ya viene dividido exactamente igual que en el preview,
+  // el render nativo respetará la estructura de página a página (1 page preview = 1 Page PDF).
+  return null;
 }

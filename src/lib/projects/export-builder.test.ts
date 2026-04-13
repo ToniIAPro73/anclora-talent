@@ -57,7 +57,7 @@ describe('export-builder', () => {
     expect(pdfDoc).toBeTruthy();
   });
 
-  test('renders different content pages into different export images', async () => {
+  test('content page image generator is disabled to trigger native text rendering', async () => {
     const first = await buildContentPageExportImageDataUrl(
       {
         type: 'content',
@@ -67,18 +67,7 @@ describe('export-builder', () => {
       DEVICE_PAGINATION_CONFIGS.laptop,
     );
 
-    const second = await buildContentPageExportImageDataUrl(
-      {
-        type: 'content',
-        content: '<h2>Segunda página</h2><p>Contenido B</p>',
-        pageNumber: 3,
-      },
-      DEVICE_PAGINATION_CONFIGS.laptop,
-    );
-
-    expect(first).toBeTruthy();
-    expect(second).toBeTruthy();
-    expect(first).not.toBe(second);
+    expect(first).toBeNull();
   });
 
   test('builds a non-empty DOCX buffer without synthetic cover text when a rendered cover exists', async () => {
