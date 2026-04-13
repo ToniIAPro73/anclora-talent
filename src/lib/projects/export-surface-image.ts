@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import sharp from 'sharp';
 import type { ProjectRecord, CoverDesign } from './types';
 import { parsePageContent, type ParsedContentBlock } from './export-content-blocks';
@@ -15,6 +17,13 @@ import { findSurfaceTextLayer } from './cover-layer-style';
 
 const CANVAS_WIDTH = 400;
 const CANVAS_HEIGHT = 600;
+const EMBEDDED_BODY_FONT_FAMILY = 'AncloraExportSans';
+const EMBEDDED_FONT_FILES = {
+  regular: resolve(process.cwd(), 'node_modules/pdfjs-dist/standard_fonts/LiberationSans-Regular.ttf'),
+  bold: resolve(process.cwd(), 'node_modules/pdfjs-dist/standard_fonts/LiberationSans-Bold.ttf'),
+  italic: resolve(process.cwd(), 'node_modules/pdfjs-dist/standard_fonts/LiberationSans-Italic.ttf'),
+  boldItalic: resolve(process.cwd(), 'node_modules/pdfjs-dist/standard_fonts/LiberationSans-BoldItalic.ttf'),
+} as const;
 
 const COVER_GRADIENTS: Record<CoverDesign['palette'], string> = {
   obsidian: 'linear-gradient(160deg, #0b133f 0%, #0b233f 50%, #07252f 100%)',
@@ -30,11 +39,12 @@ const COVER_TEXT_COLORS: Record<CoverDesign['palette'], { primary: string; secon
 
 const BACK_COVER_BACKGROUND =
   'linear-gradient(160deg, #0b133f 0%, #0b233f 50%, #07252f 100%)';
-const PREVIEW_PAGE_BACKGROUND = '#0C141E';
-const PREVIEW_PAGE_BORDER = 'rgba(74, 159, 216, 0.14)';
-const PREVIEW_TEXT_PRIMARY = '#EDF2F8';
-const PREVIEW_TEXT_TERTIARY = '#7090A8';
-const PREVIEW_QUOTE_BORDER = '#4A9FD8';
+const PREVIEW_PAGE_BACKGROUND = '#FFFFFF';
+const PREVIEW_TEXT_PRIMARY = '#0C1820';
+const PREVIEW_TEXT_TERTIARY = '#5F6B7A';
+const PREVIEW_QUOTE_BORDER = '#D4AF37';
+
+let embeddedFontFaceCssPromise: Promise<string> | null = null;
 
 function escapeXml(value: string) {
   return value
@@ -154,7 +164,7 @@ function renderTextLayer({
   const anchor = textAnchorForLayer(layer);
   const fill = rgbaToSvgColor(layer?.fill, fallbackColor);
   const opacity = layer?.opacity ?? 1;
-  const fontFamily = escapeXml(layer?.fontFamily || 'Arial, Helvetica, sans-serif');
+  const fontFamily = escapeXml(layer?.fontFamily || `${EMBEDDED_BODY_FONT_FAMILY}, sans-serif`);
   const fontWeight = normalizeFontWeight(layer?.fontWeight, 400);
   const fontStyle = layer?.fontStyle ?? 'normal';
 
@@ -225,6 +235,48 @@ async function rasterizeSvg(svg: string) {
   return `data:image/png;base64,${png.toString('base64')}`;
 }
 
+async function loadEmbeddedFontFaceCss() {
+  if (!embeddedFontFaceCssPromise) {
+    embeddedFontFaceCssPromise = (async () => {
+      const [regular, bold, italic, boldItalic] = await Promise.all([
+        readFile(EMBEDDED_FONT_FILES.regular),
+        readFile(EMBEDDED_FONT_FILES.bold),
+        readFile(EMBEDDED_FONT_FILES.italic),
+        readFile(EMBEDDED_FONT_FILES.boldItalic),
+      ]);
+
+      return `
+        @font-face {
+          font-family: '${EMBEDDED_BODY_FONT_FAMILY}';
+          src: url(data:font/ttf;base64,${regular.toString('base64')}) format('truetype');
+          font-style: normal;
+          font-weight: 400;
+        }
+        @font-face {
+          font-family: '${EMBEDDED_BODY_FONT_FAMILY}';
+          src: url(data:font/ttf;base64,${bold.toString('base64')}) format('truetype');
+          font-style: normal;
+          font-weight: 700;
+        }
+        @font-face {
+          font-family: '${EMBEDDED_BODY_FONT_FAMILY}';
+          src: url(data:font/ttf;base64,${italic.toString('base64')}) format('truetype');
+          font-style: italic;
+          font-weight: 400;
+        }
+        @font-face {
+          font-family: '${EMBEDDED_BODY_FONT_FAMILY}';
+          src: url(data:font/ttf;base64,${boldItalic.toString('base64')}) format('truetype');
+          font-style: italic;
+          font-weight: 700;
+        }
+      `;
+    })();
+  }
+
+  return embeddedFontFaceCssPromise;
+}
+
 function renderBodyTextBlock({
   text,
   x,
@@ -255,7 +307,7 @@ function renderBodyTextBlock({
         x="${x}"
         y="${y + fontSize * 0.85}"
         fill="${fill}"
-        font-family="Arial, Helvetica, sans-serif"
+        font-family="${EMBEDDED_BODY_FONT_FAMILY}, sans-serif"
         font-size="${fontSize}"
         font-weight="${fontWeight}"
         font-style="${fontStyle}"
@@ -271,6 +323,136 @@ function renderBodyTextBlock({
     `,
     height: Math.max(1, lines.length) * lineAdvance,
   };
+}
+
+async function buildCoverFallbackSvg(project: ProjectRecord) {
+  const surface = normalizeCoverSurface(project);
+  const backgroundImage = await fetchImageAsDataUrl(project.cover.backgroundImageUrl);
+  const titleLayer = findSurfaceTextLayer(surface.layers, 'title');
+  const subtitleLayer = findSurfaceTextLayer(surface.layers, 'subtitle');
+  const authorLayer = findSurfaceTextLayer(surface.layers, 'author');
+  const palette = project.cover.palette;
+  const colors = COVER_TEXT_COLORS[palette];
+  const fontFaceCss = await loadEmbeddedFontFaceCss();
+
+  const title = surface.fields.title?.value || project.cover.title || project.document.title || 'Proyecto sin título';
+  const subtitle = surface.fields.subtitle?.visible ? surface.fields.subtitle.value : '';
+  const author = surface.fields.author?.visible ? surface.fields.author.value : '';
+  const opacity = surface.opacity ?? 0.4;
+
+  const children = [
+    renderTextLayer({
+      value: title,
+      layer: titleLayer,
+      fallbackTop: COVER_TEXT_LAYOUT.titleTop * CANVAS_HEIGHT,
+      fallbackLeft: CANVAS_WIDTH / 2,
+      fallbackWidth: COVER_TEXT_LAYOUT.titleWidth * CANVAS_WIDTH,
+      fallbackFontSize: COVER_TEXT_LAYOUT.titleFontSize,
+      fallbackLineHeight: COVER_TEXT_LAYOUT.titleLineHeight,
+      fallbackColor: colors.primary,
+    }),
+    subtitle
+      ? renderTextLayer({
+          value: subtitle,
+          layer: subtitleLayer,
+          fallbackTop: COVER_TEXT_LAYOUT.subtitleTop * CANVAS_HEIGHT,
+          fallbackLeft: CANVAS_WIDTH / 2,
+          fallbackWidth: COVER_TEXT_LAYOUT.subtitleWidth * CANVAS_WIDTH,
+          fallbackFontSize: COVER_TEXT_LAYOUT.subtitleFontSize,
+          fallbackLineHeight: 1.45,
+          fallbackColor: colors.secondary,
+        })
+      : '',
+    author
+      ? renderTextLayer({
+          value: author,
+          layer: authorLayer,
+          fallbackTop: COVER_TEXT_LAYOUT.authorTop * CANVAS_HEIGHT,
+          fallbackLeft: CANVAS_WIDTH / 2,
+          fallbackWidth: COVER_TEXT_LAYOUT.authorWidth * CANVAS_WIDTH,
+          fallbackFontSize: COVER_TEXT_LAYOUT.authorFontSize,
+          fallbackLineHeight: COVER_TEXT_LAYOUT.titleLineHeight,
+          fallbackColor: colors.primary,
+          uppercase: true,
+        })
+      : '',
+  ].join('');
+
+  return buildSvgShell({
+    width: CANVAS_WIDTH,
+    height: CANVAS_HEIGHT,
+    background: COVER_GRADIENTS[palette],
+    backgroundImage,
+    overlayOpacity: opacity,
+    accentColor: palette === 'sand' ? '#0b313f' : '#d4af37',
+    children,
+    fontFaceCss,
+  });
+}
+
+async function buildBackCoverFallbackSvg(project: ProjectRecord) {
+  const surface = normalizeBackCoverSurface(project);
+  const backgroundImage = await fetchImageAsDataUrl(project.backCover.backgroundImageUrl);
+  const titleLayer = findSurfaceTextLayer(surface.layers, 'title');
+  const bodyLayer = findSurfaceTextLayer(surface.layers, 'body');
+  const authorBioLayer = findSurfaceTextLayer(surface.layers, 'authorBio');
+  const fontFaceCss = await loadEmbeddedFontFaceCss();
+
+  const title = surface.fields.title?.visible ? surface.fields.title.value : '';
+  const body = surface.fields.body?.visible ? surface.fields.body.value : '';
+  const authorBio = surface.fields.authorBio?.visible ? surface.fields.authorBio.value : '';
+  const opacity = surface.opacity ?? 0.24;
+  const defaultTextColor = project.backCover.accentColor || '#f2e3b3';
+  const secondaryTextColor = 'rgba(242,227,179,0.78)';
+
+  const children = [
+    title
+      ? renderTextLayer({
+          value: title,
+          layer: titleLayer,
+          fallbackTop: BACK_COVER_TEXT_LAYOUT.titleTop * CANVAS_HEIGHT,
+          fallbackLeft: BACK_COVER_TEXT_LAYOUT.titleLeft * CANVAS_WIDTH,
+          fallbackWidth: BACK_COVER_TEXT_LAYOUT.titleWidth * CANVAS_WIDTH,
+          fallbackFontSize: BACK_COVER_TEXT_LAYOUT.titleFontSize,
+          fallbackLineHeight: BACK_COVER_TEXT_LAYOUT.titleLineHeight,
+          fallbackColor: defaultTextColor,
+        })
+      : '',
+    body
+      ? renderTextLayer({
+          value: body,
+          layer: bodyLayer,
+          fallbackTop: BACK_COVER_TEXT_LAYOUT.bodyTop * CANVAS_HEIGHT,
+          fallbackLeft: BACK_COVER_TEXT_LAYOUT.bodyLeft * CANVAS_WIDTH,
+          fallbackWidth: BACK_COVER_TEXT_LAYOUT.bodyWidth * CANVAS_WIDTH,
+          fallbackFontSize: BACK_COVER_TEXT_LAYOUT.bodyFontSize,
+          fallbackLineHeight: BACK_COVER_TEXT_LAYOUT.bodyLineHeight,
+          fallbackColor: defaultTextColor,
+        })
+      : '',
+    authorBio
+      ? renderTextLayer({
+          value: authorBio,
+          layer: authorBioLayer,
+          fallbackTop: BACK_COVER_TEXT_LAYOUT.authorBioTop * CANVAS_HEIGHT,
+          fallbackLeft: BACK_COVER_TEXT_LAYOUT.authorBioLeft * CANVAS_WIDTH,
+          fallbackWidth: BACK_COVER_TEXT_LAYOUT.authorBioWidth * CANVAS_WIDTH,
+          fallbackFontSize: BACK_COVER_TEXT_LAYOUT.authorBioFontSize,
+          fallbackLineHeight: BACK_COVER_TEXT_LAYOUT.authorBioLineHeight,
+          fallbackColor: secondaryTextColor,
+        })
+      : '',
+  ].join('');
+
+  return buildSvgShell({
+    width: CANVAS_WIDTH,
+    height: CANVAS_HEIGHT,
+    background: BACK_COVER_BACKGROUND,
+    backgroundImage,
+    overlayOpacity: opacity,
+    children,
+    fontFaceCss,
+  });
 }
 
 function renderContentBlocksSvg(blocks: ParsedContentBlock[], config: PaginationConfig) {
@@ -337,39 +519,62 @@ function renderContentBlocksSvg(blocks: ParsedContentBlock[], config: Pagination
 }
 
 function buildSvgShell({
+  width,
+  height,
   background,
   backgroundImage,
   overlayOpacity,
   children,
   accentColor,
+  fontFaceCss,
 }: {
+  width: number;
+  height: number;
   background: string;
   backgroundImage?: string | null;
   overlayOpacity: number;
   children: string;
   accentColor?: string | null;
+  fontFaceCss?: string;
 }) {
   const gradientId = `gradient-${Math.random().toString(36).slice(2, 8)}`;
+  const usesGradient = background.includes('gradient');
 
   return `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" viewBox="0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}">
+    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
       <defs>
+        ${
+          fontFaceCss
+            ? `<style><![CDATA[
+              ${fontFaceCss}
+            ]]></style>`
+            : ''
+        }
+        ${
+          usesGradient
+            ? `
         <linearGradient id="${gradientId}" x1="0%" y1="0%" x2="55%" y2="100%">
           <stop offset="0%" stop-color="${background.includes('#0b133f') ? '#0b133f' : '#f2e3b3'}" />
           <stop offset="50%" stop-color="${background.includes('#124a50') ? '#0b313f' : background.includes('#f2e3b3') ? '#e7d4a0' : '#0b233f'}" />
           <stop offset="100%" stop-color="${background.includes('#124a50') ? '#07252f' : background.includes('#f2e3b3') ? '#d4af37' : '#07252f'}" />
-        </linearGradient>
+        </linearGradient>`
+            : ''
+        }
       </defs>
-      <rect width="100%" height="100%" fill="url(#${gradientId})" />
+      <rect width="100%" height="100%" fill="${usesGradient ? `url(#${gradientId})` : background}" />
       ${
         backgroundImage
-          ? `<image href="${backgroundImage}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" preserveAspectRatio="xMidYMid slice" opacity="${overlayOpacity}" />`
+          ? `<image href="${backgroundImage}" x="0" y="0" width="${width}" height="${height}" preserveAspectRatio="xMidYMid slice" opacity="${overlayOpacity}" />`
           : ''
       }
-      <rect x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" fill="rgba(7,12,20,0.18)" />
+      ${
+        backgroundImage && overlayOpacity > 0
+          ? `<rect x="0" y="0" width="${width}" height="${height}" fill="rgba(7,12,20,0.18)" />`
+          : ''
+      }
       ${
         accentColor
-          ? `<rect x="0" y="0" width="${CANVAS_WIDTH}" height="4" fill="${accentColor}" />`
+          ? `<rect x="0" y="0" width="${width}" height="4" fill="${accentColor}" />`
           : ''
       }
       ${children}
@@ -381,25 +586,38 @@ export async function buildCoverExportImageDataUrl(project: ProjectRecord) {
   if (project.cover.renderedImageUrl?.trim()) {
     return project.cover.renderedImageUrl;
   }
-  // Desactivado para evitar tofu de fontconfig.
-  return null;
+  return rasterizeSvg(await buildCoverFallbackSvg(project));
 }
 
 export async function buildBackCoverExportImageDataUrl(project: ProjectRecord) {
   if (project.backCover.renderedImageUrl?.trim()) {
     return project.backCover.renderedImageUrl;
   }
-  // Desactivado para evitar tofu de fontconfig.
-  return null;
+  return rasterizeSvg(await buildBackCoverFallbackSvg(project));
 }
 
 export async function buildContentPageExportImageDataUrl(
   page: PreviewPage,
   config: PaginationConfig,
 ) {
-  // Desactivado para evitar cuadrados (tofu) de sharp en entornos sin fuentes.
-  // Al retornar null, export-builder.tsx usará el render nativo de react-pdf y docx.
-  // Como el array de 'pages' ya viene dividido exactamente igual que en el preview,
-  // el render nativo respetará la estructura de página a página (1 page preview = 1 Page PDF).
-  return null;
+  if (page.type !== 'content' || !page.content?.trim()) {
+    return null;
+  }
+
+  const blocks = parsePageContent(page.content);
+  if (blocks.length === 0) {
+    return null;
+  }
+
+  const fontFaceCss = await loadEmbeddedFontFaceCss();
+  const svg = buildSvgShell({
+    width: config.pageWidth,
+    height: config.pageHeight,
+    background: PREVIEW_PAGE_BACKGROUND,
+    overlayOpacity: 0,
+    children: renderContentBlocksSvg(blocks, config),
+    fontFaceCss,
+  });
+
+  return rasterizeSvg(svg);
 }

@@ -30,9 +30,13 @@ En este momento:
 Estado actual por formato:
 
 - `DOCX`:
-  - Se detectó que algunas páginas se estaban reutilizando incorrectamente dentro del documento.
-  - Tras los últimos cambios, un `DOCX` regenerado localmente ya no reutiliza la misma imagen repetidas veces.
-  - Aun así, los `nunca.docx` del raíz siguen siendo exportaciones antiguas defectuosas y no deben tomarse como verificación del estado corregido del código.
+  - El repo había derivado temporalmente a una estrategia mixta:
+    - portada y contraportada como imagen
+    - cuerpo del documento como texto nativo de Word
+  - Esa deriva rompía el objetivo principal, porque Word recomponía el layout del contenido y dejaba de respetar la misma composición visual del preview.
+  - Además, las imágenes insertadas en el `DOCX` no estaban ocupando todo el tamaño de página real de `6x9`.
+  - Ya se ha corregido de nuevo la ruta del `DOCX` para volver a bloquear visualmente cada página de contenido mediante rasterización por página.
+  - Aun así, los `nunca.docx` del raíz siguen siendo exportaciones antiguas defectuosas y no deben tomarse como verificación del estado actual.
 
 - `PDF`:
   - Sigue siendo el formato más delicado.
@@ -72,17 +76,18 @@ Conclusión:
 
 - El fallo ya no puede atribuirse únicamente a que el preview estuviera generando páginas duplicadas.
 
-### 2. La rasterización previa de cada página de contenido también produce resultados distintos
+### 2. La rasterización previa de cada página de contenido vuelve a ser necesaria para DOCX
 
-Se verificó que, para el proyecto real:
+Se confirmó un punto clave:
 
-- Cada página de contenido produce un `dataUrl` distinto en `buildContentPageExportImageDataUrl(...)`.
-- Los hashes de imagen por página son distintos.
+- Mientras el cuerpo del `DOCX` se exporte como párrafos nativos, Word puede rehacer saltos, alturas y posiciones.
+- Eso impide garantizar que la página `N` del `DOCX` coincida con la página `N` del preview, aunque la paginación previa sí sea correcta.
+- Para `DOCX`, la estrategia correcta es bloquear cada página como representación visual cerrada.
 
 Conclusión:
 
-- El fallo restante no nace en la generación individual de imágenes por página.
-- El problema queda desplazado al ensamblado final del export, especialmente en PDF y en las referencias internas de DOCX/PDF.
+- La rasterización por página no es un detalle opcional para `DOCX`.
+- Es una condición necesaria para mantener la fidelidad página a página respecto al preview.
 
 ### 3. Había una desalineación entre preview y exportación server-side
 
@@ -136,9 +141,16 @@ Antes de esta fase ya se habían aplicado varios cambios para acercar el export 
   - renderizando las páginas de contenido como SVG nativo
   - generando imágenes de contenido más estables y diferenciadas
 
+En la revisión actual se añadió además:
+
+- Reintroducción explícita de la rasterización de páginas de contenido para la ruta `DOCX`.
+- Incrustación de fuentes en el SVG de exportación para evitar `tofu` o sustituciones de fuentes del sistema en `sharp`.
+- Ajuste del tamaño de imagen insertado en Word para ocupar la página completa `6x9` del export.
+
 Objetivo de estos cambios:
 
 - Evitar que varias páginas del contenido se convirtieran en la misma imagen.
+- Evitar que Word recomponga el contenido y rompa la correspondencia con el preview.
 
 ### C. Pruebas automatizadas añadidas o reforzadas
 
@@ -148,9 +160,10 @@ Se han ejecutado y mantenido verdes pruebas sobre:
 - [src/lib/preview/content-paginator.test.ts](/home/toni/projects/anclora-talent/src/lib/preview/content-paginator.test.ts)
 - [src/lib/preview/preview-builder.test.ts](/home/toni/projects/anclora-talent/src/lib/preview/preview-builder.test.ts)
 
-Última verificación realizada:
+Última verificación puntual en esta revisión:
 
-- `44 passed`
+- `vitest run src/lib/projects/export-builder.test.ts`
+- `5 passed`
 
 Se añadió verificación para asegurar, entre otras cosas, que:
 
@@ -200,11 +213,16 @@ Resumen cronológico de los intentos hechos para resolver el problema:
 
 14. Se corrigió esa divergencia en `content-paginator.ts` y `editor-page-layout.ts`.
 
-15. Tras esa corrección, se regeneró un `DOCX` local de diagnóstico y se verificó que:
-  - ya no reutiliza un mismo recurso gráfico repetidamente
-  - ahora contiene `44` dibujos únicos para `44` páginas
+15. En una revisión posterior se detectó una deriva no deseada:
+  - el cuerpo del `DOCX` había vuelto a caer a texto nativo de Word
+  - la imagen insertada en las páginas gráficas no ocupaba toda la página física del documento
 
-16. Se intentó hacer lo mismo con el `PDF`, pero el render final de `@react-pdf/renderer` todavía está fallando en local con:
+16. Se corrigió esa deriva para el `DOCX`:
+  - restaurando la generación de imagen por página de contenido
+  - incrustando fuentes en la rasterización SVG
+  - ajustando la inserción en Word al tamaño real de página `6x9`
+
+17. Se dejó el `PDF` fuera de esta corrección concreta para no mezclar problemas, porque el render final de `@react-pdf/renderer` todavía está fallando en local con:
   - `TypeError: Cannot read properties of undefined (reading 'S')`
 
 ## Estado de Verificación Actual
@@ -214,8 +232,8 @@ Resumen cronológico de los intentos hechos para resolver el problema:
 - El proyecto real puede cargarse correctamente desde base de datos.
 - El preview exportable genera `44` páginas.
 - Las páginas de contenido del preview son distintas.
-- La imagen generada para cada página de contenido es distinta.
-- El `DOCX` de diagnóstico generado tras la corrección ya no reutiliza la misma imagen repetidas veces.
+- La ruta `DOCX` vuelve a generar imagen por página para el contenido, en vez de delegar el layout a Word.
+- Las imágenes insertadas en el `DOCX` se dimensionan ahora al tamaño completo de página del export.
 - La suite de tests relevante está pasando.
 
 ### Pendiente de cerrar
@@ -259,7 +277,8 @@ La situación actual es esta:
 - Ya no estamos en una fase de tanteo general.
 - La exportación ha mejorado y el problema se ha estrechado mucho.
 - El preview y la exportación server-side estaban desalineados, y eso ya se ha corregido.
-- El `DOCX` de diagnóstico posterior a esa corrección muestra señales claras de mejora real.
+- El cuello de botella principal de `DOCX` era que Word estaba recuperando control del layout del cuerpo del documento.
+- Ese punto ya se ha corregido devolviendo al `DOCX` un modelo de página bloqueada por imagen.
 - El `PDF` sigue teniendo un problema adicional en su render final.
 - Los archivos `nunca.docx` y `nunca.pdf` que están ahora en el raíz siguen siendo malos y no sirven como validación del estado actual del código.
 

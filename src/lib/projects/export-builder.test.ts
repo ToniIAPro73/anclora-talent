@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import JSZip from 'jszip';
 import mammoth from 'mammoth';
 import { createProjectRecord } from './factories';
 import { createDefaultSurfaceState } from './cover-surface';
@@ -57,7 +58,7 @@ describe('export-builder', () => {
     expect(pdfDoc).toBeTruthy();
   });
 
-  test('content page image generator is disabled to trigger native text rendering', async () => {
+  test('content page image generator returns a PNG data URL for DOCX page locking', async () => {
     const first = await buildContentPageExportImageDataUrl(
       {
         type: 'content',
@@ -67,14 +68,38 @@ describe('export-builder', () => {
       DEVICE_PAGINATION_CONFIGS.laptop,
     );
 
-    expect(first).toBeNull();
+    expect(first).toMatch(/^data:image\/png;base64,/);
   });
 
-  test('builds a non-empty DOCX buffer without synthetic cover text when a rendered cover exists', async () => {
-    const buffer = await buildProjectDocxBuffer(makeProject());
+  test('builds a DOCX with one locked image frame per preview page and no synthetic cover text', async () => {
+    const project = makeProject();
+    project.document.chapters = [
+      {
+        ...project.document.chapters[0],
+        title: 'Capítulo 1',
+        blocks: [
+          { id: 'heading', order: 1, type: 'heading', content: '<h1>Capítulo 1</h1>' },
+          {
+            id: 'body',
+            order: 2,
+            type: 'paragraph',
+            content: `<p>${'Contenido de prueba '.repeat(900)}</p>`,
+          },
+        ],
+      },
+    ];
+
+    const pages = buildExportPreview(project);
+    const buffer = await buildProjectDocxBuffer(project);
     expect(buffer.byteLength).toBeGreaterThan(0);
 
     const extracted = await mammoth.extractRawText({ buffer });
     expect(extracted.value).not.toContain('Anclora Talent');
+
+    const zip = await JSZip.loadAsync(buffer);
+    const documentXml = await zip.file('word/document.xml')!.async('string');
+    const imageReferences = (documentXml.match(/<a:blip\b/g) ?? []).length;
+
+    expect(imageReferences).toBe(pages.length);
   });
 });

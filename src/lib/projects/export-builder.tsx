@@ -37,6 +37,8 @@ const PDF_MARGIN_TOP = EXPORT_CONFIG.marginTop * PDF_SCALE;
 const PDF_MARGIN_BOTTOM = EXPORT_CONFIG.marginBottom * PDF_SCALE;
 const PDF_MARGIN_LEFT = EXPORT_CONFIG.marginLeft * PDF_SCALE;
 const PDF_MARGIN_RIGHT = EXPORT_CONFIG.marginRight * PDF_SCALE;
+const DOCX_PAGE_WIDTH = EXPORT_CONFIG.pageWidth;
+const DOCX_PAGE_HEIGHT = EXPORT_CONFIG.pageHeight;
 
 const COVER_PALETTE_COLORS: Record<string, { bg: string; text: string; accent: string }> = {
   obsidian: { bg: '#0b133f', text: '#f2e3b3', accent: '#d4af37' },
@@ -497,9 +499,7 @@ export async function buildProjectPdf(project: ProjectRecord) {
   const palette = COVER_PALETTE_COLORS[project.cover.palette] ?? COVER_PALETTE_COLORS.obsidian;
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
-  const contentImageUrls = await Promise.all(
-    pages.map((page) => buildContentPageExportImageDataUrl(page, EXPORT_CONFIG)),
-  );
+  const contentImageUrls = pages.map(() => null as string | null);
 
   return (
     <Document
@@ -775,8 +775,8 @@ export async function buildProjectDocxBuffer(project: ProjectRecord) {
                   data: pageImagePayloads[index]!.data,
                   type: pageImagePayloads[index]!.type,
                   transformation: {
-                    width: 432,
-                    height: 648,
+                    width: DOCX_PAGE_WIDTH,
+                    height: DOCX_PAGE_HEIGHT,
                   },
                 }),
               ],
