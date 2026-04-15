@@ -28,6 +28,8 @@ import {
   syncProjectPaginationAction,
 } from '@/lib/projects/actions';
 import { computeChapterPageMetrics } from '@/lib/preview/metrics';
+import { buildPaginationConfig } from '@/lib/preview/device-configs';
+import { buildDerivedChapterSections } from '@/lib/preview/preview-builder';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import {
@@ -181,6 +183,26 @@ export function ProjectWorkspace({
   const [pageNumberSyncFeedback, setPageNumberSyncFeedback] = useState<PaginationSyncFeedback>('idle');
   const [isPending, startTransition] = useTransition();
   const exportQuery = useMemo(() => buildExportQueryString(preferences), [preferences]);
+  const chapterEditorPaginationConfig = useMemo(() => {
+    const previewFormat =
+      preferences.device === 'mobile' || preferences.device === 'tablet'
+        ? preferences.device
+        : 'laptop';
+
+    return buildPaginationConfig(previewFormat, {
+      fontSize: preferences.fontSize ?? '16px',
+      margins: {
+        top: preferences.margins?.top ?? 24,
+        bottom: preferences.margins?.bottom ?? 24,
+        left: preferences.margins?.left ?? 24,
+        right: preferences.margins?.right ?? 24,
+      },
+    });
+  }, [preferences.device, preferences.fontSize, preferences.margins]);
+  const derivedChapterHtmlById = useMemo(() => {
+    const derivedSections = buildDerivedChapterSections(project, chapterEditorPaginationConfig);
+    return new Map(derivedSections.map((section) => [section.id, section.html]));
+  }, [chapterEditorPaginationConfig, project]);
 
   useEffect(() => {
     setActiveStep(normalizeWorkflowStep(project.workflowStep));
@@ -629,6 +651,7 @@ export function ProjectWorkspace({
         {editingChapterId !== null && editingChapterIndex >= 0 && (
           <ChapterEditorModal
             chapters={project.document.chapters}
+            derivedChapterHtmlById={derivedChapterHtmlById}
             currentChapterIndex={editingChapterIndex}
             isOpen={editingChapterId !== null}
             projectId={project.id}

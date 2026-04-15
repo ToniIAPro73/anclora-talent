@@ -8,7 +8,12 @@ import { projectRepository } from '@/lib/db/repositories';
 import { uploadProjectBlob } from '@/lib/blob/client';
 import { normalizeSurfaceState, type SurfaceState } from './cover-surface';
 import { buildPaginationConfig } from '@/lib/preview/device-configs';
-import { buildSyncedTocChapterContent } from '@/lib/preview/preview-builder';
+import {
+  buildSyncedTocChapterContent,
+  isTocChapter,
+  stripExistingTocPageNumbers,
+} from '@/lib/preview/preview-builder';
+import { chapterBlocksToHtml } from './chapter-html';
 import type { CoverDesign, UpdateBackCoverInput, UpdateCoverInput, UpdateDocumentInput } from './types';
 import { defaultEditorPreferences } from '@/lib/ui-preferences/preferences';
 
@@ -142,6 +147,10 @@ export async function saveChapterContentAction(formData: FormData) {
   const chapter = project.document.chapters.find((ch) => ch.id === chapterId);
   if (!chapter) return;
 
+  const sanitizedHtmlContent = isTocChapter(chapterTitle || chapter.title)
+    ? stripExistingTocPageNumbers(htmlContent)
+    : htmlContent;
+
   // Replace all blocks with a single block containing the complete HTML content
   // This prevents duplication when concatenating multiple blocks
   const blockId = chapter.blocks[0]?.id ?? randomUUID();
@@ -152,7 +161,7 @@ export async function saveChapterContentAction(formData: FormData) {
     chapterTitle: chapterTitle || chapter.title,
     chapterId,
     blocks: [
-      { id: blockId, content: htmlContent },
+      { id: blockId, content: sanitizedHtmlContent },
       // Include other blocks with empty content to preserve their IDs but effectively remove them
       ...chapter.blocks.slice(1).map((block) => ({ id: block.id, content: '' })),
     ],
@@ -324,21 +333,25 @@ export async function syncProjectPaginationAction(formData: FormData) {
     return { status: 'missing-index' as const };
   }
 
-  await projectRepository.saveDocument(userId, projectId, {
-    title: project.document.title,
-    subtitle: project.document.subtitle,
-    author: project.document.author,
-    chapterTitle: syncedToc.chapterTitle,
-    chapterId: syncedToc.chapterId,
-    blocks: [
-      {
-        id:
-          project.document.chapters.find((chapter) => chapter.id === syncedToc.chapterId)?.blocks[0]?.id ??
-          randomUUID(),
-        content: syncedToc.html,
-      },
-    ],
-  });
+  const tocChapter = project.document.chapters.find((chapter) => chapter.id === syncedToc.chapterId);
+  const persistedTocHtml = tocChapter ? chapterBlocksToHtml(tocChapter.blocks) : '';
+  const sanitizedTocHtml = stripExistingTocPageNumbers(persistedTocHtml);
+
+  if (tocChapter && sanitizedTocHtml !== persistedTocHtml) {
+    await projectRepository.saveDocument(userId, projectId, {
+      title: project.document.title,
+      subtitle: project.document.subtitle,
+      author: project.document.author,
+      chapterTitle: tocChapter.title,
+      chapterId: tocChapter.id,
+      blocks: [
+        {
+          id: tocChapter.blocks[0]?.id ?? randomUUID(),
+          content: sanitizedTocHtml,
+        },
+      ],
+    });
+  }
 
   revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);

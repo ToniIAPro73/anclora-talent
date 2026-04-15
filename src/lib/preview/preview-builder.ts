@@ -104,7 +104,7 @@ export function buildPreviewPages(
   // BUILD CHAPTER SECTIONS (for pagination and TOC)
   // ─────────────────────────────────────────────────────────────
 
-  const resolvedSections = buildResolvedChapterSections(project, config);
+  const resolvedSections = buildDerivedChapterSections(project, config);
 
   // ─────────────────────────────────────────────────────────────
   // PAGINATE CHAPTERS
@@ -159,7 +159,7 @@ export function buildPreviewContentFlowHtml(
   project: ProjectRecord,
   config: PaginationConfig,
 ) {
-  const resolvedSections = buildResolvedChapterSections(project, config);
+  const resolvedSections = buildDerivedChapterSections(project, config);
 
   return resolvedSections
     .map((chapter) => reconcileOverflowBreaks(normalizeHtmlContent(chapter.html), config))
@@ -170,7 +170,7 @@ export function buildSyncedTocChapterContent(
   project: ProjectRecord,
   config: PaginationConfig,
 ) {
-  const resolvedSections = buildResolvedChapterSections(project, config);
+  const resolvedSections = buildDerivedChapterSections(project, config);
   const tocSection = resolvedSections.find((chapter) => isTocChapter(chapter.title));
 
   if (!tocSection) {
@@ -184,7 +184,7 @@ export function buildSyncedTocChapterContent(
   };
 }
 
-function buildResolvedChapterSections(
+export function buildDerivedChapterSections(
   project: ProjectRecord,
   config: PaginationConfig,
 ) {
@@ -274,7 +274,7 @@ function measureChapterPageMetrics(
   };
 }
 
-function isTocChapter(title: string) {
+export function isTocChapter(title: string) {
   const normalized = title.trim().toLowerCase();
   return normalized === 'índice' || normalized === 'indice' || normalized === 'index';
 }
@@ -524,7 +524,7 @@ function injectTocPageNumbers(
   );
 }
 
-function stripExistingTocPageNumbers(html: string) {
+export function stripExistingTocPageNumbers(html: string) {
   let current = html;
   let previous = '';
 

@@ -13,6 +13,7 @@ import type { DocumentChapter } from '@/lib/projects/types';
 
 export interface UseChapterEditorOptions {
   chapters: DocumentChapter[];
+  derivedChapterHtmlById?: Map<string, string>;
   initialChapterIndex: number;
   projectId: string;
   onChapterChange?: (index: number) => void;
@@ -44,6 +45,7 @@ function normalizeLoadedChapterHtml(
 
 export function useChapterEditor({
   chapters,
+  derivedChapterHtmlById,
   initialChapterIndex,
   projectId,
   onChapterChange,
@@ -53,9 +55,12 @@ export function useChapterEditor({
 }: UseChapterEditorOptions) {
   const router = useRouter();
   const initialChapter = chapters[initialChapterIndex];
+  const initialChapterSourceHtml = initialChapter
+    ? derivedChapterHtmlById?.get(initialChapter.id) ?? chapterBlocksToHtml(initialChapter.blocks)
+    : '';
   const initialHtmlContent = initialChapter
     ? normalizeLoadedChapterHtml(
-        chapterBlocksToHtml(initialChapter.blocks),
+        initialChapterSourceHtml,
         device,
         fontSize,
         margins,
@@ -202,8 +207,10 @@ export function useChapterEditor({
       }
 
       const newChapter = localChapters[newIndex];
+      const nextChapterSourceHtml =
+        derivedChapterHtmlById?.get(newChapter.id) ?? chapterBlocksToHtml(newChapter.blocks);
       const reconstructedHtml = normalizeLoadedChapterHtml(
-        chapterBlocksToHtml(newChapter.blocks),
+        nextChapterSourceHtml,
         device,
         fontSize,
         margins,
@@ -217,7 +224,7 @@ export function useChapterEditor({
       setCurrentPage(0); // Reset to first page when changing chapters
       onChapterChange?.(newIndex);
     },
-    [device, fontSize, hasChanges, localChapters, margins, onChapterChange, persistCurrentChapter]
+    [derivedChapterHtmlById, device, fontSize, hasChanges, localChapters, margins, onChapterChange, persistCurrentChapter]
   );
 
   const goToPagePrev = useCallback(() => {
