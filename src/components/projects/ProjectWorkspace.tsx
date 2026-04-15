@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useTransition, useState, useMemo } from 'react';
+import { useEffect, useTransition, useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Loader2, Download } from 'lucide-react';
 import { Stepper, type Step } from '@/components/ui/Stepper';
@@ -179,7 +179,26 @@ export function ProjectWorkspace({
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [pageNumberSyncState, setPageNumberSyncState] = useState<SaveState>('idle');
   const [pageNumberSyncFeedback, setPageNumberSyncFeedback] = useState<PaginationSyncFeedback>('idle');
+  const [pageNumberIsStale, setPageNumberIsStale] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  // Track chapter changes to mark page numbers as stale
+  const prevChapterSignatureRef = useRef<string | null>(null);
+  useEffect(() => {
+    const signature = project.document.chapters
+      .map((ch) => `${ch.id}:${ch.order}`)
+      .join(',');
+
+    if (prevChapterSignatureRef.current === null) {
+      prevChapterSignatureRef.current = signature;
+      return;
+    }
+
+    if (signature !== prevChapterSignatureRef.current) {
+      prevChapterSignatureRef.current = signature;
+      setPageNumberIsStale(true);
+    }
+  }, [project.document.chapters]);
   const exportQuery = useMemo(() => buildExportQueryString(preferences), [preferences]);
 
   useEffect(() => {
@@ -327,6 +346,7 @@ export function ProjectWorkspace({
       const result = await syncProjectPaginationAction(formData);
       router.refresh();
       setPageNumberSyncState('saved');
+      setPageNumberIsStale(false);
       setPageNumberSyncFeedback(result?.status === 'missing-index' ? 'missing-index' : 'done');
       window.setTimeout(() => setPageNumberSyncState('idle'), 2000);
       window.setTimeout(() => setPageNumberSyncFeedback('idle'), 3500);
@@ -411,6 +431,7 @@ export function ProjectWorkspace({
                     ? 'synced'
                     : 'idle'
               }
+              pageNumberIsStale={pageNumberIsStale}
               syncPageNumbersLabel={copy.chapterSyncPageNumbers}
               syncPageNumbersTitle={copy.chapterSyncPageNumbersTitle}
               syncPageNumbersHelper={copy.chapterSyncPageNumbersHelper}
