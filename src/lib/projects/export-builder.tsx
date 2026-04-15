@@ -504,7 +504,11 @@ export async function buildProjectPdfWithConfig(
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
   const contentImageUrls = await Promise.all(
-    pages.map((page) => buildContentPageExportImageDataUrl(page, exportConfig)),
+    pages.map((page) =>
+      buildContentPageExportImageDataUrl(page, exportConfig, {
+        allowSvgFallback: false,
+      }),
+    ),
   );
 
   return (

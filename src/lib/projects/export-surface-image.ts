@@ -961,6 +961,9 @@ export async function buildBackCoverExportImageDataUrl(project: ProjectRecord) {
 export async function buildContentPageExportImageDataUrl(
   page: PreviewPage,
   config: PaginationConfig,
+  options?: {
+    allowSvgFallback?: boolean;
+  },
 ) {
   if (page.type !== 'content' || !page.content?.trim()) {
     return null;
@@ -973,6 +976,10 @@ export async function buildContentPageExportImageDataUrl(
   });
   if (browserRendered) {
     return browserRendered;
+  }
+
+  if (options?.allowSvgFallback === false) {
+    return null;
   }
 
   const blocks = parsePageContent(page.content);

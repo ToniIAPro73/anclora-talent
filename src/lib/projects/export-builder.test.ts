@@ -53,9 +53,10 @@ describe('export-builder', () => {
     expect(html).not.toContain('Anclora Talent');
   }, 15000);
 
-  test('builds a PDF document object', async () => {
-    const pdfDoc = await buildProjectPdf(makeProject());
-    expect(pdfDoc).toBeTruthy();
+  test('fails PDF export when an exact preview render is unavailable for content pages', async () => {
+    await expect(buildProjectPdf(makeProject())).rejects.toThrow(
+      'PDF export requires a rendered preview image for content page 2.',
+    );
   });
 
   test('content page image generator returns a PNG data URL for DOCX page locking', async () => {
