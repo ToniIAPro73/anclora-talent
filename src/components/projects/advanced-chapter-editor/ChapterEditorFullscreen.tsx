@@ -10,7 +10,6 @@ import type { DocumentChapter } from '@/lib/projects/types';
 
 interface ChapterEditorFullscreenProps {
   chapters: DocumentChapter[];
-  derivedChapterHtmlById?: Map<string, string>;
   initialChapterIndex: number;
   projectId: string;
   onClose: () => void;
@@ -22,7 +21,6 @@ interface ChapterEditorFullscreenProps {
 
 export function ChapterEditorFullscreen({
   chapters,
-  derivedChapterHtmlById,
   initialChapterIndex,
   projectId,
   onClose,
@@ -41,7 +39,6 @@ export function ChapterEditorFullscreen({
 
   const editor = useChapterEditor({
     chapters,
-    derivedChapterHtmlById,
     initialChapterIndex,
     projectId,
     device,

@@ -5,7 +5,6 @@ import type { DocumentChapter } from '@/lib/projects/types';
 
 interface ChapterEditorModalProps {
   chapters: DocumentChapter[];
-  derivedChapterHtmlById?: Map<string, string>;
   currentChapterIndex: number;
   isOpen: boolean;
   projectId: string;
@@ -19,7 +18,6 @@ interface ChapterEditorModalProps {
  */
 export function ChapterEditorModal({
   chapters,
-  derivedChapterHtmlById,
   currentChapterIndex,
   isOpen,
   projectId,
@@ -35,7 +33,6 @@ export function ChapterEditorModal({
     >
       <ChapterEditorFullscreen
         chapters={chapters}
-        derivedChapterHtmlById={derivedChapterHtmlById}
         initialChapterIndex={currentChapterIndex}
         projectId={projectId}
         onClose={onClose}
