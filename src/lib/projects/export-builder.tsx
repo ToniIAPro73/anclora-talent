@@ -2,10 +2,13 @@ import {
   AlignmentType,
   Document as DocxDocument,
   HeadingLevel,
+  HorizontalPositionRelativeFrom,
   ImageRun,
   Packer,
   Paragraph,
   TextRun,
+  TextWrappingType,
+  VerticalPositionRelativeFrom,
 } from 'docx';
 import {
   Document,
@@ -773,6 +776,9 @@ export async function buildProjectDocxBuffer(
           bottom: pageImagePayloads[index] != null ? 0 : 1080,
           left: pageImagePayloads[index] != null ? 0 : 1080,
           right: pageImagePayloads[index] != null ? 0 : 1080,
+          header: 0,
+          footer: 0,
+          gutter: 0,
         },
       },
     },
@@ -787,6 +793,27 @@ export async function buildProjectDocxBuffer(
                   transformation: {
                     width: docxPageWidth,
                     height: docxPageHeight,
+                  },
+                  floating: {
+                    horizontalPosition: {
+                      relative: HorizontalPositionRelativeFrom.PAGE,
+                      offset: 0,
+                    },
+                    verticalPosition: {
+                      relative: VerticalPositionRelativeFrom.PAGE,
+                      offset: 0,
+                    },
+                    wrap: {
+                      type: TextWrappingType.NONE,
+                    },
+                    margins: {
+                      top: 0,
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                    },
+                    allowOverlap: true,
+                    behindDocument: false,
                   },
                 }),
               ],

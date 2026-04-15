@@ -101,5 +101,7 @@ describe('export-builder', () => {
     const imageReferences = (documentXml.match(/<a:blip\b/g) ?? []).length;
 
     expect(imageReferences).toBe(pages.length);
+    expect(documentXml).toContain('<wp:anchor');
+    expect(documentXml).not.toContain('<wp:inline');
   });
 });
