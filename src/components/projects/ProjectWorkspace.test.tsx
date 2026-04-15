@@ -16,7 +16,7 @@ vi.mock('@/lib/projects/actions', () => ({
   saveChapterContentAction: vi.fn().mockResolvedValue(undefined),
   saveProjectDocumentAction: vi.fn().mockResolvedValue(undefined),
   saveProjectWorkflowStepAction: vi.fn().mockResolvedValue(undefined),
-  syncProjectPaginationAction: vi.fn().mockResolvedValue(undefined),
+  syncProjectPaginationAction: vi.fn().mockResolvedValue({ status: 'updated' }),
   moveChapterAction: vi.fn().mockResolvedValue(undefined),
   deleteChapterAction: vi.fn().mockResolvedValue(undefined),
   saveProjectCoverAction: vi.fn().mockResolvedValue(undefined),
@@ -120,6 +120,7 @@ function makeProject(overrides: Partial<ProjectRecord> = {}): ProjectRecord {
 describe('ProjectWorkspace', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    vi.mocked(syncProjectPaginationAction).mockResolvedValue({ status: 'updated' });
   });
 
   test('renders the project title in the header', () => {
@@ -202,6 +203,24 @@ describe('ProjectWorkspace', () => {
     return waitFor(() => {
       expect(syncProjectPaginationAction).toHaveBeenCalledTimes(1);
       expect(syncButton).toHaveAttribute('data-sync-state', 'synced');
+      expect(screen.getByTestId('pagination-sync-feedback-done')).toHaveTextContent(
+        copy.chapterSyncPageNumbersDone,
+      );
+    });
+  });
+
+  test('shows a warning when pagination sync cannot find an index chapter', () => {
+    vi.mocked(syncProjectPaginationAction).mockResolvedValue({ status: 'missing-index' });
+
+    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+
+    fireEvent.click(screen.getByText('Siguiente paso'));
+    fireEvent.click(screen.getByTestId('sync-page-numbers-button'));
+
+    return waitFor(() => {
+      expect(screen.getByTestId('pagination-sync-feedback-missing-index')).toHaveTextContent(
+        copy.chapterSyncPageNumbersMissingIndex,
+      );
     });
   });
 

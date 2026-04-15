@@ -85,6 +85,7 @@ function inferTemplateId(
 }
 
 type SaveState = 'idle' | 'saving' | 'saved';
+type PaginationSyncFeedback = 'idle' | 'done' | 'missing-index';
 const PROJECT_WORKFLOW_STEP_STORAGE_KEY = 'anclora-project-workflow-step';
 
 function normalizeWorkflowStep(step: number | undefined) {
@@ -177,6 +178,7 @@ export function ProjectWorkspace({
   );
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [pageNumberSyncState, setPageNumberSyncState] = useState<SaveState>('idle');
+  const [pageNumberSyncFeedback, setPageNumberSyncFeedback] = useState<PaginationSyncFeedback>('idle');
   const [isPending, startTransition] = useTransition();
   const exportQuery = useMemo(() => buildExportQueryString(preferences), [preferences]);
 
@@ -310,6 +312,7 @@ export function ProjectWorkspace({
 
   const handleSyncPageNumbers = () => {
     setPageNumberSyncState('saving');
+    setPageNumberSyncFeedback('idle');
 
     startTransition(async () => {
       const formData = new FormData();
@@ -321,10 +324,12 @@ export function ProjectWorkspace({
       formData.set('marginLeft', String(preferences.margins?.left ?? 24));
       formData.set('marginRight', String(preferences.margins?.right ?? 24));
 
-      await syncProjectPaginationAction(formData);
+      const result = await syncProjectPaginationAction(formData);
       router.refresh();
       setPageNumberSyncState('saved');
+      setPageNumberSyncFeedback(result?.status === 'missing-index' ? 'missing-index' : 'done');
       window.setTimeout(() => setPageNumberSyncState('idle'), 2000);
+      window.setTimeout(() => setPageNumberSyncFeedback('idle'), 3500);
     });
   };
 
@@ -561,6 +566,17 @@ export function ProjectWorkspace({
             <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]" data-testid="project-save-status-saved">
               <Check className="h-3 w-3" />
               Guardado
+            </span>
+          )}
+          {pageNumberSyncFeedback === 'done' && (
+            <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]" data-testid="pagination-sync-feedback-done">
+              <Check className="h-3 w-3" />
+              {copy.chapterSyncPageNumbersDone}
+            </span>
+          )}
+          {pageNumberSyncFeedback === 'missing-index' && (
+            <span className="flex items-center gap-1.5 text-xs text-amber-300" data-testid="pagination-sync-feedback-missing-index">
+              {copy.chapterSyncPageNumbersMissingIndex}
             </span>
           )}
         </div>

@@ -161,6 +161,8 @@ export type AppMessages = {
     chapterSyncPageNumbers: string;
     chapterSyncPageNumbersTitle: string;
     chapterSyncPageNumbersHelper: string;
+    chapterSyncPageNumbersDone: string;
+    chapterSyncPageNumbersMissingIndex: string;
     coverOpenBackCover: string;
     advancedCoverEyebrow: string;
     advancedCoverLayoutLabel: string;
@@ -452,6 +454,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       chapterSyncPageNumbersTitle: 'Recalcular la numeración del índice y de los pies de página',
       chapterSyncPageNumbersHelper:
         'Sincroniza el índice y los pies de página con la maquetación actual del preview.',
+      chapterSyncPageNumbersDone: 'Índice y numeración sincronizados.',
+      chapterSyncPageNumbersMissingIndex: 'No se encontró un capítulo Índice para sincronizar.',
       coverOpenBackCover: 'Contraportada',
       advancedCoverEyebrow: 'Distribución',
       advancedCoverLayoutLabel: 'Distribución',
@@ -741,6 +745,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       chapterSyncPageNumbersTitle: 'Recalculate the table of contents and footer page numbers',
       chapterSyncPageNumbersHelper:
         'Synchronize the table of contents and footers with the current preview layout.',
+      chapterSyncPageNumbersDone: 'Table of contents and pagination synchronized.',
+      chapterSyncPageNumbersMissingIndex: 'No table of contents chapter was found to synchronize.',
       coverOpenBackCover: 'Back cover',
       advancedCoverEyebrow: 'Layout',
       advancedCoverLayoutLabel: 'Layout',

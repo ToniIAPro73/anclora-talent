@@ -288,7 +288,9 @@ export async function syncProjectPaginationAction(formData: FormData) {
   const userId = await requireUserId();
   const projectId = String(formData.get('projectId') ?? '').trim();
 
-  if (!projectId) return;
+  if (!projectId) {
+    return { status: 'missing-project' as const };
+  }
 
   const device = String(formData.get('device') ?? defaultEditorPreferences.device);
   const fontSize = String(formData.get('fontSize') ?? defaultEditorPreferences.fontSize);
@@ -301,7 +303,9 @@ export async function syncProjectPaginationAction(formData: FormData) {
     device === 'mobile' || device === 'tablet' ? device : 'laptop';
 
   const project = await projectRepository.getProjectById(userId, projectId);
-  if (!project) return;
+  if (!project) {
+    return { status: 'missing-project' as const };
+  }
 
   const paginationConfig = buildPaginationConfig(previewFormat, {
     fontSize,
@@ -317,7 +321,7 @@ export async function syncProjectPaginationAction(formData: FormData) {
   if (!syncedToc) {
     revalidatePath(`/projects/${projectId}/editor`);
     revalidatePath(`/projects/${projectId}/preview`);
-    return;
+    return { status: 'missing-index' as const };
   }
 
   await projectRepository.saveDocument(userId, projectId, {
@@ -338,6 +342,7 @@ export async function syncProjectPaginationAction(formData: FormData) {
 
   revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
+  return { status: 'updated' as const };
 }
 
 export async function saveProjectCoverAction(formData: FormData) {
