@@ -1,13 +1,16 @@
 import { describe, expect, test } from 'vitest';
+import JSZip from 'jszip';
 import mammoth from 'mammoth';
 import { createProjectRecord } from './factories';
 import { createDefaultSurfaceState } from './cover-surface';
+import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 import {
   buildExportPreview,
   buildProjectDocxBuffer,
   buildProjectPdf,
   renderProjectExportHtml,
 } from './export-builder';
+import { buildContentPageExportImageDataUrl } from './export-surface-image';
 
 const TINY_PNG_DATA_URL =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9WnR6i4AAAAASUVORK5CYII=';
@@ -40,26 +43,66 @@ describe('export-builder', () => {
     expect(pages.some((page) => page.type === 'content')).toBe(true);
   });
 
-  test('renders HTML export with the preview page shell and rendered assets', () => {
-    const html = renderProjectExportHtml(makeProject());
+  test('renders HTML export with the preview page shell and rendered assets', async () => {
+    const html = await renderProjectExportHtml(makeProject());
 
     expect(html).toContain('<!DOCTYPE html>');
     expect(html).toContain('export-document');
-    expect(html).toContain(TINY_PNG_DATA_URL);
+    expect(html).toMatch(/<img class="export-full-image" src="data:image\/png;base64,[^"]+"/);
     expect(html).toContain('page-break-after: always');
     expect(html).not.toContain('Anclora Talent');
+  }, 15000);
+
+  test('fails PDF export when an exact preview render is unavailable for content pages', async () => {
+    await expect(buildProjectPdf(makeProject())).rejects.toThrow(
+      'PDF export requires a rendered preview image for content page 2.',
+    );
   });
 
-  test('builds a PDF document object', () => {
-    const pdfDoc = buildProjectPdf(makeProject());
-    expect(pdfDoc).toBeTruthy();
+  test('content page image generator returns a PNG data URL for DOCX page locking', async () => {
+    const first = await buildContentPageExportImageDataUrl(
+      {
+        type: 'content',
+        content: '<h2>Primera página</h2><p>Contenido A</p>',
+        pageNumber: 2,
+      },
+      DEVICE_PAGINATION_CONFIGS.laptop,
+    );
+
+    expect(first).toMatch(/^data:image\/png;base64,/);
   });
 
-  test('builds a non-empty DOCX buffer without synthetic cover text when a rendered cover exists', async () => {
-    const buffer = await buildProjectDocxBuffer(makeProject());
+  test('builds a DOCX with one locked image frame per preview page and no synthetic cover text', async () => {
+    const project = makeProject();
+    project.document.chapters = [
+      {
+        ...project.document.chapters[0],
+        title: 'Capítulo 1',
+        blocks: [
+          { id: 'heading', order: 1, type: 'heading', content: '<h1>Capítulo 1</h1>' },
+          {
+            id: 'body',
+            order: 2,
+            type: 'paragraph',
+            content: `<p>${'Contenido de prueba '.repeat(900)}</p>`,
+          },
+        ],
+      },
+    ];
+
+    const pages = buildExportPreview(project);
+    const buffer = await buildProjectDocxBuffer(project);
     expect(buffer.byteLength).toBeGreaterThan(0);
 
     const extracted = await mammoth.extractRawText({ buffer });
     expect(extracted.value).not.toContain('Anclora Talent');
+
+    const zip = await JSZip.loadAsync(buffer);
+    const documentXml = await zip.file('word/document.xml')!.async('string');
+    const imageReferences = (documentXml.match(/<a:blip\b/g) ?? []).length;
+
+    expect(imageReferences).toBe(pages.length);
+    expect(documentXml).toContain('<wp:anchor');
+    expect(documentXml).not.toContain('<wp:inline');
   });
 });

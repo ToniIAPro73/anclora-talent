@@ -84,17 +84,20 @@ describe('PreviewCanvas', () => {
 
     expect(screen.getByRole('button', { name: copy.previewModalSpreadView })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: copy.previewModalLaptop })).toBeInTheDocument();
-    expect(screen.getByTestId('preview-document-scroll')).toBeInTheDocument();
+    expect(screen.getByTestId('preview-modal-stage')).toBeInTheDocument();
+    expect(screen.getByTestId('preview-modal-footer')).toBeInTheDocument();
   });
 
-  test('shows chapter navigation entries inside the opened modal', () => {
+  test('shows imported chapter content inside the opened modal when navigating past the cover', () => {
     render(<PreviewCanvas copy={copy} project={makeProject()} />);
 
     fireEvent.click(screen.getByRole('button', { name: /open full preview/i }));
+    fireEvent.click(screen.getByRole('button', { name: copy.previewModalNext }));
 
-    const sidebarToc = screen.getByTestId('preview-sidebar-toc');
-    expect(sidebarToc).toBeInTheDocument();
-    expect(within(sidebarToc).getByText('Introducción')).toBeInTheDocument();
+    const previewStage = screen.getByTestId('preview-modal-stage');
+    expect(previewStage).toBeInTheDocument();
+    expect(within(previewStage).getByText('Contexto')).toBeInTheDocument();
+    expect(within(previewStage).getByText('Punto 1')).toBeInTheDocument();
   });
 
   test('closes the full preview modal and returns to the launcher button', () => {
@@ -104,6 +107,6 @@ describe('PreviewCanvas', () => {
     fireEvent.click(screen.getByRole('button', { name: copy.previewModalClose }));
 
     expect(screen.getByRole('button', { name: /open full preview/i })).toBeInTheDocument();
-    expect(screen.queryByTestId('preview-document-scroll')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('preview-modal-stage')).not.toBeInTheDocument();
   });
 });

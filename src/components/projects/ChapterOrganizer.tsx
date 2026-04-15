@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, ChevronUp, Trash2, Edit2, Plus, Download } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2, Edit2, Plus, Download, Hash, Loader2, Check } from 'lucide-react';
 import { deleteChapterAction, moveChapterAction } from '@/lib/projects/actions';
 import { calculateWordCount } from '@/lib/projects/document-stats';
 import { formatChapterPageMetrics, type ChapterPageMetrics } from '@/lib/preview/metrics';
@@ -14,6 +14,11 @@ export function ChapterOrganizer({
   onEditChapter,
   onAddChapter,
   onImportChapter,
+  onSyncPageNumbers,
+  pageNumberSyncState = 'idle',
+  syncPageNumbersLabel = 'Actualizar numeración',
+  syncPageNumbersTitle = 'Recalcular la numeración del preview y la exportación',
+  syncPageNumbersHelper = 'Sincroniza el índice y los pies de página con la maquetación actual.',
   metricsById = {},
 }: {
   projectId: string;
@@ -23,6 +28,11 @@ export function ChapterOrganizer({
   onEditChapter: (chapterId: string) => void;
   onAddChapter: () => void;
   onImportChapter: () => void;
+  onSyncPageNumbers: () => void;
+  pageNumberSyncState?: 'idle' | 'syncing' | 'synced';
+  syncPageNumbersLabel?: string;
+  syncPageNumbersTitle?: string;
+  syncPageNumbersHelper?: string;
   metricsById?: Record<string, ChapterPageMetrics>;
 }) {
   return (
@@ -33,10 +43,31 @@ export function ChapterOrganizer({
     >
       {/* Header with action buttons */}
       <div className="mb-4 flex items-center justify-between px-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-tertiary)]">
-          Capítulos ({chapters.length})
-        </p>
-        <div className="flex gap-2">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-tertiary)]">
+            Capítulos ({chapters.length})
+          </p>
+          <p className="mt-1 text-[11px] text-[var(--text-tertiary)]">
+            {syncPageNumbersHelper}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onSyncPageNumbers}
+            className="inline-flex items-center gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-1.5 text-[11px] font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-highlight)] hover:text-[var(--text-primary)]"
+            title={syncPageNumbersTitle}
+            data-testid="sync-page-numbers-button"
+            data-sync-state={pageNumberSyncState}
+          >
+            {pageNumberSyncState === 'syncing' ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : pageNumberSyncState === 'synced' ? (
+              <Check className="h-3.5 w-3.5" />
+            ) : (
+              <Hash className="h-3.5 w-3.5" />
+            )}
+            <span>{syncPageNumbersLabel}</span>
+          </button>
           <button
             onClick={onAddChapter}
             className="inline-flex items-center gap-1 rounded-[8px] bg-[var(--surface-soft)] p-1.5 text-[var(--text-secondary)] transition hover:bg-[var(--surface-highlight)] hover:text-[var(--text-primary)]"

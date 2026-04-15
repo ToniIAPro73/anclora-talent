@@ -20,6 +20,7 @@ import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
 import { PaginationConfig } from './device-configs';
 import { hasRenderablePageContent, paginateContent } from './content-paginator';
 import { reconcileOverflowBreaks } from './editor-page-layout';
+import { normalizeHtmlContent } from './html-normalize';
 
 // ==================== TYPES ====================
 
@@ -46,6 +47,18 @@ export interface PreviewPage {
   chapterId?: string;
   pageNumber: number;
 }
+
+interface ChapterSection {
+  id: string;
+  title: string;
+  html: string;
+  order: number;
+}
+
+type ChapterPageMetrics = {
+  firstPageByChapterId: Map<string, number>;
+  pageCountByChapterId: Map<string, number>;
+};
 
 // ==================== PAGE BUILDER ====================
 
@@ -87,32 +100,7 @@ export function buildPreviewPages(
   // BUILD CHAPTER SECTIONS (for pagination and TOC)
   // ─────────────────────────────────────────────────────────────
 
-  interface ChapterSection {
-    id: string;
-    title: string;
-    html: string;
-    order: number;
-  }
-
-  const chapterSections: ChapterSection[] = [];
-
-  if (project.document.chapters && project.document.chapters.length > 0) {
-    const sortedChapters = [...project.document.chapters].sort(
-      (a, b) => a.order - b.order,
-    );
-
-    sortedChapters.forEach((chapter, index) => {
-      const chapterTitle = chapter.title?.trim() || `Capítulo ${index + 1}`;
-      const chapterHtml = chapterBlocksToHtml(chapter.blocks);
-
-      chapterSections.push({
-        id: chapter.id,
-        title: chapterTitle,
-        html: chapterHtml || '<p><em>Contenido aún no disponible</em></p>',
-        order: index,
-      });
-    });
-  }
+  const resolvedSections = buildResolvedChapterSections(project, config);
 
   // ─────────────────────────────────────────────────────────────
   // PAGINATE CHAPTERS
@@ -120,7 +108,7 @@ export function buildPreviewPages(
 
   let globalPageNumber = 2; // Content starts immediately after cover
 
-  for (const chapter of chapterSections) {
+  for (const chapter of resolvedSections) {
     // Reconcile auto-breaks (strips stale auto-breaks, respects manual breaks, re-paginates)
     // then split into discrete page HTML strings.
     const reconciledChapterHtml = reconcileOverflowBreaks(chapter.html, config);
@@ -161,6 +149,250 @@ export function buildPreviewPages(
   }
 
   return pages;
+}
+
+export function buildPreviewContentFlowHtml(
+  project: ProjectRecord,
+  config: PaginationConfig,
+) {
+  const resolvedSections = buildResolvedChapterSections(project, config);
+
+  return resolvedSections
+    .map((chapter) => reconcileOverflowBreaks(normalizeHtmlContent(chapter.html), config))
+    .join('<hr data-page-break="manual">');
+}
+
+export function buildSyncedTocChapterContent(
+  project: ProjectRecord,
+  config: PaginationConfig,
+) {
+  const resolvedSections = buildResolvedChapterSections(project, config);
+  const tocSection = resolvedSections.find((chapter) => isTocChapter(chapter.title));
+
+  if (!tocSection) {
+    return null;
+  }
+
+  return {
+    chapterId: tocSection.id,
+    chapterTitle: tocSection.title,
+    html: tocSection.html,
+  };
+}
+
+function buildResolvedChapterSections(
+  project: ProjectRecord,
+  config: PaginationConfig,
+) {
+  const chapterSections = buildChapterSections(project);
+  return resolveTocChapterHtml(chapterSections, config, project);
+}
+
+function buildChapterSections(project: ProjectRecord): ChapterSection[] {
+  const chapterSections: ChapterSection[] = [];
+
+  if (!project.document.chapters?.length) {
+    return chapterSections;
+  }
+
+  const sortedChapters = [...project.document.chapters].sort(
+    (a, b) => a.order - b.order,
+  );
+
+  sortedChapters.forEach((chapter, index) => {
+    const chapterTitle = chapter.title?.trim() || `Capítulo ${index + 1}`;
+    const chapterHtml = chapterBlocksToHtml(chapter.blocks);
+
+    chapterSections.push({
+      id: chapter.id,
+      title: chapterTitle,
+      html: chapterHtml || '<p><em>Contenido aún no disponible</em></p>',
+      order: index,
+    });
+  });
+
+  return chapterSections;
+}
+
+function resolveTocChapterHtml(
+  chapterSections: ChapterSection[],
+  config: PaginationConfig,
+  project: ProjectRecord,
+) {
+  let currentSections = chapterSections;
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const metrics = measureChapterPageMetrics(currentSections, config);
+    const nextSections = currentSections.map((chapter) => {
+      if (!isTocChapter(chapter.title)) {
+        return chapter;
+      }
+
+      const nextHtml = buildTocChapterHtml(project, currentSections, metrics, chapter.html);
+      return nextHtml === chapter.html ? chapter : { ...chapter, html: nextHtml };
+    });
+
+    const hasChanged = nextSections.some((section, index) => section.html !== currentSections[index]?.html);
+    currentSections = nextSections;
+
+    if (!hasChanged) {
+      break;
+    }
+  }
+
+  return currentSections;
+}
+
+function measureChapterPageMetrics(
+  chapterSections: ChapterSection[],
+  config: PaginationConfig,
+): ChapterPageMetrics {
+  const firstPageByChapterId = new Map<string, number>();
+  const pageCountByChapterId = new Map<string, number>();
+
+  let globalPageNumber = 2;
+
+  for (const chapter of chapterSections) {
+    const reconciledChapterHtml = reconcileOverflowBreaks(chapter.html, config);
+    const chapterPageHtmls = paginateContent(reconciledChapterHtml, config)
+      .filter((page) => hasRenderablePageContent(page.html))
+      .map((page) => page.html);
+
+    const pageCount = Math.max(chapterPageHtmls.length, 1);
+    firstPageByChapterId.set(chapter.id, globalPageNumber);
+    pageCountByChapterId.set(chapter.id, pageCount);
+    globalPageNumber += pageCount;
+  }
+
+  return {
+    firstPageByChapterId,
+    pageCountByChapterId,
+  };
+}
+
+function isTocChapter(title: string) {
+  const normalized = title.trim().toLowerCase();
+  return normalized === 'índice' || normalized === 'indice' || normalized === 'index';
+}
+
+function normalizeLookupKey(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function escapeHtml(text: string) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function buildDotLeader(level: number) {
+  // Always use enough dots to fill the entire line, flexbox + overflow:hidden will handle the rest
+  return '·'.repeat(300);
+}
+
+function buildTocChapterHtml(
+  project: ProjectRecord,
+  chapterSections: ChapterSection[],
+  metrics: ChapterPageMetrics,
+  fallbackHtml: string,
+) {
+  const chapterByNormalizedTitle = new Map(
+    chapterSections.map((chapter) => [normalizeLookupKey(chapter.title), chapter]),
+  );
+
+  const sourceOutline = project.document.source?.outline?.filter(
+    (entry) => !isTocChapter(entry.title),
+  );
+
+  const outlineEntries =
+    sourceOutline && sourceOutline.length > 0
+      ? sourceOutline
+      : chapterSections
+          .filter((chapter) => !isTocChapter(chapter.title))
+          .map((chapter) => ({
+            title: chapter.title,
+            level: 1,
+          }));
+
+  if (outlineEntries.length === 0) {
+    return fallbackHtml;
+  }
+
+  const numberedEntries = outlineEntries
+    .map((entry) => {
+      const chapter = chapterByNormalizedTitle.get(normalizeLookupKey(entry.title));
+      if (!chapter) {
+        return null;
+      }
+
+      const firstPage = metrics.firstPageByChapterId.get(chapter.id);
+      if (!firstPage) {
+        return null;
+      }
+
+      return {
+        title: entry.title.trim(),
+        level: Math.max(1, entry.level ?? 1),
+        firstPage,
+      };
+    })
+    .filter((entry): entry is { title: string; level: number; firstPage: number } => Boolean(entry));
+
+  if (numberedEntries.length === 0) {
+    return fallbackHtml;
+  }
+
+  return injectTocPageNumbers(fallbackHtml, numberedEntries);
+}
+
+function injectTocPageNumbers(
+  html: string,
+  numberedEntries: Array<{ title: string; level: number; firstPage: number }>,
+) {
+  let entryIndex = 0;
+
+  return html.replace(
+    /<(p|li|h[1-6])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi,
+    (fullMatch, tagName: string, rawAttributes = '', innerHtml: string) => {
+      if (entryIndex >= numberedEntries.length) {
+        return fullMatch;
+      }
+
+      const plainText = normalizeLookupKey(stripHtmlTags(innerHtml));
+      const expectedText = normalizeLookupKey(numberedEntries[entryIndex].title);
+
+      if (!plainText || plainText !== expectedText) {
+        return fullMatch;
+      }
+
+      const entry = numberedEntries[entryIndex];
+      entryIndex += 1;
+
+      return `<${tagName}${rawAttributes}><span data-toc-line="true" data-toc-level="${entry.level}"><span data-toc-title="true">${innerHtml}</span><span data-toc-leader="true" aria-hidden="true">${buildDotLeader(entry.level)}</span><span data-toc-page="true">${entry.firstPage}</span></span></${tagName}>`;
+    },
+  );
+}
+
+function stripHtmlTags(value: string) {
+  return decodeHtmlEntities(value.replace(/<[^>]+>/g, ' '));
+}
+
+function decodeHtmlEntities(value: string) {
+  return value
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&#039;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&gt;/g, '>')
+    .replace(/&lt;/g, '<')
+    .replace(/&amp;/g, '&');
 }
 
 // ==================== HELPERS ====================

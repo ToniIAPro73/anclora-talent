@@ -11,6 +11,7 @@ import { AdvancedCoverEditor } from './advanced-cover/AdvancedCoverEditor';
 import { BackCoverForm } from './BackCoverForm';
 import { AdvancedBackCoverEditor } from './advanced-back-cover/AdvancedBackCoverEditor';
 import { PreviewCanvas } from './PreviewCanvas';
+import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { TemplateSelector } from './TemplateSelector';
 import { CollaborationPanel } from './CollaborationPanel';
 import { AIAssistant } from './AIAssistant';
@@ -18,7 +19,14 @@ import { ChapterEditorModal } from './ChapterEditorModal';
 import { AddChapterDialog } from './AddChapterDialog';
 import { ImportChapterDialog } from './ImportChapterDialog';
 import { Portal } from '@/components/ui/Portal';
-import { saveBackCoverAction, saveProjectDocumentAction, saveProjectCoverAction } from '@/lib/projects/actions';
+import { PdfExportButton } from './PdfExportButton';
+import {
+  saveBackCoverAction,
+  saveProjectCoverAction,
+  saveProjectDocumentAction,
+  saveProjectWorkflowStepAction,
+  syncProjectPaginationAction,
+} from '@/lib/projects/actions';
 import { computeChapterPageMetrics } from '@/lib/preview/metrics';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
@@ -36,6 +44,7 @@ import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface
 import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
+import { buildExportQueryString } from '@/lib/projects/export-config';
 
 const TEMPLATE_TONE_TO_PALETTE: Record<EditorialTemplate['previewTone'], ProjectRecord['cover']['palette']> = {
   obsidian: 'obsidian',
@@ -76,6 +85,7 @@ function inferTemplateId(
 }
 
 type SaveState = 'idle' | 'saving' | 'saved';
+type PaginationSyncFeedback = 'idle' | 'done' | 'missing-index';
 const PROJECT_WORKFLOW_STEP_STORAGE_KEY = 'anclora-project-workflow-step';
 
 function normalizeWorkflowStep(step: number | undefined) {
@@ -127,12 +137,12 @@ export function ProjectWorkspace({
   copy: AppMessages['project'];
 }) {
   const router = useRouter();
+  const { preferences } = useEditorPreferences();
   const [activeStep, setActiveStep] = useState(() => {
     const persistedStep = readStoredWorkflowStep(project.id);
-    return Math.max(
-      normalizeWorkflowStep(project.workflowStep),
-      persistedStep ?? 1,
-    );
+    return Number.isFinite(project.workflowStep)
+      ? normalizeWorkflowStep(project.workflowStep)
+      : (persistedStep ?? 1);
   });
   const [isAdvancedCover, setIsAdvancedCover] = useState(false);
   const [isAdvancedBackCover, setIsAdvancedBackCover] = useState(false);
@@ -167,21 +177,31 @@ export function ProjectWorkspace({
     ),
   );
   const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [pageNumberSyncState, setPageNumberSyncState] = useState<SaveState>('idle');
+  const [pageNumberSyncFeedback, setPageNumberSyncFeedback] = useState<PaginationSyncFeedback>('idle');
   const [isPending, startTransition] = useTransition();
+  const exportQuery = useMemo(() => buildExportQueryString(preferences), [preferences]);
 
   useEffect(() => {
-    const persistedStep = readStoredWorkflowStep(project.id);
-    setActiveStep(
-      Math.max(
-        normalizeWorkflowStep(project.workflowStep),
-        persistedStep ?? 1,
-      ),
-    );
+    setActiveStep(normalizeWorkflowStep(project.workflowStep));
   }, [project.id, project.updatedAt, project.workflowStep]);
 
   useEffect(() => {
     writeStoredWorkflowStep(project.id, activeStep);
   }, [activeStep, project.id]);
+
+  useEffect(() => {
+    if (normalizeWorkflowStep(project.workflowStep) === activeStep) {
+      return;
+    }
+
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.set('projectId', project.id);
+      formData.set('workflowStep', String(activeStep));
+      await saveProjectWorkflowStepAction(formData);
+    });
+  }, [activeStep, project.id, project.workflowStep, startTransition]);
 
   const activeCoverDraft = useMemo(
     () =>
@@ -290,6 +310,29 @@ export function ProjectWorkspace({
     { id: 9, title: copy.stepExport, description: copy.stepExportDesc, status: activeStep === 9 ? 'active' : activeStep > 9 ? 'completed' : 'pending' },
   ], [activeStep, copy]);
 
+  const handleSyncPageNumbers = () => {
+    setPageNumberSyncState('saving');
+    setPageNumberSyncFeedback('idle');
+
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.set('projectId', project.id);
+      formData.set('device', preferences.device ?? 'desktop');
+      formData.set('fontSize', preferences.fontSize ?? '16px');
+      formData.set('marginTop', String(preferences.margins?.top ?? 24));
+      formData.set('marginBottom', String(preferences.margins?.bottom ?? 24));
+      formData.set('marginLeft', String(preferences.margins?.left ?? 24));
+      formData.set('marginRight', String(preferences.margins?.right ?? 24));
+
+      const result = await syncProjectPaginationAction(formData);
+      router.refresh();
+      setPageNumberSyncState('saved');
+      setPageNumberSyncFeedback(result?.status === 'missing-index' ? 'missing-index' : 'done');
+      window.setTimeout(() => setPageNumberSyncState('idle'), 2000);
+      window.setTimeout(() => setPageNumberSyncFeedback('idle'), 3500);
+    });
+  };
+
   const renderStepContent = () => {
     switch (activeStep) {
       case 1: // Content
@@ -360,6 +403,17 @@ export function ProjectWorkspace({
               onEditChapter={setEditingChapterId}
               onAddChapter={() => setIsAddDialogOpen(true)}
               onImportChapter={() => setIsImportDialogOpen(true)}
+              onSyncPageNumbers={handleSyncPageNumbers}
+              pageNumberSyncState={
+                pageNumberSyncState === 'saving'
+                  ? 'syncing'
+                  : pageNumberSyncState === 'saved'
+                    ? 'synced'
+                    : 'idle'
+              }
+              syncPageNumbersLabel={copy.chapterSyncPageNumbers}
+              syncPageNumbersTitle={copy.chapterSyncPageNumbersTitle}
+              syncPageNumbersHelper={copy.chapterSyncPageNumbersHelper}
               metricsById={chapterMetricsById}
             />
           </section>
@@ -456,25 +510,22 @@ export function ProjectWorkspace({
             <div className="mt-8 flex flex-wrap justify-center gap-4">
                <button
                  onClick={() => {
-                   const htmlUrl = `/api/projects/export?projectId=${project.id}`;
+                   const htmlUrl = `/api/projects/export?projectId=${project.id}&${exportQuery}`;
                    window.open(htmlUrl, '_blank');
                  }}
                  className={`${premiumSecondaryLightButton} px-8 cursor-pointer hover:cursor-pointer`}
                >
                   {copy.previewExportButton}
                </button>
-               <button
-                 onClick={() => {
-                   const pdfUrl = `/api/projects/export/pdf?projectId=${project.id}`;
-                   window.open(pdfUrl, '_blank');
-                 }}
+               <PdfExportButton
+                 project={project}
+                 projectSlug={project.slug || ''}
+                 copy={copy}
                  className={`${premiumPrimaryDarkButton} px-8 cursor-pointer hover:cursor-pointer`}
-               >
-                  {copy.previewExportPdfButton}
-               </button>
+               />
                <button
                  onClick={() => {
-                   const docxUrl = `/api/projects/export/docx?projectId=${project.id}`;
+                   const docxUrl = `/api/projects/export/docx?projectId=${project.id}&${exportQuery}`;
                    window.open(docxUrl, '_blank');
                  }}
                  className={`${premiumSecondaryLightButton} px-8 cursor-pointer hover:cursor-pointer`}
@@ -515,6 +566,17 @@ export function ProjectWorkspace({
             <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]" data-testid="project-save-status-saved">
               <Check className="h-3 w-3" />
               Guardado
+            </span>
+          )}
+          {pageNumberSyncFeedback === 'done' && (
+            <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]" data-testid="pagination-sync-feedback-done">
+              <Check className="h-3 w-3" />
+              {copy.chapterSyncPageNumbersDone}
+            </span>
+          )}
+          {pageNumberSyncFeedback === 'missing-index' && (
+            <span className="flex items-center gap-1.5 text-xs text-amber-300" data-testid="pagination-sync-feedback-missing-index">
+              {copy.chapterSyncPageNumbersMissingIndex}
             </span>
           )}
         </div>

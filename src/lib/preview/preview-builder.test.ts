@@ -3,7 +3,7 @@
  * Tests the complete preview page building process
  */
 
-import { buildPreviewPages } from './preview-builder';
+import { buildPreviewContentFlowHtml, buildPreviewPages, buildSyncedTocChapterContent } from './preview-builder';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { DEVICE_PAGINATION_CONFIGS } from './device-configs';
 import { createDefaultSurfaceState } from '@/lib/projects/cover-surface';
@@ -442,6 +442,216 @@ describe('preview-builder', () => {
 
       const firstContentPage = pages.find((page) => page.type === 'content');
       expect(firstContentPage?.pageNumber).toBe(2);
+    });
+
+    it('enriches an index chapter with the real first page of each chapter', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          source: {
+            fileName: 'nunca.docx',
+            mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            importedAt: new Date().toISOString(),
+            outline: [
+              { title: 'Índice', level: 1, origin: 'generated' },
+              { title: 'Introducción', level: 1, origin: 'generated' },
+              { title: 'Fase 1', level: 1, origin: 'generated' },
+            ],
+          },
+          chapters: [
+            {
+              id: 'toc-chapter',
+              order: 0,
+              title: 'Índice',
+              blocks: [
+                {
+                  id: 'toc-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content:
+                    '<h2>Índice</h2><h2>Introducción</h2><p>Activación de la Presencia</p><h2>Fase 1</h2><ul><li>Día 1: Autoimagen.</li></ul>',
+                },
+              ],
+            },
+            {
+              id: 'intro-chapter',
+              order: 1,
+              title: 'Introducción',
+              blocks: [
+                {
+                  id: 'intro-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Introducción</h2><p>Texto</p>',
+                },
+              ],
+            },
+            {
+              id: 'phase-chapter',
+              order: 2,
+              title: 'Fase 1',
+              blocks: [
+                {
+                  id: 'phase-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Fase 1</h2><p>Otro texto</p>',
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const pages = buildPreviewPages(project, DEVICE_PAGINATION_CONFIGS.laptop);
+      const tocPage = pages.find(
+        (page) => page.type === 'content' && page.chapterTitle === 'Índice',
+      );
+
+      expect(tocPage?.content).toContain('Introducción');
+      expect(tocPage?.content).toContain('Fase 1');
+      expect(tocPage?.content).toContain('····');
+      expect(tocPage?.content).toContain('<h2><span data-toc-line="true"');
+      expect(tocPage?.content).toContain('<ul><li>Día 1: Autoimagen.</li></ul>');
+      expect(tocPage?.content).toContain('<span data-toc-page="true">3</span>');
+      expect(tocPage?.content).toContain('<span data-toc-page="true">4</span>');
+    });
+
+    it('falls back to chapter titles when there is no source outline for the index', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          chapters: [
+            {
+              id: 'toc-chapter',
+              order: 0,
+              title: 'Índice',
+              blocks: [
+                {
+                  id: 'toc-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Índice</h2><p>Introducción</p>',
+                },
+              ],
+            },
+            {
+              id: 'intro-chapter',
+              order: 1,
+              title: 'Introducción',
+              blocks: [
+                {
+                  id: 'intro-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Introducción</h2><p>Texto</p>',
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const pages = buildPreviewPages(project, DEVICE_PAGINATION_CONFIGS.laptop);
+      const tocPage = pages.find(
+        (page) => page.type === 'content' && page.chapterTitle === 'Índice',
+      );
+
+      expect(tocPage?.content).toContain('Introducción');
+      expect(tocPage?.content).toContain('<p><span data-toc-line="true"');
+      expect(tocPage?.content).toContain('<span data-toc-page="true">3</span>');
+    });
+
+    it('reuses the same toc-enriched html in the preview flow as in the exported pages', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          chapters: [
+            {
+              id: 'toc-chapter',
+              order: 0,
+              title: 'Índice',
+              blocks: [
+                {
+                  id: 'toc-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Índice</h2><p>Introducción</p>',
+                },
+              ],
+            },
+            {
+              id: 'intro-chapter',
+              order: 1,
+              title: 'Introducción',
+              blocks: [
+                {
+                  id: 'intro-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Introducción</h2><p>Texto</p>',
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const previewPages = buildPreviewPages(project, DEVICE_PAGINATION_CONFIGS.laptop);
+      const tocPage = previewPages.find(
+        (page) => page.type === 'content' && page.chapterTitle === 'Índice',
+      );
+      const flowHtml = buildPreviewContentFlowHtml(project, DEVICE_PAGINATION_CONFIGS.laptop);
+
+      expect(flowHtml).toContain('Introducción');
+      expect(flowHtml).toContain('<span data-toc-page="true">3</span>');
+      expect(flowHtml).toContain(tocPage?.content ?? '');
+    });
+
+    it('builds persisted toc chapter html for the editor sync action', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          chapters: [
+            {
+              id: 'toc-chapter',
+              order: 0,
+              title: 'Índice',
+              blocks: [
+                {
+                  id: 'toc-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Índice</h2><p>Introducción</p>',
+                },
+              ],
+            },
+            {
+              id: 'intro-chapter',
+              order: 1,
+              title: 'Introducción',
+              blocks: [
+                {
+                  id: 'intro-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Introducción</h2><p>Texto</p>',
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const syncedToc = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
+
+      expect(syncedToc).not.toBeNull();
+      expect(syncedToc?.chapterId).toBe('toc-chapter');
+      expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
     });
 
     it('reconciles stale automatic page breaks the same way as the chapter editor', () => {

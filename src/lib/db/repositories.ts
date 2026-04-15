@@ -12,6 +12,7 @@ import {
   updateProjectBackCover,
   updateProjectCover,
   updateProjectDocument,
+  updateProjectWorkflowStep,
 } from '@/lib/projects/factories';
 import type {
   CoverDesign,
@@ -193,6 +194,7 @@ function mapRowsToProject(
     slug: projectRow.slug,
     title: projectRow.title,
     status: projectRow.status as ProjectRecord['status'],
+    workflowStep: projectRow.workflowStep,
     createdAt: projectRow.createdAt.toISOString(),
     updatedAt: projectRow.updatedAt.toISOString(),
     document: {
@@ -281,6 +283,7 @@ export async function persistProjectGraph(db: ProjectGraphWriter, project: Proje
     slug: project.slug,
     title: project.title,
     status: project.status,
+    workflowStep: project.workflowStep,
     createdAt: new Date(project.createdAt),
     updatedAt: new Date(project.updatedAt),
   });
@@ -355,6 +358,7 @@ export async function persistDocumentUpdate(db: ProjectGraphWriterWithQuery, nex
     .update(projects)
     .set({
       title: nextProject.title,
+      workflowStep: nextProject.workflowStep,
       updatedAt: new Date(nextProject.updatedAt),
     })
     .where(eq(projects.id, nextProject.id));
@@ -598,6 +602,27 @@ async function saveCoverInDb(userId: string, projectId: string, input: UpdateCov
   return nextProject;
 }
 
+async function saveWorkflowStepInDb(userId: string, projectId: string, workflowStep: number) {
+  const db = getDb();
+  const current = await getProjectFromDb(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  const nextProject = updateProjectWorkflowStep(current, workflowStep);
+
+  await db
+    .update(projects)
+    .set({
+      workflowStep: nextProject.workflowStep,
+      updatedAt: new Date(nextProject.updatedAt),
+    })
+    .where(and(eq(projects.id, projectId), eq(projects.userId, userId)));
+
+  return nextProject;
+}
+
 async function saveRenderedCoverUrlInDb(userId: string, projectId: string, renderedImageUrl: string) {
   const db = getDb();
   const current = await getProjectFromDb(userId, projectId);
@@ -760,6 +785,18 @@ async function saveCoverInMemory(userId: string, projectId: string, input: Updat
   }
 
   const nextProject = updateProjectCover(current, input);
+  getMemoryStore().set(nextProject.id, nextProject);
+  return nextProject;
+}
+
+async function saveWorkflowStepInMemory(userId: string, projectId: string, workflowStep: number) {
+  const current = await getProjectFromMemory(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  const nextProject = updateProjectWorkflowStep(current, workflowStep);
   getMemoryStore().set(nextProject.id, nextProject);
   return nextProject;
 }
@@ -947,6 +984,11 @@ export const projectRepository = {
   },
   saveCover(userId: string, projectId: string, input: UpdateCoverInput) {
     return hasDatabase() ? saveCoverInDb(userId, projectId, input) : saveCoverInMemory(userId, projectId, input);
+  },
+  saveWorkflowStep(userId: string, projectId: string, workflowStep: number) {
+    return hasDatabase()
+      ? saveWorkflowStepInDb(userId, projectId, workflowStep)
+      : saveWorkflowStepInMemory(userId, projectId, workflowStep);
   },
   deleteProject(userId: string, projectId: string) {
     return hasDatabase() ? deleteProjectInDb(userId, projectId) : deleteProjectInMemory(userId, projectId);

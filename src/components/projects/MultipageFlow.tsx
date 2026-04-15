@@ -11,6 +11,8 @@ interface MultipageFlowProps {
   viewMode: 'single' | 'spread';
   margins: { top: number; bottom: number; left: number; right: number };
   onPageCountChange?: (pages: number) => void;
+  showPageNumbers?: boolean;
+  pageNumberOffset?: number;
 }
 
 export function MultipageFlow({
@@ -20,6 +22,8 @@ export function MultipageFlow({
   viewMode,
   margins,
   onPageCountChange,
+  showPageNumbers = false,
+  pageNumberOffset = 1,
 }: MultipageFlowProps) {
   const multipageFlowRef = useRef<HTMLDivElement>(null);
 
@@ -134,6 +138,34 @@ export function MultipageFlow({
         }
         .flow-content-root.ProseMirror p + p {
           margin-top: 0.8rem;
+        }
+        .flow-content-root.ProseMirror [data-toc-line="true"] {
+          display: grid;
+          grid-template-columns: auto minmax(0, 1fr) auto;
+          align-items: baseline;
+          column-gap: 0.5rem;
+          width: 100%;
+        }
+        .flow-content-root.ProseMirror [data-toc-title="true"] {
+          display: inline-block;
+          min-width: 0;
+        }
+        .flow-content-root.ProseMirror [data-toc-leader="true"] {
+          display: block;
+          min-width: 0.5rem;
+          overflow: hidden;
+          color: var(--text-tertiary);
+          letter-spacing: 0.08em;
+          line-height: 1;
+          transform: translateY(-0.02em);
+          white-space: nowrap;
+        }
+        .flow-content-root.ProseMirror [data-toc-page="true"] {
+          display: inline-block;
+          min-width: 1.5rem;
+          text-align: right;
+          font-weight: 700;
+          white-space: nowrap;
         }
         .flow-content-root.ProseMirror h1 {
           font-size: 2rem;
@@ -308,10 +340,19 @@ export function MultipageFlow({
         {visiblePageIndices.map((idx) => (
           <div
             key={`frame-${idx}`}
-            className="bg-[var(--preview-paper)] rounded-[8px] shadow-[var(--shadow-strong)] border border-[var(--preview-paper-border)]"
+            className="relative bg-[var(--preview-paper)] rounded-[8px] shadow-[var(--shadow-strong)] border border-[var(--preview-paper-border)]"
             style={{ height: `${pageHeight}px` }}
           >
             <div className="h-full w-full" style={pagePaddingStyle} />
+            {showPageNumbers ? (
+              <div className="pointer-events-none absolute inset-x-0 bottom-7 flex justify-center">
+                <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(7,12,20,0.05)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[var(--text-tertiary)]">
+                  <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
+                  <span>{idx + pageNumberOffset}</span>
+                  <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
+                </span>
+              </div>
+            ) : null}
           </div>
         ))}
       </div>

@@ -2,7 +2,10 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { renderToBuffer } from '@react-pdf/renderer';
 import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
-import { buildProjectPdf } from '@/lib/projects/pdf-builder';
+import { buildProjectPdfWithConfig } from '@/lib/projects/export-builder';
+import { resolveExportPaginationConfig } from '@/lib/projects/export-config';
+
+export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,7 +21,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    const pdfDoc = buildProjectPdf(project);
+    const exportConfig = resolveExportPaginationConfig(request.nextUrl.searchParams);
+    const pdfDoc = await buildProjectPdfWithConfig(project, exportConfig);
     const buffer = await renderToBuffer(pdfDoc);
 
     const slug = project.slug || 'proyecto';
@@ -33,6 +37,16 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('[export/pdf] failed', error);
-    return NextResponse.json({ error: 'PDF export failed' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'PDF export failed';
+    const details =
+      process.env.VERCEL_ENV === 'preview'
+        ? {
+            name: error instanceof Error ? error.name : typeof error,
+            message,
+            stack: error instanceof Error ? error.stack : undefined,
+          }
+        : undefined;
+
+    return NextResponse.json({ error: 'PDF export failed', details }, { status: 500 });
   }
 }

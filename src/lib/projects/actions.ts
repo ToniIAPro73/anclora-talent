@@ -7,7 +7,10 @@ import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
 import { uploadProjectBlob } from '@/lib/blob/client';
 import { normalizeSurfaceState, type SurfaceState } from './cover-surface';
+import { buildPaginationConfig } from '@/lib/preview/device-configs';
+import { buildSyncedTocChapterContent } from '@/lib/preview/preview-builder';
 import type { CoverDesign, UpdateBackCoverInput, UpdateCoverInput, UpdateDocumentInput } from './types';
+import { defaultEditorPreferences } from '@/lib/ui-preferences/preferences';
 
 function parsePalette(value: FormDataEntryValue | null): CoverDesign['palette'] {
   if (value === 'teal' || value === 'sand') {
@@ -109,6 +112,19 @@ export async function saveProjectDocumentAction(formData: FormData) {
   await projectRepository.saveDocument(userId, projectId, input);
   revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
+}
+
+export async function saveProjectWorkflowStepAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '').trim();
+  const workflowStep = Number(formData.get('workflowStep') ?? 1);
+
+  if (!projectId || !Number.isFinite(workflowStep)) {
+    return;
+  }
+
+  await projectRepository.saveWorkflowStep(userId, projectId, workflowStep);
+  revalidatePath(`/projects/${projectId}/editor`);
 }
 
 export async function saveChapterContentAction(formData: FormData) {
@@ -266,6 +282,67 @@ export async function importChapterAction(formData: FormData) {
 
   revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
+}
+
+export async function syncProjectPaginationAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '').trim();
+
+  if (!projectId) {
+    return { status: 'missing-project' as const };
+  }
+
+  const device = String(formData.get('device') ?? defaultEditorPreferences.device);
+  const fontSize = String(formData.get('fontSize') ?? defaultEditorPreferences.fontSize);
+  const marginTop = Number(formData.get('marginTop') ?? defaultEditorPreferences.margins?.top ?? 24);
+  const marginBottom = Number(formData.get('marginBottom') ?? defaultEditorPreferences.margins?.bottom ?? 24);
+  const marginLeft = Number(formData.get('marginLeft') ?? defaultEditorPreferences.margins?.left ?? 24);
+  const marginRight = Number(formData.get('marginRight') ?? defaultEditorPreferences.margins?.right ?? 24);
+
+  const previewFormat =
+    device === 'mobile' || device === 'tablet' ? device : 'laptop';
+
+  const project = await projectRepository.getProjectById(userId, projectId);
+  if (!project) {
+    return { status: 'missing-project' as const };
+  }
+
+  const paginationConfig = buildPaginationConfig(previewFormat, {
+    fontSize,
+    margins: {
+      top: marginTop,
+      bottom: marginBottom,
+      left: marginLeft,
+      right: marginRight,
+    },
+  });
+
+  const syncedToc = buildSyncedTocChapterContent(project, paginationConfig);
+  if (!syncedToc) {
+    revalidatePath(`/projects/${projectId}/editor`);
+    revalidatePath(`/projects/${projectId}/preview`);
+    return { status: 'missing-index' as const };
+  }
+
+  await projectRepository.saveDocument(userId, projectId, {
+    title: project.document.title,
+    subtitle: project.document.subtitle,
+    author: project.document.author,
+    chapterTitle: syncedToc.chapterTitle,
+    chapterId: syncedToc.chapterId,
+    blocks: [
+      {
+        id:
+          project.document.chapters.find((chapter) => chapter.id === syncedToc.chapterId)?.blocks[0]?.id ??
+          randomUUID(),
+        content: syncedToc.html,
+      },
+    ],
+  });
+
+  revalidatePath(`/projects/${projectId}/editor`);
+  revalidatePath(`/projects/${projectId}/preview`);
+  return { status: 'updated' as const };
 }
 
 export async function saveProjectCoverAction(formData: FormData) {

@@ -15,6 +15,47 @@ export interface ContentPage {
   pageNumber: number;
 }
 
+type DomRuntime = {
+  DOMParser: typeof globalThis.DOMParser;
+  document: Document;
+  Node: typeof globalThis.Node;
+};
+
+let cachedServerDomRuntime: DomRuntime | null | undefined;
+
+function getDomRuntime(): DomRuntime | null {
+  if (
+    typeof DOMParser !== 'undefined' &&
+    typeof document !== 'undefined' &&
+    typeof Node !== 'undefined'
+  ) {
+    return { DOMParser, document, Node };
+  }
+
+  if (typeof window !== 'undefined') {
+    return null;
+  }
+
+  if (cachedServerDomRuntime !== undefined) {
+    return cachedServerDomRuntime;
+  }
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { JSDOM } = require('jsdom') as { JSDOM: new (html?: string) => { window: Window & typeof globalThis } };
+    const runtimeWindow = new JSDOM('<!DOCTYPE html><html><body></body></html>').window;
+    cachedServerDomRuntime = {
+      DOMParser: runtimeWindow.DOMParser,
+      document: runtimeWindow.document,
+      Node: runtimeWindow.Node,
+    };
+    return cachedServerDomRuntime;
+  } catch {
+    cachedServerDomRuntime = null;
+    return null;
+  }
+}
+
 export function hasRenderablePageContent(html: string): boolean {
   const normalized = html
     .replace(/<hr\s+data-page-break="(?:true|manual|auto)"\s*\/?>/gi, '')
@@ -25,11 +66,12 @@ export function hasRenderablePageContent(html: string): boolean {
     return false;
   }
 
-  if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
+  const runtime = getDomRuntime();
+  if (!runtime) {
     return normalized.replace(/<[^>]+>/g, '').trim().length > 0;
   }
 
-  const parser = new DOMParser();
+  const parser = new runtime.DOMParser();
   const doc = parser.parseFromString(`<div>${normalized}</div>`, 'text/html');
   const container = doc.body.firstElementChild;
   if (!container) {
@@ -51,6 +93,10 @@ export function hasRenderablePageContent(html: string): boolean {
 export function countRenderablePages(pages: ContentPage[]): number {
   const renderablePages = pages.filter((page) => hasRenderablePageContent(page.html));
   return Math.max(renderablePages.length, 1);
+}
+
+export function getPaginationDomRuntime() {
+  return getDomRuntime();
 }
 
 /**
@@ -81,11 +127,12 @@ export function paginateContent(
   );
 
   // Parse HTML into DOM nodes
-  if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
+  const runtime = getDomRuntime();
+  if (!runtime) {
     return paginateByCharacters(htmlContent, config);
   }
 
-  const parser = new DOMParser();
+  const parser = new runtime.DOMParser();
   const doc = parser.parseFromString(`<div>${htmlContent}</div>`, 'text/html');
   const container = doc.body.firstElementChild;
 
@@ -107,13 +154,13 @@ export function paginateContent(
   let currentChapter = '';
 
   for (const node of nodes) {
-    if (node.nodeType === Node.TEXT_NODE && !node.textContent?.trim()) {
+    if (node.nodeType === runtime.Node.TEXT_NODE && !node.textContent?.trim()) {
       continue;
     }
 
     // Handle BR tags - treat as single line
     if (
-      node.nodeType === Node.ELEMENT_NODE &&
+      node.nodeType === runtime.Node.ELEMENT_NODE &&
       (node as Element).tagName === 'BR'
     ) {
       currentLines += 1.0;
@@ -122,11 +169,11 @@ export function paginateContent(
 
     // Handle manual page break markers
     if (
-      node.nodeType === Node.ELEMENT_NODE &&
+      node.nodeType === runtime.Node.ELEMENT_NODE &&
       isPageBreakElement(node as Element)
     ) {
       if (currentPageNodes.length > 0) {
-        const pageDiv = document.createElement('div');
+        const pageDiv = runtime.document.createElement('div');
         pageDiv.className = 'preview-page-content';
         currentPageNodes.forEach((n) =>
           pageDiv.appendChild(n.cloneNode(true)),
@@ -145,20 +192,20 @@ export function paginateContent(
       continue;
     }
 
-    if (node.nodeType === Node.ELEMENT_NODE) {
+    if (node.nodeType === runtime.Node.ELEMENT_NODE) {
       const element = node as Element;
       if (element.tagName === 'H1' || element.tagName === 'H2') {
         currentChapter = element.textContent || '';
       }
     }
 
-    const nodeLines = estimateNodeLines(node, config);
+    const nodeLines = estimateNodeLines(node, config, runtime);
 
     if (
       currentLines + nodeLines > approxLinesPerPage &&
       currentPageNodes.length > 0
     ) {
-      const pageDiv = document.createElement('div');
+      const pageDiv = runtime.document.createElement('div');
       pageDiv.className = 'preview-page-content';
       currentPageNodes.forEach((n) => pageDiv.appendChild(n.cloneNode(true)));
 
@@ -178,7 +225,7 @@ export function paginateContent(
   }
 
   if (currentPageNodes.length > 0) {
-    const pageDiv = document.createElement('div');
+    const pageDiv = runtime.document.createElement('div');
     pageDiv.className = 'preview-page-content';
     currentPageNodes.forEach((n) => pageDiv.appendChild(n.cloneNode(true)));
 
@@ -205,8 +252,12 @@ export function paginateContent(
  * Estimate number of lines a DOM node will take
  * More accurate estimations with spacing
  */
-function estimateNodeLines(node: Node, config: PaginationConfig): number {
-  if (node.nodeType === Node.TEXT_NODE) {
+function estimateNodeLines(
+  node: Node,
+  config: PaginationConfig,
+  runtime: DomRuntime,
+): number {
+  if (node.nodeType === runtime.Node.TEXT_NODE) {
     const text = node.textContent || '';
     if (!text.trim()) return 0;
 
@@ -218,7 +269,7 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
     return Math.max(1, textLines);
   }
 
-  if (node.nodeType === Node.ELEMENT_NODE) {
+  if (node.nodeType === runtime.Node.ELEMENT_NODE) {
     const element = node as Element;
     const tagName = element.tagName;
 
@@ -303,7 +354,7 @@ function estimateNodeLines(node: Node, config: PaginationConfig): number {
     // Default: count child nodes recursively
     let totalLines = 0;
     element.childNodes.forEach((child) => {
-      totalLines += estimateNodeLines(child, config);
+      totalLines += estimateNodeLines(child, config, runtime);
     });
     return totalLines || 1;
   }

@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest';
-
 import { PageBreak } from './page-break-extension';
 
 describe('page-break-extension', () => {
@@ -15,5 +14,9 @@ describe('page-break-extension', () => {
       ]),
     );
     expect(rendered).toEqual(['hr', { 'data-page-break': 'manual' }]);
+  });
+
+  test('does not register a custom node view so page breaks render as native hr elements', () => {
+    expect(PageBreak.config.addNodeView).toBeUndefined();
   });
 });

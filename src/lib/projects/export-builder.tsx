@@ -2,10 +2,13 @@ import {
   AlignmentType,
   Document as DocxDocument,
   HeadingLevel,
+  HorizontalPositionRelativeFrom,
   ImageRun,
   Packer,
   Paragraph,
   TextRun,
+  TextWrappingType,
+  VerticalPositionRelativeFrom,
 } from 'docx';
 import {
   Document,
@@ -16,23 +19,22 @@ import {
   View,
 } from '@react-pdf/renderer';
 import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
+import type { PaginationConfig } from '@/lib/preview/device-configs';
 import { buildPreviewPages, type PreviewPage } from '@/lib/preview/preview-builder';
 import type { ProjectRecord } from './types';
+import {
+  parsePageContent,
+  stripInlineHtml,
+  type ParsedContentBlock,
+} from './export-content-blocks';
+import {
+  buildBackCoverExportImageDataUrl,
+  buildContentPageExportImageDataUrl,
+  buildCoverExportImageDataUrl,
+} from './export-surface-image';
 
-type ParsedContentBlock =
-  | { type: 'heading'; level: number; text: string }
-  | { type: 'paragraph'; text: string }
-  | { type: 'quote'; text: string }
-  | { type: 'list-item'; text: string };
-
-const EXPORT_CONFIG = DEVICE_PAGINATION_CONFIGS.laptop;
+const DEFAULT_EXPORT_CONFIG = DEVICE_PAGINATION_CONFIGS.laptop;
 const PDF_SCALE = 0.75;
-const PDF_PAGE_WIDTH = EXPORT_CONFIG.pageWidth * PDF_SCALE;
-const PDF_PAGE_HEIGHT = EXPORT_CONFIG.pageHeight * PDF_SCALE;
-const PDF_MARGIN_TOP = EXPORT_CONFIG.marginTop * PDF_SCALE;
-const PDF_MARGIN_BOTTOM = EXPORT_CONFIG.marginBottom * PDF_SCALE;
-const PDF_MARGIN_LEFT = EXPORT_CONFIG.marginLeft * PDF_SCALE;
-const PDF_MARGIN_RIGHT = EXPORT_CONFIG.marginRight * PDF_SCALE;
 
 const COVER_PALETTE_COLORS: Record<string, { bg: string; text: string; accent: string }> = {
   obsidian: { bg: '#0b133f', text: '#f2e3b3', accent: '#d4af37' },
@@ -48,69 +50,24 @@ function escapeHtml(text: string) {
     .replace(/"/g, '&quot;');
 }
 
-function decodeHtmlEntities(text: string) {
-  return text
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
+
+function renderCoverPageHtml(imageUrl: string) {
+  return `
+    <section class="export-page export-cover export-image-only-page">
+      <img class="export-full-image" src="${escapeHtml(imageUrl)}" alt="" />
+    </section>
+  `;
 }
 
-function stripInlineHtml(text: string) {
-  return decodeHtmlEntities(
-    text
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
-      .replace(/<\/li>\s*<li[^>]*>/gi, '\n')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/[ \t]+\n/g, '\n')
-      .replace(/\n[ \t]+/g, '\n')
-      .replace(/[ \t]{2,}/g, ' ')
-      .trim(),
-  );
+function renderBackCoverPageHtml(imageUrl: string) {
+  return `
+    <section class="export-page export-back-cover export-image-only-page">
+      <img class="export-full-image" src="${escapeHtml(imageUrl)}" alt="" />
+    </section>
+  `;
 }
 
-function parsePageContent(html: string | null | undefined): ParsedContentBlock[] {
-  if (!html?.trim()) return [];
-
-  const blocks: ParsedContentBlock[] = [];
-  const pattern = /<(h([1-6])|p|blockquote|li)\b[^>]*>([\s\S]*?)<\/\1>/gi;
-
-  for (const match of html.matchAll(pattern)) {
-    const fullTag = match[1]?.toLowerCase();
-    const headingLevel = Number(match[2] ?? 2);
-    const inner = stripInlineHtml(match[3] ?? '');
-    if (!inner) continue;
-
-    if (fullTag?.startsWith('h')) {
-      blocks.push({ type: 'heading', level: headingLevel, text: inner });
-      continue;
-    }
-    if (fullTag === 'blockquote') {
-      blocks.push({ type: 'quote', text: inner });
-      continue;
-    }
-    if (fullTag === 'li') {
-      blocks.push({ type: 'list-item', text: inner });
-      continue;
-    }
-    blocks.push({ type: 'paragraph', text: inner });
-  }
-
-  if (blocks.length > 0) {
-    return blocks;
-  }
-
-  return stripInlineHtml(html)
-    .split(/\n{2,}/)
-    .map((text) => text.trim())
-    .filter(Boolean)
-    .map((text) => ({ type: 'paragraph' as const, text }));
-}
-
-function renderCoverPageHtml(page: PreviewPage, project: ProjectRecord) {
+function renderLegacyCoverPageHtml(page: PreviewPage, project: ProjectRecord) {
   const cover = page.coverData;
   if (!cover) return '';
 
@@ -132,7 +89,6 @@ function renderCoverPageHtml(page: PreviewPage, project: ProjectRecord) {
       <div class="export-cover-overlay"></div>
       <div class="export-page-inner export-cover-inner">
         <div class="export-accent-bar" style="background:${palette.accent};"></div>
-        <p class="export-eyebrow">Anclora Talent</p>
         <h1 class="export-cover-title">${escapeHtml(cover.title)}</h1>
         ${cover.showSubtitle && cover.subtitle ? `<p class="export-cover-subtitle">${escapeHtml(cover.subtitle)}</p>` : ''}
         ${cover.author ? `<p class="export-cover-author">${escapeHtml(cover.author)}</p>` : ''}
@@ -141,7 +97,7 @@ function renderCoverPageHtml(page: PreviewPage, project: ProjectRecord) {
   `;
 }
 
-function renderBackCoverPageHtml(page: PreviewPage) {
+function renderLegacyBackCoverPageHtml(page: PreviewPage) {
   const backCover = page.backCoverData;
   if (!backCover) return '';
   const renderedImageUrl = backCover.renderedImageUrl || '';
@@ -179,15 +135,28 @@ function renderContentPageHtml(page: PreviewPage) {
 }
 
 export function buildExportPreview(project: ProjectRecord) {
-  return buildPreviewPages(project, EXPORT_CONFIG);
+  return buildPreviewPages(project, DEFAULT_EXPORT_CONFIG);
 }
 
-export function renderProjectExportHtml(project: ProjectRecord) {
-  const pages = buildExportPreview(project);
+export async function renderProjectExportHtml(
+  project: ProjectRecord,
+  exportConfig: PaginationConfig = DEFAULT_EXPORT_CONFIG,
+) {
+  const pages = buildPreviewPages(project, exportConfig);
+  const coverImageUrl = await buildCoverExportImageDataUrl(project);
+  const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
   const sections = pages
     .map((page) => {
-      if (page.type === 'cover') return renderCoverPageHtml(page, project);
-      if (page.type === 'back-cover') return renderBackCoverPageHtml(page);
+      if (page.type === 'cover') {
+        return coverImageUrl
+          ? renderCoverPageHtml(coverImageUrl)
+          : renderLegacyCoverPageHtml(page, project);
+      }
+      if (page.type === 'back-cover') {
+        return backCoverImageUrl
+          ? renderBackCoverPageHtml(backCoverImageUrl)
+          : renderLegacyBackCoverPageHtml(page);
+      }
       return renderContentPageHtml(page);
     })
     .join('\n');
@@ -200,12 +169,12 @@ export function renderProjectExportHtml(project: ProjectRecord) {
   <title>${escapeHtml(project.document.title)}</title>
   <style>
     :root {
-      --page-width: ${EXPORT_CONFIG.pageWidth}px;
-      --page-height: ${EXPORT_CONFIG.pageHeight}px;
-      --page-margin-top: ${EXPORT_CONFIG.marginTop}px;
-      --page-margin-bottom: ${EXPORT_CONFIG.marginBottom}px;
-      --page-margin-left: ${EXPORT_CONFIG.marginLeft}px;
-      --page-margin-right: ${EXPORT_CONFIG.marginRight}px;
+      --page-width: ${exportConfig.pageWidth}px;
+      --page-height: ${exportConfig.pageHeight}px;
+      --page-margin-top: ${exportConfig.marginTop}px;
+      --page-margin-bottom: ${exportConfig.marginBottom}px;
+      --page-margin-left: ${exportConfig.marginLeft}px;
+      --page-margin-right: ${exportConfig.marginRight}px;
       --paper-bg: #ffffff;
       --paper-border: #d7dde7;
       --body-text: #1c2430;
@@ -379,15 +348,9 @@ export function renderProjectExportHtml(project: ProjectRecord) {
 const pdfStyles = StyleSheet.create({
   page: {
     position: 'relative',
-    width: PDF_PAGE_WIDTH,
-    height: PDF_PAGE_HEIGHT,
     backgroundColor: '#ffffff',
   },
   pageInner: {
-    paddingTop: PDF_MARGIN_TOP,
-    paddingBottom: PDF_MARGIN_BOTTOM,
-    paddingLeft: PDF_MARGIN_LEFT,
-    paddingRight: PDF_MARGIN_RIGHT,
     height: '100%',
   },
   fullImage: {
@@ -456,25 +419,24 @@ const pdfStyles = StyleSheet.create({
     color: '#111827',
   },
   paragraph: {
-    fontSize: 11,
+    fontSize: 10.5,
     lineHeight: 1.65,
     marginBottom: 8,
     color: '#2b3442',
   },
   quote: {
-    fontSize: 11,
+    fontSize: 10.5,
     lineHeight: 1.6,
     marginBottom: 8,
     marginLeft: 10,
     paddingLeft: 10,
     borderLeftWidth: 3,
-    borderLeftStyle: 'solid',
     borderLeftColor: '#d4af37',
     color: '#5f6b7a',
     fontStyle: 'italic',
   },
   listItem: {
-    fontSize: 11,
+    fontSize: 10.5,
     lineHeight: 1.65,
     marginBottom: 6,
     marginLeft: 12,
@@ -484,14 +446,12 @@ const pdfStyles = StyleSheet.create({
     marginTop: 16,
     fontSize: 12,
     lineHeight: 1.6,
-    width: '72%',
     color: '#f2e3b3',
   },
   backCoverBio: {
     marginTop: 20,
     fontSize: 10,
     lineHeight: 1.4,
-    width: '62%',
     color: 'rgba(242,227,179,0.78)',
   },
 });
@@ -525,34 +485,55 @@ function renderPdfContentBlock(block: ParsedContentBlock, index: number) {
   );
 }
 
-export function buildProjectPdf(project: ProjectRecord) {
-  const pages = buildExportPreview(project);
+export async function buildProjectPdf(project: ProjectRecord) {
+  return buildProjectPdfWithConfig(project, DEFAULT_EXPORT_CONFIG);
+}
+
+export async function buildProjectPdfWithConfig(
+  project: ProjectRecord,
+  exportConfig: PaginationConfig,
+) {
+  const pdfPageWidth = exportConfig.pageWidth * PDF_SCALE;
+  const pdfPageHeight = exportConfig.pageHeight * PDF_SCALE;
+  const pdfMarginTop = exportConfig.marginTop * PDF_SCALE;
+  const pdfMarginBottom = exportConfig.marginBottom * PDF_SCALE;
+  const pdfMarginLeft = exportConfig.marginLeft * PDF_SCALE;
+  const pdfMarginRight = exportConfig.marginRight * PDF_SCALE;
+  const pages = buildPreviewPages(project, exportConfig);
   const palette = COVER_PALETTE_COLORS[project.cover.palette] ?? COVER_PALETTE_COLORS.obsidian;
+  const coverImageUrl = await buildCoverExportImageDataUrl(project);
+  const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
+  const contentImageUrls = await Promise.all(
+    pages.map((page) =>
+      buildContentPageExportImageDataUrl(page, exportConfig, {
+        allowSvgFallback: false,
+      }),
+    ),
+  );
 
   return (
     <Document
-      title={project.document.title}
+      title={project.document.title || 'Proyecto'}
       author={project.document.author || 'Anclora Talent'}
-      subject={project.document.subtitle || project.title}
+      subject={project.document.subtitle || project.title || ''}
     >
       {pages.map((page, pageIndex) => {
         if (page.type === 'cover' && page.coverData) {
-          if (page.coverData.renderedImageUrl) {
+          if (coverImageUrl) {
             return (
-              <Page key={`pdf-cover-${pageIndex}`} size={[PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT]} style={pdfStyles.page}>
-                <Image src={page.coverData.renderedImageUrl} style={pdfStyles.fullImage} />
+              <Page key={`pdf-cover-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight }]}>
+                <Image src={coverImageUrl} style={pdfStyles.fullImage} />
               </Page>
             );
           }
 
           const imageUrl = page.coverData.backgroundImageUrl || '';
           return (
-            <Page key={`pdf-cover-${pageIndex}`} size={[PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT]} style={[pdfStyles.page, { backgroundColor: palette.bg }]}>
+            <Page key={`pdf-cover-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight, backgroundColor: palette.bg }]}>
               {imageUrl ? <Image src={imageUrl} style={pdfStyles.fullImage} /> : null}
               {imageUrl ? <View style={pdfStyles.coverOverlay} /> : null}
               <View style={[pdfStyles.accentBar, { backgroundColor: palette.accent }]} />
-              <View style={[pdfStyles.pageInner, pdfStyles.coverInner]}>
-                <Text style={[pdfStyles.eyebrow, { color: palette.accent }]}>Anclora Talent</Text>
+              <View style={[pdfStyles.pageInner, pdfStyles.coverInner, { paddingTop: pdfMarginTop, paddingBottom: pdfMarginBottom, paddingLeft: pdfMarginLeft, paddingRight: pdfMarginRight }]}>
                 <Text style={[pdfStyles.coverTitle, { color: palette.text }]}>{page.coverData.title}</Text>
                 {page.coverData.showSubtitle && page.coverData.subtitle ? (
                   <Text style={[pdfStyles.coverSubtitle, { color: palette.text }]}>{page.coverData.subtitle}</Text>
@@ -566,36 +547,55 @@ export function buildProjectPdf(project: ProjectRecord) {
         }
 
         if (page.type === 'back-cover' && page.backCoverData) {
-          if (page.backCoverData.renderedImageUrl) {
+          if (backCoverImageUrl) {
             return (
-              <Page key={`pdf-back-cover-${pageIndex}`} size={[PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT]} style={pdfStyles.page}>
-                <Image src={page.backCoverData.renderedImageUrl} style={pdfStyles.fullImage} />
+              <Page key={`pdf-back-cover-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight }]}>
+                <Image src={backCoverImageUrl} style={pdfStyles.fullImage} />
               </Page>
             );
           }
 
           const imageUrl = page.backCoverData.backgroundImageUrl || '';
           return (
-            <Page key={`pdf-back-cover-${pageIndex}`} size={[PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT]} style={[pdfStyles.page, { backgroundColor: '#0b133f' }]}>
+            <Page key={`pdf-back-cover-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight, backgroundColor: '#0b133f' }]}>
               {imageUrl ? <Image src={imageUrl} style={pdfStyles.fullImage} /> : null}
               {imageUrl ? <View style={pdfStyles.coverOverlay} /> : null}
-              <View style={[pdfStyles.pageInner, pdfStyles.coverInner]}>
-                <Text style={[pdfStyles.coverTitle, { color: '#f2e3b3', maxWidth: '75%' }]}>{page.backCoverData.title}</Text>
+              <View style={[pdfStyles.pageInner, pdfStyles.coverInner, { paddingTop: pdfMarginTop, paddingBottom: pdfMarginBottom, paddingLeft: pdfMarginLeft, paddingRight: pdfMarginRight }]}>
+                <Text style={[pdfStyles.coverTitle, { color: '#f2e3b3', maxWidth: pdfPageWidth * 0.75 }]}>{page.backCoverData.title}</Text>
                 {page.backCoverData.body ? (
-                  <Text style={pdfStyles.backCoverBody}>{stripInlineHtml(page.backCoverData.body)}</Text>
+                  <Text style={[pdfStyles.backCoverBody, { width: pdfPageWidth * 0.72 }]}>
+                    {stripInlineHtml(page.backCoverData.body)}
+                  </Text>
                 ) : null}
                 {page.backCoverData.authorBio ? (
-                  <Text style={pdfStyles.backCoverBio}>{page.backCoverData.authorBio}</Text>
+                  <Text style={[pdfStyles.backCoverBio, { width: pdfPageWidth * 0.62 }]}>
+                    {page.backCoverData.authorBio}
+                  </Text>
                 ) : null}
               </View>
             </Page>
           );
         }
 
+        const contentImageUrl = contentImageUrls[pageIndex];
+        if (page.type === 'content' && !contentImageUrl) {
+          throw new Error(
+            `PDF export requires a rendered preview image for content page ${page.pageNumber}.`,
+          );
+        }
+
+        if (contentImageUrl) {
+          return (
+            <Page key={`pdf-content-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight }]}>
+              <Image src={contentImageUrl} style={pdfStyles.fullImage} />
+            </Page>
+          );
+        }
+
         const blocks = parsePageContent(page.content);
         return (
-          <Page key={`pdf-content-${pageIndex}`} size={[PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT]} style={pdfStyles.page}>
-            <View style={pdfStyles.pageInner}>
+          <Page key={`pdf-content-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight }]}>
+            <View style={[pdfStyles.pageInner, { paddingTop: pdfMarginTop, paddingBottom: pdfMarginBottom, paddingLeft: pdfMarginLeft, paddingRight: pdfMarginRight }]}>
               {blocks.map((block, index) => renderPdfContentBlock(block, index))}
             </View>
           </Page>
@@ -617,15 +617,9 @@ function toDocxHeadingLevel(level: number) {
       return HeadingLevel.HEADING_4;
   }
 }
-
 function buildDocxPageChildren(page: PreviewPage) {
   if (page.type === 'cover' && page.coverData) {
     return [
-      new Paragraph({
-        text: 'Anclora Talent',
-        alignment: AlignmentType.CENTER,
-        spacing: { after: 240 },
-      }),
       new Paragraph({
         text: page.coverData.title,
         heading: HeadingLevel.TITLE,
@@ -758,16 +752,26 @@ async function loadImageBytes(imageUrl: string): Promise<DocxImagePayload | null
   }
 }
 
-export async function buildProjectDocxBuffer(project: ProjectRecord) {
-  const pages = buildExportPreview(project);
+export async function buildProjectDocxBuffer(
+  project: ProjectRecord,
+  exportConfig: PaginationConfig = DEFAULT_EXPORT_CONFIG,
+) {
+  const docxPageWidth = exportConfig.pageWidth;
+  const docxPageHeight = exportConfig.pageHeight;
+  const pages = buildPreviewPages(project, exportConfig);
+  const coverImageUrl = await buildCoverExportImageDataUrl(project);
+  const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
+  const contentImageUrls = await Promise.all(
+    pages.map((page) => buildContentPageExportImageDataUrl(page, exportConfig)),
+  );
   const pageImagePayloads = await Promise.all(
-    pages.map(async (page) => {
+    pages.map(async (page, index) => {
       const imageUrl =
         page.type === 'cover'
-          ? page.coverData?.renderedImageUrl ?? null
+          ? coverImageUrl
           : page.type === 'back-cover'
-            ? page.backCoverData?.renderedImageUrl ?? null
-            : null;
+            ? backCoverImageUrl
+            : contentImageUrls[index] ?? null;
 
       return imageUrl ? loadImageBytes(imageUrl) : null;
     }),
@@ -781,10 +785,13 @@ export async function buildProjectDocxBuffer(project: ProjectRecord) {
           height: 12960,
         },
         margin: {
-          top: 1080,
-          bottom: 1080,
-          left: 1080,
-          right: 1080,
+          top: pageImagePayloads[index] != null ? 0 : 1080,
+          bottom: pageImagePayloads[index] != null ? 0 : 1080,
+          left: pageImagePayloads[index] != null ? 0 : 1080,
+          right: pageImagePayloads[index] != null ? 0 : 1080,
+          header: 0,
+          footer: 0,
+          gutter: 0,
         },
       },
     },
@@ -797,12 +804,33 @@ export async function buildProjectDocxBuffer(project: ProjectRecord) {
                   data: pageImagePayloads[index]!.data,
                   type: pageImagePayloads[index]!.type,
                   transformation: {
-                    width: 432,
-                    height: 648,
+                    width: docxPageWidth,
+                    height: docxPageHeight,
+                  },
+                  floating: {
+                    horizontalPosition: {
+                      relative: HorizontalPositionRelativeFrom.PAGE,
+                      offset: 0,
+                    },
+                    verticalPosition: {
+                      relative: VerticalPositionRelativeFrom.PAGE,
+                      offset: 0,
+                    },
+                    wrap: {
+                      type: TextWrappingType.NONE,
+                    },
+                    margins: {
+                      top: 0,
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                    },
+                    allowOverlap: true,
+                    behindDocument: false,
                   },
                 }),
               ],
-              spacing: { before: 0, after: 0 },
+              spacing: { before: 0, after: 0, line: 1, lineRule: 'auto' as const },
             }),
           ]
         : buildDocxPageChildren(page),

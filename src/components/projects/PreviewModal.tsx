@@ -22,18 +22,19 @@ import {
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
-import { buildPreviewPages, type PreviewPage } from '@/lib/preview/preview-builder';
+import {
+  buildPreviewContentFlowHtml,
+  buildPreviewPages,
+  type PreviewPage,
+} from '@/lib/preview/preview-builder';
 import {
   FORMAT_PRESETS,
   buildPaginationConfig,
   type PreviewFormat,
   type PaginationConfig,
 } from '@/lib/preview/device-configs';
-import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
+import { premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { MultipageFlow } from '@/components/projects/MultipageFlow';
-import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
-import { normalizeHtmlContent } from '@/lib/preview/html-normalize';
-import { reconcileOverflowBreaks } from '@/lib/preview/editor-page-layout';
 
 interface PreviewModalProps {
   project: ProjectRecord;
@@ -60,6 +61,10 @@ export function PreviewModal({
   // CONTENT FLOW STATE
   const [totalContentPages, setTotalContentPages] = useState(1);
   const viewportRef = useRef<HTMLDivElement | null>(null);
+  const compactGhostButton =
+    'inline-flex h-10 min-w-10 items-center justify-center rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] text-[var(--button-secondary-fg)] transition hover:border-[var(--button-secondary-hover-border)] hover:bg-[var(--button-secondary-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--button-secondary-fg)] focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-30';
+  const compactPrimaryButton =
+    'inline-flex h-10 min-w-10 items-center justify-center rounded-full border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] text-[var(--button-primary-fg)] shadow-[var(--shadow-soft)] transition hover:bg-[var(--button-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--button-primary-bg)] focus-visible:ring-offset-0';
 
   // Generate pages based on selected format
   const paginationConfig = useMemo(
@@ -79,21 +84,10 @@ export function PreviewModal({
   const cover = useMemo(() => metaPages.find(p => p.type === 'cover'), [metaPages]);
   const backCover = useMemo(() => metaPages.find(p => p.type === 'back-cover'), [metaPages]);
 
-// COMBINED CONTENT HTML
-const contentHtml = useMemo(() => {
-  if (!project.document.chapters?.length) return '';
-  
-  const sorted = [...project.document.chapters].sort((a, b) => a.order - b.order);
-
-  const fragments = sorted.map((chapter) => {
-    const rawHtml = chapterBlocksToHtml(chapter.blocks);
-    const normalized = normalizeHtmlContent(rawHtml);
-    return reconcileOverflowBreaks(normalized, paginationConfig);
-  });
-
-  // Separar capítulos con un salto manual, igual que antes
-  return fragments.join('<hr data-page-break="manual">');
-}, [project.document.chapters, paginationConfig]);
+  const contentHtml = useMemo(
+    () => buildPreviewContentFlowHtml(project, paginationConfig),
+    [paginationConfig, project],
+  );
 
   // LOGICAL PAGE INDEXING
   const firstContentIndex = 1;
@@ -185,23 +179,26 @@ const contentHtml = useMemo(() => {
     <div
       aria-label={project.document.title || 'Vista previa'}
       role="dialog" aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[rgba(4,6,12,0.78)] backdrop-blur-md px-0 md:px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[rgba(4,6,12,0.78)] backdrop-blur-md"
       onKeyDown={handleKeyDown} tabIndex={0}
     >
-      <div className="mx-auto flex h-[100dvh] w-full max-w-[1800px] flex-col overflow-hidden border border-white/10 bg-[#111c28] shadow-[0_30px_120px_rgba(0,0,0,0.45)] md:mt-4 md:h-[calc(100dvh-32px)] md:rounded-[28px]">
-        <header className="shrink-0 border-b border-white/10 bg-[rgba(255,255,255,0.02)] px-4 py-2.5 md:px-5 md:py-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="min-w-0 text-base font-black flex items-center gap-2 truncate text-[var(--text-primary)] text-white md:text-lg">
-            <Eye className="w-4 h-4" /> {project.document.title || 'Vista Previa'}
+      <div className="mx-auto flex h-screen w-full flex-col overflow-hidden rounded-none border border-white/10 bg-[#111c28] shadow-[0_30px_120px_rgba(0,0,0,0.45)]">
+        <header className="shrink-0 border-b border-white/10 bg-[rgba(255,255,255,0.02)] px-3 py-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="min-w-0 truncate text-[13px] font-black tracking-tight text-white">
+              <span className="inline-flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                {project.document.title || 'Vista Previa'}
+              </span>
             </h2>
 
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-[rgba(255,255,255,0.03)] p-1">
+            <div className="flex shrink-0 items-center gap-1">
+              <div className="flex items-center gap-1 rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-1.5 py-1">
                 <button
                   aria-label={copy.previewModalSingleView}
                   aria-pressed={viewMode === 'single'}
                   onClick={() => setViewMode('single')}
-                  className={`${viewMode === 'single' ? premiumPrimaryDarkButton : premiumSecondaryLightButton} px-2 py-1.5 text-xs`}
+                  className={viewMode === 'single' ? compactPrimaryButton : compactGhostButton}
                 >
                   <Eye className="h-4 w-4" />
                 </button>
@@ -209,37 +206,35 @@ const contentHtml = useMemo(() => {
                   aria-label={copy.previewModalSpreadView}
                   aria-pressed={viewMode === 'spread'}
                   onClick={() => setViewMode('spread')}
-                  className={`${viewMode === 'spread' ? premiumPrimaryDarkButton : premiumSecondaryLightButton} px-2 py-1.5 text-xs`}
+                  className={viewMode === 'spread' ? compactPrimaryButton : compactGhostButton}
                 >
                   <BookOpen className="h-4 w-4" />
                 </button>
-              </div>
-              <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-[rgba(255,255,255,0.03)] p-1">
+                <div className="mx-1 h-5 w-px bg-[var(--border-subtle)]" />
                 {(['mobile', 'tablet', 'laptop'] as const).map(fmt => (
                   <button
                     key={fmt}
                     aria-label={fmt === 'mobile' ? copy.previewModalMobile : fmt === 'tablet' ? copy.previewModalTablet : copy.previewModalLaptop}
                     aria-pressed={format === fmt}
                     onClick={() => setFormat(fmt)}
-                    className={`${format === fmt ? premiumPrimaryDarkButton : premiumSecondaryLightButton} px-2 py-1.5 text-xs`}
+                    className={format === fmt ? compactPrimaryButton : compactGhostButton}
                   >
                     {fmt === 'mobile' ? <Smartphone className="h-4 w-4" /> : fmt === 'tablet' ? <Tablet className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
                   </button>
                 ))}
-              </div>
-              <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-[rgba(255,255,255,0.03)] px-2 py-1">
+                <div className="mx-1 h-5 w-px bg-[var(--border-subtle)]" />
                 <button
                   aria-label={copy.previewModalZoomOut}
                   onClick={() => handleZoomChange(zoom - 10)}
-                  className={`${premiumSecondaryLightButton} p-2`}
+                  className={compactGhostButton}
                 >
                   <ZoomOut className="h-4 w-4" />
                 </button>
-                <span className="text-xs text-white w-10 text-center">{zoom}%</span>
+                <span className="w-10 text-center text-xs text-white">{zoom}%</span>
                 <button
                   aria-label={copy.previewModalZoomIn}
                   onClick={() => handleZoomChange(zoom + 10)}
-                  className={`${premiumSecondaryLightButton} p-2`}
+                  className={compactGhostButton}
                 >
                   <ZoomIn className="h-4 w-4" />
                 </button>
@@ -247,7 +242,7 @@ const contentHtml = useMemo(() => {
               <button
                 aria-label={copy.previewModalClose}
                 onClick={onClose}
-                className={`${premiumSecondaryLightButton} px-4 py-1.5 flex-shrink-0 text-sm font-semibold min-w-[120px]`}
+                className={`${premiumSecondaryLightButton} min-w-[128px] flex-shrink-0 px-3.5 py-1.5 text-sm font-semibold`}
                 title={copy.previewModalClose}
               >
                 CERRAR
@@ -261,7 +256,7 @@ const contentHtml = useMemo(() => {
             data-testid="preview-modal-stage"
             data-preview-viewport="true"
             ref={viewportRef}
-            className="flex-1 flex flex-col items-center justify-center p-3 overflow-auto custom-scrollbar"
+            className="flex flex-1 flex-col items-center justify-center overflow-auto p-2 custom-scrollbar"
           >
             <div 
               data-testid="preview-spread-frame"
@@ -279,6 +274,8 @@ const contentHtml = useMemo(() => {
                     currentPage={currentPage >= firstContentIndex && currentPage <= lastContentIndex ? currentPage - firstContentIndex : 0}
                     viewMode={viewMode}
                     margins={preferences.margins!}
+                    showPageNumbers
+                    pageNumberOffset={2}
                     onPageCountChange={setTotalContentPages}
                   />
                 </div>
@@ -296,17 +293,17 @@ const contentHtml = useMemo(() => {
             </div>
           </section>
 
-          <footer data-testid="preview-modal-footer" className="absolute bottom-0 inset-x-0 h-14 border-t border-white/10 bg-[rgba(7,12,20,0.92)] px-4 backdrop-blur-md">
+          <footer data-testid="preview-modal-footer" className="absolute bottom-0 inset-x-0 h-12 border-t border-white/10 bg-[rgba(7,12,20,0.92)] px-3 backdrop-blur-md">
             <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center">
               <div />
-              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-[rgba(255,255,255,0.03)] px-2 py-1">
+              <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-[rgba(255,255,255,0.03)] px-2 py-1">
                 <button
                   aria-label={copy.previewModalPrevious}
                   onClick={prevPage}
                   disabled={currentPage === 0}
-                  className={`${premiumSecondaryLightButton} h-10 w-10 p-0 disabled:opacity-30`}
+                  className={compactGhostButton}
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-5 w-5 text-white" strokeWidth={2.25} />
                 </button>
                 <label className="flex items-center gap-2 px-1 text-sm font-medium text-white">
                   <span className="sr-only">{copy.previewModalPage}</span>
@@ -328,7 +325,7 @@ const contentHtml = useMemo(() => {
                         setPageInput(String(currentPage + 1));
                       }
                     }}
-                    className="w-16 rounded-[12px] border border-white/10 bg-[#0f1825] px-2 py-1.5 text-center text-sm font-semibold text-white outline-none transition focus:border-[var(--accent-mint)]"
+                    className="w-14 rounded-[12px] border border-white/10 bg-[#0f1825] px-2 py-1 text-center text-sm font-semibold text-white outline-none transition focus:border-[var(--accent-mint)]"
                   />
                   <span className="text-white/55">de {logicalTotalPages}</span>
                 </label>
@@ -336,9 +333,9 @@ const contentHtml = useMemo(() => {
                   aria-label={copy.previewModalNext}
                   onClick={nextPage}
                   disabled={currentPage >= logicalTotalPages - 1}
-                  className={`${premiumSecondaryLightButton} h-10 w-10 p-0 disabled:opacity-30`}
+                  className={compactGhostButton}
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-5 w-5 text-white" strokeWidth={2.25} />
                 </button>
               </div>
               <div />

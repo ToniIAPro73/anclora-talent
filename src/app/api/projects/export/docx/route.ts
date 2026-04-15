@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
 import { buildProjectDocxBuffer } from '@/lib/projects/export-builder';
+import { resolveExportPaginationConfig } from '@/lib/projects/export-config';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +18,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    const buffer = await buildProjectDocxBuffer(project);
+    const exportConfig = resolveExportPaginationConfig(request.nextUrl.searchParams);
+    const buffer = await buildProjectDocxBuffer(project, exportConfig);
     const slug = project.slug || 'proyecto';
     const filename = `${slug}.docx`;
 
