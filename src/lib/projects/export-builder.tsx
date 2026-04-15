@@ -503,7 +503,9 @@ export async function buildProjectPdfWithConfig(
   const palette = COVER_PALETTE_COLORS[project.cover.palette] ?? COVER_PALETTE_COLORS.obsidian;
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
-  const contentImageUrls = pages.map(() => null as string | null);
+  const contentImageUrls = await Promise.all(
+    pages.map((page) => buildContentPageExportImageDataUrl(page, exportConfig)),
+  );
 
   return (
     <Document
@@ -571,10 +573,17 @@ export async function buildProjectPdfWithConfig(
           );
         }
 
-        if (contentImageUrls[pageIndex]) {
+        const contentImageUrl = contentImageUrls[pageIndex];
+        if (page.type === 'content' && !contentImageUrl) {
+          throw new Error(
+            `PDF export requires a rendered preview image for content page ${page.pageNumber}.`,
+          );
+        }
+
+        if (contentImageUrl) {
           return (
             <Page key={`pdf-content-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight }]}>
-              <Image src={contentImageUrls[pageIndex]!} style={pdfStyles.fullImage} />
+              <Image src={contentImageUrl} style={pdfStyles.fullImage} />
             </Page>
           );
         }
