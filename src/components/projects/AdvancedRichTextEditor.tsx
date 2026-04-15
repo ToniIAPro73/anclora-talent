@@ -183,6 +183,67 @@ const ParagraphIndent = Extension.create({
   },
 });
 
+const TocBlockAttributes = Extension.create({
+  name: 'tocBlockAttributes',
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['paragraph', 'heading', 'listItem'],
+        attributes: {
+          tocEntry: {
+            default: null,
+            parseHTML: (element) =>
+              element.getAttribute('data-toc-entry') === 'true' ? 'true' : null,
+            renderHTML: (attributes) =>
+              attributes.tocEntry ? { 'data-toc-entry': 'true' } : {},
+          },
+          tocLevel: {
+            default: null,
+            parseHTML: (element) => element.getAttribute('data-toc-level'),
+            renderHTML: (attributes) =>
+              attributes.tocLevel ? { 'data-toc-level': String(attributes.tocLevel) } : {},
+          },
+        },
+      },
+    ];
+  },
+});
+
+const TocInlineAttributes = Extension.create({
+  name: 'tocInlineAttributes',
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['textStyle'],
+        attributes: {
+          tocTitle: {
+            default: null,
+            parseHTML: (element) =>
+              element.getAttribute('data-toc-title') === 'true' ? 'true' : null,
+            renderHTML: (attributes) =>
+              attributes.tocTitle ? { 'data-toc-title': 'true' } : {},
+          },
+          tocLeader: {
+            default: null,
+            parseHTML: (element) =>
+              element.getAttribute('data-toc-leader') === 'true' ? 'true' : null,
+            renderHTML: (attributes) =>
+              attributes.tocLeader ? { 'data-toc-leader': 'true', 'aria-hidden': 'true' } : {},
+          },
+          tocPage: {
+            default: null,
+            parseHTML: (element) => element.getAttribute('data-toc-page'),
+            renderHTML: (attributes) =>
+              attributes.tocPage ? { 'data-toc-page': String(attributes.tocPage) } : {},
+          },
+        },
+      },
+    ];
+  },
+});
+
 function ToolbarButton({ onClick, active, disabled, title, children }: ToolbarButtonProps) {
   return (
     <button
@@ -1276,6 +1337,8 @@ export function AdvancedRichTextEditor({
       StyledBulletList,
       StyledOrderedList,
       ParagraphIndent,
+      TocBlockAttributes,
+      TocInlineAttributes,
       Placeholder.configure({
         placeholder: 'Empieza a escribir tu obra maestra...',
       }),
@@ -1525,6 +1588,8 @@ export function AdvancedRichTextEditor({
               .preview-page p + p {
                 margin-top: 0.8rem;
               }
+              .ProseMirror [data-toc-entry="true"],
+              .preview-page [data-toc-entry="true"],
               .ProseMirror [data-toc-line="true"],
               .preview-page [data-toc-line="true"] {
                 display: flex;
@@ -1534,6 +1599,18 @@ export function AdvancedRichTextEditor({
                 min-width: 0;
                 white-space: nowrap;
                 overflow: hidden;
+              }
+              .ProseMirror li[data-toc-entry="true"],
+              .preview-page li[data-toc-entry="true"] {
+                list-style: none;
+                margin-left: 0;
+                padding-left: 0;
+              }
+              .ProseMirror li[data-toc-entry="true"]::before,
+              .preview-page li[data-toc-entry="true"]::before {
+                content: "•";
+                flex: 0 0 auto;
+                margin-right: 0.5rem;
               }
               .ProseMirror [data-toc-title="true"],
               .preview-page [data-toc-title="true"] {

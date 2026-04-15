@@ -512,7 +512,7 @@ describe('preview-builder', () => {
       expect(tocPage?.content).toContain('Introducción');
       expect(tocPage?.content).toContain('Fase 1');
       expect(tocPage?.content).toContain('····');
-      expect(tocPage?.content).toContain('<h2><span data-toc-line="true"');
+      expect(tocPage?.content).toContain('<h2 data-toc-entry="true"');
       expect(tocPage?.content).toContain('<ul><li>Día 1: Autoimagen.</li></ul>');
       expect(tocPage?.content).toContain('<span data-toc-page="true">3</span>');
       expect(tocPage?.content).toContain('<span data-toc-page="true">4</span>');
@@ -560,7 +560,7 @@ describe('preview-builder', () => {
       );
 
       expect(tocPage?.content).toContain('Introducción');
-      expect(tocPage?.content).toContain('<p><span data-toc-line="true"');
+      expect(tocPage?.content).toContain('<p data-toc-entry="true"');
       expect(tocPage?.content).toContain('<span data-toc-page="true">3</span>');
     });
 
@@ -745,7 +745,7 @@ describe('preview-builder', () => {
 
       expect(syncedToc?.html).toContain('Día 1: Autoimagen.');
       expect(syncedToc?.html).toContain('Día 2: Fortalezas latentes.');
-      expect(syncedToc?.html).toContain('<li><span data-toc-line="true"');
+      expect(syncedToc?.html).toContain('<li data-toc-entry="true"');
       expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
       expect(syncedToc?.html.match(/data-toc-page="true"/g)).toHaveLength(3);
     });

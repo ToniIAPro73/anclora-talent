@@ -519,7 +519,7 @@ function injectTocPageNumbers(
       const entry = numberedEntries[entryIndex];
       entryIndex += 1;
 
-      return `<${tagName}${rawAttributes}><span data-toc-line="true" data-toc-level="${entry.level}"><span data-toc-title="true">${innerHtml}</span><span data-toc-leader="true" aria-hidden="true">${buildDotLeader(entry.level)}</span><span data-toc-page="true">${entry.firstPage}</span></span></${tagName}>`;
+      return `<${tagName}${rawAttributes} data-toc-entry="true" data-toc-level="${entry.level}"><span data-toc-title="true">${innerHtml}</span><span data-toc-leader="true" aria-hidden="true">${buildDotLeader(entry.level)}</span><span data-toc-page="true">${entry.firstPage}</span></${tagName}>`;
     },
   );
 }
@@ -534,6 +534,12 @@ function stripExistingTocPageNumbers(html: string) {
       /<span data-toc-line="true"[^>]*>\s*<span data-toc-title="true">([\s\S]*?)<\/span>\s*<span data-toc-leader="true"[^>]*>[\s\S]*?<\/span>\s*<span data-toc-page="true">[\s\S]*?<\/span>\s*<\/span>/gi,
       '$1',
     );
+    current = current.replace(
+      /<span data-toc-title="true">([\s\S]*?)<\/span>\s*<span data-toc-leader="true"[^>]*>[\s\S]*?<\/span>\s*<span data-toc-page="true">[\s\S]*?<\/span>/gi,
+      '$1',
+    );
+    current = current.replace(/\sdata-toc-entry="true"/gi, '');
+    current = current.replace(/\sdata-toc-level="[^"]*"/gi, '');
   }
 
   return current;
