@@ -140,18 +140,18 @@ export function MultipageFlow({
           margin-top: 0.8rem;
         }
         .flow-content-root.ProseMirror [data-toc-line="true"] {
-          display: flex;
+          display: grid;
+          grid-template-columns: auto minmax(0, 1fr) auto;
           align-items: baseline;
+          column-gap: 0.5rem;
           width: 100%;
-          gap: 0;
         }
         .flow-content-root.ProseMirror [data-toc-title="true"] {
-          flex: 0 1 auto;
+          display: inline-block;
           min-width: 0;
-          margin-right: 0.5rem;
         }
         .flow-content-root.ProseMirror [data-toc-leader="true"] {
-          flex: 1 1 auto;
+          display: block;
           min-width: 0.5rem;
           overflow: hidden;
           color: var(--text-tertiary);
@@ -161,11 +161,11 @@ export function MultipageFlow({
           white-space: nowrap;
         }
         .flow-content-root.ProseMirror [data-toc-page="true"] {
-          flex: 0 0 auto;
-          margin-left: 0.5rem;
+          display: inline-block;
           min-width: 1.5rem;
           text-align: right;
           font-weight: 700;
+          white-space: nowrap;
         }
         .flow-content-root.ProseMirror h1 {
           font-size: 2rem;
@@ -346,8 +346,10 @@ export function MultipageFlow({
             <div className="h-full w-full" style={pagePaddingStyle} />
             {showPageNumbers ? (
               <div className="pointer-events-none absolute inset-x-0 bottom-7 flex justify-center">
-                <span className="rounded-full bg-[rgba(7,12,20,0.05)] px-3 py-1 text-[11px] font-semibold tracking-[0.18em] text-[var(--text-tertiary)]">
-                  {idx + pageNumberOffset}
+                <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(7,12,20,0.05)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[var(--text-tertiary)]">
+                  <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
+                  <span>{idx + pageNumberOffset}</span>
+                  <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
                 </span>
               </div>
             ) : null}
