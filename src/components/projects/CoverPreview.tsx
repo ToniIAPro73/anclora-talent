@@ -22,11 +22,13 @@ export function CoverPreview({
   palette,
   backgroundImageUrl,
   eyebrow,
+  visualOnly = false,
 }: {
   surface: SurfaceState;
   palette: CoverDesign['palette'];
   backgroundImageUrl?: string | null;
   eyebrow: string;
+  visualOnly?: boolean;
 }) {
   const colors = previewText[palette];
   const title = surface.fields.title?.value || 'Título del proyecto';
@@ -55,98 +57,105 @@ export function CoverPreview({
   const subtitleTextAlign = subtitleLayer?.textAlign ?? 'center';
   const authorTextAlign = authorLayer?.textAlign ?? 'center';
 
+  const visual = (
+    <div
+      className="relative aspect-[2/3] w-full overflow-hidden rounded-[32px] border border-[var(--border-subtle)] shadow-[var(--shadow-strong)]"
+      style={{ background: previewGradients[palette] }}
+    >
+      {backgroundImageUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={backgroundImageUrl}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          style={{ opacity }}
+        />
+      )}
+
+      <div className="absolute inset-0 p-10 text-center">
+        <h2
+          className="absolute -translate-y-1/2 font-black tracking-tight"
+          style={{
+            top: titleTop,
+            left: titleLeft,
+            transform: `translate(${titleTranslateX}, -50%)`,
+            width: `${((titleLayer?.width ?? (COVER_TEXT_LAYOUT.titleWidth * 400)) / 400) * 100}%`,
+            color: titleLayer?.fill ?? colors.primary,
+            lineHeight: titleLayer?.lineHeight ?? COVER_TEXT_LAYOUT.titleLineHeight,
+            fontSize: `${titleLayer?.fontSize ?? COVER_TEXT_LAYOUT.titleFontSize}px`,
+            fontFamily: titleLayer?.fontFamily ?? undefined,
+            fontWeight: titleLayer?.fontWeight ?? 900,
+            fontStyle: titleLayer?.fontStyle ?? 'normal',
+            letterSpacing: fabricCharSpacingToCss(titleLayer?.charSpacing, titleLayer?.fontSize ?? COVER_TEXT_LAYOUT.titleFontSize),
+            opacity: titleLayer?.opacity ?? 1,
+            textAlign: titleTextAlign,
+          }}
+          data-testid="cover-preview-title"
+        >
+          {title}
+        </h2>
+        {subtitle && (
+          <p
+            className="absolute -translate-y-1/2 font-medium"
+            style={{
+              top: subtitleTop,
+              left: subtitleLeft,
+              transform: `translate(${subtitleTranslateX}, -50%)`,
+              width: `${((subtitleLayer?.width ?? (COVER_TEXT_LAYOUT.subtitleWidth * 400)) / 400) * 100}%`,
+              color: subtitleLayer?.fill ?? colors.secondary,
+              fontSize: `${subtitleLayer?.fontSize ?? COVER_TEXT_LAYOUT.subtitleFontSize}px`,
+              lineHeight: subtitleLayer?.lineHeight ?? 1.45,
+              fontFamily: subtitleLayer?.fontFamily ?? undefined,
+              fontWeight: subtitleLayer?.fontWeight ?? 500,
+              fontStyle: subtitleLayer?.fontStyle ?? 'normal',
+              letterSpacing: fabricCharSpacingToCss(subtitleLayer?.charSpacing, subtitleLayer?.fontSize ?? COVER_TEXT_LAYOUT.subtitleFontSize),
+              opacity: subtitleLayer?.opacity ?? 1,
+              textAlign: subtitleTextAlign,
+            }}
+            data-testid="cover-preview-subtitle"
+          >
+            {subtitle}
+          </p>
+        )}
+        {author && (
+          <p
+            className="absolute -translate-y-1/2 font-medium uppercase"
+            style={{
+              top: authorTop,
+              left: authorLeft,
+              transform: `translate(${authorTranslateX}, -50%)`,
+              width: `${((authorLayer?.width ?? (COVER_TEXT_LAYOUT.authorWidth * 400)) / 400) * 100}%`,
+              color: authorLayer?.fill ?? colors.primary,
+              fontSize: `${authorLayer?.fontSize ?? COVER_TEXT_LAYOUT.authorFontSize}px`,
+              lineHeight: authorLayer?.lineHeight ?? COVER_TEXT_LAYOUT.titleLineHeight,
+              fontFamily: authorLayer?.fontFamily ?? undefined,
+              fontWeight: authorLayer?.fontWeight ?? 500,
+              fontStyle: authorLayer?.fontStyle ?? 'normal',
+              letterSpacing: fabricCharSpacingToCss(authorLayer?.charSpacing, authorLayer?.fontSize ?? COVER_TEXT_LAYOUT.authorFontSize),
+              opacity: authorLayer?.opacity ?? 1,
+              textAlign: authorTextAlign,
+            }}
+          >
+            {author}
+          </p>
+        )}
+      </div>
+
+      <div
+        className="absolute top-0 left-0 right-0 h-1"
+        style={{ background: palette === 'sand' ? '#0b313f' : '#d4af37' }}
+      />
+    </div>
+  );
+
+  if (visualOnly) {
+    return visual;
+  }
+
   return (
     <section className="space-y-4">
       <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">{eyebrow}</p>
-      <div 
-        className="relative aspect-[2/3] w-full overflow-hidden rounded-[32px] border border-[var(--border-subtle)] shadow-[var(--shadow-strong)]"
-        style={{ background: previewGradients[palette] }}
-      >
-        {backgroundImageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img 
-            src={backgroundImageUrl} 
-            alt="" 
-            className="absolute inset-0 h-full w-full object-cover" 
-            style={{ opacity }}
-          />
-        )}
-        
-        <div className="absolute inset-0 p-10 text-center">
-          <h2
-            className="absolute -translate-y-1/2 font-black tracking-tight"
-            style={{
-              top: titleTop,
-              left: titleLeft,
-              transform: `translate(${titleTranslateX}, -50%)`,
-              width: `${((titleLayer?.width ?? (COVER_TEXT_LAYOUT.titleWidth * 400)) / 400) * 100}%`,
-              color: titleLayer?.fill ?? colors.primary,
-              lineHeight: titleLayer?.lineHeight ?? COVER_TEXT_LAYOUT.titleLineHeight,
-              fontSize: `${titleLayer?.fontSize ?? COVER_TEXT_LAYOUT.titleFontSize}px`,
-              fontFamily: titleLayer?.fontFamily ?? undefined,
-              fontWeight: titleLayer?.fontWeight ?? 900,
-              fontStyle: titleLayer?.fontStyle ?? 'normal',
-              letterSpacing: fabricCharSpacingToCss(titleLayer?.charSpacing, titleLayer?.fontSize ?? COVER_TEXT_LAYOUT.titleFontSize),
-              opacity: titleLayer?.opacity ?? 1,
-              textAlign: titleTextAlign,
-            }}
-            data-testid="cover-preview-title"
-          >
-            {title}
-          </h2>
-          {subtitle && (
-            <p
-              className="absolute -translate-y-1/2 font-medium"
-              style={{
-                top: subtitleTop,
-                left: subtitleLeft,
-                transform: `translate(${subtitleTranslateX}, -50%)`,
-                width: `${((subtitleLayer?.width ?? (COVER_TEXT_LAYOUT.subtitleWidth * 400)) / 400) * 100}%`,
-                color: subtitleLayer?.fill ?? colors.secondary,
-                fontSize: `${subtitleLayer?.fontSize ?? COVER_TEXT_LAYOUT.subtitleFontSize}px`,
-                lineHeight: subtitleLayer?.lineHeight ?? 1.45,
-                fontFamily: subtitleLayer?.fontFamily ?? undefined,
-                fontWeight: subtitleLayer?.fontWeight ?? 500,
-                fontStyle: subtitleLayer?.fontStyle ?? 'normal',
-                letterSpacing: fabricCharSpacingToCss(subtitleLayer?.charSpacing, subtitleLayer?.fontSize ?? COVER_TEXT_LAYOUT.subtitleFontSize),
-                opacity: subtitleLayer?.opacity ?? 1,
-                textAlign: subtitleTextAlign,
-              }}
-              data-testid="cover-preview-subtitle"
-            >
-              {subtitle}
-            </p>
-          )}
-          {author && (
-            <p
-              className="absolute -translate-y-1/2 font-medium uppercase"
-              style={{
-                top: authorTop,
-                left: authorLeft,
-                transform: `translate(${authorTranslateX}, -50%)`,
-                width: `${((authorLayer?.width ?? (COVER_TEXT_LAYOUT.authorWidth * 400)) / 400) * 100}%`,
-                color: authorLayer?.fill ?? colors.primary,
-                fontSize: `${authorLayer?.fontSize ?? COVER_TEXT_LAYOUT.authorFontSize}px`,
-                lineHeight: authorLayer?.lineHeight ?? COVER_TEXT_LAYOUT.titleLineHeight,
-                fontFamily: authorLayer?.fontFamily ?? undefined,
-                fontWeight: authorLayer?.fontWeight ?? 500,
-                fontStyle: authorLayer?.fontStyle ?? 'normal',
-                letterSpacing: fabricCharSpacingToCss(authorLayer?.charSpacing, authorLayer?.fontSize ?? COVER_TEXT_LAYOUT.authorFontSize),
-                opacity: authorLayer?.opacity ?? 1,
-                textAlign: authorTextAlign,
-              }}
-            >
-              {author}
-            </p>
-          )}
-        </div>
-
-        {/* Accent bar simulation */}
-        <div 
-          className="absolute top-0 left-0 right-0 h-1" 
-          style={{ background: palette === 'sand' ? '#0b313f' : '#d4af37' }} 
-        />
-      </div>
+      {visual}
     </section>
   );
 }

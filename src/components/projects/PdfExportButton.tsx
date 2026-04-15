@@ -327,6 +327,7 @@ function PreviewCapturePage({
           palette={project.cover.palette}
           backgroundImageUrl={project.cover.backgroundImageUrl}
           eyebrow={copy.coverEyebrow}
+          visualOnly
         />
       </div>
     );
@@ -358,6 +359,7 @@ function PreviewCapturePage({
           backgroundImageUrl={project.backCover.backgroundImageUrl}
           accentColor={project.backCover.accentColor}
           eyebrow={copy.backCoverEyebrow}
+          visualOnly
         />
       </div>
     );

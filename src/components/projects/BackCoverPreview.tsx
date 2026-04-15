@@ -12,11 +12,13 @@ export function BackCoverPreview({
   backgroundImageUrl,
   eyebrow,
   accentColor,
+  visualOnly = false,
 }: {
   surface: SurfaceState;
   backgroundImageUrl?: string | null;
   eyebrow: string;
   accentColor?: string | null;
+  visualOnly?: boolean;
 }) {
   const title = surface.fields.title?.visible ? surface.fields.title.value : '';
   const body = surface.fields.body?.visible ? surface.fields.body.value : '';
@@ -51,106 +53,114 @@ export function BackCoverPreview({
 
   const buildTranslateX = (originX: string | undefined) => (originX === 'center' ? '-50%' : '0');
 
+  const visual = (
+    <div
+      className="relative aspect-[2/3] w-full overflow-hidden rounded-[32px] border border-[var(--border-subtle)] shadow-[var(--shadow-strong)]"
+      style={{ background: FALLBACK_BACKGROUND }}
+    >
+      {backgroundImageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={backgroundImageUrl}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          style={{ opacity }}
+        />
+      ) : null}
+
+      {title ? (
+        <p
+          className="absolute -translate-y-1/2 font-black"
+          style={{
+            top: titleTop,
+            left: titleLeft,
+            transform: `translate(${buildTranslateX(titleLayer?.originX)}, -50%)`,
+            width: `${((titleLayer?.width ?? (BACK_COVER_TEXT_LAYOUT.titleWidth * canvasWidth)) / canvasWidth) * 100}%`,
+            color: titleLayer?.fill ?? defaultTextColor,
+            lineHeight: titleLayer?.lineHeight ?? BACK_COVER_TEXT_LAYOUT.titleLineHeight,
+            fontSize: `${titleLayer?.fontSize ?? BACK_COVER_TEXT_LAYOUT.titleFontSize}px`,
+            fontFamily: titleLayer?.fontFamily ?? undefined,
+            fontWeight: titleLayer?.fontWeight ?? 900,
+            fontStyle: titleLayer?.fontStyle ?? 'normal',
+            letterSpacing: fabricCharSpacingToCss(
+              titleLayer?.charSpacing,
+              titleLayer?.fontSize ?? BACK_COVER_TEXT_LAYOUT.titleFontSize,
+            ),
+            opacity: titleLayer?.opacity ?? 1,
+            textAlign: titleLayer?.textAlign ?? 'left',
+          }}
+          data-testid="back-cover-preview-title"
+        >
+          {title}
+        </p>
+      ) : null}
+
+      {body ? (
+        <p
+          className="absolute -translate-y-1/2 font-medium"
+          style={{
+            top: bodyTop,
+            left: bodyLeft,
+            transform: `translate(${buildTranslateX(bodyLayer?.originX)}, -50%)`,
+            width: `${((bodyLayer?.width ?? (BACK_COVER_TEXT_LAYOUT.bodyWidth * canvasWidth)) / canvasWidth) * 100}%`,
+            color: bodyLayer?.fill ?? defaultTextColor,
+            lineHeight: bodyLayer?.lineHeight ?? BACK_COVER_TEXT_LAYOUT.bodyLineHeight,
+            fontSize: `${bodyLayer?.fontSize ?? BACK_COVER_TEXT_LAYOUT.bodyFontSize}px`,
+            fontFamily: bodyLayer?.fontFamily ?? undefined,
+            fontWeight: bodyLayer?.fontWeight ?? 500,
+            fontStyle: bodyLayer?.fontStyle ?? 'normal',
+            letterSpacing: fabricCharSpacingToCss(
+              bodyLayer?.charSpacing,
+              bodyLayer?.fontSize ?? BACK_COVER_TEXT_LAYOUT.bodyFontSize,
+            ),
+            opacity: bodyLayer?.opacity ?? 1,
+            textAlign: bodyLayer?.textAlign ?? 'left',
+            whiteSpace: 'pre-wrap',
+          }}
+          data-testid="back-cover-preview-body"
+        >
+          {body}
+        </p>
+      ) : null}
+
+      {authorBio ? (
+        <p
+          className="absolute -translate-y-1/2"
+          style={{
+            top: authorBioTop,
+            left: authorBioLeft,
+            transform: `translate(${buildTranslateX(authorBioLayer?.originX)}, -50%)`,
+            width: `${((authorBioLayer?.width ?? (BACK_COVER_TEXT_LAYOUT.authorBioWidth * canvasWidth)) / canvasWidth) * 100}%`,
+            color: authorBioLayer?.fill ?? secondaryTextColor,
+            lineHeight: authorBioLayer?.lineHeight ?? BACK_COVER_TEXT_LAYOUT.authorBioLineHeight,
+            fontSize: `${authorBioLayer?.fontSize ?? BACK_COVER_TEXT_LAYOUT.authorBioFontSize}px`,
+            fontFamily: authorBioLayer?.fontFamily ?? undefined,
+            fontWeight: authorBioLayer?.fontWeight ?? 400,
+            fontStyle: authorBioLayer?.fontStyle ?? 'normal',
+            letterSpacing: fabricCharSpacingToCss(
+              authorBioLayer?.charSpacing,
+              authorBioLayer?.fontSize ?? BACK_COVER_TEXT_LAYOUT.authorBioFontSize,
+            ),
+            opacity: authorBioLayer?.opacity ?? 1,
+            textAlign: authorBioLayer?.textAlign ?? 'left',
+            whiteSpace: 'pre-wrap',
+          }}
+          data-testid="back-cover-preview-author-bio"
+        >
+          {authorBio}
+        </p>
+      ) : null}
+    </div>
+  );
+
+  if (visualOnly) {
+    return visual;
+  }
+
   return (
     <section className="space-y-4">
       <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">{eyebrow}</p>
-      <div
-        className="relative aspect-[2/3] w-full overflow-hidden rounded-[32px] border border-[var(--border-subtle)] shadow-[var(--shadow-strong)]"
-        style={{ background: FALLBACK_BACKGROUND }}
-      >
-        {backgroundImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={backgroundImageUrl}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-            style={{ opacity }}
-          />
-        ) : null}
-
-        {title ? (
-          <p
-            className="absolute -translate-y-1/2 font-black"
-            style={{
-              top: titleTop,
-              left: titleLeft,
-              transform: `translate(${buildTranslateX(titleLayer?.originX)}, -50%)`,
-              width: `${((titleLayer?.width ?? (BACK_COVER_TEXT_LAYOUT.titleWidth * canvasWidth)) / canvasWidth) * 100}%`,
-              color: titleLayer?.fill ?? defaultTextColor,
-              lineHeight: titleLayer?.lineHeight ?? BACK_COVER_TEXT_LAYOUT.titleLineHeight,
-              fontSize: `${titleLayer?.fontSize ?? BACK_COVER_TEXT_LAYOUT.titleFontSize}px`,
-              fontFamily: titleLayer?.fontFamily ?? undefined,
-              fontWeight: titleLayer?.fontWeight ?? 900,
-              fontStyle: titleLayer?.fontStyle ?? 'normal',
-              letterSpacing: fabricCharSpacingToCss(
-                titleLayer?.charSpacing,
-                titleLayer?.fontSize ?? BACK_COVER_TEXT_LAYOUT.titleFontSize,
-              ),
-              opacity: titleLayer?.opacity ?? 1,
-              textAlign: titleLayer?.textAlign ?? 'left',
-            }}
-            data-testid="back-cover-preview-title"
-          >
-            {title}
-          </p>
-        ) : null}
-
-        {body ? (
-          <p
-            className="absolute -translate-y-1/2 font-medium"
-            style={{
-              top: bodyTop,
-              left: bodyLeft,
-              transform: `translate(${buildTranslateX(bodyLayer?.originX)}, -50%)`,
-              width: `${((bodyLayer?.width ?? (BACK_COVER_TEXT_LAYOUT.bodyWidth * canvasWidth)) / canvasWidth) * 100}%`,
-              color: bodyLayer?.fill ?? defaultTextColor,
-              lineHeight: bodyLayer?.lineHeight ?? BACK_COVER_TEXT_LAYOUT.bodyLineHeight,
-              fontSize: `${bodyLayer?.fontSize ?? BACK_COVER_TEXT_LAYOUT.bodyFontSize}px`,
-              fontFamily: bodyLayer?.fontFamily ?? undefined,
-              fontWeight: bodyLayer?.fontWeight ?? 500,
-              fontStyle: bodyLayer?.fontStyle ?? 'normal',
-              letterSpacing: fabricCharSpacingToCss(
-                bodyLayer?.charSpacing,
-                bodyLayer?.fontSize ?? BACK_COVER_TEXT_LAYOUT.bodyFontSize,
-              ),
-              opacity: bodyLayer?.opacity ?? 1,
-              textAlign: bodyLayer?.textAlign ?? 'left',
-              whiteSpace: 'pre-wrap',
-            }}
-            data-testid="back-cover-preview-body"
-          >
-            {body}
-          </p>
-        ) : null}
-
-        {authorBio ? (
-          <p
-            className="absolute -translate-y-1/2"
-            style={{
-              top: authorBioTop,
-              left: authorBioLeft,
-              transform: `translate(${buildTranslateX(authorBioLayer?.originX)}, -50%)`,
-              width: `${((authorBioLayer?.width ?? (BACK_COVER_TEXT_LAYOUT.authorBioWidth * canvasWidth)) / canvasWidth) * 100}%`,
-              color: authorBioLayer?.fill ?? secondaryTextColor,
-              lineHeight: authorBioLayer?.lineHeight ?? BACK_COVER_TEXT_LAYOUT.authorBioLineHeight,
-              fontSize: `${authorBioLayer?.fontSize ?? BACK_COVER_TEXT_LAYOUT.authorBioFontSize}px`,
-              fontFamily: authorBioLayer?.fontFamily ?? undefined,
-              fontWeight: authorBioLayer?.fontWeight ?? 400,
-              fontStyle: authorBioLayer?.fontStyle ?? 'normal',
-              letterSpacing: fabricCharSpacingToCss(
-                authorBioLayer?.charSpacing,
-                authorBioLayer?.fontSize ?? BACK_COVER_TEXT_LAYOUT.authorBioFontSize,
-              ),
-              opacity: authorBioLayer?.opacity ?? 1,
-              textAlign: authorBioLayer?.textAlign ?? 'left',
-              whiteSpace: 'pre-wrap',
-            }}
-            data-testid="back-cover-preview-author-bio"
-          >
-            {authorBio}
-          </p>
-        ) : null}
-      </div>
+      {visual}
     </section>
   );
 }
