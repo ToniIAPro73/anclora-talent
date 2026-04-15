@@ -746,6 +746,7 @@ describe('preview-builder', () => {
       expect(syncedToc?.html).toContain('Día 1: Autoimagen.');
       expect(syncedToc?.html).toContain('Día 2: Fortalezas latentes.');
       expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
+      expect(syncedToc?.html.match(/data-toc-page="true"/g)).toHaveLength(3);
     });
 
     it('reconciles stale automatic page breaks the same way as the chapter editor', () => {

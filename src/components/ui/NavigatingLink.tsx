@@ -27,6 +27,10 @@ export function NavigatingLink({
   const pathname = usePathname();
   const [isNavigating, setIsNavigating] = React.useState(false);
 
+  React.useEffect(() => {
+    setIsNavigating(false);
+  }, [pathname]);
+
   const handleClick = React.useCallback(() => {
     if (pathname === href) {
       return;

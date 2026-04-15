@@ -168,9 +168,16 @@ function PreviewContentPage({
           min-width: 0.5rem;
           overflow: hidden;
           color: var(--text-tertiary);
-          letter-spacing: 0.08em;
           line-height: 1;
           transform: translateY(-0.02em);
+          white-space: nowrap;
+          font-size: 0;
+        }
+        .pdf-export-content-root [data-toc-leader="true"]::before {
+          content: '····························································································';
+          display: block;
+          font-size: 1rem;
+          letter-spacing: 0.08em;
           white-space: nowrap;
         }
         .pdf-export-content-root [data-toc-page="true"] {

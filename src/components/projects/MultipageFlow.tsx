@@ -161,9 +161,16 @@ export function MultipageFlow({
           min-width: 0.5rem;
           overflow: hidden;
           color: var(--text-tertiary);
-          letter-spacing: 0.08em;
           line-height: 1;
           transform: translateY(-0.02em);
+          white-space: nowrap;
+          font-size: 0;
+        }
+        .flow-content-root.ProseMirror [data-toc-leader="true"]::before {
+          content: '····························································································';
+          display: block;
+          font-size: 1rem;
+          letter-spacing: 0.08em;
           white-space: nowrap;
         }
         .flow-content-root.ProseMirror [data-toc-page="true"] {

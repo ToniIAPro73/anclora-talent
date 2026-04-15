@@ -302,8 +302,8 @@ function escapeHtml(text: string) {
 }
 
 function buildDotLeader(level: number) {
-  // Always use enough dots to fill the entire line, flexbox + overflow:hidden will handle the rest
-  return '·'.repeat(300);
+  // Keep the persisted HTML lightweight. The full visual leader is rendered by CSS.
+  return '····';
 }
 
 function buildTocChapterHtml(
