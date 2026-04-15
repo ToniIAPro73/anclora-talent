@@ -104,6 +104,7 @@ function PreviewContentPage({
         paddingBottom: `${config.marginBottom}px`,
         paddingLeft: `${config.marginLeft}px`,
         paddingRight: `${config.marginRight}px`,
+        textAlign: 'left',
       }}
     >
       <style>{`
@@ -113,6 +114,7 @@ function PreviewContentPage({
           color: var(--text-primary);
           font-size: ${config.fontSize}px;
           line-height: ${config.lineHeight};
+          text-align: left;
           word-wrap: break-word;
           overflow-wrap: break-word;
         }
@@ -452,6 +454,7 @@ export function PdfExportButton({
       <div
         aria-hidden="true"
         className="pointer-events-none fixed left-[-200vw] top-0"
+        style={{ textAlign: 'left' }}
       >
         <div ref={captureNodeRef}>
           {activePage ? (
