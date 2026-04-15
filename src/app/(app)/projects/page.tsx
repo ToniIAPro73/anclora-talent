@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { premiumPrimaryMintButton } from '@/components/ui/button-styles';
+import { NavigatingLink } from '@/components/ui/NavigatingLink';
 import { requireUserId } from '@/lib/auth/guards';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
@@ -25,9 +25,9 @@ export default async function ProjectsPage() {
             {dashboardCopy.sectionTitle}
           </h2>
         </div>
-        <Link href="/projects/new" className={`${premiumPrimaryMintButton} px-5`}>
+        <NavigatingLink href="/projects/new" pendingLabel={dashboardCopy.createProject} className={`${premiumPrimaryMintButton} px-5`}>
           {dashboardCopy.createProject}
-        </Link>
+        </NavigatingLink>
       </div>
 
       {hasProjects ? (
@@ -47,9 +47,9 @@ export default async function ProjectsPage() {
           <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--text-secondary)]">
             {dataAvailable ? dashboardCopy.emptyDescription : dashboardCopy.emptyFallbackDescription}
           </p>
-          <Link href="/projects/new" className={`mt-6 inline-flex ${premiumPrimaryMintButton} px-5`}>
+          <NavigatingLink href="/projects/new" pendingLabel={dashboardCopy.emptyAction} className={`mt-6 inline-flex ${premiumPrimaryMintButton} px-5`}>
             {dashboardCopy.emptyAction}
-          </Link>
+          </NavigatingLink>
         </div>
       )}
     </div>

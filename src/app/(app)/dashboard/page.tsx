@@ -1,7 +1,7 @@
-import Link from 'next/link';
 import { CreateProjectForm } from '@/components/projects/CreateProjectForm';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { premiumPrimaryDarkButton, premiumPrimaryMintButton } from '@/components/ui/button-styles';
+import { NavigatingLink } from '@/components/ui/NavigatingLink';
 import { requireUserId } from '@/lib/auth/guards';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
@@ -27,9 +27,9 @@ export default async function DashboardPage() {
             {dashboardCopy.description}
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/projects/new" className={`${premiumPrimaryMintButton} px-5`}>
+            <NavigatingLink href="/projects/new" pendingLabel={dashboardCopy.createProject} className={`${premiumPrimaryMintButton} px-5`}>
               {dashboardCopy.createProject}
-            </Link>
+            </NavigatingLink>
           </div>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <div className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-4">
@@ -83,9 +83,9 @@ export default async function DashboardPage() {
                 ? dashboardCopy.emptyDescription
                 : dashboardCopy.emptyFallbackDescription}
             </p>
-            <Link href="/projects/new" className={`mt-6 ${premiumPrimaryDarkButton} min-h-11 px-5`}>
+            <NavigatingLink href="/projects/new" pendingLabel={dashboardCopy.emptyAction} className={`mt-6 ${premiumPrimaryDarkButton} min-h-11 px-5`}>
               {dashboardCopy.emptyAction}
-            </Link>
+            </NavigatingLink>
           </div>
         )}
       </section>

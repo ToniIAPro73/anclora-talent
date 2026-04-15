@@ -654,6 +654,48 @@ describe('preview-builder', () => {
       expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
     });
 
+    it('matches toc entries even when the index text is more descriptive than the chapter title', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          chapters: [
+            {
+              id: 'toc-chapter',
+              order: 0,
+              title: 'Índice',
+              blocks: [
+                {
+                  id: 'toc-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Índice</h2><p>Introducción: Activación de la Presencia</p>',
+                },
+              ],
+            },
+            {
+              id: 'intro-chapter',
+              order: 1,
+              title: 'Introducción',
+              blocks: [
+                {
+                  id: 'intro-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Introducción: Activación de la Presencia</h2><p>Texto</p>',
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const syncedToc = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
+
+      expect(syncedToc?.html).toContain('Introducción: Activación de la Presencia');
+      expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
+    });
+
     it('reconciles stale automatic page breaks the same way as the chapter editor', () => {
       const base = createMockProject();
       const project = createMockProject({

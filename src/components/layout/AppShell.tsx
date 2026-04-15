@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
 import { ChevronLeft, ChevronRight, FolderOpen, LayoutDashboard, PenSquare } from 'lucide-react';
@@ -11,6 +10,7 @@ import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { LocaleToggle } from './LocaleToggle';
 import { ThemeToggle } from './ThemeToggle';
 import { EditorPreferencesSidebar } from '@/components/projects/EditorPreferencesSidebar';
+import { NavigatingLink } from '@/components/ui/NavigatingLink';
 
 const SIDEBAR_KEY = 'anclora-sidebar-collapsed';
 
@@ -86,9 +86,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <nav className={`mt-8 space-y-2 text-sm font-semibold ${collapsed ? 'px-3' : 'px-6'}`}>
             {navLinks.map(({ href, icon: Icon, label }) => (
-              <Link
+              <NavigatingLink
                 key={href}
                 href={href}
+                pendingLabel={label}
                 title={collapsed ? label : undefined}
                 className={`flex items-center rounded-2xl border border-transparent py-3 text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:bg-[var(--page-surface-muted)] hover:text-[var(--text-primary)] ${
                   collapsed ? 'justify-center px-2' : 'gap-3 px-4'
@@ -98,7 +99,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 <Icon className="h-4 w-4 flex-shrink-0" />
                 {!collapsed && label}
-              </Link>
+              </NavigatingLink>
             ))}
           </nav>
 
