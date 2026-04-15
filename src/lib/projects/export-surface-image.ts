@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import sharp from 'sharp';
+import type { Browser } from 'playwright-core';
 import type { ProjectRecord, CoverDesign } from './types';
 import { parsePageContent, type ParsedContentBlock } from './export-content-blocks';
 import type { PreviewPage } from '@/lib/preview/preview-builder';
@@ -47,7 +48,7 @@ const PREVIEW_TEXT_TERTIARY = '#5F6B7A';
 const PREVIEW_QUOTE_BORDER = '#D4AF37';
 
 let embeddedFontFaceCssPromise: Promise<string> | null = null;
-let playwrightBrowserPromise: Promise<any> | null = null;
+let playwrightBrowserPromise: Promise<Browser> | null = null;
 
 function escapeXml(value: string) {
   return value
@@ -247,11 +248,46 @@ async function rasterizeSvg(svg: string) {
   return `data:image/png;base64,${png.toString('base64')}`;
 }
 
+async function launchLocalPlaywrightBrowser() {
+  const { chromium } = await import('@playwright/test');
+  return chromium.launch({ headless: true });
+}
+
+async function launchServerChromiumBrowser() {
+  const [{ chromium }, chromiumBinaryModule] = await Promise.all([
+    import('playwright-core'),
+    import('@sparticuz/chromium'),
+  ]);
+  const chromiumBinary = chromiumBinaryModule.default;
+  const executablePath = await chromiumBinary.executablePath();
+
+  return chromium.launch({
+    args: chromiumBinary.args,
+    executablePath,
+    headless: true,
+  });
+}
+
 async function getPlaywrightBrowser() {
   if (!playwrightBrowserPromise) {
-    playwrightBrowserPromise = import('@playwright/test').then(({ chromium }) =>
-      chromium.launch({ headless: true }),
-    );
+    playwrightBrowserPromise = (async () => {
+      try {
+        return await launchLocalPlaywrightBrowser();
+      } catch (localError) {
+        try {
+          return await launchServerChromiumBrowser();
+        } catch (serverError) {
+          console.error('[export/render] browser launch failed', {
+            localError,
+            serverError,
+          });
+          throw serverError;
+        }
+      }
+    })().catch((error) => {
+      playwrightBrowserPromise = null;
+      throw error;
+    });
   }
 
   return playwrightBrowserPromise;
@@ -320,7 +356,8 @@ async function renderHtmlToPngDataUrl({
     const buffer = await page.locator('#export-page').screenshot({ type: 'png' });
     await page.close();
     return `data:image/png;base64,${buffer.toString('base64')}`;
-  } catch {
+  } catch (error) {
+    console.error('[export/render] html to png failed', error);
     return null;
   }
 }
