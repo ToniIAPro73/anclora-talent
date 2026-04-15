@@ -375,7 +375,9 @@ function extractTocRenderableEntries(html: string) {
   sanitizedHtml.replace(
     /<(p|li|h[1-6])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi,
     (_fullMatch, tagName: string, _rawAttributes = '', innerHtml: string) => {
-      const plainText = normalizeVisibleText(stripHtmlTags(innerHtml));
+      const plainText = stripExistingTocSuffix(
+        normalizeVisibleText(stripHtmlTags(innerHtml)),
+      );
 
       if (!plainText || isTocChapter(plainText) || !/[^\d\s·~∿.-]/u.test(plainText)) {
         return '';
@@ -450,7 +452,6 @@ function measureOutlineEntryPageMetrics(
   }
 
   let pageCursor = 0;
-  let lastResolvedPage: number | undefined;
 
   for (const entry of outlineEntries) {
     const normalizedTitle = normalizeLookupKey(entry.title);
@@ -467,7 +468,6 @@ function measureOutlineEntryPageMetrics(
     if (matchedPage) {
       firstPageByOutlineTitle.set(normalizedTitle, matchedPage.pageNumber);
       pageCursor = Math.max(pageCursor, pageRecords.indexOf(matchedPage));
-      lastResolvedPage = matchedPage.pageNumber;
       continue;
     }
 
@@ -485,12 +485,6 @@ function measureOutlineEntryPageMetrics(
 
     if (fallbackPage) {
       firstPageByOutlineTitle.set(normalizedTitle, fallbackPage);
-      lastResolvedPage = fallbackPage;
-      continue;
-    }
-
-    if (lastResolvedPage) {
-      firstPageByOutlineTitle.set(normalizedTitle, lastResolvedPage);
     }
   }
 
@@ -513,7 +507,9 @@ function injectTocPageNumbers(
         return fullMatch;
       }
 
-      const plainText = normalizeMatchKey(stripHtmlTags(innerHtml));
+      const plainText = normalizeMatchKey(
+        stripExistingTocSuffix(stripHtmlTags(innerHtml)),
+      );
       const expectedText = normalizeMatchKey(numberedEntries[entryIndex].title);
 
       if (!plainText || !matchesOutlineText(plainText, expectedText)) {
@@ -558,6 +554,12 @@ function stripHtmlTags(value: string) {
 function normalizeVisibleText(value: string) {
   return decodeHtmlEntities(value)
     .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function stripExistingTocSuffix(value: string) {
+  return value
+    .replace(/\s*[·.\-–—~∿]+\s*\d+\s*$/u, '')
     .trim();
 }
 

@@ -513,7 +513,7 @@ describe('preview-builder', () => {
       expect(tocPage?.content).toContain('Fase 1');
       expect(tocPage?.content).toContain('····');
       expect(tocPage?.content).toContain('<h2><span data-toc-line="true"');
-      expect(tocPage?.content).toContain('<ul><li><span data-toc-line="true"');
+      expect(tocPage?.content).toContain('<ul><li>Día 1: Autoimagen.</li></ul>');
       expect(tocPage?.content).toContain('<span data-toc-page="true">3</span>');
       expect(tocPage?.content).toContain('<span data-toc-page="true">4</span>');
     });
