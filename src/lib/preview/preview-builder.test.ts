@@ -469,7 +469,8 @@ describe('preview-builder', () => {
                   id: 'toc-block',
                   type: 'paragraph',
                   order: 0,
-                  content: '<h2>Índice</h2><p>Contenido provisional</p>',
+                  content:
+                    '<h2>Índice</h2><h2>Introducción</h2><p>Activación de la Presencia</p><h2>Fase 1</h2><ul><li>Día 1: Autoimagen.</li></ul>',
                 },
               ],
             },
@@ -511,6 +512,8 @@ describe('preview-builder', () => {
       expect(tocPage?.content).toContain('Introducción');
       expect(tocPage?.content).toContain('Fase 1');
       expect(tocPage?.content).toContain('····');
+      expect(tocPage?.content).toContain('<h2><span data-toc-line="true"');
+      expect(tocPage?.content).toContain('<ul><li>Día 1: Autoimagen.</li></ul>');
       expect(tocPage?.content).toContain('<span data-toc-page="true">3</span>');
       expect(tocPage?.content).toContain('<span data-toc-page="true">4</span>');
     });
@@ -530,7 +533,7 @@ describe('preview-builder', () => {
                   id: 'toc-block',
                   type: 'paragraph',
                   order: 0,
-                  content: '<h2>Índice</h2><p>Contenido provisional</p>',
+                  content: '<h2>Índice</h2><p>Introducción</p>',
                 },
               ],
             },
@@ -557,6 +560,7 @@ describe('preview-builder', () => {
       );
 
       expect(tocPage?.content).toContain('Introducción');
+      expect(tocPage?.content).toContain('<p><span data-toc-line="true"');
       expect(tocPage?.content).toContain('<span data-toc-page="true">3</span>');
     });
 
@@ -575,7 +579,7 @@ describe('preview-builder', () => {
                   id: 'toc-block',
                   type: 'paragraph',
                   order: 0,
-                  content: '<h2>Índice</h2><p>Contenido provisional</p>',
+                  content: '<h2>Índice</h2><p>Introducción</p>',
                 },
               ],
             },

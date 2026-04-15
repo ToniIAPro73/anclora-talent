@@ -146,14 +146,15 @@ function PreviewContentPage({
         .pdf-export-content-root p + p {
           margin-top: 0.8rem;
         }
-        .pdf-export-content-root p[data-toc-entry="true"] {
+        .pdf-export-content-root [data-toc-line="true"] {
           display: flex;
           align-items: baseline;
-          margin: 0 0 0.55rem 0;
-          white-space: nowrap;
+          width: 100%;
+          gap: 0;
         }
         .pdf-export-content-root [data-toc-title="true"] {
-          flex: 0 0 auto;
+          flex: 0 1 auto;
+          min-width: 0;
           margin-right: 0.5rem;
         }
         .pdf-export-content-root [data-toc-leader="true"] {

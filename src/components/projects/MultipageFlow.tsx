@@ -139,14 +139,15 @@ export function MultipageFlow({
         .flow-content-root.ProseMirror p + p {
           margin-top: 0.8rem;
         }
-        .flow-content-root.ProseMirror p[data-toc-entry="true"] {
+        .flow-content-root.ProseMirror [data-toc-line="true"] {
           display: flex;
           align-items: baseline;
-          margin: 0 0 0.55rem 0;
-          white-space: nowrap;
+          width: 100%;
+          gap: 0;
         }
         .flow-content-root.ProseMirror [data-toc-title="true"] {
-          flex: 0 0 auto;
+          flex: 0 1 auto;
+          min-width: 0;
           margin-right: 0.5rem;
         }
         .flow-content-root.ProseMirror [data-toc-leader="true"] {

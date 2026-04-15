@@ -308,7 +308,7 @@ function buildTocChapterHtml(
     return fallbackHtml;
   }
 
-  const lines = outlineEntries
+  const numberedEntries = outlineEntries
     .map((entry) => {
       const chapter = chapterByNormalizedTitle.get(normalizeLookupKey(entry.title));
       if (!chapter) {
@@ -320,21 +320,61 @@ function buildTocChapterHtml(
         return null;
       }
 
-      const cleanTitle = entry.title.trim();
-      const level = Math.max(1, entry.level ?? 1);
-      const dots = buildDotLeader(level);
-      const paddingLeft = (level - 1) * 24;
-
-      return `<p data-toc-entry="true" style="margin:0 0 0.55rem 0;padding-left:${paddingLeft}px;"><span data-toc-title="true">${escapeHtml(cleanTitle)}</span><span data-toc-leader="true" aria-hidden="true">${dots}</span><span data-toc-page="true">${firstPage}</span></p>`;
+      return {
+        title: entry.title.trim(),
+        level: Math.max(1, entry.level ?? 1),
+        firstPage,
+      };
     })
-    .filter(Boolean)
-    .join('');
+    .filter((entry): entry is { title: string; level: number; firstPage: number } => Boolean(entry));
 
-  if (!lines) {
+  if (numberedEntries.length === 0) {
     return fallbackHtml;
   }
 
-  return `<h2>Índice</h2>${lines}`;
+  return injectTocPageNumbers(fallbackHtml, numberedEntries);
+}
+
+function injectTocPageNumbers(
+  html: string,
+  numberedEntries: Array<{ title: string; level: number; firstPage: number }>,
+) {
+  let entryIndex = 0;
+
+  return html.replace(
+    /<(p|li|h[1-6])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi,
+    (fullMatch, tagName: string, rawAttributes = '', innerHtml: string) => {
+      if (entryIndex >= numberedEntries.length) {
+        return fullMatch;
+      }
+
+      const plainText = normalizeLookupKey(stripHtmlTags(innerHtml));
+      const expectedText = normalizeLookupKey(numberedEntries[entryIndex].title);
+
+      if (!plainText || plainText !== expectedText) {
+        return fullMatch;
+      }
+
+      const entry = numberedEntries[entryIndex];
+      entryIndex += 1;
+
+      return `<${tagName}${rawAttributes}><span data-toc-line="true" data-toc-level="${entry.level}"><span data-toc-title="true">${innerHtml}</span><span data-toc-leader="true" aria-hidden="true">${buildDotLeader(entry.level)}</span><span data-toc-page="true">${entry.firstPage}</span></span></${tagName}>`;
+    },
+  );
+}
+
+function stripHtmlTags(value: string) {
+  return decodeHtmlEntities(value.replace(/<[^>]+>/g, ' '));
+}
+
+function decodeHtmlEntities(value: string) {
+  return value
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&#039;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&gt;/g, '>')
+    .replace(/&lt;/g, '<')
+    .replace(/&amp;/g, '&');
 }
 
 // ==================== HELPERS ====================
