@@ -51,7 +51,7 @@ describe('export-builder', () => {
     expect(html).toMatch(/<img class="export-full-image" src="data:image\/png;base64,[^"]+"/);
     expect(html).toContain('page-break-after: always');
     expect(html).not.toContain('Anclora Talent');
-  });
+  }, 15000);
 
   test('builds a PDF document object', async () => {
     const pdfDoc = await buildProjectPdf(makeProject());

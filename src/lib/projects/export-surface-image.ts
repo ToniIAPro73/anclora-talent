@@ -919,6 +919,10 @@ function buildSvgShell({
 }
 
 export async function buildCoverExportImageDataUrl(project: ProjectRecord) {
+  if (project.cover.renderedImageUrl?.trim()) {
+    return project.cover.renderedImageUrl;
+  }
+
   const browserRendered = await renderHtmlToPngDataUrl({
     html: renderCoverPreviewHtml(project),
     width: EXPORT_PAGE_WIDTH,
@@ -935,6 +939,10 @@ export async function buildCoverExportImageDataUrl(project: ProjectRecord) {
 }
 
 export async function buildBackCoverExportImageDataUrl(project: ProjectRecord) {
+  if (project.backCover.renderedImageUrl?.trim()) {
+    return project.backCover.renderedImageUrl;
+  }
+
   const browserRendered = await renderHtmlToPngDataUrl({
     html: renderBackCoverPreviewHtml(project),
     width: EXPORT_PAGE_WIDTH,

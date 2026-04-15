@@ -73,8 +73,8 @@ describe('premium button classes contract', () => {
     return readFileSync(resolve(process.cwd(), 'src', relativePath), 'utf8');
   }
 
-  test('AdvancedCoverEditor uses premiumPrimaryDarkButton for save', () => {
-    const src = readSrc('components/projects/advanced-cover/AdvancedCoverEditor.tsx');
+  test('advanced cover flow uses premiumPrimaryDarkButton for save', () => {
+    const src = readSrc('components/projects/advanced-cover/AdvancedSurfaceEditor.tsx');
     expect(premiumButtonPattern.test(src)).toBe(true);
   });
 
