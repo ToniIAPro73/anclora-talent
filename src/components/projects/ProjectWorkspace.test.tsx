@@ -4,7 +4,7 @@ import { ProjectWorkspace } from './ProjectWorkspace';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { createDefaultSurfaceState } from '@/lib/projects/cover-surface';
-import { saveProjectWorkflowStepAction } from '@/lib/projects/actions';
+import { saveProjectWorkflowStepAction, syncProjectPaginationAction } from '@/lib/projects/actions';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -16,6 +16,7 @@ vi.mock('@/lib/projects/actions', () => ({
   saveChapterContentAction: vi.fn().mockResolvedValue(undefined),
   saveProjectDocumentAction: vi.fn().mockResolvedValue(undefined),
   saveProjectWorkflowStepAction: vi.fn().mockResolvedValue(undefined),
+  syncProjectPaginationAction: vi.fn().mockResolvedValue(undefined),
   moveChapterAction: vi.fn().mockResolvedValue(undefined),
   deleteChapterAction: vi.fn().mockResolvedValue(undefined),
   saveProjectCoverAction: vi.fn().mockResolvedValue(undefined),
@@ -199,6 +200,7 @@ describe('ProjectWorkspace', () => {
     fireEvent.click(syncButton);
 
     return waitFor(() => {
+      expect(syncProjectPaginationAction).toHaveBeenCalledTimes(1);
       expect(syncButton).toHaveAttribute('data-sync-state', 'synced');
     });
   });

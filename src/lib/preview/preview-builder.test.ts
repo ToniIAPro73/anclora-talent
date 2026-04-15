@@ -3,7 +3,7 @@
  * Tests the complete preview page building process
  */
 
-import { buildPreviewContentFlowHtml, buildPreviewPages } from './preview-builder';
+import { buildPreviewContentFlowHtml, buildPreviewPages, buildSyncedTocChapterContent } from './preview-builder';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { DEVICE_PAGINATION_CONFIGS } from './device-configs';
 import { createDefaultSurfaceState } from '@/lib/projects/cover-surface';
@@ -609,6 +609,49 @@ describe('preview-builder', () => {
       expect(flowHtml).toContain('Introducción');
       expect(flowHtml).toContain('<span data-toc-page="true">3</span>');
       expect(flowHtml).toContain(tocPage?.content ?? '');
+    });
+
+    it('builds persisted toc chapter html for the editor sync action', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          chapters: [
+            {
+              id: 'toc-chapter',
+              order: 0,
+              title: 'Índice',
+              blocks: [
+                {
+                  id: 'toc-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Índice</h2><p>Introducción</p>',
+                },
+              ],
+            },
+            {
+              id: 'intro-chapter',
+              order: 1,
+              title: 'Introducción',
+              blocks: [
+                {
+                  id: 'intro-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Introducción</h2><p>Texto</p>',
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const syncedToc = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
+
+      expect(syncedToc).not.toBeNull();
+      expect(syncedToc?.chapterId).toBe('toc-chapter');
+      expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
     });
 
     it('reconciles stale automatic page breaks the same way as the chapter editor', () => {

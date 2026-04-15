@@ -25,6 +25,7 @@ import {
   saveProjectCoverAction,
   saveProjectDocumentAction,
   saveProjectWorkflowStepAction,
+  syncProjectPaginationAction,
 } from '@/lib/projects/actions';
 import { computeChapterPageMetrics } from '@/lib/preview/metrics';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
@@ -310,7 +311,17 @@ export function ProjectWorkspace({
   const handleSyncPageNumbers = () => {
     setPageNumberSyncState('saving');
 
-    startTransition(() => {
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.set('projectId', project.id);
+      formData.set('device', preferences.device ?? 'desktop');
+      formData.set('fontSize', preferences.fontSize ?? '16px');
+      formData.set('marginTop', String(preferences.margins?.top ?? 24));
+      formData.set('marginBottom', String(preferences.margins?.bottom ?? 24));
+      formData.set('marginLeft', String(preferences.margins?.left ?? 24));
+      formData.set('marginRight', String(preferences.margins?.right ?? 24));
+
+      await syncProjectPaginationAction(formData);
       router.refresh();
       setPageNumberSyncState('saved');
       window.setTimeout(() => setPageNumberSyncState('idle'), 2000);

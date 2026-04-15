@@ -162,6 +162,24 @@ export function buildPreviewContentFlowHtml(
     .join('<hr data-page-break="manual">');
 }
 
+export function buildSyncedTocChapterContent(
+  project: ProjectRecord,
+  config: PaginationConfig,
+) {
+  const resolvedSections = buildResolvedChapterSections(project, config);
+  const tocSection = resolvedSections.find((chapter) => isTocChapter(chapter.title));
+
+  if (!tocSection) {
+    return null;
+  }
+
+  return {
+    chapterId: tocSection.id,
+    chapterTitle: tocSection.title,
+    html: tocSection.html,
+  };
+}
+
 function buildResolvedChapterSections(
   project: ProjectRecord,
   config: PaginationConfig,

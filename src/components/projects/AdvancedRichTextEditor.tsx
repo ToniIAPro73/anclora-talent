@@ -1525,6 +1525,38 @@ export function AdvancedRichTextEditor({
               .preview-page p + p {
                 margin-top: 0.8rem;
               }
+              .ProseMirror [data-toc-line="true"],
+              .preview-page [data-toc-line="true"] {
+                display: grid;
+                grid-template-columns: auto minmax(0, 1fr) auto;
+                align-items: baseline;
+                column-gap: 0.5rem;
+                width: 100%;
+              }
+              .ProseMirror [data-toc-title="true"],
+              .preview-page [data-toc-title="true"] {
+                display: inline-block;
+                min-width: 0;
+              }
+              .ProseMirror [data-toc-leader="true"],
+              .preview-page [data-toc-leader="true"] {
+                display: block;
+                min-width: 0.5rem;
+                overflow: hidden;
+                color: var(--text-tertiary);
+                letter-spacing: 0.08em;
+                line-height: 1;
+                transform: translateY(-0.02em);
+                white-space: nowrap;
+              }
+              .ProseMirror [data-toc-page="true"],
+              .preview-page [data-toc-page="true"] {
+                display: inline-block;
+                min-width: 1.5rem;
+                text-align: right;
+                font-weight: 700;
+                white-space: nowrap;
+              }
               .ProseMirror h1,
               .preview-page h1 {
                 font-size: 2rem;
@@ -1787,13 +1819,20 @@ export function AdvancedRichTextEditor({
                   key={pageIndex}
                   data-testid="editable-page-surface"
                   data-page-index={pageIndex}
-                  className="multipage-page-frame"
+                  className="multipage-page-frame relative"
                   onMouseDown={(event) => {
                     event.preventDefault();
                     focusVisiblePage(pageIndex);
                   }}
                 >
                   <div className="multipage-page-inner" style={pagePaddingStyle} />
+                  <div className="pointer-events-none absolute inset-x-0 bottom-7 flex justify-center">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(7,12,20,0.05)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[var(--text-tertiary)]">
+                      <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
+                      <span>{pageIndex + 1}</span>
+                      <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
