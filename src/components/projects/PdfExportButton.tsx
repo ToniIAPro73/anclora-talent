@@ -149,12 +149,12 @@ function PreviewContentPage({
         .pdf-export-content-root [data-toc-entry="true"],
         .pdf-export-content-root [data-toc-line="true"] {
           display: flex;
+          flex-wrap: wrap;
           align-items: baseline;
           gap: 0.5rem;
           width: 100%;
           min-width: 0;
-          white-space: nowrap;
-          overflow: hidden;
+          overflow: visible;
         }
         .pdf-export-content-root li[data-toc-entry="true"] {
           list-style: none;
@@ -170,20 +170,20 @@ function PreviewContentPage({
           display: block;
           flex: 0 1 auto;
           min-width: 0;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+          overflow: visible;
+          text-overflow: clip;
+          white-space: normal;
         }
         .pdf-export-content-root [data-toc-title="true"] * {
-          white-space: nowrap !important;
+          white-space: inherit !important;
         }
         .pdf-export-content-root [data-toc-title="true"] br {
-          display: none;
+          display: block;
         }
         .pdf-export-content-root [data-toc-leader="true"] {
           display: block;
-          flex: 1 1 auto;
-          min-width: 0.5rem;
+          flex: 1 1 6rem;
+          min-width: 3rem;
           overflow: hidden;
           color: var(--text-tertiary);
           line-height: 1;

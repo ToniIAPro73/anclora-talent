@@ -142,12 +142,12 @@ export function MultipageFlow({
         .flow-content-root.ProseMirror [data-toc-entry="true"],
         .flow-content-root.ProseMirror [data-toc-line="true"] {
           display: flex;
+          flex-wrap: wrap;
           align-items: baseline;
           gap: 0.5rem;
           width: 100%;
           min-width: 0;
-          white-space: nowrap;
-          overflow: hidden;
+          overflow: visible;
         }
         .flow-content-root.ProseMirror li[data-toc-entry="true"] {
           list-style: none;
@@ -163,20 +163,20 @@ export function MultipageFlow({
           display: block;
           flex: 0 1 auto;
           min-width: 0;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+          overflow: visible;
+          text-overflow: clip;
+          white-space: normal;
         }
         .flow-content-root.ProseMirror [data-toc-title="true"] * {
-          white-space: nowrap !important;
+          white-space: inherit !important;
         }
         .flow-content-root.ProseMirror [data-toc-title="true"] br {
-          display: none;
+          display: block;
         }
         .flow-content-root.ProseMirror [data-toc-leader="true"] {
           display: block;
-          flex: 1 1 auto;
-          min-width: 0.5rem;
+          flex: 1 1 6rem;
+          min-width: 3rem;
           overflow: hidden;
           color: var(--text-tertiary);
           line-height: 1;

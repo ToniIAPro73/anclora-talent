@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Extension } from '@tiptap/core';
 import { useEditor, EditorContent, type Editor } from '@tiptap/react';
-import { TextSelection } from '@tiptap/pm/state';
+import { Selection, TextSelection } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import BulletList from '@tiptap/extension-bullet-list';
 import OrderedList from '@tiptap/extension-ordered-list';
@@ -1479,13 +1479,46 @@ export function AdvancedRichTextEditor({
 
       const relativePageIndex = Math.max(0, pageIndex - spreadStartPage);
       const coords = {
-        left: flowBounds.left + relativePageIndex * (pageWidth + pageGap) + 8,
-        top: flowBounds.top + 8,
+        left: flowBounds.left + relativePageIndex * (pageWidth + pageGap) + 1,
+        top: flowBounds.top + 1,
       };
       const resolved = posAtCoords(coords);
 
       if (!resolved?.pos) {
         return;
+      }
+
+      let selectionPos = resolved.pos;
+
+      try {
+        const $resolvedPos = editor.state.doc.resolve(resolved.pos);
+
+        for (let depth = $resolvedPos.depth; depth >= 0; depth -= 1) {
+          const node = $resolvedPos.node(depth);
+
+          if (!node.isTextblock) {
+            continue;
+          }
+
+          selectionPos = $resolvedPos.start(depth);
+          break;
+        }
+
+        const safeSelection = Selection.near(
+          editor.state.doc.resolve(Math.max(0, Math.min(selectionPos, editor.state.doc.content.size))),
+          1,
+        );
+
+        editor.view.dispatch(editor.state.tr.setSelection(safeSelection));
+
+        if (typeof editor.view.focus === 'function') {
+          editor.view.focus();
+        }
+
+        return;
+      } catch {
+        // Fall through to the simpler text selection path below if the
+        // visual-to-document resolution cannot be normalized.
       }
 
       editor.view.dispatch(
@@ -1593,12 +1626,12 @@ export function AdvancedRichTextEditor({
               .ProseMirror [data-toc-line="true"],
               .preview-page [data-toc-line="true"] {
                 display: flex;
+                flex-wrap: wrap;
                 align-items: baseline;
                 gap: 0.5rem;
                 width: 100%;
                 min-width: 0;
-                white-space: nowrap;
-                overflow: hidden;
+                overflow: visible;
               }
               .ProseMirror li[data-toc-entry="true"],
               .preview-page li[data-toc-entry="true"] {
@@ -1617,23 +1650,23 @@ export function AdvancedRichTextEditor({
                 display: block;
                 flex: 0 1 auto;
                 min-width: 0;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
+                overflow: visible;
+                text-overflow: clip;
+                white-space: normal;
               }
               .ProseMirror [data-toc-title="true"] *,
               .preview-page [data-toc-title="true"] * {
-                white-space: nowrap !important;
+                white-space: inherit !important;
               }
               .ProseMirror [data-toc-title="true"] br,
               .preview-page [data-toc-title="true"] br {
-                display: none;
+                display: block;
               }
               .ProseMirror [data-toc-leader="true"],
               .preview-page [data-toc-leader="true"] {
                 display: block;
-                flex: 1 1 auto;
-                min-width: 0.5rem;
+                flex: 1 1 6rem;
+                min-width: 3rem;
                 overflow: hidden;
                 color: var(--text-tertiary);
                 line-height: 1;
