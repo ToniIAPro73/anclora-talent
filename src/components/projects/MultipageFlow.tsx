@@ -11,6 +11,8 @@ interface MultipageFlowProps {
   viewMode: 'single' | 'spread';
   margins: { top: number; bottom: number; left: number; right: number };
   onPageCountChange?: (pages: number) => void;
+  showPageNumbers?: boolean;
+  pageNumberOffset?: number;
 }
 
 export function MultipageFlow({
@@ -20,6 +22,8 @@ export function MultipageFlow({
   viewMode,
   margins,
   onPageCountChange,
+  showPageNumbers = false,
+  pageNumberOffset = 1,
 }: MultipageFlowProps) {
   const multipageFlowRef = useRef<HTMLDivElement>(null);
 
@@ -308,10 +312,17 @@ export function MultipageFlow({
         {visiblePageIndices.map((idx) => (
           <div
             key={`frame-${idx}`}
-            className="bg-[var(--preview-paper)] rounded-[8px] shadow-[var(--shadow-strong)] border border-[var(--preview-paper-border)]"
+            className="relative bg-[var(--preview-paper)] rounded-[8px] shadow-[var(--shadow-strong)] border border-[var(--preview-paper-border)]"
             style={{ height: `${pageHeight}px` }}
           >
             <div className="h-full w-full" style={pagePaddingStyle} />
+            {showPageNumbers ? (
+              <div className="pointer-events-none absolute inset-x-0 bottom-7 flex justify-center">
+                <span className="rounded-full bg-[rgba(7,12,20,0.05)] px-3 py-1 text-[11px] font-semibold tracking-[0.18em] text-[var(--text-tertiary)]">
+                  {idx + pageNumberOffset}
+                </span>
+              </div>
+            ) : null}
           </div>
         ))}
       </div>

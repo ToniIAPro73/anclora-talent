@@ -47,6 +47,18 @@ export interface PreviewPage {
   pageNumber: number;
 }
 
+interface ChapterSection {
+  id: string;
+  title: string;
+  html: string;
+  order: number;
+}
+
+type ChapterPageMetrics = {
+  firstPageByChapterId: Map<string, number>;
+  pageCountByChapterId: Map<string, number>;
+};
+
 // ==================== PAGE BUILDER ====================
 
 /**
@@ -87,13 +99,6 @@ export function buildPreviewPages(
   // BUILD CHAPTER SECTIONS (for pagination and TOC)
   // ─────────────────────────────────────────────────────────────
 
-  interface ChapterSection {
-    id: string;
-    title: string;
-    html: string;
-    order: number;
-  }
-
   const chapterSections: ChapterSection[] = [];
 
   if (project.document.chapters && project.document.chapters.length > 0) {
@@ -114,13 +119,15 @@ export function buildPreviewPages(
     });
   }
 
+  const resolvedSections = resolveTocChapterHtml(chapterSections, config, project);
+
   // ─────────────────────────────────────────────────────────────
   // PAGINATE CHAPTERS
   // ─────────────────────────────────────────────────────────────
 
   let globalPageNumber = 2; // Content starts immediately after cover
 
-  for (const chapter of chapterSections) {
+  for (const chapter of resolvedSections) {
     // Reconcile auto-breaks (strips stale auto-breaks, respects manual breaks, re-paginates)
     // then split into discrete page HTML strings.
     const reconciledChapterHtml = reconcileOverflowBreaks(chapter.html, config);
@@ -161,6 +168,148 @@ export function buildPreviewPages(
   }
 
   return pages;
+}
+
+function resolveTocChapterHtml(
+  chapterSections: ChapterSection[],
+  config: PaginationConfig,
+  project: ProjectRecord,
+) {
+  let currentSections = chapterSections;
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const metrics = measureChapterPageMetrics(currentSections, config);
+    const nextSections = currentSections.map((chapter) => {
+      if (!isTocChapter(chapter.title)) {
+        return chapter;
+      }
+
+      const nextHtml = buildTocChapterHtml(project, chapterSections, metrics, chapter.html);
+      return nextHtml === chapter.html ? chapter : { ...chapter, html: nextHtml };
+    });
+
+    const hasChanged = nextSections.some((section, index) => section.html !== currentSections[index]?.html);
+    currentSections = nextSections;
+
+    if (!hasChanged) {
+      break;
+    }
+  }
+
+  return currentSections;
+}
+
+function measureChapterPageMetrics(
+  chapterSections: ChapterSection[],
+  config: PaginationConfig,
+): ChapterPageMetrics {
+  const firstPageByChapterId = new Map<string, number>();
+  const pageCountByChapterId = new Map<string, number>();
+
+  let globalPageNumber = 2;
+
+  for (const chapter of chapterSections) {
+    const reconciledChapterHtml = reconcileOverflowBreaks(chapter.html, config);
+    const chapterPageHtmls = paginateContent(reconciledChapterHtml, config)
+      .filter((page) => hasRenderablePageContent(page.html))
+      .map((page) => page.html);
+
+    const pageCount = Math.max(chapterPageHtmls.length, 1);
+    firstPageByChapterId.set(chapter.id, globalPageNumber);
+    pageCountByChapterId.set(chapter.id, pageCount);
+    globalPageNumber += pageCount;
+  }
+
+  return {
+    firstPageByChapterId,
+    pageCountByChapterId,
+  };
+}
+
+function isTocChapter(title: string) {
+  const normalized = title.trim().toLowerCase();
+  return normalized === 'índice' || normalized === 'indice' || normalized === 'index';
+}
+
+function normalizeLookupKey(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function escapeHtml(text: string) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function buildDotLeader(title: string, pageNumber: number, level: number) {
+  const target = Math.max(18, 64 - level * 6);
+  const dots = Math.max(6, target - title.length - String(pageNumber).length);
+  return '·'.repeat(dots);
+}
+
+function buildTocChapterHtml(
+  project: ProjectRecord,
+  chapterSections: ChapterSection[],
+  metrics: ChapterPageMetrics,
+  fallbackHtml: string,
+) {
+  const chapterByNormalizedTitle = new Map(
+    chapterSections.map((chapter) => [normalizeLookupKey(chapter.title), chapter]),
+  );
+
+  const sourceOutline = project.document.source?.outline?.filter(
+    (entry) => !isTocChapter(entry.title),
+  );
+
+  const outlineEntries =
+    sourceOutline && sourceOutline.length > 0
+      ? sourceOutline
+      : chapterSections
+          .filter((chapter) => !isTocChapter(chapter.title))
+          .map((chapter) => ({
+            title: chapter.title,
+            level: 1,
+          }));
+
+  if (outlineEntries.length === 0) {
+    return fallbackHtml;
+  }
+
+  const lines = outlineEntries
+    .map((entry) => {
+      const chapter = chapterByNormalizedTitle.get(normalizeLookupKey(entry.title));
+      if (!chapter) {
+        return null;
+      }
+
+      const firstPage = metrics.firstPageByChapterId.get(chapter.id);
+      if (!firstPage) {
+        return null;
+      }
+
+      const cleanTitle = entry.title.trim();
+      const level = Math.max(1, entry.level ?? 1);
+      const dots = buildDotLeader(cleanTitle, firstPage, level);
+      const paddingLeft = (level - 1) * 24;
+
+      return `<p data-toc-entry="true" style="margin:0 0 0.55rem 0;padding-left:${paddingLeft}px;white-space:nowrap;">${escapeHtml(cleanTitle)} ${dots} ${firstPage}</p>`;
+    })
+    .filter(Boolean)
+    .join('');
+
+  if (!lines) {
+    return fallbackHtml;
+  }
+
+  return `<h2>Índice</h2>${lines}`;
 }
 
 // ==================== HELPERS ====================

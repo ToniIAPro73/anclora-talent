@@ -282,6 +282,11 @@ function PreviewContentPage({
         className="pdf-export-content-root ProseMirror"
         dangerouslySetInnerHTML={{ __html: page.content ?? '' }}
       />
+      <div className="pointer-events-none absolute inset-x-0 bottom-7 flex justify-center">
+        <span className="rounded-full bg-[rgba(7,12,20,0.05)] px-3 py-1 text-[11px] font-semibold tracking-[0.18em] text-[var(--text-tertiary)]">
+          {page.pageNumber}
+        </span>
+      </div>
     </div>
   );
 }

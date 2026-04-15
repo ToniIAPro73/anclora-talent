@@ -284,6 +284,8 @@ const contentHtml = useMemo(() => {
                     currentPage={currentPage >= firstContentIndex && currentPage <= lastContentIndex ? currentPage - firstContentIndex : 0}
                     viewMode={viewMode}
                     margins={preferences.margins!}
+                    showPageNumbers
+                    pageNumberOffset={2}
                     onPageCountChange={setTotalContentPages}
                   />
                 </div>

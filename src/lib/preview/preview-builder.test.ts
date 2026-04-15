@@ -444,6 +444,122 @@ describe('preview-builder', () => {
       expect(firstContentPage?.pageNumber).toBe(2);
     });
 
+    it('enriches an index chapter with the real first page of each chapter', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          source: {
+            fileName: 'nunca.docx',
+            mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            importedAt: new Date().toISOString(),
+            outline: [
+              { title: 'Índice', level: 1, origin: 'generated' },
+              { title: 'Introducción', level: 1, origin: 'generated' },
+              { title: 'Fase 1', level: 1, origin: 'generated' },
+            ],
+          },
+          chapters: [
+            {
+              id: 'toc-chapter',
+              order: 0,
+              title: 'Índice',
+              blocks: [
+                {
+                  id: 'toc-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Índice</h2><p>Contenido provisional</p>',
+                },
+              ],
+            },
+            {
+              id: 'intro-chapter',
+              order: 1,
+              title: 'Introducción',
+              blocks: [
+                {
+                  id: 'intro-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Introducción</h2><p>Texto</p>',
+                },
+              ],
+            },
+            {
+              id: 'phase-chapter',
+              order: 2,
+              title: 'Fase 1',
+              blocks: [
+                {
+                  id: 'phase-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Fase 1</h2><p>Otro texto</p>',
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const pages = buildPreviewPages(project, DEVICE_PAGINATION_CONFIGS.laptop);
+      const tocPage = pages.find(
+        (page) => page.type === 'content' && page.chapterTitle === 'Índice',
+      );
+
+      expect(tocPage?.content).toContain('Introducción');
+      expect(tocPage?.content).toContain('Fase 1');
+      expect(tocPage?.content).toContain('····');
+      expect(tocPage?.content).toContain(' 3</p>');
+      expect(tocPage?.content).toContain(' 4</p>');
+    });
+
+    it('falls back to chapter titles when there is no source outline for the index', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          chapters: [
+            {
+              id: 'toc-chapter',
+              order: 0,
+              title: 'Índice',
+              blocks: [
+                {
+                  id: 'toc-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Índice</h2><p>Contenido provisional</p>',
+                },
+              ],
+            },
+            {
+              id: 'intro-chapter',
+              order: 1,
+              title: 'Introducción',
+              blocks: [
+                {
+                  id: 'intro-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Introducción</h2><p>Texto</p>',
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const pages = buildPreviewPages(project, DEVICE_PAGINATION_CONFIGS.laptop);
+      const tocPage = pages.find(
+        (page) => page.type === 'content' && page.chapterTitle === 'Índice',
+      );
+
+      expect(tocPage?.content).toContain('Introducción');
+      expect(tocPage?.content).toContain(' 3</p>');
+    });
+
     it('reconciles stale automatic page breaks the same way as the chapter editor', () => {
       const base = createMockProject();
       const project = createMockProject({
