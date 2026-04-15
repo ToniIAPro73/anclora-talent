@@ -2,7 +2,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { renderToBuffer } from '@react-pdf/renderer';
 import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
-import { buildProjectPdf } from '@/lib/projects/pdf-builder';
+import { buildProjectPdfWithConfig } from '@/lib/projects/export-builder';
+import { resolveExportPaginationConfig } from '@/lib/projects/export-config';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,7 +19,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    const pdfDoc = await buildProjectPdf(project);
+    const exportConfig = resolveExportPaginationConfig(request.nextUrl.searchParams);
+    const pdfDoc = await buildProjectPdfWithConfig(project, exportConfig);
     const buffer = await renderToBuffer(pdfDoc);
 
     const slug = project.slug || 'proyecto';

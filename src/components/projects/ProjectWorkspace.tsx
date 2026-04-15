@@ -11,6 +11,7 @@ import { AdvancedCoverEditor } from './advanced-cover/AdvancedCoverEditor';
 import { BackCoverForm } from './BackCoverForm';
 import { AdvancedBackCoverEditor } from './advanced-back-cover/AdvancedBackCoverEditor';
 import { PreviewCanvas } from './PreviewCanvas';
+import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { TemplateSelector } from './TemplateSelector';
 import { CollaborationPanel } from './CollaborationPanel';
 import { AIAssistant } from './AIAssistant';
@@ -41,6 +42,7 @@ import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface
 import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
+import { buildExportQueryString } from '@/lib/projects/export-config';
 
 const TEMPLATE_TONE_TO_PALETTE: Record<EditorialTemplate['previewTone'], ProjectRecord['cover']['palette']> = {
   obsidian: 'obsidian',
@@ -132,6 +134,7 @@ export function ProjectWorkspace({
   copy: AppMessages['project'];
 }) {
   const router = useRouter();
+  const { preferences } = useEditorPreferences();
   const [activeStep, setActiveStep] = useState(() => {
     const persistedStep = readStoredWorkflowStep(project.id);
     return Number.isFinite(project.workflowStep)
@@ -172,6 +175,7 @@ export function ProjectWorkspace({
   );
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [isPending, startTransition] = useTransition();
+  const exportQuery = useMemo(() => buildExportQueryString(preferences), [preferences]);
 
   useEffect(() => {
     setActiveStep(normalizeWorkflowStep(project.workflowStep));
@@ -467,7 +471,7 @@ export function ProjectWorkspace({
             <div className="mt-8 flex flex-wrap justify-center gap-4">
                <button
                  onClick={() => {
-                   const htmlUrl = `/api/projects/export?projectId=${project.id}`;
+                   const htmlUrl = `/api/projects/export?projectId=${project.id}&${exportQuery}`;
                    window.open(htmlUrl, '_blank');
                  }}
                  className={`${premiumSecondaryLightButton} px-8 cursor-pointer hover:cursor-pointer`}
@@ -476,7 +480,7 @@ export function ProjectWorkspace({
                </button>
                <button
                  onClick={() => {
-                   const pdfUrl = `/api/projects/export/pdf?projectId=${project.id}`;
+                   const pdfUrl = `/api/projects/export/pdf?projectId=${project.id}&${exportQuery}`;
                    window.open(pdfUrl, '_blank');
                  }}
                  className={`${premiumPrimaryDarkButton} px-8 cursor-pointer hover:cursor-pointer`}
@@ -485,7 +489,7 @@ export function ProjectWorkspace({
                </button>
                <button
                  onClick={() => {
-                   const docxUrl = `/api/projects/export/docx?projectId=${project.id}`;
+                   const docxUrl = `/api/projects/export/docx?projectId=${project.id}&${exportQuery}`;
                    window.open(docxUrl, '_blank');
                  }}
                  className={`${premiumSecondaryLightButton} px-8 cursor-pointer hover:cursor-pointer`}

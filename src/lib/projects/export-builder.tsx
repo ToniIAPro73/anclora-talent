@@ -16,6 +16,7 @@ import {
   View,
 } from '@react-pdf/renderer';
 import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
+import type { PaginationConfig } from '@/lib/preview/device-configs';
 import { buildPreviewPages, type PreviewPage } from '@/lib/preview/preview-builder';
 import type { ProjectRecord } from './types';
 import {
@@ -29,16 +30,8 @@ import {
   buildCoverExportImageDataUrl,
 } from './export-surface-image';
 
-const EXPORT_CONFIG = DEVICE_PAGINATION_CONFIGS.laptop;
+const DEFAULT_EXPORT_CONFIG = DEVICE_PAGINATION_CONFIGS.laptop;
 const PDF_SCALE = 0.75;
-const PDF_PAGE_WIDTH = EXPORT_CONFIG.pageWidth * PDF_SCALE;
-const PDF_PAGE_HEIGHT = EXPORT_CONFIG.pageHeight * PDF_SCALE;
-const PDF_MARGIN_TOP = EXPORT_CONFIG.marginTop * PDF_SCALE;
-const PDF_MARGIN_BOTTOM = EXPORT_CONFIG.marginBottom * PDF_SCALE;
-const PDF_MARGIN_LEFT = EXPORT_CONFIG.marginLeft * PDF_SCALE;
-const PDF_MARGIN_RIGHT = EXPORT_CONFIG.marginRight * PDF_SCALE;
-const DOCX_PAGE_WIDTH = EXPORT_CONFIG.pageWidth;
-const DOCX_PAGE_HEIGHT = EXPORT_CONFIG.pageHeight;
 
 const COVER_PALETTE_COLORS: Record<string, { bg: string; text: string; accent: string }> = {
   obsidian: { bg: '#0b133f', text: '#f2e3b3', accent: '#d4af37' },
@@ -139,11 +132,14 @@ function renderContentPageHtml(page: PreviewPage) {
 }
 
 export function buildExportPreview(project: ProjectRecord) {
-  return buildPreviewPages(project, EXPORT_CONFIG);
+  return buildPreviewPages(project, DEFAULT_EXPORT_CONFIG);
 }
 
-export async function renderProjectExportHtml(project: ProjectRecord) {
-  const pages = buildExportPreview(project);
+export async function renderProjectExportHtml(
+  project: ProjectRecord,
+  exportConfig: PaginationConfig = DEFAULT_EXPORT_CONFIG,
+) {
+  const pages = buildPreviewPages(project, exportConfig);
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
   const sections = pages
@@ -170,12 +166,12 @@ export async function renderProjectExportHtml(project: ProjectRecord) {
   <title>${escapeHtml(project.document.title)}</title>
   <style>
     :root {
-      --page-width: ${EXPORT_CONFIG.pageWidth}px;
-      --page-height: ${EXPORT_CONFIG.pageHeight}px;
-      --page-margin-top: ${EXPORT_CONFIG.marginTop}px;
-      --page-margin-bottom: ${EXPORT_CONFIG.marginBottom}px;
-      --page-margin-left: ${EXPORT_CONFIG.marginLeft}px;
-      --page-margin-right: ${EXPORT_CONFIG.marginRight}px;
+      --page-width: ${exportConfig.pageWidth}px;
+      --page-height: ${exportConfig.pageHeight}px;
+      --page-margin-top: ${exportConfig.marginTop}px;
+      --page-margin-bottom: ${exportConfig.marginBottom}px;
+      --page-margin-left: ${exportConfig.marginLeft}px;
+      --page-margin-right: ${exportConfig.marginRight}px;
       --paper-bg: #ffffff;
       --paper-border: #d7dde7;
       --body-text: #1c2430;
@@ -349,15 +345,9 @@ export async function renderProjectExportHtml(project: ProjectRecord) {
 const pdfStyles = StyleSheet.create({
   page: {
     position: 'relative',
-    width: PDF_PAGE_WIDTH,
-    height: PDF_PAGE_HEIGHT,
     backgroundColor: '#ffffff',
   },
   pageInner: {
-    paddingTop: PDF_MARGIN_TOP,
-    paddingBottom: PDF_MARGIN_BOTTOM,
-    paddingLeft: PDF_MARGIN_LEFT,
-    paddingRight: PDF_MARGIN_RIGHT,
     height: '100%',
   },
   fullImage: {
@@ -453,14 +443,12 @@ const pdfStyles = StyleSheet.create({
     marginTop: 16,
     fontSize: 12,
     lineHeight: 1.6,
-    width: PDF_PAGE_WIDTH * 0.72,
     color: '#f2e3b3',
   },
   backCoverBio: {
     marginTop: 20,
     fontSize: 10,
     lineHeight: 1.4,
-    width: PDF_PAGE_WIDTH * 0.62,
     color: 'rgba(242,227,179,0.78)',
   },
 });
@@ -495,7 +483,20 @@ function renderPdfContentBlock(block: ParsedContentBlock, index: number) {
 }
 
 export async function buildProjectPdf(project: ProjectRecord) {
-  const pages = buildExportPreview(project);
+  return buildProjectPdfWithConfig(project, DEFAULT_EXPORT_CONFIG);
+}
+
+export async function buildProjectPdfWithConfig(
+  project: ProjectRecord,
+  exportConfig: PaginationConfig,
+) {
+  const pdfPageWidth = exportConfig.pageWidth * PDF_SCALE;
+  const pdfPageHeight = exportConfig.pageHeight * PDF_SCALE;
+  const pdfMarginTop = exportConfig.marginTop * PDF_SCALE;
+  const pdfMarginBottom = exportConfig.marginBottom * PDF_SCALE;
+  const pdfMarginLeft = exportConfig.marginLeft * PDF_SCALE;
+  const pdfMarginRight = exportConfig.marginRight * PDF_SCALE;
+  const pages = buildPreviewPages(project, exportConfig);
   const palette = COVER_PALETTE_COLORS[project.cover.palette] ?? COVER_PALETTE_COLORS.obsidian;
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
@@ -511,7 +512,7 @@ export async function buildProjectPdf(project: ProjectRecord) {
         if (page.type === 'cover' && page.coverData) {
           if (coverImageUrl) {
             return (
-              <Page key={`pdf-cover-${pageIndex}`} size={[PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT]} style={pdfStyles.page}>
+              <Page key={`pdf-cover-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight }]}>
                 <Image src={coverImageUrl} style={pdfStyles.fullImage} />
               </Page>
             );
@@ -519,11 +520,11 @@ export async function buildProjectPdf(project: ProjectRecord) {
 
           const imageUrl = page.coverData.backgroundImageUrl || '';
           return (
-            <Page key={`pdf-cover-${pageIndex}`} size={[PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT]} style={[pdfStyles.page, { backgroundColor: palette.bg }]}>
+            <Page key={`pdf-cover-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight, backgroundColor: palette.bg }]}>
               {imageUrl ? <Image src={imageUrl} style={pdfStyles.fullImage} /> : null}
               {imageUrl ? <View style={pdfStyles.coverOverlay} /> : null}
               <View style={[pdfStyles.accentBar, { backgroundColor: palette.accent }]} />
-              <View style={[pdfStyles.pageInner, pdfStyles.coverInner]}>
+              <View style={[pdfStyles.pageInner, pdfStyles.coverInner, { paddingTop: pdfMarginTop, paddingBottom: pdfMarginBottom, paddingLeft: pdfMarginLeft, paddingRight: pdfMarginRight }]}>
                 <Text style={[pdfStyles.coverTitle, { color: palette.text }]}>{page.coverData.title}</Text>
                 {page.coverData.showSubtitle && page.coverData.subtitle ? (
                   <Text style={[pdfStyles.coverSubtitle, { color: palette.text }]}>{page.coverData.subtitle}</Text>
@@ -539,7 +540,7 @@ export async function buildProjectPdf(project: ProjectRecord) {
         if (page.type === 'back-cover' && page.backCoverData) {
           if (backCoverImageUrl) {
             return (
-              <Page key={`pdf-back-cover-${pageIndex}`} size={[PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT]} style={pdfStyles.page}>
+              <Page key={`pdf-back-cover-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight }]}>
                 <Image src={backCoverImageUrl} style={pdfStyles.fullImage} />
               </Page>
             );
@@ -547,16 +548,20 @@ export async function buildProjectPdf(project: ProjectRecord) {
 
           const imageUrl = page.backCoverData.backgroundImageUrl || '';
           return (
-            <Page key={`pdf-back-cover-${pageIndex}`} size={[PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT]} style={[pdfStyles.page, { backgroundColor: '#0b133f' }]}>
+            <Page key={`pdf-back-cover-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight, backgroundColor: '#0b133f' }]}>
               {imageUrl ? <Image src={imageUrl} style={pdfStyles.fullImage} /> : null}
               {imageUrl ? <View style={pdfStyles.coverOverlay} /> : null}
-              <View style={[pdfStyles.pageInner, pdfStyles.coverInner]}>
-                <Text style={[pdfStyles.coverTitle, { color: '#f2e3b3', maxWidth: PDF_PAGE_WIDTH * 0.75 }]}>{page.backCoverData.title}</Text>
+              <View style={[pdfStyles.pageInner, pdfStyles.coverInner, { paddingTop: pdfMarginTop, paddingBottom: pdfMarginBottom, paddingLeft: pdfMarginLeft, paddingRight: pdfMarginRight }]}>
+                <Text style={[pdfStyles.coverTitle, { color: '#f2e3b3', maxWidth: pdfPageWidth * 0.75 }]}>{page.backCoverData.title}</Text>
                 {page.backCoverData.body ? (
-                  <Text style={pdfStyles.backCoverBody}>{stripInlineHtml(page.backCoverData.body)}</Text>
+                  <Text style={[pdfStyles.backCoverBody, { width: pdfPageWidth * 0.72 }]}>
+                    {stripInlineHtml(page.backCoverData.body)}
+                  </Text>
                 ) : null}
                 {page.backCoverData.authorBio ? (
-                  <Text style={pdfStyles.backCoverBio}>{page.backCoverData.authorBio}</Text>
+                  <Text style={[pdfStyles.backCoverBio, { width: pdfPageWidth * 0.62 }]}>
+                    {page.backCoverData.authorBio}
+                  </Text>
                 ) : null}
               </View>
             </Page>
@@ -565,7 +570,7 @@ export async function buildProjectPdf(project: ProjectRecord) {
 
         if (contentImageUrls[pageIndex]) {
           return (
-            <Page key={`pdf-content-${pageIndex}`} size={[PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT]} style={pdfStyles.page}>
+            <Page key={`pdf-content-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight }]}>
               <Image src={contentImageUrls[pageIndex]!} style={pdfStyles.fullImage} />
             </Page>
           );
@@ -573,8 +578,8 @@ export async function buildProjectPdf(project: ProjectRecord) {
 
         const blocks = parsePageContent(page.content);
         return (
-          <Page key={`pdf-content-${pageIndex}`} size={[PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT]} style={pdfStyles.page}>
-            <View style={pdfStyles.pageInner}>
+          <Page key={`pdf-content-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight }]}>
+            <View style={[pdfStyles.pageInner, { paddingTop: pdfMarginTop, paddingBottom: pdfMarginBottom, paddingLeft: pdfMarginLeft, paddingRight: pdfMarginRight }]}>
               {blocks.map((block, index) => renderPdfContentBlock(block, index))}
             </View>
           </Page>
@@ -731,12 +736,17 @@ async function loadImageBytes(imageUrl: string): Promise<DocxImagePayload | null
   }
 }
 
-export async function buildProjectDocxBuffer(project: ProjectRecord) {
-  const pages = buildExportPreview(project);
+export async function buildProjectDocxBuffer(
+  project: ProjectRecord,
+  exportConfig: PaginationConfig = DEFAULT_EXPORT_CONFIG,
+) {
+  const docxPageWidth = exportConfig.pageWidth;
+  const docxPageHeight = exportConfig.pageHeight;
+  const pages = buildPreviewPages(project, exportConfig);
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
   const contentImageUrls = await Promise.all(
-    pages.map((page) => buildContentPageExportImageDataUrl(page, EXPORT_CONFIG)),
+    pages.map((page) => buildContentPageExportImageDataUrl(page, exportConfig)),
   );
   const pageImagePayloads = await Promise.all(
     pages.map(async (page, index) => {
@@ -775,12 +785,12 @@ export async function buildProjectDocxBuffer(project: ProjectRecord) {
                   data: pageImagePayloads[index]!.data,
                   type: pageImagePayloads[index]!.type,
                   transformation: {
-                    width: DOCX_PAGE_WIDTH,
-                    height: DOCX_PAGE_HEIGHT,
+                    width: docxPageWidth,
+                    height: docxPageHeight,
                   },
                 }),
               ],
-              spacing: { before: 0, after: 0 },
+              spacing: { before: 0, after: 0, line: 1, lineRule: 'auto' as const },
             }),
           ]
         : buildDocxPageChildren(page),

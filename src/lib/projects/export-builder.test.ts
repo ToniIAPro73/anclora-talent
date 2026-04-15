@@ -48,7 +48,7 @@ describe('export-builder', () => {
 
     expect(html).toContain('<!DOCTYPE html>');
     expect(html).toContain('export-document');
-    expect(html).toContain(TINY_PNG_DATA_URL);
+    expect(html).toMatch(/<img class="export-full-image" src="data:image\/png;base64,[^"]+"/);
     expect(html).toContain('page-break-after: always');
     expect(html).not.toContain('Anclora Talent');
   });

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { PreviewCanvas } from '@/components/projects/PreviewCanvas';
+import { ExportLinks } from '@/components/projects/ExportLinks';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
@@ -33,27 +34,11 @@ export default async function ProjectPreviewPage({
           <Link href={`/projects/${project.id}/editor`} className={`${premiumSecondaryLightButton} px-5`}>
             {projectCopy.previewBackToEditor}
           </Link>
-          <a
-            href={`/api/projects/export?projectId=${project.id}`}
-            download={`${project.slug || projectCopy.previewExportFilename}.html`}
-            className={`${premiumSecondaryLightButton} px-5`}
-          >
-            {projectCopy.previewExportButton}
-          </a>
-          <a
-            href={`/api/projects/export/pdf?projectId=${project.id}`}
-            download={`${project.slug || projectCopy.previewExportFilename}.pdf`}
-            className={`${premiumSecondaryLightButton} px-5`}
-          >
-            {projectCopy.previewExportPdfButton}
-          </a>
-          <a
-            href={`/api/projects/export/docx?projectId=${project.id}`}
-            download={`${project.slug || projectCopy.previewExportFilename}.docx`}
-            className={`${premiumSecondaryLightButton} px-5`}
-          >
-            {projectCopy.previewExportDocxButton}
-          </a>
+          <ExportLinks
+            projectId={project.id}
+            projectSlug={project.slug || ''}
+            copy={projectCopy}
+          />
           <Link href={`/projects/${project.id}/cover`} className={`${premiumPrimaryDarkButton} px-5`}>
             {projectCopy.previewOpenCover}
           </Link>
