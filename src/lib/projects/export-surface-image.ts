@@ -268,6 +268,18 @@ async function launchServerChromiumBrowser() {
   });
 }
 
+function serializeError(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+    };
+  }
+
+  return error;
+}
+
 async function getPlaywrightBrowser() {
   if (!playwrightBrowserPromise) {
     playwrightBrowserPromise = (async () => {
@@ -278,8 +290,8 @@ async function getPlaywrightBrowser() {
           return await launchServerChromiumBrowser();
         } catch (serverError) {
           console.error('[export/render] browser launch failed', {
-            localError,
-            serverError,
+            localError: serializeError(localError),
+            serverError: serializeError(serverError),
           });
           throw serverError;
         }
@@ -357,7 +369,7 @@ async function renderHtmlToPngDataUrl({
     await page.close();
     return `data:image/png;base64,${buffer.toString('base64')}`;
   } catch (error) {
-    console.error('[export/render] html to png failed', error);
+    console.error('[export/render] html to png failed', serializeError(error));
     return null;
   }
 }

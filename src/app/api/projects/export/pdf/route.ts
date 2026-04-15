@@ -37,6 +37,16 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('[export/pdf] failed', error);
-    return NextResponse.json({ error: 'PDF export failed' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'PDF export failed';
+    const details =
+      process.env.VERCEL_ENV === 'preview'
+        ? {
+            name: error instanceof Error ? error.name : typeof error,
+            message,
+            stack: error instanceof Error ? error.stack : undefined,
+          }
+        : undefined;
+
+    return NextResponse.json({ error: 'PDF export failed', details }, { status: 500 });
   }
 }
