@@ -3,7 +3,7 @@
  * Tests the complete preview page building process
  */
 
-import { buildPreviewPages } from './preview-builder';
+import { buildPreviewContentFlowHtml, buildPreviewPages } from './preview-builder';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { DEVICE_PAGINATION_CONFIGS } from './device-configs';
 import { createDefaultSurfaceState } from '@/lib/projects/cover-surface';
@@ -558,6 +558,53 @@ describe('preview-builder', () => {
 
       expect(tocPage?.content).toContain('Introducción');
       expect(tocPage?.content).toContain('<span data-toc-page="true">3</span>');
+    });
+
+    it('reuses the same toc-enriched html in the preview flow as in the exported pages', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          chapters: [
+            {
+              id: 'toc-chapter',
+              order: 0,
+              title: 'Índice',
+              blocks: [
+                {
+                  id: 'toc-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Índice</h2><p>Contenido provisional</p>',
+                },
+              ],
+            },
+            {
+              id: 'intro-chapter',
+              order: 1,
+              title: 'Introducción',
+              blocks: [
+                {
+                  id: 'intro-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Introducción</h2><p>Texto</p>',
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const previewPages = buildPreviewPages(project, DEVICE_PAGINATION_CONFIGS.laptop);
+      const tocPage = previewPages.find(
+        (page) => page.type === 'content' && page.chapterTitle === 'Índice',
+      );
+      const flowHtml = buildPreviewContentFlowHtml(project, DEVICE_PAGINATION_CONFIGS.laptop);
+
+      expect(flowHtml).toContain('Introducción');
+      expect(flowHtml).toContain('<span data-toc-page="true">3</span>');
+      expect(flowHtml).toContain(tocPage?.content ?? '');
     });
 
     it('reconciles stale automatic page breaks the same way as the chapter editor', () => {

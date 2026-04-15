@@ -22,7 +22,11 @@ import {
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
-import { buildPreviewPages, type PreviewPage } from '@/lib/preview/preview-builder';
+import {
+  buildPreviewContentFlowHtml,
+  buildPreviewPages,
+  type PreviewPage,
+} from '@/lib/preview/preview-builder';
 import {
   FORMAT_PRESETS,
   buildPaginationConfig,
@@ -31,9 +35,6 @@ import {
 } from '@/lib/preview/device-configs';
 import { premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { MultipageFlow } from '@/components/projects/MultipageFlow';
-import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
-import { normalizeHtmlContent } from '@/lib/preview/html-normalize';
-import { reconcileOverflowBreaks } from '@/lib/preview/editor-page-layout';
 
 interface PreviewModalProps {
   project: ProjectRecord;
@@ -83,21 +84,10 @@ export function PreviewModal({
   const cover = useMemo(() => metaPages.find(p => p.type === 'cover'), [metaPages]);
   const backCover = useMemo(() => metaPages.find(p => p.type === 'back-cover'), [metaPages]);
 
-// COMBINED CONTENT HTML
-const contentHtml = useMemo(() => {
-  if (!project.document.chapters?.length) return '';
-  
-  const sorted = [...project.document.chapters].sort((a, b) => a.order - b.order);
-
-  const fragments = sorted.map((chapter) => {
-    const rawHtml = chapterBlocksToHtml(chapter.blocks);
-    const normalized = normalizeHtmlContent(rawHtml);
-    return reconcileOverflowBreaks(normalized, paginationConfig);
-  });
-
-  // Separar capítulos con un salto manual, igual que antes
-  return fragments.join('<hr data-page-break="manual">');
-}, [project.document.chapters, paginationConfig]);
+  const contentHtml = useMemo(
+    () => buildPreviewContentFlowHtml(project, paginationConfig),
+    [paginationConfig, project],
+  );
 
   // LOGICAL PAGE INDEXING
   const firstContentIndex = 1;

@@ -20,6 +20,7 @@ import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
 import { PaginationConfig } from './device-configs';
 import { hasRenderablePageContent, paginateContent } from './content-paginator';
 import { reconcileOverflowBreaks } from './editor-page-layout';
+import { normalizeHtmlContent } from './html-normalize';
 
 // ==================== TYPES ====================
 
@@ -99,27 +100,7 @@ export function buildPreviewPages(
   // BUILD CHAPTER SECTIONS (for pagination and TOC)
   // ─────────────────────────────────────────────────────────────
 
-  const chapterSections: ChapterSection[] = [];
-
-  if (project.document.chapters && project.document.chapters.length > 0) {
-    const sortedChapters = [...project.document.chapters].sort(
-      (a, b) => a.order - b.order,
-    );
-
-    sortedChapters.forEach((chapter, index) => {
-      const chapterTitle = chapter.title?.trim() || `Capítulo ${index + 1}`;
-      const chapterHtml = chapterBlocksToHtml(chapter.blocks);
-
-      chapterSections.push({
-        id: chapter.id,
-        title: chapterTitle,
-        html: chapterHtml || '<p><em>Contenido aún no disponible</em></p>',
-        order: index,
-      });
-    });
-  }
-
-  const resolvedSections = resolveTocChapterHtml(chapterSections, config, project);
+  const resolvedSections = buildResolvedChapterSections(project, config);
 
   // ─────────────────────────────────────────────────────────────
   // PAGINATE CHAPTERS
@@ -170,6 +151,51 @@ export function buildPreviewPages(
   return pages;
 }
 
+export function buildPreviewContentFlowHtml(
+  project: ProjectRecord,
+  config: PaginationConfig,
+) {
+  const resolvedSections = buildResolvedChapterSections(project, config);
+
+  return resolvedSections
+    .map((chapter) => reconcileOverflowBreaks(normalizeHtmlContent(chapter.html), config))
+    .join('<hr data-page-break="manual">');
+}
+
+function buildResolvedChapterSections(
+  project: ProjectRecord,
+  config: PaginationConfig,
+) {
+  const chapterSections = buildChapterSections(project);
+  return resolveTocChapterHtml(chapterSections, config, project);
+}
+
+function buildChapterSections(project: ProjectRecord): ChapterSection[] {
+  const chapterSections: ChapterSection[] = [];
+
+  if (!project.document.chapters?.length) {
+    return chapterSections;
+  }
+
+  const sortedChapters = [...project.document.chapters].sort(
+    (a, b) => a.order - b.order,
+  );
+
+  sortedChapters.forEach((chapter, index) => {
+    const chapterTitle = chapter.title?.trim() || `Capítulo ${index + 1}`;
+    const chapterHtml = chapterBlocksToHtml(chapter.blocks);
+
+    chapterSections.push({
+      id: chapter.id,
+      title: chapterTitle,
+      html: chapterHtml || '<p><em>Contenido aún no disponible</em></p>',
+      order: index,
+    });
+  });
+
+  return chapterSections;
+}
+
 function resolveTocChapterHtml(
   chapterSections: ChapterSection[],
   config: PaginationConfig,
@@ -184,7 +210,7 @@ function resolveTocChapterHtml(
         return chapter;
       }
 
-      const nextHtml = buildTocChapterHtml(project, chapterSections, metrics, chapter.html);
+      const nextHtml = buildTocChapterHtml(project, currentSections, metrics, chapter.html);
       return nextHtml === chapter.html ? chapter : { ...chapter, html: nextHtml };
     });
 
