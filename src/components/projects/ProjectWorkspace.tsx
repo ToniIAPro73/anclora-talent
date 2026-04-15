@@ -175,6 +175,7 @@ export function ProjectWorkspace({
     ),
   );
   const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [pageNumberSyncState, setPageNumberSyncState] = useState<SaveState>('idle');
   const [isPending, startTransition] = useTransition();
   const exportQuery = useMemo(() => buildExportQueryString(preferences), [preferences]);
 
@@ -306,6 +307,16 @@ export function ProjectWorkspace({
     { id: 9, title: copy.stepExport, description: copy.stepExportDesc, status: activeStep === 9 ? 'active' : activeStep > 9 ? 'completed' : 'pending' },
   ], [activeStep, copy]);
 
+  const handleSyncPageNumbers = () => {
+    setPageNumberSyncState('saving');
+
+    startTransition(() => {
+      router.refresh();
+      setPageNumberSyncState('saved');
+      window.setTimeout(() => setPageNumberSyncState('idle'), 2000);
+    });
+  };
+
   const renderStepContent = () => {
     switch (activeStep) {
       case 1: // Content
@@ -376,6 +387,17 @@ export function ProjectWorkspace({
               onEditChapter={setEditingChapterId}
               onAddChapter={() => setIsAddDialogOpen(true)}
               onImportChapter={() => setIsImportDialogOpen(true)}
+              onSyncPageNumbers={handleSyncPageNumbers}
+              pageNumberSyncState={
+                pageNumberSyncState === 'saving'
+                  ? 'syncing'
+                  : pageNumberSyncState === 'saved'
+                    ? 'synced'
+                    : 'idle'
+              }
+              syncPageNumbersLabel={copy.chapterSyncPageNumbers}
+              syncPageNumbersTitle={copy.chapterSyncPageNumbersTitle}
+              syncPageNumbersHelper={copy.chapterSyncPageNumbersHelper}
               metricsById={chapterMetricsById}
             />
           </section>

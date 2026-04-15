@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { ProjectWorkspace } from './ProjectWorkspace';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
@@ -183,6 +183,24 @@ describe('ProjectWorkspace', () => {
 
     expect(screen.getByText('Capítulo 1')).toBeInTheDocument();
     expect(screen.getByText('Capítulo 2')).toBeInTheDocument();
+  });
+
+  test('shows the pagination sync action in Step 2 and updates its state when clicked', () => {
+    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+
+    fireEvent.click(screen.getByText('Siguiente paso'));
+
+    const syncButton = screen.getByTestId('sync-page-numbers-button');
+
+    expect(syncButton).toBeInTheDocument();
+    expect(syncButton).toHaveTextContent(copy.chapterSyncPageNumbers);
+    expect(syncButton).toHaveAttribute('data-sync-state', 'idle');
+
+    fireEvent.click(syncButton);
+
+    return waitFor(() => {
+      expect(syncButton).toHaveAttribute('data-sync-state', 'synced');
+    });
   });
 
   test('navigates through steps', () => {
