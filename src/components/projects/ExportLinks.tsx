@@ -7,8 +7,11 @@ import {
   premiumSecondaryLightButton,
 } from '@/components/ui/button-styles';
 import { buildExportQueryString } from '@/lib/projects/export-config';
+import type { ProjectRecord } from '@/lib/projects/types';
+import { PdfExportButton } from './PdfExportButton';
 
 interface ExportLinksProps {
+  project: ProjectRecord;
   projectId: string;
   projectSlug: string;
   copy: AppMessages['project'];
@@ -20,6 +23,7 @@ function buildExportHref(pathname: string, projectId: string, query: string) {
 }
 
 export function ExportLinks({
+  project,
   projectId,
   projectSlug,
   copy,
@@ -36,13 +40,12 @@ export function ExportLinks({
       >
         {copy.previewExportButton}
       </a>
-      <a
-        href={buildExportHref('/api/projects/export/pdf', projectId, query)}
-        download={`${projectSlug || copy.previewExportFilename}.pdf`}
+      <PdfExportButton
+        project={project}
+        projectSlug={projectSlug}
+        copy={copy}
         className={`${premiumSecondaryLightButton} px-5`}
-      >
-        {copy.previewExportPdfButton}
-      </a>
+      />
       <a
         href={buildExportHref('/api/projects/export/docx', projectId, query)}
         download={`${projectSlug || copy.previewExportFilename}.docx`}

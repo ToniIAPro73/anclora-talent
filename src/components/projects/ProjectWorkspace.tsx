@@ -19,6 +19,7 @@ import { ChapterEditorModal } from './ChapterEditorModal';
 import { AddChapterDialog } from './AddChapterDialog';
 import { ImportChapterDialog } from './ImportChapterDialog';
 import { Portal } from '@/components/ui/Portal';
+import { PdfExportButton } from './PdfExportButton';
 import {
   saveBackCoverAction,
   saveProjectCoverAction,
@@ -478,15 +479,12 @@ export function ProjectWorkspace({
                >
                   {copy.previewExportButton}
                </button>
-               <button
-                 onClick={() => {
-                   const pdfUrl = `/api/projects/export/pdf?projectId=${project.id}&${exportQuery}`;
-                   window.open(pdfUrl, '_blank');
-                 }}
+               <PdfExportButton
+                 project={project}
+                 projectSlug={project.slug || ''}
+                 copy={copy}
                  className={`${premiumPrimaryDarkButton} px-8 cursor-pointer hover:cursor-pointer`}
-               >
-                  {copy.previewExportPdfButton}
-               </button>
+               />
                <button
                  onClick={() => {
                    const docxUrl = `/api/projects/export/docx?projectId=${project.id}&${exportQuery}`;

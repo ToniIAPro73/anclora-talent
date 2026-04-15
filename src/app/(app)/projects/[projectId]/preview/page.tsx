@@ -35,6 +35,7 @@ export default async function ProjectPreviewPage({
             {projectCopy.previewBackToEditor}
           </Link>
           <ExportLinks
+            project={project}
             projectId={project.id}
             projectSlug={project.slug || ''}
             copy={projectCopy}
