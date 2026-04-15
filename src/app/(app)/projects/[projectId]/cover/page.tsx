@@ -1,7 +1,7 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AdvancedCoverEditor } from '@/components/projects/advanced-cover/AdvancedCoverEditor';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
+import { NavigatingLink } from '@/components/ui/NavigatingLink';
 import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
@@ -34,15 +34,15 @@ export default async function ProjectCoverPage({
           </h2>
         </div>
         <div className="flex flex-wrap gap-3">
-          <Link href={`/projects/${project.id}/editor`} className={`${premiumSecondaryLightButton} px-5`}>
+          <NavigatingLink href={`/projects/${project.id}/editor`} pendingLabel={copy.coverBackEditor} className={`${premiumSecondaryLightButton} px-5`}>
             {copy.coverBackEditor}
-          </Link>
-          <Link href={`/projects/${project.id}/back-cover`} className={`${premiumSecondaryLightButton} px-5`}>
+          </NavigatingLink>
+          <NavigatingLink href={`/projects/${project.id}/back-cover`} pendingLabel={copy.coverOpenBackCover} className={`${premiumSecondaryLightButton} px-5`}>
             {copy.coverOpenBackCover}
-          </Link>
-          <Link href={`/projects/${project.id}/preview`} className={`${premiumPrimaryDarkButton} px-5`}>
+          </NavigatingLink>
+          <NavigatingLink href={`/projects/${project.id}/preview`} pendingLabel={copy.coverBackPreview} className={`${premiumPrimaryDarkButton} px-5`}>
             {copy.coverBackPreview}
-          </Link>
+          </NavigatingLink>
         </div>
       </div>
       <AdvancedCoverEditor project={project} copy={copy} />

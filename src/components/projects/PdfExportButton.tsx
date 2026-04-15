@@ -147,18 +147,24 @@ function PreviewContentPage({
           margin-top: 0.8rem;
         }
         .pdf-export-content-root [data-toc-line="true"] {
-          display: grid;
-          grid-template-columns: auto minmax(0, 1fr) auto;
+          display: flex;
           align-items: baseline;
-          column-gap: 0.5rem;
+          gap: 0.5rem;
           width: 100%;
+          min-width: 0;
+          white-space: nowrap;
         }
         .pdf-export-content-root [data-toc-title="true"] {
-          display: inline-block;
+          display: block;
+          flex: 0 1 auto;
           min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
         .pdf-export-content-root [data-toc-leader="true"] {
           display: block;
+          flex: 1 1 auto;
           min-width: 0.5rem;
           overflow: hidden;
           color: var(--text-tertiary);
@@ -169,6 +175,7 @@ function PreviewContentPage({
         }
         .pdf-export-content-root [data-toc-page="true"] {
           display: inline-block;
+          flex: 0 0 auto;
           min-width: 1.5rem;
           text-align: right;
           font-weight: 700;

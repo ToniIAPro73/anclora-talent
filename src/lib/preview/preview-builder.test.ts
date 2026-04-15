@@ -696,6 +696,58 @@ describe('preview-builder', () => {
       expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
     });
 
+    it('uses the visible toc chapter entries as the source of truth when the outline is incomplete', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          source: {
+            ...base.document.source,
+            outline: [
+              { title: 'Índice', level: 1 },
+              { title: 'Introducción: Activación de la Presencia', level: 2 },
+            ],
+          },
+          chapters: [
+            {
+              id: 'toc-chapter',
+              order: 0,
+              title: 'Índice',
+              blocks: [
+                {
+                  id: 'toc-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content:
+                    '<h2>Índice</h2><p>Introducción: Activación de la Presencia</p><ul><li>Día 1: Autoimagen.</li><li>Día 2: Fortalezas latentes.</li></ul>',
+                },
+              ],
+            },
+            {
+              id: 'intro-chapter',
+              order: 1,
+              title: 'Introducción',
+              blocks: [
+                {
+                  id: 'intro-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content:
+                    '<h2>Introducción: Activación de la Presencia</h2><p>Día 1: Autoimagen.</p><p>Día 2: Fortalezas latentes.</p>',
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const syncedToc = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
+
+      expect(syncedToc?.html).toContain('Día 1: Autoimagen.');
+      expect(syncedToc?.html).toContain('Día 2: Fortalezas latentes.');
+      expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
+    });
+
     it('reconciles stale automatic page breaks the same way as the chapter editor', () => {
       const base = createMockProject();
       const project = createMockProject({

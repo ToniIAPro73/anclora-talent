@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import Link from 'next/link';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
+import { NavigatingLink } from '@/components/ui/NavigatingLink';
 
 export default function ProjectError({
   error,
@@ -35,9 +35,9 @@ export default function ProjectError({
         <button onClick={reset} className={`${premiumPrimaryDarkButton} px-5`}>
           Reintentar
         </button>
-        <Link href="/dashboard" className={`${premiumSecondaryLightButton} px-5`}>
+        <NavigatingLink href="/dashboard" pendingLabel="Volver al dashboard" className={`${premiumSecondaryLightButton} px-5`}>
           Volver al dashboard
-        </Link>
+        </NavigatingLink>
       </div>
     </div>
   );

@@ -313,7 +313,7 @@ function buildTocChapterHtml(
   config: PaginationConfig,
   fallbackHtml: string,
 ) {
-  const outlineEntries = buildOutlineEntries(project, chapterSections);
+  const outlineEntries = buildOutlineEntries(project, chapterSections, fallbackHtml);
 
   if (outlineEntries.length === 0) {
     return fallbackHtml;
@@ -346,7 +346,14 @@ function buildTocChapterHtml(
 function buildOutlineEntries(
   project: ProjectRecord,
   chapterSections: ChapterSection[],
+  tocHtml: string,
 ) {
+  const visibleTocEntries = extractTocRenderableEntries(tocHtml);
+
+  if (visibleTocEntries.length > 0) {
+    return visibleTocEntries;
+  }
+
   const sourceOutline = project.document.source?.outline?.filter(
     (entry) => !isTocChapter(entry.title),
   );
@@ -359,6 +366,43 @@ function buildOutlineEntries(
           title: chapter.title,
           level: 1,
         }));
+}
+
+function extractTocRenderableEntries(html: string) {
+  const sanitizedHtml = stripExistingTocPageNumbers(html);
+  const entries: Array<{ title: string; level: number }> = [];
+
+  sanitizedHtml.replace(
+    /<(p|li|h[1-6])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi,
+    (_fullMatch, tagName: string, _rawAttributes = '', innerHtml: string) => {
+      const plainText = normalizeVisibleText(stripHtmlTags(innerHtml));
+
+      if (!plainText || isTocChapter(plainText) || !/[^\d\s·~∿.-]/u.test(plainText)) {
+        return '';
+      }
+
+      entries.push({
+        title: plainText,
+        level: resolveTocEntryLevel(tagName),
+      });
+
+      return '';
+    },
+  );
+
+  return entries;
+}
+
+function resolveTocEntryLevel(tagName: string) {
+  if (/^h[1-6]$/i.test(tagName)) {
+    return Math.max(1, Number.parseInt(tagName.slice(1), 10) || 1);
+  }
+
+  if (tagName.toLowerCase() === 'li') {
+    return 3;
+  }
+
+  return 2;
 }
 
 function measureOutlineEntryPageMetrics(
@@ -501,6 +545,12 @@ function matchesOutlineText(candidate: string, target: string) {
 
 function stripHtmlTags(value: string) {
   return decodeHtmlEntities(value.replace(/<[^>]+>/g, ' '));
+}
+
+function normalizeVisibleText(value: string) {
+  return decodeHtmlEntities(value)
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function decodeHtmlEntities(value: string) {

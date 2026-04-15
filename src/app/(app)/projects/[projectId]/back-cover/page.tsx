@@ -1,7 +1,7 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { BackCoverForm } from '@/components/projects/BackCoverForm';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
+import { NavigatingLink } from '@/components/ui/NavigatingLink';
 import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
@@ -34,12 +34,12 @@ export default async function ProjectBackCoverPage({
           </h2>
         </div>
         <div className="flex gap-3">
-          <Link href={`/projects/${project.id}/cover`} className={`${premiumSecondaryLightButton} px-5`}>
+          <NavigatingLink href={`/projects/${project.id}/cover`} pendingLabel={copy.backCoverBackToCover} className={`${premiumSecondaryLightButton} px-5`}>
             {copy.backCoverBackToCover}
-          </Link>
-          <Link href={`/projects/${project.id}/preview`} className={`${premiumPrimaryDarkButton} px-5`}>
+          </NavigatingLink>
+          <NavigatingLink href={`/projects/${project.id}/preview`} pendingLabel={copy.previewBackToEditor} className={`${premiumPrimaryDarkButton} px-5`}>
             {copy.previewBackToEditor}
-          </Link>
+          </NavigatingLink>
         </div>
       </div>
       <BackCoverForm copy={copy} project={project} />
