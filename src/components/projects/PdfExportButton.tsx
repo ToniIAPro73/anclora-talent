@@ -118,6 +118,17 @@ function PreviewContentPage({
           word-wrap: break-word;
           overflow-wrap: break-word;
         }
+        .pdf-export-content-root p,
+        .pdf-export-content-root h1,
+        .pdf-export-content-root h2,
+        .pdf-export-content-root h3,
+        .pdf-export-content-root h4,
+        .pdf-export-content-root h5,
+        .pdf-export-content-root h6,
+        .pdf-export-content-root blockquote,
+        .pdf-export-content-root li {
+          text-align: inherit;
+        }
         .pdf-export-content-root > * {
           break-inside: avoid;
           page-break-inside: avoid;
