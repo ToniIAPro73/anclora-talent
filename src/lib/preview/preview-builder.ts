@@ -250,8 +250,8 @@ function escapeHtml(text: string) {
 }
 
 function buildDotLeader(level: number) {
-  const target = Math.max(24, 96 - level * 8);
-  return '·'.repeat(target);
+  // Always use enough dots to fill the entire line, flexbox + overflow:hidden will handle the rest
+  return '·'.repeat(300);
 }
 
 function buildTocChapterHtml(

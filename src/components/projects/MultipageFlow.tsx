@@ -142,24 +142,26 @@ export function MultipageFlow({
         .flow-content-root.ProseMirror p[data-toc-entry="true"] {
           display: flex;
           align-items: baseline;
-          gap: 0.5rem;
           margin: 0 0 0.55rem 0;
           white-space: nowrap;
         }
         .flow-content-root.ProseMirror [data-toc-title="true"] {
-          flex: 0 1 auto;
-          min-width: 0;
+          flex: 0 0 auto;
+          margin-right: 0.5rem;
         }
         .flow-content-root.ProseMirror [data-toc-leader="true"] {
           flex: 1 1 auto;
+          min-width: 0.5rem;
           overflow: hidden;
           color: var(--text-tertiary);
           letter-spacing: 0.08em;
           line-height: 1;
           transform: translateY(-0.02em);
+          white-space: nowrap;
         }
         .flow-content-root.ProseMirror [data-toc-page="true"] {
           flex: 0 0 auto;
+          margin-left: 0.5rem;
           min-width: 1.5rem;
           text-align: right;
           font-weight: 700;
