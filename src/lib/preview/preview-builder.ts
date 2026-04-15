@@ -249,10 +249,9 @@ function escapeHtml(text: string) {
     .replace(/'/g, '&#039;');
 }
 
-function buildDotLeader(title: string, pageNumber: number, level: number) {
-  const target = Math.max(18, 64 - level * 6);
-  const dots = Math.max(6, target - title.length - String(pageNumber).length);
-  return '·'.repeat(dots);
+function buildDotLeader(level: number) {
+  const target = Math.max(24, 96 - level * 8);
+  return '·'.repeat(target);
 }
 
 function buildTocChapterHtml(
@@ -297,10 +296,10 @@ function buildTocChapterHtml(
 
       const cleanTitle = entry.title.trim();
       const level = Math.max(1, entry.level ?? 1);
-      const dots = buildDotLeader(cleanTitle, firstPage, level);
+      const dots = buildDotLeader(level);
       const paddingLeft = (level - 1) * 24;
 
-      return `<p data-toc-entry="true" style="margin:0 0 0.55rem 0;padding-left:${paddingLeft}px;white-space:nowrap;">${escapeHtml(cleanTitle)} ${dots} ${firstPage}</p>`;
+      return `<p data-toc-entry="true" style="margin:0 0 0.55rem 0;padding-left:${paddingLeft}px;"><span data-toc-title="true">${escapeHtml(cleanTitle)}</span><span data-toc-leader="true" aria-hidden="true">${dots}</span><span data-toc-page="true">${firstPage}</span></p>`;
     })
     .filter(Boolean)
     .join('');

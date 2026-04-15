@@ -146,6 +146,31 @@ function PreviewContentPage({
         .pdf-export-content-root p + p {
           margin-top: 0.8rem;
         }
+        .pdf-export-content-root p[data-toc-entry="true"] {
+          display: flex;
+          align-items: baseline;
+          gap: 0.5rem;
+          margin: 0 0 0.55rem 0;
+          white-space: nowrap;
+        }
+        .pdf-export-content-root [data-toc-title="true"] {
+          flex: 0 1 auto;
+          min-width: 0;
+        }
+        .pdf-export-content-root [data-toc-leader="true"] {
+          flex: 1 1 auto;
+          overflow: hidden;
+          color: var(--text-tertiary);
+          letter-spacing: 0.08em;
+          line-height: 1;
+          transform: translateY(-0.02em);
+        }
+        .pdf-export-content-root [data-toc-page="true"] {
+          flex: 0 0 auto;
+          min-width: 1.5rem;
+          text-align: right;
+          font-weight: 700;
+        }
         .pdf-export-content-root h1 {
           font-size: 2rem;
           line-height: 1.1;

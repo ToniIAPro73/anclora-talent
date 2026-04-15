@@ -511,8 +511,8 @@ describe('preview-builder', () => {
       expect(tocPage?.content).toContain('Introducción');
       expect(tocPage?.content).toContain('Fase 1');
       expect(tocPage?.content).toContain('····');
-      expect(tocPage?.content).toContain(' 3</p>');
-      expect(tocPage?.content).toContain(' 4</p>');
+      expect(tocPage?.content).toContain('<span data-toc-page="true">3</span>');
+      expect(tocPage?.content).toContain('<span data-toc-page="true">4</span>');
     });
 
     it('falls back to chapter titles when there is no source outline for the index', () => {
@@ -557,7 +557,7 @@ describe('preview-builder', () => {
       );
 
       expect(tocPage?.content).toContain('Introducción');
-      expect(tocPage?.content).toContain(' 3</p>');
+      expect(tocPage?.content).toContain('<span data-toc-page="true">3</span>');
     });
 
     it('reconciles stale automatic page breaks the same way as the chapter editor', () => {
