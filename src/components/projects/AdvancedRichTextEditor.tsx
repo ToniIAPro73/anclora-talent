@@ -1533,6 +1533,7 @@ export function AdvancedRichTextEditor({
                 width: 100%;
                 min-width: 0;
                 white-space: nowrap;
+                overflow: hidden;
               }
               .ProseMirror [data-toc-title="true"],
               .preview-page [data-toc-title="true"] {
@@ -1542,6 +1543,14 @@ export function AdvancedRichTextEditor({
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
+              }
+              .ProseMirror [data-toc-title="true"] *,
+              .preview-page [data-toc-title="true"] * {
+                white-space: nowrap !important;
+              }
+              .ProseMirror [data-toc-title="true"] br,
+              .preview-page [data-toc-title="true"] br {
+                display: none;
               }
               .ProseMirror [data-toc-leader="true"],
               .preview-page [data-toc-leader="true"] {
@@ -1557,7 +1566,7 @@ export function AdvancedRichTextEditor({
               }
               .ProseMirror [data-toc-leader="true"]::before,
               .preview-page [data-toc-leader="true"]::before {
-                content: '····························································································';
+                content: '················································································································································';
                 display: block;
                 font-size: 1rem;
                 letter-spacing: 0.08em;

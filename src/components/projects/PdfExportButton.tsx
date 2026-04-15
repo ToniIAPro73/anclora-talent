@@ -153,6 +153,7 @@ function PreviewContentPage({
           width: 100%;
           min-width: 0;
           white-space: nowrap;
+          overflow: hidden;
         }
         .pdf-export-content-root [data-toc-title="true"] {
           display: block;
@@ -161,6 +162,12 @@ function PreviewContentPage({
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+        }
+        .pdf-export-content-root [data-toc-title="true"] * {
+          white-space: nowrap !important;
+        }
+        .pdf-export-content-root [data-toc-title="true"] br {
+          display: none;
         }
         .pdf-export-content-root [data-toc-leader="true"] {
           display: block;
@@ -174,7 +181,7 @@ function PreviewContentPage({
           font-size: 0;
         }
         .pdf-export-content-root [data-toc-leader="true"]::before {
-          content: '····························································································';
+          content: '················································································································································';
           display: block;
           font-size: 1rem;
           letter-spacing: 0.08em;

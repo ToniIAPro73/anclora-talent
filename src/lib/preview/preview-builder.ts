@@ -450,6 +450,7 @@ function measureOutlineEntryPageMetrics(
   }
 
   let pageCursor = 0;
+  let lastResolvedPage: number | undefined;
 
   for (const entry of outlineEntries) {
     const normalizedTitle = normalizeLookupKey(entry.title);
@@ -466,6 +467,7 @@ function measureOutlineEntryPageMetrics(
     if (matchedPage) {
       firstPageByOutlineTitle.set(normalizedTitle, matchedPage.pageNumber);
       pageCursor = Math.max(pageCursor, pageRecords.indexOf(matchedPage));
+      lastResolvedPage = matchedPage.pageNumber;
       continue;
     }
 
@@ -483,6 +485,12 @@ function measureOutlineEntryPageMetrics(
 
     if (fallbackPage) {
       firstPageByOutlineTitle.set(normalizedTitle, fallbackPage);
+      lastResolvedPage = fallbackPage;
+      continue;
+    }
+
+    if (lastResolvedPage) {
+      firstPageByOutlineTitle.set(normalizedTitle, lastResolvedPage);
     }
   }
 
