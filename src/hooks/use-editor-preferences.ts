@@ -1,56 +1,61 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   EditorPreferences,
   defaultEditorPreferences,
   EDITOR_PREFERENCES_STORAGE_KEY,
 } from '@/lib/ui-preferences/preferences';
+import { getEditorPreferencesAction, saveEditorPreferencesAction } from '@/lib/ui-preferences/actions';
 
-/**
- * Initialize preferences from localStorage
- */
-function initializePreferences(): EditorPreferences {
+function readFromLocalStorage(): EditorPreferences {
   try {
     const stored = localStorage.getItem(EDITOR_PREFERENCES_STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return { ...defaultEditorPreferences, ...parsed };
-    }
-  } catch (error) {
-    console.error('Failed to load editor preferences:', error);
+    if (stored) return { ...defaultEditorPreferences, ...JSON.parse(stored) };
+  } catch {
+    // ignore
   }
   return defaultEditorPreferences;
 }
 
-/**
- * Hook to manage editor preferences (font, size, device, margins)
- * Persists to localStorage and syncs between tabs
- */
-export function useEditorPreferences() {
-  const [preferences, setPreferencesState] = useState<EditorPreferences>(() =>
-    initializePreferences()
-  );
-  const [isLoaded, setIsLoaded] = useState(false);
+function writeToLocalStorage(prefs: EditorPreferences) {
+  try {
+    localStorage.setItem(EDITOR_PREFERENCES_STORAGE_KEY, JSON.stringify(prefs));
+  } catch {
+    // ignore
+  }
+}
 
-  // Mark as loaded after mount
+export function useEditorPreferences() {
+  const [preferences, setPreferencesState] = useState<EditorPreferences>(defaultEditorPreferences);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // On mount: hydrate from localStorage immediately, then sync from DB
   useEffect(() => {
-    setIsLoaded(true);
+    setPreferencesState(readFromLocalStorage());
+
+    getEditorPreferencesAction().then((dbPrefs) => {
+      setPreferencesState(dbPrefs);
+      writeToLocalStorage(dbPrefs);
+    }).catch(() => {
+      // DB unavailable — localStorage values remain
+    }).finally(() => {
+      setIsLoaded(true);
+    });
   }, []);
 
-  // Listen for storage changes (other tabs/windows)
+  // Cross-tab sync via StorageEvent
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === EDITOR_PREFERENCES_STORAGE_KEY && e.newValue) {
         try {
-          const parsed = JSON.parse(e.newValue);
-          setPreferencesState({ ...defaultEditorPreferences, ...parsed });
-        } catch (error) {
-          console.error('Failed to parse storage changes:', error);
+          setPreferencesState({ ...defaultEditorPreferences, ...JSON.parse(e.newValue) });
+        } catch {
+          // ignore
         }
       }
     };
-
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
@@ -58,11 +63,14 @@ export function useEditorPreferences() {
   const setPreferences = useCallback((newPreferences: Partial<EditorPreferences>) => {
     setPreferencesState((prev) => {
       const updated = { ...prev, ...newPreferences };
-      try {
-        localStorage.setItem(EDITOR_PREFERENCES_STORAGE_KEY, JSON.stringify(updated));
-      } catch (error) {
-        console.error('Failed to save editor preferences:', error);
-      }
+      writeToLocalStorage(updated);
+
+      // Debounce DB write to avoid hammering on rapid slider changes
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => {
+        saveEditorPreferencesAction(updated).catch(() => {});
+      }, 800);
+
       return updated;
     });
   }, []);
@@ -71,15 +79,11 @@ export function useEditorPreferences() {
     setPreferencesState(defaultEditorPreferences);
     try {
       localStorage.removeItem(EDITOR_PREFERENCES_STORAGE_KEY);
-    } catch (error) {
-      console.error('Failed to reset editor preferences:', error);
+    } catch {
+      // ignore
     }
+    saveEditorPreferencesAction(defaultEditorPreferences).catch(() => {});
   }, []);
 
-  return {
-    preferences,
-    isLoaded,
-    setPreferences,
-    resetPreferences,
-  };
+  return { preferences, isLoaded, setPreferences, resetPreferences };
 }
