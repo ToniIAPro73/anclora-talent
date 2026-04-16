@@ -1,9 +1,9 @@
-import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import type { ProjectSummary } from '@/lib/projects/types';
 import { premiumPrimaryMintButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import type { AppMessages } from '@/lib/i18n/messages';
 import { ProjectDeleteButton } from './ProjectDeleteButton';
+import { NavigatingLink } from '@/components/ui/NavigatingLink';
 
 const paletteClassMap: Record<ProjectSummary['coverPalette'], string> = {
   obsidian: 'border border-[rgba(212,175,55,0.18)] bg-[#0b133f] text-[#f2e3b3]',
@@ -37,13 +37,21 @@ export function ProjectCard({
       </p>
       <div className="mt-6 h-px bg-[var(--border-subtle)]" />
       <div className="mt-6 flex flex-wrap gap-3">
-        <Link href={`/projects/${project.id}/editor`} className={`${premiumPrimaryMintButton} px-5`}>
+        <NavigatingLink
+          href={`/projects/${project.id}/editor`}
+          pendingLabel={copy.cardOpenEditor}
+          className={`${premiumPrimaryMintButton} px-5`}
+        >
           {copy.cardOpenEditor}
           <ArrowRight className="h-4 w-4" />
-        </Link>
-        <Link href={`/projects/${project.id}/preview`} className={`${premiumSecondaryLightButton} px-5`}>
+        </NavigatingLink>
+        <NavigatingLink
+          href={`/projects/${project.id}/preview`}
+          pendingLabel={copy.cardPreview}
+          className={`${premiumSecondaryLightButton} px-5`}
+        >
           {copy.cardPreview}
-        </Link>
+        </NavigatingLink>
         <ProjectDeleteButton
           projectId={project.id}
           label={copy.cardDelete}

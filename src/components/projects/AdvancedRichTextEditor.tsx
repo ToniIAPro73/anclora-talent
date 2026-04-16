@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Extension } from '@tiptap/core';
 import { useEditor, EditorContent, type Editor } from '@tiptap/react';
-import { TextSelection } from '@tiptap/pm/state';
+import { Selection, TextSelection } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import BulletList from '@tiptap/extension-bullet-list';
 import OrderedList from '@tiptap/extension-ordered-list';
@@ -176,6 +176,67 @@ const ParagraphIndent = Extension.create({
                 style: `margin-left: ${indent * 2}rem;`,
               };
             },
+          },
+        },
+      },
+    ];
+  },
+});
+
+const TocBlockAttributes = Extension.create({
+  name: 'tocBlockAttributes',
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['paragraph', 'heading', 'listItem'],
+        attributes: {
+          tocEntry: {
+            default: null,
+            parseHTML: (element) =>
+              element.getAttribute('data-toc-entry') === 'true' ? 'true' : null,
+            renderHTML: (attributes) =>
+              attributes.tocEntry ? { 'data-toc-entry': 'true' } : {},
+          },
+          tocLevel: {
+            default: null,
+            parseHTML: (element) => element.getAttribute('data-toc-level'),
+            renderHTML: (attributes) =>
+              attributes.tocLevel ? { 'data-toc-level': String(attributes.tocLevel) } : {},
+          },
+        },
+      },
+    ];
+  },
+});
+
+const TocInlineAttributes = Extension.create({
+  name: 'tocInlineAttributes',
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['textStyle'],
+        attributes: {
+          tocTitle: {
+            default: null,
+            parseHTML: (element) =>
+              element.getAttribute('data-toc-title') === 'true' ? 'true' : null,
+            renderHTML: (attributes) =>
+              attributes.tocTitle ? { 'data-toc-title': 'true' } : {},
+          },
+          tocLeader: {
+            default: null,
+            parseHTML: (element) =>
+              element.getAttribute('data-toc-leader') === 'true' ? 'true' : null,
+            renderHTML: (attributes) =>
+              attributes.tocLeader ? { 'data-toc-leader': 'true', 'aria-hidden': 'true' } : {},
+          },
+          tocPage: {
+            default: null,
+            parseHTML: (element) => element.getAttribute('data-toc-page'),
+            renderHTML: (attributes) =>
+              attributes.tocPage ? { 'data-toc-page': String(attributes.tocPage) } : {},
           },
         },
       },
@@ -1276,6 +1337,8 @@ export function AdvancedRichTextEditor({
       StyledBulletList,
       StyledOrderedList,
       ParagraphIndent,
+      TocBlockAttributes,
+      TocInlineAttributes,
       Placeholder.configure({
         placeholder: 'Empieza a escribir tu obra maestra...',
       }),
@@ -1416,13 +1479,46 @@ export function AdvancedRichTextEditor({
 
       const relativePageIndex = Math.max(0, pageIndex - spreadStartPage);
       const coords = {
-        left: flowBounds.left + relativePageIndex * (pageWidth + pageGap) + 8,
-        top: flowBounds.top + 8,
+        left: flowBounds.left + relativePageIndex * (pageWidth + pageGap) + 1,
+        top: flowBounds.top + 1,
       };
       const resolved = posAtCoords(coords);
 
       if (!resolved?.pos) {
         return;
+      }
+
+      let selectionPos = resolved.pos;
+
+      try {
+        const $resolvedPos = editor.state.doc.resolve(resolved.pos);
+
+        for (let depth = $resolvedPos.depth; depth >= 0; depth -= 1) {
+          const node = $resolvedPos.node(depth);
+
+          if (!node.isTextblock) {
+            continue;
+          }
+
+          selectionPos = $resolvedPos.start(depth);
+          break;
+        }
+
+        const safeSelection = Selection.near(
+          editor.state.doc.resolve(Math.max(0, Math.min(selectionPos, editor.state.doc.content.size))),
+          1,
+        );
+
+        editor.view.dispatch(editor.state.tr.setSelection(safeSelection));
+
+        if (typeof editor.view.focus === 'function') {
+          editor.view.focus();
+        }
+
+        return;
+      } catch {
+        // Fall through to the simpler text selection path below if the
+        // visual-to-document resolution cannot be normalized.
       }
 
       editor.view.dispatch(
@@ -1525,33 +1621,71 @@ export function AdvancedRichTextEditor({
               .preview-page p + p {
                 margin-top: 0.8rem;
               }
+              .ProseMirror [data-toc-entry="true"],
+              .preview-page [data-toc-entry="true"],
               .ProseMirror [data-toc-line="true"],
               .preview-page [data-toc-line="true"] {
-                display: grid;
-                grid-template-columns: auto minmax(0, 1fr) auto;
+                display: flex;
+                flex-wrap: wrap;
                 align-items: baseline;
-                column-gap: 0.5rem;
+                gap: 0.5rem;
                 width: 100%;
+                min-width: 0;
+                overflow: visible;
+              }
+              .ProseMirror li[data-toc-entry="true"],
+              .preview-page li[data-toc-entry="true"] {
+                list-style: none;
+                margin-left: 0;
+                padding-left: 0;
+              }
+              .ProseMirror li[data-toc-entry="true"]::before,
+              .preview-page li[data-toc-entry="true"]::before {
+                content: "•";
+                flex: 0 0 auto;
+                margin-right: 0.5rem;
               }
               .ProseMirror [data-toc-title="true"],
               .preview-page [data-toc-title="true"] {
-                display: inline-block;
+                display: block;
+                flex: 0 1 auto;
                 min-width: 0;
+                overflow: visible;
+                text-overflow: clip;
+                white-space: normal;
+              }
+              .ProseMirror [data-toc-title="true"] *,
+              .preview-page [data-toc-title="true"] * {
+                white-space: inherit !important;
+              }
+              .ProseMirror [data-toc-title="true"] br,
+              .preview-page [data-toc-title="true"] br {
+                display: block;
               }
               .ProseMirror [data-toc-leader="true"],
               .preview-page [data-toc-leader="true"] {
                 display: block;
-                min-width: 0.5rem;
+                flex: 1 1 6rem;
+                min-width: 3rem;
                 overflow: hidden;
                 color: var(--text-tertiary);
-                letter-spacing: 0.08em;
                 line-height: 1;
                 transform: translateY(-0.02em);
+                white-space: nowrap;
+                font-size: 0;
+              }
+              .ProseMirror [data-toc-leader="true"]::before,
+              .preview-page [data-toc-leader="true"]::before {
+                content: '················································································································································';
+                display: block;
+                font-size: 1rem;
+                letter-spacing: 0.08em;
                 white-space: nowrap;
               }
               .ProseMirror [data-toc-page="true"],
               .preview-page [data-toc-page="true"] {
                 display: inline-block;
+                flex: 0 0 auto;
                 min-width: 1.5rem;
                 text-align: right;
                 font-weight: 700;

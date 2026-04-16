@@ -512,7 +512,7 @@ describe('preview-builder', () => {
       expect(tocPage?.content).toContain('Introducción');
       expect(tocPage?.content).toContain('Fase 1');
       expect(tocPage?.content).toContain('····');
-      expect(tocPage?.content).toContain('<h2><span data-toc-line="true"');
+      expect(tocPage?.content).toContain('<h2 data-toc-entry="true"');
       expect(tocPage?.content).toContain('<ul><li>Día 1: Autoimagen.</li></ul>');
       expect(tocPage?.content).toContain('<span data-toc-page="true">3</span>');
       expect(tocPage?.content).toContain('<span data-toc-page="true">4</span>');
@@ -560,7 +560,7 @@ describe('preview-builder', () => {
       );
 
       expect(tocPage?.content).toContain('Introducción');
-      expect(tocPage?.content).toContain('<p><span data-toc-line="true"');
+      expect(tocPage?.content).toContain('<p data-toc-entry="true"');
       expect(tocPage?.content).toContain('<span data-toc-page="true">3</span>');
     });
 
@@ -652,6 +652,102 @@ describe('preview-builder', () => {
       expect(syncedToc).not.toBeNull();
       expect(syncedToc?.chapterId).toBe('toc-chapter');
       expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
+    });
+
+    it('matches toc entries even when the index text is more descriptive than the chapter title', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          chapters: [
+            {
+              id: 'toc-chapter',
+              order: 0,
+              title: 'Índice',
+              blocks: [
+                {
+                  id: 'toc-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Índice</h2><p>Introducción: Activación de la Presencia</p>',
+                },
+              ],
+            },
+            {
+              id: 'intro-chapter',
+              order: 1,
+              title: 'Introducción',
+              blocks: [
+                {
+                  id: 'intro-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Introducción: Activación de la Presencia</h2><p>Texto</p>',
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const syncedToc = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
+
+      expect(syncedToc?.html).toContain('Introducción: Activación de la Presencia');
+      expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
+    });
+
+    it('uses the visible toc chapter entries as the source of truth when the outline is incomplete', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          source: {
+            ...base.document.source,
+            outline: [
+              { title: 'Índice', level: 1 },
+              { title: 'Introducción: Activación de la Presencia', level: 2 },
+            ],
+          },
+          chapters: [
+            {
+              id: 'toc-chapter',
+              order: 0,
+              title: 'Índice',
+              blocks: [
+                {
+                  id: 'toc-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content:
+                    '<h2>Índice</h2><p>Introducción: Activación de la Presencia</p><ul><li>Día 1: Autoimagen.</li><li>Día 2: Fortalezas latentes.</li></ul>',
+                },
+              ],
+            },
+            {
+              id: 'intro-chapter',
+              order: 1,
+              title: 'Introducción',
+              blocks: [
+                {
+                  id: 'intro-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content:
+                    '<h2>Introducción: Activación de la Presencia</h2><p>Día 1: Autoimagen.</p><p>Día 2: Fortalezas latentes.</p>',
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const syncedToc = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
+
+      expect(syncedToc?.html).toContain('Día 1: Autoimagen.');
+      expect(syncedToc?.html).toContain('Día 2: Fortalezas latentes.');
+      expect(syncedToc?.html).toContain('<li data-toc-entry="true"');
+      expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
+      expect(syncedToc?.html.match(/data-toc-page="true"/g)).toHaveLength(3);
     });
 
     it('reconciles stale automatic page breaks the same way as the chapter editor', () => {

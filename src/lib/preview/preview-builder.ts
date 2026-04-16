@@ -60,6 +60,10 @@ type ChapterPageMetrics = {
   pageCountByChapterId: Map<string, number>;
 };
 
+type OutlineEntryPageMetrics = {
+  firstPageByOutlineTitle: Map<string, number>;
+};
+
 // ==================== PAGE BUILDER ====================
 
 /**
@@ -100,7 +104,7 @@ export function buildPreviewPages(
   // BUILD CHAPTER SECTIONS (for pagination and TOC)
   // ─────────────────────────────────────────────────────────────
 
-  const resolvedSections = buildResolvedChapterSections(project, config);
+  const resolvedSections = buildDerivedChapterSections(project, config);
 
   // ─────────────────────────────────────────────────────────────
   // PAGINATE CHAPTERS
@@ -155,7 +159,7 @@ export function buildPreviewContentFlowHtml(
   project: ProjectRecord,
   config: PaginationConfig,
 ) {
-  const resolvedSections = buildResolvedChapterSections(project, config);
+  const resolvedSections = buildDerivedChapterSections(project, config);
 
   return resolvedSections
     .map((chapter) => reconcileOverflowBreaks(normalizeHtmlContent(chapter.html), config))
@@ -166,7 +170,7 @@ export function buildSyncedTocChapterContent(
   project: ProjectRecord,
   config: PaginationConfig,
 ) {
-  const resolvedSections = buildResolvedChapterSections(project, config);
+  const resolvedSections = buildDerivedChapterSections(project, config);
   const tocSection = resolvedSections.find((chapter) => isTocChapter(chapter.title));
 
   if (!tocSection) {
@@ -180,7 +184,7 @@ export function buildSyncedTocChapterContent(
   };
 }
 
-function buildResolvedChapterSections(
+export function buildDerivedChapterSections(
   project: ProjectRecord,
   config: PaginationConfig,
 ) {
@@ -228,7 +232,7 @@ function resolveTocChapterHtml(
         return chapter;
       }
 
-      const nextHtml = buildTocChapterHtml(project, currentSections, metrics, chapter.html);
+      const nextHtml = buildTocChapterHtml(project, currentSections, metrics, config, chapter.html);
       return nextHtml === chapter.html ? chapter : { ...chapter, html: nextHtml };
     });
 
@@ -270,9 +274,23 @@ function measureChapterPageMetrics(
   };
 }
 
-function isTocChapter(title: string) {
-  const normalized = title.trim().toLowerCase();
-  return normalized === 'índice' || normalized === 'indice' || normalized === 'index';
+export function isTocChapter(title: string) {
+  const normalized = title
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '');
+  return [
+    'indice',
+    'index',
+    'tabla de contenidos',
+    'tabla de contenido',
+    'table of contents',
+    'contents',
+    'contenidos',
+    'contenido',
+    'sumario',
+  ].includes(normalized);
 }
 
 function normalizeLookupKey(value: string) {
@@ -282,6 +300,10 @@ function normalizeLookupKey(value: string) {
     .replace(/\p{Diacritic}/gu, '')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function normalizeMatchKey(value: string) {
+  return normalizeLookupKey(value).replace(/[^\p{Letter}\p{Number}\s]/gu, '');
 }
 
 function escapeHtml(text: string) {
@@ -294,46 +316,28 @@ function escapeHtml(text: string) {
 }
 
 function buildDotLeader(level: number) {
-  // Always use enough dots to fill the entire line, flexbox + overflow:hidden will handle the rest
-  return '·'.repeat(300);
+  // Keep the persisted HTML lightweight. The full visual leader is rendered by CSS.
+  return '····';
 }
 
 function buildTocChapterHtml(
   project: ProjectRecord,
   chapterSections: ChapterSection[],
   metrics: ChapterPageMetrics,
+  config: PaginationConfig,
   fallbackHtml: string,
 ) {
-  const chapterByNormalizedTitle = new Map(
-    chapterSections.map((chapter) => [normalizeLookupKey(chapter.title), chapter]),
-  );
-
-  const sourceOutline = project.document.source?.outline?.filter(
-    (entry) => !isTocChapter(entry.title),
-  );
-
-  const outlineEntries =
-    sourceOutline && sourceOutline.length > 0
-      ? sourceOutline
-      : chapterSections
-          .filter((chapter) => !isTocChapter(chapter.title))
-          .map((chapter) => ({
-            title: chapter.title,
-            level: 1,
-          }));
+  const outlineEntries = buildOutlineEntries(project, chapterSections, fallbackHtml);
 
   if (outlineEntries.length === 0) {
     return fallbackHtml;
   }
 
+  const outlineMetrics = measureOutlineEntryPageMetrics(chapterSections, metrics, config, outlineEntries);
+
   const numberedEntries = outlineEntries
     .map((entry) => {
-      const chapter = chapterByNormalizedTitle.get(normalizeLookupKey(entry.title));
-      if (!chapter) {
-        return null;
-      }
-
-      const firstPage = metrics.firstPageByChapterId.get(chapter.id);
+      const firstPage = outlineMetrics.firstPageByOutlineTitle.get(normalizeLookupKey(entry.title));
       if (!firstPage) {
         return null;
       }
@@ -353,36 +357,230 @@ function buildTocChapterHtml(
   return injectTocPageNumbers(fallbackHtml, numberedEntries);
 }
 
+function buildOutlineEntries(
+  project: ProjectRecord,
+  chapterSections: ChapterSection[],
+  tocHtml: string,
+) {
+  const visibleTocEntries = extractTocRenderableEntries(tocHtml);
+
+  if (visibleTocEntries.length > 0) {
+    return visibleTocEntries;
+  }
+
+  const sourceOutline = project.document.source?.outline?.filter(
+    (entry) => !isTocChapter(entry.title),
+  );
+
+  return sourceOutline && sourceOutline.length > 0
+    ? sourceOutline
+    : chapterSections
+        .filter((chapter) => !isTocChapter(chapter.title))
+        .map((chapter) => ({
+          title: chapter.title,
+          level: 1,
+        }));
+}
+
+function extractTocRenderableEntries(html: string) {
+  const sanitizedHtml = stripExistingTocPageNumbers(html);
+  const entries: Array<{ title: string; level: number }> = [];
+
+  sanitizedHtml.replace(
+    /<(p|li|h[1-6])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi,
+    (_fullMatch, tagName: string, _rawAttributes = '', innerHtml: string) => {
+      const plainText = stripExistingTocSuffix(
+        normalizeVisibleText(stripHtmlTags(innerHtml)),
+      );
+
+      if (!plainText || isTocChapter(plainText) || !/[^\d\s·~∿.-]/u.test(plainText)) {
+        return '';
+      }
+
+      entries.push({
+        title: plainText,
+        level: resolveTocEntryLevel(tagName),
+      });
+
+      return '';
+    },
+  );
+
+  return entries;
+}
+
+function resolveTocEntryLevel(tagName: string) {
+  if (/^h[1-6]$/i.test(tagName)) {
+    return Math.max(1, Number.parseInt(tagName.slice(1), 10) || 1);
+  }
+
+  if (tagName.toLowerCase() === 'li') {
+    return 3;
+  }
+
+  return 2;
+}
+
+function measureOutlineEntryPageMetrics(
+  chapterSections: ChapterSection[],
+  metrics: ChapterPageMetrics,
+  config: PaginationConfig,
+  outlineEntries: Array<{ title: string; level: number }>,
+): OutlineEntryPageMetrics {
+  const firstPageByOutlineTitle = new Map<string, number>();
+  const pageRecords: Array<{ pageNumber: number; chapterId: string; text: string }> = [];
+
+  let globalPageNumber = 2;
+
+  for (const chapter of chapterSections) {
+    const reconciledChapterHtml = reconcileOverflowBreaks(chapter.html, config);
+    const chapterPageHtmls = paginateContent(reconciledChapterHtml, config)
+      .filter((page) => hasRenderablePageContent(page.html))
+      .map((page) => page.html);
+
+    const effectivePageHtmls = chapterPageHtmls.length > 0 ? chapterPageHtmls : [''];
+
+    if (isTocChapter(chapter.title)) {
+      globalPageNumber += effectivePageHtmls.length;
+      continue;
+    }
+
+    if (chapterPageHtmls.length === 0) {
+      pageRecords.push({
+        pageNumber: globalPageNumber,
+        chapterId: chapter.id,
+        text: '',
+      });
+      globalPageNumber += 1;
+      continue;
+    }
+
+    for (const pageHtml of chapterPageHtmls) {
+      pageRecords.push({
+        pageNumber: globalPageNumber,
+        chapterId: chapter.id,
+        text: normalizeMatchKey(stripHtmlTags(pageHtml)),
+      });
+      globalPageNumber += 1;
+    }
+  }
+
+  let pageCursor = 0;
+
+  for (const entry of outlineEntries) {
+    const normalizedTitle = normalizeLookupKey(entry.title);
+    const matchTitle = normalizeMatchKey(entry.title);
+
+    const matchedPage = pageRecords.find((page, index) => {
+      if (index < pageCursor) {
+        return false;
+      }
+
+      return matchesOutlineText(page.text, matchTitle);
+    });
+
+    if (matchedPage) {
+      firstPageByOutlineTitle.set(normalizedTitle, matchedPage.pageNumber);
+      pageCursor = Math.max(pageCursor, pageRecords.indexOf(matchedPage));
+      continue;
+    }
+
+    const matchingChapter = chapterSections.find((chapter) => {
+      if (isTocChapter(chapter.title)) {
+        return false;
+      }
+
+      return matchesOutlineText(normalizeMatchKey(chapter.title), matchTitle);
+    });
+
+    const fallbackPage = matchingChapter
+      ? metrics.firstPageByChapterId.get(matchingChapter.id)
+      : undefined;
+
+    if (fallbackPage) {
+      firstPageByOutlineTitle.set(normalizedTitle, fallbackPage);
+    }
+  }
+
+  return {
+    firstPageByOutlineTitle,
+  };
+}
+
 function injectTocPageNumbers(
   html: string,
   numberedEntries: Array<{ title: string; level: number; firstPage: number }>,
 ) {
+  const sanitizedHtml = stripExistingTocPageNumbers(html);
   let entryIndex = 0;
 
-  return html.replace(
+  return sanitizedHtml.replace(
     /<(p|li|h[1-6])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi,
     (fullMatch, tagName: string, rawAttributes = '', innerHtml: string) => {
       if (entryIndex >= numberedEntries.length) {
         return fullMatch;
       }
 
-      const plainText = normalizeLookupKey(stripHtmlTags(innerHtml));
-      const expectedText = normalizeLookupKey(numberedEntries[entryIndex].title);
+      const plainText = normalizeMatchKey(
+        stripExistingTocSuffix(stripHtmlTags(innerHtml)),
+      );
+      const expectedText = normalizeMatchKey(numberedEntries[entryIndex].title);
 
-      if (!plainText || plainText !== expectedText) {
+      if (!plainText || !matchesOutlineText(plainText, expectedText)) {
         return fullMatch;
       }
 
       const entry = numberedEntries[entryIndex];
       entryIndex += 1;
 
-      return `<${tagName}${rawAttributes}><span data-toc-line="true" data-toc-level="${entry.level}"><span data-toc-title="true">${innerHtml}</span><span data-toc-leader="true" aria-hidden="true">${buildDotLeader(entry.level)}</span><span data-toc-page="true">${entry.firstPage}</span></span></${tagName}>`;
+      return `<${tagName}${rawAttributes} data-toc-entry="true" data-toc-level="${entry.level}"><span data-toc-title="true">${innerHtml}</span><span data-toc-leader="true" aria-hidden="true">${buildDotLeader(entry.level)}</span><span data-toc-page="true">${entry.firstPage}</span></${tagName}>`;
     },
   );
 }
 
+export function stripExistingTocPageNumbers(html: string) {
+  let current = html;
+  let previous = '';
+
+  while (current !== previous) {
+    previous = current;
+    current = current.replace(
+      /<span data-toc-line="true"[^>]*>\s*<span data-toc-title="true">([\s\S]*?)<\/span>\s*<span data-toc-leader="true"[^>]*>[\s\S]*?<\/span>\s*<span data-toc-page="true">[\s\S]*?<\/span>\s*<\/span>/gi,
+      '$1',
+    );
+    current = current.replace(
+      /<span data-toc-title="true">([\s\S]*?)<\/span>\s*<span data-toc-leader="true"[^>]*>[\s\S]*?<\/span>\s*<span data-toc-page="true">[\s\S]*?<\/span>/gi,
+      '$1',
+    );
+    current = current.replace(/\sdata-toc-entry="true"/gi, '');
+    current = current.replace(/\sdata-toc-level="[^"]*"/gi, '');
+  }
+
+  return current;
+}
+
+function matchesOutlineText(candidate: string, target: string) {
+  if (!candidate || !target) {
+    return false;
+  }
+
+  return candidate === target || candidate.includes(target) || target.includes(candidate);
+}
+
 function stripHtmlTags(value: string) {
   return decodeHtmlEntities(value.replace(/<[^>]+>/g, ' '));
+}
+
+function normalizeVisibleText(value: string) {
+  return decodeHtmlEntities(value)
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function stripExistingTocSuffix(value: string) {
+  return value
+    .replace(/\s*[·.\-–—~∿]+\s*\d+\s*$/u, '')
+    .trim();
 }
 
 function decodeHtmlEntities(value: string) {
