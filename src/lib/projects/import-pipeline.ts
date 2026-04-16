@@ -1032,16 +1032,61 @@ export function buildImportedDocumentSeed({
       .filter((ch) => !isTocChapterTitle(ch.title))
       .map((ch) => ch.title.trim().toLowerCase()),
   );
-  const outlineForIndex = detectedOutline
+  // Scan the full outline for entries that are NOT in chapterTitleSet but match
+  // MAJOR_HEADING_RE. These typically come from the stale Word TOC cache (bold
+  // paragraphs in the front matter that become non-structural headings). Two cases:
+  //
+  //   A) Rich description that starts with a chapter title (a proper prefix match):
+  //      e.g. "FASE 1: PERCEPCIÓN (Días 1-10) - Autoconciencia…" starts with
+  //      "Fase 1: Percepción". → Stored in richLabelMap for substitution below.
+  //
+  //   B) Entry with no chapter prefix (e.g. "CIERRE: LA VISIBILIDAD SOSTENIBLE"):
+  //      → Collected in extraTocEntries for insertion after the last Día cluster.
+  const richLabelMap = new Map<string, string>(); // chapterTitleLower → richTitle
+  const extraTocEntries: OutlineEntry[] = [];     // CIERRE-like extra level-1 entries
+  for (const entry of detectedOutline) {
+    const trimmedLower = entry.title.trim().toLowerCase();
+    if (chapterTitleSet.has(trimmedLower)) continue;   // already a chapter title
+    if (isTocChapterTitle(entry.title)) continue;
+    if (!MAJOR_HEADING_RE.test(entry.title.trim())) continue;
+
+    let matchedChapter: string | null = null;
+    for (const chapterTitle of chapterTitleSet) {
+      if (trimmedLower.startsWith(chapterTitle) && trimmedLower.length > chapterTitle.length) {
+        matchedChapter = chapterTitle;
+        break;
+      }
+    }
+
+    if (matchedChapter) {
+      // Prefer the longest/richest label if multiple exist for the same chapter.
+      const existing = richLabelMap.get(matchedChapter);
+      if (!existing || entry.title.trim().length > existing.length) {
+        richLabelMap.set(matchedChapter, entry.title.trim());
+      }
+    } else {
+      const alreadyAdded = extraTocEntries.some(
+        (e) => e.title.trim().toLowerCase() === trimmedLower,
+      );
+      if (!alreadyAdded) {
+        extraTocEntries.push({ ...entry, level: 1 });
+      }
+    }
+  }
+
+  // Build the filtered and level-assigned outline from actual chapter entries,
+  // substituting rich labels where available.
+  const baseOutlineForIndex = detectedOutline
     .filter((entry) => {
       if (isTocChapterTitle(entry.title)) return false;
       if (!chapterTitleSet.has(entry.title.trim().toLowerCase())) return false;
-      // For sub-entries, exclude recurring internal section markers like
-      // "REFLEXIÓN" or "RETO DE ACCIÓN". These appear in every chapter but the
-      // original Word TOC intentionally excludes them. We keep a sub-entry only
-      // when its title contains a digit (e.g. "Día 1: …", "Tema 3") or is long
-      // enough to be a proper sub-chapter title (≥ 16 chars).
-      if (!/\d/.test(entry.title) && entry.title.trim().length < 16) return false;
+      // Exclude recurring internal section markers like "REFLEXIÓN" or
+      // "RETO DE ACCIÓN" (present as chapters but not meant for the TOC).
+      // Rule: no digit AND shorter than 16 chars → drop, UNLESS the title
+      // matches MAJOR_HEADING_RE (e.g. "Introducción", "Prólogo", "Cierre").
+      if (!/\d/.test(entry.title) && entry.title.trim().length < 16) {
+        if (!MAJOR_HEADING_RE.test(entry.title.trim())) return false;
+      }
       return true;
     })
     .map((entry) => {
@@ -1049,13 +1094,44 @@ export function buildImportedDocumentSeed({
       // is correct even when FASE and Día chapters both use the same heading
       // style in the Word document (which would give them the same level in
       // the structural analysis).
-      // • MAJOR_HEADING_RE matches (FASE X, CIERRE, Introducción…) → level 1
-      // • MINOR_HEADING_RE matches (Día X, Tema X…)                → level 2
+      // • MAJOR_HEADING_RE matches (FASE X, Introducción…) → level 1, use rich label
+      // • MINOR_HEADING_RE matches (Día X, Tema X…)        → level 2
       const title = entry.title.trim();
+      const titleLower = title.toLowerCase();
+      const richLabel = richLabelMap.get(titleLower);
+      if (richLabel) return { ...entry, title: richLabel, level: 1 };
       if (MAJOR_HEADING_RE.test(title)) return { ...entry, level: 1 };
       if (MINOR_HEADING_RE.test(title)) return { ...entry, level: 2 };
       return entry;
     });
+
+  // Insert extra entries (CIERRE etc.) just before the first level-1 entry that
+  // follows the last MINOR_HEADING_RE group — i.e., between the last Día cluster
+  // and the tail chapters (e.g. "Después de los 30 días", "Recursos recomendados").
+  let outlineForIndex: OutlineEntry[];
+  if (extraTocEntries.length > 0) {
+    let lastMinorIdx = -1;
+    for (let i = 0; i < baseOutlineForIndex.length; i++) {
+      if (MINOR_HEADING_RE.test(baseOutlineForIndex[i].title.trim())) lastMinorIdx = i;
+    }
+    let insertAt = baseOutlineForIndex.length;
+    if (lastMinorIdx >= 0) {
+      for (let i = lastMinorIdx + 1; i < baseOutlineForIndex.length; i++) {
+        if (baseOutlineForIndex[i].level <= 1) {
+          insertAt = i;
+          break;
+        }
+      }
+    }
+    outlineForIndex = [
+      ...baseOutlineForIndex.slice(0, insertAt),
+      ...extraTocEntries,
+      ...baseOutlineForIndex.slice(insertAt),
+    ];
+  } else {
+    outlineForIndex = baseOutlineForIndex;
+  }
+
   const generatedIndex = outlineForIndex.length >= 2 ? buildGeneratedIndexChapter(outlineForIndex) : null;
 
   if (generatedIndex) {
