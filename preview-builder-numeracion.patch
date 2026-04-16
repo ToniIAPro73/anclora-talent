@@ -1,0 +1,57 @@
+diff --git a/src/lib/preview/preview-builder.ts b/src/lib/preview/preview-builder.ts
+index 0000000..1111111 100644
+--- a/src/lib/preview/preview-builder.ts
++++ b/src/lib/preview/preview-builder.ts
+@@ -45,8 +45,9 @@ export function stripExistingTocPageNumbers(html: string) {
+ }
+ 
+ function buildDotLeader(level: number) {
+-  // Keep the persisted HTML lightweight. The full visual leader is rendered by CSS.
+-  return '····';
++  // Use dots to fill space until page number
++  // Level 1 (main chapters) -> longer leader
++  const base = level === 1 ? 50 : 35;
++  return '.'.repeat(base);
+ }
+ 
+ function injectTocPageNumbers(
+@@ -54,32 +55,25 @@ function injectTocPageNumbers(
+   numberedEntries: Array<{ title: string; level: number; firstPage: number }>,
+ ) {
+-  const sanitizedHtml = stripExistingTocPageNumbers(html);
+   let entryIndex = 0;
+ 
+-  return sanitizedHtml.replace(
++  return html.replace(
+     /<(p|li|h[1-6])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi,
+     (fullMatch, tagName: string, rawAttributes = '', innerHtml: string) => {
+       if (entryIndex >= numberedEntries.length) {
+         return fullMatch;
+       }
+ 
+-      const plainText = normalizeMatchKey(
+-        stripExistingTocSuffix(stripHtmlTags(innerHtml)),
+-      );
++      const plainText = normalizeMatchKey(stripHtmlTags(innerHtml));
+       const expectedText = normalizeMatchKey(numberedEntries[entryIndex].title);
+ 
+       if (!plainText || !matchesOutlineText(plainText, expectedText)) {
+         return fullMatch;
+       }
+ 
+       const entry = numberedEntries[entryIndex];
+       entryIndex += 1;
+ 
+-      // Strip any inline page-number suffix (e.g., "----3", "····5") that the
+-      // original Word TOC may have embedded in the entry text. The system will
+-      // inject the correct page number via data-toc-page instead.
+-      const cleanInnerHtml = innerHtml.replace(/\s*[-–—·.~∿]{1,}\s*\d+\s*$/, '').trim();
++      // Remove previous numbering if exists
++      const cleanInnerHtml = innerHtml.replace(/\s*[-.]+\s*\d+\s*$/, '').trim();
++      const leader = buildDotLeader(entry.level);
+ 
+-      return `<${tagName}${rawAttributes} data-toc-entry="true" data-toc-level="${entry.level}"><span data-toc-title="true">${cleanInnerHtml}</span><span data-toc-leader="true" aria-hidden="true">${buildDotLeader(entry.level)}</span><span data-toc-page="true">${entry.firstPage}</span></${tagName}>`;
++      return `<${tagName}${rawAttributes}>${cleanInnerHtml}${leader}${entry.firstPage}</${tagName}>`;
+     },
+   );
+ }
