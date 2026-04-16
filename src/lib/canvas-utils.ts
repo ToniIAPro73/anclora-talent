@@ -6,7 +6,6 @@ export async function getFabric(): Promise<any> {
   if (fabricModule) return fabricModule;
   try {
     const mod = await import('fabric');
-    console.info('[getFabric] Fabric module imported:', Object.keys(mod));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const m = mod as any;
     fabricModule =
@@ -160,6 +159,7 @@ export async function createFabricCanvas(
   const canvas = new CanvasClass(canvasElement, {
     backgroundColor: '#ffffff',
     preserveObjectStacking: true,
+    enableRetinaScaling: false,
     ...options,
     width: CANVAS_WIDTH,
     height: CANVAS_HEIGHT,
@@ -179,9 +179,11 @@ async function waitForFont(fontFamily: string, fontSize: number): Promise<void> 
   }
   
   try {
-    const fontSpec = `${fontSize}px ${fontFamily}`;
     await (document as any).fonts.ready;
-    await (document as any).fonts.load(fontSpec);
+    await Promise.all([
+      (document as any).fonts.load(`${fontSize}px "${fontFamily}"`),
+      (document as any).fonts.load(`bold ${fontSize}px "${fontFamily}"`),
+    ]);
   } catch (e) {
     console.warn('[waitForFont] Font loading failed, continuing anyway:', e);
   }
@@ -263,71 +265,16 @@ export async function addTextToCanvas(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (wrapWidth) (fabricText as any).wrapWidth = wrapWidth;
 
-  // INSTRUMENTACIÓN: registrar valores reales del objeto de texto
-  console.info('[addTextToCanvas] Texto creado:', {
-    id: (fabricText as any).id,
-    tipo: fabricText.type,
-    text: fabricText.text,
-    rawText: (fabricText as any).rawText,
-    wrapWidth: (fabricText as any).wrapWidth,
-    width: fabricText.width,
-    minWidth: fabricText.minWidth,
-    height: fabricText.height,
-    scaleX: fabricText.scaleX,
-    scaleY: fabricText.scaleY,
-    lines: (fabricText as any).lines,
-    lineCount: (fabricText as any).lines?.length,
-    left: fabricText.left,
-    top: fabricText.top,
-    originX: fabricText.originX,
-    originY: fabricText.originY,
-    fontSize: fabricText.fontSize,
-    fontFamily: fabricText.fontFamily,
-  });
-
   // Forzar recálculo de dimensiones DESPUÉS de que la fuente esté disponible
-  // Esto es crítico: initDimensions() mide el texto con la fuente real
   (fabricText as FabricTextLike).initDimensions?.();
-  
-  // Resetear escalado a 1 para evitar distorsión
-  (fabricText as FabricTextLike).set?.({
-    scaleX: 1,
-    scaleY: 1,
-    dirty: true,
-  });
-  
+  (fabricText as FabricTextLike).set?.({ scaleX: 1, scaleY: 1, dirty: true });
   (fabricText as FabricTextLike).setCoords?.();
-
-  // SEGUNDA INSTRUMENTACIÓN: verificar valores después de initDimensions
-  console.info('[addTextToCanvas] Después de initDimensions:', {
-    id: (fabricText as any).id,
-    width: fabricText.width,
-    minWidth: fabricText.minWidth,
-    height: fabricText.height,
-    scaleX: fabricText.scaleX,
-    scaleY: fabricText.scaleY,
-    lines: (fabricText as any).lines,
-    lineCount: (fabricText as any).lines?.length,
-  });
 
   canvas.add(fabricText);
   canvas.setActiveObject(fabricText);
   if (canvas.requestRenderAll) canvas.requestRenderAll();
   else canvas.renderAll();
-  
-  // TERCERA INSTRUMENTACIÓN: verificar después de añadir al canvas
-  setTimeout(() => {
-    console.info('[addTextToCanvas] Después de render:', {
-      id: (fabricText as any).id,
-      width: fabricText.width,
-      height: fabricText.height,
-      scaleX: fabricText.scaleX,
-      scaleY: fabricText.scaleY,
-      oCoords: fabricText.oCoords,
-      aCoords: fabricText.aCoords,
-    });
-  }, 100);
-  
+
   return fabricText;
 }
 
@@ -339,39 +286,21 @@ export async function addImageToCanvas(
 ) {
   const fabric = await getFabric();
 
-  console.info('[addImageToCanvas] Starting with URL:', imageUrl);
-  console.info('[addImageToCanvas] Fabric Image class:', fabric.Image);
-
   try {
     const result = fabric.Image.fromURL(imageUrl, { crossOrigin: 'anonymous' });
-    console.info('[addImageToCanvas] fromURL returned:', result);
-
     const img = result instanceof Promise ? await result : result;
-    console.info('[addImageToCanvas] Image loaded, img:', img);
 
     // ── FIX: en Fabric 7 las dimensiones están en el HTMLImageElement subyacente,
     //         no en img.width / img.height (que son undefined antes de set()).
     const { width: sourceW, height: sourceH } = getFabricImageSourceSize(img);
 
-    console.info('[addImageToCanvas] source dimensions:', sourceW, sourceH);
-    console.info('[addImageToCanvas] fabric dimensions before normalization:', img.width, img.height);
+    img.set?.({ width: sourceW, height: sourceH });
 
-    img.set?.({
-      width: sourceW,
-      height: sourceH,
-    });
-
-  const fit = options.fit ?? 'contain';
-  const attachToCanvas = options.attachToCanvas ?? true;
-  const targetWidth = options.targetWidth ?? CANVAS_WIDTH * 0.9;
+    const fit = options.fit ?? 'contain';
+    const attachToCanvas = options.attachToCanvas ?? true;
+    const targetWidth = options.targetWidth ?? CANVAS_WIDTH * 0.9;
     const targetHeight = options.targetHeight ?? CANVAS_HEIGHT * 0.9;
-    const scale = getImageScaleForFit({
-      imageWidth: sourceW,
-      imageHeight: sourceH,
-      targetWidth,
-      targetHeight,
-      fit,
-    });
+    const scale = getImageScaleForFit({ imageWidth: sourceW, imageHeight: sourceH, targetWidth, targetHeight, fit });
 
     img.set({
       left: options.left ?? CANVAS_WIDTH / 2,
@@ -382,25 +311,19 @@ export async function addImageToCanvas(
       originY: 'center',
       ...options,
     });
-    if (typeof img.setCoords === 'function') {
-      img.setCoords();
-    }
+    if (typeof img.setCoords === 'function') img.setCoords();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (options?.id) (img as any).id = options.id;
 
     if (attachToCanvas) {
       canvas.add(img);
-      if (typeof img.setCoords === 'function') {
-        img.setCoords();
-      }
+      if (typeof img.setCoords === 'function') img.setCoords();
       canvas.setActiveObject(img);
       if (canvas.requestRenderAll) canvas.requestRenderAll();
       else canvas.renderAll();
     }
 
-    console.info('[addImageToCanvas] Image added and rendered, scale:', scale);
-    console.info('[addImageToCanvas] fabric dimensions after normalization:', img.width, img.height);
     return img;
   } catch (error) {
     console.error('[addImageToCanvas] Error:', error);
@@ -422,6 +345,14 @@ export function exportCanvasToJSON(canvas: any): string {
 export function loadCanvasFromJSON(canvas: any, json: string): Promise<void> {
   return new Promise((resolve) => {
     canvas.loadFromJSON(json, () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      canvas.getObjects().forEach((obj: any) => {
+        if (obj.type === 'textbox' || obj.type === 'i-text') {
+          obj.set({ scaleX: 1, scaleY: 1, objectCaching: false });
+          obj.initDimensions?.();
+          obj.setCoords?.();
+        }
+      });
       if (canvas.requestRenderAll) canvas.requestRenderAll();
       else canvas.renderAll();
       resolve();

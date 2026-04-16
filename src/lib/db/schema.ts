@@ -126,3 +126,11 @@ export const activityLog = pgTable('activity_log', {
   payload: jsonb('payload').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const userPreferences = pgTable('user_preferences', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: varchar('user_id', { length: 191 }).notNull().unique(),
+  editorPreferences: jsonb('editor_preferences').notNull().default({}),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
