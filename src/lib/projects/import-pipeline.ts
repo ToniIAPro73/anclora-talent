@@ -1036,12 +1036,13 @@ export function buildImportedDocumentSeed({
     .filter((entry) => {
       if (isTocChapterTitle(entry.title)) return false;
       if (!chapterTitleSet.has(entry.title.trim().toLowerCase())) return false;
-      // For sub-entries, exclude recurring internal section markers like
-      // "REFLEXIÓN" or "RETO DE ACCIÓN". These appear in every chapter but the
-      // original Word TOC intentionally excludes them. We keep a sub-entry only
-      // when its title contains a digit (e.g. "Día 1: …", "Tema 3") or is long
-      // enough to be a proper sub-chapter title (≥ 16 chars).
-      if (!/\d/.test(entry.title) && entry.title.trim().length < 16) return false;
+      // Exclude recurring internal section markers like "REFLEXIÓN" or
+      // "RETO DE ACCIÓN" (present as chapters but not meant for the TOC).
+      // Rule: no digit AND shorter than 16 chars → drop, UNLESS the title
+      // matches MAJOR_HEADING_RE (e.g. "Introducción", "Prólogo", "Cierre").
+      if (!/\d/.test(entry.title) && entry.title.trim().length < 16) {
+        if (!MAJOR_HEADING_RE.test(entry.title.trim())) return false;
+      }
       return true;
     })
     .map((entry) => {
