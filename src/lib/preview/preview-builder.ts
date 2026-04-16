@@ -362,8 +362,9 @@ function buildTocHtmlFromEntries(
 }
 
 function buildDotLeader(level: number) {
-  // Keep the persisted HTML lightweight. The full visual leader is rendered by CSS.
-  return '····';
+  // Level 1 (main chapters) -> longer leader
+  const base = level === 1 ? 50 : 35;
+  return '.'.repeat(base);
 }
 
 function buildTocChapterHtml(
@@ -587,48 +588,30 @@ function injectTocPageNumbers(
   html: string,
   numberedEntries: TocNumberedEntry[],
 ) {
-  const sanitizedHtml = stripExistingTocPageNumbers(html);
-  
   let entryIndex = 0;
 
-  return sanitizedHtml.replace(
+  return html.replace(
     /<(p|li|h[1-6])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi,
     (fullMatch, tagName: string, rawAttributes = '', innerHtml: string) => {
       if (entryIndex >= numberedEntries.length) {
         return fullMatch;
       }
 
-      const plainText = normalizeMatchKey(
-        stripExistingTocSuffix(stripHtmlTags(innerHtml)),
-      );
+      const plainText = normalizeMatchKey(stripHtmlTags(innerHtml));
+      const expectedText = normalizeMatchKey(numberedEntries[entryIndex].title);
 
-      if (!plainText) {
+      if (!plainText || !matchesOutlineText(plainText, expectedText)) {
         return fullMatch;
       }
 
-      // Try to find if THIS line exists ANYWHERE in the remaining numbered entries.
-      let matchIdx = -1;
-      for (let i = entryIndex; i < numberedEntries.length; i++) {
-        const expected = normalizeMatchKey(numberedEntries[i].title);
-        if (matchesOutlineText(plainText, expected)) {
-          matchIdx = i;
-          break;
-        }
-      }
+      const entry = numberedEntries[entryIndex];
+      entryIndex += 1;
 
-      if (matchIdx === -1) {
-        return fullMatch;
-      }
+      // Remove previous numbering if exists (periods or hyphens followed by a page number)
+      const cleanInnerHtml = innerHtml.replace(/\s*[-.]+\s*\d+\s*$/, '').trim();
+      const leader = buildDotLeader(entry.level);
 
-      // Found a match! Use it and advance entryIndex to the one after it to maintain sequence.
-      const entry = numberedEntries[matchIdx];
-      entryIndex = matchIdx + 1;
-
-      // Strip any inline page-number suffix (e.g., "----3", "····5") that the
-      // original Word TOC may have embedded in the entry text.
-      const cleanInnerHtml = innerHtml.replace(/\s*[-–—·.~∿]{1,}\s*\d+\s*$/, '').trim();
-
-      return `<${tagName}${rawAttributes} data-toc-entry="true" data-toc-level="${entry.level}"><span data-toc-title="true">${cleanInnerHtml}</span><span data-toc-leader="true" aria-hidden="true">${buildDotLeader(entry.level)}</span><span data-toc-page="true">${entry.firstPage}</span></${tagName}>`;
+      return `<${tagName}${rawAttributes}>${cleanInnerHtml}${leader}${entry.firstPage}</${tagName}>`;
     },
   );
 }

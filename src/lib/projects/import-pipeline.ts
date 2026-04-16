@@ -568,20 +568,9 @@ function parseHtmlBlocks(input: string) {
       ];
     }
 
-    if (
-      isStrongOnlyParagraph(clean) ||
-      (!/<br\s*\/?>/i.test(clean) && isStrongStandaloneHeadingSignal(text))
-    ) {
-      return [
-        {
-          kind: 'heading' as const,
-          text: cleanHeadingText(text),
-          html: clean,
-          level: inferHeadingLevel(text) ?? 2,
-          structural: false,
-        },
-      ];
-    }
+    // REMOVED: heuristic that converted index paragraphs to headings.
+    // Previously, any bold paragraph matching "FASE 1", "Dia 1" became a heading,
+    // creating false chapters. Now we trust only <h1>-<h6> from Mammoth.
 
     return [
       {
