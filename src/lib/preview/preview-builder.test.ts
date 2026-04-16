@@ -696,6 +696,47 @@ describe('preview-builder', () => {
       expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
     });
 
+    it('handles duplicate titles in TOC by sequential matching', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          chapters: [
+            {
+              id: 'toc-chapter',
+              order: 0,
+              title: 'Índice',
+              blocks: [
+                {
+                  id: 'toc-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Índice</h2><p>Reflexión</p><p>Reflexión</p>',
+                },
+              ],
+            },
+            {
+              id: 'ch1',
+              order: 1,
+              title: 'Reflexión',
+              blocks: [{ id: 'b1', type: 'paragraph', order: 1, content: '<p>Ref1</p>' }], // Page 3
+            },
+            {
+              id: 'ch2',
+              order: 2,
+              title: 'Reflexión',
+              blocks: [{ id: 'b2', type: 'paragraph', order: 1, content: '<p>Ref2</p>' }], // Page 4
+            },
+          ],
+        },
+      });
+
+      const syncedToc = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
+
+      expect(syncedToc?.html).toContain('<p data-toc-entry="true" data-toc-level="2"><span data-toc-title="true">Reflexión</span><span data-toc-leader="true" aria-hidden="true">····</span><span data-toc-page="true">3</span></p>');
+      expect(syncedToc?.html).toContain('<p data-toc-entry="true" data-toc-level="2"><span data-toc-title="true">Reflexión</span><span data-toc-leader="true" aria-hidden="true">····</span><span data-toc-page="true">4</span></p>');
+    });
+
     it('supplements missing chapters in the index during sync action', () => {
       const base = createMockProject();
       const project = createMockProject({
@@ -769,7 +810,7 @@ describe('preview-builder', () => {
             {
               id: 'intro-chapter',
               order: 1,
-              title: 'Introducción',
+              title: 'Capítulo Intro',
               blocks: [
                 {
                   id: 'intro-block',
@@ -790,7 +831,10 @@ describe('preview-builder', () => {
       expect(syncedToc?.html).toContain('Día 2: Fortalezas latentes.');
       expect(syncedToc?.html).toContain('<li data-toc-entry="true"');
       expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
-      expect(syncedToc?.html.match(/data-toc-page="true"/g)).toHaveLength(3);
+      
+      const pageNumbers = Array.from(syncedToc?.html.matchAll(/data-toc-page="true">(\d+)</g)).map(m => m[1]);
+      // Should have: Introducción, Día 1, Día 2, Capítulo Intro -> 4 entries
+      expect(pageNumbers).toHaveLength(4);
     });
 
     it('reconciles stale automatic page breaks the same way as the chapter editor', () => {
@@ -825,7 +869,7 @@ describe('preview-builder', () => {
       expect(contentPages[0].content).not.toContain('data-page-break="auto"');
     });
 
-    it('does not inject a synthetic chapter heading that is not present in the chapter html', () => {
+    it('includes the chapter heading that is present in the chapter content', () => {
       const base = createMockProject();
       const project = createMockProject({
         document: {
@@ -836,6 +880,12 @@ describe('preview-builder', () => {
               order: 1,
               title: 'Introducción',
               blocks: [
+                {
+                  id: 'intro-h2',
+                  type: 'heading',
+                  order: 0,
+                  content: '<h2>Introducción</h2>',
+                },
                 {
                   id: 'intro-block',
                   type: 'paragraph',
@@ -851,8 +901,8 @@ describe('preview-builder', () => {
       const pages = buildPreviewPages(project, DEVICE_PAGINATION_CONFIGS.laptop);
       const firstContentPage = pages.find((page) => page.type === 'content');
 
+      expect(firstContentPage?.content).toContain('<h2>Introducción</h2>');
       expect(firstContentPage?.content).toContain('Primer párrafo real del capítulo.');
-      expect(firstContentPage?.content).not.toContain('<h2>Introducción</h2>');
     });
 
     it('paginates chapter content from the same canonical html used by the chapter editor', () => {

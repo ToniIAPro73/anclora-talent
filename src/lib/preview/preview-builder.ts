@@ -61,7 +61,7 @@ type ChapterPageMetrics = {
 };
 
 type OutlineEntryPageMetrics = {
-  firstPageByOutlineTitle: Map<string, number>;
+  firstPages: number[];
 };
 
 type TocNumberedEntry = {
@@ -386,8 +386,8 @@ function buildTocChapterHtml(
   const outlineMetrics = measureOutlineEntryPageMetrics(chapterSections, metrics, config, outlineEntries);
 
   const numberedEntries = outlineEntries
-    .map((entry) => {
-      const firstPage = outlineMetrics.firstPageByOutlineTitle.get(normalizeLookupKey(entry.title));
+    .map((entry, index) => {
+      const firstPage = outlineMetrics.firstPages[index];
       if (!firstPage) {
         return null;
       }
@@ -398,7 +398,7 @@ function buildTocChapterHtml(
         firstPage,
       };
     })
-    .filter((entry): entry is { title: string; level: number; firstPage: number } => Boolean(entry));
+    .filter((entry): entry is TocNumberedEntry => Boolean(entry));
 
   if (numberedEntries.length === 0) {
     return fallbackHtml;
@@ -407,10 +407,16 @@ function buildTocChapterHtml(
   // If supplements were added (outlineEntries has more entries than what was in
   // the stored HTML), we must generate fresh HTML so all entries — including the
   // newly added ones like "CIERRE" — appear in the output.
-  // Otherwise inject page numbers directly into the stored HTML to preserve any
-  // existing formatting or manual edits.
+  // Also synthesize if the stored HTML was basically empty (e.g. initial import
+  // without a proper TOC).
+  // Otherwise inject page numbers directly into the stored HTML to preserve the
+  // original Word document layout and formatting.
   const hasSupplement = outlineEntries.length > visibleFromHtml.length;
-  const baseHtml = hasSupplement ? buildTocHtmlFromEntries(outlineEntries) : fallbackHtml;
+  const isOriginalEmpty = visibleFromHtml.length === 0;
+  
+  const baseHtml = (hasSupplement || isOriginalEmpty) 
+    ? buildTocHtmlFromEntries(outlineEntries) 
+    : fallbackHtml;
 
   return injectTocPageNumbers(baseHtml, numberedEntries);
 }
@@ -422,91 +428,92 @@ function buildOutlineEntries(
 ) {
   const visibleTocEntries = extractTocRenderableEntries(tocHtml);
 
-  if (visibleTocEntries.length > 0) {
-    // Check for entries that should be in the TOC but are absent from the stored
-    // HTML. This happens for projects imported before the full TOC generation was
-    // in place (e.g. CIERRE, Después de los 30 días, Recursos recomendados).
-    const existingKeys = new Set(
-      visibleTocEntries.map((e) => normalizeLookupKey(e.title)),
-    );
-
-    const chapterKeys = new Set(
-      chapterSections
-        .filter((ch) => !isTocChapter(ch.title))
-        .map((ch) => normalizeLookupKey(ch.title)),
-    );
-
-    // 1. Actual chapters not present in the stored TOC (added after import, or
-    //    missing from old generated index).
-    const missingChapters = chapterSections
-      .filter(
-        (ch) =>
-          !isTocChapter(ch.title) &&
-          !existingKeys.has(normalizeLookupKey(ch.title)),
-      )
-      .map((ch) => ({ title: ch.title, level: 1 as const }));
-
-    // 2. MAJOR_HEADING_RE entries from source.outline that are not already in
-    //    the stored TOC and are not actual chapters (e.g. "CIERRE: LA VISIBILIDAD
-    //    SOSTENIBLE" from the stale Word TOC cache).
-    const majorSupplements = (project.document.source?.outline ?? [])
-      .filter((entry) => !isTocChapter(entry.title))
-      .filter((entry) => !existingKeys.has(normalizeLookupKey(entry.title)))
-      .filter((entry) => !chapterKeys.has(normalizeLookupKey(entry.title)))
-      .filter((entry) => MAJOR_HEADING_RE.test(entry.title.trim()))
-      // De-duplicate (same title may appear multiple times in the raw outline)
-      .filter(
-        (entry, idx, arr) =>
-          arr.findIndex(
-            (e) => normalizeLookupKey(e.title) === normalizeLookupKey(entry.title),
-          ) === idx,
-      )
-      .map((entry) => ({ title: entry.title, level: 1 as const }));
-
-    const allSupplements = [...majorSupplements, ...missingChapters];
-
-    if (allSupplements.length === 0) {
-      return visibleTocEntries;
-    }
-
-    // Insert supplements after the last minor-heading cluster (e.g. last Día X
-    // entry, level ≥ 3 from <li>), but before the first subsequent major entry
-    // (level < 3, e.g. "Después de los 30 días"). This positions CIERRE between
-    // Día 30 and any tail chapters.
-    let lastMinorIdx = -1;
-    for (let i = 0; i < visibleTocEntries.length; i++) {
-      if (visibleTocEntries[i].level >= 3) lastMinorIdx = i;
-    }
-
-    let insertAt = visibleTocEntries.length;
-    if (lastMinorIdx >= 0) {
-      for (let i = lastMinorIdx + 1; i < visibleTocEntries.length; i++) {
-        if (visibleTocEntries[i].level < 3) {
-          insertAt = i;
-          break;
-        }
-      }
-    }
-
-    return [
-      ...visibleTocEntries.slice(0, insertAt),
-      ...allSupplements,
-      ...visibleTocEntries.slice(insertAt),
-    ];
-  }
-
-  const sourceOutline = project.document.source?.outline?.filter(
-    (entry) => !isTocChapter(entry.title),
+  // Check for entries that should be in the TOC but are absent from the stored
+  // HTML. This happens for projects imported before the full TOC generation was
+  // in place (e.g. CIERRE, Después de los 30 días, Recursos recomendados).
+  const existingKeys = new Set(
+    visibleTocEntries.map((e) => normalizeLookupKey(e.title)),
   );
 
-  return sourceOutline && sourceOutline.length > 0
-    ? sourceOutline
-    : chapterSections
-        .filter((chapter) => !isTocChapter(chapter.title))
-        .map((chapter) => ({
-          title: chapter.title,
-          level: 1,
-        }));
+  const chapterKeys = new Set(
+    chapterSections
+      .filter((ch) => !isTocChapter(ch.title))
+      .map((ch) => normalizeLookupKey(ch.title)),
+  );
+
+  // 1. Actual chapters not present in the stored TOC (added after import, or
+  //    missing from old generated index).
+  const missingChapters = chapterSections
+    .filter(
+      (ch) =>
+        !isTocChapter(ch.title) &&
+        !existingKeys.has(normalizeLookupKey(ch.title)),
+    )
+    .map((ch) => ({ title: ch.title, level: 1 as const }));
+
+  // 2. MAJOR_HEADING_RE entries from source.outline that are not already in
+  //    the stored TOC and are not actual chapters (e.g. "CIERRE: LA VISIBILIDAD
+  //    SOSTENIBLE" from the stale Word TOC cache).
+  const majorSupplements = (project.document.source?.outline ?? [])
+    .filter((entry) => !isTocChapter(entry.title))
+    .filter((entry) => !existingKeys.has(normalizeLookupKey(entry.title)))
+    .filter((entry) => !chapterKeys.has(normalizeLookupKey(entry.title)))
+    .filter((entry) => MAJOR_HEADING_RE.test(entry.title.trim()))
+    // De-duplicate (same title may appear multiple times in the raw outline)
+    .filter(
+      (entry, idx, arr) =>
+        arr.findIndex(
+          (e) => normalizeLookupKey(e.title) === normalizeLookupKey(entry.title),
+        ) === idx,
+    )
+    .map((entry) => ({ title: entry.title, level: 1 as const }));
+
+  const allSupplements = [...majorSupplements, ...missingChapters];
+
+  if (allSupplements.length === 0) {
+    return visibleTocEntries;
+  }
+
+  if (visibleTocEntries.length === 0) {
+    // If we have NO visible entries, use the full outline or just the chapters
+    const sourceOutline = project.document.source?.outline?.filter(
+      (entry) => !isTocChapter(entry.title),
+    );
+
+    return sourceOutline && sourceOutline.length > 0
+      ? sourceOutline
+      : chapterSections
+          .filter((chapter) => !isTocChapter(chapter.title))
+          .map((chapter) => ({
+            title: chapter.title,
+            level: 1,
+          }));
+  }
+
+  // Insert supplements after the last minor-heading cluster (e.g. last Día X
+  // entry, level ≥ 3 from <li>), but before the first subsequent major entry
+  // (level < 3, e.g. "Después de los 30 días"). This positions CIERRE between
+  // Día 30 and any tail chapters.
+  let lastMinorIdx = -1;
+  for (let i = 0; i < visibleTocEntries.length; i++) {
+    if (visibleTocEntries[i].level >= 3) lastMinorIdx = i;
+  }
+
+  let insertAt = visibleTocEntries.length;
+  if (lastMinorIdx >= 0) {
+    for (let i = lastMinorIdx + 1; i < visibleTocEntries.length; i++) {
+      if (visibleTocEntries[i].level < 3) {
+        insertAt = i;
+        break;
+      }
+    }
+  }
+
+  return [
+    ...visibleTocEntries.slice(0, insertAt),
+    ...allSupplements,
+    ...visibleTocEntries.slice(insertAt),
+  ];
 }
 
 function extractTocRenderableEntries(html: string) {
@@ -554,7 +561,7 @@ function measureOutlineEntryPageMetrics(
   config: PaginationConfig,
   outlineEntries: Array<{ title: string; level: number }>,
 ): OutlineEntryPageMetrics {
-  const firstPageByOutlineTitle = new Map<string, number>();
+  const firstPages: number[] = [];
   const pageRecords: Array<{
     pageNumber: number;
     chapterId: string;
@@ -602,7 +609,6 @@ function measureOutlineEntryPageMetrics(
   let pageCursor = 0;
 
   for (const entry of outlineEntries) {
-    const normalizedTitle = normalizeLookupKey(entry.title);
     const matchTitle = normalizeMatchKey(entry.title);
 
     const matchedPage = pageRecords.find((page, index) => {
@@ -617,34 +623,34 @@ function measureOutlineEntryPageMetrics(
     });
 
     if (matchedPage) {
-      firstPageByOutlineTitle.set(normalizedTitle, matchedPage.pageNumber);
-      pageCursor = Math.max(pageCursor, pageRecords.indexOf(matchedPage));
+      const matchIndex = pageRecords.indexOf(matchedPage);
+      firstPages.push(matchedPage.pageNumber);
+      pageCursor = matchIndex + 1;
       continue;
     }
 
-    const matchingChapter = chapterSections.find((chapter) => {
-      if (isTocChapter(chapter.title)) {
-        return false;
-      }
-
-      return matchesOutlineText(normalizeMatchKey(chapter.title), matchTitle);
+    // Try to find the chapter that likely contains this sub-entry
+    const matchingRecord = pageRecords.find((page) => {
+      return matchesOutlineText(page.chapterTitle, matchTitle) || matchesOutlineText(matchTitle, page.chapterTitle);
     });
 
-    const fallbackPage = matchingChapter
-      ? metrics.firstPageByChapterId.get(matchingChapter.id)
-      : undefined;
+    if (matchingRecord) {
+      firstPages.push(matchingRecord.pageNumber);
+      // We don't advance pageCursor for fallbacks to avoid skipping other entries 
+      // that might have better matches later.
+      continue;
+    }
 
+    const fallbackPage = metrics.firstPageByChapterId.get(chapterSections.find(c => !isTocChapter(c.title))?.id ?? '');
     if (fallbackPage) {
-      firstPageByOutlineTitle.set(normalizedTitle, fallbackPage);
-      const fallbackPageIndex = pageRecords.findIndex(p => p.pageNumber === fallbackPage);
-      if (fallbackPageIndex >= 0) {
-        pageCursor = Math.max(pageCursor, fallbackPageIndex);
-      }
+      firstPages.push(fallbackPage);
+    } else {
+      firstPages.push(0);
     }
   }
 
   return {
-    firstPageByOutlineTitle,
+    firstPages,
   };
 }
 
@@ -653,18 +659,16 @@ function injectTocPageNumbers(
   numberedEntries: TocNumberedEntry[],
 ) {
   const sanitizedHtml = stripExistingTocPageNumbers(html);
-  const entriesByTitle = new Map<string, TocNumberedEntry[]>();
-
-  for (const entry of numberedEntries) {
-    const key = normalizeMatchKey(entry.title);
-    const bucket = entriesByTitle.get(key) ?? [];
-    bucket.push(entry);
-    entriesByTitle.set(key, bucket);
-  }
+  
+  let entryIndex = 0;
 
   return sanitizedHtml.replace(
     /<(p|li|h[1-6])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi,
     (fullMatch, tagName: string, rawAttributes = '', innerHtml: string) => {
+      if (entryIndex >= numberedEntries.length) {
+        return fullMatch;
+      }
+
       const plainText = normalizeMatchKey(
         stripExistingTocSuffix(stripHtmlTags(innerHtml)),
       );
@@ -673,19 +677,26 @@ function injectTocPageNumbers(
         return fullMatch;
       }
 
-      const matchingBucket =
-        Array.from(entriesByTitle.entries()).find(([key]) => matchesOutlineText(plainText, key))?.[1] ??
-        null;
+      // Try to find if THIS line exists ANYWHERE in the remaining numbered entries.
+      let matchIdx = -1;
+      for (let i = entryIndex; i < numberedEntries.length; i++) {
+        const expected = normalizeMatchKey(numberedEntries[i].title);
+        if (matchesOutlineText(plainText, expected)) {
+          matchIdx = i;
+          break;
+        }
+      }
 
-      const entry = matchingBucket?.shift();
-
-      if (!entry) {
+      if (matchIdx === -1) {
         return fullMatch;
       }
 
+      // Found a match! Use it and advance entryIndex to the one after it to maintain sequence.
+      const entry = numberedEntries[matchIdx];
+      entryIndex = matchIdx + 1;
+
       // Strip any inline page-number suffix (e.g., "----3", "····5") that the
-      // original Word TOC may have embedded in the entry text. The system will
-      // inject the correct page number via data-toc-page instead.
+      // original Word TOC may have embedded in the entry text.
       const cleanInnerHtml = innerHtml.replace(/\s*[-–—·.~∿]{1,}\s*\d+\s*$/, '').trim();
 
       return `<${tagName}${rawAttributes} data-toc-entry="true" data-toc-level="${entry.level}"><span data-toc-title="true">${cleanInnerHtml}</span><span data-toc-leader="true" aria-hidden="true">${buildDotLeader(entry.level)}</span><span data-toc-page="true">${entry.firstPage}</span></${tagName}>`;
@@ -695,23 +706,19 @@ function injectTocPageNumbers(
 
 export function stripExistingTocPageNumbers(html: string) {
   let current = html;
-  let previous = '';
 
-  while (current !== previous) {
-    previous = current;
-    current = current.replace(
-      /<span data-toc-line="true"[^>]*>\s*<span data-toc-title="true">([\s\S]*?)<\/span>\s*<span data-toc-leader="true"[^>]*>[\s\S]*?<\/span>\s*<span data-toc-page="true">[\s\S]*?<\/span>\s*<\/span>/gi,
-      '$1',
-    );
-    current = current.replace(
-      /<span data-toc-title="true">([\s\S]*?)<\/span>\s*<span data-toc-leader="true"[^>]*>[\s\S]*?<\/span>\s*<span data-toc-page="true">[\s\S]*?<\/span>/gi,
-      '$1',
-    );
-    current = current.replace(/\sdata-toc-entry="true"/gi, '');
-    current = current.replace(/\sdata-toc-level="[^"]*"/gi, '');
-  }
+  // 1. Remove the data-toc-page spans and leaders first
+  current = current.replace(/<span data-toc-leader="true"[^>]*>[\s\S]*?<\/span>/gi, '');
+  current = current.replace(/<span data-toc-page="true"[^>]*>[\s\S]*?<\/span>/gi, '');
+  
+  // 2. Unwrap the title span if it exists
+  current = current.replace(/<span data-toc-title="true">([\s\S]*?)<\/span>/gi, '$1');
+  
+  // 3. Remove all data-toc attributes from parent tags
+  current = current.replace(/\sdata-toc-entry="true"/gi, '');
+  current = current.replace(/\sdata-toc-level="[^"]*"/gi, '');
 
-  return current;
+  return current.trim();
 }
 
 function matchesOutlineText(candidate: string, target: string) {

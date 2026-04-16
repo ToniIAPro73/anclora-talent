@@ -696,37 +696,37 @@ function buildGeneratedIndexChapter(outline: OutlineEntry[]) {
   if (filtered.length < 2) return null;
 
   const blocks: ImportedDocumentSeed['blocks'] = [];
-  let currentTopLevel: OutlineEntry | null = null;
-  let nestedItems: string[] = [];
+  let currentGroup: { title: string; items: string[] } | null = null;
 
-  const flushNested = () => {
-    if (nestedItems.length === 0) return;
-    blocks.push({
-      type: 'paragraph',
-      content: `<ul>${nestedItems.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`,
-    });
-    nestedItems = [];
+  const flushGroup = () => {
+    if (!currentGroup) return;
+    blocks.push({ type: 'heading', content: currentGroup.title });
+    if (currentGroup.items.length > 0) {
+      blocks.push({
+        type: 'paragraph',
+        content: `<ul>${currentGroup.items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`,
+      });
+    }
+    currentGroup = null;
   };
 
   for (const entry of filtered) {
     if (entry.level <= 1) {
-      flushNested();
-      currentTopLevel = entry;
+      flushGroup();
+      currentGroup = { title: entry.title, items: [] };
+    } else if (currentGroup) {
+      currentGroup.items.push(entry.title);
+    } else {
+      // Level 2 entry without a parent level 1 entry
       blocks.push({ type: 'heading', content: entry.title });
-      continue;
-    }
-
-    if (currentTopLevel) {
-      nestedItems.push(entry.title);
     }
   }
 
-  flushNested();
+  flushGroup();
 
   if (blocks.length === 0) return null;
 
-  // Prepend the chapter title as a heading block (the same way buildChaptersFromBlocks
-  // does for regular chapters — without this the title wouldn't render in the editor).
+  // Prepend the chapter title as a heading block
   blocks.unshift({ type: 'heading', content: 'Índice' });
 
   return {
@@ -900,7 +900,7 @@ function buildChaptersFromBlocks(blocks: ParsedBlock[], title: string, author: s
 
       flushCurrent();
       currentTitle = cleanHeadingText(block.text) || `Capítulo ${chapters.length + 1}`;
-      currentBlocks = [];
+      currentBlocks = [block];
       continue;
     }
 
@@ -1007,44 +1007,28 @@ export function buildImportedDocumentSeed({
     ? subtitleDetection.subtitle.slice(0, 260)
     : `Documento importado desde ${fileName}`;
   let detectedChapters = frontMatterSource.chapters;
-  let detectedOutline = (frontMatterSource.detectedOutline ?? detectedChapters.map((chapter) => ({
+  let detectedOutline = frontMatterSource.detectedOutline ?? detectedChapters.map((chapter) => ({
     title: chapter.title,
     level: 1,
     origin: 'detected' as const,
-  }))).filter((entry) => entry.title !== title);
+  }));
 
   const explicitIndexIdx = detectedChapters.findIndex((chapter) => isTocChapterTitle(chapter.title));
   const hasExplicitIndex = explicitIndexIdx >= 0;
 
   // Build the index using only outline entries that correspond to actual
-  // detected chapters. The raw outline includes ALL heading-like text (e.g.
-  // "REFLEXIÓN", "RETO DE ACCIÓN") because those short ALL-CAPS strings pass
-  // the standalone-heading heuristic. Using the chapter titles as an allowlist
-  // ensures only real chapter boundaries appear in the generated TOC.
-  //
-  // We always regenerate the index from chapters so it is guaranteed to cover
-  // ALL chapters — the Word .docx embedded TOC cache may be stale (Word only
-  // refreshes it when you right-click → "Update field").
+  // detected chapters.
   const chapterTitleSet = new Set(
     detectedChapters
       .filter((ch) => !isTocChapterTitle(ch.title))
       .map((ch) => ch.title.trim().toLowerCase()),
   );
-  // Scan the full outline for entries that are NOT in chapterTitleSet but match
-  // MAJOR_HEADING_RE. These typically come from the stale Word TOC cache (bold
-  // paragraphs in the front matter that become non-structural headings). Two cases:
-  //
-  //   A) Rich description that starts with a chapter title (a proper prefix match):
-  //      e.g. "FASE 1: PERCEPCIÓN (Días 1-10) - Autoconciencia…" starts with
-  //      "Fase 1: Percepción". → Stored in richLabelMap for substitution below.
-  //
-  //   B) Entry with no chapter prefix (e.g. "CIERRE: LA VISIBILIDAD SOSTENIBLE"):
-  //      → Collected in extraTocEntries for insertion after the last Día cluster.
+
   const richLabelMap = new Map<string, string>(); // chapterTitleLower → richTitle
   const extraTocEntries: OutlineEntry[] = [];     // CIERRE-like extra level-1 entries
   for (const entry of detectedOutline) {
     const trimmedLower = entry.title.trim().toLowerCase();
-    if (chapterTitleSet.has(trimmedLower)) continue;   // already a chapter title
+    if (chapterTitleSet.has(trimmedLower)) continue;
     if (isTocChapterTitle(entry.title)) continue;
     if (!MAJOR_HEADING_RE.test(entry.title.trim())) continue;
 
@@ -1057,7 +1041,6 @@ export function buildImportedDocumentSeed({
     }
 
     if (matchedChapter) {
-      // Prefer the longest/richest label if multiple exist for the same chapter.
       const existing = richLabelMap.get(matchedChapter);
       if (!existing || entry.title.trim().length > existing.length) {
         richLabelMap.set(matchedChapter, entry.title.trim());
@@ -1072,28 +1055,17 @@ export function buildImportedDocumentSeed({
     }
   }
 
-  // Build the filtered and level-assigned outline from actual chapter entries,
-  // substituting rich labels where available.
   const baseOutlineForIndex = detectedOutline
     .filter((entry) => {
-      if (isTocChapterTitle(entry.title)) return false;
-      if (!chapterTitleSet.has(entry.title.trim().toLowerCase())) return false;
-      // Exclude recurring internal section markers like "REFLEXIÓN" or
-      // "RETO DE ACCIÓN" (present as chapters but not meant for the TOC).
-      // Rule: no digit AND shorter than 16 chars → drop, UNLESS the title
-      // matches MAJOR_HEADING_RE (e.g. "Introducción", "Prólogo", "Cierre").
-      if (!/\d/.test(entry.title) && entry.title.trim().length < 16) {
-        if (!MAJOR_HEADING_RE.test(entry.title.trim())) return false;
-      }
-      return true;
+      const title = entry.title.trim();
+      const titleLower = title.toLowerCase();
+      if (isTocChapterTitle(title)) return false;
+      if (chapterTitleSet.has(titleLower)) return true;
+      if (MAJOR_HEADING_RE.test(title)) return true;
+      if (MINOR_HEADING_RE.test(title)) return true;
+      return false;
     })
     .map((entry) => {
-      // Override the structural level with a semantic one so the TOC hierarchy
-      // is correct even when FASE and Día chapters both use the same heading
-      // style in the Word document (which would give them the same level in
-      // the structural analysis).
-      // • MAJOR_HEADING_RE matches (FASE X, Introducción…) → level 1, use rich label
-      // • MINOR_HEADING_RE matches (Día X, Tema X…)        → level 2
       const title = entry.title.trim();
       const titleLower = title.toLowerCase();
       const richLabel = richLabelMap.get(titleLower);
@@ -1103,9 +1075,6 @@ export function buildImportedDocumentSeed({
       return entry;
     });
 
-  // Insert extra entries (CIERRE etc.) just before the first level-1 entry that
-  // follows the last MINOR_HEADING_RE group — i.e., between the last Día cluster
-  // and the tail chapters (e.g. "Después de los 30 días", "Recursos recomendados").
   let outlineForIndex: OutlineEntry[];
   if (extraTocEntries.length > 0) {
     let lastMinorIdx = -1;
@@ -1132,28 +1101,19 @@ export function buildImportedDocumentSeed({
 
   const generatedIndex = outlineForIndex.length >= 2 ? buildGeneratedIndexChapter(outlineForIndex) : null;
 
+  // RULE: If we have an explicit index from Word with real content, keep it.
+  // We only replace it with the generated one if it's empty or extremely short.
+  const explicitIndexBlocks = hasExplicitIndex ? detectedChapters[explicitIndexIdx].blocks : [];
+  const isExplicitIndexSubstantial = explicitIndexBlocks.some(b => b.content.trim().length > 50);
+
   if (generatedIndex) {
-    if (hasExplicitIndex) {
-      // Replace the (potentially stale) explicit Word TOC in-place with the
-      // freshly generated one so chapter order is preserved.
-      const outlineReplaceIdx = detectedOutline.findIndex((entry) =>
-        isTocChapterTitle(entry.title),
-      );
+    if (hasExplicitIndex && !isExplicitIndexSubstantial) {
       detectedChapters = [
         ...detectedChapters.slice(0, explicitIndexIdx),
         generatedIndex.chapter,
         ...detectedChapters.slice(explicitIndexIdx + 1),
       ];
-      if (outlineReplaceIdx >= 0) {
-        detectedOutline = [
-          ...detectedOutline.slice(0, outlineReplaceIdx),
-          generatedIndex.outlineEntry,
-          ...detectedOutline.slice(outlineReplaceIdx + 1),
-        ];
-      }
-    } else {
-      // No explicit index found — insert the generated one after the prologue
-      // (or at position 0 if there is no prologue).
+    } else if (!hasExplicitIndex) {
       const prologueIndex = detectedChapters.findIndex((chapter) => chapter.title.toLowerCase() === 'prólogo');
       const insertAt = prologueIndex >= 0 ? prologueIndex + 1 : 0;
       detectedChapters = [
@@ -1161,13 +1121,11 @@ export function buildImportedDocumentSeed({
         generatedIndex.chapter,
         ...detectedChapters.slice(insertAt),
       ];
-      detectedOutline = [
-        ...detectedOutline.slice(0, insertAt),
-        generatedIndex.outlineEntry,
-        ...detectedOutline.slice(insertAt),
-      ];
     }
   }
+
+  // Update detectedOutline to reflect the final outline used for indexing
+  detectedOutline = outlineForIndex;
 
   const importedPreviewBlocks = (detectedChapters[0]?.blocks ?? []).slice(0, 6).map(
     (block): ImportedDocumentSeed['blocks'][number] => ({
