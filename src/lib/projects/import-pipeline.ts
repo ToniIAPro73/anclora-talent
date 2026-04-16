@@ -727,6 +727,10 @@ function buildGeneratedIndexChapter(outline: OutlineEntry[]) {
 
   if (blocks.length === 0) return null;
 
+  // Prepend the chapter title as a heading block (the same way buildChaptersFromBlocks
+  // does for regular chapters — without this the title wouldn't render in the editor).
+  blocks.unshift({ type: 'heading', content: 'Índice' });
+
   return {
     chapter: {
       title: 'Índice',
@@ -1013,14 +1017,46 @@ export function buildImportedDocumentSeed({
 
   const explicitIndexIdx = detectedChapters.findIndex((chapter) => isTocChapterTitle(chapter.title));
   const hasExplicitIndex = explicitIndexIdx >= 0;
-  const topLevelOutlineCount = detectedOutline.filter((entry) => entry.level === 1).length;
 
-  // Always build a generated index from the detected chapter headings so the
-  // index is guaranteed to cover ALL chapters — even if the Word .docx file's
-  // cached TOC field is stale (Word only updates the cache when you right-click
-  // "Update field", so late-added chapters are often missing from the cache that
-  // Mammoth reads).
-  const generatedIndex = topLevelOutlineCount >= 3 ? buildGeneratedIndexChapter(detectedOutline) : null;
+  // Build the index using only outline entries that correspond to actual
+  // detected chapters. The raw outline includes ALL heading-like text (e.g.
+  // "REFLEXIÓN", "RETO DE ACCIÓN") because those short ALL-CAPS strings pass
+  // the standalone-heading heuristic. Using the chapter titles as an allowlist
+  // ensures only real chapter boundaries appear in the generated TOC.
+  //
+  // We always regenerate the index from chapters so it is guaranteed to cover
+  // ALL chapters — the Word .docx embedded TOC cache may be stale (Word only
+  // refreshes it when you right-click → "Update field").
+  const chapterTitleSet = new Set(
+    detectedChapters
+      .filter((ch) => !isTocChapterTitle(ch.title))
+      .map((ch) => ch.title.trim().toLowerCase()),
+  );
+  const outlineForIndex = detectedOutline
+    .filter((entry) => {
+      if (isTocChapterTitle(entry.title)) return false;
+      if (!chapterTitleSet.has(entry.title.trim().toLowerCase())) return false;
+      // For sub-entries, exclude recurring internal section markers like
+      // "REFLEXIÓN" or "RETO DE ACCIÓN". These appear in every chapter but the
+      // original Word TOC intentionally excludes them. We keep a sub-entry only
+      // when its title contains a digit (e.g. "Día 1: …", "Tema 3") or is long
+      // enough to be a proper sub-chapter title (≥ 16 chars).
+      if (!/\d/.test(entry.title) && entry.title.trim().length < 16) return false;
+      return true;
+    })
+    .map((entry) => {
+      // Override the structural level with a semantic one so the TOC hierarchy
+      // is correct even when FASE and Día chapters both use the same heading
+      // style in the Word document (which would give them the same level in
+      // the structural analysis).
+      // • MAJOR_HEADING_RE matches (FASE X, CIERRE, Introducción…) → level 1
+      // • MINOR_HEADING_RE matches (Día X, Tema X…)                → level 2
+      const title = entry.title.trim();
+      if (MAJOR_HEADING_RE.test(title)) return { ...entry, level: 1 };
+      if (MINOR_HEADING_RE.test(title)) return { ...entry, level: 2 };
+      return entry;
+    });
+  const generatedIndex = outlineForIndex.length >= 2 ? buildGeneratedIndexChapter(outlineForIndex) : null;
 
   if (generatedIndex) {
     if (hasExplicitIndex) {
