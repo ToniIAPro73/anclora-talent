@@ -727,6 +727,10 @@ function buildGeneratedIndexChapter(outline: OutlineEntry[]) {
 
   if (blocks.length === 0) return null;
 
+  // Prepend the chapter title as a heading block (the same way buildChaptersFromBlocks
+  // does for regular chapters — without this the title wouldn't render in the editor).
+  blocks.unshift({ type: 'heading', content: 'Índice' });
+
   return {
     chapter: {
       title: 'Índice',
@@ -1028,19 +1032,30 @@ export function buildImportedDocumentSeed({
       .filter((ch) => !isTocChapterTitle(ch.title))
       .map((ch) => ch.title.trim().toLowerCase()),
   );
-  const outlineForIndex = detectedOutline.filter((entry) => {
-    if (isTocChapterTitle(entry.title)) return false;
-    if (!chapterTitleSet.has(entry.title.trim().toLowerCase())) return false;
-    // For level-2 sub-entries, exclude recurring internal section markers like
-    // "REFLEXIÓN" or "RETO DE ACCIÓN". These appear in every chapter but the
-    // original Word TOC intentionally excludes them. We keep a sub-entry only
-    // when its title contains a digit (e.g. "Día 1: …", "Tema 3") or is long
-    // enough to be a proper sub-chapter title (≥ 16 chars).
-    if (entry.level >= 2 && !/\d/.test(entry.title) && entry.title.trim().length < 16) {
-      return false;
-    }
-    return true;
-  });
+  const outlineForIndex = detectedOutline
+    .filter((entry) => {
+      if (isTocChapterTitle(entry.title)) return false;
+      if (!chapterTitleSet.has(entry.title.trim().toLowerCase())) return false;
+      // For sub-entries, exclude recurring internal section markers like
+      // "REFLEXIÓN" or "RETO DE ACCIÓN". These appear in every chapter but the
+      // original Word TOC intentionally excludes them. We keep a sub-entry only
+      // when its title contains a digit (e.g. "Día 1: …", "Tema 3") or is long
+      // enough to be a proper sub-chapter title (≥ 16 chars).
+      if (!/\d/.test(entry.title) && entry.title.trim().length < 16) return false;
+      return true;
+    })
+    .map((entry) => {
+      // Override the structural level with a semantic one so the TOC hierarchy
+      // is correct even when FASE and Día chapters both use the same heading
+      // style in the Word document (which would give them the same level in
+      // the structural analysis).
+      // • MAJOR_HEADING_RE matches (FASE X, CIERRE, Introducción…) → level 1
+      // • MINOR_HEADING_RE matches (Día X, Tema X…)                → level 2
+      const title = entry.title.trim();
+      if (MAJOR_HEADING_RE.test(title)) return { ...entry, level: 1 };
+      if (MINOR_HEADING_RE.test(title)) return { ...entry, level: 2 };
+      return entry;
+    });
   const generatedIndex = outlineForIndex.length >= 2 ? buildGeneratedIndexChapter(outlineForIndex) : null;
 
   if (generatedIndex) {
