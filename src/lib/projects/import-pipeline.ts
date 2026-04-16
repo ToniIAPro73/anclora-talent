@@ -726,8 +726,11 @@ function buildGeneratedIndexChapter(outline: OutlineEntry[]) {
 
   if (blocks.length === 0) return null;
 
-  // Prepend the chapter title as a heading block
-  blocks.unshift({ type: 'heading', content: 'Índice' });
+  // Prepend the chapter title as a heading block ONLY if not already there
+  const firstBlockContent = blocks[0]?.content || '';
+  if (!firstBlockContent.includes('Índice')) {
+    blocks.unshift({ type: 'heading', content: 'Índice' });
+  }
 
   return {
     chapter: {
@@ -1055,6 +1058,8 @@ export function buildImportedDocumentSeed({
     }
   }
 
+  // Build the filtered and level-assigned outline from actual chapter entries,
+  // substituting rich labels where available.
   const baseOutlineForIndex = detectedOutline
     .filter((entry) => {
       const title = entry.title.trim();
@@ -1075,36 +1080,14 @@ export function buildImportedDocumentSeed({
       return entry;
     });
 
-  let outlineForIndex: OutlineEntry[];
-  if (extraTocEntries.length > 0) {
-    let lastMinorIdx = -1;
-    for (let i = 0; i < baseOutlineForIndex.length; i++) {
-      if (MINOR_HEADING_RE.test(baseOutlineForIndex[i].title.trim())) lastMinorIdx = i;
-    }
-    let insertAt = baseOutlineForIndex.length;
-    if (lastMinorIdx >= 0) {
-      for (let i = lastMinorIdx + 1; i < baseOutlineForIndex.length; i++) {
-        if (baseOutlineForIndex[i].level <= 1) {
-          insertAt = i;
-          break;
-        }
-      }
-    }
-    outlineForIndex = [
-      ...baseOutlineForIndex.slice(0, insertAt),
-      ...extraTocEntries,
-      ...baseOutlineForIndex.slice(insertAt),
-    ];
-  } else {
-    outlineForIndex = baseOutlineForIndex;
-  }
+  const outlineForIndex = baseOutlineForIndex;
 
   const generatedIndex = outlineForIndex.length >= 2 ? buildGeneratedIndexChapter(outlineForIndex) : null;
 
   // RULE: If we have an explicit index from Word with real content, keep it.
   // We only replace it with the generated one if it's empty or extremely short.
   const explicitIndexBlocks = hasExplicitIndex ? detectedChapters[explicitIndexIdx].blocks : [];
-  const isExplicitIndexSubstantial = explicitIndexBlocks.some(b => b.content.trim().length > 50);
+  const isExplicitIndexSubstantial = explicitIndexBlocks.length > 0;
 
   if (generatedIndex) {
     if (hasExplicitIndex && !isExplicitIndexSubstantial) {

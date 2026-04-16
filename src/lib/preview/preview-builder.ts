@@ -428,92 +428,26 @@ function buildOutlineEntries(
 ) {
   const visibleTocEntries = extractTocRenderableEntries(tocHtml);
 
-  // Check for entries that should be in the TOC but are absent from the stored
-  // HTML. This happens for projects imported before the full TOC generation was
-  // in place (e.g. CIERRE, Después de los 30 días, Recursos recomendados).
-  const existingKeys = new Set(
-    visibleTocEntries.map((e) => normalizeLookupKey(e.title)),
-  );
-
-  const chapterKeys = new Set(
-    chapterSections
-      .filter((ch) => !isTocChapter(ch.title))
-      .map((ch) => normalizeLookupKey(ch.title)),
-  );
-
-  // 1. Actual chapters not present in the stored TOC (added after import, or
-  //    missing from old generated index).
-  const missingChapters = chapterSections
-    .filter(
-      (ch) =>
-        !isTocChapter(ch.title) &&
-        !existingKeys.has(normalizeLookupKey(ch.title)),
-    )
-    .map((ch) => ({ title: ch.title, level: 1 as const }));
-
-  // 2. MAJOR_HEADING_RE entries from source.outline that are not already in
-  //    the stored TOC and are not actual chapters (e.g. "CIERRE: LA VISIBILIDAD
-  //    SOSTENIBLE" from the stale Word TOC cache).
-  const majorSupplements = (project.document.source?.outline ?? [])
-    .filter((entry) => !isTocChapter(entry.title))
-    .filter((entry) => !existingKeys.has(normalizeLookupKey(entry.title)))
-    .filter((entry) => !chapterKeys.has(normalizeLookupKey(entry.title)))
-    .filter((entry) => MAJOR_HEADING_RE.test(entry.title.trim()))
-    // De-duplicate (same title may appear multiple times in the raw outline)
-    .filter(
-      (entry, idx, arr) =>
-        arr.findIndex(
-          (e) => normalizeLookupKey(e.title) === normalizeLookupKey(entry.title),
-        ) === idx,
-    )
-    .map((entry) => ({ title: entry.title, level: 1 as const }));
-
-  const allSupplements = [...majorSupplements, ...missingChapters];
-
-  if (allSupplements.length === 0) {
+  if (visibleTocEntries.length > 0) {
+    // Loyalty to the editor/original document: if the TOC has content, 
+    // we use ONLY what is visible. No automatic supplementation that 
+    // breaks the original layout.
     return visibleTocEntries;
   }
 
-  if (visibleTocEntries.length === 0) {
-    // If we have NO visible entries, use the full outline or just the chapters
-    const sourceOutline = project.document.source?.outline?.filter(
-      (entry) => !isTocChapter(entry.title),
-    );
+  // Only if the TOC is completely empty, we provide a fallback from the outline or chapters
+  const sourceOutline = project.document.source?.outline?.filter(
+    (entry) => !isTocChapter(entry.title),
+  );
 
-    return sourceOutline && sourceOutline.length > 0
-      ? sourceOutline
-      : chapterSections
-          .filter((chapter) => !isTocChapter(chapter.title))
-          .map((chapter) => ({
-            title: chapter.title,
-            level: 1,
-          }));
-  }
-
-  // Insert supplements after the last minor-heading cluster (e.g. last Día X
-  // entry, level ≥ 3 from <li>), but before the first subsequent major entry
-  // (level < 3, e.g. "Después de los 30 días"). This positions CIERRE between
-  // Día 30 and any tail chapters.
-  let lastMinorIdx = -1;
-  for (let i = 0; i < visibleTocEntries.length; i++) {
-    if (visibleTocEntries[i].level >= 3) lastMinorIdx = i;
-  }
-
-  let insertAt = visibleTocEntries.length;
-  if (lastMinorIdx >= 0) {
-    for (let i = lastMinorIdx + 1; i < visibleTocEntries.length; i++) {
-      if (visibleTocEntries[i].level < 3) {
-        insertAt = i;
-        break;
-      }
-    }
-  }
-
-  return [
-    ...visibleTocEntries.slice(0, insertAt),
-    ...allSupplements,
-    ...visibleTocEntries.slice(insertAt),
-  ];
+  return sourceOutline && sourceOutline.length > 0
+    ? sourceOutline
+    : chapterSections
+        .filter((chapter) => !isTocChapter(chapter.title))
+        .map((chapter) => ({
+          title: chapter.title,
+          level: 1,
+        }));
 }
 
 function extractTocRenderableEntries(html: string) {
