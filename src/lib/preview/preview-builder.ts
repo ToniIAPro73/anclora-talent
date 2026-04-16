@@ -104,7 +104,7 @@ export function buildPreviewPages(
   // BUILD CHAPTER SECTIONS (for pagination and TOC)
   // ─────────────────────────────────────────────────────────────
 
-  const resolvedSections = buildDerivedChapterSections(project, config);
+  const resolvedSections = buildChapterSections(project);
 
   // ─────────────────────────────────────────────────────────────
   // PAGINATE CHAPTERS
@@ -159,7 +159,7 @@ export function buildPreviewContentFlowHtml(
   project: ProjectRecord,
   config: PaginationConfig,
 ) {
-  const resolvedSections = buildDerivedChapterSections(project, config);
+  const resolvedSections = buildChapterSections(project);
 
   return resolvedSections
     .map((chapter) => reconcileOverflowBreaks(normalizeHtmlContent(chapter.html), config))
@@ -306,12 +306,6 @@ function normalizeMatchKey(value: string) {
   return normalizeLookupKey(value).replace(/[^\p{Letter}\p{Number}\s]/gu, '');
 }
 
-// Matches major structural headings that should appear as level-1 entries in the
-// generated TOC. Used to identify "extra" entries from source.outline (e.g.,
-// "CIERRE: LA VISIBILIDAD SOSTENIBLE") that were not generated as chapters.
-const MAJOR_HEADING_RE =
-  /^(?:cap[ií]tulo|chapter|introducci[oó]n|pr[oó]logo|prologo|[íi]ndice|indice|fase\s+\d+|parte\s+\d+|secci[oó]n|ep[ií]logo|cierre|despu[eé]s\s+de|recursos(?:\s+recomendados)?|anexos?)(?:\b|:)/i;
-
 function escapeHtml(text: string) {
   return text
     .replace(/&/g, '&amp;')
@@ -368,10 +362,13 @@ function buildTocChapterHtml(
   fallbackHtml: string,
 ) {
   // Count visible entries in stored HTML *before* supplementing, so we can detect
-  // whether buildOutlineEntries added any new entries from source.outline.
+  // whether we need to synthesize a minimal index because the stored chapter
+  // has no renderable entries at all.
   const visibleFromHtml = extractTocRenderableEntries(fallbackHtml);
-
-  const outlineEntries = buildOutlineEntries(project, chapterSections, fallbackHtml);
+  const outlineEntries =
+    visibleFromHtml.length > 0
+      ? visibleFromHtml
+      : buildOutlineEntries(project, chapterSections, fallbackHtml);
 
   if (outlineEntries.length === 0) {
     return fallbackHtml;
@@ -398,13 +395,13 @@ function buildTocChapterHtml(
     return fallbackHtml;
   }
 
-  // If supplements were added (outlineEntries has more entries than what was in
-  // the stored HTML), we must generate fresh HTML so all entries — including the
-  // newly added ones like "CIERRE" — appear in the output.
-  // Otherwise inject page numbers directly into the stored HTML to preserve any
-  // existing formatting or manual edits.
-  const hasSupplement = outlineEntries.length > visibleFromHtml.length;
-  const baseHtml = hasSupplement ? buildTocHtmlFromEntries(outlineEntries) : fallbackHtml;
+  // If the editor already has visible TOC entries, preserve that HTML as the
+  // source of truth and only inject page-number adornments. We synthesize a
+  // fresh TOC only when the stored chapter has no renderable entries at all.
+  const shouldSynthesizeBaseHtml = visibleFromHtml.length === 0;
+  const baseHtml = shouldSynthesizeBaseHtml
+    ? buildTocHtmlFromEntries(outlineEntries)
+    : fallbackHtml;
 
   return injectTocPageNumbers(baseHtml, numberedEntries);
 }
@@ -417,76 +414,7 @@ function buildOutlineEntries(
   const visibleTocEntries = extractTocRenderableEntries(tocHtml);
 
   if (visibleTocEntries.length > 0) {
-    // Check for entries that should be in the TOC but are absent from the stored
-    // HTML. This happens for projects imported before the full TOC generation was
-    // in place (e.g. CIERRE, Después de los 30 días, Recursos recomendados).
-    const existingKeys = new Set(
-      visibleTocEntries.map((e) => normalizeLookupKey(e.title)),
-    );
-
-    const chapterKeys = new Set(
-      chapterSections
-        .filter((ch) => !isTocChapter(ch.title))
-        .map((ch) => normalizeLookupKey(ch.title)),
-    );
-
-    // 1. Actual chapters not present in the stored TOC (added after import, or
-    //    missing from old generated index).
-    const missingChapters = chapterSections
-      .filter(
-        (ch) =>
-          !isTocChapter(ch.title) &&
-          !existingKeys.has(normalizeLookupKey(ch.title)),
-      )
-      .map((ch) => ({ title: ch.title, level: 1 as const }));
-
-    // 2. MAJOR_HEADING_RE entries from source.outline that are not already in
-    //    the stored TOC and are not actual chapters (e.g. "CIERRE: LA VISIBILIDAD
-    //    SOSTENIBLE" from the stale Word TOC cache).
-    const majorSupplements = (project.document.source?.outline ?? [])
-      .filter((entry) => !isTocChapter(entry.title))
-      .filter((entry) => !existingKeys.has(normalizeLookupKey(entry.title)))
-      .filter((entry) => !chapterKeys.has(normalizeLookupKey(entry.title)))
-      .filter((entry) => MAJOR_HEADING_RE.test(entry.title.trim()))
-      // De-duplicate (same title may appear multiple times in the raw outline)
-      .filter(
-        (entry, idx, arr) =>
-          arr.findIndex(
-            (e) => normalizeLookupKey(e.title) === normalizeLookupKey(entry.title),
-          ) === idx,
-      )
-      .map((entry) => ({ title: entry.title, level: 1 as const }));
-
-    const allSupplements = [...majorSupplements, ...missingChapters];
-
-    if (allSupplements.length === 0) {
-      return visibleTocEntries;
-    }
-
-    // Insert supplements after the last minor-heading cluster (e.g. last Día X
-    // entry, level ≥ 3 from <li>), but before the first subsequent major entry
-    // (level < 3, e.g. "Después de los 30 días"). This positions CIERRE between
-    // Día 30 and any tail chapters.
-    let lastMinorIdx = -1;
-    for (let i = 0; i < visibleTocEntries.length; i++) {
-      if (visibleTocEntries[i].level >= 3) lastMinorIdx = i;
-    }
-
-    let insertAt = visibleTocEntries.length;
-    if (lastMinorIdx >= 0) {
-      for (let i = lastMinorIdx + 1; i < visibleTocEntries.length; i++) {
-        if (visibleTocEntries[i].level < 3) {
-          insertAt = i;
-          break;
-        }
-      }
-    }
-
-    return [
-      ...visibleTocEntries.slice(0, insertAt),
-      ...allSupplements,
-      ...visibleTocEntries.slice(insertAt),
-    ];
+    return visibleTocEntries;
   }
 
   const sourceOutline = project.document.source?.outline?.filter(

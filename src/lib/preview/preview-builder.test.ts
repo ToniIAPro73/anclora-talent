@@ -444,7 +444,7 @@ describe('preview-builder', () => {
       expect(firstContentPage?.pageNumber).toBe(2);
     });
 
-    it('enriches an index chapter with the real first page of each chapter', () => {
+    it('renders the stored index chapter html without deriving a different toc in preview', () => {
       const base = createMockProject();
       const project = createMockProject({
         document: {
@@ -511,14 +511,13 @@ describe('preview-builder', () => {
 
       expect(tocPage?.content).toContain('Introducción');
       expect(tocPage?.content).toContain('Fase 1');
-      expect(tocPage?.content).toContain('····');
-      expect(tocPage?.content).toContain('<h2 data-toc-entry="true"');
+      expect(tocPage?.content).not.toContain('····');
+      expect(tocPage?.content).not.toContain('data-toc-entry="true"');
       expect(tocPage?.content).toContain('<ul><li>Día 1: Autoimagen.</li></ul>');
-      expect(tocPage?.content).toContain('<span data-toc-page="true">3</span>');
-      expect(tocPage?.content).toContain('<span data-toc-page="true">4</span>');
+      expect(tocPage?.content).not.toContain('data-toc-page="true"');
     });
 
-    it('falls back to chapter titles when there is no source outline for the index', () => {
+    it('keeps the stored toc html unchanged in preview even when there is no source outline', () => {
       const base = createMockProject();
       const project = createMockProject({
         document: {
@@ -560,11 +559,12 @@ describe('preview-builder', () => {
       );
 
       expect(tocPage?.content).toContain('Introducción');
-      expect(tocPage?.content).toContain('<p data-toc-entry="true"');
-      expect(tocPage?.content).toContain('<span data-toc-page="true">3</span>');
+      expect(tocPage?.content).toContain('<p>Introducción</p>');
+      expect(tocPage?.content).not.toContain('data-toc-entry="true"');
+      expect(tocPage?.content).not.toContain('data-toc-page="true"');
     });
 
-    it('reuses the same toc-enriched html in the preview flow as in the exported pages', () => {
+    it('reuses the same stored toc html in the preview flow as in the exported pages', () => {
       const base = createMockProject();
       const project = createMockProject({
         document: {
@@ -607,7 +607,7 @@ describe('preview-builder', () => {
       const flowHtml = buildPreviewContentFlowHtml(project, DEVICE_PAGINATION_CONFIGS.laptop);
 
       expect(flowHtml).toContain('Introducción');
-      expect(flowHtml).toContain('<span data-toc-page="true">3</span>');
+      expect(flowHtml).not.toContain('data-toc-page="true"');
       expect(flowHtml).toContain(tocPage?.content ?? '');
     });
 

@@ -104,7 +104,7 @@ export function useChapterEditor({
     1,
     measuredTotalPages == null
       ? estimatedTotalPages
-      : Math.max(estimatedTotalPages, measuredTotalPages),
+      : Math.min(estimatedTotalPages, measuredTotalPages),
   );
 
   useEffect(() => {

@@ -10,8 +10,6 @@ import { normalizeSurfaceState, type SurfaceState } from './cover-surface';
 import { buildPaginationConfig } from '@/lib/preview/device-configs';
 import {
   buildSyncedTocChapterContent,
-  isTocChapter,
-  stripExistingTocPageNumbers,
 } from '@/lib/preview/preview-builder';
 import { chapterBlocksToHtml } from './chapter-html';
 import type { CoverDesign, UpdateBackCoverInput, UpdateCoverInput, UpdateDocumentInput } from './types';
@@ -147,10 +145,6 @@ export async function saveChapterContentAction(formData: FormData) {
   const chapter = project.document.chapters.find((ch) => ch.id === chapterId);
   if (!chapter) return;
 
-  const sanitizedHtmlContent = isTocChapter(chapterTitle || chapter.title)
-    ? stripExistingTocPageNumbers(htmlContent)
-    : htmlContent;
-
   // Replace all blocks with a single block containing the complete HTML content
   // This prevents duplication when concatenating multiple blocks
   const blockId = chapter.blocks[0]?.id ?? randomUUID();
@@ -161,7 +155,7 @@ export async function saveChapterContentAction(formData: FormData) {
     chapterTitle: chapterTitle || chapter.title,
     chapterId,
     blocks: [
-      { id: blockId, content: sanitizedHtmlContent },
+      { id: blockId, content: htmlContent },
       // Include other blocks with empty content to preserve their IDs but effectively remove them
       ...chapter.blocks.slice(1).map((block) => ({ id: block.id, content: '' })),
     ],
