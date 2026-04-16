@@ -64,6 +64,12 @@ type OutlineEntryPageMetrics = {
   firstPageByOutlineTitle: Map<string, number>;
 };
 
+type TocNumberedEntry = {
+  title: string;
+  level: number;
+  firstPage: number;
+};
+
 // ==================== PAGE BUILDER ====================
 
 /**
@@ -477,7 +483,12 @@ function measureOutlineEntryPageMetrics(
   outlineEntries: Array<{ title: string; level: number }>,
 ): OutlineEntryPageMetrics {
   const firstPageByOutlineTitle = new Map<string, number>();
-  const pageRecords: Array<{ pageNumber: number; chapterId: string; text: string }> = [];
+  const pageRecords: Array<{
+    pageNumber: number;
+    chapterId: string;
+    chapterTitle: string;
+    text: string;
+  }> = [];
 
   let globalPageNumber = 2;
 
@@ -498,6 +509,7 @@ function measureOutlineEntryPageMetrics(
       pageRecords.push({
         pageNumber: globalPageNumber,
         chapterId: chapter.id,
+        chapterTitle: normalizeMatchKey(chapter.title),
         text: '',
       });
       globalPageNumber += 1;
@@ -508,6 +520,7 @@ function measureOutlineEntryPageMetrics(
       pageRecords.push({
         pageNumber: globalPageNumber,
         chapterId: chapter.id,
+        chapterTitle: normalizeMatchKey(chapter.title),
         text: normalizeMatchKey(stripHtmlTags(pageHtml)),
       });
       globalPageNumber += 1;
@@ -525,7 +538,10 @@ function measureOutlineEntryPageMetrics(
         return false;
       }
 
-      return matchesOutlineText(page.text, matchTitle);
+      return (
+        matchesOutlineText(page.text, matchTitle) ||
+        matchesOutlineText(page.chapterTitle, matchTitle)
+      );
     });
 
     if (matchedPage) {
@@ -562,29 +578,38 @@ function measureOutlineEntryPageMetrics(
 
 function injectTocPageNumbers(
   html: string,
-  numberedEntries: Array<{ title: string; level: number; firstPage: number }>,
+  numberedEntries: TocNumberedEntry[],
 ) {
   const sanitizedHtml = stripExistingTocPageNumbers(html);
-  let entryIndex = 0;
+  const entriesByTitle = new Map<string, TocNumberedEntry[]>();
+
+  for (const entry of numberedEntries) {
+    const key = normalizeMatchKey(entry.title);
+    const bucket = entriesByTitle.get(key) ?? [];
+    bucket.push(entry);
+    entriesByTitle.set(key, bucket);
+  }
 
   return sanitizedHtml.replace(
     /<(p|li|h[1-6])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi,
     (fullMatch, tagName: string, rawAttributes = '', innerHtml: string) => {
-      if (entryIndex >= numberedEntries.length) {
-        return fullMatch;
-      }
-
       const plainText = normalizeMatchKey(
         stripExistingTocSuffix(stripHtmlTags(innerHtml)),
       );
-      const expectedText = normalizeMatchKey(numberedEntries[entryIndex].title);
 
-      if (!plainText || !matchesOutlineText(plainText, expectedText)) {
+      if (!plainText) {
         return fullMatch;
       }
 
-      const entry = numberedEntries[entryIndex];
-      entryIndex += 1;
+      const matchingBucket =
+        Array.from(entriesByTitle.entries()).find(([key]) => matchesOutlineText(plainText, key))?.[1] ??
+        null;
+
+      const entry = matchingBucket?.shift();
+
+      if (!entry) {
+        return fullMatch;
+      }
 
       // Strip any inline page-number suffix (e.g., "----3", "····5") that the
       // original Word TOC may have embedded in the entry text. The system will
