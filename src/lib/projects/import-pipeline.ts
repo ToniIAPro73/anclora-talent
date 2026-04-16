@@ -701,12 +701,10 @@ function buildGeneratedIndexChapter(outline: OutlineEntry[]) {
 
   const flushNested = () => {
     if (nestedItems.length === 0) return;
-    for (const chunk of chunkOutlineItems(nestedItems, 6)) {
-      blocks.push({
-        type: 'paragraph',
-        content: `<ul>${chunk.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`,
-      });
-    }
+    blocks.push({
+      type: 'paragraph',
+      content: `<ul>${nestedItems.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`,
+    });
     nestedItems = [];
   };
 
