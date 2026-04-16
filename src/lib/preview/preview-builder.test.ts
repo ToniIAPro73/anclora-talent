@@ -696,6 +696,49 @@ describe('preview-builder', () => {
       expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
     });
 
+    it('supplements missing chapters in the index during sync action', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          chapters: [
+            {
+              id: 'toc-chapter',
+              order: 0,
+              title: 'Índice',
+              blocks: [
+                {
+                  id: 'toc-block',
+                  type: 'paragraph',
+                  order: 0,
+                  content: '<h2>Índice</h2><p>Introducción</p>', // Missing Capítulo 2
+                },
+              ],
+            },
+            {
+              id: 'ch1',
+              order: 1,
+              title: 'Introducción',
+              blocks: [{ id: 'b1', type: 'paragraph', order: 1, content: '<p>Intro</p>' }],
+            },
+            {
+              id: 'ch2',
+              order: 2,
+              title: 'Capítulo 2',
+              blocks: [{ id: 'b2', type: 'paragraph', order: 1, content: '<p>Content</p>' }],
+            },
+          ],
+        },
+      });
+
+      const syncedToc = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
+
+      expect(syncedToc?.html).toContain('Introducción');
+      expect(syncedToc?.html).toContain('Capítulo 2');
+      expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
+      expect(syncedToc?.html).toContain('<span data-toc-page="true">4</span>');
+    });
+
     it('uses the visible toc chapter entries as the source of truth when the outline is incomplete', () => {
       const base = createMockProject();
       const project = createMockProject({
