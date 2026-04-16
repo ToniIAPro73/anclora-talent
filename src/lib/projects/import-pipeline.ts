@@ -1011,23 +1011,52 @@ export function buildImportedDocumentSeed({
     origin: 'detected' as const,
   }))).filter((entry) => entry.title !== title);
 
-  const hasExplicitIndex = detectedChapters.some((chapter) => isTocChapterTitle(chapter.title));
+  const explicitIndexIdx = detectedChapters.findIndex((chapter) => isTocChapterTitle(chapter.title));
+  const hasExplicitIndex = explicitIndexIdx >= 0;
   const topLevelOutlineCount = detectedOutline.filter((entry) => entry.level === 1).length;
-  const generatedIndex = !hasExplicitIndex && topLevelOutlineCount >= 3 ? buildGeneratedIndexChapter(detectedOutline) : null;
+
+  // Always build a generated index from the detected chapter headings so the
+  // index is guaranteed to cover ALL chapters — even if the Word .docx file's
+  // cached TOC field is stale (Word only updates the cache when you right-click
+  // "Update field", so late-added chapters are often missing from the cache that
+  // Mammoth reads).
+  const generatedIndex = topLevelOutlineCount >= 3 ? buildGeneratedIndexChapter(detectedOutline) : null;
 
   if (generatedIndex) {
-    const prologueIndex = detectedChapters.findIndex((chapter) => chapter.title.toLowerCase() === 'prólogo');
-    const insertAt = prologueIndex >= 0 ? prologueIndex + 1 : 0;
-    detectedChapters = [
-      ...detectedChapters.slice(0, insertAt),
-      generatedIndex.chapter,
-      ...detectedChapters.slice(insertAt),
-    ];
-    detectedOutline = [
-      ...detectedOutline.slice(0, insertAt),
-      generatedIndex.outlineEntry,
-      ...detectedOutline.slice(insertAt),
-    ];
+    if (hasExplicitIndex) {
+      // Replace the (potentially stale) explicit Word TOC in-place with the
+      // freshly generated one so chapter order is preserved.
+      const outlineReplaceIdx = detectedOutline.findIndex((entry) =>
+        isTocChapterTitle(entry.title),
+      );
+      detectedChapters = [
+        ...detectedChapters.slice(0, explicitIndexIdx),
+        generatedIndex.chapter,
+        ...detectedChapters.slice(explicitIndexIdx + 1),
+      ];
+      if (outlineReplaceIdx >= 0) {
+        detectedOutline = [
+          ...detectedOutline.slice(0, outlineReplaceIdx),
+          generatedIndex.outlineEntry,
+          ...detectedOutline.slice(outlineReplaceIdx + 1),
+        ];
+      }
+    } else {
+      // No explicit index found — insert the generated one after the prologue
+      // (or at position 0 if there is no prologue).
+      const prologueIndex = detectedChapters.findIndex((chapter) => chapter.title.toLowerCase() === 'prólogo');
+      const insertAt = prologueIndex >= 0 ? prologueIndex + 1 : 0;
+      detectedChapters = [
+        ...detectedChapters.slice(0, insertAt),
+        generatedIndex.chapter,
+        ...detectedChapters.slice(insertAt),
+      ];
+      detectedOutline = [
+        ...detectedOutline.slice(0, insertAt),
+        generatedIndex.outlineEntry,
+        ...detectedOutline.slice(insertAt),
+      ];
+    }
   }
 
   const importedPreviewBlocks = (detectedChapters[0]?.blocks ?? []).slice(0, 6).map(
