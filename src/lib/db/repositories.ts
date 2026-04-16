@@ -2,7 +2,8 @@ import 'server-only';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { getDb, hasDatabase } from './index';
-import { backCoverDesigns, coverDesigns, coverLayers, documentBlocks, projectAssets, projectDocuments, projects } from './schema';
+import { backCoverDesigns, coverDesigns, coverLayers, documentBlocks, projectAssets, projectDocuments, projects, userPreferences } from './schema';
+import type { EditorPreferences } from '@/lib/ui-preferences/preferences';
 import { normalizeSurfaceState, type SurfaceState } from '@/lib/projects/cover-surface';
 import { createMockProjectStore } from '@/lib/projects/mock-data';
 import {
@@ -1028,5 +1029,43 @@ export const projectRepository = {
     return hasDatabase()
       ? deleteChapterInDb(userId, projectId, chapterId)
       : deleteChapterInMemory(userId, projectId, chapterId);
+  },
+};
+
+// ── User Preferences Repository ──────────────────────────────────────────────
+
+async function getEditorPreferencesFromDb(userId: string): Promise<EditorPreferences | null> {
+  const db = getDb();
+  const rows = await db
+    .select({ editorPreferences: userPreferences.editorPreferences })
+    .from(userPreferences)
+    .where(eq(userPreferences.userId, userId))
+    .limit(1);
+  if (rows.length === 0) return null;
+  return rows[0].editorPreferences as EditorPreferences;
+}
+
+async function saveEditorPreferencesToDb(userId: string, prefs: EditorPreferences): Promise<void> {
+  const db = getDb();
+  await db
+    .insert(userPreferences)
+    .values({ userId, editorPreferences: prefs })
+    .onConflictDoUpdate({
+      target: userPreferences.userId,
+      set: {
+        editorPreferences: prefs,
+        updatedAt: new Date(),
+      },
+    });
+}
+
+export const userPreferencesRepository = {
+  async getEditorPreferences(userId: string): Promise<EditorPreferences | null> {
+    if (!hasDatabase()) return null;
+    return getEditorPreferencesFromDb(userId);
+  },
+  async saveEditorPreferences(userId: string, prefs: EditorPreferences): Promise<void> {
+    if (!hasDatabase()) return;
+    await saveEditorPreferencesToDb(userId, prefs);
   },
 };

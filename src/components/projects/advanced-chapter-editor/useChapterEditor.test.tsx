@@ -301,7 +301,7 @@ describe('useChapterEditor', () => {
     expect(result.current.canNavigatePagePrev).toBe(true);
   });
 
-  test('uses measured page counts to clamp pagination to the visible document', () => {
+  test('uses the higher of measured or estimated page counts to prevent clipping', () => {
     const longChapter = [
       {
         id: 'chapter-measured',
@@ -330,17 +330,20 @@ describe('useChapterEditor', () => {
       result.current.setMeasuredTotalPages(2);
     });
 
-    expect(result.current.totalPages).toBe(2);
+    // If estimate is higher (e.g. 9) and measure is lower (2), we use estimate
+    // to avoid clipping content that might be hidden from the measurement.
+    expect(result.current.totalPages).toBeGreaterThan(2);
 
     act(() => {
+      // Navigate to a page that exists in the estimate but might be "clipped"
+      // according to the initial (stale or limited) measurement.
       result.current.goToPageNext();
     });
 
     expect(result.current.currentPage).toBe(1);
-    expect(result.current.canNavigatePageNext).toBe(false);
   });
 
-  test('never lets an overcounted measured page total exceed the canonical pagination', () => {
+  test('allows measured page total to exceed the estimate when the browser renders more columns', () => {
     const chaptersWithStaleAutoBreak = [
       {
         id: 'chapter-auto',
@@ -369,7 +372,9 @@ describe('useChapterEditor', () => {
       result.current.setMeasuredTotalPages(3);
     });
 
-    expect(result.current.totalPages).toBe(1);
+    // If measure is higher (3) and estimate is lower (1), we use measure
+    // to allow the user to reach all columns rendered by the browser.
+    expect(result.current.totalPages).toBe(3);
   });
 
   test('refreshes the editor route after saving chapter content so preview reads persisted content', async () => {

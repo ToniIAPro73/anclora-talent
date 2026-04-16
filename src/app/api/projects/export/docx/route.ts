@@ -4,6 +4,8 @@ import { projectRepository } from '@/lib/db/repositories';
 import { buildProjectDocxBuffer } from '@/lib/projects/export-builder';
 import { resolveExportPaginationConfig } from '@/lib/projects/export-config';
 
+export const runtime = 'nodejs';
+
 export async function GET(request: NextRequest) {
   try {
     const userId = await requireUserId();
