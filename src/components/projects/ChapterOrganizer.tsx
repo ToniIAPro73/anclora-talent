@@ -16,6 +16,7 @@ export function ChapterOrganizer({
   onImportChapter,
   onSyncPageNumbers,
   pageNumberSyncState = 'idle',
+  pageNumberIsStale = false,
   syncPageNumbersLabel = 'Actualizar numeración',
   syncPageNumbersTitle = 'Recalcular la numeración del preview y la exportación',
   syncPageNumbersHelper = 'Sincroniza el índice y los pies de página con la maquetación actual.',
@@ -30,6 +31,7 @@ export function ChapterOrganizer({
   onImportChapter: () => void;
   onSyncPageNumbers: () => void;
   pageNumberSyncState?: 'idle' | 'syncing' | 'synced';
+  pageNumberIsStale?: boolean;
   syncPageNumbersLabel?: string;
   syncPageNumbersTitle?: string;
   syncPageNumbersHelper?: string;
@@ -52,22 +54,32 @@ export function ChapterOrganizer({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={onSyncPageNumbers}
-            className="inline-flex items-center gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-1.5 text-[11px] font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-highlight)] hover:text-[var(--text-primary)]"
-            title={syncPageNumbersTitle}
-            data-testid="sync-page-numbers-button"
-            data-sync-state={pageNumberSyncState}
-          >
-            {pageNumberSyncState === 'syncing' ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : pageNumberSyncState === 'synced' ? (
-              <Check className="h-3.5 w-3.5" />
-            ) : (
-              <Hash className="h-3.5 w-3.5" />
+          <div className="relative">
+            <button
+              onClick={onSyncPageNumbers}
+              className="inline-flex items-center gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-1.5 text-[11px] font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-highlight)] hover:text-[var(--text-primary)]"
+              title={syncPageNumbersTitle}
+              data-testid="sync-page-numbers-button"
+              data-sync-state={pageNumberSyncState}
+              data-stale={pageNumberIsStale ? 'true' : 'false'}
+            >
+              {pageNumberSyncState === 'syncing' ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : pageNumberSyncState === 'synced' ? (
+                <Check className="h-3.5 w-3.5" />
+              ) : (
+                <Hash className="h-3.5 w-3.5" />
+              )}
+              <span>{syncPageNumbersLabel}</span>
+            </button>
+            {pageNumberIsStale && pageNumberSyncState === 'idle' && (
+              <span
+                className="pointer-events-none absolute -right-1 -top-1 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-amber-400"
+                aria-label="Numeración desactualizada"
+                data-testid="sync-stale-badge"
+              />
             )}
-            <span>{syncPageNumbersLabel}</span>
-          </button>
+          </div>
           <button
             onClick={onAddChapter}
             className="inline-flex items-center gap-1 rounded-[8px] bg-[var(--surface-soft)] p-1.5 text-[var(--text-secondary)] transition hover:bg-[var(--surface-highlight)] hover:text-[var(--text-primary)]"

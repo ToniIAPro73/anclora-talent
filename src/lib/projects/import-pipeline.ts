@@ -671,8 +671,28 @@ function buildOutlineEntriesFromBlocks(
   }, []);
 }
 
+/** Mirrors preview-builder isTocChapter so import uses consistent detection. */
+function isTocChapterTitle(title: string) {
+  const normalized = title
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '');
+  return [
+    'indice',
+    'index',
+    'tabla de contenidos',
+    'tabla de contenido',
+    'table of contents',
+    'contents',
+    'contenidos',
+    'contenido',
+    'sumario',
+  ].includes(normalized);
+}
+
 function buildGeneratedIndexChapter(outline: OutlineEntry[]) {
-  const filtered = outline.filter((entry) => entry.title.toLowerCase() !== 'índice');
+  const filtered = outline.filter((entry) => !isTocChapterTitle(entry.title));
   if (filtered.length < 2) return null;
 
   const blocks: ImportedDocumentSeed['blocks'] = [];
@@ -852,7 +872,7 @@ function buildChaptersFromBlocks(blocks: ParsedBlock[], title: string, author: s
   };
 
   for (const block of blocks) {
-    const withinIndex = cleanHeadingText(currentTitle ?? '').toLowerCase() === 'índice';
+    const withinIndex = isTocChapterTitle(cleanHeadingText(currentTitle ?? ''));
 
     if (
       currentTitle === null &&
@@ -991,7 +1011,7 @@ export function buildImportedDocumentSeed({
     origin: 'detected' as const,
   }))).filter((entry) => entry.title !== title);
 
-  const hasExplicitIndex = detectedChapters.some((chapter) => chapter.title.toLowerCase() === 'índice');
+  const hasExplicitIndex = detectedChapters.some((chapter) => isTocChapterTitle(chapter.title));
   const topLevelOutlineCount = detectedOutline.filter((entry) => entry.level === 1).length;
   const generatedIndex = !hasExplicitIndex && topLevelOutlineCount >= 3 ? buildGeneratedIndexChapter(detectedOutline) : null;
 
@@ -1121,6 +1141,16 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
             "p[style-name='Heading 1'] => h1:fresh",
             "p[style-name='Heading 2'] => h2:fresh",
             "p[style-name='Heading 3'] => h3:fresh",
+            "p[style-name='Heading 4'] => h4:fresh",
+            "p[style-name='Heading 5'] => h5:fresh",
+            "p[style-name='TOC 1'] => p:fresh",
+            "p[style-name='TOC 2'] => p:fresh",
+            "p[style-name='TOC 3'] => p:fresh",
+            "p[style-name='TOC Heading'] => h2:fresh",
+            "p[style-name='Índice 1'] => p:fresh",
+            "p[style-name='Índice 2'] => p:fresh",
+            "p[style-name='Indice 1'] => p:fresh",
+            "p[style-name='Indice 2'] => p:fresh",
           ],
         },
       );

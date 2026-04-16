@@ -275,8 +275,22 @@ function measureChapterPageMetrics(
 }
 
 export function isTocChapter(title: string) {
-  const normalized = title.trim().toLowerCase();
-  return normalized === 'índice' || normalized === 'indice' || normalized === 'index';
+  const normalized = title
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '');
+  return [
+    'indice',
+    'index',
+    'tabla de contenidos',
+    'tabla de contenido',
+    'table of contents',
+    'contents',
+    'contenidos',
+    'contenido',
+    'sumario',
+  ].includes(normalized);
 }
 
 function normalizeLookupKey(value: string) {

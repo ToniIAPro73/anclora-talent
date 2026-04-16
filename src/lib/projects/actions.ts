@@ -335,9 +335,9 @@ export async function syncProjectPaginationAction(formData: FormData) {
 
   const tocChapter = project.document.chapters.find((chapter) => chapter.id === syncedToc.chapterId);
   const persistedTocHtml = tocChapter ? chapterBlocksToHtml(tocChapter.blocks) : '';
-  const sanitizedTocHtml = stripExistingTocPageNumbers(persistedTocHtml);
+  const syncedHtml = syncedToc.html;
 
-  if (tocChapter && sanitizedTocHtml !== persistedTocHtml) {
+  if (tocChapter && syncedHtml !== persistedTocHtml) {
     await projectRepository.saveDocument(userId, projectId, {
       title: project.document.title,
       subtitle: project.document.subtitle,
@@ -347,7 +347,7 @@ export async function syncProjectPaginationAction(formData: FormData) {
       blocks: [
         {
           id: tocChapter.blocks[0]?.id ?? randomUUID(),
-          content: sanitizedTocHtml,
+          content: syncedHtml,
         },
       ],
     });
