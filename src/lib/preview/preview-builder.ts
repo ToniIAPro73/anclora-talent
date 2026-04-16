@@ -404,17 +404,12 @@ function buildTocChapterHtml(
     return fallbackHtml;
   }
 
-  // If supplements were added (outlineEntries has more entries than what was in
-  // the stored HTML), we must generate fresh HTML so all entries — including the
-  // newly added ones like "CIERRE" — appear in the output.
-  // Also synthesize if the stored HTML was basically empty (e.g. initial import
-  // without a proper TOC).
-  // Otherwise inject page numbers directly into the stored HTML to preserve the
-  // original Word document layout and formatting.
-  const hasSupplement = outlineEntries.length > visibleFromHtml.length;
+  // RULE: If the original HTML has content, we keep it exactly as is.
+  // We only synthesize a fresh TOC if the stored HTML is completely empty.
+  // This preserves the original Word document layout and avoids duplicates.
   const isOriginalEmpty = visibleFromHtml.length === 0;
   
-  const baseHtml = (hasSupplement || isOriginalEmpty) 
+  const baseHtml = isOriginalEmpty 
     ? buildTocHtmlFromEntries(outlineEntries) 
     : fallbackHtml;
 

@@ -1455,7 +1455,7 @@ export function AdvancedRichTextEditor({
 
     const measuredPages = Math.max(
       1,
-      Math.ceil((occupiedWidth + 1) / (contentWidth + columnGap)),
+      Math.ceil((occupiedWidth + 10) / (contentWidth + columnGap)),
     );
 
     onPageCountChange(measuredPages);

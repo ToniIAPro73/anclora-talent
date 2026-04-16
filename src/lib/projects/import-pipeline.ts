@@ -728,7 +728,9 @@ function buildGeneratedIndexChapter(outline: OutlineEntry[]) {
 
   // Prepend the chapter title as a heading block ONLY if not already there
   const firstBlockContent = blocks[0]?.content || '';
-  if (!firstBlockContent.includes('Índice')) {
+  const hasIndexHeading = firstBlockContent.toLowerCase().includes('índice');
+
+  if (!hasIndexHeading) {
     blocks.unshift({ type: 'heading', content: 'Índice' });
   }
 
@@ -865,10 +867,15 @@ function buildChaptersFromBlocks(blocks: ParsedBlock[], title: string, author: s
       .filter((block) => block.text.trim().length > 0 || block.kind === 'rule')
       .map(toDocumentBlock);
 
+    // Only prepend the title heading if the first block isn't already that same title
+    const firstBlockText = currentBlocks[0]?.text?.trim().toLowerCase() || '';
+    const titleText = currentTitle.trim().toLowerCase();
+    const shouldPrependTitle = firstBlockText !== titleText;
+
     chapters.push({
       title: currentTitle,
       blocks: [
-        { type: 'heading', content: currentTitle },
+        ...(shouldPrependTitle ? [{ type: 'heading' as const, content: currentTitle }] : []),
         ...(documentBlocks.length > 0
           ? documentBlocks
           : [{ type: 'paragraph' as const, content: currentTitle }]),
@@ -877,8 +884,6 @@ function buildChaptersFromBlocks(blocks: ParsedBlock[], title: string, author: s
   };
 
   for (const block of blocks) {
-    const withinIndex = isTocChapterTitle(cleanHeadingText(currentTitle ?? ''));
-
     if (
       currentTitle === null &&
       block.kind === 'heading' &&
@@ -890,7 +895,7 @@ function buildChaptersFromBlocks(blocks: ParsedBlock[], title: string, author: s
       continue;
     }
 
-    if (isMajorChapterBlock(block, chapterBoundaryLevel) && !(withinIndex && !block.structural)) {
+    if (isMajorChapterBlock(block, chapterBoundaryLevel)) {
       if (currentTitle === null && frontMatter.length > 0) {
         const prologueBlocks = extractPrologueBlocksFromFrontMatter(frontMatter, title, author);
         if (prologueBlocks.length > 0) {
@@ -903,7 +908,7 @@ function buildChaptersFromBlocks(blocks: ParsedBlock[], title: string, author: s
 
       flushCurrent();
       currentTitle = cleanHeadingText(block.text) || `Capítulo ${chapters.length + 1}`;
-      currentBlocks = [block];
+      currentBlocks = [block]; // Include the heading block in the content
       continue;
     }
 
@@ -1085,26 +1090,17 @@ export function buildImportedDocumentSeed({
   const generatedIndex = outlineForIndex.length >= 2 ? buildGeneratedIndexChapter(outlineForIndex) : null;
 
   // RULE: If we have an explicit index from Word with real content, keep it.
-  // We only replace it with the generated one if it's empty or extremely short.
-  const explicitIndexBlocks = hasExplicitIndex ? detectedChapters[explicitIndexIdx].blocks : [];
-  const isExplicitIndexSubstantial = explicitIndexBlocks.length > 0;
+  // We NEVER replace it during the initial import to preserve layout fidelity.
+  const isExplicitIndexSubstantial = hasExplicitIndex && detectedChapters[explicitIndexIdx].blocks.length > 0;
 
-  if (generatedIndex) {
-    if (hasExplicitIndex && !isExplicitIndexSubstantial) {
-      detectedChapters = [
-        ...detectedChapters.slice(0, explicitIndexIdx),
-        generatedIndex.chapter,
-        ...detectedChapters.slice(explicitIndexIdx + 1),
-      ];
-    } else if (!hasExplicitIndex) {
-      const prologueIndex = detectedChapters.findIndex((chapter) => chapter.title.toLowerCase() === 'prólogo');
-      const insertAt = prologueIndex >= 0 ? prologueIndex + 1 : 0;
-      detectedChapters = [
-        ...detectedChapters.slice(0, insertAt),
-        generatedIndex.chapter,
-        ...detectedChapters.slice(insertAt),
-      ];
-    }
+  if (generatedIndex && !hasExplicitIndex) {
+    const prologueIndex = detectedChapters.findIndex((chapter) => chapter.title.toLowerCase() === 'prólogo');
+    const insertAt = prologueIndex >= 0 ? prologueIndex + 1 : 0;
+    detectedChapters = [
+      ...detectedChapters.slice(0, insertAt),
+      generatedIndex.chapter,
+      ...detectedChapters.slice(insertAt),
+    ];
   }
 
   // Update detectedOutline to reflect the final outline used for indexing
