@@ -499,6 +499,10 @@ function measureOutlineEntryPageMetrics(
 
     if (fallbackPage) {
       firstPageByOutlineTitle.set(normalizedTitle, fallbackPage);
+      const fallbackPageIndex = pageRecords.findIndex(p => p.pageNumber === fallbackPage);
+      if (fallbackPageIndex >= 0) {
+        pageCursor = Math.max(pageCursor, fallbackPageIndex);
+      }
     }
   }
 
@@ -533,7 +537,12 @@ function injectTocPageNumbers(
       const entry = numberedEntries[entryIndex];
       entryIndex += 1;
 
-      return `<${tagName}${rawAttributes} data-toc-entry="true" data-toc-level="${entry.level}"><span data-toc-title="true">${innerHtml}</span><span data-toc-leader="true" aria-hidden="true">${buildDotLeader(entry.level)}</span><span data-toc-page="true">${entry.firstPage}</span></${tagName}>`;
+      // Strip any inline page-number suffix (e.g., "----3", "····5") that the
+      // original Word TOC may have embedded in the entry text. The system will
+      // inject the correct page number via data-toc-page instead.
+      const cleanInnerHtml = innerHtml.replace(/\s*[-–—·.~∿]{1,}\s*\d+\s*$/, '').trim();
+
+      return `<${tagName}${rawAttributes} data-toc-entry="true" data-toc-level="${entry.level}"><span data-toc-title="true">${cleanInnerHtml}</span><span data-toc-leader="true" aria-hidden="true">${buildDotLeader(entry.level)}</span><span data-toc-page="true">${entry.firstPage}</span></${tagName}>`;
     },
   );
 }
