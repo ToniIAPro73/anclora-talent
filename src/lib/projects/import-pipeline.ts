@@ -988,9 +988,13 @@ export function buildImportedDocumentSeed({
   const rawTitle = paragraphs[0] && paragraphs[0].length <= 120 ? paragraphs[0] : fallbackTitle;
   const textImportMode = inferTextImportMode(fileName, mimeType);
   const normalizedHtml = html
-  ? html.replace(/<\/p>\s*<p[^>]*>\s*([·._\-—\s]{2,})(\d+)\s*<\/p>/gi, ' ··· $2</p>')
+  ? html
+      // 1) une el párrafo del título con el de los puntos+número
+      .replace(/<\/p>\s*<p[^>]*>\s*([·._\-—\s]{2,})(\d+)\s*<\/p>/gi, ' $1$2</p>')
+      // 2) normaliza cualquier líder a puntos medios y separa número
+      .replace(/([·._\-—\s]{2,})(\d+)<\/p>/gi, ' ··· $2</p>')
   : null;
-  const htmlBlocks = html ? parseHtmlBlocks(html) : [];
+  const htmlBlocks = normalizedHtml ? parseHtmlBlocks(normalizedHtml) : [];
   const textBlocks = parseTextBlocks(text, textImportMode);
   const parsedBlocks =
     htmlBlocks.some((block) => block.html.includes('<br'))
@@ -1221,7 +1225,7 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
           ],
         },
       );
-      const richHtml = normalizeHtmlFragment(result.value);
+      const richHtml = normalizeHtmlFragment(result.value).replace(/<p([^>]*)>(\s*[·._\-—]{3,}\s*\d+\s*)<\/p>/gi, '<p$1 class="toc-entry">$2</p>');
       const richText = normalizeText(textFromHtml(richHtml));
 
       if (richText) {
