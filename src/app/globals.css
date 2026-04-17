@@ -263,44 +263,10 @@ hr[data-page-break="true"]::after {
   letter-spacing: 0.08em;
 }
 
-/* Índice con puntos justificados - VERSIÓN FINAL */
-.toc-list { list-style:none; padding:0; margin:0; }
-.toc-list li, p.toc-entry {
-  display: flex !important;
-  align-items: baseline;
-  gap: .5rem;
-  width: 100%;
+/* Fuerza mono en TODO el editor para el índice */
+.ProseMirror {
+  font-variant-numeric: tabular-nums!important;
 }
-.toc-leader {
-  flex: 1 1 auto;
-  border-bottom: 1px dotted currentColor;
-  height: 1px;
-  opacity: .6;
-  margin: 0 .4rem;
-}
-.toc-page {
-  flex: 0 0 auto;
-  font-variant-numeric: tabular-nums;
-  min-width: 2ch;
-  text-align: right;
-}
-
-/* Fuerza el índice a usar fuente monoespaciada para que los puntos cuadren */
-.toc-list, .toc-list li, p:has(> .toc-page) {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
-}
-
-/* --- FIX DEFINITIVO ÍNDICE --- */
-.ProseMirror h2 + p,
-.ProseMirror h2 + ul,
-.ProseMirror ul.toc-list {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
-  font-size: 0.95em;
-  line-height: 1.6;
-}
-
-.ProseMirror ul.toc-list li {
-  white-space: pre; /* respeta los puntos tal cual vienen de Word */
+.ProseMirror p,.ProseMirror li,.ProseMirror h1,.ProseMirror h2 {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace!important;
 }

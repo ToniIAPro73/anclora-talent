@@ -475,21 +475,31 @@ function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
    .map(m => normalizeHtmlFragment(m[0]))
    .filter(Boolean);
 
-  if (items.length === 0) return [{
-    kind: 'list', text: textFromHtml(fragment), html: fragment, level: null, structural: false
-  }];
+  if (items.length === 0) {
+    return [{
+      kind: 'list',
+      text: textFromHtml(fragment),
+      html: fragment,
+      level: null,
+      structural: false
+    }];
+  }
 
-  // FUSIONA <li>Título</li> + <li>.....5</li>
+  // FUSIONA <li>Título</li> + <li>.....5</li> y RELLENA con puntos fijos
   const merged: string[] = [];
   for (let i = 0; i < items.length; i++) {
-    const currText = textFromHtml(items[i]).trim();
-    const nextText = items[i+1]? textFromHtml(items[i+1]).trim() : '';
+    const currText = textFromHtml(items[i]).trim().replace(/\s+/g, ' ');
+    const nextText = items[i + 1]? textFromHtml(items[i + 1]).trim() : '';
     const isNextLeader = /^[·._\-—\s]{2,}\d+\s*$/.test(nextText);
 
     if (currText && isNextLeader &&!/^\d+$/.test(currText)) {
       const num = nextText.match(/(\d+)/)?.[1]?? '';
-      merged.push(items[i].replace(/<\/li>$/i,
-        `<span class="toc-leader"></span><span class="toc-page">${num}</span></li>`));
+      // 70 caracteres de ancho total (ajusta a 65 si se te corta, o 75 si sobra espacio)
+      const targetWidth = 70;
+      const dotsNeeded = Math.max(3, targetWidth - currText.length - num.length);
+      const padded = `${currText}${'.'.repeat(dotsNeeded)}${num}`;
+
+      merged.push(`<li>${escapeHtml(padded)}</li>`);
       i++; // saltamos el líder
     } else if (!/^[·._\-—\s]{2,}\d+\s*$/.test(currText)) {
       merged.push(items[i]);
@@ -497,11 +507,18 @@ function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
   }
 
   // chunking original para no mover Fase 2
-  const groups: string[][] = []; let cur: string[] = []; let w = 0;
+  const groups: string[][] = [];
+  let cur: string[] = [];
+  let w = 0;
   for (const it of merged) {
     const words = textFromHtml(it).split(/\s+/).length;
-    if (cur.length >= 6 || w + words > 140) { groups.push(cur); cur=[]; w=0; }
-    cur.push(it); w+=words;
+    if (cur.length >= 6 || w + words > 140) {
+      groups.push(cur);
+      cur = [];
+      w = 0;
+    }
+    cur.push(it);
+    w += words;
   }
   if (cur.length) groups.push(cur);
 
