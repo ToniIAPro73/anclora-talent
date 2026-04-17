@@ -150,11 +150,11 @@ function stripTags(input: string) {
 
 function normalizeHtmlFragment(input: string) {
   return input
-    .replace(/\r\n/g, '\n')
-    .replace(/\sstyle="[^"]*"/gi, '')
-    .replace(/\sclass="[^"]*"/gi, '')
-    .replace(/>\s+</g, '><')
-    .trim();
+   .replace(/\r\n/g, '\n')
+   .replace(/\sstyle="[^"]*"/gi, '')
+    // NO borramos las clases, las necesitamos para el índice
+   .replace(/>\s+</g, '><')
+   .trim();
 }
 
 function textFromHtml(input: string) {
@@ -473,12 +473,33 @@ function isStrongOnlyParagraph(fragment: string) {
 function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
   const tag = fragment.match(/^<(ul|ol)/i)?.[1]?.toLowerCase() === 'ol'? 'ol' : 'ul';
   const items = Array.from(fragment.matchAll(/<li[^>]*>[\s\S]*?<\/li>/gi))
-   .map(m => normalizeHtmlFragment(m[0])).filter(Boolean);
+   .map(m => normalizeHtmlFragment(m[0]))
+   .filter(Boolean);
 
-  if (!items.length) return [{ kind:'list', text:textFromHtml(fragment), html:fragment, level:null, structural:false }];
+  if (items.length === 0) return [{
+    kind: 'list', text: textFromHtml(fragment), html: fragment, level: null, structural: false
+  }];
 
-  const groups:string[][] = []; let cur:string[]=[]; let w=0;
-  for (const it of items) {
+  // FUSIONA <li>Título</li> + <li>.....5</li>
+  const merged: string[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const currText = textFromHtml(items[i]).trim();
+    const nextText = items[i+1]? textFromHtml(items[i+1]).trim() : '';
+    const isNextLeader = /^[·._\-—\s]{2,}\d+\s*$/.test(nextText);
+
+    if (currText && isNextLeader &&!/^\d+$/.test(currText)) {
+      const num = nextText.match(/(\d+)/)?.[1]?? '';
+      merged.push(items[i].replace(/<\/li>$/i,
+        `<span class="toc-leader"></span><span class="toc-page">${num}</span></li>`));
+      i++; // saltamos el líder
+    } else if (!/^[·._\-—\s]{2,}\d+\s*$/.test(currText)) {
+      merged.push(items[i]);
+    }
+  }
+
+  // chunking original para no mover Fase 2
+  const groups: string[][] = []; let cur: string[] = []; let w = 0;
+  for (const it of merged) {
     const words = textFromHtml(it).split(/\s+/).length;
     if (cur.length >= 6 || w + words > 140) { groups.push(cur); cur=[]; w=0; }
     cur.push(it); w+=words;
@@ -486,10 +507,11 @@ function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
   if (cur.length) groups.push(cur);
 
   return groups.map(g => ({
-    kind:'list' as const,
+    kind: 'list' as const,
     text: g.map(textFromHtml).join('\n'),
     html: `<${tag} class="toc-list">${g.join('')}</${tag}>`,
-    level:null, structural:false
+    level: null,
+    structural: false,
   }));
 }
 
