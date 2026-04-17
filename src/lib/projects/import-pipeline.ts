@@ -473,8 +473,8 @@ function isStrongOnlyParagraph(fragment: string) {
 function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
   const tag = fragment.match(/^<(ul|ol)/i)?.[1]?.toLowerCase() === 'ol'? 'ol' : 'ul';
   const items = Array.from(fragment.matchAll(/<li[^>]*>[\s\S]*?<\/li>/gi))
-   .map((m) => normalizeHtmlFragment(m[0]))
-   .filter(Boolean);
+  .map((m) => normalizeHtmlFragment(m[0]))
+  .filter(Boolean);
 
   if (items.length === 0) {
     return [{
@@ -486,26 +486,51 @@ function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
     }];
   }
 
+  // 1) FUSIONA <li>Título</li> + <li>......5</li>
+  const merged: string[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const curr = items[i];
+    const currText = textFromHtml(curr).trim();
+    const next = items[i + 1];
+    const nextText = next? textFromHtml(next).trim() : '';
+
+    const isNextLeader = /^[·._\-—\s]{2,}\d+\s*$/.test(nextText);
+    const isCurrLeader = /^[·._\-—\s]{2,}\d+\s*$/.test(currText);
+
+    if (!isCurrLeader && isNextLeader) {
+      const num = nextText.match(/(\d+)/)?.[1]?? '';
+      // Inserta los spans ANTES del </li>
+      const fused = curr.replace(/<\/li>$/i,
+        `<span class="toc-leader" aria-hidden="true"></span><span class="toc-page">${num}</span></li>`);
+      merged.push(fused);
+      i++; // saltamos el líder
+    } else if (!isCurrLeader) {
+      merged.push(curr);
+    }
+    // si es un líder huérfano, lo ignoramos
+  }
+
+  // 2) Mantén el chunking original (máx 6 items) para no mover Fase 2 de página
   const groups: string[][] = [];
   let current: string[] = [];
-  let currentWords = 0;
+  let words = 0;
 
-  for (const item of items) {
-    const words = textFromHtml(item).split(/\s+/).filter(Boolean).length;
-    if (current.length > 0 && (current.length >= 6 || currentWords + words > 140)) {
+  for (const it of merged) {
+    const w = textFromHtml(it).split(/\s+/).length;
+    if (current.length >= 6 || words + w > 140) {
       groups.push(current);
       current = [];
-      currentWords = 0;
+      words = 0;
     }
-    current.push(item);
-    currentWords += words;
+    current.push(it);
+    words += w;
   }
   if (current.length) groups.push(current);
 
   return groups.map((group) => ({
     kind: 'list' as const,
     text: group.map(textFromHtml).join('\n'),
-    html: `<${tag}>${group.join('')}</${tag}>`,
+    html: `<${tag} class="toc-list">${group.join('')}</${tag}>`,
     level: null,
     structural: false,
   }));
