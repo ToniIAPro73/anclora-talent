@@ -473,50 +473,39 @@ function isStrongOnlyParagraph(fragment: string) {
 function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
   const tag = fragment.match(/^<(ul|ol)/i)?.[1]?.toLowerCase() === 'ol'? 'ol' : 'ul';
   const items = Array.from(fragment.matchAll(/<li[^>]*>[\s\S]*?<\/li>/gi))
-  .map((m) => normalizeHtmlFragment(m[0]))
-  .filter(Boolean);
+   .map((m) => normalizeHtmlFragment(m[0]))
+   .filter(Boolean);
 
-  // 1) Fusiona <li>título</li> + <li>....5</li> en uno solo con estructura TOC
-  const merged: string[] = [];
-  for (let i = 0; i < items.length; i++) {
-    const currText = textFromHtml(items[i]);
-    const nextText = i + 1 < items.length? textFromHtml(items[i+1]) : '';
-    const isLeader = /^[·._\-—\s]{3,}\d+\s*$/.test(nextText);
-
-    if (currText && isLeader &&!/···/.test(currText)) {
-      const num = nextText.match(/(\d+)/)?.[1]?? '';
-      // Estructura con spans para poder alinear a la derecha
-      const fused = items[i].replace(
-        /<\/li>$/,
-        `<span class="toc-dots" aria-hidden="true"></span><span class="toc-page">${num}</span></li>`
-      );
-      merged.push(fused);
-      i++; // saltamos el li de puntos
-    } else {
-      merged.push(items[i]);
-    }
+  if (items.length === 0) {
+    return [{
+      kind: 'list',
+      text: textFromHtml(fragment),
+      html: fragment,
+      level: null,
+      structural: false,
+    }];
   }
 
-  // 2) Vuelve a aplicar el chunking original (máx 6 items o 140 palabras)
   const groups: string[][] = [];
   let current: string[] = [];
-  let words = 0;
-  for (const it of merged) {
-    const w = textFromHtml(it).split(/\s+/).length;
-    if (current.length >= 6 || words + w > 140) {
+  let currentWords = 0;
+
+  for (const item of items) {
+    const words = textFromHtml(item).split(/\s+/).filter(Boolean).length;
+    if (current.length > 0 && (current.length >= 6 || currentWords + words > 140)) {
       groups.push(current);
       current = [];
-      words = 0;
+      currentWords = 0;
     }
-    current.push(it);
-    words += w;
+    current.push(item);
+    currentWords += words;
   }
   if (current.length) groups.push(current);
 
   return groups.map((group) => ({
     kind: 'list' as const,
     text: group.map(textFromHtml).join('\n'),
-    html: `<${tag} class="toc-list">${group.join('')}</${tag}>`,
+    html: `<${tag}>${group.join('')}</${tag}>`,
     level: null,
     structural: false,
   }));
@@ -524,72 +513,60 @@ function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
 
 function parseHtmlBlocks(input: string) {
   const normalized = normalizeHtmlFragment(input);
-  const matches = normalized.match(BLOCK_TAG_RE) ?? [];
+  const matches = normalized.match(BLOCK_TAG_RE)?? [];
+  const blocks: ParsedBlock[] = [];
 
-  return matches.flatMap((fragment) => {
+  for (const fragment of matches) {
     const clean = normalizeHtmlFragment(fragment);
-    const tag = clean.match(/^<(h[1-6]|p|ul|ol|blockquote)/i)?.[1]?.toLowerCase() ?? 'p';
+    const tag = clean.match(/^<(h[1-6]|p|ul|ol|blockquote)/i)?.[1]?.toLowerCase()?? 'p';
     const text = textFromHtml(clean);
 
-    if (!text) return [];
-    if (text && isDecorativeLine(text)) return [];
+    if (!text || isDecorativeLine(text)) continue;
+
+    // DETECCIÓN DE LÍDER HUÉRFANO: "................5"
+    const isLeaderOnly = /^[·._\-—\s]{2,}\d+\s*$/.test(text.trim());
+
+    if (isLeaderOnly && blocks.length > 0) {
+      const prev = blocks[blocks.length - 1];
+      const num = text.match(/(\d+)/)?.[1]?? '';
+
+      // Fusiona en el último elemento del bloque anterior
+      if (prev.kind === 'list') {
+        prev.html = prev.html.replace(/<\/li>(?![\s\S]*<\/li>)/,
+          `<span class="toc-leader"></span><span class="toc-page">${num}</span></li>`);
+      } else {
+        prev.html = prev.html.replace(/<\/(p|h[1-6]|blockquote)>$/,
+          `<span class="toc-leader"></span><span class="toc-page">${num}</span></$1>`);
+      }
+      prev.text = `${prev.text} ${num}`;
+      continue; // no añadimos el bloque de líderes
+    }
 
     if (tag.startsWith('h')) {
-      return [
-        {
-          kind: 'heading' as const,
-          text: cleanHeadingText(text),
-          html: clean,
-          level: Number(tag.replace('h', '')),
-          structural: true,
-        },
-      ];
+      blocks.push({
+        kind: 'heading',
+        text: cleanHeadingText(text),
+        html: clean,
+        level: Number(tag.replace('h', '')),
+        structural: true,
+      });
+      continue;
     }
 
     if (tag === 'ul' || tag === 'ol') {
-       const listBlocks = splitHtmlListBlocks(clean);
-       // Si el siguiente fragmento es un párrafo solo con puntos y número, lo fusionamos
-       return listBlocks;
-     }
+      blocks.push(...splitHtmlListBlocks(clean));
+      continue;
+    }
 
     if (tag === 'blockquote') {
-      return [
-        {
-          kind: 'quote' as const,
-          text,
-          html: clean,
-          level: null,
-          structural: true,
-        },
-      ];
+      blocks.push({ kind: 'quote', text, html: clean, level: null, structural: true });
+      continue;
     }
 
-    if (/<br\s*\/?>/i.test(clean)) {
-      return [
-        {
-          kind: 'paragraph' as const,
-          text,
-          html: clean,
-          level: null,
-          structural: false,
-        },
-      ];
-    }
+    blocks.push({ kind: 'paragraph', text, html: clean, level: null, structural: false });
+  }
 
-    // REMOVED: heuristic that converted index paragraphs to headings.
-    // Previously, any bold paragraph matching "FASE 1", "Dia 1" became a heading,
-    // creating false chapters. Now we trust only <h1>-<h6> from Mammoth.
-
-    return [
-      {
-        kind: 'paragraph' as const,
-        text,
-        html: clean,
-        level: null,
-        structural: false,
-      },
-    ];
-  });
+  return blocks;
 }
 
 function scoreParsedBlocks(blocks: ParsedBlock[]) {

@@ -1,3 +1,5 @@
+/* stylelint-disable at-rule-no-unknown */
+
 @import "tailwindcss";
 
 :root,
@@ -259,4 +261,25 @@ hr[data-page-break="true"]::after {
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+/* Índice con puntos justificados */
+.toc-leader {
+  flex: 1 1 auto;
+  border-bottom: 1px dotted currentColor;
+  margin: 0.5rem;
+  transform: translateY(-3px);
+  opacity:.7;
+}
+.toc-page {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  min-width: 2ch;
+  text-align: right;
+}
+/* Aplica flex a cualquier bloque que contenga un número de página */
+p:has(.toc-page), li:has(.toc-page), h1:has(.toc-page), h2:has(.toc-page), h3:has(.toc-page) {
+  display: flex!important;
+  align-items: baseline;
+  width: 100%;
 }
