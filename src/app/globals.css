@@ -291,3 +291,16 @@ hr[data-page-break="true"]::after {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
 }
+
+/* --- FIX DEFINITIVO ÍNDICE --- */
+.ProseMirror h2 + p,
+.ProseMirror h2 + ul,
+.ProseMirror ul.toc-list {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  font-size: 0.95em;
+  line-height: 1.6;
+}
+
+.ProseMirror ul.toc-list li {
+  white-space: pre; /* respeta los puntos tal cual vienen de Word */
+}
