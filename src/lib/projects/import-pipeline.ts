@@ -2,13 +2,13 @@ import type { ImportedDocumentSeed } from './types';
 
 const SUPPORTED_IMPORT_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'txt', 'md']);
 const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote)[^>]*>[\s\S]*?<\/\1>/gi;
-const ALL_CAPS_RE = /^[^a-z]*[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ0-9 .,·:;()\-–—]+$/;
+const ALL_CAPS_RE = /^(?=.{40,})[^a-z]*[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ0-9 .,·:;()\-–—]+$/;
 const MAJOR_HEADING_RE = /^(?:cap[ií]tulo|chapter|introducci[oó]n|pr[oó]logo|prologo|[íi]ndice|indice|fase\s+\d+|parte\s+\d+|secci[oó]n|ep[ií]logo|cierre|despu[eé]s\s+de|recursos(?:\s+recomendados)?|anexos?)(?:\b|:)/i;
 const MINOR_HEADING_RE = /^(?:d[ií]a\s+\d+|tema\s+\d+|idea\s+clave|reto\s+de\s+acci[oó]n|preguntas?\s+de\s+reflexi[oó]n|ejercicio|caso|las\s+cinco\s+claves|cierre\s+de\s+fase)(?:\b|:)/i;
 
 function getExtension(fileName: string) {
   const parts = fileName.toLowerCase().split('.');
-  return parts.length > 1 ? parts.at(-1) ?? '' : '';
+  return parts.length > 1 ? parts.pop()! : '';
 }
 
 type ParsedBlockKind = 'heading' | 'paragraph' | 'list' | 'quote' | 'rule';
@@ -616,7 +616,6 @@ function isMajorChapterBlock(block: ParsedBlock, chapterBoundaryLevel: number) {
 
   if (block.structural && (block.level ?? 9) <= chapterBoundaryLevel) return true;
   if (MAJOR_HEADING_RE.test(normalized)) return true;
-  if (MINOR_HEADING_RE.test(normalized)) return false;
   return false;
 }
 
