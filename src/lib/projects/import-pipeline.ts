@@ -473,38 +473,53 @@ function isStrongOnlyParagraph(fragment: string) {
 function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
   const tag = fragment.match(/^<(ul|ol)/i)?.[1]?.toLowerCase() === 'ol'? 'ol' : 'ul';
   const items = Array.from(fragment.matchAll(/<li[^>]*>[\s\S]*?<\/li>/gi))
-   .map((match) => normalizeHtmlFragment(match[0]))
-   .filter(Boolean);
+  .map((m) => normalizeHtmlFragment(m[0]))
+  .filter(Boolean);
 
-  // NUEVO: fusiona li de texto + li de líderes en el mismo <li>
-  const mergedItems: string[] = [];
+  // 1) Fusiona <li>título</li> + <li>....5</li> en uno solo con estructura TOC
+  const merged: string[] = [];
   for (let i = 0; i < items.length; i++) {
-    const curr = items[i];
-    const currText = textFromHtml(curr);
-    const next = items[i + 1];
-    const nextText = next? textFromHtml(next) : '';
-
+    const currText = textFromHtml(items[i]);
+    const nextText = i + 1 < items.length? textFromHtml(items[i+1]) : '';
     const isLeader = /^[·._\-—\s]{3,}\d+\s*$/.test(nextText);
-    const isTitle = currText &&!isLeader && currText.length < 120;
 
-    if (isTitle && isLeader) {
+    if (currText && isLeader &&!/···/.test(currText)) {
       const num = nextText.match(/(\d+)/)?.[1]?? '';
-      // fusiona en un solo <li>
-      const fused = curr.replace(/<\/li>$/, ` ··· ${num}</li>`);
-      mergedItems.push(fused);
-      i++; // salta el siguiente
+      // Estructura con spans para poder alinear a la derecha
+      const fused = items[i].replace(
+        /<\/li>$/,
+        `<span class="toc-dots" aria-hidden="true"></span><span class="toc-page">${num}</span></li>`
+      );
+      merged.push(fused);
+      i++; // saltamos el li de puntos
     } else {
-      mergedItems.push(curr);
+      merged.push(items[i]);
     }
   }
 
-  return [{
+  // 2) Vuelve a aplicar el chunking original (máx 6 items o 140 palabras)
+  const groups: string[][] = [];
+  let current: string[] = [];
+  let words = 0;
+  for (const it of merged) {
+    const w = textFromHtml(it).split(/\s+/).length;
+    if (current.length >= 6 || words + w > 140) {
+      groups.push(current);
+      current = [];
+      words = 0;
+    }
+    current.push(it);
+    words += w;
+  }
+  if (current.length) groups.push(current);
+
+  return groups.map((group) => ({
     kind: 'list' as const,
-    text: mergedItems.map(textFromHtml).join('\n'),
-    html: `<${tag}>${mergedItems.join('')}</${tag}>`,
+    text: group.map(textFromHtml).join('\n'),
+    html: `<${tag} class="toc-list">${group.join('')}</${tag}>`,
     level: null,
     structural: false,
-  }];
+  }));
 }
 
 function parseHtmlBlocks(input: string) {
@@ -981,13 +996,7 @@ export function buildImportedDocumentSeed({
   const rawTitle = paragraphs[0] && paragraphs[0].length <= 120? paragraphs[0] : fallbackTitle;
   const textImportMode = inferTextImportMode(fileName, mimeType);
 
-  const normalizedHtml = html
-   ? html
-        // une párrafos sueltos de TOC y normaliza líderes
-       .replace(/<\/p>\s*<p[^>]*>\s*([·._\-—\s]{2,})(\d+)\s*<\/p>/gi, ' $1$2</p>')
-       .replace(/([·._\-—\s]{2,})(\d+)<\/p>/gi, ' ··· $2</p>')
-    : null;
-
+  const normalizedHtml = html? html : null;
   const htmlBlocks = normalizedHtml? parseHtmlBlocks(normalizedHtml) : [];
   const textBlocks = parseTextBlocks(text, textImportMode);
 
