@@ -987,48 +987,50 @@ export function buildImportedDocumentSeed({
 }): ImportedDocumentSeed {
   const paragraphs = paragraphsFromText(text);
   const fallbackTitle = fileNameToTitle(fileName) || 'Documento importado';
-  const rawTitle = paragraphs[0] && paragraphs[0].length <= 120 ? paragraphs[0] : fallbackTitle;
+  const rawTitle = paragraphs[0] && paragraphs[0].length <= 120? paragraphs[0] : fallbackTitle;
   const textImportMode = inferTextImportMode(fileName, mimeType);
+
   const normalizedHtml = html
-  ? html
-      // 1) une el párrafo del título con el de los puntos+número
-      .replace(/<\/p>\s*<p[^>]*>\s*([·._\-—\s]{2,})(\d+)\s*<\/p>/gi, ' $1$2</p>')
-      // 2) normaliza cualquier líder a puntos medios y separa número
-      .replace(/([·._\-—\s]{2,})(\d+)<\/p>/gi, ' ··· $2</p>')
-  : null;
- let htmlBlocks = normalizedHtml? parseHtmlBlocks(normalizedHtml) : [];
+   ? html
+        // 1) une el párrafo del título con el de los puntos+número
+       .replace(/<\/p>\s*<p[^>]*>\s*([·._\-—\s]{2,})(\d+)\s*<\/p>/gi, ' $1$2</p>')
+        // 2) normaliza cualquier líder a puntos medios y separa número
+       .replace(/([·._\-—\s]{2,})(\d+)<\/p>/gi, ' ··· $2</p>')
+    : null;
 
-// FIX TOC: fusiona <li>Día X...</li> seguido de <p>____5</p>
-htmlBlocks = htmlBlocks.reduce<ParsedBlock[]>((acc, block, i) => {
-  const prev = acc[acc.length - 1];
-  const isLeaderPara = block.kind === 'paragraph' && /^[·._\-—\s]{3,}\d+\s*$/.test(block.text);
+  let htmlBlocks = normalizedHtml? parseHtmlBlocks(normalizedHtml) : [];
 
-  if (prev && (prev.kind === 'list' || prev.kind === 'paragraph') && isLeaderPara) {
-    const num = block.text.match(/(\d+)\s*$/ )?.[1]?? '';
-    // quita el último </li></ul> o </p>, añade puntos y número
-    prev.html = prev.html.replace(/<\/(li|ul|p)>$/, ` ··· ${num}</$1>`);
-    prev.text = `${prev.text} ··· ${num}`;
-    return acc; // no añadimos el párrafo de líderes
-  }
-  acc.push(block);
-  return acc;
+  // FIX TOC: fusiona <li>Día X...</li> seguido de <p>____5</p>
+  htmlBlocks = htmlBlocks.reduce<ParsedBlock[]>((acc, block) => {
+    const prev = acc[acc.length - 1];
+    const isLeaderPara = block.kind === 'paragraph' && /^[·._\-—\s]{3,}\d+\s*$/.test(block.text);
+
+    if (prev && (prev.kind === 'list' || prev.kind === 'paragraph') && isLeaderPara) {
+      const num = block.text.match(/(\d+)\s*$/)?.[1]?? '';
+      // quita el último </li></ul></ol> o </p>, añade puntos y número
+      prev.html = prev.html.replace(/<\/(li|ul|ol|p)>$/, ` ··· ${num}</$1>`);
+      prev.text = `${prev.text} ··· ${num}`;
+      return acc; // no añadimos el párrafo de líderes
+    }
+    acc.push(block);
+    return acc;
   }, []);
+
   const textBlocks = parseTextBlocks(text, textImportMode);
-  const parsedBlocks =
-    htmlBlocks.some((block) => block.html.includes('<br'))
-      ? htmlBlocks
-      : scoreParsedBlocks(htmlBlocks) >= scoreParsedBlocks(textBlocks)
-        ? htmlBlocks
-        : textBlocks;
+
+  // FUERZA usar htmlBlocks cuando vienen de DOCX (tienen estructura)
+  // Antes se descartaban por el score, y se perdía el fix del TOC
+  const parsedBlocks = normalizedHtml && htmlBlocks.length > 0? htmlBlocks : textBlocks;
+
   const frontMatterSource = buildChaptersFromBlocks(parsedBlocks, fallbackTitle, extractAuthorFromText(text));
   const title = detectTitleFromFrontMatter(frontMatterSource.frontMatter, rawTitle);
   const author = detectAuthorFromFrontMatter(frontMatterSource.frontMatter, text);
   const subtitleDetection = detectSubtitleFromFrontMatter(frontMatterSource.frontMatter, title, author);
   const subtitle = subtitleDetection.subtitle
-    ? subtitleDetection.subtitle.slice(0, 260)
+   ? subtitleDetection.subtitle.slice(0, 260)
     : `Documento importado desde ${fileName}`;
   let detectedChapters = frontMatterSource.chapters;
-  let detectedOutline = frontMatterSource.detectedOutline ?? detectedChapters.map((chapter) => ({
+  let detectedOutline = frontMatterSource.detectedOutline?? detectedChapters.map((chapter) => ({
     title: chapter.title,
     level: 1,
     origin: 'detected' as const,
@@ -1041,12 +1043,12 @@ htmlBlocks = htmlBlocks.reduce<ParsedBlock[]>((acc, block, i) => {
   // detected chapters.
   const chapterTitleSet = new Set(
     detectedChapters
-      .filter((ch) => !isTocChapterTitle(ch.title))
-      .map((ch) => ch.title.trim().toLowerCase()),
+     .filter((ch) =>!isTocChapterTitle(ch.title))
+     .map((ch) => ch.title.trim().toLowerCase()),
   );
 
   const richLabelMap = new Map<string, string>(); // chapterTitleLower → richTitle
-  const extraTocEntries: OutlineEntry[] = [];     // CIERRE-like extra level-1 entries
+  const extraTocEntries: OutlineEntry[] = []; // CIERRE-like extra level-1 entries
   for (const entry of detectedOutline) {
     const trimmedLower = entry.title.trim().toLowerCase();
     if (chapterTitleSet.has(trimmedLower)) continue;
@@ -1071,7 +1073,7 @@ htmlBlocks = htmlBlocks.reduce<ParsedBlock[]>((acc, block, i) => {
         (e) => e.title.trim().toLowerCase() === trimmedLower,
       );
       if (!alreadyAdded) {
-        extraTocEntries.push({ ...entry, level: 1 });
+        extraTocEntries.push({...entry, level: 1 });
       }
     }
   }
@@ -1079,7 +1081,7 @@ htmlBlocks = htmlBlocks.reduce<ParsedBlock[]>((acc, block, i) => {
   // Build the filtered and level-assigned outline from actual chapter entries,
   // substituting rich labels where available.
   const baseOutlineForIndex = detectedOutline
-    .filter((entry) => {
+   .filter((entry) => {
       const title = entry.title.trim();
       const titleLower = title.toLowerCase();
       if (isTocChapterTitle(title)) return false;
@@ -1088,38 +1090,38 @@ htmlBlocks = htmlBlocks.reduce<ParsedBlock[]>((acc, block, i) => {
       if (MINOR_HEADING_RE.test(title)) return true;
       return false;
     })
-    .map((entry) => {
+   .map((entry) => {
       const title = entry.title.trim();
       const titleLower = title.toLowerCase();
       const richLabel = richLabelMap.get(titleLower);
-      if (richLabel) return { ...entry, title: richLabel, level: 1 };
-      if (MAJOR_HEADING_RE.test(title)) return { ...entry, level: 1 };
-      if (MINOR_HEADING_RE.test(title)) return { ...entry, level: 2 };
+      if (richLabel) return {...entry, title: richLabel, level: 1 };
+      if (MAJOR_HEADING_RE.test(title)) return {...entry, level: 1 };
+      if (MINOR_HEADING_RE.test(title)) return {...entry, level: 2 };
       return entry;
     });
 
   const outlineForIndex = baseOutlineForIndex;
 
-  const generatedIndex = outlineForIndex.length >= 2 ? buildGeneratedIndexChapter(outlineForIndex) : null;
+  const generatedIndex = outlineForIndex.length >= 2? buildGeneratedIndexChapter(outlineForIndex) : null;
 
   // RULE: If we have an explicit index from Word with real content, keep it.
   // We NEVER replace it during the initial import to preserve layout fidelity.
   const isExplicitIndexSubstantial = hasExplicitIndex && detectedChapters[explicitIndexIdx].blocks.length > 0;
 
-  if (generatedIndex && !hasExplicitIndex) {
+  if (generatedIndex &&!hasExplicitIndex) {
     const prologueIndex = detectedChapters.findIndex((chapter) => chapter.title.toLowerCase() === 'prólogo');
-    const insertAt = prologueIndex >= 0 ? prologueIndex + 1 : 0;
+    const insertAt = prologueIndex >= 0? prologueIndex + 1 : 0;
     detectedChapters = [
-      ...detectedChapters.slice(0, insertAt),
+     ...detectedChapters.slice(0, insertAt),
       generatedIndex.chapter,
-      ...detectedChapters.slice(insertAt),
+     ...detectedChapters.slice(insertAt),
     ];
   }
 
   // Update detectedOutline to reflect the final outline used for indexing
   detectedOutline = outlineForIndex;
 
-  const importedPreviewBlocks = (detectedChapters[0]?.blocks ?? []).slice(0, 6).map(
+  const importedPreviewBlocks = (detectedChapters[0]?.blocks?? []).slice(0, 6).map(
     (block): ImportedDocumentSeed['blocks'][number] => ({
       type: block.type as ImportedDocumentSeed['blocks'][number]['type'],
       content: block.content,
@@ -1128,7 +1130,7 @@ htmlBlocks = htmlBlocks.reduce<ParsedBlock[]>((acc, block, i) => {
 
   const blocks: ImportedDocumentSeed['blocks'] =
     importedPreviewBlocks.length > 0
-      ? importedPreviewBlocks
+     ? importedPreviewBlocks
       : [
           { type: 'heading' as const, content: title },
           { type: 'paragraph' as const, content: subtitle },
@@ -1145,7 +1147,7 @@ htmlBlocks = htmlBlocks.reduce<ParsedBlock[]>((acc, block, i) => {
 
   const chapters: NonNullable<ImportedDocumentSeed['chapters']> =
     normalizedDetectedChapters.length > 0
-      ? normalizedDetectedChapters
+     ? normalizedDetectedChapters
       : [
           {
             title,
