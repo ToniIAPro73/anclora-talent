@@ -511,10 +511,12 @@ describe('preview-builder', () => {
 
       expect(tocPage?.content).toContain('Introducción');
       expect(tocPage?.content).toContain('Fase 1');
+      // buildPreviewPages no re-deriva ni reenumera el índice: devuelve el
+      // HTML persistido tal cual. La inyección de `.toc-entry`/números sucede
+      // en `buildSyncedTocChapterContent` cuando el usuario pulsa "Actualizar numeración".
       expect(tocPage?.content).not.toContain('····');
-      expect(tocPage?.content).not.toContain('data-toc-entry="true"');
+      expect(tocPage?.content).not.toContain('class="toc-entry"');
       expect(tocPage?.content).toContain('<ul><li>Día 1: Autoimagen.</li></ul>');
-      expect(tocPage?.content).not.toContain('data-toc-page="true"');
     });
 
     it('keeps the stored toc html unchanged in preview even when there is no source outline', () => {
@@ -559,9 +561,11 @@ describe('preview-builder', () => {
       );
 
       expect(tocPage?.content).toContain('Introducción');
+      // buildPreviewPages devuelve el HTML persistido sin tocarlo (tal cual está
+      // en `project.document.chapters[*].blocks`). La transformación semántica
+      // `.toc-entry` sucede en el sync del editor, no en el preview.
       expect(tocPage?.content).toContain('<p>Introducción</p>');
-      expect(tocPage?.content).not.toContain('data-toc-entry="true"');
-      expect(tocPage?.content).not.toContain('data-toc-page="true"');
+      expect(tocPage?.content).not.toContain('class="toc-entry"');
     });
 
     it('reuses the same stored toc html in the preview flow as in the exported pages', () => {
@@ -607,7 +611,7 @@ describe('preview-builder', () => {
       const flowHtml = buildPreviewContentFlowHtml(project, DEVICE_PAGINATION_CONFIGS.laptop);
 
       expect(flowHtml).toContain('Introducción');
-      expect(flowHtml).not.toContain('data-toc-page="true"');
+      // El flow de preview reutiliza exactamente el mismo HTML del TOC sincronizado
       expect(flowHtml).toContain(tocPage?.content ?? '');
     });
 
@@ -651,7 +655,7 @@ describe('preview-builder', () => {
 
       expect(syncedToc).not.toBeNull();
       expect(syncedToc?.chapterId).toBe('toc-chapter');
-      expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
+      expect(syncedToc?.html).toContain('<span class="toc-page">3</span>');
     });
 
     it('matches toc entries even when the index text is more descriptive than the chapter title', () => {
@@ -693,7 +697,7 @@ describe('preview-builder', () => {
       const syncedToc = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
 
       expect(syncedToc?.html).toContain('Introducción: Activación de la Presencia');
-      expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
+      expect(syncedToc?.html).toContain('<span class="toc-page">3</span>');
     });
 
     it('handles duplicate titles in TOC by sequential matching', () => {
@@ -733,8 +737,12 @@ describe('preview-builder', () => {
 
       const syncedToc = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
 
-      expect(syncedToc?.html).toContain('<p data-toc-entry="true" data-toc-level="2"><span data-toc-title="true">Reflexión</span><span data-toc-leader="true" aria-hidden="true">····</span><span data-toc-page="true">3</span></p>');
-      expect(syncedToc?.html).toContain('<p data-toc-entry="true" data-toc-level="2"><span data-toc-title="true">Reflexión</span><span data-toc-leader="true" aria-hidden="true">····</span><span data-toc-page="true">4</span></p>');
+      expect(syncedToc?.html).toContain(
+        '<p class="toc-entry" data-toc-entry="true" data-toc-level="2"><span class="toc-title">Reflexión</span><span class="toc-leader" aria-hidden="true"></span><span class="toc-page">3</span></p>',
+      );
+      expect(syncedToc?.html).toContain(
+        '<p class="toc-entry" data-toc-entry="true" data-toc-level="2"><span class="toc-title">Reflexión</span><span class="toc-leader" aria-hidden="true"></span><span class="toc-page">4</span></p>',
+      );
     });
 
     it('supplements missing chapters in the index during sync action', () => {
@@ -776,8 +784,8 @@ describe('preview-builder', () => {
 
       expect(syncedToc?.html).toContain('Introducción');
       expect(syncedToc?.html).toContain('Capítulo 2');
-      expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
-      expect(syncedToc?.html).toContain('<span data-toc-page="true">4</span>');
+      expect(syncedToc?.html).toContain('<span class="toc-page">3</span>');
+      expect(syncedToc?.html).toContain('<span class="toc-page">4</span>');
     });
 
     it('uses the visible toc chapter entries as the source of truth when the outline is incomplete', () => {
@@ -829,11 +837,13 @@ describe('preview-builder', () => {
 
       expect(syncedToc?.html).toContain('Día 1: Autoimagen.');
       expect(syncedToc?.html).toContain('Día 2: Fortalezas latentes.');
-      expect(syncedToc?.html).toContain('<li data-toc-entry="true"');
-      expect(syncedToc?.html).toContain('<span data-toc-page="true">3</span>');
-      
-      const pageNumbers = Array.from(syncedToc?.html.matchAll(/data-toc-page="true">(\d+)</g)).map(m => m[1]);
-      // Should have: Introducción, Día 1, Día 2, Capítulo Intro -> 4 entries
+      expect(syncedToc?.html).toMatch(/<li[^>]*class="[^"]*\btoc-entry\b/);
+      expect(syncedToc?.html).toContain('<span class="toc-page">3</span>');
+
+      const pageNumbers = Array.from(
+        (syncedToc?.html ?? '').matchAll(/<span class="toc-page">(\d+)<\/span>/g),
+      ).map((m) => m[1]);
+      // Se esperan: Introducción, Día 1, Día 2, Capítulo Intro → 4 entradas
       expect(pageNumbers).toHaveLength(4);
     });
 
