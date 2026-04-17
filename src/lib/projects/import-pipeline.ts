@@ -152,7 +152,6 @@ function normalizeHtmlFragment(input: string) {
   return input
     .replace(/\r\n/g, '\n')
     .replace(/\sstyle="[^"]*"/gi, '')
-    .replace(/\sclass="[^"]*"/gi, '')
     .replace(/>\s+</g, '><')
     .trim();
 }
@@ -471,46 +470,75 @@ function isStrongOnlyParagraph(fragment: string) {
 }
 
 function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
-  const tag = fragment.match(/^<(ul|ol)/i)?.[1]?.toLowerCase() === 'ol' ? 'ol' : 'ul';
+  const tag = fragment.match(/^<(ul|ol)/i)?.[1]?.toLowerCase() === 'ol'? 'ol' : 'ul';
   const items = Array.from(fragment.matchAll(/<li[^>]*>[\s\S]*?<\/li>/gi))
-    .map((match) => normalizeHtmlFragment(match[0]))
-    .filter(Boolean);
+   .map(m => normalizeHtmlFragment(m[0]))
+   .filter(Boolean);
 
   if (items.length === 0) {
-    return [
-      {
-        kind: 'list',
-        text: textFromHtml(fragment),
-        html: fragment,
-        level: null,
-        structural: false,
-      },
-    ];
+    return [{
+      kind: 'list',
+      text: textFromHtml(fragment),
+      html: fragment,
+      level: null,
+      structural: false
+    }];
   }
 
-  const groups: string[][] = [];
-  let current: string[] = [];
-  let currentWords = 0;
+  // FUSIONA <li>Título</li> + <li>·····5</li> en una sola entrada semántica:
+  //   <li class="toc-entry"><span class="toc-title">…</span><span class="toc-leader"></span><span class="toc-page">5</span></li>
+  // Los `·` de relleno los pinta CSS (.toc-leader::before). No insertamos puntos como texto.
+  const merged: string[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const currText = textFromHtml(items[i]).trim().replace(/\s+/g, ' ');
+    const nextText = items[i + 1] ? textFromHtml(items[i + 1]).trim() : '';
+    const isNextLeader = /^[·._\-—\s]{2,}\d+\s*$/.test(nextText);
 
-  for (const item of items) {
-    const words = textFromHtml(item).split(/\s+/).filter(Boolean).length;
-    if (current.length > 0 && (current.length >= 6 || currentWords + words > 140)) {
-      groups.push(current);
-      current = [];
-      currentWords = 0;
+    if (currText && isNextLeader && !/^\d+$/.test(currText)) {
+      const num = nextText.match(/(\d+)/)?.[1] ?? '';
+      merged.push(
+        `<li class="toc-entry" data-toc-entry="true" data-toc-level="2">` +
+          `<span class="toc-title">${escapeHtml(currText)}</span>` +
+          `<span class="toc-leader" aria-hidden="true"></span>` +
+          `<span class="toc-page">${escapeHtml(num)}</span>` +
+          `</li>`,
+      );
+      i++; // saltamos el líder
+    } else if (!/^[·._\-—\s]{2,}\d+\s*$/.test(currText)) {
+      // Entrada sin número (índice "limpio"): envolver en .toc-entry para que
+      // "Actualizar numeración" pueda inyectar .toc-leader + .toc-page sin tocar el texto.
+      if (currText) {
+        merged.push(
+          `<li class="toc-entry" data-toc-entry="true" data-toc-level="2">` +
+            `<span class="toc-title">${escapeHtml(currText)}</span>` +
+            `</li>`,
+        );
+      } else {
+        merged.push(items[i]);
+      }
     }
-    current.push(item);
-    currentWords += words;
   }
 
-  if (current.length > 0) {
-    groups.push(current);
+  // chunking original para no mover Fase 2
+  const groups: string[][] = [];
+  let cur: string[] = [];
+  let w = 0;
+  for (const it of merged) {
+    const words = textFromHtml(it).split(/\s+/).length;
+    if (cur.length >= 6 || w + words > 140) {
+      groups.push(cur);
+      cur = [];
+      w = 0;
+    }
+    cur.push(it);
+    w += words;
   }
+  if (cur.length) groups.push(cur);
 
-  return groups.map((group) => ({
+  return groups.map(g => ({
     kind: 'list' as const,
-    text: group.map((item) => textFromHtml(item)).join('\n'),
-    html: `<${tag}>${group.join('')}</${tag}>`,
+    text: g.map(textFromHtml).join('\n'),
+    html: `<${tag} class="toc-list">${g.join('')}</${tag}>`,
     level: null,
     structural: false,
   }));
@@ -518,70 +546,86 @@ function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
 
 function parseHtmlBlocks(input: string) {
   const normalized = normalizeHtmlFragment(input);
-  const matches = normalized.match(BLOCK_TAG_RE) ?? [];
+  const matches = normalized.match(BLOCK_TAG_RE)?? [];
+  const blocks: ParsedBlock[] = [];
+  let pendingLeader: string | null = null;
 
-  return matches.flatMap((fragment) => {
+  for (const fragment of matches) {
     const clean = normalizeHtmlFragment(fragment);
-    const tag = clean.match(/^<(h[1-6]|p|ul|ol|blockquote)/i)?.[1]?.toLowerCase() ?? 'p';
+    const tag = clean.match(/^<(h[1-6]|p|ul|ol|blockquote)/i)?.[1]?.toLowerCase()?? 'p';
     const text = textFromHtml(clean);
+    if (!text || isDecorativeLine(text)) continue;
 
-    if (!text) return [];
-    if (text && isDecorativeLine(text)) return [];
+    const isLeader = /^[·._\-—\s]{2,}\d+\s*$/.test(text.trim());
+    const num = text.match(/(\d+)/)?.[1];
+
+    // Si es solo puntos+número, guárdalo para el siguiente elemento
+    if (isLeader && num) {
+      pendingLeader = num;
+      continue;
+    }
+
+    let html = clean;
+
+    // Si teníamos un líder pendiente, lo inyectamos AHORA.
+    // Envolvemos el contenido del nodo en spans semánticos para que el CSS leader
+    // funcione y el botón "Actualizar numeración" pueda reescribirlo sin tocar el texto.
+    if (pendingLeader) {
+      const escapedPage = escapeHtml(pendingLeader);
+      if (tag === 'ul' || tag === 'ol') {
+        // Inyecta en el ÚLTIMO <li> de la lista: envuelve su contenido actual como toc-title.
+        html = html.replace(
+          /<li([^>]*)>([\s\S]*?)<\/li>(?![\s\S]*<\/li>)/,
+          (_m, attrs: string, inner: string) => {
+            const hasClass = /\bclass="([^"]*)"/i.test(attrs);
+            const newAttrs = hasClass
+              ? attrs.replace(/\bclass="([^"]*)"/i, (_c, cls) =>
+                  `class="${/\btoc-entry\b/.test(cls) ? cls : `${cls} toc-entry`.trim()}"`,
+                )
+              : `${attrs} class="toc-entry"`;
+            return (
+              `<li${newAttrs} data-toc-entry="true" data-toc-level="2">` +
+              `<span class="toc-title">${inner}</span>` +
+              `<span class="toc-leader" aria-hidden="true"></span>` +
+              `<span class="toc-page">${escapedPage}</span>` +
+              `</li>`
+            );
+          },
+        );
+      } else {
+        html = html.replace(
+          /^<(p|h[1-6]|blockquote)([^>]*)>([\s\S]*?)<\/\1>$/,
+          (_m, t: string, attrs: string, inner: string) => {
+            const hasClass = /\bclass="([^"]*)"/i.test(attrs);
+            const newAttrs = hasClass
+              ? attrs.replace(/\bclass="([^"]*)"/i, (_c, cls) =>
+                  `class="${/\btoc-entry\b/.test(cls) ? cls : `${cls} toc-entry`.trim()}"`,
+                )
+              : `${attrs} class="toc-entry"`;
+            return (
+              `<${t}${newAttrs} data-toc-entry="true" data-toc-level="2">` +
+              `<span class="toc-title">${inner}</span>` +
+              `<span class="toc-leader" aria-hidden="true"></span>` +
+              `<span class="toc-page">${escapedPage}</span>` +
+              `</${t}>`
+            );
+          },
+        );
+      }
+      pendingLeader = null;
+    }
 
     if (tag.startsWith('h')) {
-      return [
-        {
-          kind: 'heading' as const,
-          text: cleanHeadingText(text),
-          html: clean,
-          level: Number(tag.replace('h', '')),
-          structural: true,
-        },
-      ];
+      blocks.push({ kind: 'heading', text: cleanHeadingText(text), html, level: Number(tag.replace('h','')), structural: true });
+    } else if (tag === 'ul' || tag === 'ol') {
+      blocks.push(...splitHtmlListBlocks(html));
+    } else if (tag === 'blockquote') {
+      blocks.push({ kind: 'quote', text, html, level: null, structural: true });
+    } else {
+      blocks.push({ kind: 'paragraph', text, html, level: null, structural: false });
     }
-
-    if (tag === 'ul' || tag === 'ol') {
-      return splitHtmlListBlocks(clean);
-    }
-
-    if (tag === 'blockquote') {
-      return [
-        {
-          kind: 'quote' as const,
-          text,
-          html: clean,
-          level: null,
-          structural: true,
-        },
-      ];
-    }
-
-    if (/<br\s*\/?>/i.test(clean)) {
-      return [
-        {
-          kind: 'paragraph' as const,
-          text,
-          html: clean,
-          level: null,
-          structural: false,
-        },
-      ];
-    }
-
-    // REMOVED: heuristic that converted index paragraphs to headings.
-    // Previously, any bold paragraph matching "FASE 1", "Dia 1" became a heading,
-    // creating false chapters. Now we trust only <h1>-<h6> from Mammoth.
-
-    return [
-      {
-        kind: 'paragraph' as const,
-        text,
-        html: clean,
-        level: null,
-        structural: false,
-      },
-    ];
-  });
+  }
+  return blocks;
 }
 
 function scoreParsedBlocks(blocks: ParsedBlock[]) {
@@ -985,25 +1029,26 @@ export function buildImportedDocumentSeed({
 }): ImportedDocumentSeed {
   const paragraphs = paragraphsFromText(text);
   const fallbackTitle = fileNameToTitle(fileName) || 'Documento importado';
-  const rawTitle = paragraphs[0] && paragraphs[0].length <= 120 ? paragraphs[0] : fallbackTitle;
+  const rawTitle = paragraphs[0] && paragraphs[0].length <= 120? paragraphs[0] : fallbackTitle;
   const textImportMode = inferTextImportMode(fileName, mimeType);
-  const htmlBlocks = html ? parseHtmlBlocks(html) : [];
+
+  const normalizedHtml = html? html : null;
+  const htmlBlocks = normalizedHtml? parseHtmlBlocks(normalizedHtml) : [];
   const textBlocks = parseTextBlocks(text, textImportMode);
-  const parsedBlocks =
-    htmlBlocks.some((block) => block.html.includes('<br'))
-      ? htmlBlocks
-      : scoreParsedBlocks(htmlBlocks) >= scoreParsedBlocks(textBlocks)
-        ? htmlBlocks
-        : textBlocks;
+
+  // Usa siempre HTML cuando viene de DOCX (ya lleva el TOC fusionado en splitHtmlListBlocks)
+  const parsedBlocks = normalizedHtml && htmlBlocks.length > 0? htmlBlocks : textBlocks;
+
   const frontMatterSource = buildChaptersFromBlocks(parsedBlocks, fallbackTitle, extractAuthorFromText(text));
   const title = detectTitleFromFrontMatter(frontMatterSource.frontMatter, rawTitle);
   const author = detectAuthorFromFrontMatter(frontMatterSource.frontMatter, text);
   const subtitleDetection = detectSubtitleFromFrontMatter(frontMatterSource.frontMatter, title, author);
   const subtitle = subtitleDetection.subtitle
-    ? subtitleDetection.subtitle.slice(0, 260)
+   ? subtitleDetection.subtitle.slice(0, 260)
     : `Documento importado desde ${fileName}`;
+
   let detectedChapters = frontMatterSource.chapters;
-  let detectedOutline = frontMatterSource.detectedOutline ?? detectedChapters.map((chapter) => ({
+  let detectedOutline = frontMatterSource.detectedOutline?? detectedChapters.map((chapter) => ({
     title: chapter.title,
     level: 1,
     origin: 'detected' as const,
@@ -1012,16 +1057,15 @@ export function buildImportedDocumentSeed({
   const explicitIndexIdx = detectedChapters.findIndex((chapter) => isTocChapterTitle(chapter.title));
   const hasExplicitIndex = explicitIndexIdx >= 0;
 
-  // Build the index using only outline entries that correspond to actual
-  // detected chapters.
   const chapterTitleSet = new Set(
     detectedChapters
-      .filter((ch) => !isTocChapterTitle(ch.title))
-      .map((ch) => ch.title.trim().toLowerCase()),
+     .filter((ch) =>!isTocChapterTitle(ch.title))
+     .map((ch) => ch.title.trim().toLowerCase()),
   );
 
-  const richLabelMap = new Map<string, string>(); // chapterTitleLower → richTitle
-  const extraTocEntries: OutlineEntry[] = [];     // CIERRE-like extra level-1 entries
+  const richLabelMap = new Map<string, string>();
+  const extraTocEntries: OutlineEntry[] = [];
+
   for (const entry of detectedOutline) {
     const trimmedLower = entry.title.trim().toLowerCase();
     if (chapterTitleSet.has(trimmedLower)) continue;
@@ -1046,15 +1090,13 @@ export function buildImportedDocumentSeed({
         (e) => e.title.trim().toLowerCase() === trimmedLower,
       );
       if (!alreadyAdded) {
-        extraTocEntries.push({ ...entry, level: 1 });
+        extraTocEntries.push({...entry, level: 1 });
       }
     }
   }
 
-  // Build the filtered and level-assigned outline from actual chapter entries,
-  // substituting rich labels where available.
   const baseOutlineForIndex = detectedOutline
-    .filter((entry) => {
+   .filter((entry) => {
       const title = entry.title.trim();
       const titleLower = title.toLowerCase();
       if (isTocChapterTitle(title)) return false;
@@ -1063,38 +1105,32 @@ export function buildImportedDocumentSeed({
       if (MINOR_HEADING_RE.test(title)) return true;
       return false;
     })
-    .map((entry) => {
+   .map((entry) => {
       const title = entry.title.trim();
       const titleLower = title.toLowerCase();
       const richLabel = richLabelMap.get(titleLower);
-      if (richLabel) return { ...entry, title: richLabel, level: 1 };
-      if (MAJOR_HEADING_RE.test(title)) return { ...entry, level: 1 };
-      if (MINOR_HEADING_RE.test(title)) return { ...entry, level: 2 };
+      if (richLabel) return {...entry, title: richLabel, level: 1 };
+      if (MAJOR_HEADING_RE.test(title)) return {...entry, level: 1 };
+      if (MINOR_HEADING_RE.test(title)) return {...entry, level: 2 };
       return entry;
     });
 
   const outlineForIndex = baseOutlineForIndex;
+  const generatedIndex = outlineForIndex.length >= 2? buildGeneratedIndexChapter(outlineForIndex) : null;
 
-  const generatedIndex = outlineForIndex.length >= 2 ? buildGeneratedIndexChapter(outlineForIndex) : null;
-
-  // RULE: If we have an explicit index from Word with real content, keep it.
-  // We NEVER replace it during the initial import to preserve layout fidelity.
-  const isExplicitIndexSubstantial = hasExplicitIndex && detectedChapters[explicitIndexIdx].blocks.length > 0;
-
-  if (generatedIndex && !hasExplicitIndex) {
+  if (generatedIndex &&!hasExplicitIndex) {
     const prologueIndex = detectedChapters.findIndex((chapter) => chapter.title.toLowerCase() === 'prólogo');
-    const insertAt = prologueIndex >= 0 ? prologueIndex + 1 : 0;
+    const insertAt = prologueIndex >= 0? prologueIndex + 1 : 0;
     detectedChapters = [
-      ...detectedChapters.slice(0, insertAt),
+     ...detectedChapters.slice(0, insertAt),
       generatedIndex.chapter,
-      ...detectedChapters.slice(insertAt),
+     ...detectedChapters.slice(insertAt),
     ];
   }
 
-  // Update detectedOutline to reflect the final outline used for indexing
   detectedOutline = outlineForIndex;
 
-  const importedPreviewBlocks = (detectedChapters[0]?.blocks ?? []).slice(0, 6).map(
+  const importedPreviewBlocks = (detectedChapters[0]?.blocks?? []).slice(0, 6).map(
     (block): ImportedDocumentSeed['blocks'][number] => ({
       type: block.type as ImportedDocumentSeed['blocks'][number]['type'],
       content: block.content,
@@ -1103,11 +1139,12 @@ export function buildImportedDocumentSeed({
 
   const blocks: ImportedDocumentSeed['blocks'] =
     importedPreviewBlocks.length > 0
-      ? importedPreviewBlocks
+     ? importedPreviewBlocks
       : [
           { type: 'heading' as const, content: title },
           { type: 'paragraph' as const, content: subtitle },
         ];
+
   const normalizedDetectedChapters = detectedChapters.map(
     (chapter): NonNullable<ImportedDocumentSeed['chapters']>[number] => ({
       title: chapter.title,
@@ -1120,31 +1157,14 @@ export function buildImportedDocumentSeed({
 
   const chapters: NonNullable<ImportedDocumentSeed['chapters']> =
     normalizedDetectedChapters.length > 0
-      ? normalizedDetectedChapters
-      : [
-          {
-            title,
-            blocks,
-          },
-        ];
+     ? normalizedDetectedChapters
+      : [{ title, blocks }];
 
   const warnings: string[] = [];
-
-  if (!author) {
-    warnings.push('No se detectó con certeza el autor; revísalo tras importar.');
-  }
-
-  if (generatedIndex) {
-    warnings.push('Se ha generado un índice sintético editable a partir de la estructura detectada del documento.');
-  }
-
-  if (subtitleDetection.candidateCount > 2) {
-    warnings.push('La portada contenía varias líneas y se han condensado en un único subtítulo editable.');
-  }
-
-  if (detectedChapters.length <= 1) {
-    warnings.push('No se detectaron secciones principales claras; se mantuvo una estructura conservadora.');
-  }
+  if (!author) warnings.push('No se detectó con certeza el autor; revísalo tras importar.');
+  if (generatedIndex) warnings.push('Se ha generado un índice sintético editable a partir de la estructura detectada del documento.');
+  if (subtitleDetection.candidateCount > 2) warnings.push('La portada contenía varias líneas y se han condensado en un único subtítulo editable.');
+  if (detectedChapters.length <= 1) warnings.push('No se detectaron secciones principales claras; se mantuvo una estructura conservadora.');
 
   return {
     title,
@@ -1218,7 +1238,7 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
           ],
         },
       );
-      const richHtml = normalizeHtmlFragment(result.value);
+      const richHtml = normalizeHtmlFragment(result.value).replace(/<p([^>]*)>(\s*[·._\-—]{3,}\s*\d+\s*)<\/p>/gi, '<p$1 class="toc-entry">$2</p>');
       const richText = normalizeText(textFromHtml(richHtml));
 
       if (richText) {
