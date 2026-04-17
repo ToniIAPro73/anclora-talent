@@ -284,3 +284,10 @@ hr[data-page-break="true"]::after {
   min-width: 2ch;
   text-align: right;
 }
+
+/* Fuerza el índice a usar fuente monoespaciada para que los puntos cuadren */
+.toc-list, .toc-list li, p:has(> .toc-page) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
