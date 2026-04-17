@@ -150,11 +150,10 @@ function stripTags(input: string) {
 
 function normalizeHtmlFragment(input: string) {
   return input
-   .replace(/\r\n/g, '\n')
-   .replace(/\sstyle="[^"]*"/gi, '')
-    // NO borramos las clases, las necesitamos para el índice
-   .replace(/>\s+</g, '><')
-   .trim();
+    .replace(/\r\n/g, '\n')
+    .replace(/\sstyle="[^"]*"/gi, '')
+    .replace(/>\s+</g, '><')
+    .trim();
 }
 
 function textFromHtml(input: string) {
