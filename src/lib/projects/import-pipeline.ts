@@ -471,49 +471,40 @@ function isStrongOnlyParagraph(fragment: string) {
 }
 
 function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
-  const tag = fragment.match(/^<(ul|ol)/i)?.[1]?.toLowerCase() === 'ol' ? 'ol' : 'ul';
+  const tag = fragment.match(/^<(ul|ol)/i)?.[1]?.toLowerCase() === 'ol'? 'ol' : 'ul';
   const items = Array.from(fragment.matchAll(/<li[^>]*>[\s\S]*?<\/li>/gi))
-    .map((match) => normalizeHtmlFragment(match[0]))
-    .filter(Boolean);
+   .map((match) => normalizeHtmlFragment(match[0]))
+   .filter(Boolean);
 
-  if (items.length === 0) {
-    return [
-      {
-        kind: 'list',
-        text: textFromHtml(fragment),
-        html: fragment,
-        level: null,
-        structural: false,
-      },
-    ];
-  }
+  // NUEVO: fusiona li de texto + li de líderes en el mismo <li>
+  const mergedItems: string[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const curr = items[i];
+    const currText = textFromHtml(curr);
+    const next = items[i + 1];
+    const nextText = next? textFromHtml(next) : '';
 
-  const groups: string[][] = [];
-  let current: string[] = [];
-  let currentWords = 0;
+    const isLeader = /^[·._\-—\s]{3,}\d+\s*$/.test(nextText);
+    const isTitle = currText &&!isLeader && currText.length < 120;
 
-  for (const item of items) {
-    const words = textFromHtml(item).split(/\s+/).filter(Boolean).length;
-    if (current.length > 0 && (current.length >= 6 || currentWords + words > 140)) {
-      groups.push(current);
-      current = [];
-      currentWords = 0;
+    if (isTitle && isLeader) {
+      const num = nextText.match(/(\d+)/)?.[1]?? '';
+      // fusiona en un solo <li>
+      const fused = curr.replace(/<\/li>$/, ` ··· ${num}</li>`);
+      mergedItems.push(fused);
+      i++; // salta el siguiente
+    } else {
+      mergedItems.push(curr);
     }
-    current.push(item);
-    currentWords += words;
   }
 
-  if (current.length > 0) {
-    groups.push(current);
-  }
-
-  return groups.map((group) => ({
+  return [{
     kind: 'list' as const,
-    text: group.map((item) => textFromHtml(item)).join('\n'),
-    html: `<${tag}>${group.join('')}</${tag}>`,
+    text: mergedItems.map(textFromHtml).join('\n'),
+    html: `<${tag}>${mergedItems.join('')}</${tag}>`,
     level: null,
     structural: false,
-  }));
+  }];
 }
 
 function parseHtmlBlocks(input: string) {
@@ -992,34 +983,15 @@ export function buildImportedDocumentSeed({
 
   const normalizedHtml = html
    ? html
-        // 1) une el párrafo del título con el de los puntos+número
+        // une párrafos sueltos de TOC y normaliza líderes
        .replace(/<\/p>\s*<p[^>]*>\s*([·._\-—\s]{2,})(\d+)\s*<\/p>/gi, ' $1$2</p>')
-        // 2) normaliza cualquier líder a puntos medios y separa número
        .replace(/([·._\-—\s]{2,})(\d+)<\/p>/gi, ' ··· $2</p>')
     : null;
 
-  let htmlBlocks = normalizedHtml? parseHtmlBlocks(normalizedHtml) : [];
-
-  // FIX TOC: fusiona <li>Día X...</li> seguido de <p>____5</p>
-  htmlBlocks = htmlBlocks.reduce<ParsedBlock[]>((acc, block) => {
-    const prev = acc[acc.length - 1];
-    const isLeaderPara = block.kind === 'paragraph' && /^[·._\-—\s]{3,}\d+\s*$/.test(block.text);
-
-    if (prev && (prev.kind === 'list' || prev.kind === 'paragraph') && isLeaderPara) {
-      const num = block.text.match(/(\d+)\s*$/)?.[1]?? '';
-      // quita el último </li></ul></ol> o </p>, añade puntos y número
-      prev.html = prev.html.replace(/<\/(li|ul|ol|p)>$/, ` ··· ${num}</$1>`);
-      prev.text = `${prev.text} ··· ${num}`;
-      return acc; // no añadimos el párrafo de líderes
-    }
-    acc.push(block);
-    return acc;
-  }, []);
-
+  const htmlBlocks = normalizedHtml? parseHtmlBlocks(normalizedHtml) : [];
   const textBlocks = parseTextBlocks(text, textImportMode);
 
-  // FUERZA usar htmlBlocks cuando vienen de DOCX (tienen estructura)
-  // Antes se descartaban por el score, y se perdía el fix del TOC
+  // Usa siempre HTML cuando viene de DOCX (ya lleva el TOC fusionado en splitHtmlListBlocks)
   const parsedBlocks = normalizedHtml && htmlBlocks.length > 0? htmlBlocks : textBlocks;
 
   const frontMatterSource = buildChaptersFromBlocks(parsedBlocks, fallbackTitle, extractAuthorFromText(text));
@@ -1029,6 +1001,7 @@ export function buildImportedDocumentSeed({
   const subtitle = subtitleDetection.subtitle
    ? subtitleDetection.subtitle.slice(0, 260)
     : `Documento importado desde ${fileName}`;
+
   let detectedChapters = frontMatterSource.chapters;
   let detectedOutline = frontMatterSource.detectedOutline?? detectedChapters.map((chapter) => ({
     title: chapter.title,
@@ -1039,16 +1012,15 @@ export function buildImportedDocumentSeed({
   const explicitIndexIdx = detectedChapters.findIndex((chapter) => isTocChapterTitle(chapter.title));
   const hasExplicitIndex = explicitIndexIdx >= 0;
 
-  // Build the index using only outline entries that correspond to actual
-  // detected chapters.
   const chapterTitleSet = new Set(
     detectedChapters
      .filter((ch) =>!isTocChapterTitle(ch.title))
      .map((ch) => ch.title.trim().toLowerCase()),
   );
 
-  const richLabelMap = new Map<string, string>(); // chapterTitleLower → richTitle
-  const extraTocEntries: OutlineEntry[] = []; // CIERRE-like extra level-1 entries
+  const richLabelMap = new Map<string, string>();
+  const extraTocEntries: OutlineEntry[] = [];
+
   for (const entry of detectedOutline) {
     const trimmedLower = entry.title.trim().toLowerCase();
     if (chapterTitleSet.has(trimmedLower)) continue;
@@ -1078,8 +1050,6 @@ export function buildImportedDocumentSeed({
     }
   }
 
-  // Build the filtered and level-assigned outline from actual chapter entries,
-  // substituting rich labels where available.
   const baseOutlineForIndex = detectedOutline
    .filter((entry) => {
       const title = entry.title.trim();
@@ -1101,12 +1071,7 @@ export function buildImportedDocumentSeed({
     });
 
   const outlineForIndex = baseOutlineForIndex;
-
   const generatedIndex = outlineForIndex.length >= 2? buildGeneratedIndexChapter(outlineForIndex) : null;
-
-  // RULE: If we have an explicit index from Word with real content, keep it.
-  // We NEVER replace it during the initial import to preserve layout fidelity.
-  const isExplicitIndexSubstantial = hasExplicitIndex && detectedChapters[explicitIndexIdx].blocks.length > 0;
 
   if (generatedIndex &&!hasExplicitIndex) {
     const prologueIndex = detectedChapters.findIndex((chapter) => chapter.title.toLowerCase() === 'prólogo');
@@ -1118,7 +1083,6 @@ export function buildImportedDocumentSeed({
     ];
   }
 
-  // Update detectedOutline to reflect the final outline used for indexing
   detectedOutline = outlineForIndex;
 
   const importedPreviewBlocks = (detectedChapters[0]?.blocks?? []).slice(0, 6).map(
@@ -1135,6 +1099,7 @@ export function buildImportedDocumentSeed({
           { type: 'heading' as const, content: title },
           { type: 'paragraph' as const, content: subtitle },
         ];
+
   const normalizedDetectedChapters = detectedChapters.map(
     (chapter): NonNullable<ImportedDocumentSeed['chapters']>[number] => ({
       title: chapter.title,
@@ -1148,30 +1113,13 @@ export function buildImportedDocumentSeed({
   const chapters: NonNullable<ImportedDocumentSeed['chapters']> =
     normalizedDetectedChapters.length > 0
      ? normalizedDetectedChapters
-      : [
-          {
-            title,
-            blocks,
-          },
-        ];
+      : [{ title, blocks }];
 
   const warnings: string[] = [];
-
-  if (!author) {
-    warnings.push('No se detectó con certeza el autor; revísalo tras importar.');
-  }
-
-  if (generatedIndex) {
-    warnings.push('Se ha generado un índice sintético editable a partir de la estructura detectada del documento.');
-  }
-
-  if (subtitleDetection.candidateCount > 2) {
-    warnings.push('La portada contenía varias líneas y se han condensado en un único subtítulo editable.');
-  }
-
-  if (detectedChapters.length <= 1) {
-    warnings.push('No se detectaron secciones principales claras; se mantuvo una estructura conservadora.');
-  }
+  if (!author) warnings.push('No se detectó con certeza el autor; revísalo tras importar.');
+  if (generatedIndex) warnings.push('Se ha generado un índice sintético editable a partir de la estructura detectada del documento.');
+  if (subtitleDetection.candidateCount > 2) warnings.push('La portada contenía varias líneas y se han condensado en un único subtítulo editable.');
+  if (detectedChapters.length <= 1) warnings.push('No se detectaron secciones principales claras; se mantuvo una estructura conservadora.');
 
   return {
     title,
