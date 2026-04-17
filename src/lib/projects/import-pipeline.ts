@@ -987,6 +987,9 @@ export function buildImportedDocumentSeed({
   const fallbackTitle = fileNameToTitle(fileName) || 'Documento importado';
   const rawTitle = paragraphs[0] && paragraphs[0].length <= 120 ? paragraphs[0] : fallbackTitle;
   const textImportMode = inferTextImportMode(fileName, mimeType);
+  const normalizedHtml = html
+  ? html.replace(/<\/p>\s*<p[^>]*>\s*([·._\-—\s]{2,})(\d+)\s*<\/p>/gi, ' ··· $2</p>')
+  : null;
   const htmlBlocks = html ? parseHtmlBlocks(html) : [];
   const textBlocks = parseTextBlocks(text, textImportMode);
   const parsedBlocks =
