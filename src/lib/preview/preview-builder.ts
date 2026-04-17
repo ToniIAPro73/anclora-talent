@@ -361,12 +361,6 @@ function buildTocHtmlFromEntries(
   return parts.join('\n');
 }
 
-function buildDotLeader(level: number) {
-  // Level 1 (main chapters) -> longer leader
-  const base = level === 1 ? 50 : 35;
-  return '.'.repeat(base);
-}
-
 function buildTocChapterHtml(
   project: ProjectRecord,
   chapterSections: ChapterSection[],
@@ -410,9 +404,9 @@ function buildTocChapterHtml(
   // This preserves the original Word document layout and avoids duplicates.
   const isOriginalEmpty = visibleFromHtml.length === 0;
   
-  const baseHtml = isOriginalEmpty 
-    ? buildTocHtmlFromEntries(outlineEntries) 
-    : fallbackHtml;
+  const baseHtml = isOriginalEmpty
+    ? buildTocHtmlFromEntries(outlineEntries)
+    : stripExistingTocPageNumbers(fallbackHtml);
 
   return injectTocPageNumbers(baseHtml, numberedEntries);
 }
@@ -423,27 +417,55 @@ function buildOutlineEntries(
   tocHtml: string,
 ) {
   const visibleTocEntries = extractTocRenderableEntries(tocHtml);
+  const currentChapters = chapterSections
+    .filter((chapter) => !isTocChapter(chapter.title))
+    .map((chapter) => ({ title: chapter.title, level: 1 }));
 
-  if (visibleTocEntries.length > 0) {
-    // Loyalty to the editor/original document: if the TOC has content, 
-    // we use ONLY what is visible. No automatic supplementation that 
-    // breaks the original layout.
-    return visibleTocEntries;
+  if (visibleTocEntries.length === 0) {
+    const sourceOutline = project.document.source?.outline?.filter(
+      (entry) => !isTocChapter(entry.title),
+    );
+    return sourceOutline && sourceOutline.length > 0 ? sourceOutline : currentChapters;
   }
 
-  // Only if the TOC is completely empty, we provide a fallback from the outline or chapters
+  // MERGE: el índice visible es la fuente primaria. Suplementamos con:
+  // - Entradas del `source.outline` original que no están visibles.
+  // - Capítulos actuales (títulos reales) que no están visibles — esto cubre
+  //   los capítulos añadidos por el usuario después de la importación.
+  // Los capítulos eliminados desaparecen porque al re-inyectar no encuentran un
+  // capítulo real que las respalde; injectTocPageNumbers marca las que no
+  // coinciden con un número y después las entradas huérfanas se limpian.
+  const existingKeys = visibleTocEntries
+    .map((entry) => normalizeMatchKey(entry.title))
+    .filter(Boolean);
+
+  const isAlreadyRepresented = (candidateKey: string) => {
+    if (!candidateKey) return true;
+    return existingKeys.some(
+      (key) => key === candidateKey || key.includes(candidateKey) || candidateKey.includes(key),
+    );
+  };
+
   const sourceOutline = project.document.source?.outline?.filter(
     (entry) => !isTocChapter(entry.title),
   );
 
-  return sourceOutline && sourceOutline.length > 0
-    ? sourceOutline
-    : chapterSections
-        .filter((chapter) => !isTocChapter(chapter.title))
-        .map((chapter) => ({
-          title: chapter.title,
-          level: 1,
-        }));
+  const supplementCandidates = [
+    ...(sourceOutline ?? []),
+    ...currentChapters,
+  ];
+  const supplementary: Array<{ title: string; level: number }> = [];
+  const supplementKeys = new Set<string>();
+  for (const entry of supplementCandidates) {
+    const key = normalizeMatchKey(entry.title);
+    if (!key) continue;
+    if (isAlreadyRepresented(key)) continue;
+    if (supplementKeys.has(key)) continue;
+    supplementary.push(entry);
+    supplementKeys.add(key);
+  }
+
+  return [...visibleTocEntries, ...supplementary];
 }
 
 function extractTocRenderableEntries(html: string) {
@@ -559,24 +581,30 @@ function measureOutlineEntryPageMetrics(
       continue;
     }
 
-    // Try to find the chapter that likely contains this sub-entry
-    const matchingRecord = pageRecords.find((page) => {
-      return matchesOutlineText(page.chapterTitle, matchTitle) || matchesOutlineText(matchTitle, page.chapterTitle);
-    });
-
-    if (matchingRecord) {
-      firstPages.push(matchingRecord.pageNumber);
-      // We don't advance pageCursor for fallbacks to avoid skipping other entries 
-      // that might have better matches later.
+    // Relajar el cursor: sub-entradas cuyo texto aparece en una página anterior
+    // (p. ej. "Día 1" cuando "Introducción" ya consumió el cursor).
+    const matchedIgnoringCursor = pageRecords.find((page) =>
+      matchesOutlineText(page.text, matchTitle),
+    );
+    if (matchedIgnoringCursor) {
+      firstPages.push(matchedIgnoringCursor.pageNumber);
       continue;
     }
 
-    const fallbackPage = metrics.firstPageByChapterId.get(chapterSections.find(c => !isTocChapter(c.title))?.id ?? '');
-    if (fallbackPage) {
-      firstPages.push(fallbackPage);
-    } else {
-      firstPages.push(0);
+    // Fallback por título de capítulo (sub-entradas sin texto coincidente).
+    const matchingRecord = pageRecords.find(
+      (page) =>
+        matchesOutlineText(page.chapterTitle, matchTitle) ||
+        matchesOutlineText(matchTitle, page.chapterTitle),
+    );
+    if (matchingRecord) {
+      firstPages.push(matchingRecord.pageNumber);
+      continue;
     }
+
+    // Huérfana (p. ej. capítulo borrado que quedó en el índice persistido).
+    // Marcamos con 0 para que se filtre de `numberedEntries` y no se re-inyecte.
+    firstPages.push(0);
   }
 
   return {
@@ -588,47 +616,135 @@ function injectTocPageNumbers(
   html: string,
   numberedEntries: TocNumberedEntry[],
 ) {
-  let entryIndex = 0;
+  const remaining = numberedEntries.slice();
 
-  return html.replace(
-    /<(p|li|h[1-6])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi,
-    (fullMatch, tagName: string, rawAttributes = '', innerHtml: string) => {
-      if (entryIndex >= numberedEntries.length) {
-        return fullMatch;
-      }
+  // Reemplaza cada <p|li|h*> candidato por la forma semántica
+  //   <tag class="toc-entry" …><span class="toc-title">…</span><span class="toc-leader"></span><span class="toc-page">N</span></tag>
+  // Empareja por texto normalizado; si el nodo no corresponde a ninguna entrada, se deja tal cual.
+  const withInjected = html.replace(
+    /<(p|li|h[1-6])((?:\s[^>]*)?)>([\s\S]*?)<\/\1>/gi,
+    (fullMatch, tagName: string, rawAttributes: string = '', innerHtml: string) => {
+      const titleHtml = extractTocTitleHtml(innerHtml);
+      const plainText = normalizeMatchKey(stripHtmlTags(titleHtml));
+      if (!plainText) return fullMatch;
 
-      const plainText = normalizeMatchKey(stripHtmlTags(innerHtml));
-      const expectedText = normalizeMatchKey(numberedEntries[entryIndex].title);
+      // Busca la primera entrada cuyo título coincida; no asume orden estricto
+      const matchIndex = remaining.findIndex((entry) => {
+        const expected = normalizeMatchKey(entry.title);
+        return expected && matchesOutlineText(plainText, expected);
+      });
+      if (matchIndex < 0) return fullMatch;
 
-      if (!plainText || !matchesOutlineText(plainText, expectedText)) {
-        return fullMatch;
-      }
-
-      const entry = numberedEntries[entryIndex];
-      entryIndex += 1;
-
-      // Remove previous numbering if exists (periods or hyphens followed by a page number)
-      const cleanInnerHtml = innerHtml.replace(/\s*[-.]+\s*\d+\s*$/, '').trim();
-      const leader = buildDotLeader(entry.level);
-
-      return `<${tagName}${rawAttributes}>${cleanInnerHtml}${leader}${entry.firstPage}</${tagName}>`;
+      const entry = remaining.splice(matchIndex, 1)[0];
+      const attrs = ensureTocEntryAttributes(rawAttributes, entry.level);
+      return (
+        `<${tagName}${attrs}>` +
+        `<span class="toc-title">${titleHtml}</span>` +
+        `<span class="toc-leader" aria-hidden="true"></span>` +
+        `<span class="toc-page">${entry.firstPage}</span>` +
+        `</${tagName}>`
+      );
     },
   );
+
+  // Añade al final las entradas que no encontraron un nodo existente (capítulos nuevos)
+  if (remaining.length === 0) {
+    return withInjected;
+  }
+
+  const extraHtml = remaining
+    .map((entry) => {
+      const tag = entry.level <= 1 ? 'h2' : 'li';
+      const attrs = ` class="toc-entry" data-toc-entry="true" data-toc-level="${Math.max(1, entry.level)}"`;
+      return (
+        `<${tag}${attrs}>` +
+        `<span class="toc-title">${decodeHtmlEntities(entry.title)}</span>` +
+        `<span class="toc-leader" aria-hidden="true"></span>` +
+        `<span class="toc-page">${entry.firstPage}</span>` +
+        `</${tag}>`
+      );
+    })
+    .join('');
+
+  // Si el TOC tiene <ul>, mete los <li> dentro del último; en caso contrario, los añade al final.
+  if (/<\/ul>/i.test(withInjected) && remaining.every((entry) => entry.level > 1)) {
+    return withInjected.replace(/<\/ul>(?![\s\S]*<\/ul>)/i, `${extraHtml}</ul>`);
+  }
+  return `${withInjected}${extraHtml}`;
+}
+
+function extractTocTitleHtml(innerHtml: string) {
+  const titleSpan = innerHtml.match(/<span\s+[^>]*class="[^"]*\btoc-title\b[^"]*"[^>]*>([\s\S]*?)<\/span>/i);
+  if (titleSpan) return titleSpan[1];
+
+  // Quita leader/page si vienen, y cualquier sufijo "…··· 5" textual
+  let current = innerHtml
+    .replace(/<span\s+[^>]*class="[^"]*\btoc-leader\b[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '')
+    .replace(/<span\s+[^>]*class="[^"]*\btoc-page\b[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '')
+    .replace(/<span\s+data-toc-leader="true"[^>]*>[\s\S]*?<\/span>/gi, '')
+    .replace(/<span\s+data-toc-page="true"[^>]*>[\s\S]*?<\/span>/gi, '')
+    .replace(/<span\s+data-toc-title="true"[^>]*>([\s\S]*?)<\/span>/gi, '$1');
+  current = current.replace(/\s*[·.\-–—~∿]{2,}\s*\d+\s*$/u, '').trim();
+  return current;
+}
+
+function ensureTocEntryAttributes(rawAttributes: string, level: number) {
+  let attrs = rawAttributes ?? '';
+  if (/\bclass="([^"]*)"/i.test(attrs)) {
+    attrs = attrs.replace(/\bclass="([^"]*)"/i, (_m, cls: string) => {
+      const normalized = /\btoc-entry\b/.test(cls) ? cls : `${cls} toc-entry`.trim();
+      return `class="${normalized}"`;
+    });
+  } else {
+    attrs = `${attrs} class="toc-entry"`;
+  }
+  if (!/\bdata-toc-entry=/.test(attrs)) {
+    attrs = `${attrs} data-toc-entry="true"`;
+  }
+  if (/\bdata-toc-level=/.test(attrs)) {
+    attrs = attrs.replace(/\bdata-toc-level="[^"]*"/i, `data-toc-level="${Math.max(1, level)}"`);
+  } else {
+    attrs = `${attrs} data-toc-level="${Math.max(1, level)}"`;
+  }
+  return attrs.startsWith(' ') ? attrs : ` ${attrs}`;
 }
 
 export function stripExistingTocPageNumbers(html: string) {
   let current = html;
 
-  // 1. Remove the data-toc-page spans and leaders first
-  current = current.replace(/<span data-toc-leader="true"[^>]*>[\s\S]*?<\/span>/gi, '');
-  current = current.replace(/<span data-toc-page="true"[^>]*>[\s\S]*?<\/span>/gi, '');
-  
-  // 2. Unwrap the title span if it exists
-  current = current.replace(/<span data-toc-title="true">([\s\S]*?)<\/span>/gi, '$1');
-  
-  // 3. Remove all data-toc attributes from parent tags
+  // 1. Legacy: data-toc-leader / data-toc-page spans
+  current = current.replace(/<span\s+data-toc-leader="true"[^>]*>[\s\S]*?<\/span>/gi, '');
+  current = current.replace(/<span\s+data-toc-page="true"[^>]*>[\s\S]*?<\/span>/gi, '');
+  current = current.replace(/<span\s+data-toc-title="true"[^>]*>([\s\S]*?)<\/span>/gi, '$1');
+
+  // 2. Nuevos spans semánticos por class
+  current = current.replace(/<span\s+[^>]*class="[^"]*\btoc-leader\b[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '');
+  current = current.replace(/<span\s+[^>]*class="[^"]*\btoc-page\b[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '');
+  current = current.replace(
+    /<span\s+[^>]*class="[^"]*\btoc-title\b[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
+    '$1',
+  );
+
+  // 3. Sufijos textuales "……5" o "·····5" dentro del nodo
+  current = current.replace(
+    /(<(p|li|h[1-6])(?:\s[^>]*)?>)([\s\S]*?)(<\/\2>)/gi,
+    (_m, open: string, _tag: string, inner: string, close: string) => {
+      const cleaned = inner.replace(/\s*[·.\-–—~∿]{2,}\s*\d+\s*$/u, '').trim();
+      return `${open}${cleaned}${close}`;
+    },
+  );
+
+  // 4. Atributos data-toc-* residuales
   current = current.replace(/\sdata-toc-entry="true"/gi, '');
   current = current.replace(/\sdata-toc-level="[^"]*"/gi, '');
+  current = current.replace(/\sclass="([^"]*)"/gi, (match, cls: string) => {
+    const cleaned = cls
+      .split(/\s+/)
+      .filter((c: string) => c && c !== 'toc-entry')
+      .join(' ')
+      .trim();
+    return cleaned ? ` class="${cleaned}"` : '';
+  });
 
   return current.trim();
 }

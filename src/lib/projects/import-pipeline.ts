@@ -485,24 +485,37 @@ function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
     }];
   }
 
-  // FUSIONA <li>Título</li> + <li>.....5</li> y RELLENA con puntos fijos
+  // FUSIONA <li>Título</li> + <li>·····5</li> en una sola entrada semántica:
+  //   <li class="toc-entry"><span class="toc-title">…</span><span class="toc-leader"></span><span class="toc-page">5</span></li>
+  // Los `·` de relleno los pinta CSS (.toc-leader::before). No insertamos puntos como texto.
   const merged: string[] = [];
   for (let i = 0; i < items.length; i++) {
     const currText = textFromHtml(items[i]).trim().replace(/\s+/g, ' ');
-    const nextText = items[i + 1]? textFromHtml(items[i + 1]).trim() : '';
+    const nextText = items[i + 1] ? textFromHtml(items[i + 1]).trim() : '';
     const isNextLeader = /^[·._\-—\s]{2,}\d+\s*$/.test(nextText);
 
-    if (currText && isNextLeader &&!/^\d+$/.test(currText)) {
-      const num = nextText.match(/(\d+)/)?.[1]?? '';
-      // 70 caracteres de ancho total (ajusta a 65 si se te corta, o 75 si sobra espacio)
-      const targetWidth = 70;
-      const dotsNeeded = Math.max(3, targetWidth - currText.length - num.length);
-      const padded = `${currText}${'.'.repeat(dotsNeeded)}${num}`;
-
-      merged.push(`<li>${escapeHtml(padded)}</li>`);
+    if (currText && isNextLeader && !/^\d+$/.test(currText)) {
+      const num = nextText.match(/(\d+)/)?.[1] ?? '';
+      merged.push(
+        `<li class="toc-entry" data-toc-entry="true" data-toc-level="2">` +
+          `<span class="toc-title">${escapeHtml(currText)}</span>` +
+          `<span class="toc-leader" aria-hidden="true"></span>` +
+          `<span class="toc-page">${escapeHtml(num)}</span>` +
+          `</li>`,
+      );
       i++; // saltamos el líder
     } else if (!/^[·._\-—\s]{2,}\d+\s*$/.test(currText)) {
-      merged.push(items[i]);
+      // Entrada sin número (índice "limpio"): envolver en .toc-entry para que
+      // "Actualizar numeración" pueda inyectar .toc-leader + .toc-page sin tocar el texto.
+      if (currText) {
+        merged.push(
+          `<li class="toc-entry" data-toc-entry="true" data-toc-level="2">` +
+            `<span class="toc-title">${escapeHtml(currText)}</span>` +
+            `</li>`,
+        );
+      } else {
+        merged.push(items[i]);
+      }
     }
   }
 
@@ -554,15 +567,50 @@ function parseHtmlBlocks(input: string) {
 
     let html = clean;
 
-    // Si teníamos un líder pendiente, lo inyectamos AHORA
+    // Si teníamos un líder pendiente, lo inyectamos AHORA.
+    // Envolvemos el contenido del nodo en spans semánticos para que el CSS leader
+    // funcione y el botón "Actualizar numeración" pueda reescribirlo sin tocar el texto.
     if (pendingLeader) {
+      const escapedPage = escapeHtml(pendingLeader);
       if (tag === 'ul' || tag === 'ol') {
-        // inyecta en el ÚLTIMO <li> de la lista
-        html = html.replace(/<\/li>(?![\s\S]*<\/li>)/,
-          `<span class="toc-leader"></span><span class="toc-page">${pendingLeader}</span></li>`);
+        // Inyecta en el ÚLTIMO <li> de la lista: envuelve su contenido actual como toc-title.
+        html = html.replace(
+          /<li([^>]*)>([\s\S]*?)<\/li>(?![\s\S]*<\/li>)/,
+          (_m, attrs: string, inner: string) => {
+            const hasClass = /\bclass="([^"]*)"/i.test(attrs);
+            const newAttrs = hasClass
+              ? attrs.replace(/\bclass="([^"]*)"/i, (_c, cls) =>
+                  `class="${/\btoc-entry\b/.test(cls) ? cls : `${cls} toc-entry`.trim()}"`,
+                )
+              : `${attrs} class="toc-entry"`;
+            return (
+              `<li${newAttrs} data-toc-entry="true" data-toc-level="2">` +
+              `<span class="toc-title">${inner}</span>` +
+              `<span class="toc-leader" aria-hidden="true"></span>` +
+              `<span class="toc-page">${escapedPage}</span>` +
+              `</li>`
+            );
+          },
+        );
       } else {
-        html = html.replace(/<\/(p|h[1-6]|blockquote)>$/,
-          `<span class="toc-leader"></span><span class="toc-page">${pendingLeader}</span></$1>`);
+        html = html.replace(
+          /^<(p|h[1-6]|blockquote)([^>]*)>([\s\S]*?)<\/\1>$/,
+          (_m, t: string, attrs: string, inner: string) => {
+            const hasClass = /\bclass="([^"]*)"/i.test(attrs);
+            const newAttrs = hasClass
+              ? attrs.replace(/\bclass="([^"]*)"/i, (_c, cls) =>
+                  `class="${/\btoc-entry\b/.test(cls) ? cls : `${cls} toc-entry`.trim()}"`,
+                )
+              : `${attrs} class="toc-entry"`;
+            return (
+              `<${t}${newAttrs} data-toc-entry="true" data-toc-level="2">` +
+              `<span class="toc-title">${inner}</span>` +
+              `<span class="toc-leader" aria-hidden="true"></span>` +
+              `<span class="toc-page">${escapedPage}</span>` +
+              `</${t}>`
+            );
+          },
+        );
       }
       pendingLeader = null;
     }
