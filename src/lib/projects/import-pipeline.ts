@@ -541,8 +541,10 @@ function parseHtmlBlocks(input: string) {
     }
 
     if (tag === 'ul' || tag === 'ol') {
-      return splitHtmlListBlocks(clean);
-    }
+       const listBlocks = splitHtmlListBlocks(clean);
+       // Si el siguiente fragmento es un párrafo solo con puntos y número, lo fusionamos
+       return listBlocks;
+     }
 
     if (tag === 'blockquote') {
       return [
@@ -994,7 +996,23 @@ export function buildImportedDocumentSeed({
       // 2) normaliza cualquier líder a puntos medios y separa número
       .replace(/([·._\-—\s]{2,})(\d+)<\/p>/gi, ' ··· $2</p>')
   : null;
-  const htmlBlocks = normalizedHtml ? parseHtmlBlocks(normalizedHtml) : [];
+ let htmlBlocks = normalizedHtml? parseHtmlBlocks(normalizedHtml) : [];
+
+// FIX TOC: fusiona <li>Día X...</li> seguido de <p>____5</p>
+htmlBlocks = htmlBlocks.reduce<ParsedBlock[]>((acc, block, i) => {
+  const prev = acc[acc.length - 1];
+  const isLeaderPara = block.kind === 'paragraph' && /^[·._\-—\s]{3,}\d+\s*$/.test(block.text);
+
+  if (prev && (prev.kind === 'list' || prev.kind === 'paragraph') && isLeaderPara) {
+    const num = block.text.match(/(\d+)\s*$/ )?.[1]?? '';
+    // quita el último </li></ul> o </p>, añade puntos y número
+    prev.html = prev.html.replace(/<\/(li|ul|p)>$/, ` ··· ${num}</$1>`);
+    prev.text = `${prev.text} ··· ${num}`;
+    return acc; // no añadimos el párrafo de líderes
+  }
+  acc.push(block);
+  return acc;
+  }, []);
   const textBlocks = parseTextBlocks(text, textImportMode);
   const parsedBlocks =
     htmlBlocks.some((block) => block.html.includes('<br'))
