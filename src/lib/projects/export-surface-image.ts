@@ -759,83 +759,179 @@ function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
           background: var(--preview-paper);
           border: 1px solid transparent;
           color: var(--text-primary);
-          font-family: "DM Sans", system-ui, sans-serif;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
           font-size: ${config.fontSize}px;
           line-height: ${config.lineHeight};
           padding: ${config.marginTop}px ${config.marginRight}px ${config.marginBottom}px ${config.marginLeft}px;
           word-wrap: break-word;
           overflow-wrap: break-word;
         }
-        #export-page img {
+
+        /* Tipografía y bloques: copia 1:1 del editor y globals.css */
+        .ProseMirror p,
+        .ProseMirror li,
+        .ProseMirror h1,
+        .ProseMirror h2,
+        .ProseMirror h3,
+        .ProseMirror h4,
+        .ProseMirror h5,
+        .ProseMirror h6 {
+          font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+          font-variant-numeric: tabular-nums;
+        }
+
+        .ProseMirror img {
           max-width: 100%;
           height: auto;
           object-fit: cover;
         }
-        #export-page p {
+        .ProseMirror p {
           margin: 0;
           overflow-wrap: break-word;
           word-break: break-word;
         }
-        #export-page p + p {
+        .ProseMirror p + p {
           margin-top: 0.8rem;
         }
-        #export-page h1 {
+        .ProseMirror h1 {
           font-size: 2rem;
           line-height: 1.1;
           font-weight: 800;
           margin: 0 0 1rem 0;
           color: var(--text-primary);
         }
-        #export-page h2 {
+        .ProseMirror h2 {
           font-size: 1.5rem;
           line-height: 1.2;
           font-weight: 750;
           margin: 0 0 0.85rem 0;
           color: var(--text-primary);
         }
-        #export-page h3 {
+        .ProseMirror h3 {
           font-size: 1.2rem;
           line-height: 1.3;
           font-weight: 700;
           margin: 0 0 0.75rem 0;
           color: var(--text-primary);
         }
-        #export-page h4 {
+        .ProseMirror h4 {
           font-size: 1.05rem;
           line-height: 1.35;
           font-weight: 700;
           margin: 0 0 0.65rem 0;
           color: var(--text-primary);
         }
-        #export-page h5,
-        #export-page h6 {
+        .ProseMirror h5,
+        .ProseMirror h6 {
           font-size: 0.95rem;
           line-height: 1.4;
           font-weight: 700;
           margin: 0 0 0.6rem 0;
           color: var(--text-primary);
         }
-        #export-page ul,
-        #export-page ol {
+
+        .ProseMirror ul,
+        .ProseMirror ol {
           margin: 0 0 1rem 1.5rem;
           padding: 0;
         }
-        #export-page ul:not([data-bullet-style]) { list-style-type: disc; }
-        #export-page ol:not([data-list-style]) { list-style-type: decimal; }
-        #export-page li { margin: 0.35rem 0; }
-        #export-page blockquote {
+        .ProseMirror ul:not([data-bullet-style]) { list-style-type: disc; }
+        .ProseMirror ol:not([data-list-style]) { list-style-type: decimal; }
+        .ProseMirror li { margin: 0.35rem 0; }
+
+        /* Estilos de viñetas especiales (copiados de MultipageFlow) */
+        .ProseMirror ul[data-bullet-style="diamond"],
+        .ProseMirror ul[data-bullet-style="arrow"],
+        .ProseMirror ul[data-bullet-style="check"] {
+          list-style: none;
+          padding-left: 0;
+        }
+        .ProseMirror ul[data-bullet-style="diamond"] > li,
+        .ProseMirror ul[data-bullet-style="arrow"] > li,
+        .ProseMirror ul[data-bullet-style="check"] > li {
+          position: relative;
+          padding-left: 1.5rem;
+        }
+        .ProseMirror ul[data-bullet-style="diamond"] > li::before { content: "◆"; }
+        .ProseMirror ul[data-bullet-style="arrow"] > li::before { content: "➤"; }
+        .ProseMirror ul[data-bullet-style="check"] > li::before { content: "✓"; }
+        .ProseMirror ul[data-bullet-style="diamond"] > li::before,
+        .ProseMirror ul[data-bullet-style="arrow"] > li::before,
+        .ProseMirror ul[data-bullet-style="check"] > li::before {
+          position: absolute;
+          left: 0;
+          color: var(--text-primary);
+          font-weight: 700;
+        }
+
+        /* Estilos de listas numeradas especiales (copiados de MultipageFlow) */
+        .ProseMirror ol[data-list-style="decimal-parentheses"],
+        .ProseMirror ol[data-list-style="lower-alpha-parentheses"] {
+          list-style: none;
+          counter-reset: custom-list;
+          padding-left: 0;
+        }
+        .ProseMirror ol[data-list-style="decimal-parentheses"] > li,
+        .ProseMirror ol[data-list-style="lower-alpha-parentheses"] > li {
+          position: relative;
+          padding-left: 2rem;
+          counter-increment: custom-list;
+        }
+        .ProseMirror ol[data-list-style="decimal-parentheses"] > li::before { content: counter(custom-list) ") "; }
+        .ProseMirror ol[data-list-style="lower-alpha-parentheses"] > li::before { content: counter(custom-list, lower-alpha) ") "; }
+        .ProseMirror ol[data-list-style="decimal-parentheses"] > li::before,
+        .ProseMirror ol[data-list-style="lower-alpha-parentheses"] > li::before {
+          position: absolute;
+          left: 0;
+          color: var(--text-primary);
+          font-weight: 600;
+        }
+
+        .ProseMirror blockquote {
           margin: 1rem 0;
           padding: 0.25rem 0 0.25rem 1rem;
           border-left: 4px solid var(--preview-quote-border);
           background: transparent;
           color: var(--text-secondary);
         }
-        #export-page blockquote p { margin: 0; }
-        #export-page hr[data-page-break] { display: none; }
+        .ProseMirror blockquote p { margin: 0; }
+        
+        /* Índice con CSS leader (copiado de globals.css) */
+        [data-toc-entry="true"] {
+          display: flex !important;
+          align-items: baseline;
+          gap: 0;
+          margin: 0;
+          padding: 0;
+          white-space: nowrap;
+          list-style: none;
+          line-height: 1.5;
+        }
+
+        [data-toc-entry="true"][data-toc-page]::before {
+          content: "······································································································";
+          order: 1;
+          flex: 1 1 auto;
+          overflow: hidden;
+          margin: 0 0.35em;
+          letter-spacing: 0.15em;
+          color: inherit;
+          white-space: nowrap;
+          font-variant-numeric: tabular-nums;
+        }
+
+        [data-toc-entry="true"][data-toc-page]::after {
+          content: attr(data-toc-page);
+          order: 2;
+          flex: 0 0 auto;
+          font-variant-numeric: tabular-nums;
+        }
+
+        .ProseMirror hr[data-page-break] { display: none; }
       </style>
     </head>
     <body>
-      <div id="export-page">${page.content ?? ''}</div>
+      <div id="export-page" class="ProseMirror">${page.content ?? ''}</div>
     </body>
   </html>`;
 }
