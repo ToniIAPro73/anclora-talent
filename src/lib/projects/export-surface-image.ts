@@ -345,7 +345,10 @@ async function renderHtmlToImageDataUrl({
       deviceScaleFactor: 1,
     });
 
-    await page.setContent(html, { waitUntil: 'networkidle' });
+    // Use 'load' rather than 'networkidle' so that an unreachable Google Fonts
+    // CDN can't stall the screenshot (the inlined @font-face fallback ensures
+    // we still have Latin glyphs when the external CSS never loads).
+    await page.setContent(html, { waitUntil: 'load' });
     await page.waitForFunction(async () => {
       const images = Array.from(document.images);
       await Promise.all(
@@ -737,12 +740,17 @@ function renderBackCoverPreviewHtml(project: ProjectRecord) {
   </html>`;
 }
 
-function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
+async function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
   const googleFonts = [
     'JetBrains+Mono:wght@400;500;600;700;800',
     'DM+Sans:wght@400;500;700;800;900'
   ];
-  
+
+  // Inline the embedded font so the serverless Chromium (which ships without
+  // system fonts) can always paint Latin glyphs even if Google Fonts is
+  // unreachable. Without this, screenshots render as "tofu" rectangles.
+  const embeddedFontFaceCss = await loadEmbeddedFontFaceCss();
+
   return `<!DOCTYPE html>
   <html>
     <head>
@@ -750,6 +758,7 @@ function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
       <meta name="viewport" content="width=${config.pageWidth}, initial-scale=1" />
       ${googleFonts.map(f => `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${f}&display=swap" />`).join('\n')}
       <style>
+        ${embeddedFontFaceCss}
         :root {
           --text-primary: #0C1820;
           --text-secondary: #3A5068;
@@ -768,7 +777,7 @@ function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
           background: var(--preview-paper);
           border: 1px solid transparent;
           color: var(--text-primary);
-          font-family: "JetBrains Mono", "DM Sans", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+          font-family: "JetBrains Mono", "DM Sans", "${EMBEDDED_BODY_FONT_FAMILY}", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
           font-size: ${config.fontSize}px;
           line-height: ${config.lineHeight};
           padding: ${config.marginTop}px ${config.marginRight}px ${config.marginBottom}px ${config.marginLeft}px;
@@ -779,7 +788,7 @@ function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
         /* Contenedor principal: replica exacta del editor */
         .ProseMirror {
           font-variant-numeric: tabular-nums !important;
-          font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+          font-family: "JetBrains Mono", "${EMBEDDED_BODY_FONT_FAMILY}", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
         }
 
         .ProseMirror p,
@@ -790,7 +799,7 @@ function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
         .ProseMirror h4,
         .ProseMirror h5,
         .ProseMirror h6 {
-          font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+          font-family: "JetBrains Mono", "${EMBEDDED_BODY_FONT_FAMILY}", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
           font-variant-numeric: tabular-nums;
         }
 
@@ -904,7 +913,7 @@ function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
           white-space: nowrap !important;
           list-style: none !important;
           line-height: 1.5 !important;
-          font-family: "JetBrains Mono", ui-monospace, monospace !important;
+          font-family: "JetBrains Mono", "${EMBEDDED_BODY_FONT_FAMILY}", ui-monospace, monospace !important;
         }
 
         [data-toc-entry="true"][data-toc-page]::before {
@@ -1116,7 +1125,7 @@ export async function buildContentPageExportImageDataUrl(
   }
 
   const browserRendered = await renderHtmlToImageDataUrl({
-    html: renderContentPreviewHtml(page, config),
+    html: await renderContentPreviewHtml(page, config),
     width: config.pageWidth,
     height: config.pageHeight,
   });
