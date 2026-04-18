@@ -204,6 +204,12 @@ const TocBlockAttributes = Extension.create({
             renderHTML: (attributes) =>
               attributes.tocLevel ? { 'data-toc-level': String(attributes.tocLevel) } : {},
           },
+          tocPage: {
+            default: null,
+            parseHTML: (element) => element.getAttribute('data-toc-page'),
+            renderHTML: (attributes) =>
+              attributes.tocPage ? { 'data-toc-page': String(attributes.tocPage) } : {},
+          },
         },
       },
     ];
@@ -1621,75 +1627,46 @@ export function AdvancedRichTextEditor({
               .preview-page p + p {
                 margin-top: 0.8rem;
               }
+              /* Indice con leader CSS: el paragraph/li tiene data-toc-entry
+                 (contenedor flex) y opcionalmente data-toc-page (numero).
+                 Titulo = texto plano (anon flex item, order 0).
+                 ::before = puntos que rellenan (flex:1, order 1).
+                 ::after  = numero de pagina desde attr() (order 2). */
               .ProseMirror [data-toc-entry="true"],
-              .preview-page [data-toc-entry="true"],
-              .ProseMirror [data-toc-line="true"],
-              .preview-page [data-toc-line="true"] {
+              .preview-page [data-toc-entry="true"] {
                 display: flex;
                 flex-wrap: wrap;
                 align-items: baseline;
-                gap: 0.5rem;
-                width: 100%;
-                min-width: 0;
-                overflow: visible;
+                gap: 0;
+                margin: 0;
+                padding: 0;
+                line-height: 1.5;
               }
-              .ProseMirror li[data-toc-entry="true"],
-              .preview-page li[data-toc-entry="true"] {
-                list-style: none;
-                margin-left: 0;
-                padding-left: 0;
-              }
-              .ProseMirror li[data-toc-entry="true"]::before,
-              .preview-page li[data-toc-entry="true"]::before {
-                content: "•";
-                flex: 0 0 auto;
-                margin-right: 0.5rem;
-              }
-              .ProseMirror [data-toc-title="true"],
-              .preview-page [data-toc-title="true"] {
-                display: block;
-                flex: 0 1 auto;
-                min-width: 0;
-                overflow: visible;
-                text-overflow: clip;
-                white-space: normal;
-              }
-              .ProseMirror [data-toc-title="true"] *,
-              .preview-page [data-toc-title="true"] * {
-                white-space: inherit !important;
-              }
-              .ProseMirror [data-toc-title="true"] br,
-              .preview-page [data-toc-title="true"] br {
-                display: block;
-              }
-              .ProseMirror [data-toc-leader="true"],
-              .preview-page [data-toc-leader="true"] {
-                display: block;
-                flex: 1 1 6rem;
-                min-width: 3rem;
+              .ProseMirror [data-toc-entry="true"][data-toc-page]::before,
+              .preview-page [data-toc-entry="true"][data-toc-page]::before {
+                content: "······································································································";
+                order: 1;
+                flex: 1 1 auto;
                 overflow: hidden;
-                color: var(--text-tertiary);
-                line-height: 1;
-                transform: translateY(-0.02em);
+                margin: 0 0.35em;
+                letter-spacing: 0.15em;
+                color: inherit;
                 white-space: nowrap;
-                font-size: 0;
+                font-variant-numeric: tabular-nums;
               }
-              .ProseMirror [data-toc-leader="true"]::before,
-              .preview-page [data-toc-leader="true"]::before {
-                content: '················································································································································';
-                display: block;
-                font-size: 1rem;
-                letter-spacing: 0.08em;
-                white-space: nowrap;
-              }
-              .ProseMirror [data-toc-page="true"],
-              .preview-page [data-toc-page="true"] {
-                display: inline-block;
+              .ProseMirror [data-toc-entry="true"][data-toc-page]::after,
+              .preview-page [data-toc-entry="true"][data-toc-page]::after {
+                content: attr(data-toc-page);
+                order: 2;
                 flex: 0 0 auto;
-                min-width: 1.5rem;
-                text-align: right;
-                font-weight: 700;
-                white-space: nowrap;
+                margin-left: auto;
+                font-variant-numeric: tabular-nums;
+              }
+              .ProseMirror ul.toc-list,
+              .preview-page ul.toc-list {
+                list-style: none;
+                margin: 0;
+                padding: 0;
               }
               .ProseMirror h1,
               .preview-page h1 {

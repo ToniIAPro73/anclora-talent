@@ -655,7 +655,7 @@ describe('preview-builder', () => {
 
       expect(syncedToc).not.toBeNull();
       expect(syncedToc?.chapterId).toBe('toc-chapter');
-      expect(syncedToc?.html).toContain('<span class="toc-page">3</span>');
+      expect(syncedToc?.html).toMatch(/data-toc-page="3"/);
     });
 
     it('matches toc entries even when the index text is more descriptive than the chapter title', () => {
@@ -697,7 +697,7 @@ describe('preview-builder', () => {
       const syncedToc = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
 
       expect(syncedToc?.html).toContain('Introducción: Activación de la Presencia');
-      expect(syncedToc?.html).toContain('<span class="toc-page">3</span>');
+      expect(syncedToc?.html).toMatch(/data-toc-page="3"/);
     });
 
     it('handles duplicate titles in TOC by sequential matching', () => {
@@ -738,10 +738,10 @@ describe('preview-builder', () => {
       const syncedToc = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
 
       expect(syncedToc?.html).toContain(
-        '<p class="toc-entry" data-toc-entry="true" data-toc-level="2"><span class="toc-title">Reflexión</span><span class="toc-leader" aria-hidden="true"></span><span class="toc-page">3</span></p>',
+        '<p data-toc-entry="true" data-toc-level="2" data-toc-page="3">Reflexión</p>',
       );
       expect(syncedToc?.html).toContain(
-        '<p class="toc-entry" data-toc-entry="true" data-toc-level="2"><span class="toc-title">Reflexión</span><span class="toc-leader" aria-hidden="true"></span><span class="toc-page">4</span></p>',
+        '<p data-toc-entry="true" data-toc-level="2" data-toc-page="4">Reflexión</p>',
       );
     });
 
@@ -784,8 +784,8 @@ describe('preview-builder', () => {
 
       expect(syncedToc?.html).toContain('Introducción');
       expect(syncedToc?.html).toContain('Capítulo 2');
-      expect(syncedToc?.html).toContain('<span class="toc-page">3</span>');
-      expect(syncedToc?.html).toContain('<span class="toc-page">4</span>');
+      expect(syncedToc?.html).toMatch(/data-toc-page="3"/);
+      expect(syncedToc?.html).toMatch(/data-toc-page="4"/);
     });
 
     it('uses the visible toc chapter entries as the source of truth when the outline is incomplete', () => {
@@ -837,11 +837,11 @@ describe('preview-builder', () => {
 
       expect(syncedToc?.html).toContain('Día 1: Autoimagen.');
       expect(syncedToc?.html).toContain('Día 2: Fortalezas latentes.');
-      expect(syncedToc?.html).toMatch(/<li[^>]*class="[^"]*\btoc-entry\b/);
-      expect(syncedToc?.html).toContain('<span class="toc-page">3</span>');
+      expect(syncedToc?.html).toMatch(/<li[^>]*\bdata-toc-entry="true"/);
+      expect(syncedToc?.html).toMatch(/data-toc-page="3"/);
 
       const pageNumbers = Array.from(
-        (syncedToc?.html ?? '').matchAll(/<span class="toc-page">(\d+)<\/span>/g),
+        (syncedToc?.html ?? '').matchAll(/data-toc-page="(\d+)"/g),
       ).map((m) => m[1]);
       // Se esperan: Introducción, Día 1, Día 2, Capítulo Intro → 4 entradas
       expect(pageNumbers).toHaveLength(4);

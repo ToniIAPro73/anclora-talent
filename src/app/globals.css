@@ -275,54 +275,44 @@ hr[data-page-break="true"]::after {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
 }
 
-/* Índice: leader con puntos medios "·" rellenando el espacio entre título y número.
-   Válido para editor, preview, PDF y DOCX (todos renderizan el mismo HTML/CSS).
-   Se aplica tanto por clase como por atributo data-toc-entry para cubrir párrafos
-   importados de Word que lleguen sin clase explícita. */
+/* Índice con CSS leader: el paragraph/li tiene `data-toc-entry="true"`
+   y opcionalmente `data-toc-page="N"`. El título va como texto plano dentro
+   del bloque (sin spans anidados para que sobreviva al roundtrip del editor).
+   - ::before → puntos `·` que rellenan (flex:1, order 1)
+   - ::after  → número desde attr(data-toc-page) (order 2)
+   Funciona igual en editor (ProseMirror), preview, PDF y DOCX porque todos
+   renderizan el mismo HTML+CSS. */
 [data-toc-entry="true"],
 li.toc-entry,
 p.toc-entry,
 h1.toc-entry, h2.toc-entry, h3.toc-entry,
 h4.toc-entry, h5.toc-entry, h6.toc-entry {
   display: flex !important;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 0;
   margin: 0;
   padding: 0;
-  white-space: nowrap;
-  list-style: none;
-  line-height: 1.15;
+  line-height: 1.5;
 }
 
-[data-toc-entry="true"] .toc-title,
-.toc-entry .toc-title {
-  flex: 0 1 auto;
-  overflow: hidden;
-  text-overflow: clip;
-  white-space: nowrap;
-  min-width: 0;
-}
-
-[data-toc-entry="true"] .toc-leader,
-.toc-entry .toc-leader {
+[data-toc-entry="true"][data-toc-page]::before {
+  content: "······································································································";
+  order: 1;
   flex: 1 1 auto;
   overflow: hidden;
-  min-width: 1.5em;
   margin: 0 0.35em;
-  color: inherit;
   letter-spacing: 0.15em;
-}
-
-[data-toc-entry="true"] .toc-leader::before,
-.toc-entry .toc-leader::before {
-  content: "······································································································";
+  color: inherit;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
-[data-toc-entry="true"] .toc-page,
-.toc-entry .toc-page {
+[data-toc-entry="true"][data-toc-page]::after {
+  content: attr(data-toc-page);
+  order: 2;
   flex: 0 0 auto;
+  margin-left: auto;
   font-variant-numeric: tabular-nums;
 }
 
@@ -333,7 +323,6 @@ ul.toc-list {
   list-style: none;
 }
 
-/* Por si quedara algún <li> del índice sin .toc-entry */
 ul.toc-list > li {
   margin: 0;
   padding: 0;
