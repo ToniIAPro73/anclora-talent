@@ -329,7 +329,7 @@ function collectGoogleFontLinks(fontFamilies: Array<string | null | undefined>) 
     .join('\n');
 }
 
-async function renderHtmlToPngDataUrl({
+async function renderHtmlToImageDataUrl({
   html,
   width,
   height,
@@ -365,11 +365,15 @@ async function renderHtmlToPngDataUrl({
       return true;
     });
 
-    const buffer = await page.locator('#export-page').screenshot({ type: 'png' });
+    // Use JPEG with 80% quality to keep file sizes manageable for DOCX
+    const buffer = await page.locator('#export-page').screenshot({ 
+      type: 'jpeg',
+      quality: 80 
+    });
     await page.close();
-    return `data:image/png;base64,${buffer.toString('base64')}`;
+    return `data:image/jpeg;base64,${buffer.toString('base64')}`;
   } catch (error) {
-    console.error('[export/render] html to png failed', serializeError(error));
+    console.error('[export/render] html to jpeg failed', serializeError(error));
     return null;
   }
 }
@@ -1065,7 +1069,7 @@ export async function buildCoverExportImageDataUrl(project: ProjectRecord) {
     return project.cover.renderedImageUrl;
   }
 
-  const browserRendered = await renderHtmlToPngDataUrl({
+  const browserRendered = await renderHtmlToImageDataUrl({
     html: renderCoverPreviewHtml(project),
     width: EXPORT_PAGE_WIDTH,
     height: EXPORT_PAGE_HEIGHT,
@@ -1085,7 +1089,7 @@ export async function buildBackCoverExportImageDataUrl(project: ProjectRecord) {
     return project.backCover.renderedImageUrl;
   }
 
-  const browserRendered = await renderHtmlToPngDataUrl({
+  const browserRendered = await renderHtmlToImageDataUrl({
     html: renderBackCoverPreviewHtml(project),
     width: EXPORT_PAGE_WIDTH,
     height: EXPORT_PAGE_HEIGHT,
@@ -1111,7 +1115,7 @@ export async function buildContentPageExportImageDataUrl(
     return null;
   }
 
-  const browserRendered = await renderHtmlToPngDataUrl({
+  const browserRendered = await renderHtmlToImageDataUrl({
     html: renderContentPreviewHtml(page, config),
     width: config.pageWidth,
     height: config.pageHeight,

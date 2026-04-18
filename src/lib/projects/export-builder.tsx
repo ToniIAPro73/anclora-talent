@@ -728,11 +728,21 @@ async function loadImageBytes(imageUrl: string): Promise<DocxImagePayload | null
 
   try {
     if (imageUrl.startsWith('data:')) {
-      const [, base64 = ''] = imageUrl.split(',', 2);
+      const parts = imageUrl.split(',', 2);
+      const mime = parts[0].match(/:(.*?);/)?.[1];
+      const base64 = parts[1];
       if (!base64) return null;
+      
+      const binaryString = atob(base64);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      
       return {
-        data: Buffer.from(base64, 'base64'),
-        type: inferImageType(imageUrl),
+        data: bytes,
+        type: mime?.includes('jpeg') || mime?.includes('jpg') ? 'jpg' : 'png',
       };
     }
 
@@ -748,6 +758,15 @@ async function loadImageBytes(imageUrl: string): Promise<DocxImagePayload | null
     console.error('[docx/loadImageBytes] failed', error);
     return null;
   }
+}
+
+function escapeXml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
 
 export async function buildProjectDocxBuffer(
@@ -835,8 +854,8 @@ export async function buildProjectDocxBuffer(
 
   const doc = new DocxDocument({
     creator: 'Anclora Talent',
-    title: stripInlineHtml(project.document.title || 'Proyecto'),
-    description: stripInlineHtml(project.document.subtitle || ''),
+    title: escapeXml(stripInlineHtml(project.document.title || 'Proyecto')),
+    description: escapeXml(stripInlineHtml(project.document.subtitle || '')),
     sections,
   });
 
