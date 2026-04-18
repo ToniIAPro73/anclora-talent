@@ -19,7 +19,7 @@ import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver
 import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
 import { PaginationConfig } from './device-configs';
 import { hasRenderablePageContent, paginateContent } from './content-paginator';
-import { reconcileOverflowBreaks } from './editor-page-layout';
+import { reconcileOverflowBreaks, stripAutoBreaks } from './editor-page-layout';
 import { normalizeHtmlContent } from './html-normalize';
 
 // ==================== TYPES ====================
@@ -186,7 +186,7 @@ export function buildSyncedTocChapterContent(
   return {
     chapterId: tocSection.id,
     chapterTitle: tocSection.title,
-    html: tocSection.html,
+    html: stripAutoBreaks(tocSection.html),
   };
 }
 
@@ -619,12 +619,12 @@ function injectTocPageNumbers(
   const remaining = numberedEntries.slice();
 
   // Formato objetivo (sin spans, sobrevive al roundtrip del editor):
-  //   <tag data-toc-entry="true" data-toc-level="N" data-toc-page="M">Título</tag>
+  //   <tag data-toc-entry="true" data-toc-level="N" data-toc-page="M"><span class="toc-title">Título</span></tag>
   // CSS (::before + ::after con attr(data-toc-page)) pinta los puntos y el número.
   const withInjected = html.replace(
     /<(p|li|h[1-6])((?:\s[^>]*)?)>([\s\S]*?)<\/\1>/gi,
     (fullMatch, tagName: string, rawAttributes: string = '', innerHtml: string) => {
-      const titleHtml = extractTocTitleHtml(innerHtml);
+      const titleHtml = stripTocTitleSpans(extractTocTitleHtml(innerHtml));
       const plainText = normalizeMatchKey(stripHtmlTags(titleHtml));
       if (!plainText) return fullMatch;
 
@@ -656,6 +656,12 @@ function injectTocPageNumbers(
     return withInjected.replace(/<\/ul>(?![\s\S]*<\/ul>)/i, `${extraHtml}</ul>`);
   }
   return `${withInjected}${extraHtml}`;
+}
+
+function stripTocTitleSpans(html: string) {
+  return html
+    .replace(/<span\s+[^>]*class="[^"]*\btoc-title\b[^"]*"[^>]*>([\s\S]*?)<\/span>/gi, '$1')
+    .replace(/<span\s+data-toc-title="true"[^>]*>([\s\S]*?)<\/span>/gi, '$1');
 }
 
 function extractTocTitleHtml(innerHtml: string) {
@@ -695,7 +701,7 @@ function ensureTocEntryAttributes(rawAttributes: string, level: number, page: nu
 export function stripExistingTocPageNumbers(html: string) {
   let current = html;
 
-  // 1. Spans semánticos legacy (por class o por data-*)
+  // 1. Spans semánticos legacy y nuevos (por class o por data-*)
   current = current.replace(/<span\s+data-toc-leader="true"[^>]*>[\s\S]*?<\/span>/gi, '');
   current = current.replace(/<span\s+data-toc-page="true"[^>]*>[\s\S]*?<\/span>/gi, '');
   current = current.replace(/<span\s+data-toc-title="true"[^>]*>([\s\S]*?)<\/span>/gi, '$1');
@@ -705,6 +711,9 @@ export function stripExistingTocPageNumbers(html: string) {
     /<span\s+[^>]*class="[^"]*\btoc-title\b[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
     '$1',
   );
+
+  // También limpiar los spans que inyectamos nosotros para ellipsis
+  current = current.replace(/<span\s+class="toc-title"[^>]*>([\s\S]*?)<\/span>/gi, '$1');
 
   // 2. Sufijos textuales "·····5" o "... 5" dentro del nodo
   current = current.replace(
