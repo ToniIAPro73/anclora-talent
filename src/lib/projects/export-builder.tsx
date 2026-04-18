@@ -721,6 +721,12 @@ function inferImageType(imageUrl: string): DocxImagePayload['type'] {
   return 'png';
 }
 
+function cleanStringForDocx(input: string) {
+  // Remove control characters that break Word XML (except \n and \t)
+  return stripInlineHtml(input || '')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+}
+
 async function loadImageBytes(imageUrl: string): Promise<DocxImagePayload | null> {
   if (!imageUrl || !imageUrl.trim()) {
     return null;
@@ -733,15 +739,8 @@ async function loadImageBytes(imageUrl: string): Promise<DocxImagePayload | null
       const base64 = parts[1];
       if (!base64) return null;
       
-      const binaryString = atob(base64);
-      const len = binaryString.length;
-      const bytes = new Uint8Array(len);
-      for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      
       return {
-        data: bytes,
+        data: Buffer.from(base64, 'base64'),
         type: mime?.includes('jpeg') || mime?.includes('jpg') ? 'jpg' : 'png',
       };
     }
@@ -758,15 +757,6 @@ async function loadImageBytes(imageUrl: string): Promise<DocxImagePayload | null
     console.error('[docx/loadImageBytes] failed', error);
     return null;
   }
-}
-
-function escapeXml(value: string) {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
 }
 
 export async function buildProjectDocxBuffer(
@@ -820,7 +810,8 @@ export async function buildProjectDocxBuffer(
                 },
               }),
             ],
-            spacing: { before: 0, after: 0, line: 240, lineRule: 'auto' },
+            // Use line 0 and lineRule exact to ensure the image doesn't get pushed
+            spacing: { before: 0, after: 0, line: 0, lineRule: 'exact' },
           }),
         ]
       : buildDocxPageChildren(page);
@@ -854,8 +845,8 @@ export async function buildProjectDocxBuffer(
 
   const doc = new DocxDocument({
     creator: 'Anclora Talent',
-    title: escapeXml(stripInlineHtml(project.document.title || 'Proyecto')),
-    description: escapeXml(stripInlineHtml(project.document.subtitle || '')),
+    title: cleanStringForDocx(project.document.title || 'Proyecto'),
+    description: cleanStringForDocx(project.document.subtitle || ''),
     sections,
   });
 
