@@ -1,8 +1,10 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { PreviewCanvas } from './PreviewCanvas';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { ProjectRecord } from '@/lib/projects/types';
+
+vi.mock('server-only', () => ({}));
 
 const copy = resolveLocaleMessages('es').project;
 

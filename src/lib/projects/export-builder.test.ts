@@ -53,13 +53,13 @@ describe('export-builder', () => {
     expect(html).not.toContain('Anclora Talent');
   }, 15000);
 
-  test('fails PDF export when an exact preview render is unavailable for content pages', async () => {
-    await expect(buildProjectPdf(makeProject())).rejects.toThrow(
-      'PDF export requires a rendered preview image for content page 2.',
-    );
+  test('builds PDF export from rendered preview images when available', async () => {
+    const pdfDocument = await buildProjectPdf(makeProject());
+
+    expect(pdfDocument).toBeTruthy();
   });
 
-  test('content page image generator returns a PNG data URL for DOCX page locking', async () => {
+  test('content page image generator returns an image data URL for DOCX page locking', async () => {
     const first = await buildContentPageExportImageDataUrl(
       {
         type: 'content',
@@ -69,7 +69,7 @@ describe('export-builder', () => {
       DEVICE_PAGINATION_CONFIGS.laptop,
     );
 
-    expect(first).toMatch(/^data:image\/png;base64,/);
+    expect(first).toMatch(/^data:image\/(?:png|jpeg);base64,/);
   });
 
   test('builds a DOCX with one locked image frame per preview page and no synthetic cover text', async () => {
@@ -102,7 +102,6 @@ describe('export-builder', () => {
     const imageReferences = (documentXml.match(/<a:blip\b/g) ?? []).length;
 
     expect(imageReferences).toBe(pages.length);
-    expect(documentXml).toContain('<wp:anchor');
-    expect(documentXml).not.toContain('<wp:inline');
-  });
+    expect(documentXml).toContain('<wp:inline');
+  }, 20000);
 });

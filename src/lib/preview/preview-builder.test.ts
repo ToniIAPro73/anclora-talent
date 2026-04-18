@@ -738,10 +738,10 @@ describe('preview-builder', () => {
       const syncedToc = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
 
       expect(syncedToc?.html).toContain(
-        '<p data-toc-entry="true" data-toc-level="2" data-toc-page="3">Reflexión</p>',
+        '<p data-toc-entry="true" data-toc-level="2" data-toc-page="3"><span class="toc-title">Reflexión</span></p>',
       );
       expect(syncedToc?.html).toContain(
-        '<p data-toc-entry="true" data-toc-level="2" data-toc-page="4">Reflexión</p>',
+        '<p data-toc-entry="true" data-toc-level="2" data-toc-page="4"><span class="toc-title">Reflexión</span></p>',
       );
     });
 
