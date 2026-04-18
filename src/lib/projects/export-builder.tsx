@@ -48,159 +48,298 @@ function escapeHtml(text: string) {
     .replace(/"/g, '&quot;');
 }
 
-function toDocxHeadingLevel(level: number) {
-  switch (level) {
-    case 1:
-      return HeadingLevel.HEADING_1;
-    case 2:
-      return HeadingLevel.HEADING_2;
-    case 3:
-      return HeadingLevel.HEADING_3;
-    default:
-      return HeadingLevel.HEADING_4;
-  }
+function renderCoverPageHtml(imageUrl: string) {
+  return `
+    <section class="export-page export-cover export-image-only-page">
+      <img class="export-full-image" src="${escapeHtml(imageUrl)}" alt="" />
+    </section>
+  `;
 }
 
-function buildDocxPageChildren(page: PreviewPage) {
-  if (page.type === 'cover' && page.coverData) {
-    return [
-      new Paragraph({
-        text: page.coverData.title,
-        heading: HeadingLevel.TITLE,
-        alignment: AlignmentType.CENTER,
-        spacing: { after: 240 },
-      }),
-      ...(page.coverData.showSubtitle && page.coverData.subtitle
-        ? [
-            new Paragraph({
-              text: page.coverData.subtitle,
-              alignment: AlignmentType.CENTER,
-              spacing: { after: 240 },
-            }),
-          ]
-        : []),
-      ...(page.coverData.author
-        ? [
-            new Paragraph({
-              text: page.coverData.author,
-              alignment: AlignmentType.CENTER,
-            }),
-          ]
-        : []),
-    ];
-  }
-
-  if (page.type === 'back-cover' && page.backCoverData) {
-    return [
-      new Paragraph({
-        text: page.backCoverData.title,
-        heading: HeadingLevel.TITLE,
-        alignment: AlignmentType.LEFT,
-        spacing: { after: 240 },
-      }),
-      ...(page.backCoverData.body
-        ? [
-            new Paragraph({
-              text: stripInlineHtml(page.backCoverData.body),
-              spacing: { after: 240 },
-            }),
-          ]
-        : []),
-      ...(page.backCoverData.authorBio
-        ? [
-            new Paragraph({
-              text: page.backCoverData.authorBio,
-              spacing: { before: 180 },
-            }),
-          ]
-        : []),
-    ];
-  }
-
-  const blocks = parsePageContent(page.content);
-  return blocks.map((block) => {
-    if (block.type === 'heading') {
-      return new Paragraph({
-        text: block.text,
-        heading: toDocxHeadingLevel(block.level),
-        spacing: { after: 160 },
-      });
-    }
-    if (block.type === 'quote') {
-      return new Paragraph({
-        children: [new TextRun({ text: block.text, italics: true })],
-        indent: { left: 420 },
-        border: {
-          left: { color: 'D4AF37', size: 12, style: 'single' },
-        },
-        spacing: { after: 160 },
-      });
-    }
-    if (block.type === 'list-item') {
-      return new Paragraph({
-        text: block.text,
-        bullet: { level: 0 },
-        spacing: { after: 80 },
-      });
-    }
-    return new Paragraph({
-      text: block.text,
-      spacing: { after: 140 },
-    });
-  });
+function renderBackCoverPageHtml(imageUrl: string) {
+  return `
+    <section class="export-page export-back-cover export-image-only-page">
+      <img class="export-full-image" src="${escapeHtml(imageUrl)}" alt="" />
+    </section>
+  `;
 }
 
-type DocxImagePayload = {
-  data: Uint8Array;
-  type: 'png' | 'jpg' | 'gif' | 'bmp';
-};
+function renderLegacyCoverPageHtml(page: PreviewPage, project: ProjectRecord) {
+  const cover = page.coverData;
+  if (!cover) return '';
 
-function inferImageType(imageUrl: string): DocxImagePayload['type'] {
-  const lowerUrl = imageUrl.toLowerCase();
-  if (lowerUrl.includes('image/jpeg') || lowerUrl.endsWith('.jpeg')) return 'jpg';
-  if (lowerUrl.includes('image/jpg') || lowerUrl.endsWith('.jpg')) return 'jpg';
-  if (lowerUrl.includes('image/gif') || lowerUrl.endsWith('.gif')) return 'gif';
-  if (lowerUrl.includes('image/bmp') || lowerUrl.endsWith('.bmp')) return 'bmp';
-  return 'png';
-}
+  const palette = COVER_PALETTE_COLORS[project.cover.palette] ?? COVER_PALETTE_COLORS.obsidian;
+  const renderedImageUrl = cover.renderedImageUrl || '';
+  const imageUrl = renderedImageUrl || cover.backgroundImageUrl || '';
 
-function cleanStringForDocx(input: string) {
-  return stripInlineHtml(input || '')
-    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '')
-    .trim();
-}
-
-async function loadImageBytes(imageUrl: string): Promise<DocxImagePayload | null> {
-  if (!imageUrl || !imageUrl.trim()) {
-    return null;
+  if (renderedImageUrl) {
+    return `
+      <section class="export-page export-cover export-image-only-page">
+        <img class="export-full-image" src="${escapeHtml(renderedImageUrl)}" alt="" />
+      </section>
+    `;
   }
 
-  try {
-    if (imageUrl.startsWith('data:')) {
-      const parts = imageUrl.split(',', 2);
-      const mime = parts[0].match(/:(.*?);/)?.[1];
-      const base64 = parts[1];
-      if (!base64) return null;
-      
-      const buffer = Buffer.from(base64, 'base64');
-      return {
-        data: new Uint8Array(buffer),
-        type: mime?.includes('jpeg') || mime?.includes('jpg') ? 'jpg' : 'png',
-      };
+  return `
+    <section class="export-page export-cover" style="background:${palette.bg}; color:${palette.text};">
+      ${imageUrl ? `<img class="export-full-image" src="${escapeHtml(imageUrl)}" alt="" />` : ''}
+      <div class="export-cover-overlay"></div>
+      <div class="export-page-inner export-cover-inner">
+        <div class="export-accent-bar" style="background:${palette.accent};"></div>
+        <h1 class="export-cover-title">${escapeHtml(cover.title)}</h1>
+        ${cover.showSubtitle && cover.subtitle ? `<p class="export-cover-subtitle">${escapeHtml(cover.subtitle)}</p>` : ''}
+        ${cover.author ? `<p class="export-cover-author">${escapeHtml(cover.author)}</p>` : ''}
+      </div>
+    </section>
+  `;
+}
+
+function renderLegacyBackCoverPageHtml(page: PreviewPage) {
+  const backCover = page.backCoverData;
+  if (!backCover) return '';
+  const renderedImageUrl = backCover.renderedImageUrl || '';
+  const imageUrl = renderedImageUrl || backCover.backgroundImageUrl || '';
+
+  if (renderedImageUrl) {
+    return `
+      <section class="export-page export-back-cover export-image-only-page">
+        <img class="export-full-image" src="${escapeHtml(renderedImageUrl)}" alt="" />
+      </section>
+    `;
+  }
+
+  return `
+    <section class="export-page export-back-cover">
+      ${imageUrl ? `<img class="export-full-image" src="${escapeHtml(imageUrl)}" alt="" />` : ''}
+      <div class="export-cover-overlay"></div>
+      <div class="export-page-inner export-back-cover-inner">
+        <h1 class="export-back-cover-title">${escapeHtml(backCover.title)}</h1>
+        ${backCover.body ? `<div class="export-back-cover-body">${backCover.body}</div>` : ''}
+        ${backCover.authorBio ? `<div class="export-back-cover-bio">${escapeHtml(backCover.authorBio)}</div>` : ''}
+      </div>
+    </section>
+  `;
+}
+
+function renderContentPageHtml(page: PreviewPage) {
+  return `
+    <section class="export-page export-content-page">
+      <div class="export-page-inner export-content-inner">
+        ${page.content ?? ''}
+      </div>
+    </section>
+  `;
+}
+
+export function buildExportPreview(project: ProjectRecord) {
+  return buildPreviewPages(project, DEFAULT_EXPORT_CONFIG);
+}
+
+export async function renderProjectExportHtml(
+  project: ProjectRecord,
+  exportConfig: PaginationConfig = DEFAULT_EXPORT_CONFIG,
+) {
+  const pages = buildPreviewPages(project, exportConfig);
+  const coverImageUrl = await buildCoverExportImageDataUrl(project);
+  const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
+  const sections = pages
+    .map((page) => {
+      if (page.type === 'cover') {
+        return coverImageUrl
+          ? renderCoverPageHtml(coverImageUrl)
+          : renderLegacyCoverPageHtml(page, project);
+      }
+      if (page.type === 'back-cover') {
+        return backCoverImageUrl
+          ? renderBackCoverPageHtml(backCoverImageUrl)
+          : renderLegacyBackCoverPageHtml(page);
+      }
+      return renderContentPageHtml(page);
+    })
+    .join('\n');
+
+  return `<!DOCTYPE html>
+<html lang="${project.document.language ?? 'es'}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${escapeHtml(project.document.title)}</title>
+  <style>
+    :root {
+      --page-width: ${exportConfig.pageWidth}px;
+      --page-height: ${exportConfig.pageHeight}px;
+      --page-margin-top: ${exportConfig.marginTop}px;
+      --page-margin-bottom: ${exportConfig.marginBottom}px;
+      --page-margin-left: ${exportConfig.marginLeft}px;
+      --page-margin-right: ${exportConfig.marginRight}px;
+      --paper-bg: #ffffff;
+      --paper-border: #d7dde7;
+      --body-text: #1c2430;
+      --muted-text: #5f6b7a;
+      --quote-border: #d4af37;
+      --app-bg: #0a1019;
     }
-
-    const response = await fetch(imageUrl);
-    if (!response.ok) return null;
-
-    const buffer = await response.arrayBuffer();
-    return {
-      data: new Uint8Array(buffer),
-      type: inferImageType(response.headers.get('content-type') || imageUrl),
-    };
-  } catch (error) {
-    console.error('[docx/loadImageBytes] failed', error);
-    return null;
-  }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: Georgia, serif;
+      background: var(--app-bg);
+      color: var(--body-text);
+      padding: 32px;
+    }
+    .export-document {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+    .export-page {
+      position: relative;
+      width: var(--page-width);
+      min-height: var(--page-height);
+      overflow: hidden;
+      background: var(--paper-bg);
+      border: 1px solid var(--paper-border);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+      page-break-after: always;
+      break-after: page;
+    }
+    .export-image-only-page {
+      background: #000;
+    }
+    .export-page-inner {
+      position: relative;
+      width: 100%;
+      min-height: var(--page-height);
+      padding: var(--page-margin-top) var(--page-margin-right) var(--page-margin-bottom) var(--page-margin-left);
+      z-index: 1;
+    }
+    .export-full-image {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+    }
+    .export-cover-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(7,12,20,0.15), rgba(7,12,20,0.5));
+      z-index: 0;
+    }
+    .export-cover-inner, .export-back-cover-inner {
+      color: #f2e3b3;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .export-accent-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+    .export-eyebrow {
+      margin: 0 0 18px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.28em;
+      opacity: 0.9;
+      font-weight: 700;
+    }
+    .export-cover-title, .export-back-cover-title {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 44px;
+      line-height: 1.08;
+      font-weight: 900;
+    }
+    .export-cover-subtitle {
+      margin: 18px 0 0;
+      font-size: 18px;
+      line-height: 1.55;
+      opacity: 0.86;
+      max-width: 80%;
+    }
+    .export-cover-author {
+      margin: 28px 0 0;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .export-content-inner h1,
+    .export-content-inner h2,
+    .export-content-inner h3,
+    .export-content-inner h4,
+    .export-content-inner h5,
+    .export-content-inner h6 {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #111827;
+      margin-top: 0;
+      margin-bottom: 0.75rem;
+    }
+    .export-content-inner h2 { font-size: 1.5rem; }
+    .export-content-inner p,
+    .export-content-inner li,
+    .export-back-cover-body {
+      font-size: 16px;
+      line-height: 1.7;
+      color: ${project.cover.palette === 'sand' ? '#1c2430' : '#f7f0cf'};
+    }
+    .export-content-page .export-content-inner p,
+    .export-content-page .export-content-inner li {
+      color: var(--body-text);
+    }
+    .export-content-inner blockquote,
+    .export-back-cover-bio {
+      margin: 1.25rem 0 0;
+      padding-left: 1rem;
+      border-left: 4px solid var(--quote-border);
+      color: var(--muted-text);
+      font-style: italic;
+    }
+    .export-back-cover {
+      background: linear-gradient(160deg, #0b133f 0%, #0b233f 50%, #07252f 100%);
+    }
+    .export-back-cover-title {
+      max-width: 75%;
+      margin-bottom: 20px;
+    }
+    .export-back-cover-body {
+      max-width: 72%;
+      white-space: pre-wrap;
+    }
+    .export-back-cover-bio {
+      max-width: 62%;
+      white-space: pre-wrap;
+      color: rgba(242,227,179,0.78);
+    }
+    @page {
+      size: 6in 9in;
+      margin: 0;
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .export-document { gap: 0; }
+      .export-page {
+        border: none;
+        box-shadow: none;
+        width: 6in;
+        min-height: 9in;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="export-document">
+    ${sections}
+  </main>
+</body>
+</html>`;
 }
 
 const pdfStyles = StyleSheet.create({
@@ -461,6 +600,161 @@ export async function buildProjectPdfWithConfig(
       })}
     </Document>
   );
+}
+
+function toDocxHeadingLevel(level: number) {
+  switch (level) {
+    case 1:
+      return HeadingLevel.HEADING_1;
+    case 2:
+      return HeadingLevel.HEADING_2;
+    case 3:
+      return HeadingLevel.HEADING_3;
+    default:
+      return HeadingLevel.HEADING_4;
+  }
+}
+
+function buildDocxPageChildren(page: PreviewPage) {
+  if (page.type === 'cover' && page.coverData) {
+    return [
+      new Paragraph({
+        text: page.coverData.title,
+        heading: HeadingLevel.TITLE,
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 240 },
+      }),
+      ...(page.coverData.showSubtitle && page.coverData.subtitle
+        ? [
+            new Paragraph({
+              text: page.coverData.subtitle,
+              alignment: AlignmentType.CENTER,
+              spacing: { after: 240 },
+            }),
+          ]
+        : []),
+      ...(page.coverData.author
+        ? [
+            new Paragraph({
+              text: page.coverData.author,
+              alignment: AlignmentType.CENTER,
+            }),
+          ]
+        : []),
+    ];
+  }
+
+  if (page.type === 'back-cover' && page.backCoverData) {
+    return [
+      new Paragraph({
+        text: page.backCoverData.title,
+        heading: HeadingLevel.TITLE,
+        alignment: AlignmentType.LEFT,
+        spacing: { after: 240 },
+      }),
+      ...(page.backCoverData.body
+        ? [
+            new Paragraph({
+              text: stripInlineHtml(page.backCoverData.body),
+              spacing: { after: 240 },
+            }),
+          ]
+        : []),
+      ...(page.backCoverData.authorBio
+        ? [
+            new Paragraph({
+              text: page.backCoverData.authorBio,
+              spacing: { before: 180 },
+            }),
+          ]
+        : []),
+    ];
+  }
+
+  const blocks = parsePageContent(page.content);
+  return blocks.map((block) => {
+    if (block.type === 'heading') {
+      return new Paragraph({
+        text: block.text,
+        heading: toDocxHeadingLevel(block.level),
+        spacing: { after: 160 },
+      });
+    }
+    if (block.type === 'quote') {
+      return new Paragraph({
+        children: [new TextRun({ text: block.text, italics: true })],
+        indent: { left: 420 },
+        border: {
+          left: { color: 'D4AF37', size: 12, style: 'single' },
+        },
+        spacing: { after: 160 },
+      });
+    }
+    if (block.type === 'list-item') {
+      return new Paragraph({
+        text: block.text,
+        bullet: { level: 0 },
+        spacing: { after: 80 },
+      });
+    }
+    return new Paragraph({
+      text: block.text,
+      spacing: { after: 140 },
+    });
+  });
+}
+
+type DocxImagePayload = {
+  data: Uint8Array;
+  type: 'png' | 'jpg' | 'gif' | 'bmp';
+};
+
+function inferImageType(imageUrl: string): DocxImagePayload['type'] {
+  const lowerUrl = imageUrl.toLowerCase();
+  if (lowerUrl.includes('image/jpeg') || lowerUrl.endsWith('.jpeg')) return 'jpg';
+  if (lowerUrl.includes('image/jpg') || lowerUrl.endsWith('.jpg')) return 'jpg';
+  if (lowerUrl.includes('image/gif') || lowerUrl.endsWith('.gif')) return 'gif';
+  if (lowerUrl.includes('image/bmp') || lowerUrl.endsWith('.bmp')) return 'bmp';
+  return 'png';
+}
+
+function cleanStringForDocx(input: string) {
+  return stripInlineHtml(input || '')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '')
+    .trim();
+}
+
+async function loadImageBytes(imageUrl: string): Promise<DocxImagePayload | null> {
+  if (!imageUrl || !imageUrl.trim()) {
+    return null;
+  }
+
+  try {
+    if (imageUrl.startsWith('data:')) {
+      const parts = imageUrl.split(',', 2);
+      const mime = parts[0].match(/:(.*?);/)?.[1];
+      const base64 = parts[1];
+      if (!base64) return null;
+      
+      const buffer = Buffer.from(base64, 'base64');
+      return {
+        data: new Uint8Array(buffer),
+        type: mime?.includes('jpeg') || mime?.includes('jpg') ? 'jpg' : 'png',
+      };
+    }
+
+    const response = await fetch(imageUrl);
+    if (!response.ok) return null;
+
+    const buffer = await response.arrayBuffer();
+    return {
+      data: new Uint8Array(buffer),
+      type: inferImageType(response.headers.get('content-type') || imageUrl),
+    };
+  } catch (error) {
+    console.error('[docx/loadImageBytes] failed', error);
+    return null;
+  }
 }
 
 export async function buildProjectDocxBuffer(
