@@ -756,8 +756,17 @@ export async function buildProjectDocxBuffer(
   project: ProjectRecord,
   exportConfig: PaginationConfig = DEFAULT_EXPORT_CONFIG,
 ) {
-  const docxPageWidth = exportConfig.pageWidth;
-  const docxPageHeight = exportConfig.pageHeight;
+  // Conversions for docx library:
+  // - Size (Width/Height) in Twips (1/1440 inch). 96 DPI -> 1px = 15 Twips.
+  // - Image transformation in EMUs (1/914400 inch). 96 DPI -> 1px = 9525 EMUs.
+  const PX_TO_TWIPS = 15;
+  const PX_TO_EMU = 9525;
+
+  const docxPageWidthTwips = exportConfig.pageWidth * PX_TO_TWIPS;
+  const docxPageHeightTwips = exportConfig.pageHeight * PX_TO_TWIPS;
+  const docxImageWidthEmu = exportConfig.pageWidth * PX_TO_EMU;
+  const docxImageHeightEmu = exportConfig.pageHeight * PX_TO_EMU;
+
   const pages = buildPreviewPages(project, exportConfig);
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
@@ -781,14 +790,14 @@ export async function buildProjectDocxBuffer(
     properties: {
       page: {
         size: {
-          width: 8640,
-          height: 12960,
+          width: docxPageWidthTwips,
+          height: docxPageHeightTwips,
         },
         margin: {
-          top: pageImagePayloads[index] != null ? 0 : 1080,
-          bottom: pageImagePayloads[index] != null ? 0 : 1080,
-          left: pageImagePayloads[index] != null ? 0 : 1080,
-          right: pageImagePayloads[index] != null ? 0 : 1080,
+          top: pageImagePayloads[index] != null ? 0 : exportConfig.marginTop * PX_TO_TWIPS,
+          bottom: pageImagePayloads[index] != null ? 0 : exportConfig.marginBottom * PX_TO_TWIPS,
+          left: pageImagePayloads[index] != null ? 0 : exportConfig.marginLeft * PX_TO_TWIPS,
+          right: pageImagePayloads[index] != null ? 0 : exportConfig.marginRight * PX_TO_TWIPS,
           header: 0,
           footer: 0,
           gutter: 0,
@@ -804,8 +813,8 @@ export async function buildProjectDocxBuffer(
                   data: pageImagePayloads[index]!.data,
                   type: pageImagePayloads[index]!.type,
                   transformation: {
-                    width: docxPageWidth,
-                    height: docxPageHeight,
+                    width: docxImageWidthEmu,
+                    height: docxImageHeightEmu,
                   },
                   floating: {
                     horizontalPosition: {
