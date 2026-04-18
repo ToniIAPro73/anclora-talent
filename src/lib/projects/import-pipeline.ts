@@ -732,11 +732,11 @@ function buildGeneratedIndexChapter(outline: OutlineEntry[]) {
 
   const flushGroup = () => {
     if (!currentGroup) return;
-    blocks.push({ type: 'heading', content: currentGroup.title });
+    blocks.push({ type: 'heading', content: `<span class="toc-title">${escapeHtml(currentGroup.title)}</span>` });
     if (currentGroup.items.length > 0) {
       blocks.push({
         type: 'paragraph',
-        content: `<ul>${currentGroup.items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`,
+        content: `<ul>${currentGroup.items.map((item) => `<li><span class="toc-title">${escapeHtml(item)}</span></li>`).join('')}</ul>`,
       });
     }
     currentGroup = null;
@@ -750,7 +750,7 @@ function buildGeneratedIndexChapter(outline: OutlineEntry[]) {
       currentGroup.items.push(entry.title);
     } else {
       // Level 2 entry without a parent level 1 entry
-      blocks.push({ type: 'heading', content: entry.title });
+      blocks.push({ type: 'heading', content: `<span class="toc-title">${escapeHtml(entry.title)}</span>` });
     }
   }
 

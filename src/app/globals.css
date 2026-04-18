@@ -295,6 +295,15 @@ h4.toc-entry, h5.toc-entry, h6.toc-entry {
   white-space: nowrap;
   list-style: none;
   line-height: 1.5;
+  overflow: hidden; /* Garantiza que el flex container no se desborde */
+}
+
+.toc-title {
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 [data-toc-entry="true"][data-toc-page]::before {

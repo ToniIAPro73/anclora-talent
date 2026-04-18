@@ -342,7 +342,7 @@ function buildTocHtmlFromEntries(
   const flushItems = () => {
     if (pendingItems.length === 0) return;
     parts.push(
-      `<ul>${pendingItems.map((t) => `<li>${escapeHtml(t)}</li>`).join('')}</ul>`,
+      `<ul>${pendingItems.map((t) => `<li><span class="toc-title">${escapeHtml(t)}</span></li>`).join('')}</ul>`,
     );
     pendingItems = [];
   };
@@ -353,7 +353,7 @@ function buildTocHtmlFromEntries(
       pendingItems.push(entry.title);
     } else {
       flushItems();
-      parts.push(`<h2>${escapeHtml(entry.title)}</h2>`);
+      parts.push(`<h2><span class="toc-title">${escapeHtml(entry.title)}</span></h2>`);
     }
   }
   flushItems();
@@ -636,7 +636,7 @@ function injectTocPageNumbers(
 
       const entry = remaining.splice(matchIndex, 1)[0];
       const attrs = ensureTocEntryAttributes(rawAttributes, entry.level, entry.firstPage);
-      return `<${tagName}${attrs}>${titleHtml}</${tagName}>`;
+      return `<${tagName}${attrs}><span class="toc-title">${titleHtml}</span></${tagName}>`;
     },
   );
 
@@ -648,7 +648,7 @@ function injectTocPageNumbers(
     .map((entry) => {
       const tag = entry.level <= 1 ? 'h2' : 'li';
       const attrs = ` data-toc-entry="true" data-toc-level="${Math.max(1, entry.level)}" data-toc-page="${entry.firstPage}"`;
-      return `<${tag}${attrs}>${decodeHtmlEntities(entry.title)}</${tag}>`;
+      return `<${tag}${attrs}><span class="toc-title">${decodeHtmlEntities(entry.title)}</span></${tag}>`;
     })
     .join('');
 
