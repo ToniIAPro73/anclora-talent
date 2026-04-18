@@ -281,28 +281,68 @@ function serializeError(error: unknown) {
 }
 
 async function getPlaywrightBrowser() {
-  if (!playwrightBrowserPromise) {
-    playwrightBrowserPromise = (async () => {
-      try {
-        return await launchLocalPlaywrightBrowser();
-      } catch (localError) {
-        try {
-          return await launchServerChromiumBrowser();
-        } catch (serverError) {
-          console.error('[export/render] browser launch failed', {
-            localError: serializeError(localError),
-            serverError: serializeError(serverError),
-          });
-          throw serverError;
-        }
+  if (playwrightBrowserPromise) {
+    try {
+      const cached = await playwrightBrowserPromise;
+      if (cached.isConnected()) {
+        return cached;
       }
-    })().catch((error) => {
-      playwrightBrowserPromise = null;
-      throw error;
-    });
+    } catch {
+      // fall through to relaunch
+    }
+    playwrightBrowserPromise = null;
   }
 
+  playwrightBrowserPromise = (async () => {
+    try {
+      return await launchLocalPlaywrightBrowser();
+    } catch (localError) {
+      try {
+        return await launchServerChromiumBrowser();
+      } catch (serverError) {
+        console.error('[export/render] browser launch failed', {
+          localError: serializeError(localError),
+          serverError: serializeError(serverError),
+        });
+        throw serverError;
+      }
+    }
+  })().catch((error) => {
+    playwrightBrowserPromise = null;
+    throw error;
+  });
+
   return playwrightBrowserPromise;
+}
+
+function isBrowserClosedError(error: unknown) {
+  if (!(error instanceof Error)) return false;
+  const msg = error.message || '';
+  return (
+    msg.includes('Target page, context or browser has been closed') ||
+    msg.includes('Browser has been closed') ||
+    msg.includes('has been closed') ||
+    msg.includes('Target closed') ||
+    msg.includes('Connection closed')
+  );
+}
+
+const RENDER_CONCURRENCY = 3;
+let activeRenders = 0;
+const renderQueue: Array<() => void> = [];
+
+async function withRenderSlot<T>(fn: () => Promise<T>): Promise<T> {
+  if (activeRenders >= RENDER_CONCURRENCY) {
+    await new Promise<void>((resolve) => renderQueue.push(resolve));
+  }
+  activeRenders++;
+  try {
+    return await fn();
+  } finally {
+    activeRenders--;
+    const next = renderQueue.shift();
+    if (next) next();
+  }
 }
 
 function googleFontHref(fontFamily: string) {
@@ -329,7 +369,7 @@ function collectGoogleFontLinks(fontFamilies: Array<string | null | undefined>) 
     .join('\n');
 }
 
-async function renderHtmlToImageDataUrl({
+async function renderOnce({
   html,
   width,
   height,
@@ -338,14 +378,17 @@ async function renderHtmlToImageDataUrl({
   width: number;
   height: number;
 }) {
-  try {
-    const browser = await getPlaywrightBrowser();
-    const page = await browser.newPage({
-      viewport: { width, height },
-      deviceScaleFactor: 1,
-    });
+  const browser = await getPlaywrightBrowser();
+  const page = await browser.newPage({
+    viewport: { width, height },
+    deviceScaleFactor: 1,
+  });
 
-    await page.setContent(html, { waitUntil: 'networkidle' });
+  try {
+    // Use 'load' rather than 'networkidle' so that an unreachable Google Fonts
+    // CDN can't stall the screenshot (the inlined @font-face fallback ensures
+    // we still have Latin glyphs when the external CSS never loads).
+    await page.setContent(html, { waitUntil: 'load' });
     await page.waitForFunction(async () => {
       const images = Array.from(document.images);
       await Promise.all(
@@ -366,16 +409,46 @@ async function renderHtmlToImageDataUrl({
     });
 
     // Use JPEG with 80% quality to keep file sizes manageable for DOCX
-    const buffer = await page.locator('#export-page').screenshot({ 
+    const buffer = await page.locator('#export-page').screenshot({
       type: 'jpeg',
-      quality: 80 
+      quality: 80,
     });
-    await page.close();
     return `data:image/jpeg;base64,${buffer.toString('base64')}`;
-  } catch (error) {
-    console.error('[export/render] html to jpeg failed', serializeError(error));
-    return null;
+  } finally {
+    try {
+      await page.close();
+    } catch {
+      // page already closed — ignore
+    }
   }
+}
+
+async function renderHtmlToImageDataUrl(input: {
+  html: string;
+  width: number;
+  height: number;
+}) {
+  return withRenderSlot(async () => {
+    try {
+      return await renderOnce(input);
+    } catch (error) {
+      if (isBrowserClosedError(error)) {
+        console.warn('[export/render] browser closed, relaunching and retrying once');
+        playwrightBrowserPromise = null;
+        try {
+          return await renderOnce(input);
+        } catch (retryError) {
+          console.error(
+            '[export/render] html to jpeg failed after retry',
+            serializeError(retryError),
+          );
+          return null;
+        }
+      }
+      console.error('[export/render] html to jpeg failed', serializeError(error));
+      return null;
+    }
+  });
 }
 
 async function loadEmbeddedFontFaceCss() {
@@ -737,12 +810,17 @@ function renderBackCoverPreviewHtml(project: ProjectRecord) {
   </html>`;
 }
 
-function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
+async function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
   const googleFonts = [
     'JetBrains+Mono:wght@400;500;600;700;800',
     'DM+Sans:wght@400;500;700;800;900'
   ];
-  
+
+  // Inline the embedded font so the serverless Chromium (which ships without
+  // system fonts) can always paint Latin glyphs even if Google Fonts is
+  // unreachable. Without this, screenshots render as "tofu" rectangles.
+  const embeddedFontFaceCss = await loadEmbeddedFontFaceCss();
+
   return `<!DOCTYPE html>
   <html>
     <head>
@@ -750,6 +828,7 @@ function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
       <meta name="viewport" content="width=${config.pageWidth}, initial-scale=1" />
       ${googleFonts.map(f => `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${f}&display=swap" />`).join('\n')}
       <style>
+        ${embeddedFontFaceCss}
         :root {
           --text-primary: #0C1820;
           --text-secondary: #3A5068;
@@ -768,7 +847,7 @@ function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
           background: var(--preview-paper);
           border: 1px solid transparent;
           color: var(--text-primary);
-          font-family: "JetBrains Mono", "DM Sans", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+          font-family: "JetBrains Mono", "DM Sans", "${EMBEDDED_BODY_FONT_FAMILY}", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
           font-size: ${config.fontSize}px;
           line-height: ${config.lineHeight};
           padding: ${config.marginTop}px ${config.marginRight}px ${config.marginBottom}px ${config.marginLeft}px;
@@ -779,7 +858,7 @@ function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
         /* Contenedor principal: replica exacta del editor */
         .ProseMirror {
           font-variant-numeric: tabular-nums !important;
-          font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+          font-family: "JetBrains Mono", "${EMBEDDED_BODY_FONT_FAMILY}", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
         }
 
         .ProseMirror p,
@@ -790,7 +869,7 @@ function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
         .ProseMirror h4,
         .ProseMirror h5,
         .ProseMirror h6 {
-          font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+          font-family: "JetBrains Mono", "${EMBEDDED_BODY_FONT_FAMILY}", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
           font-variant-numeric: tabular-nums;
         }
 
@@ -904,7 +983,7 @@ function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
           white-space: nowrap !important;
           list-style: none !important;
           line-height: 1.5 !important;
-          font-family: "JetBrains Mono", ui-monospace, monospace !important;
+          font-family: "JetBrains Mono", "${EMBEDDED_BODY_FONT_FAMILY}", ui-monospace, monospace !important;
         }
 
         [data-toc-entry="true"][data-toc-page]::before {
@@ -1116,7 +1195,7 @@ export async function buildContentPageExportImageDataUrl(
   }
 
   const browserRendered = await renderHtmlToImageDataUrl({
-    html: renderContentPreviewHtml(page, config),
+    html: await renderContentPreviewHtml(page, config),
     width: config.pageWidth,
     height: config.pageHeight,
   });

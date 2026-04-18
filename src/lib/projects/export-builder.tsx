@@ -762,12 +762,14 @@ export async function buildProjectDocxBuffer(
   exportConfig: PaginationConfig = DEFAULT_EXPORT_CONFIG,
 ) {
   const PX_TO_TWIPS = 15;
-  const PX_TO_EMU = 9525;
 
   const docxPageWidthTwips = Math.round(exportConfig.pageWidth * PX_TO_TWIPS);
   const docxPageHeightTwips = Math.round(exportConfig.pageHeight * PX_TO_TWIPS);
-  const docxImageWidthEmu = Math.round(exportConfig.pageWidth * PX_TO_EMU);
-  const docxImageHeightEmu = Math.round(exportConfig.pageHeight * PX_TO_EMU);
+  // docx's ImageRun.transformation expects dimensions in PIXELS; the library
+  // multiplies by 9525 internally to convert to EMU. Passing EMU here would
+  // double-convert and generate a file Word refuses to open.
+  const docxImageWidthPx = Math.round(exportConfig.pageWidth);
+  const docxImageHeightPx = Math.round(exportConfig.pageHeight);
 
   const pages = buildPreviewPages(project, exportConfig);
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
@@ -802,8 +804,8 @@ export async function buildProjectDocxBuffer(
               data: pageImagePayloads[index]!.data,
               type: pageImagePayloads[index]!.type,
               transformation: {
-                width: docxImageWidthEmu,
-                height: docxImageHeightEmu,
+                width: docxImageWidthPx,
+                height: docxImageHeightPx,
               },
             }),
           ],
