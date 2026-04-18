@@ -618,9 +618,9 @@ function injectTocPageNumbers(
 ) {
   const remaining = numberedEntries.slice();
 
-  // Reemplaza cada <p|li|h*> candidato por la forma semántica
-  //   <tag class="toc-entry" …><span class="toc-title">…</span><span class="toc-leader"></span><span class="toc-page">N</span></tag>
-  // Empareja por texto normalizado; si el nodo no corresponde a ninguna entrada, se deja tal cual.
+  // Formato objetivo (sin spans, sobrevive al roundtrip del editor):
+  //   <tag data-toc-entry="true" data-toc-level="N" data-toc-page="M">Título</tag>
+  // CSS (::before + ::after con attr(data-toc-page)) pinta los puntos y el número.
   const withInjected = html.replace(
     /<(p|li|h[1-6])((?:\s[^>]*)?)>([\s\S]*?)<\/\1>/gi,
     (fullMatch, tagName: string, rawAttributes: string = '', innerHtml: string) => {
@@ -628,7 +628,6 @@ function injectTocPageNumbers(
       const plainText = normalizeMatchKey(stripHtmlTags(titleHtml));
       if (!plainText) return fullMatch;
 
-      // Busca la primera entrada cuyo título coincida; no asume orden estricto
       const matchIndex = remaining.findIndex((entry) => {
         const expected = normalizeMatchKey(entry.title);
         return expected && matchesOutlineText(plainText, expected);
@@ -636,18 +635,11 @@ function injectTocPageNumbers(
       if (matchIndex < 0) return fullMatch;
 
       const entry = remaining.splice(matchIndex, 1)[0];
-      const attrs = ensureTocEntryAttributes(rawAttributes, entry.level);
-      return (
-        `<${tagName}${attrs}>` +
-        `<span class="toc-title">${titleHtml}</span>` +
-        `<span class="toc-leader" aria-hidden="true"></span>` +
-        `<span class="toc-page">${entry.firstPage}</span>` +
-        `</${tagName}>`
-      );
+      const attrs = ensureTocEntryAttributes(rawAttributes, entry.level, entry.firstPage);
+      return `<${tagName}${attrs}>${titleHtml}</${tagName}>`;
     },
   );
 
-  // Añade al final las entradas que no encontraron un nodo existente (capítulos nuevos)
   if (remaining.length === 0) {
     return withInjected;
   }
@@ -655,18 +647,11 @@ function injectTocPageNumbers(
   const extraHtml = remaining
     .map((entry) => {
       const tag = entry.level <= 1 ? 'h2' : 'li';
-      const attrs = ` class="toc-entry" data-toc-entry="true" data-toc-level="${Math.max(1, entry.level)}"`;
-      return (
-        `<${tag}${attrs}>` +
-        `<span class="toc-title">${decodeHtmlEntities(entry.title)}</span>` +
-        `<span class="toc-leader" aria-hidden="true"></span>` +
-        `<span class="toc-page">${entry.firstPage}</span>` +
-        `</${tag}>`
-      );
+      const attrs = ` data-toc-entry="true" data-toc-level="${Math.max(1, entry.level)}" data-toc-page="${entry.firstPage}"`;
+      return `<${tag}${attrs}>${decodeHtmlEntities(entry.title)}</${tag}>`;
     })
     .join('');
 
-  // Si el TOC tiene <ul>, mete los <li> dentro del último; en caso contrario, los añade al final.
   if (/<\/ul>/i.test(withInjected) && remaining.every((entry) => entry.level > 1)) {
     return withInjected.replace(/<\/ul>(?![\s\S]*<\/ul>)/i, `${extraHtml}</ul>`);
   }
@@ -674,50 +659,46 @@ function injectTocPageNumbers(
 }
 
 function extractTocTitleHtml(innerHtml: string) {
+  // Legacy: si el título estaba envuelto en un span semántico (con clase o data-*),
+  // lo extraemos. Si no, el innerHtml ya es el texto del título.
   const titleSpan = innerHtml.match(/<span\s+[^>]*class="[^"]*\btoc-title\b[^"]*"[^>]*>([\s\S]*?)<\/span>/i);
   if (titleSpan) return titleSpan[1];
 
-  // Quita leader/page si vienen, y cualquier sufijo "…··· 5" textual
   let current = innerHtml
     .replace(/<span\s+[^>]*class="[^"]*\btoc-leader\b[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '')
     .replace(/<span\s+[^>]*class="[^"]*\btoc-page\b[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '')
     .replace(/<span\s+data-toc-leader="true"[^>]*>[\s\S]*?<\/span>/gi, '')
     .replace(/<span\s+data-toc-page="true"[^>]*>[\s\S]*?<\/span>/gi, '')
     .replace(/<span\s+data-toc-title="true"[^>]*>([\s\S]*?)<\/span>/gi, '$1');
+  // Sufijo textual "…··· 5" heredado de importaciones antiguas.
   current = current.replace(/\s*[·.\-–—~∿]{2,}\s*\d+\s*$/u, '').trim();
   return current;
 }
 
-function ensureTocEntryAttributes(rawAttributes: string, level: number) {
-  let attrs = rawAttributes ?? '';
-  if (/\bclass="([^"]*)"/i.test(attrs)) {
-    attrs = attrs.replace(/\bclass="([^"]*)"/i, (_m, cls: string) => {
-      const normalized = /\btoc-entry\b/.test(cls) ? cls : `${cls} toc-entry`.trim();
-      return `class="${normalized}"`;
+function ensureTocEntryAttributes(rawAttributes: string, level: number, page: number) {
+  // Limpia atributos toc-* residuales (por si venían del HTML persistido).
+  let attrs = (rawAttributes ?? '')
+    .replace(/\sdata-toc-(entry|level|page)="[^"]*"/gi, '')
+    .replace(/\sclass="([^"]*)"/gi, (_m, cls: string) => {
+      const cleaned = cls
+        .split(/\s+/)
+        .filter((c: string) => c && !/^toc-/.test(c))
+        .join(' ')
+        .trim();
+      return cleaned ? ` class="${cleaned}"` : '';
     });
-  } else {
-    attrs = `${attrs} class="toc-entry"`;
-  }
-  if (!/\bdata-toc-entry=/.test(attrs)) {
-    attrs = `${attrs} data-toc-entry="true"`;
-  }
-  if (/\bdata-toc-level=/.test(attrs)) {
-    attrs = attrs.replace(/\bdata-toc-level="[^"]*"/i, `data-toc-level="${Math.max(1, level)}"`);
-  } else {
-    attrs = `${attrs} data-toc-level="${Math.max(1, level)}"`;
-  }
+
+  attrs = `${attrs} data-toc-entry="true" data-toc-level="${Math.max(1, level)}" data-toc-page="${page}"`;
   return attrs.startsWith(' ') ? attrs : ` ${attrs}`;
 }
 
 export function stripExistingTocPageNumbers(html: string) {
   let current = html;
 
-  // 1. Legacy: data-toc-leader / data-toc-page spans
+  // 1. Spans semánticos legacy (por class o por data-*)
   current = current.replace(/<span\s+data-toc-leader="true"[^>]*>[\s\S]*?<\/span>/gi, '');
   current = current.replace(/<span\s+data-toc-page="true"[^>]*>[\s\S]*?<\/span>/gi, '');
   current = current.replace(/<span\s+data-toc-title="true"[^>]*>([\s\S]*?)<\/span>/gi, '$1');
-
-  // 2. Nuevos spans semánticos por class
   current = current.replace(/<span\s+[^>]*class="[^"]*\btoc-leader\b[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '');
   current = current.replace(/<span\s+[^>]*class="[^"]*\btoc-page\b[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '');
   current = current.replace(
@@ -725,7 +706,7 @@ export function stripExistingTocPageNumbers(html: string) {
     '$1',
   );
 
-  // 3. Sufijos textuales "……5" o "·····5" dentro del nodo
+  // 2. Sufijos textuales "·····5" o "... 5" dentro del nodo
   current = current.replace(
     /(<(p|li|h[1-6])(?:\s[^>]*)?>)([\s\S]*?)(<\/\2>)/gi,
     (_m, open: string, _tag: string, inner: string, close: string) => {
@@ -734,10 +715,16 @@ export function stripExistingTocPageNumbers(html: string) {
     },
   );
 
-  // 4. Atributos data-toc-* residuales
-  // IMPORTANTE: NO limpiar class="toc-entry" — es necesaria para display:flex
-  current = current.replace(/\sdata-toc-entry="true"/gi, '');
-  current = current.replace(/\sdata-toc-level="[^"]*"/gi, '');
+  // 3. Atributos data-toc-* residuales (entry/level/page) y clases toc-*
+  current = current.replace(/\sdata-toc-(entry|level|page)="[^"]*"/gi, '');
+  current = current.replace(/\sclass="([^"]*)"/gi, (_m, cls: string) => {
+    const cleaned = cls
+      .split(/\s+/)
+      .filter((c: string) => c && !/^toc-/.test(c))
+      .join(' ')
+      .trim();
+    return cleaned ? ` class="${cleaned}"` : '';
+  });
 
   return current.trim();
 }
