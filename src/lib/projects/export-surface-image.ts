@@ -772,11 +772,12 @@ function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
           overflow-wrap: break-word;
         }
 
+        /* Contenedor principal: replica exacta del editor */
         .ProseMirror {
           font-variant-numeric: tabular-nums !important;
+          font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
         }
 
-        /* Tipografía y bloques: copia 1:1 del editor y globals.css */
         .ProseMirror p,
         .ProseMirror li,
         .ProseMirror h1,
@@ -798,6 +799,7 @@ function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
           margin: 0;
           overflow-wrap: break-word;
           word-break: break-word;
+          line-height: ${config.lineHeight};
         }
         .ProseMirror p + p {
           margin-top: 0.8rem;
@@ -848,52 +850,24 @@ function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
         .ProseMirror ol:not([data-list-style]) { list-style-type: decimal; }
         .ProseMirror li { margin: 0.35rem 0; }
 
-        /* Estilos de viñetas especiales (copiados de MultipageFlow) */
-        .ProseMirror ul[data-bullet-style="diamond"],
-        .ProseMirror ul[data-bullet-style="arrow"],
-        .ProseMirror ul[data-bullet-style="check"] {
-          list-style: none;
-          padding-left: 0;
-        }
+        /* Estilos de viñetas especiales */
+        .ProseMirror ul[data-bullet-style="diamond"] > li::before { content: "◆"; }
+        .ProseMirror ul[data-bullet-style="arrow"] > li::before { content: "➤"; }
+        .ProseMirror ul[data-bullet-style="check"] > li::before { content: "✓"; }
+        
         .ProseMirror ul[data-bullet-style="diamond"] > li,
         .ProseMirror ul[data-bullet-style="arrow"] > li,
         .ProseMirror ul[data-bullet-style="check"] > li {
           position: relative;
           padding-left: 1.5rem;
+          list-style: none;
         }
-        .ProseMirror ul[data-bullet-style="diamond"] > li::before { content: "◆"; }
-        .ProseMirror ul[data-bullet-style="arrow"] > li::before { content: "➤"; }
-        .ProseMirror ul[data-bullet-style="check"] > li::before { content: "✓"; }
         .ProseMirror ul[data-bullet-style="diamond"] > li::before,
         .ProseMirror ul[data-bullet-style="arrow"] > li::before,
         .ProseMirror ul[data-bullet-style="check"] > li::before {
           position: absolute;
           left: 0;
-          color: var(--text-primary);
           font-weight: 700;
-        }
-
-        /* Estilos de listas numeradas especiales (copiados de MultipageFlow) */
-        .ProseMirror ol[data-list-style="decimal-parentheses"],
-        .ProseMirror ol[data-list-style="lower-alpha-parentheses"] {
-          list-style: none;
-          counter-reset: custom-list;
-          padding-left: 0;
-        }
-        .ProseMirror ol[data-list-style="decimal-parentheses"] > li,
-        .ProseMirror ol[data-list-style="lower-alpha-parentheses"] > li {
-          position: relative;
-          padding-left: 2rem;
-          counter-increment: custom-list;
-        }
-        .ProseMirror ol[data-list-style="decimal-parentheses"] > li::before { content: counter(custom-list) ") "; }
-        .ProseMirror ol[data-list-style="lower-alpha-parentheses"] > li::before { content: counter(custom-list, lower-alpha) ") "; }
-        .ProseMirror ol[data-list-style="decimal-parentheses"] > li::before,
-        .ProseMirror ol[data-list-style="lower-alpha-parentheses"] > li::before {
-          position: absolute;
-          left: 0;
-          color: var(--text-primary);
-          font-weight: 600;
         }
 
         .ProseMirror blockquote {
@@ -903,50 +877,51 @@ function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
           background: transparent;
           color: var(--text-secondary);
         }
-        .ProseMirror blockquote p { margin: 0; }
         
-        /* Índice con CSS leader (copiado de globals.css) */
-        ul.toc-list,
+        /* ÍNDICE: Estilos críticos para paridad total */
         .ProseMirror ul.toc-list {
           margin: 0 !important;
           padding: 0 !important;
           list-style: none !important;
         }
 
-        ul.toc-list > li,
         .ProseMirror ul.toc-list > li {
           margin: 0 !important;
           padding: 0 !important;
         }
 
+        /* Entrada de índice: flexbox con leader */
         [data-toc-entry="true"] {
           display: flex !important;
-          align-items: baseline;
-          gap: 0;
+          align-items: baseline !important;
+          gap: 0 !important;
           margin: 0 !important;
           padding: 0 !important;
-          white-space: nowrap;
-          list-style: none;
-          line-height: 1.5;
+          white-space: nowrap !important;
+          list-style: none !important;
+          line-height: 1.5 !important;
+          font-family: "JetBrains Mono", ui-monospace, monospace !important;
         }
 
         [data-toc-entry="true"][data-toc-page]::before {
-          content: "······································································································";
-          order: 1;
-          flex: 1 1 auto;
-          overflow: hidden;
-          margin: 0 0.35em;
-          letter-spacing: 0.15em;
-          color: inherit;
-          white-space: nowrap;
-          font-variant-numeric: tabular-nums;
+          content: "······································································································" !important;
+          order: 1 !important;
+          flex: 1 1 auto !important;
+          overflow: hidden !important;
+          margin: 0 0.35em !important;
+          letter-spacing: 0.15em !important;
+          color: inherit !important;
+          white-space: nowrap !important;
+          font-variant-numeric: tabular-nums !important;
         }
 
         [data-toc-entry="true"][data-toc-page]::after {
-          content: attr(data-toc-page);
-          order: 2;
-          flex: 0 0 auto;
-          font-variant-numeric: tabular-nums;
+          content: attr(data-toc-page) !important;
+          order: 2 !important;
+          flex: 0 0 auto !important;
+          font-variant-numeric: tabular-nums !important;
+          min-width: 1.5em !important;
+          text-align: right !important;
         }
 
         .ProseMirror hr[data-page-break] { display: none; }
