@@ -734,12 +734,17 @@ function renderBackCoverPreviewHtml(project: ProjectRecord) {
 }
 
 function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
+  const googleFonts = [
+    'JetBrains+Mono:wght@400;500;600;700;800',
+    'DM+Sans:wght@400;500;700;800;900'
+  ];
+  
   return `<!DOCTYPE html>
   <html>
     <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=${config.pageWidth}, initial-scale=1" />
-      ${collectGoogleFontLinks([])}
+      ${googleFonts.map(f => `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${f}&display=swap" />`).join('\n')}
       <style>
         :root {
           --text-primary: #0C1820;
@@ -759,12 +764,16 @@ function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
           background: var(--preview-paper);
           border: 1px solid transparent;
           color: var(--text-primary);
-          font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+          font-family: "JetBrains Mono", "DM Sans", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
           font-size: ${config.fontSize}px;
           line-height: ${config.lineHeight};
           padding: ${config.marginTop}px ${config.marginRight}px ${config.marginBottom}px ${config.marginLeft}px;
           word-wrap: break-word;
           overflow-wrap: break-word;
+        }
+
+        .ProseMirror {
+          font-variant-numeric: tabular-nums !important;
         }
 
         /* Tipografía y bloques: copia 1:1 del editor y globals.css */
@@ -776,7 +785,7 @@ function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
         .ProseMirror h4,
         .ProseMirror h5,
         .ProseMirror h6 {
-          font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+          font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
           font-variant-numeric: tabular-nums;
         }
 
@@ -897,12 +906,25 @@ function renderContentPreviewHtml(page: PreviewPage, config: PaginationConfig) {
         .ProseMirror blockquote p { margin: 0; }
         
         /* Índice con CSS leader (copiado de globals.css) */
+        ul.toc-list,
+        .ProseMirror ul.toc-list {
+          margin: 0 !important;
+          padding: 0 !important;
+          list-style: none !important;
+        }
+
+        ul.toc-list > li,
+        .ProseMirror ul.toc-list > li {
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
         [data-toc-entry="true"] {
           display: flex !important;
           align-items: baseline;
           gap: 0;
-          margin: 0;
-          padding: 0;
+          margin: 0 !important;
+          padding: 0 !important;
           white-space: nowrap;
           list-style: none;
           line-height: 1.5;
