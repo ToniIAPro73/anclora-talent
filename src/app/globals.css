@@ -276,25 +276,34 @@ hr[data-page-break="true"]::after {
 }
 
 /* Índice: leader con puntos medios "·" rellenando el espacio entre título y número.
-   Válido para editor, preview, PDF y DOCX (todos renderizan el mismo HTML/CSS). */
-.toc-entry {
-  display: flex;
+   Válido para editor, preview, PDF y DOCX (todos renderizan el mismo HTML/CSS).
+   Se aplica tanto por clase como por atributo data-toc-entry para cubrir párrafos
+   importados de Word que lleguen sin clase explícita. */
+[data-toc-entry="true"],
+li.toc-entry,
+p.toc-entry,
+h1.toc-entry, h2.toc-entry, h3.toc-entry,
+h4.toc-entry, h5.toc-entry, h6.toc-entry {
+  display: flex !important;
   align-items: baseline;
   gap: 0;
   margin: 0;
   padding: 0;
   white-space: nowrap;
   list-style: none;
-  /* Compacta ligeramente cada fila del índice */
   line-height: 1.15;
 }
 
+[data-toc-entry="true"] .toc-title,
 .toc-entry .toc-title {
   flex: 0 1 auto;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: clip;
+  white-space: nowrap;
+  min-width: 0;
 }
 
+[data-toc-entry="true"] .toc-leader,
 .toc-entry .toc-leader {
   flex: 1 1 auto;
   overflow: hidden;
@@ -304,12 +313,14 @@ hr[data-page-break="true"]::after {
   letter-spacing: 0.15em;
 }
 
+[data-toc-entry="true"] .toc-leader::before,
 .toc-entry .toc-leader::before {
   content: "······································································································";
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
+[data-toc-entry="true"] .toc-page,
 .toc-entry .toc-page {
   flex: 0 0 auto;
   font-variant-numeric: tabular-nums;

@@ -735,16 +735,9 @@ export function stripExistingTocPageNumbers(html: string) {
   );
 
   // 4. Atributos data-toc-* residuales
+  // IMPORTANTE: NO limpiar class="toc-entry" — es necesaria para display:flex
   current = current.replace(/\sdata-toc-entry="true"/gi, '');
   current = current.replace(/\sdata-toc-level="[^"]*"/gi, '');
-  current = current.replace(/\sclass="([^"]*)"/gi, (match, cls: string) => {
-    const cleaned = cls
-      .split(/\s+/)
-      .filter((c: string) => c && c !== 'toc-entry')
-      .join(' ')
-      .trim();
-    return cleaned ? ` class="${cleaned}"` : '';
-  });
 
   return current.trim();
 }
