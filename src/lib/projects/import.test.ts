@@ -216,6 +216,35 @@ describe('document import parser isolation', () => {
     expect(chapterHtml).toContain('Segunda línea');
   });
 
+  test('docx explicit index strips imported page numbers until sync is requested', async () => {
+    vi.doMock('server-only', () => ({}));
+
+    const { buildImportedDocumentSeed } = await import('./import');
+    const result = buildImportedDocumentSeed({
+      fileName: 'indice.docx',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      text: 'texto normalizado',
+      html: [
+        '<h1>Índice</h1>',
+        '<ul>',
+        '<li>Introducción</li>',
+        '<li>·········································5</li>',
+        '<li>Fase 1: Percepción</li>',
+        '<li>·········································9</li>',
+        '</ul>',
+        '<h1>Introducción</h1>',
+        '<p>Texto de apertura</p>',
+      ].join(''),
+    });
+
+    const indexHtml = result.chapters?.[0].blocks.map((block) => block.content).join('\n') ?? '';
+    expect(indexHtml).toContain('data-toc-entry="true"');
+    expect(indexHtml).not.toContain('data-toc-page=');
+    expect(indexHtml).not.toContain('····');
+    expect(indexHtml).not.toContain('>5<');
+    expect(indexHtml).not.toContain('>9<');
+  });
+
   test('markdown preserves explicit line breaks as br tags inside paragraphs', async () => {
     vi.doMock('server-only', () => ({}));
 

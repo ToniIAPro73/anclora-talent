@@ -469,6 +469,27 @@ function isStrongOnlyParagraph(fragment: string) {
   return /<(strong|b)/i.test(inner) && !/<(?!\/?(?:strong|b|em|i|span|sup|sub|u|br)\b)[^>]+>/i.test(inner);
 }
 
+function stripImportedTocPageMarkup(fragment: string) {
+  let sanitized = fragment
+    .replace(/<span\s+data-toc-leader="true"[^>]*>[\s\S]*?<\/span>/gi, '')
+    .replace(/<span\s+data-toc-page="true"[^>]*>[\s\S]*?<\/span>/gi, '')
+    .replace(/<span\s+data-toc-title="true"[^>]*>([\s\S]*?)<\/span>/gi, '$1')
+    .replace(/<span\s+[^>]*class="[^"]*\btoc-leader\b[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '')
+    .replace(/<span\s+[^>]*class="[^"]*\btoc-page\b[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '')
+    .replace(/<span\s+[^>]*class="[^"]*\btoc-title\b[^"]*"[^>]*>([\s\S]*?)<\/span>/gi, '$1')
+    .replace(/\sdata-toc-(entry|level|page)="[^"]*"/gi, '');
+
+  sanitized = sanitized.replace(
+    /(<(p|li|h[1-6])(?:\s[^>]*)?>)([\s\S]*?)(<\/\2>)/gi,
+    (_match, open: string, _tag: string, inner: string, close: string) => {
+      const cleanedInner = inner.replace(/\s*[·._\-—~∿]{2,}\s*\d+\s*$/u, '').trim();
+      return `${open}${cleanedInner}${close}`;
+    },
+  );
+
+  return sanitized;
+}
+
 function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
   const tag =
     fragment.match(/^<(ul|ol)/i)?.[1]?.toLowerCase() === 'ol' ? 'ol' : 'ul';
@@ -501,9 +522,8 @@ function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
     const isNextLeader = /^[·._\-—\s]{2,}\d+\s*$/.test(nextText);
 
     if (currText && isNextLeader && !/^\d+$/.test(currText)) {
-      const num = nextText.match(/(\d+)/)?.[1] ?? '';
       merged.push(
-        `<li data-toc-entry="true" data-toc-level="2" data-toc-page="${escapeHtml(num)}">${escapeHtml(currText)}</li>`,
+        `<li data-toc-entry="true" data-toc-level="2">${escapeHtml(currText)}</li>`,
       );
       i++; // saltamos el líder
     } else if (!/^[·._\-—\s]{2,}\d+\s*$/.test(currText)) {
@@ -513,8 +533,6 @@ function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
         merged.push(
           `<li data-toc-entry="true" data-toc-level="2">${escapeHtml(currText)}</li>`,
         );
-      } else {
-        merged.push(items[i]);
       }
     }
   }
@@ -566,63 +584,29 @@ function parseHtmlBlocks(input: string) {
   const normalized = normalizeHtmlFragment(input);
   const matches = normalized.match(BLOCK_TAG_RE)?? [];
   const blocks: ParsedBlock[] = [];
-  let pendingLeader: string | null = null;
 
   for (const fragment of matches) {
-    const clean = normalizeHtmlFragment(fragment);
+    const clean = normalizeHtmlFragment(stripImportedTocPageMarkup(fragment));
     const tag = clean.match(/^<(h[1-6]|p|ul|ol|blockquote)/i)?.[1]?.toLowerCase()?? 'p';
     const text = textFromHtml(clean);
     if (!text || isDecorativeLine(text)) continue;
 
     const isLeader = /^[·._\-—\s]{2,}\d+\s*$/.test(text.trim());
-    const num = text.match(/(\d+)/)?.[1];
 
-    // Si es solo puntos+número, guárdalo para el siguiente elemento
-    if (isLeader && num) {
-      pendingLeader = num;
+    // Si es solo puntos+número, lo descartamos: el índice importado debe quedar limpio
+    // y la numeración solo se inyecta cuando el usuario pulsa "Actualizar numeración".
+    if (isLeader) {
       continue;
     }
 
-    let html = clean;
-
-    // Si teníamos un líder pendiente, lo colocamos como data-toc-page sobre
-    // el nodo actual. Sin spans: el editor los descartaría. El CSS lo pinta.
-    if (pendingLeader) {
-      const escapedPage = escapeHtml(pendingLeader);
-      const plainText = escapeHtml(text.trim().replace(/\s+/g, ' '));
-      if (tag === 'ul' || tag === 'ol') {
-        html = html.replace(
-          /<li([^>]*)>([\s\S]*?)<\/li>(?![\s\S]*<\/li>)/,
-          (_m, attrs: string, inner: string) => {
-            const innerText = textFromHtml(inner).trim().replace(/\s+/g, ' ');
-            const cleanAttrs = attrs
-              .replace(/\sdata-toc-(entry|level|page)="[^"]*"/gi, '')
-              .replace(/\sclass="[^"]*toc-[^"]*"/gi, '');
-            return `<li${cleanAttrs} data-toc-entry="true" data-toc-level="2" data-toc-page="${escapedPage}">${escapeHtml(innerText)}</li>`;
-          },
-        );
-      } else {
-        html = html.replace(
-          /^<(p|h[1-6]|blockquote)([^>]*)>([\s\S]*?)<\/\1>$/,
-          (_m, t: string, attrs: string) => {
-            const cleanAttrs = attrs
-              .replace(/\sdata-toc-(entry|level|page)="[^"]*"/gi, '')
-              .replace(/\sclass="[^"]*toc-[^"]*"/gi, '');
-            return `<${t}${cleanAttrs} data-toc-entry="true" data-toc-level="2" data-toc-page="${escapedPage}">${plainText}</${t}>`;
-          },
-        );
-      }
-      pendingLeader = null;
-    }
-
     if (tag.startsWith('h')) {
-      blocks.push({ kind: 'heading', text: cleanHeadingText(text), html, level: Number(tag.replace('h','')), structural: true });
+      blocks.push({ kind: 'heading', text: cleanHeadingText(text), html: clean, level: Number(tag.replace('h','')), structural: true });
     } else if (tag === 'ul' || tag === 'ol') {
-      blocks.push(...splitHtmlListBlocks(html));
+      blocks.push(...splitHtmlListBlocks(clean));
     } else if (tag === 'blockquote') {
-      blocks.push({ kind: 'quote', text, html, level: null, structural: true });
+      blocks.push({ kind: 'quote', text, html: clean, level: null, structural: true });
     } else {
-      blocks.push({ kind: 'paragraph', text, html, level: null, structural: false });
+      blocks.push({ kind: 'paragraph', text, html: clean, level: null, structural: false });
     }
   }
   return blocks;
