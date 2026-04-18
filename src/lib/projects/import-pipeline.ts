@@ -470,19 +470,24 @@ function isStrongOnlyParagraph(fragment: string) {
 }
 
 function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
-  const tag = fragment.match(/^<(ul|ol)/i)?.[1]?.toLowerCase() === 'ol'? 'ol' : 'ul';
-  const items = Array.from(fragment.matchAll(/<li[^>]*>[\s\S]*?<\/li>/gi))
-   .map(m => normalizeHtmlFragment(m[0]))
-   .filter(Boolean);
+  const tag =
+    fragment.match(/^<(ul|ol)/i)?.[1]?.toLowerCase() === 'ol' ? 'ol' : 'ul';
+  const items = Array.from(
+    fragment.matchAll(/<li[^>]*>[\s\S]*?<\/li>/gi),
+  )
+    .map((m) => normalizeHtmlFragment(m[0]))
+    .filter(Boolean);
 
   if (items.length === 0) {
-    return [{
-      kind: 'list',
-      text: textFromHtml(fragment),
-      html: fragment,
-      level: null,
-      structural: false
-    }];
+    return [
+      {
+        kind: 'list',
+        text: textFromHtml(fragment),
+        html: fragment,
+        level: null,
+        structural: false,
+      },
+    ];
   }
 
   // FUSIONA <li>Título</li> + <li>·····5</li> en una sola entrada semántica:
@@ -501,7 +506,7 @@ function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
           `<span class="toc-title">${escapeHtml(currText)}</span>` +
           `<span class="toc-leader" aria-hidden="true"></span>` +
           `<span class="toc-page">${escapeHtml(num)}</span>` +
-          `</li>`,
+        `</li>`,
       );
       i++; // saltamos el líder
     } else if (!/^[·._\-—\s]{2,}\d+\s*$/.test(currText)) {
@@ -511,12 +516,30 @@ function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
         merged.push(
           `<li class="toc-entry" data-toc-entry="true" data-toc-level="2">` +
             `<span class="toc-title">${escapeHtml(currText)}</span>` +
-            `</li>`,
+          `</li>`,
         );
       } else {
         merged.push(items[i]);
       }
     }
+  }
+
+  // Si todos los elementos parecen entradas de índice, no troceamos en varios <ul>.
+  // Esto reduce el espacio vertical del capítulo de índice.
+  const allLookLikeIndex = merged.every((html) =>
+    isLikelyIndexEntry(textFromHtml(html).trim()),
+  );
+
+  if (allLookLikeIndex) {
+    return [
+      {
+        kind: 'list' as const,
+        text: merged.map(textFromHtml).join('\n'),
+        html: `<${tag} class="toc-list">${merged.join('')}</${tag}>`,
+        level: null,
+        structural: false,
+      },
+    ];
   }
 
   // chunking original para no mover Fase 2
@@ -535,7 +558,7 @@ function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
   }
   if (cur.length) groups.push(cur);
 
-  return groups.map(g => ({
+  return groups.map((g) => ({
     kind: 'list' as const,
     text: g.map(textFromHtml).join('\n'),
     html: `<${tag} class="toc-list">${g.join('')}</${tag}>`,

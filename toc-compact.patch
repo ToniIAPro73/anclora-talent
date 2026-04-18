@@ -1,0 +1,97 @@
+diff --git a/src/lib/projects/import-pipeline.ts b/src/lib/projects/import-pipeline.ts
+index 88ac8ec4..00000000 100644
+--- a/src/lib/projects/import-pipeline.ts
++++ b/src/lib/projects/import-pipeline.ts
+@@ -175,7 +175,8 @@ function isStrongOnlyParagraph(fragment: string) {
+   const inner = fragment.match(/^<p[^>]*>([\s\S]*)<\/p>$/i)?.[1] ?? '';
+   return /<(strong|b)/i.test(inner) && !/<(?!\/?(?:strong|b|em|i|span|sup|sub|u|br)\b)[^>]+>/i.test(inner);
+ }
+ 
+-function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
++// Listas HTML (incluido el índice importado desde DOCX)
++function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
+   const tag = fragment.match(/^<(ul|ol)/i)?.[1]?.toLowerCase() === 'ol'? 'ol' : 'ul';
+   const items = Array.from(fragment.matchAll(/<li[^>]*>[\s\S]*?<\/li>/gi))
+    .map(m => normalizeHtmlFragment(m[0]))
+@@ -210,6 +211,22 @@ function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
+       }
+     }
+   }
++
++  // Si TODOS los ítems tienen pinta de entrada de índice, no troceamos en varios <ul>.
++  // Esto reduce el espacio vertical y mantiene el índice en el mismo número de páginas
++  // que el documento original siempre que sea posible.
++  const allLookLikeIndex = merged.every((html) =>
++    isLikelyIndexEntry(textFromHtml(html).trim()),
++  );
++
++  if (allLookLikeIndex) {
++    return [{
++      kind: 'list' as const,
++      text: merged.map(textFromHtml).join('\n'),
++      html: `<${tag} class="toc-list">${merged.join('')}</${tag}>`,
++      level: null,
++      structural: false,
++    }];
++  }
+ 
+   // chunking original para no mover Fase 2
+   const groups: string[][] = [];
+@@ -224,7 +241,7 @@ function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
+   }
+   if (cur.length) groups.push(cur);
+ 
+-  return groups.map(g => ({
++  return groups.map(g => ({
+     kind: 'list' as const,
+     text: g.map(textFromHtml).join('\n'),
+     html: `<${tag} class=\"toc-list\">${g.join('')}</${tag}>`,
+diff --git a/src/app/globals.css b/src/app/globals.css
+index d6bea43e..00000000 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -164,6 +164,7 @@ hr[data-page-break="true"]::after {
+   letter-spacing: 0.08em;
+ }
+ 
++/* Editor: tipografía monoespaciada para facilitar alineación del índice */
+ /* Fuerza mono en TODO el editor para el índice */
+ .ProseMirror {
+   font-variant-numeric: tabular-nums!important;
+@@ -173,7 +174,8 @@ hr[data-page-break="true"]::after {
+   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace!important;
+ }
+ 
+-/* Índice: leader con puntos medios "·" rellenando el espacio entre título y número.
++/* Índice: leader con puntos medios "·" rellenando el espacio entre título y número.
+    Válido para editor, preview, PDF y DOCX (todos renderizan el mismo HTML/CSS). */
+ .toc-entry {
+   display: flex;
+@@ -183,6 +185,8 @@ hr[data-page-break="true"]::after {
+   padding: 0;
+   white-space: nowrap;
+   list-style: none;
++  /* Compacta ligeramente cada fila del índice frente al body de texto normal */
++  line-height: 1.15;
+ }
+ .toc-entry .toc-title {
+   flex: 0 1 auto;
+@@ -202,6 +206,19 @@ hr[data-page-break="true"]::after {
+ }
+ .toc-entry .toc-page {
+   flex: 0 0 auto;
+   font-variant-numeric: tabular-nums;
+ }
++
++/* Listas de índice compactas: sin márgenes ni bullets extra */
++ul.toc-list {
++  margin: 0;
++  padding: 0;
++  list-style: none;
++}
++
++/* Por si quedara algún <li> de índice sin .toc-entry */
++ul.toc-list > li {
++  margin: 0;
++  padding: 0;
++}

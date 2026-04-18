@@ -265,10 +265,14 @@ hr[data-page-break="true"]::after {
 
 /* Fuerza mono en TODO el editor para el índice */
 .ProseMirror {
-  font-variant-numeric: tabular-nums!important;
+  font-variant-numeric: tabular-nums !important;
 }
-.ProseMirror p,.ProseMirror li,.ProseMirror h1,.ProseMirror h2 {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace!important;
+
+.ProseMirror p,
+.ProseMirror li,
+.ProseMirror h1,
+.ProseMirror h2 {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
 }
 
 /* Índice: leader con puntos medios "·" rellenando el espacio entre título y número.
@@ -281,12 +285,16 @@ hr[data-page-break="true"]::after {
   padding: 0;
   white-space: nowrap;
   list-style: none;
+  /* Compacta ligeramente cada fila del índice */
+  line-height: 1.15;
 }
+
 .toc-entry .toc-title {
   flex: 0 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .toc-entry .toc-leader {
   flex: 1 1 auto;
   overflow: hidden;
@@ -295,12 +303,27 @@ hr[data-page-break="true"]::after {
   color: inherit;
   letter-spacing: 0.15em;
 }
+
 .toc-entry .toc-leader::before {
   content: "······································································································";
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+
 .toc-entry .toc-page {
   flex: 0 0 auto;
   font-variant-numeric: tabular-nums;
+}
+
+/* Listas de índice compactas: sin márgenes ni bullets extra */
+ul.toc-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Por si quedara algún <li> del índice sin .toc-entry */
+ul.toc-list > li {
+  margin: 0;
+  padding: 0;
 }
