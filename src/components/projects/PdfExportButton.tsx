@@ -112,21 +112,23 @@ function PreviewContentPage({
           height: 100%;
           overflow: hidden;
           color: var(--text-primary);
+          font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
           font-size: ${config.fontSize}px;
           line-height: ${config.lineHeight};
           text-align: left;
           word-wrap: break-word;
           overflow-wrap: break-word;
+          font-variant-numeric: tabular-nums;
         }
         .pdf-export-content-root p,
+        .pdf-export-content-root li,
         .pdf-export-content-root h1,
         .pdf-export-content-root h2,
         .pdf-export-content-root h3,
         .pdf-export-content-root h4,
         .pdf-export-content-root h5,
-        .pdf-export-content-root h6,
-        .pdf-export-content-root blockquote,
-        .pdf-export-content-root li {
+        .pdf-export-content-root h6 {
+          font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
           text-align: inherit;
         }
         .pdf-export-content-root > * {
@@ -146,66 +148,52 @@ function PreviewContentPage({
         .pdf-export-content-root p + p {
           margin-top: 0.8rem;
         }
-        .pdf-export-content-root [data-toc-entry="true"],
-        .pdf-export-content-root [data-toc-line="true"] {
-          display: flex;
-          flex-wrap: wrap;
-          align-items: baseline;
-          gap: 0.5rem;
-          width: 100%;
-          min-width: 0;
-          overflow: visible;
+        
+        /* ÍNDICE: Estilos 1:1 con globals.css y MultipageFlow */
+        .pdf-export-content-root ul.toc-list {
+          margin: 0 !important;
+          padding: 0 !important;
+          list-style: none !important;
         }
-        .pdf-export-content-root li[data-toc-entry="true"] {
-          list-style: none;
-          margin-left: 0;
-          padding-left: 0;
+
+        .pdf-export-content-root ul.toc-list > li {
+          margin: 0 !important;
+          padding: 0 !important;
         }
-        .pdf-export-content-root li[data-toc-entry="true"]::before {
-          content: "•";
-          flex: 0 0 auto;
-          margin-right: 0.5rem;
+
+        .pdf-export-content-root [data-toc-entry="true"] {
+          display: flex !important;
+          align-items: baseline !important;
+          gap: 0 !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          white-space: nowrap !important;
+          list-style: none !important;
+          line-height: 1.5 !important;
         }
-        .pdf-export-content-root [data-toc-title="true"] {
-          display: block;
-          flex: 0 1 auto;
-          min-width: 0;
-          overflow: visible;
-          text-overflow: clip;
-          white-space: normal;
+
+        .pdf-export-content-root [data-toc-entry="true"][data-toc-page]::before {
+          content: "······································································································" !important;
+          order: 1 !important;
+          flex: 1 1 auto !important;
+          overflow: hidden !important;
+          margin: 0 0.35em !important;
+          letter-spacing: 0.15em !important;
+          color: inherit !important;
+          white-space: nowrap !important;
+          font-variant-numeric: tabular-nums !important;
         }
-        .pdf-export-content-root [data-toc-title="true"] * {
-          white-space: inherit !important;
+
+        .pdf-export-content-root [data-toc-entry="true"][data-toc-page]::after {
+          content: attr(data-toc-page) !important;
+          order: 2 !important;
+          flex: 0 0 auto !important;
+          font-variant-numeric: tabular-nums !important;
+          min-width: 1.5em !important;
+          text-align: right !important;
         }
-        .pdf-export-content-root [data-toc-title="true"] br {
-          display: block;
-        }
-        .pdf-export-content-root [data-toc-leader="true"] {
-          display: block;
-          flex: 1 1 6rem;
-          min-width: 3rem;
-          overflow: hidden;
-          color: var(--text-tertiary);
-          line-height: 1;
-          transform: translateY(-0.02em);
-          white-space: nowrap;
-          font-size: 0;
-        }
-        .pdf-export-content-root [data-toc-leader="true"]::before {
-          content: '················································································································································';
-          display: block;
-          font-size: 1rem;
-          letter-spacing: 0.08em;
-          white-space: nowrap;
-        }
-        .pdf-export-content-root [data-toc-page="true"] {
-          display: inline-block;
-          flex: 0 0 auto;
-          min-width: 1.5rem;
-          text-align: right;
-          font-weight: 700;
-          white-space: nowrap;
-        }
+
         .pdf-export-content-root h1 {
           font-size: 2rem;
           line-height: 1.1;

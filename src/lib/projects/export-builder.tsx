@@ -2,13 +2,11 @@ import {
   AlignmentType,
   Document as DocxDocument,
   HeadingLevel,
-  HorizontalPositionRelativeFrom,
   ImageRun,
   Packer,
   Paragraph,
   TextRun,
-  TextWrappingType,
-  VerticalPositionRelativeFrom,
+  SectionType,
 } from 'docx';
 import {
   Document,
@@ -49,7 +47,6 @@ function escapeHtml(text: string) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
-
 
 function renderCoverPageHtml(imageUrl: string) {
   return `
@@ -617,6 +614,7 @@ function toDocxHeadingLevel(level: number) {
       return HeadingLevel.HEADING_4;
   }
 }
+
 function buildDocxPageChildren(page: PreviewPage) {
   if (page.type === 'cover' && page.coverData) {
     return [
@@ -667,7 +665,6 @@ function buildDocxPageChildren(page: PreviewPage) {
             new Paragraph({
               text: page.backCoverData.authorBio,
               spacing: { before: 180 },
-              thematicBreak: true,
             }),
           ]
         : []),
@@ -721,33 +718,41 @@ function inferImageType(imageUrl: string): DocxImagePayload['type'] {
   return 'png';
 }
 
+function cleanStringForDocx(input: string) {
+  return stripInlineHtml(input || '')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '')
+    .trim();
+}
+
 async function loadImageBytes(imageUrl: string): Promise<DocxImagePayload | null> {
-  if (!imageUrl.trim()) {
+  if (!imageUrl || !imageUrl.trim()) {
     return null;
   }
 
-  if (imageUrl.startsWith('data:')) {
-    const [, base64 = ''] = imageUrl.split(',', 2);
-    return base64
-      ? {
-          data: Uint8Array.from(Buffer.from(base64, 'base64')),
-          type: inferImageType(imageUrl),
-        }
-      : null;
-  }
-
   try {
-    const response = await fetch(imageUrl);
-    if (!response.ok) {
-      return null;
+    if (imageUrl.startsWith('data:')) {
+      const parts = imageUrl.split(',', 2);
+      const mime = parts[0].match(/:(.*?);/)?.[1];
+      const base64 = parts[1];
+      if (!base64) return null;
+      
+      const buffer = Buffer.from(base64, 'base64');
+      return {
+        data: new Uint8Array(buffer),
+        type: mime?.includes('jpeg') || mime?.includes('jpg') ? 'jpg' : 'png',
+      };
     }
+
+    const response = await fetch(imageUrl);
+    if (!response.ok) return null;
 
     const buffer = await response.arrayBuffer();
     return {
       data: new Uint8Array(buffer),
       type: inferImageType(response.headers.get('content-type') || imageUrl),
     };
-  } catch {
+  } catch (error) {
+    console.error('[docx/loadImageBytes] failed', error);
     return null;
   }
 }
@@ -756,14 +761,22 @@ export async function buildProjectDocxBuffer(
   project: ProjectRecord,
   exportConfig: PaginationConfig = DEFAULT_EXPORT_CONFIG,
 ) {
-  const docxPageWidth = exportConfig.pageWidth;
-  const docxPageHeight = exportConfig.pageHeight;
+  const PX_TO_TWIPS = 15;
+  const PX_TO_EMU = 9525;
+
+  const docxPageWidthTwips = Math.round(exportConfig.pageWidth * PX_TO_TWIPS);
+  const docxPageHeightTwips = Math.round(exportConfig.pageHeight * PX_TO_TWIPS);
+  const docxImageWidthEmu = Math.round(exportConfig.pageWidth * PX_TO_EMU);
+  const docxImageHeightEmu = Math.round(exportConfig.pageHeight * PX_TO_EMU);
+
   const pages = buildPreviewPages(project, exportConfig);
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
+  
   const contentImageUrls = await Promise.all(
     pages.map((page) => buildContentPageExportImageDataUrl(page, exportConfig)),
   );
+
   const pageImagePayloads = await Promise.all(
     pages.map(async (page, index) => {
       const imageUrl =
@@ -777,69 +790,61 @@ export async function buildProjectDocxBuffer(
     }),
   );
 
-  const sections = pages.map((page, index) => ({
-    properties: {
-      page: {
-        size: {
-          width: 8640,
-          height: 12960,
-        },
-        margin: {
-          top: pageImagePayloads[index] != null ? 0 : 1080,
-          bottom: pageImagePayloads[index] != null ? 0 : 1080,
-          left: pageImagePayloads[index] != null ? 0 : 1080,
-          right: pageImagePayloads[index] != null ? 0 : 1080,
-          header: 0,
-          footer: 0,
-          gutter: 0,
+  const sections = pages.map((page, index) => {
+    const hasImage = pageImagePayloads[index] != null;
+    let children: Paragraph[] = [];
+
+    if (hasImage) {
+      children = [
+        new Paragraph({
+          children: [
+            new ImageRun({
+              data: pageImagePayloads[index]!.data,
+              type: pageImagePayloads[index]!.type,
+              transformation: {
+                width: docxImageWidthEmu,
+                height: docxImageHeightEmu,
+              },
+            }),
+          ],
+          spacing: { before: 0, after: 0, line: 0, lineRule: 'exact' },
+        }),
+      ];
+    } else {
+      children = buildDocxPageChildren(page);
+    }
+
+    if (children.length === 0) {
+      children.push(new Paragraph(''));
+    }
+
+    return {
+      properties: {
+        type: SectionType.NEXT_PAGE,
+        page: {
+          size: {
+            width: docxPageWidthTwips,
+            height: docxPageHeightTwips,
+          },
+          margin: {
+            top: hasImage ? 0 : Math.round(exportConfig.marginTop * PX_TO_TWIPS),
+            bottom: hasImage ? 0 : Math.round(exportConfig.marginBottom * PX_TO_TWIPS),
+            left: hasImage ? 0 : Math.round(exportConfig.marginLeft * PX_TO_TWIPS),
+            right: hasImage ? 0 : Math.round(exportConfig.marginRight * PX_TO_TWIPS),
+            header: 0,
+            footer: 0,
+            gutter: 0,
+          },
         },
       },
-    },
-    children:
-      pageImagePayloads[index] != null
-        ? [
-            new Paragraph({
-              children: [
-                new ImageRun({
-                  data: pageImagePayloads[index]!.data,
-                  type: pageImagePayloads[index]!.type,
-                  transformation: {
-                    width: docxPageWidth,
-                    height: docxPageHeight,
-                  },
-                  floating: {
-                    horizontalPosition: {
-                      relative: HorizontalPositionRelativeFrom.PAGE,
-                      offset: 0,
-                    },
-                    verticalPosition: {
-                      relative: VerticalPositionRelativeFrom.PAGE,
-                      offset: 0,
-                    },
-                    wrap: {
-                      type: TextWrappingType.NONE,
-                    },
-                    margins: {
-                      top: 0,
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                    },
-                    allowOverlap: true,
-                    behindDocument: false,
-                  },
-                }),
-              ],
-              spacing: { before: 0, after: 0, line: 1, lineRule: 'auto' as const },
-            }),
-          ]
-        : buildDocxPageChildren(page),
-  }));
+      children,
+    };
+  });
 
   const doc = new DocxDocument({
     creator: 'Anclora Talent',
-    title: project.document.title,
-    description: project.document.subtitle,
+    title: cleanStringForDocx(project.document.title || 'Proyecto'),
+    description: cleanStringForDocx(project.document.subtitle || ''),
     sections,
   });
 
