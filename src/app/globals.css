@@ -288,12 +288,11 @@ p.toc-entry,
 h1.toc-entry, h2.toc-entry, h3.toc-entry,
 h4.toc-entry, h5.toc-entry, h6.toc-entry {
   display: flex !important;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 0;
   margin: 0;
   padding: 0;
-  white-space: nowrap;
-  list-style: none;
   line-height: 1.5;
 }
 
@@ -313,6 +312,7 @@ h4.toc-entry, h5.toc-entry, h6.toc-entry {
   content: attr(data-toc-page);
   order: 2;
   flex: 0 0 auto;
+  margin-left: auto;
   font-variant-numeric: tabular-nums;
 }
 

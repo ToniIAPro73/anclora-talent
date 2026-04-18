@@ -1635,12 +1635,11 @@ export function AdvancedRichTextEditor({
               .ProseMirror [data-toc-entry="true"],
               .preview-page [data-toc-entry="true"] {
                 display: flex;
+                flex-wrap: wrap;
                 align-items: baseline;
                 gap: 0;
                 margin: 0;
                 padding: 0;
-                white-space: nowrap;
-                list-style: none;
                 line-height: 1.5;
               }
               .ProseMirror [data-toc-entry="true"][data-toc-page]::before,
@@ -1660,13 +1659,8 @@ export function AdvancedRichTextEditor({
                 content: attr(data-toc-page);
                 order: 2;
                 flex: 0 0 auto;
+                margin-left: auto;
                 font-variant-numeric: tabular-nums;
-              }
-              .ProseMirror li[data-toc-entry="true"],
-              .preview-page li[data-toc-entry="true"] {
-                list-style: none;
-                margin-left: 0;
-                padding-left: 0;
               }
               .ProseMirror ul.toc-list,
               .preview-page ul.toc-list {
