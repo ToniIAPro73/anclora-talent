@@ -757,10 +757,26 @@ async function loadImageBytes(imageUrl: string): Promise<DocxImagePayload | null
   }
 }
 
+import {
+  AlignmentType,
+  Document as DocxDocument,
+  HeadingLevel,
+  ImageRun,
+  Packer,
+  Paragraph,
+  TextRun,
+  SectionType,
+} from 'docx';
+
+// ... (previous helper functions remain)
+
 export async function buildProjectDocxBuffer(
   project: ProjectRecord,
   exportConfig: PaginationConfig = DEFAULT_EXPORT_CONFIG,
 ) {
+  // Conversions for docx library:
+  // - Size (Width/Height) in Twips (1/1440 inch). 96 DPI -> 1px = 15 Twips.
+  // - Image transformation in EMUs (1/914400 inch). 96 DPI -> 1px = 9525 EMUs.
   const PX_TO_TWIPS = 15;
   const PX_TO_EMU = 9525;
 
@@ -790,19 +806,17 @@ export async function buildProjectDocxBuffer(
     }),
   );
 
-  const allChildren: any[] = [];
+  const sections = pages.map((page, index) => {
+    const hasImage = pageImagePayloads[index] != null;
+    let children: Paragraph[] = [];
 
-  for (let i = 0; i < pages.length; i++) {
-    const page = pages[i];
-    const imagePayload = pageImagePayloads[i];
-
-    if (imagePayload) {
-      allChildren.push(
+    if (hasImage) {
+      children = [
         new Paragraph({
           children: [
             new ImageRun({
-              data: imagePayload.data,
-              type: imagePayload.type,
+              data: pageImagePayloads[index]!.data,
+              type: pageImagePayloads[index]!.type,
               transformation: {
                 width: docxImageWidthEmu,
                 height: docxImageHeightEmu,
@@ -810,43 +824,45 @@ export async function buildProjectDocxBuffer(
             }),
           ],
           spacing: { before: 0, after: 0, line: 0, lineRule: 'exact' },
-        })
-      );
+        }),
+      ];
     } else {
-      allChildren.push(...buildDocxPageChildren(page));
+      children = buildDocxPageChildren(page);
     }
 
-    if (i < pages.length - 1) {
-      allChildren.push(new Paragraph({ children: [new PageBreak()] }));
+    // Word XML safety: Every section needs at least one child
+    if (children.length === 0) {
+      children.push(new Paragraph(''));
     }
-  }
+
+    return {
+      properties: {
+        type: SectionType.NEXT_PAGE,
+        page: {
+          size: {
+            width: docxPageWidthTwips,
+            height: docxPageHeightTwips,
+          },
+          margin: {
+            top: hasImage ? 0 : Math.round(exportConfig.marginTop * PX_TO_TWIPS),
+            bottom: hasImage ? 0 : Math.round(exportConfig.marginBottom * PX_TO_TWIPS),
+            left: hasImage ? 0 : Math.round(exportConfig.marginLeft * PX_TO_TWIPS),
+            right: hasImage ? 0 : Math.round(exportConfig.marginRight * PX_TO_TWIPS),
+            header: 0,
+            footer: 0,
+            gutter: 0,
+          },
+        },
+      },
+      children,
+    };
+  });
 
   const doc = new DocxDocument({
     creator: 'Anclora Talent',
     title: cleanStringForDocx(project.document.title || 'Proyecto'),
     description: cleanStringForDocx(project.document.subtitle || ''),
-    sections: [
-      {
-        properties: {
-          page: {
-            size: {
-              width: docxPageWidthTwips,
-              height: docxPageHeightTwips,
-            },
-            margin: {
-              top: 0,
-              bottom: 0,
-              left: 0,
-              right: 0,
-              header: 0,
-              footer: 0,
-              gutter: 0,
-            },
-          },
-        },
-        children: allChildren,
-      },
-    ],
+    sections,
   });
 
   return Packer.toBuffer(doc);
