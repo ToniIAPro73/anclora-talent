@@ -281,28 +281,68 @@ function serializeError(error: unknown) {
 }
 
 async function getPlaywrightBrowser() {
-  if (!playwrightBrowserPromise) {
-    playwrightBrowserPromise = (async () => {
-      try {
-        return await launchLocalPlaywrightBrowser();
-      } catch (localError) {
-        try {
-          return await launchServerChromiumBrowser();
-        } catch (serverError) {
-          console.error('[export/render] browser launch failed', {
-            localError: serializeError(localError),
-            serverError: serializeError(serverError),
-          });
-          throw serverError;
-        }
+  if (playwrightBrowserPromise) {
+    try {
+      const cached = await playwrightBrowserPromise;
+      if (cached.isConnected()) {
+        return cached;
       }
-    })().catch((error) => {
-      playwrightBrowserPromise = null;
-      throw error;
-    });
+    } catch {
+      // fall through to relaunch
+    }
+    playwrightBrowserPromise = null;
   }
 
+  playwrightBrowserPromise = (async () => {
+    try {
+      return await launchLocalPlaywrightBrowser();
+    } catch (localError) {
+      try {
+        return await launchServerChromiumBrowser();
+      } catch (serverError) {
+        console.error('[export/render] browser launch failed', {
+          localError: serializeError(localError),
+          serverError: serializeError(serverError),
+        });
+        throw serverError;
+      }
+    }
+  })().catch((error) => {
+    playwrightBrowserPromise = null;
+    throw error;
+  });
+
   return playwrightBrowserPromise;
+}
+
+function isBrowserClosedError(error: unknown) {
+  if (!(error instanceof Error)) return false;
+  const msg = error.message || '';
+  return (
+    msg.includes('Target page, context or browser has been closed') ||
+    msg.includes('Browser has been closed') ||
+    msg.includes('has been closed') ||
+    msg.includes('Target closed') ||
+    msg.includes('Connection closed')
+  );
+}
+
+const RENDER_CONCURRENCY = 3;
+let activeRenders = 0;
+const renderQueue: Array<() => void> = [];
+
+async function withRenderSlot<T>(fn: () => Promise<T>): Promise<T> {
+  if (activeRenders >= RENDER_CONCURRENCY) {
+    await new Promise<void>((resolve) => renderQueue.push(resolve));
+  }
+  activeRenders++;
+  try {
+    return await fn();
+  } finally {
+    activeRenders--;
+    const next = renderQueue.shift();
+    if (next) next();
+  }
 }
 
 function googleFontHref(fontFamily: string) {
@@ -329,7 +369,7 @@ function collectGoogleFontLinks(fontFamilies: Array<string | null | undefined>) 
     .join('\n');
 }
 
-async function renderHtmlToImageDataUrl({
+async function renderOnce({
   html,
   width,
   height,
@@ -338,13 +378,13 @@ async function renderHtmlToImageDataUrl({
   width: number;
   height: number;
 }) {
-  try {
-    const browser = await getPlaywrightBrowser();
-    const page = await browser.newPage({
-      viewport: { width, height },
-      deviceScaleFactor: 1,
-    });
+  const browser = await getPlaywrightBrowser();
+  const page = await browser.newPage({
+    viewport: { width, height },
+    deviceScaleFactor: 1,
+  });
 
+  try {
     // Use 'load' rather than 'networkidle' so that an unreachable Google Fonts
     // CDN can't stall the screenshot (the inlined @font-face fallback ensures
     // we still have Latin glyphs when the external CSS never loads).
@@ -369,16 +409,46 @@ async function renderHtmlToImageDataUrl({
     });
 
     // Use JPEG with 80% quality to keep file sizes manageable for DOCX
-    const buffer = await page.locator('#export-page').screenshot({ 
+    const buffer = await page.locator('#export-page').screenshot({
       type: 'jpeg',
-      quality: 80 
+      quality: 80,
     });
-    await page.close();
     return `data:image/jpeg;base64,${buffer.toString('base64')}`;
-  } catch (error) {
-    console.error('[export/render] html to jpeg failed', serializeError(error));
-    return null;
+  } finally {
+    try {
+      await page.close();
+    } catch {
+      // page already closed — ignore
+    }
   }
+}
+
+async function renderHtmlToImageDataUrl(input: {
+  html: string;
+  width: number;
+  height: number;
+}) {
+  return withRenderSlot(async () => {
+    try {
+      return await renderOnce(input);
+    } catch (error) {
+      if (isBrowserClosedError(error)) {
+        console.warn('[export/render] browser closed, relaunching and retrying once');
+        playwrightBrowserPromise = null;
+        try {
+          return await renderOnce(input);
+        } catch (retryError) {
+          console.error(
+            '[export/render] html to jpeg failed after retry',
+            serializeError(retryError),
+          );
+          return null;
+        }
+      }
+      console.error('[export/render] html to jpeg failed', serializeError(error));
+      return null;
+    }
+  });
 }
 
 async function loadEmbeddedFontFaceCss() {
