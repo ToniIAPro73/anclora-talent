@@ -83,23 +83,25 @@ function makeProject(overrides?: Partial<ProjectRecord>): ProjectRecord {
 }
 
 describe('buildSyncedTocChapterContent — Actualizar numeración', () => {
-  test('wraps clean entries in the semantic .toc-entry structure with page numbers', () => {
+  test('adds data-toc-page on each entry paragraph (no nested spans)', () => {
     const project = makeProject();
     const synced = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
 
     expect(synced).not.toBeNull();
     expect(synced?.html).toContain(
-      '<p class="toc-entry" data-toc-entry="true" data-toc-level="2"><span class="toc-title">Introducción</span><span class="toc-leader" aria-hidden="true"></span><span class="toc-page">3</span></p>',
+      '<p data-toc-entry="true" data-toc-level="2" data-toc-page="3">Introducción</p>',
     );
     expect(synced?.html).toContain(
-      '<p class="toc-entry" data-toc-entry="true" data-toc-level="2"><span class="toc-title">Capítulo 1</span><span class="toc-leader" aria-hidden="true"></span><span class="toc-page">4</span></p>',
+      '<p data-toc-entry="true" data-toc-level="2" data-toc-page="4">Capítulo 1</p>',
     );
-    // No se introducen `·` como texto; el relleno visual lo hace CSS.
+    // No se introducen `·` como texto ni spans anidados; el CSS pinta los `·` y el número.
     expect(synced?.html).not.toContain('····');
     expect(synced?.html).not.toContain('.....');
+    expect(synced?.html).not.toContain('<span class="toc-title"');
+    expect(synced?.html).not.toContain('<span class="toc-page"');
   });
 
-  test('legacy text dots ("······5") get stripped and replaced by the semantic structure', () => {
+  test('legacy text dots ("······5") get stripped and replaced by data-toc-page', () => {
     const project = makeProject({
       document: {
         ...makeProject().document,
@@ -113,7 +115,6 @@ describe('buildSyncedTocChapterContent — Actualizar numeración', () => {
                 id: 'b',
                 type: 'paragraph',
                 order: 0,
-                // Formato heredado con puntos textuales "·····5" al final del párrafo.
                 content:
                   '<h2>Índice</h2><p>Introducción·········································5</p><p>Capítulo 1·········································9</p>',
               },
@@ -126,11 +127,12 @@ describe('buildSyncedTocChapterContent — Actualizar numeración', () => {
 
     const synced = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
 
-    expect(synced?.html).toContain('<span class="toc-title">Introducción</span>');
-    expect(synced?.html).toContain('<span class="toc-page">3</span>');
-    expect(synced?.html).toContain('<span class="toc-title">Capítulo 1</span>');
-    expect(synced?.html).toContain('<span class="toc-page">4</span>');
-    // Los puntos textuales legacy quedan fuera del HTML final.
+    expect(synced?.html).toContain(
+      '<p data-toc-entry="true" data-toc-level="2" data-toc-page="3">Introducción</p>',
+    );
+    expect(synced?.html).toContain(
+      '<p data-toc-entry="true" data-toc-level="2" data-toc-page="4">Capítulo 1</p>',
+    );
     expect(synced?.html).not.toContain('·········································5');
     expect(synced?.html).not.toContain('·········································9');
   });
@@ -180,12 +182,9 @@ describe('buildSyncedTocChapterContent — Actualizar numeración', () => {
 
     const synced = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
 
-    expect(synced?.html).toContain('<span class="toc-title">Capítulo 2</span>');
-    expect(synced?.html).toContain('<span class="toc-page">5</span>');
-
-    // Las entradas originales siguen presentes con sus números actualizados.
-    expect(synced?.html).toContain('<span class="toc-title">Introducción</span>');
-    expect(synced?.html).toContain('<span class="toc-title">Capítulo 1</span>');
+    expect(synced?.html).toMatch(/data-toc-page="5"[^>]*>Capítulo 2/);
+    expect(synced?.html).toMatch(/data-toc-page="3"[^>]*>Introducción/);
+    expect(synced?.html).toMatch(/data-toc-page="4"[^>]*>Capítulo 1/);
   });
 
   test('renumbers remaining entries when a chapter is deleted', () => {
@@ -205,8 +204,8 @@ describe('buildSyncedTocChapterContent — Actualizar numeración', () => {
                 order: 0,
                 content:
                   '<h2>Índice</h2>' +
-                  '<p class="toc-entry" data-toc-entry="true" data-toc-level="2"><span class="toc-title">Introducción</span><span class="toc-leader" aria-hidden="true"></span><span class="toc-page">3</span></p>' +
-                  '<p class="toc-entry" data-toc-entry="true" data-toc-level="2"><span class="toc-title">Capítulo 1</span><span class="toc-leader" aria-hidden="true"></span><span class="toc-page">4</span></p>',
+                  '<p data-toc-entry="true" data-toc-level="2" data-toc-page="3">Introducción</p>' +
+                  '<p data-toc-entry="true" data-toc-level="2" data-toc-page="4">Capítulo 1</p>',
               },
             ],
           },
@@ -222,13 +221,12 @@ describe('buildSyncedTocChapterContent — Actualizar numeración', () => {
 
     const synced = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
 
-    expect(synced?.html).toContain('<span class="toc-title">Introducción</span>');
-    expect(synced?.html).toContain('<span class="toc-page">3</span>');
+    expect(synced?.html).toMatch(/data-toc-page="3"[^>]*>Introducción/);
 
     // Tras borrar el capítulo, al quedarse su entrada sin página calculada, no se
     // re-inyecta con nuevo número (la numeración refleja solo capítulos existentes).
     const pageNumbers = Array.from(
-      (synced?.html ?? '').matchAll(/<span class="toc-page">(\d+)<\/span>/g),
+      (synced?.html ?? '').matchAll(/data-toc-page="(\d+)"/g),
     ).map((m) => m[1]);
     expect(pageNumbers).toEqual(['3']);
   });
@@ -253,6 +251,13 @@ describe('stripExistingTocPageNumbers', () => {
       '<span class="toc-leader" aria-hidden="true"></span>' +
       '<span class="toc-page">5</span>' +
       '</p>';
+    const stripped = stripExistingTocPageNumbers(html);
+    expect(stripped).toBe('<p>Introducción</p>');
+  });
+
+  test('removes new data-toc-page attribute on the paragraph', () => {
+    const html =
+      '<p data-toc-entry="true" data-toc-level="2" data-toc-page="5">Introducción</p>';
     const stripped = stripExistingTocPageNumbers(html);
     expect(stripped).toBe('<p>Introducción</p>');
   });
