@@ -693,9 +693,12 @@ function renderCoverPreviewHtml(project: ProjectRecord) {
   const titleLeft = toPercent(titleLayer?.left, CANVAS_WIDTH, CANVAS_WIDTH / 2);
   const subtitleLeft = toPercent(subtitleLayer?.left, CANVAS_WIDTH, CANVAS_WIDTH / 2);
   const authorLeft = toPercent(authorLayer?.left, CANVAS_WIDTH, CANVAS_WIDTH / 2);
-  const titleTranslateX = titleLayer?.originX === 'left' ? '0' : '-50%';
-  const subtitleTranslateX = subtitleLayer?.originX === 'left' ? '0' : '-50%';
-  const authorTranslateX = authorLayer?.originX === 'left' ? '0' : '-50%';
+  
+  // Front cover defaults to centering (-50%) if originX is not 'left'
+  const buildCoverTranslateX = (originX: string | undefined) => (originX === 'left' ? '0' : '-50%');
+  const titleTranslateX = buildCoverTranslateX(titleLayer?.originX);
+  const subtitleTranslateX = buildCoverTranslateX(subtitleLayer?.originX);
+  const authorTranslateX = buildCoverTranslateX(authorLayer?.originX);
   const titleTextAlign = titleLayer?.textAlign ?? 'center';
   const subtitleTextAlign = subtitleLayer?.textAlign ?? 'center';
   const authorTextAlign = authorLayer?.textAlign ?? 'center';
