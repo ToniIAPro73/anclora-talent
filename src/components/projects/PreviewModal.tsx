@@ -8,7 +8,6 @@
 import * as React from 'react';
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import {
-  X,
   ChevronLeft,
   ChevronRight,
   ZoomIn,
@@ -65,6 +64,10 @@ export function PreviewModal({
     'inline-flex h-10 min-w-10 items-center justify-center rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] text-[var(--button-secondary-fg)] transition hover:border-[var(--button-secondary-hover-border)] hover:bg-[var(--button-secondary-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--button-secondary-fg)] focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-30';
   const compactPrimaryButton =
     'inline-flex h-10 min-w-10 items-center justify-center rounded-full border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] text-[var(--button-primary-fg)] shadow-[var(--shadow-soft)] transition hover:bg-[var(--button-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--button-primary-bg)] focus-visible:ring-offset-0';
+
+  useEffect(() => {
+    setFormat(preferredFormat || 'laptop');
+  }, [preferredFormat]);
 
   // Generate pages based on selected format
   const paginationConfig = useMemo(
@@ -130,9 +133,6 @@ export function PreviewModal({
   );
 
   const pagePreset = FORMAT_PRESETS[format];
-  
-  // Spread width logic
-  const isSpreadContent = viewMode === 'spread' && currentPage >= firstContentIndex && currentPage <= lastContentIndex;
   
   const spreadWidth = viewMode === 'spread' && (currentPage > 0 && currentPage < backCoverIndex)
       ? pagePreset.viewportWidth * 2 + 24
@@ -353,7 +353,19 @@ import { createDefaultSurfaceState, normalizeSurfaceState } from '@/lib/projects
 import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface-resolver';
 import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
 
-function PageRenderer({ page, format, copy, config, project }: { page: PreviewPage, format: PreviewFormat, copy: any, config: PaginationConfig, project: ProjectRecord }) {
+function PageRenderer({
+  page,
+  format,
+  copy,
+  config,
+  project,
+}: {
+  page: PreviewPage;
+  format: PreviewFormat;
+  copy: AppMessages['project'];
+  config: PaginationConfig;
+  project: ProjectRecord;
+}) {
   const preset = FORMAT_PRESETS[format];
   const pageStyle = {
     width: `${preset.viewportWidth}px`,
@@ -366,6 +378,7 @@ function PageRenderer({ page, format, copy, config, project }: { page: PreviewPa
     if (page.coverData.renderedImageUrl) {
       return (
         <div style={pageStyle} className="relative overflow-hidden bg-[#070c14] rounded-[8px] shadow-[var(--shadow-strong)] border border-white/10">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src={page.coverData.renderedImageUrl} 
             alt={copy.previewModalCoverAlt}
@@ -406,6 +419,7 @@ function PageRenderer({ page, format, copy, config, project }: { page: PreviewPa
     if (page.backCoverData.renderedImageUrl) {
       return (
         <div style={pageStyle} className="relative overflow-hidden bg-[#070c14] rounded-[8px] shadow-[var(--shadow-strong)] border border-white/10">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src={page.backCoverData.renderedImageUrl} 
             alt={copy.previewModalBackCoverAlt}

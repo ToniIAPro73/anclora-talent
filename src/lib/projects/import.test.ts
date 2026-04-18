@@ -63,14 +63,16 @@ describe('document import parser isolation', () => {
       ].join('\n'),
     });
 
-    expect(result.chapters).toHaveLength(2);
-    expect(result.chapters?.[0].title).toBe('Capitulo uno');
-    expect(result.chapters?.[0].blocks[0]).toEqual({
+    expect(result.chapters).toHaveLength(3);
+    expect(result.chapters?.[0].title).toBe('Índice');
+    expect(result.chapters?.[1].title).toBe('Capitulo uno');
+    expect(result.chapters?.[1].blocks[0]).toEqual({
       type: 'heading',
       content: 'Capitulo uno',
     });
-    expect(result.chapters?.[0].blocks.some((block) => block.content.includes('Texto del primer capitulo.'))).toBe(true);
-    expect(result.chapters?.[1].title).toBe('Capitulo dos');
+    expect(result.chapters?.[1].blocks.some((block) => block.content.includes('Texto del primer capitulo.'))).toBe(true);
+    expect(result.chapters?.[2].title).toBe('Capitulo dos');
+    expect(result.warnings?.some((warning) => warning.includes('índice sintético editable'))).toBe(true);
   });
 
   test('docx import prefers mammoth html extraction for chapter-aware parsing', async () => {
@@ -105,9 +107,11 @@ describe('document import parser isolation', () => {
 
     const result = await extractImportedDocumentSeed(file);
 
-    expect(result.chapters).toHaveLength(2);
-    expect(result.chapters?.[0].title).toBe('Capitulo uno');
-    expect(result.chapters?.[1].title).toBe('Capitulo dos');
+    expect(result.chapters).toHaveLength(3);
+    expect(result.chapters?.[0].title).toBe('Índice');
+    expect(result.chapters?.[1].title).toBe('Capitulo uno');
+    expect(result.chapters?.[2].title).toBe('Capitulo dos');
+    expect(result.warnings?.some((warning) => warning.includes('índice sintético editable'))).toBe(true);
   });
 
   test('structural h1 day headings become independent chapters while index entries do not', async () => {
@@ -180,7 +184,7 @@ describe('document import parser isolation', () => {
       'Dolores escondidos',
       'Monetización',
     ]);
-    expect(result.detectedOutline?.some((entry) => entry.title === 'Índice' && entry.origin === 'generated')).toBe(true);
+    expect(result.detectedOutline?.some((entry) => entry.title === 'Contexto del mercado')).toBe(true);
     expect(result.warnings?.some((warning) => warning.includes('índice sintético editable'))).toBe(true);
   });
 

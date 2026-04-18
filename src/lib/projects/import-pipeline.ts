@@ -464,11 +464,6 @@ function parseTextBlocks(input: string, mode: TextImportMode = 'default'): Parse
   return blocks;
 }
 
-function isStrongOnlyParagraph(fragment: string) {
-  const inner = fragment.match(/^<p[^>]*>([\s\S]*)<\/p>$/i)?.[1] ?? '';
-  return /<(strong|b)/i.test(inner) && !/<(?!\/?(?:strong|b|em|i|span|sup|sub|u|br)\b)[^>]+>/i.test(inner);
-}
-
 function stripImportedTocPageMarkup(fragment: string) {
   let sanitized = fragment
     .replace(/<span\s+data-toc-leader="true"[^>]*>[\s\S]*?<\/span>/gi, '')
@@ -612,15 +607,6 @@ function parseHtmlBlocks(input: string) {
   return blocks;
 }
 
-function scoreParsedBlocks(blocks: ParsedBlock[]) {
-  return blocks.reduce((score, block) => {
-    if (block.kind === 'heading') return score + 5;
-    if (block.kind === 'list') return score + 3;
-    if (block.kind === 'quote') return score + 2;
-    return score + 1;
-  }, 0);
-}
-
 function determineChapterBoundaryLevel(blocks: ParsedBlock[]) {
   const structuralHeadings = blocks.filter((block) => block.kind === 'heading' && block.structural && block.level !== null);
   const level1Count = structuralHeadings.filter((block) => block.level === 1).length;
@@ -645,14 +631,6 @@ function isMajorChapterBlock(block: ParsedBlock, chapterBoundaryLevel: number) {
   if (block.structural && (block.level ?? 9) <= chapterBoundaryLevel) return true;
   if (MAJOR_HEADING_RE.test(normalized)) return true;
   return false;
-}
-
-function chunkOutlineItems(items: string[], maxItems = 6) {
-  const chunks: string[][] = [];
-  for (let index = 0; index < items.length; index += maxItems) {
-    chunks.push(items.slice(index, index + maxItems));
-  }
-  return chunks;
 }
 
 function buildOutlineEntriesFromBlocks(
