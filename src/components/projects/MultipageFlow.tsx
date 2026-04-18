@@ -139,66 +139,6 @@ export function MultipageFlow({
         .flow-content-root.ProseMirror p + p {
           margin-top: 0.8rem;
         }
-        .flow-content-root.ProseMirror [data-toc-entry="true"],
-        .flow-content-root.ProseMirror [data-toc-line="true"] {
-          display: flex;
-          flex-wrap: wrap;
-          align-items: baseline;
-          gap: 0.5rem;
-          width: 100%;
-          min-width: 0;
-          overflow: visible;
-        }
-        .flow-content-root.ProseMirror li[data-toc-entry="true"] {
-          list-style: none;
-          margin-left: 0;
-          padding-left: 0;
-        }
-        .flow-content-root.ProseMirror li[data-toc-entry="true"]::before {
-          content: "•";
-          flex: 0 0 auto;
-          margin-right: 0.5rem;
-        }
-        .flow-content-root.ProseMirror [data-toc-title="true"] {
-          display: block;
-          flex: 0 1 auto;
-          min-width: 0;
-          overflow: visible;
-          text-overflow: clip;
-          white-space: normal;
-        }
-        .flow-content-root.ProseMirror [data-toc-title="true"] * {
-          white-space: inherit !important;
-        }
-        .flow-content-root.ProseMirror [data-toc-title="true"] br {
-          display: block;
-        }
-        .flow-content-root.ProseMirror [data-toc-leader="true"] {
-          display: block;
-          flex: 1 1 6rem;
-          min-width: 3rem;
-          overflow: hidden;
-          color: var(--text-tertiary);
-          line-height: 1;
-          transform: translateY(-0.02em);
-          white-space: nowrap;
-          font-size: 0;
-        }
-        .flow-content-root.ProseMirror [data-toc-leader="true"]::before {
-          content: '················································································································································';
-          display: block;
-          font-size: 1rem;
-          letter-spacing: 0.08em;
-          white-space: nowrap;
-        }
-        .flow-content-root.ProseMirror [data-toc-page="true"] {
-          display: inline-block;
-          flex: 0 0 auto;
-          min-width: 1.5rem;
-          text-align: right;
-          font-weight: 700;
-          white-space: nowrap;
-        }
         .flow-content-root.ProseMirror h1 {
           font-size: 2rem;
           line-height: 1.1;
