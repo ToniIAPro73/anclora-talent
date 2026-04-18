@@ -61,16 +61,30 @@ async function verifyImport(filePath: string) {
     const hasNumbers = indexChapter.blocks.some(b => /[·\-–—]{2,}\s*\d+/.test(b.content));
     console.log('  - Tiene numeros?:', hasNumbers ? 'SI (incorrecto)' : 'NO (correcto)');
     
-    // Verificar que no se crearon capitulos falsos desde el indice
-    const falseChapters = seed.chapters.filter(ch => 
-      /^FASE \d+:/i.test(ch.title) || /^Dia \d+:/i.test(ch.title)
-    );
-    
-    if (falseChapters.length > 0) {
-      console.log('\nERROR: Se detectaron capitulos falsos creados desde el indice:');
-      falseChapters.forEach(ch => console.log('  -', ch.title));
+    // Verificar entradas estructurales huérfanas usando outline detectado.
+    // Mucho más fiable que leer texto fusionado de bloques <ul>.
+    const outlineEntries = (seed.detectedOutline ?? [])
+      .map((entry) => normalizeMatch(entry.title))
+      .filter((entry) => entry && entry !== 'indice');
+
+    const realChapterKeys = seed.chapters
+      .filter((ch) => ch.title !== indexChapter.title)
+      .map((ch) => normalizeMatch(ch.title));
+
+    const suspiciousMissingChapters = outlineEntries.filter((entry) => {
+      if (!/^(fase\s+\d+|dia\s+\d+|introduccion|recursos|despues\s+de|cierre)/i.test(entry)) {
+        return false;
+      }
+      return !realChapterKeys.some((chapter) =>
+        chapter === entry || chapter.includes(entry) || entry.includes(chapter),
+      );
+    });
+
+    if (suspiciousMissingChapters.length > 0) {
+      console.log('\nERROR: Hay entradas estructurales en índice sin capítulo real asociado:');
+      suspiciousMissingChapters.forEach(ch => console.log('  -', ch));
     } else {
-      console.log('\nNo se detectaron capitulos falsos');
+      console.log('\nNo se detectaron duplicados ni entradas estructurales huérfanas');
     }
   } else {
     console.log('\nNo se encontro capitulo de indice');
