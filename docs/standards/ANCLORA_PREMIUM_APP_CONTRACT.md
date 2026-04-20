@@ -5,7 +5,7 @@ Fijar una gramática premium compartida para productos públicos o semi-público
 
 Ámbito:
 - `anclora-impulso`
-- `Boveda-Anclora/dashboard`
+- `anclora-command-center`
 - `anclora-synergi`
 - `anclora-data-lab`
 - `anclora-talent`
@@ -27,9 +27,6 @@ Fijar una gramática premium compartida para productos públicos o semi-público
 - El CTA principal puede tener mayor presencia visual, pero no debe monopolizar toda la lectura.
 - No más de un CTA dominante por viewport principal.
 - Los secundarios deben sentirse premium, no utilitarios sin remate.
-- Los botones y pills interactivos deben tener variantes reales por tema cuando la app soporte `dark/light`.
-- Un botón válido en `dark` no puede reciclarse sin ajuste como solución por defecto en `light`.
-- El modo `light` debe redefinir al menos fondo, foreground, borde y hover de los CTAs principales y secundarios cuando el contraste o el peso visual lo exijan.
 - Las familias equivalentes deben mantener semántica visual estable entre temas:
   - misma lógica de foreground por familia
   - misma lógica de contraste por familia
@@ -85,7 +82,6 @@ Fijar una gramática premium compartida para productos públicos o semi-público
 
 ### 8. Tema premium
 - Si la app soporta dos o más temas, cada modo debe sentirse diseñado, no derivado.
-- Los tokens de tema deben poder producir variantes reales por tema en botones, pills, formularios y otros elementos críticos de interacción.
 - Los temas no pueden reinterpretar por accidente la semántica de una familia de botón, pill o control interactivo.
 - La regla base es:
   - misma familia semántica
@@ -96,7 +92,7 @@ Fijar una gramática premium compartida para productos públicos o semi-público
 
 ## Reglas particulares por aplicación
 
-### `Boveda-Anclora/dashboard`
+### `anclora-command-center`
 - Forma parte del grupo premium.
 - Debe mantener `es/en/de`.
 - Debe mantener toggle visible de tema `dark/light`.
