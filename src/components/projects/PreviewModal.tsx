@@ -32,7 +32,6 @@ import {
   type PreviewFormat,
   type PaginationConfig,
 } from '@/lib/preview/device-configs';
-import { premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { MultipageFlow } from '@/components/projects/MultipageFlow';
 
 interface PreviewModalProps {
@@ -60,10 +59,6 @@ export function PreviewModal({
   // CONTENT FLOW STATE
   const [totalContentPages, setTotalContentPages] = useState(1);
   const viewportRef = useRef<HTMLDivElement | null>(null);
-  const compactGhostButton =
-    'inline-flex h-10 min-w-10 items-center justify-center rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] text-[var(--button-secondary-fg)] transition hover:border-[var(--button-secondary-hover-border)] hover:bg-[var(--button-secondary-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--button-secondary-fg)] focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-30';
-  const compactPrimaryButton =
-    'inline-flex h-10 min-w-10 items-center justify-center rounded-full border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] text-[var(--button-primary-fg)] shadow-[var(--shadow-soft)] transition hover:bg-[var(--button-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--button-primary-bg)] focus-visible:ring-offset-0';
 
   useEffect(() => {
     setFormat(preferredFormat || 'laptop');
@@ -198,7 +193,7 @@ export function PreviewModal({
                   aria-label={copy.previewModalSingleView}
                   aria-pressed={viewMode === 'single'}
                   onClick={() => setViewMode('single')}
-                  className={viewMode === 'single' ? compactPrimaryButton : compactGhostButton}
+                  className={viewMode === 'single' ? 'ac-button ac-button--primary ac-button--sm' : 'ac-button ac-button--ghost ac-button--sm'}
                 >
                   <Eye className="h-4 w-4" />
                 </button>
@@ -206,35 +201,35 @@ export function PreviewModal({
                   aria-label={copy.previewModalSpreadView}
                   aria-pressed={viewMode === 'spread'}
                   onClick={() => setViewMode('spread')}
-                  className={viewMode === 'spread' ? compactPrimaryButton : compactGhostButton}
+                  className={viewMode === 'spread' ? 'ac-button ac-button--primary ac-button--sm' : 'ac-button ac-button--ghost ac-button--sm'}
                 >
                   <BookOpen className="h-4 w-4" />
                 </button>
-                <div className="mx-1 h-5 w-px bg-[var(--border-subtle)]" />
+                <div className="ac-preview-control-divider" />
                 {(['mobile', 'tablet', 'laptop'] as const).map(fmt => (
                   <button
                     key={fmt}
                     aria-label={fmt === 'mobile' ? copy.previewModalMobile : fmt === 'tablet' ? copy.previewModalTablet : copy.previewModalLaptop}
                     aria-pressed={format === fmt}
                     onClick={() => setFormat(fmt)}
-                    className={format === fmt ? compactPrimaryButton : compactGhostButton}
+                    className={format === fmt ? 'ac-button ac-button--primary ac-button--sm' : 'ac-button ac-button--ghost ac-button--sm'}
                   >
                     {fmt === 'mobile' ? <Smartphone className="h-4 w-4" /> : fmt === 'tablet' ? <Tablet className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
                   </button>
                 ))}
-                <div className="mx-1 h-5 w-px bg-[var(--border-subtle)]" />
+                <div className="ac-preview-control-divider" />
                 <button
                   aria-label={copy.previewModalZoomOut}
                   onClick={() => handleZoomChange(zoom - 10)}
-                  className={compactGhostButton}
+                  className="ac-button ac-button--ghost ac-button--sm"
                 >
                   <ZoomOut className="h-4 w-4" />
                 </button>
-                <span className="w-10 text-center text-xs text-white">{zoom}%</span>
+                <span className="ac-preview-control-value">{zoom}%</span>
                 <button
                   aria-label={copy.previewModalZoomIn}
                   onClick={() => handleZoomChange(zoom + 10)}
-                  className={compactGhostButton}
+                  className="ac-button ac-button--ghost ac-button--sm"
                 >
                   <ZoomIn className="h-4 w-4" />
                 </button>
@@ -242,7 +237,7 @@ export function PreviewModal({
               <button
                 aria-label={copy.previewModalClose}
                 onClick={onClose}
-                className={`${premiumSecondaryLightButton} min-w-[128px] flex-shrink-0 px-3.5 py-1.5 text-sm font-semibold`}
+                className="ac-button ac-button--secondary flex-shrink-0"
                 title={copy.previewModalClose}
               >
                 CERRAR
@@ -296,12 +291,12 @@ export function PreviewModal({
           <footer data-testid="preview-modal-footer" className="ac-preview-overlay__footer-bar talent-preview-footer">
             <div className="ac-preview-overlay__footer-grid">
               <div />
-              <div className="ac-preview-overlay__footer talent-preview-pagination rounded-full px-2 py-1">
+              <div className="ac-preview-overlay__footer ac-preview-pagination talent-preview-pagination">
                 <button
                   aria-label={copy.previewModalPrevious}
                   onClick={prevPage}
                   disabled={currentPage === 0}
-                  className={compactGhostButton}
+                  className="ac-button ac-button--ghost ac-button--sm"
                 >
                   <ChevronLeft className="h-5 w-5 text-white" strokeWidth={2.25} />
                 </button>
@@ -325,7 +320,7 @@ export function PreviewModal({
                         setPageInput(String(currentPage + 1));
                       }
                     }}
-                    className="talent-preview-page-input w-14 rounded-[12px] border px-2 py-1 text-center text-sm font-semibold outline-none transition"
+                    className="ac-preview-page-field talent-preview-page-input"
                   />
                   <span className="text-white/55">de {logicalTotalPages}</span>
                 </label>
@@ -333,7 +328,7 @@ export function PreviewModal({
                   aria-label={copy.previewModalNext}
                   onClick={nextPage}
                   disabled={currentPage >= logicalTotalPages - 1}
-                  className={compactGhostButton}
+                  className="ac-button ac-button--ghost ac-button--sm"
                 >
                   <ChevronRight className="h-5 w-5 text-white" strokeWidth={2.25} />
                 </button>

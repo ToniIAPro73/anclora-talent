@@ -2,10 +2,6 @@
 
 import type { AppMessages } from '@/lib/i18n/messages';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
-import {
-  premiumPrimaryDarkButton,
-  premiumSecondaryLightButton,
-} from '@/components/ui/button-styles';
 import { buildExportQueryString } from '@/lib/projects/export-config';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { PdfExportButton } from './PdfExportButton';
@@ -32,11 +28,11 @@ export function ExportLinks({
   const query = buildExportQueryString(preferences);
 
   return (
-    <>
+    <div className="ac-export-suite__actions">
       <a
         href={buildExportHref('/api/projects/export', projectId, query)}
         download={`${projectSlug || copy.previewExportFilename}.html`}
-        className={`${premiumSecondaryLightButton} px-5`}
+        className="ac-button ac-button--secondary"
       >
         {copy.previewExportButton}
       </a>
@@ -44,15 +40,15 @@ export function ExportLinks({
         project={project}
         projectSlug={projectSlug}
         copy={copy}
-        className={`${premiumSecondaryLightButton} px-5`}
+        className="ac-button ac-button--primary"
       />
       <a
         href={buildExportHref('/api/projects/export/docx', projectId, query)}
         download={`${projectSlug || copy.previewExportFilename}.docx`}
-        className={`${premiumSecondaryLightButton} px-5`}
+        className="ac-button ac-button--secondary"
       >
         {copy.previewExportDocxButton}
       </a>
-    </>
+    </div>
   );
 }

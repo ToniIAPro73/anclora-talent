@@ -506,19 +506,23 @@ export function ProjectWorkspace({
         return <AIAssistant />;
       case 9: // Export
         return (
-          <section className="flex min-h-[400px] flex-col items-center justify-center rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-12 text-center shadow-[var(--shadow-strong)]">
-            <Download className="mb-4 h-12 w-12 text-[var(--accent)]" />
-            <h3 className="text-2xl font-black tracking-tight text-[var(--text-primary)]">{copy.stepExport}</h3>
-            <p className="mt-2 max-w-md text-base text-[var(--text-secondary)]">
-              Tu proyecto está listo para ser publicado. Elige el formato de salida deseado.
-            </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-4">
+          <section className="ac-surface-panel ac-export-suite">
+            <div className="ac-export-suite__mark">
+              <Download className="h-8 w-8" />
+            </div>
+            <div className="ac-export-suite__content">
+              <h3 className="ac-export-suite__title">{copy.stepExport}</h3>
+              <p className="ac-export-suite__summary">
+                Tu proyecto está listo para ser publicado. Elige el formato de salida deseado.
+              </p>
+            </div>
+            <div className="ac-export-suite__actions">
                <button
                  onClick={() => {
                    const htmlUrl = `/api/projects/export?projectId=${project.id}&${exportQuery}`;
                    window.open(htmlUrl, '_blank');
                  }}
-                 className={`${premiumSecondaryLightButton} px-8 cursor-pointer hover:cursor-pointer`}
+                 className="ac-button ac-button--secondary"
                >
                   {copy.previewExportButton}
                </button>
@@ -526,18 +530,18 @@ export function ProjectWorkspace({
                  project={project}
                  projectSlug={project.slug || ''}
                  copy={copy}
-                 className={`${premiumPrimaryDarkButton} px-8 cursor-pointer hover:cursor-pointer`}
+                 className="ac-button ac-button--primary"
                />
                <button
                  onClick={() => {
                    const docxUrl = `/api/projects/export/docx?projectId=${project.id}&${exportQuery}`;
                    window.open(docxUrl, '_blank');
                  }}
-                 className={`${premiumSecondaryLightButton} px-8 cursor-pointer hover:cursor-pointer`}
+                 className="ac-button ac-button--secondary"
                >
                   {copy.previewExportDocxButton}
                </button>
-               <button className={`${premiumSecondaryLightButton} px-8 opacity-30 cursor-default`} disabled>
+               <button className="ac-button ac-button--secondary" disabled>
                   Exportar EPUB (Próximamente)
                </button>
             </div>
