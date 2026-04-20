@@ -457,9 +457,9 @@ body {
 }
 
 .talent-shell-sidebar-nav .ac-sidebar-nav__item {
-  min-height: 58px;
-  border-radius: 1.15rem;
-  padding-left: 0;
+  min-height: 64px;
+  border-radius: 1.25rem;
+  padding-inline: 0;
 }
 
 .talent-shell-sidebar-nav .ac-sidebar-nav__list {
@@ -473,7 +473,9 @@ body {
 
 .talent-shell-sidebar-link__label {
   width: 100%;
-  gap: 22px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  column-gap: 26px;
   justify-content: flex-start;
   align-items: center;
   text-align: left;
@@ -481,33 +483,56 @@ body {
 
 .talent-shell-sidebar-link__icon {
   display: inline-flex;
-  height: 36px;
-  width: 36px;
+  height: 42px;
+  width: 42px;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--border-default));
-  background: color-mix(in srgb, var(--surface-panel-strong) 78%, transparent);
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border-default));
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--surface-panel-strong) 88%, transparent) 0%,
+      color-mix(in srgb, var(--surface-panel) 74%, transparent) 100%);
   color: var(--text-primary);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 10px 22px rgba(7, 16, 25, 0.14);
 }
 
 .talent-shell-sidebar-link__text {
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
+.talent-shell-sidebar-nav .ac-sidebar-nav__item {
+  background: transparent;
+}
+
+.talent-shell-sidebar-nav .ac-sidebar-nav__item:hover,
+.talent-shell-sidebar-nav .ac-sidebar-nav__item:focus-visible {
+  background: color-mix(in srgb, var(--surface-panel-strong) 82%, transparent);
+}
+
+.talent-shell-sidebar-nav .ac-sidebar-nav__item[aria-current="page"] {
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--surface-panel-strong) 92%, transparent) 0%,
+      color-mix(in srgb, var(--surface-panel) 90%, transparent) 100%);
+}
+
 .talent-shell-sidebar-nav .ac-sidebar-nav__item[aria-current="page"] .talent-shell-sidebar-link__icon {
-  border-color: color-mix(in srgb, var(--accent) 42%, var(--border-default));
-  background: color-mix(in srgb, var(--accent) 18%, var(--surface-panel-strong));
+  border-color: rgba(255, 211, 122, 0.22);
+  background:
+    radial-gradient(circle at top left, rgba(255, 235, 188, 0.84) 0%, rgba(225, 173, 120, 0.66) 50%, rgba(145, 95, 127, 0.82) 100%);
+  color: #2a1820;
 }
 
 .talent-shell-switcher {
-  gap: 10px;
-  padding: 8px 10px;
-  border-color: color-mix(in srgb, var(--accent) 16%, var(--border-strong));
+  gap: 8px;
+  padding: 6px;
+  border-color: color-mix(in srgb, var(--accent) 14%, var(--border-strong));
   border-radius: 999px;
   background:
     linear-gradient(180deg,
@@ -518,20 +543,22 @@ body {
 
 .talent-shell-switcher__leading-icon {
   color: var(--text-tertiary);
+  margin-left: 10px;
+  margin-right: 2px;
   flex-shrink: 0;
 }
 
 .talent-shell-switcher__option {
-  min-height: 42px;
-  padding-inline: 16px;
-  font-size: 0.78rem;
+  min-height: 40px;
+  padding-inline: 15px;
+  font-size: 0.76rem;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
 .talent-shell-switcher__option--theme {
-  min-width: 46px;
+  min-width: 42px;
   padding-inline: 0;
   border-radius: 999px;
 }
@@ -590,11 +617,12 @@ html[data-theme="light"] .talent-shell-switcher .ac-theme-switcher__option[aria-
   position: relative;
   overflow: hidden;
   gap: 10px;
-  border-radius: 20px;
-  font-size: 1rem;
+  border-radius: 999px;
+  font-size: 0.84rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
-  text-transform: none;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-width: 1px;
 }
 
 .talent-action-button::before {
@@ -607,17 +635,23 @@ html[data-theme="light"] .talent-shell-switcher .ac-theme-switcher__option[aria-
 }
 
 .talent-action-button--primary::before {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 70%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.34), transparent);
 }
 
 .talent-action-button--secondary::before,
 .talent-action-button--destructive::before {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 72%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
 }
 
 .talent-action-button > * {
   position: relative;
   z-index: 1;
+}
+
+.talent-action-button:hover::before,
+.talent-action-button:focus-visible::before {
+  left: 160%;
+  transition: all 0.8s ease-in-out;
 }
 
 .talent-workspace-stage .ac-section-heading__title {

@@ -94,7 +94,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     pendingLabel={label}
                     title={collapsed ? label : undefined}
                     aria-current={isActive(href) ? 'page' : undefined}
-                    className={`ac-sidebar-nav__item talent-shell-sidebar-link ${collapsed ? 'justify-center px-2' : 'justify-start gap-3 px-4'}`}
+                    className={`ac-sidebar-nav__item talent-shell-sidebar-link ${collapsed ? 'justify-center px-2' : 'justify-start px-0'}`}
                   >
                     <span className="ac-sidebar-nav__item-label talent-shell-sidebar-link__label">
                       <span className="talent-shell-sidebar-link__icon">
