@@ -9,10 +9,9 @@ export function LocaleToggle() {
   const messages = resolveLocaleMessages(locale).shell;
 
   return (
-    <div className="ac-language-switcher talent-shell-switcher talent-shell-switcher--locale">
-      <span className="talent-shell-switcher__meta">
+    <div className="ac-language-switcher talent-shell-switcher talent-shell-switcher--locale" aria-label={messages.localeLabel}>
+      <span className="talent-shell-switcher__icon">
         <Languages className="h-4 w-4" />
-        <span>{messages.localeLabel}</span>
       </span>
       <button
         type="button"

@@ -9,11 +9,7 @@ export function ThemeToggle() {
   const messages = resolveLocaleMessages(locale).shell;
 
   return (
-    <div className="ac-theme-switcher talent-shell-switcher talent-shell-switcher--theme">
-      <span className="talent-shell-switcher__meta">
-        <Moon className="h-4 w-4" />
-        <span>{messages.themeLabel}</span>
-      </span>
+    <div className="ac-theme-switcher talent-shell-switcher talent-shell-switcher--theme" aria-label={messages.themeLabel}>
       <button
         type="button"
         onClick={() => setTheme('dark')}
@@ -22,7 +18,7 @@ export function ThemeToggle() {
         className="ac-theme-switcher__option talent-shell-switcher__option talent-shell-switcher__option--icon"
       >
         <Moon className="h-4 w-4" />
-        <span className="sr-only">{messages.themeDark}</span>
+        <span>{messages.themeDark}</span>
       </button>
       <button
         type="button"
@@ -32,7 +28,7 @@ export function ThemeToggle() {
         className="ac-theme-switcher__option talent-shell-switcher__option talent-shell-switcher__option--icon"
       >
         <Sun className="h-4 w-4" />
-        <span className="sr-only">{messages.themeLight}</span>
+        <span>{messages.themeLight}</span>
       </button>
     </div>
   );

@@ -274,27 +274,28 @@ body {
 }
 
 .talent-button--dark {
-  --ac-button-bg: var(--button-primary-bg);
-  --ac-button-fg: var(--button-primary-fg);
-  --ac-button-border: var(--button-primary-border);
-  --ac-button-shadow: var(--shadow-soft);
+  --ac-button-bg: color-mix(in srgb, var(--accent) 32%, #07131d);
+  --ac-button-fg: #f8fbff;
+  --ac-button-border: color-mix(in srgb, var(--accent) 48%, rgba(255, 255, 255, 0.18));
+  --ac-button-shadow: 0 16px 30px rgba(3, 11, 20, 0.34);
 }
 
 .talent-button--dark:hover,
 .talent-button--dark:focus-visible {
-  background: var(--button-primary-hover);
+  background: color-mix(in srgb, var(--accent) 40%, #0c1b29);
 }
 
 .talent-button--secondary {
-  --ac-button-bg: var(--button-secondary-bg);
-  --ac-button-fg: var(--button-secondary-fg);
-  --ac-button-border: var(--button-secondary-border);
+  --ac-button-bg: rgba(255, 255, 255, 0.05);
+  --ac-button-fg: #f3f7fb;
+  --ac-button-border: rgba(255, 255, 255, 0.14);
+  --ac-button-shadow: 0 10px 24px rgba(3, 11, 20, 0.2);
 }
 
 .talent-button--secondary:hover,
 .talent-button--secondary:focus-visible {
-  background: var(--button-secondary-hover-bg);
-  border-color: var(--button-secondary-hover-border);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .ac-button {
@@ -398,6 +399,7 @@ body {
 .talent-shell-sidebar-link__label {
   width: 100%;
   gap: 14px;
+  justify-content: flex-start;
 }
 
 .talent-shell-sidebar-link__icon {
@@ -432,31 +434,29 @@ body {
   box-shadow: var(--shadow-soft);
 }
 
-.talent-shell-switcher__meta {
+.talent-shell-switcher__icon {
   display: inline-flex;
   min-height: 40px;
+  min-width: 40px;
   align-items: center;
-  gap: 8px;
-  padding: 0 12px;
+  justify-content: center;
+  padding: 0;
   border-radius: 999px;
   background: color-mix(in srgb, var(--surface-panel-strong) 68%, transparent);
   color: var(--text-secondary);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .talent-shell-switcher__option {
   min-height: 40px;
   padding-inline: 14px;
   font-size: 0.76rem;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 .talent-shell-switcher__option--icon {
-  min-width: 40px;
-  padding-inline: 0;
+  min-width: 48px;
+  padding-inline: 12px;
 }
 
 .talent-shell-user-button {
@@ -482,6 +482,10 @@ body {
   font-size: 1.5rem;
   font-weight: 900;
   letter-spacing: -0.02em;
+}
+
+.talent-project-card .ac-card__footer .ac-button {
+  box-shadow: 0 14px 28px rgba(3, 11, 20, 0.26);
 }
 
 .talent-workspace-stage .ac-section-heading__title {

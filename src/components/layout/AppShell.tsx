@@ -86,7 +86,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <nav className={`talent-shell-sidebar-nav ac-sidebar-nav mt-8 text-sm font-semibold ${collapsed ? 'px-3' : 'px-6'}`}>
             <div className="ac-sidebar-nav__group">
-              {!collapsed && <p className="ac-sidebar-nav__eyebrow">{messages.topbarEyebrow}</p>}
               <div className="ac-sidebar-nav__list">
                 {navLinks.map(({ href, icon: Icon, label }) => (
                   <NavigatingLink
@@ -95,7 +94,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     pendingLabel={label}
                     title={collapsed ? label : undefined}
                     aria-current={isActive(href) ? 'page' : undefined}
-                    className={`ac-sidebar-nav__item talent-shell-sidebar-link ${collapsed ? 'justify-center px-2' : 'gap-3 px-4'}`}
+                    className={`ac-sidebar-nav__item talent-shell-sidebar-link ${collapsed ? 'justify-center px-2' : 'justify-start gap-3 px-4'}`}
                   >
                     <span className="ac-sidebar-nav__item-label talent-shell-sidebar-link__label">
                       <span className="talent-shell-sidebar-link__icon">
@@ -127,8 +126,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="talent-shell-main xl:p-8">
           <header className="ac-topbar talent-shell-topbar flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="ac-topbar__titles">
-              <p className="ac-topbar__eyebrow">{messages.topbarEyebrow}</p>
-              <h1 className="mt-2 text-3xl font-black tracking-tight text-[var(--text-primary)]">{messages.topbarTitle}</h1>
+              <h1 className="text-3xl font-black tracking-tight text-[var(--text-primary)]">{messages.topbarTitle}</h1>
             </div>
             <div className="ac-topbar__actions talent-shell-topbar-actions flex flex-wrap items-center justify-end gap-3">
               <LocaleToggle />
