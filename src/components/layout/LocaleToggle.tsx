@@ -10,9 +10,7 @@ export function LocaleToggle() {
 
   return (
     <div className="ac-language-switcher talent-shell-switcher talent-shell-switcher--locale" aria-label={messages.localeLabel}>
-      <span className="talent-shell-switcher__icon">
-        <Languages className="h-4 w-4" />
-      </span>
+      <Languages className="talent-shell-switcher__leading-icon h-4 w-4" />
       <button
         type="button"
         onClick={() => setLocale('es')}

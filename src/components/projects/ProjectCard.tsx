@@ -1,4 +1,3 @@
-import { ArrowRight } from 'lucide-react';
 import type { ProjectSummary } from '@/lib/projects/types';
 import { premiumPrimaryMintButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import type { AppMessages } from '@/lib/i18n/messages';
@@ -42,15 +41,14 @@ export function ProjectCard({
         <NavigatingLink
           href={`/projects/${project.id}/editor`}
           pendingLabel={copy.cardOpenEditor}
-          className={`${premiumPrimaryMintButton} px-5`}
+          className={`${premiumPrimaryMintButton} talent-action-button talent-action-button--primary px-5`}
         >
           {copy.cardOpenEditor}
-          <ArrowRight className="h-4 w-4" />
         </NavigatingLink>
         <NavigatingLink
           href={`/projects/${project.id}/preview`}
           pendingLabel={copy.cardPreview}
-          className={`${premiumSecondaryLightButton} px-5`}
+          className={`${premiumSecondaryLightButton} talent-action-button talent-action-button--secondary px-5`}
         >
           {copy.cardPreview}
         </NavigatingLink>

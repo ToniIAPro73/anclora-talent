@@ -23,7 +23,7 @@ export function ProjectDeleteButton({
       }}
     >
       <input type="hidden" name="projectId" value={projectId} />
-      <SubmitButton className="ac-button ac-button--destructive ac-button--lg">
+      <SubmitButton className="ac-button ac-button--destructive ac-button--lg talent-action-button talent-action-button--destructive">
         <Trash2 className="h-4 w-4" />
         {label}
       </SubmitButton>
