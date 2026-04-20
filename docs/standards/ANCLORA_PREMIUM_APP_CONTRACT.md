@@ -10,6 +10,26 @@ Fijar una gramática premium compartida para productos públicos o semi-público
 - `anclora-data-lab`
 - `anclora-talent`
 
+## Autoridad
+
+- Registro operativo: `docs/governance/contracts-registry.json`
+- Inventario aplicable: `docs/governance/ecosystem-repos.json`
+- Fuente ejecutable relacionada: `anclora-design-system`
+
+## Repos a los que aplica
+
+- `anclora-impulso`
+- `anclora-command-center`
+- `anclora-synergi`
+- `anclora-data-lab`
+- `anclora-talent`
+
+## Sincronización con repos consumidores
+
+- Contrato fuente en la bóveda: `docs/standards/ANCLORA_PREMIUM_APP_CONTRACT.md`
+- Target normal de propagación: `docs/standards/`
+- Dependencia de auditoría y propagación desde `docs/governance/contracts-registry.json`
+
 ## Piezas canónicas del design system
 
 Las apps premium deben construirse sobre piezas reales de `anclora-design-system`, no sobre estilos locales de pantalla:
