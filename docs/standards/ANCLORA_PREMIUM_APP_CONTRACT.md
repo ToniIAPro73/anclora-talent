@@ -10,6 +10,32 @@ Fijar una gramática premium compartida para productos públicos o semi-público
 - `anclora-data-lab`
 - `anclora-talent`
 
+## Piezas canónicas del design system
+
+Las apps premium deben construirse sobre piezas reales de `anclora-design-system`, no sobre estilos locales de pantalla:
+
+- `tokens` para acentos, foreground, border, glow, overlay y estados semánticos
+- `themes` para `dark/light` o tema editorial único diseñado
+- `foundations` para tipografía premium, spacing, elevation y materiales
+- `components` para:
+  - button
+  - card
+  - dialog
+  - input/select/textarea
+  - tabs
+  - badge/pill
+  - top bar controls
+- `patterns` para:
+  - landing premium
+  - shell autenticado premium
+  - funnels de sign-in / sign-up
+  - dashboards editoriales
+  - grids de cards
+  - preview / cover / content blocks
+
+Regla:
+- una app premium puede componer de forma distinta, pero no debe redefinir localmente una primitive que ya exista como `component` o `pattern` canónico.
+
 ## Invariantes de grupo
 
 ### 1. Dirección visual
@@ -33,6 +59,7 @@ Fijar una gramática premium compartida para productos públicos o semi-público
   - misma lectura de prioridad entre `primary`, `secondary`, `ghost` y `destructive`
 - Un botón dorado, teal o de firma no puede cambiar arbitrariamente el color del texto entre `dark` y `light` si sigue perteneciendo a la misma familia semántica.
 - Si una familia necesita redefinirse entre temas, el cambio debe estar documentado como variante real por tema y no como herencia accidental de tokens.
+- La implementación base debe partir del `button` canónico del design system o de una variante explícita derivada del mismo.
 
 ### 3. Cards premium
 - Se admite mayor profundidad visual que en el grupo interno.
@@ -42,6 +69,7 @@ Fijar una gramática premium compartida para productos públicos o semi-público
   - separación perceptible entre cards
   - hover medido
   - cero solapes o desplazamientos bruscos entre cards vecinas
+- La card premium base debe vivir en `anclora-design-system` como pieza o pattern compartido. No se aceptan cuatro gramáticas de card premium inconexas.
 
 ### 4. Modales premium
 - Se aplica `MODAL_CONTRACT.md`.
@@ -115,6 +143,7 @@ Fijar una gramática premium compartida para productos públicos o semi-público
 - El shell autenticado debe exponer toggles visibles de tema e idioma integrados en la identidad premium.
 - La experiencia debe sentirse como plataforma editorial premium coherente en `landing`, `sign-in`, `sign-up`, `dashboard`, `editor`, `preview` y `cover`.
 - No puede parecer un dashboard interno con decoración aplicada encima.
+- Su dominio es `human_capital`, por lo que las composiciones premium deben evitar la semántica visual típica de real estate aunque reutilicen las mismas primitives y reglas base.
 
 ## Gate de aceptación
 
@@ -125,3 +154,4 @@ Una feature premium no está lista si:
 - el modo alternativo parece una conversión incompleta
 - el selector de idioma o tema rompe el acabado de marca
 - una misma familia de botón cambia el foreground o la legibilidad entre temas sin motivo contractual explícito
+- resuelve sus componentes críticos fuera de `anclora-design-system` sin haber promovido antes la pieza común
