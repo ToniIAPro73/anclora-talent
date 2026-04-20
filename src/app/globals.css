@@ -116,6 +116,21 @@ html[data-theme="dark"] {
   --button-secondary-border: rgba(74, 159, 216, 0.16);
   --button-secondary-hover-bg: rgba(28, 46, 64, 0.8);
   --button-secondary-hover-border: rgba(74, 159, 216, 0.34);
+  --talent-button-primary-bg: linear-gradient(135deg, #f3d37a 0%, #c49a24 52%, #8c6812 100%);
+  --talent-button-primary-fg: #081019;
+  --talent-button-primary-border: rgba(244, 215, 133, 0.34);
+  --talent-button-primary-shadow: 0 18px 34px rgba(196, 154, 36, 0.24);
+  --talent-button-primary-hover-bg: linear-gradient(135deg, #f7dfa0 0%, #d9ad33 54%, #9d7316 100%);
+  --talent-button-secondary-bg: rgba(255, 255, 255, 0.055);
+  --talent-button-secondary-fg: #f4f8fc;
+  --talent-button-secondary-border: rgba(255, 255, 255, 0.16);
+  --talent-button-secondary-shadow: 0 16px 30px rgba(4, 12, 22, 0.2);
+  --talent-button-secondary-hover-bg: rgba(255, 255, 255, 0.095);
+  --talent-button-secondary-hover-border: rgba(255, 255, 255, 0.24);
+  --talent-button-destructive-bg: linear-gradient(135deg, rgba(122, 22, 30, 0.96) 0%, rgba(86, 14, 22, 0.96) 100%);
+  --talent-button-destructive-fg: #fff4f4;
+  --talent-button-destructive-border: rgba(255, 154, 154, 0.24);
+  --talent-button-destructive-shadow: 0 16px 30px rgba(86, 14, 22, 0.24);
 
   /* ── App gradient ── */
   --app-gradient: radial-gradient(circle at top center, rgba(74, 159, 216, 0.12), transparent 24%),
@@ -238,6 +253,21 @@ html[data-theme="light"] {
   --button-secondary-border: rgba(12, 24, 32, 0.24);
   --button-secondary-hover-bg: rgba(255, 255, 255, 0.98);
   --button-secondary-hover-border: rgba(12, 24, 32, 0.36);
+  --talent-button-primary-bg: linear-gradient(135deg, #173a5a 0%, #0f2740 100%);
+  --talent-button-primary-fg: #fffaf0;
+  --talent-button-primary-border: rgba(23, 58, 90, 0.14);
+  --talent-button-primary-shadow: 0 18px 32px rgba(15, 39, 64, 0.16);
+  --talent-button-primary-hover-bg: linear-gradient(135deg, #1d466b 0%, #13314d 100%);
+  --talent-button-secondary-bg: rgba(255, 255, 255, 0.88);
+  --talent-button-secondary-fg: #10253a;
+  --talent-button-secondary-border: rgba(16, 37, 58, 0.12);
+  --talent-button-secondary-shadow: 0 14px 28px rgba(16, 37, 58, 0.1);
+  --talent-button-secondary-hover-bg: rgba(255, 255, 255, 0.98);
+  --talent-button-secondary-hover-border: rgba(16, 37, 58, 0.2);
+  --talent-button-destructive-bg: linear-gradient(135deg, #a9313b 0%, #851f29 100%);
+  --talent-button-destructive-fg: #fff5f5;
+  --talent-button-destructive-border: rgba(133, 31, 41, 0.18);
+  --talent-button-destructive-shadow: 0 14px 28px rgba(133, 31, 41, 0.12);
 
   /* ── App gradient ── */
   --app-gradient: radial-gradient(circle at top center, rgba(58, 136, 190, 0.10), transparent 24%),
@@ -274,39 +304,79 @@ body {
 }
 
 .talent-button--dark {
-  --ac-button-bg: color-mix(in srgb, var(--accent) 32%, #07131d);
-  --ac-button-fg: #f8fbff;
-  --ac-button-border: color-mix(in srgb, var(--accent) 48%, rgba(255, 255, 255, 0.18));
-  --ac-button-shadow: 0 16px 30px rgba(3, 11, 20, 0.34);
+  --ac-button-bg: var(--talent-button-primary-bg);
+  --ac-button-fg: var(--talent-button-primary-fg);
+  --ac-button-border: var(--talent-button-primary-border);
+  --ac-button-shadow: var(--talent-button-primary-shadow);
 }
 
 .talent-button--dark:hover,
 .talent-button--dark:focus-visible {
-  background: color-mix(in srgb, var(--accent) 40%, #0c1b29);
+  background: var(--talent-button-primary-hover-bg);
 }
 
 .talent-button--secondary {
-  --ac-button-bg: rgba(255, 255, 255, 0.05);
-  --ac-button-fg: #f3f7fb;
-  --ac-button-border: rgba(255, 255, 255, 0.14);
-  --ac-button-shadow: 0 10px 24px rgba(3, 11, 20, 0.2);
+  --ac-button-bg: var(--talent-button-secondary-bg);
+  --ac-button-fg: var(--talent-button-secondary-fg);
+  --ac-button-border: var(--talent-button-secondary-border);
+  --ac-button-shadow: var(--talent-button-secondary-shadow);
 }
 
 .talent-button--secondary:hover,
 .talent-button--secondary:focus-visible {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--talent-button-secondary-hover-bg);
+  border-color: var(--talent-button-secondary-hover-border);
 }
 
 .ac-button {
   text-transform: none;
-  letter-spacing: -0.01em;
-  font-size: 0.88rem;
-  font-weight: 700;
+  letter-spacing: -0.015em;
+  font-size: 0.92rem;
+  font-weight: 800;
+  border-radius: 18px;
+  padding-inline: 22px;
 }
 
 .ac-button--sm {
-  font-size: 0.8rem;
+  font-size: 0.84rem;
+  border-radius: 16px;
+}
+
+.ac-button--lg {
+  min-height: 54px;
+  padding-inline: 26px;
+}
+
+.ac-button--primary {
+  --ac-button-bg: var(--talent-button-primary-bg);
+  --ac-button-fg: var(--talent-button-primary-fg);
+  --ac-button-border: var(--talent-button-primary-border);
+  --ac-button-shadow: var(--talent-button-primary-shadow);
+}
+
+.ac-button--primary:hover,
+.ac-button--primary:focus-visible {
+  background: var(--talent-button-primary-hover-bg);
+}
+
+.ac-button--secondary {
+  --ac-button-bg: var(--talent-button-secondary-bg);
+  --ac-button-fg: var(--talent-button-secondary-fg);
+  --ac-button-border: var(--talent-button-secondary-border);
+  --ac-button-shadow: var(--talent-button-secondary-shadow);
+}
+
+.ac-button--secondary:hover,
+.ac-button--secondary:focus-visible {
+  background: var(--talent-button-secondary-hover-bg);
+  border-color: var(--talent-button-secondary-hover-border);
+}
+
+.ac-button--destructive {
+  --ac-button-bg: var(--talent-button-destructive-bg);
+  --ac-button-fg: var(--talent-button-destructive-fg);
+  --ac-button-border: var(--talent-button-destructive-border);
+  --ac-button-shadow: var(--talent-button-destructive-shadow);
 }
 
 .talent-shell-grid {
@@ -391,6 +461,10 @@ body {
   border-radius: 1.15rem;
 }
 
+.talent-shell-sidebar-nav .ac-sidebar-nav__list {
+  gap: 18px;
+}
+
 .talent-shell-sidebar-link {
   width: 100%;
   justify-content: flex-start;
@@ -398,8 +472,9 @@ body {
 
 .talent-shell-sidebar-link__label {
   width: 100%;
-  gap: 14px;
+  gap: 22px;
   justify-content: flex-start;
+  text-align: left;
 }
 
 .talent-shell-sidebar-link__icon {
@@ -419,6 +494,7 @@ body {
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
 .talent-shell-sidebar-nav .ac-sidebar-nav__item[aria-current="page"] .talent-shell-sidebar-link__icon {
@@ -485,7 +561,10 @@ body {
 }
 
 .talent-project-card .ac-card__footer .ac-button {
-  box-shadow: 0 14px 28px rgba(3, 11, 20, 0.26);
+  min-height: 52px;
+  min-width: 150px;
+  justify-content: center;
+  box-shadow: 0 16px 30px rgba(3, 11, 20, 0.22);
 }
 
 .talent-workspace-stage .ac-section-heading__title {
