@@ -23,7 +23,7 @@ export function ProjectDeleteButton({
       }}
     >
       <input type="hidden" name="projectId" value={projectId} />
-      <SubmitButton className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-[rgba(173,53,69,0.18)] bg-[rgba(173,53,69,0.08)] px-4 py-2 text-sm font-semibold text-[#8a2434] transition hover:bg-[rgba(173,53,69,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a2434] focus-visible:ring-offset-2 disabled:opacity-50">
+      <SubmitButton className="ac-button ac-button--destructive ac-button--lg">
         <Trash2 className="h-4 w-4" />
         {label}
       </SubmitButton>

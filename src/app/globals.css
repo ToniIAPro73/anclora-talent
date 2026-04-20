@@ -1,6 +1,7 @@
 /* stylelint-disable at-rule-no-unknown */
 
 @import "tailwindcss";
+@import "@anclora/design-system/system.css";
 
 :root,
 html[data-theme="dark"] {
@@ -48,6 +49,30 @@ html[data-theme="dark"] {
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.22);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.30);
   --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.38);
+
+  /* ── Design system semantic alignment ── */
+  --surface-canvas: #0C141E;
+  --surface-subtle: rgba(14, 24, 37, 0.72);
+  --surface-panel: #111C28;
+  --surface-panel-strong: #162535;
+  --surface-elevated: #1C2E40;
+  --surface-overlay: rgba(4, 6, 12, 0.82);
+  --surface-glass: rgba(12, 20, 30, 0.72);
+  --text-link: var(--accent);
+  --focus-ring: color-mix(in srgb, var(--accent) 52%, white 20%);
+  --focus-ring-offset: rgba(12, 20, 30, 0.88);
+  --action-primary-bg: var(--button-highlight-bg);
+  --action-primary-fg: var(--button-highlight-fg);
+  --action-primary-border: rgba(74, 159, 216, 0.3);
+  --action-secondary-bg: rgba(14, 24, 37, 0.68);
+  --action-secondary-fg: #EDF2F8;
+  --action-secondary-border: rgba(74, 159, 216, 0.16);
+  --action-ghost-bg: rgba(255, 255, 255, 0.03);
+  --action-ghost-fg: #EDF2F8;
+  --action-ghost-border: rgba(74, 159, 216, 0.14);
+  --action-destructive-bg: rgba(229, 62, 62, 0.16);
+  --action-destructive-fg: #ffd7d7;
+  --action-destructive-border: rgba(229, 62, 62, 0.28);
 
   /* ── Semantic ── */
   --danger: #E53E3E;
@@ -147,6 +172,30 @@ html[data-theme="light"] {
   --shadow-md: 0 8px 24px rgba(12, 24, 32, 0.12);
   --shadow-lg: 0 16px 48px rgba(12, 24, 32, 0.16);
 
+  /* ── Design system semantic alignment ── */
+  --surface-canvas: #F2F7FC;
+  --surface-subtle: rgba(255, 255, 255, 0.76);
+  --surface-panel: #FFFFFF;
+  --surface-panel-strong: #FFFFFF;
+  --surface-elevated: #E8F0F8;
+  --surface-overlay: rgba(12, 24, 32, 0.72);
+  --surface-glass: rgba(255, 255, 255, 0.82);
+  --text-link: var(--accent);
+  --focus-ring: color-mix(in srgb, var(--accent) 52%, white 10%);
+  --focus-ring-offset: rgba(242, 247, 252, 0.92);
+  --action-primary-bg: var(--button-highlight-bg);
+  --action-primary-fg: var(--button-highlight-fg);
+  --action-primary-border: rgba(58, 136, 190, 0.22);
+  --action-secondary-bg: rgba(255, 253, 248, 0.92);
+  --action-secondary-fg: #0C1820;
+  --action-secondary-border: rgba(12, 24, 32, 0.24);
+  --action-ghost-bg: rgba(12, 24, 32, 0.03);
+  --action-ghost-fg: #0C1820;
+  --action-ghost-border: rgba(12, 24, 32, 0.12);
+  --action-destructive-bg: rgba(229, 62, 62, 0.12);
+  --action-destructive-fg: #b12626;
+  --action-destructive-border: rgba(229, 62, 62, 0.18);
+
   /* ── Semantic ── */
   --danger: #E53E3E;
   --danger-soft: rgba(229, 62, 62, 0.10);
@@ -222,6 +271,159 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
+}
+
+.talent-button--dark {
+  --ac-button-bg: var(--button-primary-bg);
+  --ac-button-fg: var(--button-primary-fg);
+  --ac-button-border: var(--button-primary-border);
+  --ac-button-shadow: var(--shadow-soft);
+}
+
+.talent-button--dark:hover,
+.talent-button--dark:focus-visible {
+  background: var(--button-primary-hover);
+}
+
+.talent-button--secondary {
+  --ac-button-bg: var(--button-secondary-bg);
+  --ac-button-fg: var(--button-secondary-fg);
+  --ac-button-border: var(--button-secondary-border);
+}
+
+.talent-button--secondary:hover,
+.talent-button--secondary:focus-visible {
+  background: var(--button-secondary-hover-bg);
+  border-color: var(--button-secondary-hover-border);
+}
+
+.talent-shell-grid {
+  display: grid;
+  min-height: 100vh;
+  gap: 20px;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding: 16px;
+  transition: grid-template-columns 300ms ease;
+}
+
+.talent-shell-sidebar {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 36px;
+  background: var(--shell-surface);
+  box-shadow: var(--shadow-strong);
+}
+
+.talent-shell-main {
+  border: 1px solid var(--border-subtle);
+  border-radius: 40px;
+  background: var(--shell-main-surface);
+  padding: 24px;
+  box-shadow: var(--shadow-strong);
+}
+
+.talent-shell-topbar {
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0 0 24px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.talent-shell-sidebar-nav {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  min-width: auto;
+  padding: 0;
+}
+
+.talent-shell-sidebar-nav .ac-sidebar-nav__item {
+  min-height: 48px;
+  border-radius: 1rem;
+}
+
+.talent-project-card {
+  background: var(--page-surface);
+  box-shadow: var(--shadow-strong);
+}
+
+.talent-project-card .ac-card__title {
+  font-family: var(--font-sans);
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.talent-workspace-stage .ac-section-heading__title {
+  font-family: var(--font-sans);
+  max-width: none;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.talent-workspace-stage .ac-workspace-stage__actions {
+  align-items: center;
+}
+
+.talent-workspace-stage__panel {
+  background: var(--page-surface);
+  box-shadow: var(--shadow-strong);
+}
+
+.talent-workflow-shell .ac-workflow-shell__content {
+  min-height: 600px;
+}
+
+.talent-workflow-shell .ac-workflow-shell__panel,
+.talent-workflow-shell .ac-workflow-shell__progress {
+  box-shadow: var(--shadow-soft);
+}
+
+.talent-preview-overlay {
+  color-scheme: dark;
+}
+
+.talent-preview-shell {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #111c28;
+  box-shadow: 0 30px 120px rgba(0, 0, 0, 0.45);
+}
+
+.talent-preview-header {
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.talent-preview-stage {
+  background: #070c14;
+}
+
+.talent-preview-footer {
+  border-top-color: rgba(255, 255, 255, 0.1);
+  background: rgba(7, 12, 20, 0.92);
+}
+
+.talent-preview-toolbar,
+.talent-preview-pagination {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.talent-preview-page-input {
+  background: #0f1825;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.talent-preview-page-input:focus {
+  border-color: var(--accent-mint);
 }
 
 a {

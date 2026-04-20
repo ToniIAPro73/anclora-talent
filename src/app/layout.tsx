@@ -31,7 +31,10 @@ export default async function RootLayout({
         className={`${dmSans.variable} ${jetbrainsMono.variable}`}
         suppressHydrationWarning
       >
-        <body suppressHydrationWarning>
+        <body
+          className="tier-premium domain-human-capital archetype-app role-consumer cluster-core product-anclora-talent"
+          suppressHydrationWarning
+        >
           <UiPreferencesProvider initialPreferences={preferences}>{children}</UiPreferencesProvider>
         </body>
       </html>

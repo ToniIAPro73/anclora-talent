@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useTransition, useState, useMemo, useRef } from 'react';
+import { useEffect, useTransition, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Loader2, Download } from 'lucide-react';
 import { Stepper, type Step } from '@/components/ui/Stepper';
@@ -179,31 +179,15 @@ export function ProjectWorkspace({
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [pageNumberSyncState, setPageNumberSyncState] = useState<SaveState>('idle');
   const [pageNumberSyncFeedback, setPageNumberSyncFeedback] = useState<PaginationSyncFeedback>('idle');
-  const [pageNumberIsStale, setPageNumberIsStale] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  // Track chapter changes to mark page numbers as stale
-  const prevChapterSignatureRef = useRef<string | null>(null);
-  useEffect(() => {
-    const signature = project.document.chapters
-      .map((ch) => `${ch.id}:${ch.order}`)
-      .join(',');
-
-    if (prevChapterSignatureRef.current === null) {
-      prevChapterSignatureRef.current = signature;
-      return;
-    }
-
-    if (signature !== prevChapterSignatureRef.current) {
-      prevChapterSignatureRef.current = signature;
-      setPageNumberIsStale(true);
-    }
-  }, [project.document.chapters]);
+  const chapterSignature = useMemo(
+    () => project.document.chapters.map((ch) => `${ch.id}:${ch.order}`).join(','),
+    [project.document.chapters],
+  );
+  const [lastSyncedChapterSignature, setLastSyncedChapterSignature] = useState(() => chapterSignature);
+  const pageNumberIsStale = chapterSignature !== lastSyncedChapterSignature;
   const exportQuery = useMemo(() => buildExportQueryString(preferences), [preferences]);
-
-  useEffect(() => {
-    setActiveStep(normalizeWorkflowStep(project.workflowStep));
-  }, [project.id, project.updatedAt, project.workflowStep]);
 
   useEffect(() => {
     writeStoredWorkflowStep(project.id, activeStep);
@@ -346,7 +330,7 @@ export function ProjectWorkspace({
       const result = await syncProjectPaginationAction(formData);
       router.refresh();
       setPageNumberSyncState('saved');
-      setPageNumberIsStale(false);
+      setLastSyncedChapterSignature(chapterSignature);
       setPageNumberSyncFeedback(result?.status === 'missing-index' ? 'missing-index' : 'done');
       window.setTimeout(() => setPageNumberSyncState('idle'), 2000);
       window.setTimeout(() => setPageNumberSyncFeedback('idle'), 3500);
@@ -565,18 +549,14 @@ export function ProjectWorkspace({
   };
 
   return (
-    <div className="space-y-8" data-testid="project-workspace">
+    <div className="ac-workspace-stage talent-workspace-stage space-y-8" data-testid="project-workspace">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
-            {copy.editorEyebrow}
-          </p>
-          <h2 className="mt-2 text-4xl font-black tracking-tight text-[var(--text-primary)]">
-            {project.title}
-          </h2>
+      <div className="ac-workspace-stage__header ac-workspace-stage__header--split">
+        <div className="ac-section-heading">
+          <p className="ac-section-heading__eyebrow">{copy.editorEyebrow}</p>
+          <h2 className="ac-section-heading__title mt-2 text-4xl">{project.title}</h2>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="ac-workspace-stage__actions">
           {saveState === 'saving' && (
             <span className="flex items-center gap-1.5 text-xs text-[var(--text-tertiary)]" data-testid="project-save-status-saving">
               <Loader2 className="h-3 w-3 animate-spin" />
@@ -604,25 +584,26 @@ export function ProjectWorkspace({
       </div>
 
       {/* Stepper Navigation */}
-      <div className="rounded-[32px] border border-[var(--border-subtle)] bg-[var(--page-surface-muted)] p-6 shadow-[var(--shadow-soft)]">
+      <div className="ac-workflow-shell__progress ac-surface-panel ac-surface-panel--subtle p-6 shadow-[var(--shadow-soft)]">
         <Stepper steps={steps} activeStep={activeStep} onStepClick={setActiveStep} />
       </div>
 
       {/* Step Layout */}
-      <div className="grid gap-8 xl:grid-cols-[240px_1fr]">
-        <aside className="space-y-6 xl:sticky xl:top-8 xl:self-start">
-           <div className="rounded-[24px] bg-[var(--surface-soft)] p-5 border border-[var(--border-subtle)]">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-[var(--accent)]">Progreso</h4>
-              <div className="mt-3 flex items-end gap-2">
-                 <span className="text-3xl font-black text-[var(--text-primary)]">{activeStep}</span>
-                 <span className="mb-1 text-sm text-[var(--text-tertiary)]">de 9 pasos</span>
+      <div className="ac-workflow-shell talent-workflow-shell">
+        <div className="ac-workflow-shell__layout">
+        <aside className="ac-workflow-shell__rail xl:sticky xl:top-8 xl:self-start">
+           <div className="ac-workflow-shell__panel ac-surface-panel ac-surface-panel--subtle p-5">
+              <h4 className="ac-workflow-shell__panel-meta">Progreso</h4>
+              <div className="ac-workflow-shell__panel-value mt-3">
+                 <strong>{activeStep}</strong>
+                 <span>de 9 pasos</span>
               </div>
-              <p className="mt-4 text-xs leading-5 text-[var(--text-secondary)]">
+              <p className="ac-workflow-shell__panel-summary mt-4 text-xs leading-5">
                  {steps[activeStep - 1]?.description || 'Sigue el flujo editorial para completar tu publicación premium.'}
               </p>
            </div>
 
-           <div className="flex flex-col gap-3">
+           <div className="ac-workflow-shell__actions">
               <button
                 onClick={() => setActiveStep(prev => Math.max(1, prev - 1))}
                 disabled={activeStep === 1}
@@ -640,9 +621,10 @@ export function ProjectWorkspace({
            </div>
         </aside>
 
-        <main className="min-h-[600px]">
+        <main className="ac-workflow-shell__content">
           {renderStepContent()}
         </main>
+        </div>
       </div>
 
       {/* Modals rendered via Portal to escape any transform/backdrop-filter trapping */}

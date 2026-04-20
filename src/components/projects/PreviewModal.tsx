@@ -179,21 +179,21 @@ export function PreviewModal({
     <div
       aria-label={project.document.title || 'Vista previa'}
       role="dialog" aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[rgba(4,6,12,0.78)] backdrop-blur-md"
+      className="ac-preview-overlay talent-preview-overlay"
       onKeyDown={handleKeyDown} tabIndex={0}
     >
-      <div className="mx-auto flex h-screen w-full flex-col overflow-hidden rounded-none border border-white/10 bg-[#111c28] shadow-[0_30px_120px_rgba(0,0,0,0.45)]">
-        <header className="shrink-0 border-b border-white/10 bg-[rgba(255,255,255,0.02)] px-3 py-1.5">
+      <div className="ac-preview-overlay__shell talent-preview-shell mx-auto flex w-full flex-col overflow-hidden rounded-none">
+        <header className="ac-preview-overlay__header talent-preview-header shrink-0 px-3 py-1.5">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="min-w-0 truncate text-[13px] font-black tracking-tight text-white">
+            <h2 className="ac-preview-overlay__title min-w-0 truncate text-white">
               <span className="inline-flex items-center gap-2">
                 <Eye className="h-4 w-4" />
                 {project.document.title || 'Vista Previa'}
               </span>
             </h2>
 
-            <div className="flex shrink-0 items-center gap-1">
-              <div className="flex items-center gap-1 rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-1.5 py-1">
+            <div className="ac-preview-overlay__toolbar flex shrink-0 items-center gap-1">
+              <div className="ac-preview-overlay__toolbar-group talent-preview-toolbar">
                 <button
                   aria-label={copy.previewModalSingleView}
                   aria-pressed={viewMode === 'single'}
@@ -251,12 +251,12 @@ export function PreviewModal({
           </div>
         </header>
 
-        <main className="relative flex min-h-0 flex-1 overflow-hidden bg-[#070c14]">
+        <main className="ac-preview-overlay__stage talent-preview-stage relative flex min-h-0 flex-1 overflow-hidden">
           <section
             data-testid="preview-modal-stage"
             data-preview-viewport="true"
             ref={viewportRef}
-            className="flex flex-1 flex-col items-center justify-center overflow-auto p-2 custom-scrollbar"
+            className="ac-preview-overlay__viewport flex flex-1 flex-col items-center justify-center overflow-auto p-2 custom-scrollbar"
           >
             <div 
               data-testid="preview-spread-frame"
@@ -293,10 +293,10 @@ export function PreviewModal({
             </div>
           </section>
 
-          <footer data-testid="preview-modal-footer" className="absolute bottom-0 inset-x-0 h-12 border-t border-white/10 bg-[rgba(7,12,20,0.92)] px-3 backdrop-blur-md">
-            <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center">
+          <footer data-testid="preview-modal-footer" className="ac-preview-overlay__footer-bar talent-preview-footer">
+            <div className="ac-preview-overlay__footer-grid">
               <div />
-              <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-[rgba(255,255,255,0.03)] px-2 py-1">
+              <div className="ac-preview-overlay__footer talent-preview-pagination rounded-full px-2 py-1">
                 <button
                   aria-label={copy.previewModalPrevious}
                   onClick={prevPage}
@@ -325,7 +325,7 @@ export function PreviewModal({
                         setPageInput(String(currentPage + 1));
                       }
                     }}
-                    className="w-14 rounded-[12px] border border-white/10 bg-[#0f1825] px-2 py-1 text-center text-sm font-semibold text-white outline-none transition focus:border-[var(--accent-mint)]"
+                    className="talent-preview-page-input w-14 rounded-[12px] border px-2 py-1 text-center text-sm font-semibold outline-none transition"
                   />
                   <span className="text-white/55">de {logicalTotalPages}</span>
                 </label>

@@ -1,4 +1,4 @@
-import { forwardRef, HTMLAttributes, ReactNode, useState, useContext, createContext, useMemo, useRef, useEffect } from 'react';
+import { forwardRef, HTMLAttributes, ReactNode, useState, useContext, createContext, useMemo } from 'react';
 
 interface SelectContextType {
   value?: string;
@@ -15,9 +15,9 @@ interface SelectProps extends HTMLAttributes<HTMLDivElement> {
   onValueChange?: (value: string) => void;
 }
 
-interface SelectTriggerProps extends HTMLAttributes<HTMLDivElement> {}
+type SelectTriggerProps = HTMLAttributes<HTMLDivElement>;
 
-interface SelectContentProps extends HTMLAttributes<HTMLDivElement> {}
+type SelectContentProps = HTMLAttributes<HTMLDivElement>;
 
 interface SelectItemProps extends HTMLAttributes<HTMLDivElement> {
   value: string;
@@ -53,9 +53,7 @@ const SelectTrigger = forwardRef<HTMLDivElement, SelectTriggerProps>(
         ref={ref}
         onClick={() => setIsOpen?.(!isOpen)}
         className={`
-          relative w-full px-3 py-2 border border-[var(--border-subtle)] rounded-lg
-          bg-[var(--surface-soft)] text-[var(--text-primary)]
-          focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent
+          field-select relative
           flex items-center justify-between text-left cursor-pointer
           ${className}
         `.trim()}
@@ -79,7 +77,7 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
         ref={ref}
         className={`
           absolute top-full left-0 right-0 mt-1 z-50
-          bg-[var(--surface-soft)] border border-[var(--border-subtle)] rounded-lg
+          rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-panel-strong)]
           max-h-48 overflow-y-auto
           ${className}
         `.trim()}
