@@ -28,6 +28,40 @@ interface ChapterImageCanvasProps {
   canvasHeight?: number;
 }
 
+type FabricObjectLike = {
+  id?: string;
+  width?: number;
+  height?: number;
+  scaleX?: number;
+  scaleY?: number;
+  left?: number;
+  top?: number;
+  angle?: number;
+  opacity?: number;
+  originX?: string;
+  originY?: string;
+  set: (props: Record<string, unknown>) => void;
+};
+
+type FabricSelectionEvent = {
+  selected?: FabricObjectLike[];
+  target?: FabricObjectLike;
+};
+
+type FabricCanvasLike = {
+  width: number;
+  height: number;
+  add: (object: FabricObjectLike) => void;
+  remove: (object: FabricObjectLike) => void;
+  renderAll: () => void;
+  setActiveObject: (object: FabricObjectLike) => void;
+  getObjects: () => FabricObjectLike[];
+  loadFromJSON: (json: string, callback: () => void) => void;
+  toJSON: () => unknown;
+  on: (event: string, handler: (event: FabricSelectionEvent) => void) => void;
+  dispose: () => void;
+};
+
 export function ChapterImageCanvas({
   onImageAdd,
   onImageDelete,
@@ -36,17 +70,30 @@ export function ChapterImageCanvas({
   canvasWidth = 500,
   canvasHeight = 700,
 }: ChapterImageCanvasProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricCanvasRef = useRef<any>(null);
-  const guideManagerRef = useRef<any>(null);
+  const fabricCanvasRef = useRef<FabricCanvasLike | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const historyStepRef = useRef(-1);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [history, setHistory] = useState<string[]>([]);
   const [historyStep, setHistoryStep] = useState(-1);
   const [showGuides, setShowGuides] = useState(true);
 
-  // Initialize fabric canvas
+  useEffect(() => {
+    historyStepRef.current = historyStep;
+  }, [historyStep]);
+
+  const pushCanvasHistory = useCallback((canvas: FabricCanvasLike) => {
+    const canvasState = JSON.stringify(canvas.toJSON());
+    setHistory((prev) => {
+      const newHistory = prev.slice(0, historyStepRef.current + 1);
+      newHistory.push(canvasState);
+      historyStepRef.current = newHistory.length - 1;
+      setHistoryStep(historyStepRef.current);
+      return newHistory;
+    });
+  }, []);
+
   useEffect(() => {
     const initializeCanvas = async () => {
       if (!canvasRef.current) return;
@@ -63,17 +110,15 @@ export function ChapterImageCanvas({
 
       fabricCanvasRef.current = canvas;
 
-      // Initialize guide manager
-      guideManagerRef.current = createGuideManager(canvas);
+      void createGuideManager(canvas);
 
-      // Setup selection handlers
-      canvas.on('selection:created', (e: any) => {
+      canvas.on('selection:created', (e: FabricSelectionEvent) => {
         if (e.selected && e.selected.length > 0) {
           setSelectedImageId(e.selected[0].id);
         }
       });
 
-      canvas.on('selection:updated', (e: any) => {
+      canvas.on('selection:updated', (e: FabricSelectionEvent) => {
         if (e.selected && e.selected.length > 0) {
           setSelectedImageId(e.selected[0].id);
         }
@@ -83,8 +128,7 @@ export function ChapterImageCanvas({
         setSelectedImageId(null);
       });
 
-      // Setup object modification handler to track changes and save to history
-      canvas.on('object:modified', (e: any) => {
+      canvas.on('object:modified', (e: FabricSelectionEvent) => {
         if (e.target && e.target.id) {
           const obj = e.target;
           onImageUpdate?.(e.target.id, {
@@ -97,25 +141,17 @@ export function ChapterImageCanvas({
             zIndex: canvas.getObjects().indexOf(obj),
           });
 
-          // Save state to history for undo/redo
-          const canvasState = JSON.stringify(canvas.toJSON());
-          setHistory((prev) => {
-            const newHistory = prev.slice(0, historyStep + 1);
-            newHistory.push(canvasState);
-            return newHistory;
-          });
-          setHistoryStep((prev) => prev + 1);
+          pushCanvasHistory(canvas);
         }
       });
 
-      // Load existing images
       for (const img of images) {
         try {
           const fabricImg = (await addImageToCanvas(canvas, img.url, {
             id: img.id,
             selectable: true,
             evented: true,
-          })) as any;
+          })) as FabricObjectLike;
 
           fabricImg.set({
             left: img.left,
@@ -132,9 +168,9 @@ export function ChapterImageCanvas({
 
       canvas.renderAll();
 
-      // Save initial state to history
       const initialState = JSON.stringify(canvas.toJSON());
       setHistory([initialState]);
+      historyStepRef.current = 0;
       setHistoryStep(0);
     };
 
@@ -145,7 +181,7 @@ export function ChapterImageCanvas({
         fabricCanvasRef.current.dispose();
       }
     };
-  }, [canvasWidth, canvasHeight, images, onImageUpdate]);
+  }, [canvasWidth, canvasHeight, images, onImageUpdate, pushCanvasHistory]);
 
   const handleAddImage = useCallback(() => {
     fileInputRef.current?.click();
@@ -161,15 +197,15 @@ export function ChapterImageCanvas({
         const imageUrl = e.target?.result as string;
         const id = `image-${Date.now()}`;
         const canvas = fabricCanvasRef.current;
+        if (!canvas) return;
 
         try {
           const fabricImg = (await addImageToCanvas(canvas, imageUrl, {
             id,
             selectable: true,
             evented: true,
-          })) as any;
+          })) as FabricObjectLike;
 
-          // Center new image
           fabricImg.set({
             left: canvas.width / 2,
             top: canvas.height / 2,
@@ -181,14 +217,7 @@ export function ChapterImageCanvas({
           canvas.setActiveObject(fabricImg);
           canvas.renderAll();
 
-          // Save state to history for undo/redo
-          const canvasState = JSON.stringify(canvas.toJSON());
-          setHistory((prev) => {
-            const newHistory = prev.slice(0, historyStep + 1);
-            newHistory.push(canvasState);
-            return newHistory;
-          });
-          setHistoryStep((prev) => prev + 1);
+          pushCanvasHistory(canvas);
 
           const newImage: ChapterImage = {
             id,
@@ -213,30 +242,23 @@ export function ChapterImageCanvas({
       reader.readAsDataURL(file);
       event.target.value = '';
     },
-    [onImageAdd]
+    [onImageAdd, pushCanvasHistory]
   );
 
   const handleDeleteSelected = useCallback(() => {
     if (!selectedImageId || !fabricCanvasRef.current) return;
 
     const canvas = fabricCanvasRef.current;
-    const obj = canvas.getObjects().find((o: any) => o.id === selectedImageId);
+    const obj = canvas.getObjects().find((object) => object.id === selectedImageId);
     if (obj) {
       canvas.remove(obj);
       canvas.renderAll();
       setSelectedImageId(null);
       onImageDelete?.(selectedImageId);
 
-      // Save state to history for undo/redo
-      const canvasState = JSON.stringify(canvas.toJSON());
-      setHistory((prev) => {
-        const newHistory = prev.slice(0, historyStep + 1);
-        newHistory.push(canvasState);
-        return newHistory;
-      });
-      setHistoryStep((prev) => prev + 1);
+      pushCanvasHistory(canvas);
     }
-  }, [selectedImageId, onImageDelete, historyStep]);
+  }, [onImageDelete, pushCanvasHistory, selectedImageId]);
 
   const handleUndo = useCallback(() => {
     if (historyStep > 0 && fabricCanvasRef.current) {
@@ -267,14 +289,13 @@ export function ChapterImageCanvas({
   }, [historyStep, history]);
 
   return (
-    <div className="flex flex-col h-full border border-[var(--border-subtle)] rounded-[12px] bg-[var(--surface-soft)] overflow-hidden">
-      {/* Toolbar */}
-      <div className="shrink-0 flex items-center gap-2 border-b border-[var(--border-subtle)] px-4 py-3 flex-wrap">
-        <div className="flex items-center gap-1 rounded-lg bg-[var(--surface-highlight)] p-1 border border-[var(--border-subtle)]">
+    <div className="ac-text-editor h-full rounded-[12px]">
+      <div className="ac-text-editor__toolbar">
+        <div className="ac-editor-toolbar__group">
           <button
             type="button"
             onClick={handleAddImage}
-            className="flex h-8 items-center gap-2 rounded-md px-2.5 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--surface-highlight)] transition"
+            className="ac-button ac-button--ghost ac-button--sm"
             title="Añadir imagen"
           >
             <ImageIcon className="h-4 w-4 text-[var(--accent-mint)]" />
@@ -282,14 +303,12 @@ export function ChapterImageCanvas({
           </button>
         </div>
 
-        <div className="h-5 w-px bg-[var(--border-subtle)] mx-1" />
-
-        <div className="flex items-center gap-1 rounded-lg bg-[var(--surface-highlight)] p-1 border border-[var(--border-subtle)]">
+        <div className="ac-editor-toolbar__group">
           <button
             type="button"
             onClick={handleUndo}
             disabled={historyStep <= 0}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--text-primary)] hover:bg-[var(--surface-highlight)] disabled:opacity-30 transition"
+            className="ac-button ac-button--ghost ac-button--sm disabled:opacity-30"
             title="Deshacer"
           >
             <Undo2 className="h-4 w-4" />
@@ -298,49 +317,40 @@ export function ChapterImageCanvas({
             type="button"
             onClick={handleRedo}
             disabled={historyStep >= history.length - 1}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--text-primary)] hover:bg-[var(--surface-highlight)] disabled:opacity-30 transition"
+            className="ac-button ac-button--ghost ac-button--sm disabled:opacity-30"
             title="Rehacer"
           >
             <Redo2 className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="h-5 w-px bg-[var(--border-subtle)] mx-1" />
-
         <button
           type="button"
           onClick={() => setShowGuides(!showGuides)}
-          className={`flex h-8 w-8 items-center justify-center rounded-md transition ${
-            showGuides
-              ? 'text-[var(--accent-mint)] bg-[var(--accent-mint)]/10'
-              : 'text-[var(--text-tertiary)] hover:bg-[var(--surface-highlight)]'
-          }`}
+          className="ac-text-editor__button"
+          data-active={showGuides ? 'true' : 'false'}
           title="Alternar guías de alineación"
         >
           <Grid3x3 className="h-4 w-4" />
         </button>
 
-        <div className="h-5 w-px bg-[var(--border-subtle)] mx-1" />
-
         <button
           type="button"
           onClick={handleDeleteSelected}
           disabled={!selectedImageId}
-          className="flex h-8 w-8 items-center justify-center rounded-md text-red-500 hover:bg-red-500/10 disabled:opacity-30 transition"
+          className="ac-button ac-button--destructive ac-button--sm disabled:opacity-30"
           title="Eliminar seleccionado"
         >
           <Trash2 className="h-4 w-4" />
         </button>
       </div>
 
-      {/* Canvas area */}
-      <div className="flex-1 overflow-auto flex items-center justify-center p-4 bg-[var(--page-surface)]">
+      <div className="ac-text-editor__content ac-text-editor__content--scroll flex items-center justify-center p-4 bg-[var(--page-surface)]">
         <div className="border border-[var(--border-subtle)] rounded-lg overflow-hidden shadow-lg">
           <canvas ref={canvasRef} />
         </div>
       </div>
 
-      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
