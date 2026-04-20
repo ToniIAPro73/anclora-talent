@@ -9,17 +9,17 @@ const getProjectByIdMock = vi.fn();
 
 vi.mock('@/lib/db/repositories', () => ({
   projectRepository: {
-    getProjectById: (...args: any[]) => getProjectByIdMock(...args),
-    saveDocument: (...args: any[]) => saveDocumentMock(...args),
+    getProjectById: (...args: unknown[]) => getProjectByIdMock(...args),
+    saveDocument: (...args: unknown[]) => saveDocumentMock(...args),
   },
 }));
 
 const buildSyncedMock = vi.fn();
 vi.mock('@/lib/preview/preview-builder', async (importOriginal) => {
-  const mod = await importOriginal() as any;
+  const mod = await importOriginal() as Record<string, unknown>;
   return {
     ...mod,
-    buildSyncedTocChapterContent: (...args: any[]) => buildSyncedMock(...args),
+    buildSyncedTocChapterContent: (...args: unknown[]) => buildSyncedMock(...args),
   };
 });
 
@@ -36,7 +36,7 @@ function formData(data: Record<string, string>) {
 }
 
 describe('syncProjectPaginationAction - regresion numeracion', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     getProjectByIdMock.mockResolvedValue({
       id: 'proj_1',
@@ -47,12 +47,14 @@ describe('syncProjectPaginationAction - regresion numeracion', () => {
         chapters: [{ id: 'toc', title: 'Indice', blocks: [{ id: 'b1', content: '<p>Indice</p>' }] }],
       },
     });
+    const { chapterBlocksToHtml } = await import('./chapter-html');
+    vi.mocked(chapterBlocksToHtml).mockReturnValue('<p>Indice</p>');
   });
 
   test('persiste HTML con numeros cuando cambia', async () => {
     buildSyncedMock.mockReturnValue({
       chapterId: 'toc',
-      html: '<p>Indice <span class="page-num">12</span></p>',
+      html: '<p data-toc-entry="true" data-toc-level="2" data-toc-page="12"><span class="toc-title">Indice</span></p>',
     });
 
     const res = await syncProjectPaginationAction(formData({ projectId: 'proj_1' }));
@@ -60,17 +62,17 @@ describe('syncProjectPaginationAction - regresion numeracion', () => {
     expect(res.status).toBe('updated');
     expect(saveDocumentMock).toHaveBeenCalledTimes(1);
     const savedContent = saveDocumentMock.mock.calls[0][2].blocks[0].content;
-    expect(savedContent).toContain('page-num');
-    expect(savedContent).toContain('12');
+    expect(savedContent).toContain('data-toc-page="12"');
+    expect(savedContent).toContain('toc-title');
   });
 
   test('no guarda si el HTML ya tiene los numeros', async () => {
     const { chapterBlocksToHtml } = await import('./chapter-html');
-    (chapterBlocksToHtml as any).mockReturnValue('<p>Indice <span class="page-num">12</span></p>');
+    vi.mocked(chapterBlocksToHtml).mockReturnValue('<p data-toc-entry="true" data-toc-level="2" data-toc-page="12"><span class="toc-title">Indice</span></p>');
     
     buildSyncedMock.mockReturnValue({
       chapterId: 'toc',
-      html: '<p>Indice <span class="page-num">12</span></p>',
+      html: '<p data-toc-entry="true" data-toc-level="2" data-toc-page="12"><span class="toc-title">Indice</span></p>',
     });
 
     await syncProjectPaginationAction(formData({ projectId: 'proj_1' }));
@@ -80,13 +82,13 @@ describe('syncProjectPaginationAction - regresion numeracion', () => {
   test('REGRESION: no guarda version sanitizada', async () => {
     buildSyncedMock.mockReturnValue({
       chapterId: 'toc',
-      html: '<p>Indice <span class="page-num">12</span></p>',
+      html: '<p data-toc-entry="true" data-toc-level="2" data-toc-page="12"><span class="toc-title">Indice</span></p>',
     });
 
     await syncProjectPaginationAction(formData({ projectId: 'proj_1' }));
     const saved = saveDocumentMock.mock.calls[0][2].blocks[0].content;
     
-    expect(saved).toBe('<p>Indice <span class="page-num">12</span></p>');
+    expect(saved).toBe('<p data-toc-entry="true" data-toc-level="2" data-toc-page="12"><span class="toc-title">Indice</span></p>');
     expect(saved).not.toBe('<p>Indice</p>');
   });
 });

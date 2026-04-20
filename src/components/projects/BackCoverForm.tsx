@@ -59,14 +59,12 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
   };
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
-      <section className="space-y-5 rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
-          {copy.backCoverFormEyebrow}
-        </p>
+    <form onSubmit={handleSubmit} className="ac-workspace-stage__shell">
+      <section className="ac-surface-panel talent-workspace-stage__panel space-y-5 p-6">
+        <p className="ac-surface-panel__eyebrow">{copy.backCoverFormEyebrow}</p>
 
-        <label className="block space-y-2">
-          <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.backCoverTitleLabel}</span>
+        <label className="ac-form-field">
+          <span className="ac-form-field__label">{copy.backCoverTitleLabel}</span>
           <input
             name="title"
             value={surface.fields.title?.value ?? ''}
@@ -79,12 +77,12 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
                 }),
               )
             }
-            className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+            className="field-input"
           />
         </label>
 
-        <label className="block space-y-2">
-          <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.backCoverBodyLabel}</span>
+        <label className="ac-form-field">
+          <span className="ac-form-field__label">{copy.backCoverBodyLabel}</span>
           <textarea
             name="body"
             value={surface.fields.body?.value ?? ''}
@@ -98,12 +96,12 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
               )
             }
             rows={5}
-            className="min-h-28 w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+            className="field-textarea min-h-28"
           />
         </label>
 
-        <label className="block space-y-2">
-          <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.backCoverAuthorBioLabel}</span>
+        <label className="ac-form-field">
+          <span className="ac-form-field__label">{copy.backCoverAuthorBioLabel}</span>
           <textarea
             name="authorBio"
             value={surface.fields.authorBio?.value ?? ''}
@@ -117,7 +115,7 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
               )
             }
             rows={3}
-            className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+            className="field-textarea"
           />
         </label>
 
@@ -146,8 +144,8 @@ export function BackCoverForm({ copy, project }: { copy: AppMessages['project'];
           </div>
         </div>
 
-        <label className="block space-y-2">
-          <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverBackgroundLabel}</span>
+        <label className="ac-form-field">
+          <span className="ac-form-field__label">{copy.coverBackgroundLabel}</span>
           <input
             ref={fileInputRef}
             type="file"

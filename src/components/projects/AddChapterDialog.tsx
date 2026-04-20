@@ -61,19 +61,22 @@ export function AddChapterDialog({ isOpen, projectId, chapters, onClose }: AddCh
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 sm:p-6"
+      className="fixed inset-0 z-[100] overflow-y-auto"
       onClick={handleClose}
     >
-      <div
-        ref={dialogRef}
-        className="w-full max-w-md rounded-[28px] border border-[var(--border-subtle)] bg-[#111C28] p-6 shadow-[var(--shadow-strong)]"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="ac-modal-backdrop min-h-screen p-4 sm:p-6">
+        <div
+          ref={dialogRef}
+          className="ac-modal w-full max-w-md"
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="ac-modal__header mb-1">
+          <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-black text-[var(--text-primary)]">Agregar nuevo capítulo</h2>
-            <p className="mt-1 text-xs text-[var(--text-tertiary)]">
+            <p className="ac-modal__meta">Capítulo</p>
+            <h2 className="ac-modal__title text-[1.5rem]">Agregar nuevo capítulo</h2>
+            <p className="ac-modal__summary mt-1 text-xs">
               {chapters.length + 1} capítulos en total
             </p>
           </div>
@@ -86,26 +89,27 @@ export function AddChapterDialog({ isOpen, projectId, chapters, onClose }: AddCh
             <X className="h-5 w-5" />
           </button>
         </div>
+        </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="ac-modal__body space-y-4">
           {/* Title input */}
-          <label className="block space-y-2">
-            <span className="text-sm font-semibold text-[var(--text-primary)]">Título del capítulo</span>
+          <label className="ac-form-field">
+            <span className="ac-form-field__label">Título del capítulo</span>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               disabled={isSaving}
               placeholder="Ej: Introducción"
-              className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] disabled:opacity-50 focus:border-[var(--accent-mint)]"
+              className="field-input"
               autoFocus
             />
           </label>
 
           {/* Position selector */}
-          <label className="block space-y-2">
-            <span className="text-sm font-semibold text-[var(--text-primary)]">Posición</span>
+          <label className="ac-form-field">
+            <span className="ac-form-field__label">Posición</span>
             <div className="space-y-2">
               <label className="flex items-center gap-2">
                 <input
@@ -136,7 +140,7 @@ export function AddChapterDialog({ isOpen, projectId, chapters, onClose }: AddCh
                   value={selectedChapterId}
                   onChange={(e) => setSelectedChapterId(e.target.value)}
                   disabled={isSaving}
-                  className="ml-6 w-full rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none disabled:opacity-50 focus:border-[var(--accent-mint)]"
+                  className="field-select ml-6"
                 >
                   {chapters.map((ch) => (
                     <option key={ch.id} value={ch.id}>
@@ -163,7 +167,7 @@ export function AddChapterDialog({ isOpen, projectId, chapters, onClose }: AddCh
                   value={selectedChapterId}
                   onChange={(e) => setSelectedChapterId(e.target.value)}
                   disabled={isSaving}
-                  className="ml-6 w-full rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none disabled:opacity-50 focus:border-[var(--accent-mint)]"
+                  className="field-select ml-6"
                 >
                   {chapters.map((ch) => (
                     <option key={ch.id} value={ch.id}>
@@ -177,13 +181,13 @@ export function AddChapterDialog({ isOpen, projectId, chapters, onClose }: AddCh
 
           {/* Error message */}
           {error && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            <div className="rounded-lg bg-[var(--status-danger-surface)] p-3 text-sm text-[var(--status-danger-text)]">
               {error}
             </div>
           )}
 
           {/* Action buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="ac-modal__footer flex gap-3 pt-4">
             <button
               type="button"
               onClick={handleClose}
@@ -211,6 +215,7 @@ export function AddChapterDialog({ isOpen, projectId, chapters, onClose }: AddCh
             </button>
           </div>
         </form>
+      </div>
       </div>
     </div>
   );

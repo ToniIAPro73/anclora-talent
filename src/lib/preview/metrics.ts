@@ -8,8 +8,10 @@
 
 import type { ProjectRecord } from '@/lib/projects/types';
 import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
-import { paginateContent } from './content-paginator';
+import { countRenderablePages, paginateContent } from './content-paginator';
 import { DEVICE_PAGINATION_CONFIGS, type PreviewFormat } from './device-configs';
+import { normalizeHtmlContent } from './html-normalize';
+import { reconcileOverflowBreaks } from './editor-page-layout';
 
 // ==================== TYPES ====================
 
@@ -57,8 +59,11 @@ export function computeChapterPageMetrics(
     // Paginate for each format
     for (const format of formats) {
       const config = DEVICE_PAGINATION_CONFIGS[format];
-      const pages = paginateContent(chapterHtml, config);
-      pagesByFormat[format] = pages.length;
+      const canonicalHtml = normalizeHtmlContent(
+        reconcileOverflowBreaks(chapterHtml, config),
+      );
+      const pages = paginateContent(canonicalHtml, config);
+      pagesByFormat[format] = countRenderablePages(pages);
     }
 
     metrics.push({

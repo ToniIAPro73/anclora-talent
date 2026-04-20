@@ -3,6 +3,22 @@
 ## Objetivo
 Definir la mecánica visual base de botones, cards y frames interactivos del ecosistema Anclora para que todas las apps compartan la misma lógica de respuesta aunque cambie la identidad de marca.
 
+## Fuente ejecutable
+
+La implementación real de motion debe vivir en `anclora-design-system`, repartida entre:
+- `tokens` de duración, easing y amplitud
+- `foundations` de elevation y focus
+- `components` con comportamiento interactivo base
+- `patterns` cuando el motion dependa de composición
+
+La bóveda no define animaciones locales; define qué familias de motion existen y cuándo aplican.
+
+## Autoridad
+
+- Registro operativo: `docs/governance/contracts-registry.json`
+- Inventario aplicable: `docs/governance/ecosystem-repos.json`
+- Fuente ejecutable relacionada: `anclora-design-system`
+
 ## Superficies soportadas
 - `ui-motion-card`
 - `ui-motion-button`
@@ -25,6 +41,7 @@ Definir la mecánica visual base de botones, cards y frames interactivos del eco
 - Nuevos botones deben nacer desde el sistema UI del repo, no desde clases arbitrarias por pantalla.
 - Nuevos contenedores interactivos que no sean `Card` ni `Button` deben entrar en la familia `frame`.
 - No se deben inventar animaciones locales si el patrón encaja en uno de los tres tipos anteriores.
+- Si falta una variante, se añade al design system antes de consolidarla como excepción de producto.
 
 ## Reglas de bloque
 - Las cards hermanas de un mismo bloque deben compartir la misma intensidad de elevación.
@@ -56,6 +73,30 @@ Aplicaciones ultra premium:
 ## Referencias relacionadas
 - `MODAL_CONTRACT.md`
 - contrato de grupo aplicable
+
+## Repos a los que aplica
+
+- `anclora-advisor-ai`
+- `anclora-nexus`
+- `anclora-content-generator-ai`
+- `anclora-impulso`
+- `anclora-command-center`
+- `anclora-synergi`
+- `anclora-data-lab`
+- `anclora-talent`
+- `anclora-private-estates`
+- `anclora-portfolio`
+- `anclora-azure-bay-landing`
+- `anclora-playa-viva-uniestate`
+
+Nota:
+- `anclora-group` mantiene autoridad matriz y criterios globales, pero no es target normal de propagación de este contrato transversal.
+
+## Sincronización con repos consumidores
+
+- Contrato fuente en la bóveda: `docs/standards/UI_MOTION_CONTRACT.md`
+- Target normal de propagación: `docs/standards/`
+- Dependencia de auditoría y propagación desde `docs/governance/contracts-registry.json`
 
 ## Gate de aceptación
 

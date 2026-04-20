@@ -1,19 +1,18 @@
 import { forwardRef, HTMLAttributes } from 'react';
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {}
-interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {}
-interface CardContentProps extends HTMLAttributes<HTMLDivElement> {}
-interface CardTitleProps extends HTMLAttributes<HTMLHeadingElement> {}
-interface CardDescriptionProps extends HTMLAttributes<HTMLParagraphElement> {}
-interface CardFooterProps extends HTMLAttributes<HTMLDivElement> {}
+type CardProps = HTMLAttributes<HTMLDivElement>;
+type CardHeaderProps = HTMLAttributes<HTMLDivElement>;
+type CardContentProps = HTMLAttributes<HTMLDivElement>;
+type CardTitleProps = HTMLAttributes<HTMLHeadingElement>;
+type CardDescriptionProps = HTMLAttributes<HTMLParagraphElement>;
+type CardFooterProps = HTMLAttributes<HTMLDivElement>;
 
 const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ className = '', ...props }, ref) => (
     <div
       ref={ref}
       className={`
-        border border-[var(--border-subtle)] rounded-lg
-        bg-[var(--surface-default)]
+        ac-card
         ${className}
       `.trim()}
       {...props}
@@ -27,7 +26,7 @@ const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
     <div
       ref={ref}
       className={`
-        flex flex-col space-y-1.5 p-6
+        ac-card__header p-6
         ${className}
       `.trim()}
       {...props}
@@ -41,7 +40,7 @@ const CardContent = forwardRef<HTMLDivElement, CardContentProps>(
     <div
       ref={ref}
       className={`
-        p-6 pt-0
+        ac-card__body p-6 pt-0
         ${className}
       `.trim()}
       {...props}
@@ -55,7 +54,7 @@ const CardTitle = forwardRef<HTMLHeadingElement, CardTitleProps>(
     <h2
       ref={ref}
       className={`
-        text-lg font-semibold text-[var(--text-primary)]
+        ac-card__title text-lg
         ${className}
       `.trim()}
       {...props}
@@ -83,7 +82,7 @@ const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
     <div
       ref={ref}
       className={`
-        flex items-center p-6 pt-0
+        ac-card__footer items-center p-6 pt-0
         ${className}
       `.trim()}
       {...props}

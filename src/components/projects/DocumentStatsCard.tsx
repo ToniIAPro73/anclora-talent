@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { BookOpen, FileText, BarChart3, Clock, FileJson } from 'lucide-react';
 import { getDocumentStats, formatNumber, formatReadingTime } from '@/lib/projects/document-stats';
-import { getSourceDocumentMetrics, formatSourceDocumentComparison } from '@/lib/projects/source-document-metrics';
+import { getSourceDocumentMetrics } from '@/lib/projects/source-document-metrics';
 import type { ProjectDocument } from '@/lib/projects/types';
 import type { ProjectRecord } from '@/lib/projects/types';
 
@@ -24,8 +24,8 @@ export function DocumentStatsCard({ document, project, isLoading = false }: Docu
 
   if (isLoading) {
     return (
-      <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
+      <section className="ac-surface-panel talent-workspace-stage__panel p-6">
+        <p className="ac-surface-panel__eyebrow">
           Estadísticas del documento
         </p>
         <div className="mt-4 space-y-3">
@@ -38,58 +38,44 @@ export function DocumentStatsCard({ document, project, isLoading = false }: Docu
   }
 
   return (
-    <section className="h-full rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
-      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
+    <section className="ac-surface-panel talent-workspace-stage__panel h-full p-6">
+      <p className="ac-surface-panel__eyebrow">
         Estadísticas del documento
       </p>
 
       <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-        {/* Chapters stat */}
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-[var(--surface-soft)]">
+        <div className="ac-metric-card">
+          <div className="ac-metric-card__header">
             <BookOpen className="h-5 w-5 text-[var(--accent-mint)]" />
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-2xl font-black text-[var(--text-primary)]">{stats.chapterCount}</p>
-            <p className="text-xs text-[var(--text-tertiary)]">
-              {stats.chapterCount === 1 ? 'Capítulo' : 'Capítulos'}
-            </p>
-          </div>
+          <p className="ac-metric-card__value">{stats.chapterCount}</p>
+          <p className="ac-metric-card__caption">
+            {stats.chapterCount === 1 ? 'Capítulo' : 'Capítulos'}
+          </p>
         </div>
 
-        {/* Words stat */}
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-[var(--surface-soft)]">
+        <div className="ac-metric-card">
+          <div className="ac-metric-card__header">
             <FileText className="h-5 w-5 text-[var(--accent-mint)]" />
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-2xl font-black text-[var(--text-primary)]">{formatNumber(stats.wordCount)}</p>
-            <p className="text-xs text-[var(--text-tertiary)]">Palabras</p>
-          </div>
+          <p className="ac-metric-card__value">{formatNumber(stats.wordCount)}</p>
+          <p className="ac-metric-card__caption">Palabras</p>
         </div>
 
-        {/* Characters stat */}
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-[var(--surface-soft)]">
+        <div className="ac-metric-card">
+          <div className="ac-metric-card__header">
             <BarChart3 className="h-5 w-5 text-[var(--accent-mint)]" />
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-2xl font-black text-[var(--text-primary)]">{formatNumber(stats.characterCount)}</p>
-            <p className="text-xs text-[var(--text-tertiary)]">Caracteres</p>
-          </div>
+          <p className="ac-metric-card__value">{formatNumber(stats.characterCount)}</p>
+          <p className="ac-metric-card__caption">Caracteres</p>
         </div>
 
-        {/* Pages & Reading time stat */}
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-[var(--surface-soft)]">
+        <div className="ac-metric-card">
+          <div className="ac-metric-card__header">
             <Clock className="h-5 w-5 text-[var(--accent-mint)]" />
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-2xl font-black text-[var(--text-primary)]">{stats.pageCount}</p>
-            <p className="text-xs text-[var(--text-tertiary)]">
-              ~Págs (laptop)
-            </p>
-          </div>
+          <p className="ac-metric-card__value">{stats.pageCount}</p>
+          <p className="ac-metric-card__caption">~Págs (laptop)</p>
         </div>
       </div>
 
@@ -106,7 +92,7 @@ export function DocumentStatsCard({ document, project, isLoading = false }: Docu
       {/* Format info */}
       <div className="mt-4 rounded-lg bg-[var(--surface-soft)] p-3">
         <p className="text-xs text-[var(--text-secondary)]">
-          <span className="font-semibold">Nota:</span> Las estadísticas se calculan basándose en el formato laptop (6×9"). Los números pueden variar según el dispositivo y configuración de lectura.
+          <span className="font-semibold">Nota:</span> Las estadísticas se calculan basándose en el formato laptop (6×9&quot;). Los números pueden variar según el dispositivo y configuración de lectura.
         </p>
       </div>
 

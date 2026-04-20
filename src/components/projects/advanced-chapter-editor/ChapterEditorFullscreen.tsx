@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp, ZoomIn, ZoomOut } from 'lucide-react';
 import { AdvancedRichTextEditor } from '../AdvancedRichTextEditor';
-import { premiumPrimaryMintButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { useChapterEditor } from './useChapterEditor';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import type { DocumentChapter } from '@/lib/projects/types';
@@ -130,22 +129,23 @@ export function ChapterEditorFullscreen({
 
   return (
     <div
-      className="flex h-screen w-full flex-col overflow-hidden rounded-none bg-[#111C28]"
+      className="ac-editor-shell"
       onClick={(e) => e.stopPropagation()}
     >
-      {/* ═══════════════════════ HEADER ═══════════════════════ */}
-      <header className="shrink-0 flex items-center justify-between gap-2 border-b border-[var(--border-subtle)] px-3 py-1.5">
-        <div className="flex-1 min-w-0">
-          <h2 className="text-[13px] font-black tracking-tight text-[var(--text-primary)]">
+      <header className="ac-editor-shell__header">
+        <div className="ac-editor-shell__titles">
+          <h2 className="ac-editor-shell__title">
             Capítulo {editor.currentIndex + 1}/{editor.totalChapters}
           </h2>
+          <p className="ac-editor-shell__summary">{editor.currentChapter.title}</p>
         </div>
 
-        <div className="flex flex-shrink-0 items-center gap-1 rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-1.5 py-1">
+        <div className="ac-editor-shell__controls">
+          <div className="ac-preview-control-group">
           <button
             onClick={editor.goToPrevChapter}
             disabled={!editor.canNavigatePrev || editor.isSaving}
-            className={`${premiumSecondaryLightButton} px-2.5 py-1.5 disabled:opacity-50`}
+            className="ac-button ac-button--ghost ac-button--sm disabled:opacity-50"
             title="Capítulo anterior (Ctrl+←)"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -154,75 +154,72 @@ export function ChapterEditorFullscreen({
           <button
             onClick={editor.goToNextChapter}
             disabled={!editor.canNavigateNext || editor.isSaving}
-            className={`${premiumSecondaryLightButton} px-2.5 py-1.5 disabled:opacity-50`}
+            className="ac-button ac-button--ghost ac-button--sm disabled:opacity-50"
             title="Siguiente capítulo (Ctrl+→)"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
+          </div>
 
-          <div className="mx-1 h-5 w-px bg-[var(--border-subtle)]" />
-
-          {/* Page Navigation */}
           {editor.totalPages > 1 && (
-            <>
+            <div className="ac-preview-pagination">
               <button
                 onClick={editor.goToPagePrev}
                 disabled={!editor.canNavigatePagePrev || editor.isSaving}
-                className={`${premiumSecondaryLightButton} px-2.5 py-1.5 disabled:opacity-50`}
+                className="ac-button ac-button--ghost ac-button--sm disabled:opacity-50"
                 title="Página anterior (Alt+↑ o Page Up)"
               >
                 <ArrowUp className="h-4 w-4" />
               </button>
 
-              <span className="min-w-[2.5rem] px-1 text-center text-xs text-[var(--text-secondary)]">
+              <span className="ac-preview-control-value">
                 P.{editor.currentPage + 1}
               </span>
 
               <button
                 onClick={editor.goToPageNext}
                 disabled={!editor.canNavigatePageNext || editor.isSaving}
-                className={`${premiumSecondaryLightButton} px-2.5 py-1.5 disabled:opacity-50`}
+                className="ac-button ac-button--ghost ac-button--sm disabled:opacity-50"
                 title="Siguiente página (Alt+↓ o Page Down)"
               >
                 <ArrowDown className="h-4 w-4" />
               </button>
-
-              <div className="mx-1 h-5 w-px bg-[var(--border-subtle)]" />
-            </>
+            </div>
           )}
 
+          <div className="ac-preview-control-group">
           <button
             type="button"
             onClick={() => handleZoomChange(zoom - 10)}
-            className={`${premiumSecondaryLightButton} p-1.5`}
+            className="ac-button ac-button--ghost ac-button--sm"
             title="Reducir zoom"
           >
             <ZoomOut className="h-4 w-4" />
           </button>
-          <span className="w-9 text-center text-xs text-[var(--text-secondary)]">
+          <span className="ac-preview-control-value">
             {zoom}%
           </span>
           <button
             type="button"
             onClick={() => handleZoomChange(zoom + 10)}
-            className={`${premiumSecondaryLightButton} p-1.5`}
+            className="ac-button ac-button--ghost ac-button--sm"
             title="Aumentar zoom"
           >
             <ZoomIn className="h-4 w-4" />
           </button>
+          </div>
         </div>
 
-        {/* Status and Close button */}
-        <div className="flex flex-shrink-0 items-center gap-1">
+        <div className="ac-editor-shell__actions">
           {editor.lastSaved && (
-            <span className="px-1 text-xs text-[var(--accent-mint)] opacity-70">
+            <span className="ac-editor-shell__status">
               ✓ Guardado
             </span>
           )}
           <button
             onClick={handleClose}
             disabled={editor.isSaving}
-            className={`${premiumSecondaryLightButton} flex-shrink-0 px-3.5 py-1.5 text-sm font-semibold`}
+            className="ac-button ac-button--secondary"
             title="Cerrar editor (Esc)"
           >
             CERRAR
@@ -230,17 +227,14 @@ export function ChapterEditorFullscreen({
         </div>
       </header>
 
-      {/* ═══════════════════════ CONTENT AREA ═══════════════════════ */}
-      <div className="flex flex-1 flex-col gap-1 overflow-hidden p-2">
-        {/* Error message */}
+      <div className="ac-editor-shell__main">
         {editor.error && (
           <div className="rounded-[8px] border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-400 flex-shrink-0">
             {editor.error}
           </div>
         )}
 
-        {/* Content Editor - Fills available space - includes chapter title as first line */}
-        <div className="flex-1 min-h-0 overflow-auto overflow-x-hidden rounded-[8px] border border-[var(--border-subtle)] bg-[var(--surface-soft)]">
+        <div className="ac-editor-shell__surface flex-1 overflow-auto overflow-x-hidden">
           <AdvancedRichTextEditor
             defaultContent={editor.htmlContent}
             onUpdate={editor.setHtmlContent}
@@ -252,12 +246,11 @@ export function ChapterEditorFullscreen({
         </div>
       </div>
 
-      {/* ═══════════════════════ FOOTER ═══════════════════════ */}
-      <footer className="shrink-0 flex items-center gap-2 border-t border-[var(--border-subtle)] bg-[#111C28] px-3 py-2">
+      <footer className="ac-editor-shell__footer">
         <button
           onClick={handleClose}
           disabled={editor.isSaving}
-          className={`flex-1 min-w-[100px] h-9 ${premiumSecondaryLightButton}`}
+          className="ac-button ac-button--secondary"
         >
           Cancelar
         </button>
@@ -265,7 +258,7 @@ export function ChapterEditorFullscreen({
         <button
           onClick={handleSave}
           disabled={editor.isSaving || (!editor.hasChanges && editor.lastSaved !== null)}
-          className={`flex-1 min-w-[100px] h-9 flex items-center justify-center gap-1.5 ${premiumPrimaryMintButton}`}
+          className="ac-button ac-button--primary"
         >
           {editor.isSaving ? (
             <>

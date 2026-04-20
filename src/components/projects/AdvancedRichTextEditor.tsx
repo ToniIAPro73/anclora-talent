@@ -257,11 +257,8 @@ function ToolbarButton({ onClick, active, disabled, title, children }: ToolbarBu
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`inline-flex h-9 w-9 items-center justify-center rounded-[10px] text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-mint)] disabled:pointer-events-none disabled:opacity-30 ${
-        active
-          ? 'bg-[var(--accent-mint)] text-white shadow-[0_0_15px_rgba(196,154,36,0.3)]'
-          : 'text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]'
-      }`}
+      data-active={active ? 'true' : 'false'}
+      className="ac-text-editor__button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-mint)]"
     >
       {children}
     </button>
@@ -293,18 +290,15 @@ function SplitToolbarButton({
   return (
     <div className="relative" ref={containerRef}>
       <div
-        className={`flex items-center overflow-hidden rounded-[10px] border transition-colors ${
-          active
-            ? 'border-[var(--accent-mint)] bg-[var(--accent-mint)]/10'
-            : 'border-[var(--border-subtle)] bg-transparent'
-        } ${disabled ? 'opacity-30' : ''}`}
+        className={`ac-text-editor__split-shell ${disabled ? 'opacity-30' : ''}`}
+        data-active={active ? 'true' : 'false'}
       >
         <button
           type="button"
           onClick={onPrimaryClick}
           disabled={disabled}
           title={title}
-          className="inline-flex h-9 w-9 items-center justify-center text-[var(--text-secondary)] transition-colors hover:bg-[var(--hover)] hover:text-[var(--text-primary)] disabled:pointer-events-none"
+          className="ac-text-editor__split-main"
         >
           {icon}
         </button>
@@ -313,14 +307,14 @@ function SplitToolbarButton({
           onClick={() => !disabled && setIsOpen((open) => !open)}
           disabled={disabled}
           title={`Opciones de ${title.toLowerCase()}`}
-          className="inline-flex h-9 w-6 items-center justify-center border-l border-[var(--border-subtle)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--hover)] hover:text-[var(--text-primary)] disabled:pointer-events-none"
+          className="ac-text-editor__split-toggle"
         >
           <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
       </div>
 
       {isOpen && !disabled && (
-        <div className="absolute left-0 top-11 z-[110] min-w-[220px] rounded-xl border border-[var(--border-strong)] bg-[#0E1825] p-2 shadow-2xl shadow-black">
+        <div className="ac-text-editor__popover">
           {children}
         </div>
       )}
@@ -857,9 +851,8 @@ const MenuBar = ({
   if (!editor) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 border-b border-[var(--border-strong)] bg-[#0E1825] px-4 py-2.5">
-      {/* View Options */}
-      <div className="flex items-center gap-1.5 pr-3 border-r border-[var(--border-subtle)]">
+    <div className="ac-text-editor__toolbar">
+      <div className="ac-text-editor__toolbar-section">
         <ToolbarButton onClick={() => setDevice('mobile')} active={device === 'mobile'} title="Vista Móvil">
           <Smartphone className="h-4 w-4" />
         </ToolbarButton>
@@ -869,7 +862,6 @@ const MenuBar = ({
         <ToolbarButton onClick={() => setDevice('desktop')} active={device === 'desktop'} title="Vista Escritorio">
           <Monitor className="h-4 w-4" />
         </ToolbarButton>
-        <div className="w-px h-4 bg-[var(--border-subtle)] mx-1" />
         <ToolbarButton
           onClick={() => setViewMode(viewMode === 'single' ? 'double' : 'single')}
           active={viewMode === 'double'}
@@ -880,7 +872,7 @@ const MenuBar = ({
         </ToolbarButton>
       </div>
 
-      <div className="flex items-center gap-2 pr-3 border-r border-[var(--border-subtle)]">
+      <div className="ac-text-editor__toolbar-section">
         <AdvancedFontSelector
           editor={editor}
           applyToWordOrSelection={applyToWordOrSelection}
@@ -903,8 +895,7 @@ const MenuBar = ({
         <MarginSelector margins={margins} onMarginsChange={onMarginsChange} wordsPerPage={wordsPerPage} />
       </div>
 
-      {/* Text Formatting */}
-      <div className="flex items-center gap-1 pr-3 border-r border-[var(--border-subtle)]">
+      <div className="ac-text-editor__toolbar-section">
         <ToolbarButton
           onClick={() => applyToWordOrSelection((chain) => chain.toggleBold())}
           active={editor.isActive('bold')}
@@ -931,8 +922,7 @@ const MenuBar = ({
         </ToolbarButton>
       </div>
 
-      {/* Alignment */}
-      <div className="flex items-center gap-1 pr-3 border-r border-[var(--border-subtle)]">
+      <div className="ac-text-editor__toolbar-section">
         <ToolbarButton
           onClick={() => applyToParagraphOrSelection((chain) => chain.setTextAlign('left'))}
           active={editor.isActive({ textAlign: 'left' })}
@@ -967,8 +957,7 @@ const MenuBar = ({
         </ToolbarButton>
       </div>
 
-      {/* Elements */}
-      <div className="flex items-center gap-1 pr-3 border-r border-[var(--border-subtle)]">
+      <div className="ac-text-editor__toolbar-section">
         <ToolbarButton
           onClick={() => applyToParagraphOrSelection((chain) => chain.toggleHeading({ level: 1 }))}
           active={editor.isActive('heading', { level: 1 })}
@@ -1106,8 +1095,7 @@ const MenuBar = ({
         </ToolbarButton>
       </div>
 
-      {/* History */}
-      <div className="ml-auto flex items-center gap-1">
+      <div className="ac-text-editor__toolbar-actions">
         <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Deshacer">
           <Undo2 className="h-4 w-4" />
         </ToolbarButton>
@@ -1576,7 +1564,7 @@ export function AdvancedRichTextEditor({
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden rounded-[24px] border border-[var(--border-strong)] bg-[#0B121D] shadow-2xl">
+    <div className="ac-text-editor h-full shadow-2xl">
       <MenuBar
         editor={editor}
         viewMode={viewMode}
@@ -1589,7 +1577,7 @@ export function AdvancedRichTextEditor({
         wordsPerPage={wordsPerPage}
       />
 
-      <div className="flex flex-1 justify-center overflow-auto bg-[var(--background)] p-4 custom-scrollbar">
+      <div className="ac-text-editor__content ac-text-editor__content--scroll flex justify-center bg-[var(--background)] p-4 custom-scrollbar">
         <div
           className={`transition-all duration-500 ease-in-out ${deviceClasses[device]}`}
           style={{

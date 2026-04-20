@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { computeChapterPageMetrics } from './metrics';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
-import { paginateContent } from './content-paginator';
+import { countRenderablePages, paginateContent } from './content-paginator';
 import { DEVICE_PAGINATION_CONFIGS } from './device-configs';
+import { normalizeHtmlContent } from './html-normalize';
+import { reconcileOverflowBreaks } from './editor-page-layout';
 
 function createProject(overrides?: Partial<ProjectRecord>): ProjectRecord {
   const baseProject: ProjectRecord = {
@@ -78,10 +80,14 @@ describe('metrics', () => {
     const project = createProject();
     const chapter = project.document.chapters[0];
     const chapterHtml = chapterBlocksToHtml(chapter.blocks);
-    const expectedLaptopPages = paginateContent(
-      chapterHtml,
-      DEVICE_PAGINATION_CONFIGS.laptop,
-    ).length;
+    const expectedLaptopPages = countRenderablePages(
+      paginateContent(
+        normalizeHtmlContent(
+          reconcileOverflowBreaks(chapterHtml, DEVICE_PAGINATION_CONFIGS.laptop),
+        ),
+        DEVICE_PAGINATION_CONFIGS.laptop,
+      ),
+    );
 
     const metrics = computeChapterPageMetrics(project);
 

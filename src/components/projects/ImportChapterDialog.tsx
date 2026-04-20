@@ -2,7 +2,6 @@
 
 import { useState, useRef } from 'react';
 import { X, Upload, Loader2, AlertCircle, Download } from 'lucide-react';
-import { premiumPrimaryDarkButton, premiumSecondaryLightButton, premiumPrimaryMintButton } from '@/components/ui/button-styles';
 import { supportedImportAccept } from '@/lib/projects/import-config';
 import type { DocumentChapter } from '@/lib/projects/types';
 
@@ -23,6 +22,15 @@ interface ImportAnalysis {
   wordCount: number;
 }
 
+type ImportResponse = {
+  error?: string;
+  title?: string;
+  subtitle?: string;
+  chapterTitles?: string[];
+};
+
+type ImportPositionValue = 'end' | `before-${string}` | `after-${string}`;
+
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
 export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onChapterImported }: ImportChapterDialogProps) {
@@ -30,8 +38,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [analysis, setAnalysis] = useState<ImportAnalysis | null>(null);
   const [error, setError] = useState<string>('');
-  const [position, setPosition] = useState<'end' | 'before' | 'after'>('end');
-  const [selectedChapterId, setSelectedChapterId] = useState<string>(chapters[0]?.id || '');
+  const [position, setPosition] = useState<ImportPositionValue>('end');
   const [chapterTitle, setChapterTitle] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -56,7 +63,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
         body: formData,
       });
 
-      const data: any = await response.json();
+      const data: ImportResponse = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || 'Error al analizar el archivo');
@@ -115,9 +122,10 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
       formData.set('projectId', projectId);
       formData.set('sourceDocument', selectedFile);
       formData.set('chapterTitle', chapterTitle);
-      formData.set('position', position.split('-')[0]); // Extract 'before' or 'after' from 'before-id' or 'after-id'
-      if (position !== 'end' && selectedChapterId) {
-        formData.set('targetChapterId', selectedChapterId.split('-')[1] || selectedChapterId);
+      const [positionKind, targetChapterId] = position.split('-', 2);
+      formData.set('position', positionKind);
+      if (position !== 'end' && targetChapterId) {
+        formData.set('targetChapterId', targetChapterId);
       }
 
       await importChapterAction(formData);
@@ -148,32 +156,34 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 sm:p-6"
+      className="fixed inset-0 z-[100] overflow-y-auto"
       onClick={handleClose}
     >
-      <div
-        ref={dialogRef}
-        className="w-full max-w-md rounded-[28px] border border-[var(--border-subtle)] bg-[#111C28] p-6 shadow-[var(--shadow-strong)]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-black text-[var(--text-primary)]">Importar capítulo</h2>
-            <p className="mt-1 text-xs text-[var(--text-tertiary)]">Importa contenido como nuevo capítulo</p>
+      <div className="ac-modal-backdrop min-h-screen p-4 sm:p-6">
+        <div
+          ref={dialogRef}
+          className="ac-modal w-full max-w-md"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="ac-modal__header mb-1">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="ac-modal__meta">Capítulo</p>
+                <h2 className="ac-modal__title text-[1.5rem]">Importar capítulo</h2>
+                <p className="ac-modal__summary mt-1 text-xs">Importa contenido como nuevo capítulo</p>
+              </div>
+              <button
+                onClick={handleClose}
+                disabled={importState === 'importing'}
+                className="ac-button ac-button--ghost ac-button--icon disabled:opacity-50"
+                title="Cerrar"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
-          <button
-            onClick={handleClose}
-            disabled={importState === 'importing'}
-            className={`${premiumSecondaryLightButton} p-2 disabled:opacity-50`}
-            title="Cerrar"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
 
-        {/* File size limit notice */}
-        {!analysis && (
+          {!analysis && (
           <div className="mb-6 rounded-[20px] border border-blue-200 bg-blue-50 p-4">
             <div className="flex gap-3">
               <Upload className="h-5 w-5 flex-shrink-0 text-blue-600 mt-0.5" />
@@ -187,7 +197,6 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
           </div>
         )}
 
-        {/* File upload area */}
         {!analysis && (
           <div
             onDragOver={handleDragOver}
@@ -216,7 +225,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className={`${premiumPrimaryMintButton} inline-flex items-center gap-2`}
+                  className="ac-button ac-button--primary inline-flex items-center gap-2"
                 >
                   <Download className="h-4 w-4" />
                   Seleccionar archivo
@@ -230,10 +239,9 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
           </div>
         )}
 
-        {/* Analysis result */}
         {analysis && (
-          <div className="mb-6 space-y-4">
-            <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-4">
+          <div className="ac-modal__body mb-6 space-y-4">
+            <div className="ac-surface-panel ac-surface-panel--subtle p-4">
               <div className="mb-3 flex items-start justify-between">
                 <div>
                   <p className="text-sm font-semibold text-[var(--text-primary)]">{analysis.sourceFileName}</p>
@@ -251,7 +259,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
                     }
                   }}
                   disabled={importState === 'importing'}
-                  className="text-xs text-[var(--accent-mint)] hover:text-[var(--accent-mint)]/80 disabled:opacity-50"
+                  className="ac-button ac-button--ghost ac-button--sm disabled:opacity-50"
                 >
                   Cambiar archivo
                 </button>
@@ -259,27 +267,25 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
               <p className="line-clamp-2 text-xs text-[var(--text-secondary)]">{analysis.contentPreview}</p>
             </div>
 
-            {/* Chapter title input */}
-            <label className="block space-y-2">
-              <span className="text-sm font-semibold text-[var(--text-primary)]">Título del capítulo</span>
+            <label className="ac-form-field">
+              <span className="ac-form-field__label">Título del capítulo</span>
               <input
                 type="text"
                 value={chapterTitle}
                 onChange={(e) => setChapterTitle(e.target.value)}
                 disabled={importState === 'importing'}
                 placeholder={analysis.title}
-                className="w-full rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none disabled:opacity-50 focus:border-[var(--accent-mint)]"
+                className="field-input disabled:opacity-50"
               />
             </label>
 
-            {/* Position selector */}
-            <label className="block space-y-2">
-              <span className="text-sm font-semibold text-[var(--text-primary)]">Posición</span>
+            <label className="ac-form-field">
+              <span className="ac-form-field__label">Posición</span>
               <select
                 value={position}
-                onChange={(e) => setPosition(e.target.value as any)}
+                onChange={(e) => setPosition(e.target.value as ImportPositionValue)}
                 disabled={importState === 'importing'}
-                className="w-full rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none disabled:opacity-50 focus:border-[var(--accent-mint)]"
+                className="field-select disabled:opacity-50"
               >
                 <option value="end">Al final</option>
                 {chapters.map((ch) => (
@@ -297,7 +303,6 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
           </div>
         )}
 
-        {/* Error message */}
         {error && (
           <div className="mb-6 flex gap-3 rounded-lg bg-red-50 p-3">
             <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-600" />
@@ -308,12 +313,11 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
           </div>
         )}
 
-        {/* Action buttons */}
-        <div className="flex gap-3">
+        <div className="ac-modal__footer">
           <button
             onClick={handleClose}
             disabled={importState === 'importing'}
-            className={`${premiumSecondaryLightButton} flex-1 disabled:opacity-50 disabled:cursor-not-allowed`}
+            className="ac-button ac-button--secondary flex-1 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cancelar
           </button>
@@ -321,7 +325,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
             <button
               onClick={handleImport}
               disabled={importState !== 'ready' || !chapterTitle.trim()}
-              className={`${premiumPrimaryDarkButton} inline-flex items-center justify-center gap-2 flex-1 disabled:opacity-50 disabled:cursor-not-allowed`}
+              className="ac-button ac-button--primary inline-flex flex-1 items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {importState === 'importing' ? (
                 <>
@@ -337,6 +341,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
             </button>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

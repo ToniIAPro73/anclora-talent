@@ -85,11 +85,11 @@ export function CoverForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
-      <section className="space-y-4 rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 text-[var(--text-primary)] shadow-[var(--shadow-strong)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">{copy.coverFormEyebrow}</p>
-        <label className="block space-y-2">
-          <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverTitleLabel}</span>
+    <form onSubmit={handleSubmit} className="ac-workspace-stage__shell">
+      <section className="ac-surface-panel talent-workspace-stage__panel space-y-4 p-6 text-[var(--text-primary)]">
+        <p className="ac-surface-panel__eyebrow">{copy.coverFormEyebrow}</p>
+        <label className="ac-form-field">
+          <span className="ac-form-field__label">{copy.coverTitleLabel}</span>
           <input
             aria-label={copy.coverTitleLabel}
             value={surface.fields.title?.value ?? ''}
@@ -102,11 +102,11 @@ export function CoverForm({
                 }),
               )
             }
-            className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+            className="field-input"
           />
         </label>
-        <label className="block space-y-2">
-          <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverSubtitleLabel}</span>
+        <label className="ac-form-field">
+          <span className="ac-form-field__label">{copy.coverSubtitleLabel}</span>
           <textarea
             aria-label={copy.coverSubtitleLabel}
             value={surface.fields.subtitle?.value ?? ''}
@@ -119,11 +119,11 @@ export function CoverForm({
                 }),
               )
             }
-            className="min-h-28 w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+            className="field-textarea min-h-28"
           />
         </label>
-        <label className="block space-y-2">
-          <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverAuthorLabel}</span>
+        <label className="ac-form-field">
+          <span className="ac-form-field__label">{copy.coverAuthorLabel}</span>
           <input
             aria-label={copy.coverAuthorLabel}
             value={surface.fields.author?.value ?? ''}
@@ -136,23 +136,23 @@ export function CoverForm({
                 }),
               )
             }
-            className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+            className="field-input"
           />
         </label>
-        <label className="block space-y-2">
-          <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverPaletteLabel}</span>
+        <label className="ac-form-field">
+          <span className="ac-form-field__label">{copy.coverPaletteLabel}</span>
           <select
             value={palette}
             onChange={(e) => setPalette(e.target.value as CoverDesign['palette'])}
-            className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+            className="field-select"
           >
             <option value="obsidian">{copy.paletteObsidian}</option>
             <option value="teal">{copy.paletteTeal}</option>
             <option value="sand">{copy.paletteSand}</option>
           </select>
         </label>
-        <label className="block space-y-2">
-          <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.coverBackgroundLabel}</span>
+        <label className="ac-form-field">
+          <span className="ac-form-field__label">{copy.coverBackgroundLabel}</span>
           <input
             ref={fileInputRef}
             type="file"

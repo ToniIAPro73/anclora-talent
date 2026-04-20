@@ -1,6 +1,7 @@
 /* stylelint-disable at-rule-no-unknown */
 
 @import "tailwindcss";
+@import "@anclora/design-system/system.css";
 
 :root,
 html[data-theme="dark"] {
@@ -49,6 +50,30 @@ html[data-theme="dark"] {
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.30);
   --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.38);
 
+  /* ── Design system semantic alignment ── */
+  --surface-canvas: #0C141E;
+  --surface-subtle: rgba(14, 24, 37, 0.72);
+  --surface-panel: #111C28;
+  --surface-panel-strong: #162535;
+  --surface-elevated: #1C2E40;
+  --surface-overlay: rgba(4, 6, 12, 0.82);
+  --surface-glass: rgba(12, 20, 30, 0.72);
+  --text-link: var(--accent);
+  --focus-ring: color-mix(in srgb, var(--accent) 52%, white 20%);
+  --focus-ring-offset: rgba(12, 20, 30, 0.88);
+  --action-primary-bg: var(--button-highlight-bg);
+  --action-primary-fg: var(--button-highlight-fg);
+  --action-primary-border: rgba(74, 159, 216, 0.3);
+  --action-secondary-bg: rgba(14, 24, 37, 0.68);
+  --action-secondary-fg: #EDF2F8;
+  --action-secondary-border: rgba(74, 159, 216, 0.16);
+  --action-ghost-bg: rgba(255, 255, 255, 0.03);
+  --action-ghost-fg: #EDF2F8;
+  --action-ghost-border: rgba(74, 159, 216, 0.14);
+  --action-destructive-bg: rgba(229, 62, 62, 0.16);
+  --action-destructive-fg: #ffd7d7;
+  --action-destructive-border: rgba(229, 62, 62, 0.28);
+
   /* ── Semantic ── */
   --danger: #E53E3E;
   --danger-soft: rgba(229, 62, 62, 0.12);
@@ -91,6 +116,21 @@ html[data-theme="dark"] {
   --button-secondary-border: rgba(74, 159, 216, 0.16);
   --button-secondary-hover-bg: rgba(28, 46, 64, 0.8);
   --button-secondary-hover-border: rgba(74, 159, 216, 0.34);
+  --talent-button-primary-bg: linear-gradient(135deg, #f3d37a 0%, #c49a24 52%, #8c6812 100%);
+  --talent-button-primary-fg: #081019;
+  --talent-button-primary-border: rgba(244, 215, 133, 0.34);
+  --talent-button-primary-shadow: 0 18px 34px rgba(196, 154, 36, 0.24);
+  --talent-button-primary-hover-bg: linear-gradient(135deg, #f7dfa0 0%, #d9ad33 54%, #9d7316 100%);
+  --talent-button-secondary-bg: rgba(255, 255, 255, 0.055);
+  --talent-button-secondary-fg: #f4f8fc;
+  --talent-button-secondary-border: rgba(255, 255, 255, 0.16);
+  --talent-button-secondary-shadow: 0 16px 30px rgba(4, 12, 22, 0.2);
+  --talent-button-secondary-hover-bg: rgba(255, 255, 255, 0.095);
+  --talent-button-secondary-hover-border: rgba(255, 255, 255, 0.24);
+  --talent-button-destructive-bg: linear-gradient(135deg, rgba(122, 22, 30, 0.96) 0%, rgba(86, 14, 22, 0.96) 100%);
+  --talent-button-destructive-fg: #fff4f4;
+  --talent-button-destructive-border: rgba(255, 154, 154, 0.24);
+  --talent-button-destructive-shadow: 0 16px 30px rgba(86, 14, 22, 0.24);
 
   /* ── App gradient ── */
   --app-gradient: radial-gradient(circle at top center, rgba(74, 159, 216, 0.12), transparent 24%),
@@ -147,6 +187,30 @@ html[data-theme="light"] {
   --shadow-md: 0 8px 24px rgba(12, 24, 32, 0.12);
   --shadow-lg: 0 16px 48px rgba(12, 24, 32, 0.16);
 
+  /* ── Design system semantic alignment ── */
+  --surface-canvas: #F2F7FC;
+  --surface-subtle: rgba(255, 255, 255, 0.76);
+  --surface-panel: #FFFFFF;
+  --surface-panel-strong: #FFFFFF;
+  --surface-elevated: #E8F0F8;
+  --surface-overlay: rgba(12, 24, 32, 0.72);
+  --surface-glass: rgba(255, 255, 255, 0.82);
+  --text-link: var(--accent);
+  --focus-ring: color-mix(in srgb, var(--accent) 52%, white 10%);
+  --focus-ring-offset: rgba(242, 247, 252, 0.92);
+  --action-primary-bg: var(--button-highlight-bg);
+  --action-primary-fg: var(--button-highlight-fg);
+  --action-primary-border: rgba(58, 136, 190, 0.22);
+  --action-secondary-bg: rgba(255, 253, 248, 0.92);
+  --action-secondary-fg: #0C1820;
+  --action-secondary-border: rgba(12, 24, 32, 0.24);
+  --action-ghost-bg: rgba(12, 24, 32, 0.03);
+  --action-ghost-fg: #0C1820;
+  --action-ghost-border: rgba(12, 24, 32, 0.12);
+  --action-destructive-bg: rgba(229, 62, 62, 0.12);
+  --action-destructive-fg: #b12626;
+  --action-destructive-border: rgba(229, 62, 62, 0.18);
+
   /* ── Semantic ── */
   --danger: #E53E3E;
   --danger-soft: rgba(229, 62, 62, 0.10);
@@ -189,6 +253,21 @@ html[data-theme="light"] {
   --button-secondary-border: rgba(12, 24, 32, 0.24);
   --button-secondary-hover-bg: rgba(255, 255, 255, 0.98);
   --button-secondary-hover-border: rgba(12, 24, 32, 0.36);
+  --talent-button-primary-bg: linear-gradient(135deg, #173a5a 0%, #0f2740 100%);
+  --talent-button-primary-fg: #fffaf0;
+  --talent-button-primary-border: rgba(23, 58, 90, 0.14);
+  --talent-button-primary-shadow: 0 18px 32px rgba(15, 39, 64, 0.16);
+  --talent-button-primary-hover-bg: linear-gradient(135deg, #1d466b 0%, #13314d 100%);
+  --talent-button-secondary-bg: rgba(255, 255, 255, 0.88);
+  --talent-button-secondary-fg: #10253a;
+  --talent-button-secondary-border: rgba(16, 37, 58, 0.12);
+  --talent-button-secondary-shadow: 0 14px 28px rgba(16, 37, 58, 0.1);
+  --talent-button-secondary-hover-bg: rgba(255, 255, 255, 0.98);
+  --talent-button-secondary-hover-border: rgba(16, 37, 58, 0.2);
+  --talent-button-destructive-bg: linear-gradient(135deg, #a9313b 0%, #851f29 100%);
+  --talent-button-destructive-fg: #fff5f5;
+  --talent-button-destructive-border: rgba(133, 31, 41, 0.18);
+  --talent-button-destructive-shadow: 0 14px 28px rgba(133, 31, 41, 0.12);
 
   /* ── App gradient ── */
   --app-gradient: radial-gradient(circle at top center, rgba(58, 136, 190, 0.10), transparent 24%),
@@ -222,6 +301,388 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
+}
+
+.talent-button--dark {
+  --ac-button-bg: var(--talent-button-primary-bg);
+  --ac-button-fg: var(--talent-button-primary-fg);
+  --ac-button-border: var(--talent-button-primary-border);
+  --ac-button-shadow: var(--talent-button-primary-shadow);
+}
+
+.talent-button--dark:hover,
+.talent-button--dark:focus-visible {
+  background: var(--talent-button-primary-hover-bg);
+}
+
+.talent-button--secondary {
+  --ac-button-bg: var(--talent-button-secondary-bg);
+  --ac-button-fg: var(--talent-button-secondary-fg);
+  --ac-button-border: var(--talent-button-secondary-border);
+  --ac-button-shadow: var(--talent-button-secondary-shadow);
+}
+
+.talent-button--secondary:hover,
+.talent-button--secondary:focus-visible {
+  background: var(--talent-button-secondary-hover-bg);
+  border-color: var(--talent-button-secondary-hover-border);
+}
+
+.ac-button {
+  text-transform: none;
+  letter-spacing: -0.015em;
+  font-size: 0.92rem;
+  font-weight: 800;
+  border-radius: 18px;
+  padding-inline: 22px;
+}
+
+.ac-button--sm {
+  font-size: 0.84rem;
+  border-radius: 16px;
+}
+
+.ac-button--lg {
+  min-height: 54px;
+  padding-inline: 26px;
+}
+
+.ac-button--primary {
+  --ac-button-bg: var(--talent-button-primary-bg);
+  --ac-button-fg: var(--talent-button-primary-fg);
+  --ac-button-border: var(--talent-button-primary-border);
+  --ac-button-shadow: var(--talent-button-primary-shadow);
+}
+
+.ac-button--primary:hover,
+.ac-button--primary:focus-visible {
+  background: var(--talent-button-primary-hover-bg);
+}
+
+.ac-button--secondary {
+  --ac-button-bg: var(--talent-button-secondary-bg);
+  --ac-button-fg: var(--talent-button-secondary-fg);
+  --ac-button-border: var(--talent-button-secondary-border);
+  --ac-button-shadow: var(--talent-button-secondary-shadow);
+}
+
+.ac-button--secondary:hover,
+.ac-button--secondary:focus-visible {
+  background: var(--talent-button-secondary-hover-bg);
+  border-color: var(--talent-button-secondary-hover-border);
+}
+
+.ac-button--destructive {
+  --ac-button-bg: var(--talent-button-destructive-bg);
+  --ac-button-fg: var(--talent-button-destructive-fg);
+  --ac-button-border: var(--talent-button-destructive-border);
+  --ac-button-shadow: var(--talent-button-destructive-shadow);
+}
+
+.talent-shell-grid {
+  display: grid;
+  min-height: 100vh;
+  gap: 20px;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding: 16px;
+  transition: grid-template-columns 300ms ease;
+}
+
+.talent-shell-sidebar {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 36px;
+  background: var(--shell-surface);
+  box-shadow: var(--shadow-strong);
+}
+
+.talent-shell-sidebar-toggle {
+  display: inline-flex;
+  height: 40px;
+  width: 40px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-panel) 82%, transparent);
+  color: var(--text-secondary);
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform var(--dur-base) var(--ease-spring),
+    border-color var(--dur-base) ease,
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease;
+}
+
+.talent-shell-sidebar-toggle:hover,
+.talent-shell-sidebar-toggle:focus-visible {
+  transform: translateY(var(--motion-hover-lift-button));
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.talent-shell-main {
+  border: 1px solid var(--border-subtle);
+  border-radius: 40px;
+  background: var(--shell-main-surface);
+  padding: 24px;
+  box-shadow: var(--shadow-strong);
+}
+
+.talent-shell-topbar {
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0 0 24px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.talent-shell-topbar-actions {
+  gap: 12px;
+}
+
+.talent-shell-sidebar-nav {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  min-width: auto;
+  padding: 0;
+}
+
+.talent-shell-sidebar-nav .ac-sidebar-nav__item {
+  min-height: 58px;
+  border-radius: 1.15rem;
+  padding-left: 0;
+}
+
+.talent-shell-sidebar-nav .ac-sidebar-nav__list {
+  gap: 18px;
+}
+
+.talent-shell-sidebar-link {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.talent-shell-sidebar-link__label {
+  width: 100%;
+  gap: 22px;
+  justify-content: flex-start;
+  align-items: center;
+  text-align: left;
+}
+
+.talent-shell-sidebar-link__icon {
+  display: inline-flex;
+  height: 36px;
+  width: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--border-default));
+  background: color-mix(in srgb, var(--surface-panel-strong) 78%, transparent);
+  color: var(--text-primary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.talent-shell-sidebar-link__text {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.talent-shell-sidebar-nav .ac-sidebar-nav__item[aria-current="page"] .talent-shell-sidebar-link__icon {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border-default));
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface-panel-strong));
+}
+
+.talent-shell-switcher {
+  gap: 10px;
+  padding: 8px 10px;
+  border-color: color-mix(in srgb, var(--accent) 16%, var(--border-strong));
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--surface-panel) 94%, transparent) 0%,
+      color-mix(in srgb, var(--surface-panel-strong) 96%, transparent) 100%);
+  box-shadow: 0 18px 36px rgba(7, 16, 25, 0.16);
+}
+
+.talent-shell-switcher__leading-icon {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.talent-shell-switcher__option {
+  min-height: 42px;
+  padding-inline: 16px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.talent-shell-switcher__option--theme {
+  min-width: 46px;
+  padding-inline: 0;
+  border-radius: 999px;
+}
+
+.talent-shell-switcher .ac-language-switcher__option[aria-current="true"],
+.talent-shell-switcher .ac-theme-switcher__option[aria-pressed="true"] {
+  border-color: rgba(255, 211, 122, 0.22);
+  background:
+    radial-gradient(circle at top left, rgba(255, 235, 188, 0.9) 0%, rgba(225, 173, 120, 0.72) 48%, rgba(145, 95, 127, 0.88) 100%);
+  color: #28161d;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 10px 22px rgba(101, 52, 86, 0.2);
+}
+
+html[data-theme="light"] .talent-shell-switcher {
+  box-shadow: 0 16px 32px rgba(16, 37, 58, 0.08);
+}
+
+html[data-theme="light"] .talent-shell-switcher .ac-language-switcher__option[aria-current="true"],
+html[data-theme="light"] .talent-shell-switcher .ac-theme-switcher__option[aria-pressed="true"] {
+  color: #32192b;
+}
+
+.talent-shell-user-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  min-width: 52px;
+}
+
+.talent-shell-user-button .cl-userButtonTrigger,
+.talent-shell-user-button .cl-rootBox {
+  border-radius: 999px;
+}
+
+.talent-project-card {
+  background: var(--page-surface);
+  box-shadow: var(--shadow-strong);
+}
+
+.talent-project-card .ac-card__title {
+  font-family: var(--font-sans);
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.talent-project-card .ac-card__footer .ac-button {
+  min-height: 52px;
+  min-width: 150px;
+  justify-content: center;
+  box-shadow: 0 16px 30px rgba(3, 11, 20, 0.22);
+}
+
+.talent-action-button {
+  position: relative;
+  overflow: hidden;
+  gap: 10px;
+  border-radius: 20px;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: none;
+}
+
+.talent-action-button::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  opacity: 0.32;
+  pointer-events: none;
+}
+
+.talent-action-button--primary::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 70%);
+}
+
+.talent-action-button--secondary::before,
+.talent-action-button--destructive::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 72%);
+}
+
+.talent-action-button > * {
+  position: relative;
+  z-index: 1;
+}
+
+.talent-workspace-stage .ac-section-heading__title {
+  font-family: var(--font-sans);
+  max-width: none;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.talent-workspace-stage .ac-workspace-stage__actions {
+  align-items: center;
+}
+
+.talent-workspace-stage__panel {
+  background: var(--page-surface);
+  box-shadow: var(--shadow-strong);
+}
+
+.talent-workflow-shell .ac-workflow-shell__content {
+  min-height: 600px;
+}
+
+.talent-workflow-shell .ac-workflow-shell__panel,
+.talent-workflow-shell .ac-workflow-shell__progress {
+  box-shadow: var(--shadow-soft);
+}
+
+.talent-preview-overlay {
+  color-scheme: dark;
+}
+
+.talent-preview-shell {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #111c28;
+  box-shadow: 0 30px 120px rgba(0, 0, 0, 0.45);
+}
+
+.talent-preview-header {
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.talent-preview-stage {
+  background: #070c14;
+}
+
+.talent-preview-footer {
+  border-top-color: rgba(255, 255, 255, 0.1);
+  background: rgba(7, 12, 20, 0.92);
+}
+
+.talent-preview-toolbar,
+.talent-preview-pagination {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.talent-preview-page-input {
+  background: #0f1825;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.talent-preview-page-input:focus {
+  border-color: var(--accent-mint);
 }
 
 a {
@@ -295,6 +756,15 @@ h4.toc-entry, h5.toc-entry, h6.toc-entry {
   white-space: nowrap;
   list-style: none;
   line-height: 1.5;
+  overflow: hidden; /* Garantiza que el flex container no se desborde */
+}
+
+.toc-title {
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 [data-toc-entry="true"][data-toc-page]::before {

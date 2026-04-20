@@ -6,6 +6,14 @@ import type { ProjectRecord } from '@/lib/projects/types';
 import { createDefaultSurfaceState } from '@/lib/projects/cover-surface';
 import { EDITOR_PREFERENCES_STORAGE_KEY } from '@/lib/ui-preferences/preferences';
 
+vi.mock('server-only', () => ({}));
+vi.mock('@/lib/ui-preferences/actions', () => ({
+  getEditorPreferencesAction: vi.fn(async () => {
+    throw new Error('db unavailable in test');
+  }),
+  saveEditorPreferencesAction: vi.fn(async () => undefined),
+}));
+
 const copy = resolveLocaleMessages('es').project;
 
 function mockMatchMedia(matches: boolean) {
@@ -155,7 +163,7 @@ describe('PreviewModal', () => {
     expect(screen.getByRole('button', { name: copy.previewModalSpreadView })).toHaveAttribute('aria-pressed', 'false');
   });
 
-  test('initializes preview format from saved editor preferences', () => {
+  test('initializes preview format from saved editor preferences', async () => {
     window.localStorage.setItem(
       EDITOR_PREFERENCES_STORAGE_KEY,
       JSON.stringify({
@@ -167,8 +175,10 @@ describe('PreviewModal', () => {
 
     render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
 
-    expect(screen.getByRole('button', { name: copy.previewModalTablet })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: copy.previewModalLaptop })).toHaveAttribute('aria-pressed', 'false');
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: copy.previewModalTablet })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: copy.previewModalLaptop })).toHaveAttribute('aria-pressed', 'false');
+    });
   });
 
   test('allows editing the current page number and clamps it to the valid range', async () => {

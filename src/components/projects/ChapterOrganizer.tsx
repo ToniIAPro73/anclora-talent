@@ -41,23 +41,22 @@ export function ChapterOrganizer({
     <nav
       aria-label="Capítulos"
       data-testid="chapter-organizer"
-      className="flex flex-col gap-1 rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-4 shadow-[var(--shadow-strong)]"
+      className="ac-chapter-rail"
     >
-      {/* Header with action buttons */}
-      <div className="mb-4 flex items-center justify-between px-2">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-tertiary)]">
+      <div className="ac-chapter-rail__header">
+        <div className="ac-chapter-rail__titles">
+          <p className="ac-chapter-rail__title">
             Capítulos ({chapters.length})
           </p>
-          <p className="mt-1 text-[11px] text-[var(--text-tertiary)]">
+          <p className="ac-chapter-rail__summary">
             {syncPageNumbersHelper}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="ac-chapter-rail__toolbar">
           <div className="relative">
             <button
               onClick={onSyncPageNumbers}
-              className="inline-flex items-center gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-1.5 text-[11px] font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-highlight)] hover:text-[var(--text-primary)]"
+              className="ac-button ac-button--secondary ac-button--sm"
               title={syncPageNumbersTitle}
               data-testid="sync-page-numbers-button"
               data-sync-state={pageNumberSyncState}
@@ -82,7 +81,7 @@ export function ChapterOrganizer({
           </div>
           <button
             onClick={onAddChapter}
-            className="inline-flex items-center gap-1 rounded-[8px] bg-[var(--surface-soft)] p-1.5 text-[var(--text-secondary)] transition hover:bg-[var(--surface-highlight)] hover:text-[var(--text-primary)]"
+            className="ac-button ac-button--ghost ac-button--sm"
             title="Agregar nuevo capítulo"
             data-testid="add-chapter-button"
           >
@@ -90,7 +89,7 @@ export function ChapterOrganizer({
           </button>
           <button
             onClick={onImportChapter}
-            className="inline-flex items-center gap-1 rounded-[8px] bg-[var(--surface-soft)] p-1.5 text-[var(--text-secondary)] transition hover:bg-[var(--surface-highlight)] hover:text-[var(--text-primary)]"
+            className="ac-button ac-button--ghost ac-button--sm"
             title="Importar capítulo"
             data-testid="import-chapter-button"
           >
@@ -106,49 +105,40 @@ export function ChapterOrganizer({
         return (
           <div
             key={chapter.id}
-            className={`rounded-[18px] transition ${
-              isActive
-                ? 'bg-[var(--button-highlight-bg)] text-[var(--button-highlight-fg)]'
-                : 'text-[var(--text-secondary)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)]'
-            }`}
+            className="ac-chapter-rail__item"
+            data-active={isActive ? 'true' : 'false'}
           >
-            <div className="flex items-start gap-2 px-2 py-2">
+            <div className="ac-chapter-rail__item-shell">
               <button
                 type="button"
                 data-testid={`chapter-organizer-button-${index + 1}`}
                 onClick={() => onSelect(chapter.id)}
                 aria-current={isActive ? 'page' : undefined}
-                className="flex min-w-0 flex-1 items-start gap-3 rounded-[14px] px-1 py-1 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-mint)]"
+                className="ac-chapter-rail__trigger min-w-0 flex-1 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-mint)]"
               >
-                <span
-                  className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${
-                    isActive
-                      ? 'bg-white/20 text-inherit'
-                      : 'bg-[var(--surface-highlight)] text-[var(--text-tertiary)]'
-                  }`}
-                >
+                <span className="ac-chapter-rail__index mt-0.5">
                   {index + 1}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <div className="line-clamp-2 text-xs font-semibold leading-5">
+                <div className="ac-chapter-rail__body">
+                  <div className="ac-chapter-rail__chapter-title line-clamp-2">
                     {chapter.title}
                   </div>
-                  <div className="text-[10px] opacity-75">
+                  <div className="ac-chapter-rail__meta">
                     {wordCount} palabras
                   </div>
                   {metricsById[chapter.id] && (
-                    <div className="text-[10px] opacity-60 mt-0.5">
+                    <div className="ac-chapter-rail__metrics">
                       {formatChapterPageMetrics(metricsById[chapter.id])}
                     </div>
                   )}
                 </div>
               </button>
 
-              <div className="flex shrink-0 gap-1 pt-1">
+              <div className="ac-chapter-rail__actions">
                 <button
                   type="button"
                   onClick={() => onEditChapter(chapter.id)}
-                  className="rounded-[10px] border border-[var(--border-subtle)] p-1.5 transition hover:bg-[var(--surface-highlight)]"
+                  className="ac-button ac-button--ghost ac-button--sm"
                   title="Editar capítulo"
                   data-testid={`chapter-edit-button-${index + 1}`}
                 >
@@ -162,7 +152,7 @@ export function ChapterOrganizer({
                     type="submit"
                     data-testid={`chapter-move-up-button-${index + 1}`}
                     disabled={index === 0}
-                    className="rounded-[10px] border border-[var(--border-subtle)] p-1.5 disabled:opacity-30"
+                    className="ac-button ac-button--ghost ac-button--sm disabled:opacity-30"
                   >
                     <ChevronUp className="h-3.5 w-3.5" />
                   </button>
@@ -175,7 +165,7 @@ export function ChapterOrganizer({
                     type="submit"
                     data-testid={`chapter-move-down-button-${index + 1}`}
                     disabled={index === chapters.length - 1}
-                    className="rounded-[10px] border border-[var(--border-subtle)] p-1.5 disabled:opacity-30"
+                    className="ac-button ac-button--ghost ac-button--sm disabled:opacity-30"
                   >
                     <ChevronDown className="h-3.5 w-3.5" />
                   </button>
@@ -187,7 +177,7 @@ export function ChapterOrganizer({
                     type="submit"
                     data-testid={`chapter-delete-button-${index + 1}`}
                     disabled={chapters.length <= 1}
-                    className="rounded-[10px] border border-[var(--border-subtle)] p-1.5 text-red-300 disabled:opacity-30"
+                    className="ac-button ac-button--destructive ac-button--sm disabled:opacity-30"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>

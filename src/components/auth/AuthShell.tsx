@@ -16,16 +16,16 @@ export function AuthShell({ mode, children }: AuthShellProps) {
   return (
     <main className="min-h-screen bg-[var(--app-gradient)] px-4 py-6 text-[var(--text-primary)] sm:px-6 sm:py-8">
       <div className="mx-auto grid min-h-[calc(100vh-3rem)] max-w-7xl gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="relative overflow-hidden rounded-[40px] border border-[var(--border-subtle)] bg-[var(--shell-surface)] p-8 text-[var(--text-primary)] shadow-[var(--shadow-strong)] sm:p-10 lg:p-12">
+        <section className="ac-surface-panel relative overflow-hidden bg-[var(--shell-surface)] p-8 sm:p-10 lg:p-12">
           <div className="pointer-events-none absolute -right-20 top-8 h-64 w-64 rounded-full bg-[var(--accent-glow)] blur-3xl" />
           <div className="pointer-events-none absolute bottom-0 left-1/4 h-52 w-52 rounded-full bg-[var(--accent-glow-soft)] blur-3xl" />
 
           <div className="relative flex h-full flex-col justify-between gap-10">
             <div>
-              <div className="inline-flex items-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
+              <div className="ac-button ac-button--ghost ac-button--sm inline-flex w-fit pointer-events-none">
                 {copy.eyebrow}
               </div>
-              <h1 className="mt-6 max-w-3xl text-4xl font-black tracking-tight text-[var(--text-primary)] sm:text-5xl lg:text-6xl">
+              <h1 className="mt-6 max-w-3xl font-display text-4xl font-black tracking-[var(--track-hero)] text-[var(--text-primary)] sm:text-5xl lg:text-6xl">
                 {copy.title}
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-8 text-[var(--text-secondary)] sm:text-lg">
@@ -48,8 +48,8 @@ export function AuthShell({ mode, children }: AuthShellProps) {
               </div>
             </div>
 
-            <div className="rounded-[30px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--accent-mint)]">{messages.contractEyebrow}</p>
+            <div className="ac-surface-panel ac-surface-panel--subtle rounded-[30px] p-6">
+              <p className="ac-surface-panel__eyebrow text-[var(--accent-mint)]">{messages.contractEyebrow}</p>
               <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-[var(--text-primary)]">
                 {copy.accent}
               </p>
@@ -57,7 +57,7 @@ export function AuthShell({ mode, children }: AuthShellProps) {
           </div>
         </section>
 
-        <section className="flex items-center justify-center rounded-[40px] border border-[var(--border-subtle)] bg-[var(--auth-surface)] p-4 shadow-[var(--shadow-strong)] backdrop-blur sm:p-6">
+        <section className="ac-surface-panel flex items-center justify-center bg-[var(--auth-surface)] p-4 backdrop-blur sm:p-6">
           <div className="w-full max-w-[460px] rounded-[32px] border border-[var(--border-subtle)] bg-[var(--auth-card-surface)] p-3 shadow-[var(--shadow-soft)]">
             {children}
           </div>
