@@ -9,26 +9,30 @@ export function ThemeToggle() {
   const messages = resolveLocaleMessages(locale).shell;
 
   return (
-    <div className="ac-theme-switcher border-[var(--border-strong)] bg-[var(--page-surface-muted)] shadow-[var(--shadow-soft)]">
+    <div className="ac-theme-switcher talent-shell-switcher talent-shell-switcher--theme">
+      <span className="talent-shell-switcher__meta">
+        <Moon className="h-4 w-4" />
+        <span>{messages.themeLabel}</span>
+      </span>
       <button
         type="button"
         onClick={() => setTheme('dark')}
         aria-pressed={theme === 'dark'}
         aria-label={`${messages.themeLabel}: ${messages.themeDark}`}
-        className="ac-theme-switcher__option"
+        className="ac-theme-switcher__option talent-shell-switcher__option talent-shell-switcher__option--icon"
       >
         <Moon className="h-4 w-4" />
-        <span>{messages.themeDark}</span>
+        <span className="sr-only">{messages.themeDark}</span>
       </button>
       <button
         type="button"
         onClick={() => setTheme('light')}
         aria-pressed={theme === 'light'}
         aria-label={`${messages.themeLabel}: ${messages.themeLight}`}
-        className="ac-theme-switcher__option"
+        className="ac-theme-switcher__option talent-shell-switcher__option talent-shell-switcher__option--icon"
       >
         <Sun className="h-4 w-4" />
-        <span>{messages.themeLight}</span>
+        <span className="sr-only">{messages.themeLight}</span>
       </button>
     </div>
   );

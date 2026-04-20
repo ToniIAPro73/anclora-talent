@@ -9,16 +9,17 @@ export function LocaleToggle() {
   const messages = resolveLocaleMessages(locale).shell;
 
   return (
-    <div className="ac-language-switcher border-[var(--border-strong)] bg-[var(--page-surface-muted)] shadow-[var(--shadow-soft)]">
-      <span className="inline-flex min-h-10 items-center px-3 text-[var(--text-secondary)]">
+    <div className="ac-language-switcher talent-shell-switcher talent-shell-switcher--locale">
+      <span className="talent-shell-switcher__meta">
         <Languages className="h-4 w-4" />
+        <span>{messages.localeLabel}</span>
       </span>
       <button
         type="button"
         onClick={() => setLocale('es')}
         aria-current={locale === 'es'}
         aria-label={`${messages.localeLabel}: ${messages.localeSpanish}`}
-        className="ac-language-switcher__option"
+        className="ac-language-switcher__option talent-shell-switcher__option"
       >
         {messages.localeSpanish}
       </button>
@@ -27,7 +28,7 @@ export function LocaleToggle() {
         onClick={() => setLocale('en')}
         aria-current={locale === 'en'}
         aria-label={`${messages.localeLabel}: ${messages.localeEnglish}`}
-        className="ac-language-switcher__option"
+        className="ac-language-switcher__option talent-shell-switcher__option"
       >
         {messages.localeEnglish}
       </button>

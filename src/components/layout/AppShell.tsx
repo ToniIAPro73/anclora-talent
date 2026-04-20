@@ -44,7 +44,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return pathname.startsWith(href);
   };
 
-  const sidebarCols = collapsed ? '72px 1fr' : '280px 1fr';
+  const sidebarCols = collapsed ? '88px 1fr' : '320px 1fr';
 
   return (
     <div className="min-h-screen bg-[var(--app-gradient)] text-[var(--text-primary)]">
@@ -57,7 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <button
               onClick={toggle}
               aria-label={collapsed ? 'Expandir menú' : 'Contraer menú'}
-              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-tertiary)] shadow-[var(--shadow-soft)] transition hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
+              className="talent-shell-sidebar-toggle"
             >
               {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
             </button>
@@ -88,21 +88,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="ac-sidebar-nav__group">
               {!collapsed && <p className="ac-sidebar-nav__eyebrow">{messages.topbarEyebrow}</p>}
               <div className="ac-sidebar-nav__list">
-            {navLinks.map(({ href, icon: Icon, label }) => (
-              <NavigatingLink
-                key={href}
-                href={href}
-                pendingLabel={label}
-                title={collapsed ? label : undefined}
-                aria-current={isActive(href) ? 'page' : undefined}
-                className={`ac-sidebar-nav__item ${collapsed ? 'justify-center px-2' : 'gap-3 px-4'}`}
-              >
-                <span className="ac-sidebar-nav__item-label">
-                  <Icon className="h-4 w-4 flex-shrink-0" />
-                  {!collapsed && label}
-                </span>
-              </NavigatingLink>
-            ))}
+                {navLinks.map(({ href, icon: Icon, label }) => (
+                  <NavigatingLink
+                    key={href}
+                    href={href}
+                    pendingLabel={label}
+                    title={collapsed ? label : undefined}
+                    aria-current={isActive(href) ? 'page' : undefined}
+                    className={`ac-sidebar-nav__item talent-shell-sidebar-link ${collapsed ? 'justify-center px-2' : 'gap-3 px-4'}`}
+                  >
+                    <span className="ac-sidebar-nav__item-label talent-shell-sidebar-link__label">
+                      <span className="talent-shell-sidebar-link__icon">
+                        <Icon className="h-4 w-4 flex-shrink-0" />
+                      </span>
+                      {!collapsed && <span className="talent-shell-sidebar-link__text">{label}</span>}
+                    </span>
+                  </NavigatingLink>
+                ))}
               </div>
             </div>
           </nav>
@@ -128,10 +130,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <p className="ac-topbar__eyebrow">{messages.topbarEyebrow}</p>
               <h1 className="mt-2 text-3xl font-black tracking-tight text-[var(--text-primary)]">{messages.topbarTitle}</h1>
             </div>
-            <div className="ac-topbar__actions flex flex-wrap items-center justify-end gap-3">
+            <div className="ac-topbar__actions talent-shell-topbar-actions flex flex-wrap items-center justify-end gap-3">
               <LocaleToggle />
               <ThemeToggle />
-              <div className="rounded-full border border-[var(--border-strong)] bg-[var(--surface-soft)] px-2 py-1 shadow-[var(--shadow-soft)]">
+              <div className="talent-shell-user-button rounded-full border border-[var(--border-strong)] bg-[var(--surface-soft)] px-2 py-1 shadow-[var(--shadow-soft)]">
                 <UserButton />
               </div>
             </div>
