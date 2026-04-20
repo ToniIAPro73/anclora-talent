@@ -6,16 +6,23 @@ import {
   addTextToCanvas,
   addImageToCanvas,
 } from '@/lib/canvas-utils';
-import { 
+import {
   Type, 
   Image as ImageIcon, 
-  RotateCcw, 
-  RotateCw, 
   Copy, 
   Trash2,
   Undo2,
   Redo2
 } from 'lucide-react';
+
+type CanvasObjectLike = {
+  type: string;
+  left?: number;
+  top?: number;
+  clone: () => Promise<CanvasObjectLike>;
+  set: (props: Record<string, unknown>) => void;
+  toObject?: () => Record<string, unknown>;
+};
 
 export function CoverToolbar() {
   const { canvas, addElement, undo, redo, historyStep, history } = useCanvasStore();
@@ -60,7 +67,7 @@ export function CoverToolbar() {
       const imageUrl = e.target?.result as string;
       const id = `image-${Date.now()}`;
       try {
-        const fabricImage = (await addImageToCanvas(canvas, imageUrl, { id })) as any;
+        const fabricImage = await addImageToCanvas(canvas, imageUrl, { id });
         
         addElement({
           id,
@@ -90,7 +97,7 @@ export function CoverToolbar() {
 
   const handleDuplicate = async () => {
     if (!canvas) return;
-    const activeObject = canvas.getActiveObject();
+    const activeObject = canvas.getActiveObject() as CanvasObjectLike | null;
     if (!activeObject) return;
 
     try {
@@ -108,23 +115,27 @@ export function CoverToolbar() {
         id,
         type: activeObject.type.includes('text') ? 'text' : 'image',
         object: cloned,
-        properties: { ...((activeObject as any).toObject?.() || {}) },
+        properties: { ...(activeObject.toObject?.() || {}) },
       });
 
       canvas.setActiveObject(cloned);
-      canvas.requestRenderAll?.() || canvas.renderAll();
+      if (typeof canvas.requestRenderAll === 'function') {
+        canvas.requestRenderAll();
+      } else {
+        canvas.renderAll();
+      }
     } catch (error) {
       console.error('[CoverToolbar] Error cloning object:', error);
     }
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="flex items-center gap-1 rounded-xl bg-[var(--surface-soft)] p-1 border border-[var(--border-subtle)]">
+    <div className="ac-editor-toolbar">
+      <div className="ac-editor-toolbar__group">
         <button
           type="button"
           onClick={handleAddText}
-          className="flex h-9 items-center gap-2 rounded-lg px-3 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--surface-highlight)] transition"
+          className="ac-button ac-button--ghost ac-button--sm"
           title="Añadir texto"
         >
           <Type className="h-4 w-4 text-[var(--accent)]" />
@@ -133,7 +144,7 @@ export function CoverToolbar() {
         <button
           type="button"
           onClick={handleAddImage}
-          className="flex h-9 items-center gap-2 rounded-lg px-3 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--surface-highlight)] transition"
+          className="ac-button ac-button--ghost ac-button--sm"
           title="Añadir imagen"
         >
           <ImageIcon className="h-4 w-4 text-[var(--accent)]" />
@@ -149,14 +160,12 @@ export function CoverToolbar() {
         className="hidden"
       />
 
-      <div className="h-6 w-px bg-[var(--border-subtle)] mx-1" />
-
-      <div className="flex items-center gap-1 rounded-xl bg-[var(--surface-soft)] p-1 border border-[var(--border-subtle)]">
+      <div className="ac-editor-toolbar__group">
         <button
           type="button"
           onClick={undo}
           disabled={historyStep <= 0}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-primary)] hover:bg-[var(--surface-highlight)] disabled:opacity-30 transition"
+          className="ac-button ac-button--ghost ac-button--icon ac-button--sm disabled:opacity-30"
           title="Deshacer"
         >
           <Undo2 className="h-4 w-4" />
@@ -165,20 +174,18 @@ export function CoverToolbar() {
           type="button"
           onClick={redo}
           disabled={historyStep >= history.length - 1}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-primary)] hover:bg-[var(--surface-highlight)] disabled:opacity-30 transition"
+          className="ac-button ac-button--ghost ac-button--icon ac-button--sm disabled:opacity-30"
           title="Rehacer"
         >
           <Redo2 className="h-4 w-4" />
         </button>
       </div>
 
-      <div className="h-6 w-px bg-[var(--border-subtle)] mx-1" />
-
-      <div className="flex items-center gap-1 rounded-xl bg-[var(--surface-soft)] p-1 border border-[var(--border-subtle)]">
+      <div className="ac-editor-toolbar__group">
         <button
           type="button"
           onClick={handleDuplicate}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-primary)] hover:bg-[var(--surface-highlight)] transition"
+          className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
           title="Duplicar seleccionado"
         >
           <Copy className="h-4 w-4" />
@@ -186,7 +193,7 @@ export function CoverToolbar() {
         <button
           type="button"
           onClick={handleClear}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-red-500 hover:bg-red-500/10 transition"
+          className="ac-button ac-button--destructive ac-button--icon ac-button--sm"
           title="Limpiar diseño"
         >
           <Trash2 className="h-4 w-4" />
