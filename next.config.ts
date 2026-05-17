@@ -6,11 +6,6 @@ const nextConfig: NextConfig = {
     // Temporarily ignore build errors to stabilize environment
     ignoreBuildErrors: true,
   },
-  eslint: {
-    // !! WARN !!
-    // Temporarily ignore lint errors to stabilize environment
-    ignoreDuringBuilds: true,
-  },
   // @sparticuz/chromium ships its Chromium binary and font bundles as brotli
   // archives under node_modules/@sparticuz/chromium/bin. Next's file tracer
   // does not pick them up automatically, so the Vercel function starts without

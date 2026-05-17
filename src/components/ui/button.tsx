@@ -9,19 +9,19 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ children, variant = 'default', size = 'md', className = '', isLoading = false, disabled, ...props }, ref) => {
-    const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2';
+    const baseStyles = 'ac-button';
 
     const variantStyles = {
-      default: 'bg-[var(--button-primary-bg)] text-[var(--button-primary-fg)] hover:bg-[var(--button-primary-hover)] border-[var(--button-primary-border)]',
-      outline: 'border border-[var(--border-subtle)] text-[var(--text-primary)] hover:bg-[var(--surface-soft)] hover:border-[var(--border-strong)]',
-      ghost: 'text-[var(--text-secondary)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)]',
-      destructive: 'bg-red-600 text-white hover:bg-red-700',
+      default: 'ac-button--primary',
+      outline: 'ac-button--secondary talent-button--secondary',
+      ghost: 'ac-button--ghost',
+      destructive: 'ac-button--destructive',
     };
 
     const sizeStyles = {
-      sm: 'px-3 py-1.5 text-xs',
-      md: 'px-4 py-2 text-sm',
-      lg: 'px-6 py-3 text-base',
+      sm: 'ac-button--sm',
+      md: '',
+      lg: 'ac-button--lg',
     };
 
     return (

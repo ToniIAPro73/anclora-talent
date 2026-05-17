@@ -35,10 +35,10 @@ export function PreviewCanvas({
 
   // Return simple button to open the modal
   return (
-    <div className="flex justify-center items-center min-h-[400px]">
+    <div className="ac-surface-panel ac-surface-panel--subtle flex min-h-[400px] items-center justify-center p-8">
       <button
         onClick={() => setShowModal(true)}
-        className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] px-8 py-3 text-base font-bold !text-[var(--button-primary-fg)] shadow-[var(--shadow-soft)] transition hover:bg-[var(--button-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--button-primary-bg)] focus-visible:ring-offset-2"
+        className="ac-button ac-button--primary"
       >
         <BookOpen className="h-5 w-5" />
         Open Full Preview

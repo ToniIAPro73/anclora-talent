@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ChromePicker } from 'react-color';
 import { useCanvasStore } from '@/lib/canvas-store';
 import { FontSelector } from './FontSelector';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
@@ -23,41 +22,65 @@ import {
   Layers
 } from 'lucide-react';
 
+type EditableFabricObject = {
+  type: string;
+  rawText?: string;
+  text?: string;
+  fill?: string;
+  fontSize?: number;
+  fontFamily?: string;
+  opacity?: number;
+  fontWeight?: string | number;
+  fontStyle?: string;
+  textAlign?: string;
+  lineHeight?: number;
+  charSpacing?: number;
+  left?: number;
+  top?: number;
+  isBackgroundProxy?: boolean;
+  set: (props: Record<string, unknown>) => void;
+  clone: () => Promise<EditableFabricObject>;
+  toObject?: () => Record<string, unknown>;
+  bringForward: () => void;
+  sendBackwards: () => void;
+};
+
+type PropertyPanelValues = {
+  text: string;
+  fill: string;
+  fontSize: number;
+  fontFamily: string;
+  opacity: number;
+  fontWeight: string | number;
+  fontStyle: string;
+  textAlign: string;
+  lineHeight: number;
+  charSpacing: number;
+};
+
+function getPropertyPanelValues(object: EditableFabricObject): PropertyPanelValues {
+  return {
+    text: object.rawText || object.text || '',
+    fill: typeof object.fill === 'string' ? object.fill : '#ffffff',
+    fontSize: object.fontSize || 24,
+    fontFamily: object.fontFamily || 'ui-sans-serif, system-ui, sans-serif',
+    opacity: Math.round((object.opacity || 1) * 100),
+    fontWeight: object.fontWeight || 'normal',
+    fontStyle: object.fontStyle || 'normal',
+    textAlign: object.textAlign || 'center',
+    lineHeight: object.lineHeight || 1.2,
+    charSpacing: object.charSpacing || 0,
+  };
+}
+
 export function CoverPropertyPanel() {
   const { selectedElement, canvas, removeElement, updateElement, addElement } = useCanvasStore();
   const [showColorPicker, setShowColorPicker] = useState(false);
-  const [localProps, setLocalProps] = useState<any>({});
-
-  useEffect(() => {
-    if (selectedElement?.object) {
-      const obj = selectedElement.object;
-      console.log('[PropertyPanel] Updating localProps from object:', {
-        id: selectedElement.id,
-        type: obj.type,
-        text: obj.text
-      });
-      
-      setLocalProps({
-        text: obj.rawText || obj.text || '',
-        fill: typeof obj.fill === 'string' ? obj.fill : '#ffffff',
-        fontSize: obj.fontSize || 24,
-        fontFamily: obj.fontFamily || 'ui-sans-serif, system-ui, sans-serif',
-        opacity: Math.round((obj.opacity || 1) * 100),
-        fontWeight: obj.fontWeight || 'normal',
-        fontStyle: obj.fontStyle || 'normal',
-        textAlign: obj.textAlign || 'center',
-        lineHeight: obj.lineHeight || 1.2,
-        charSpacing: obj.charSpacing || 0,
-      });
-    } else {
-      setLocalProps({});
-    }
-  }, [selectedElement, selectedElement?.object, selectedElement?.id]);
 
   if (!selectedElement || !canvas) {
     return (
-      <div className="flex h-full flex-col items-center justify-center space-y-4 p-8 text-center">
-        <div className="rounded-full bg-[var(--surface-soft)] p-4 border border-[var(--border-subtle)]">
+      <div className="ac-editor-inspector__empty">
+        <div className="ac-editor-inspector__empty-mark">
           <Type className="h-8 w-8 text-[var(--text-tertiary)]" />
         </div>
         <div className="space-y-1">
@@ -68,17 +91,17 @@ export function CoverPropertyPanel() {
     );
   }
 
-  const fabricObject = selectedElement.object;
+  const fabricObject = selectedElement.object as EditableFabricObject;
+  const localProps = getPropertyPanelValues(fabricObject);
   const isText = fabricObject.type.includes('text');
-  const isBackgroundProxy = Boolean((fabricObject as { isBackgroundProxy?: boolean }).isBackgroundProxy);
+  const isBackgroundProxy = Boolean(fabricObject.isBackgroundProxy);
 
-  const updateProperties = (props: any) => {
+  const updateProperties = (props: Partial<PropertyPanelValues>) => {
     updateElement(selectedElement.id, props);
-    setLocalProps((prev: any) => ({ ...prev, ...props }));
   };
 
   const handleTextChange = (text: string) => updateProperties({ text });
-  const handleColorChange = (color: any) => updateProperties({ fill: color.hex });
+  const handleColorChange = (color: { hex: string }) => updateProperties({ fill: color.hex });
   const handleFontSizeChange = (val: number[]) => updateProperties({ fontSize: val[0] });
   const handleFontFamilyChange = (fontFamily: string) => updateProperties({ fontFamily });
   const handleOpacityChange = (val: number[]) => updateProperties({ opacity: val[0] / 100 });
@@ -112,6 +135,7 @@ export function CoverPropertyPanel() {
     if (isBackgroundProxy) return;
     try {
       const cloned = await fabricObject.clone();
+      const id = `clone-${Date.now()}`;
       cloned.set({
         left: (cloned.left || 0) + 20,
         top: (cloned.top || 0) + 20,
@@ -124,7 +148,7 @@ export function CoverPropertyPanel() {
         id,
         type: fabricObject.type.includes('text') ? 'text' : 'image',
         object: cloned,
-        properties: { ...((fabricObject as any).toObject?.() || {}) },
+        properties: { ...(fabricObject.toObject?.() || {}) },
       });
 
       canvas.setActiveObject(cloned);
@@ -136,8 +160,8 @@ export function CoverPropertyPanel() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-      <div>
-        <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--accent)] mb-4 flex items-center gap-2">
+      <div className="ac-editor-inspector__section">
+        <h3 className="ac-editor-inspector__title">
           {isText ? <Type className="h-4 w-4" /> : <Layers className="h-4 w-4" />}
           Propiedades
         </h3>
@@ -164,39 +188,48 @@ export function CoverPropertyPanel() {
 
               <div className="space-y-2">
                 <Label className="text-xs font-semibold">Alineación y Estilo</Label>
-                <div className="flex gap-1 bg-[var(--surface-soft)] p-1 rounded-lg border border-[var(--border-subtle)]">
+                <div className="ac-editor-inspector__segmented">
                   <button
+                    type="button"
                     onClick={() => handleAlignChange('left')}
-                    className={`flex-1 flex justify-center py-2 rounded-md transition ${localProps.textAlign === 'left' ? 'bg-[var(--accent-mint)] text-black' : 'hover:bg-white/5'}`}
+                    className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
+                    data-active={localProps.textAlign === 'left' ? 'true' : 'false'}
                     title="Alinear izquierda"
                   >
                     <AlignLeft className="h-4 w-4" />
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleAlignChange('center')}
-                    className={`flex-1 flex justify-center py-2 rounded-md transition ${localProps.textAlign === 'center' ? 'bg-[var(--accent-mint)] text-black' : 'hover:bg-white/5'}`}
+                    className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
+                    data-active={localProps.textAlign === 'center' ? 'true' : 'false'}
                     title="Centrar"
                   >
                     <AlignCenter className="h-4 w-4" />
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleAlignChange('right')}
-                    className={`flex-1 flex justify-center py-2 rounded-md transition ${localProps.textAlign === 'right' ? 'bg-[var(--accent-mint)] text-black' : 'hover:bg-white/5'}`}
+                    className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
+                    data-active={localProps.textAlign === 'right' ? 'true' : 'false'}
                     title="Alinear derecha"
                   >
                     <AlignRight className="h-4 w-4" />
                   </button>
-                  <div className="w-px bg-white/10 mx-1" />
                   <button
+                    type="button"
                     onClick={handleBoldToggle}
-                    className={`flex-1 flex justify-center py-2 rounded-md transition ${localProps.fontWeight === 'bold' ? 'bg-[var(--accent-mint)] text-black' : 'hover:bg-white/5'}`}
+                    className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
+                    data-active={localProps.fontWeight === 'bold' ? 'true' : 'false'}
                     title="Negrita"
                   >
                     <Bold className="h-4 w-4" />
                   </button>
                   <button
+                    type="button"
                     onClick={handleItalicToggle}
-                    className={`flex-1 flex justify-center py-2 rounded-md transition ${localProps.fontStyle === 'italic' ? 'bg-[var(--accent-mint)] text-black' : 'hover:bg-white/5'}`}
+                    className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
+                    data-active={localProps.fontStyle === 'italic' ? 'true' : 'false'}
                     title="Cursiva"
                   >
                     <Italic className="h-4 w-4" />
@@ -276,7 +309,7 @@ export function CoverPropertyPanel() {
         </div>
       </div>
 
-      <div className="pt-6 border-t border-[var(--border-subtle)] flex flex-col gap-3">
+      <div className="ac-editor-inspector__actions">
         {!isBackgroundProxy && (
         <Button
           variant="outline"

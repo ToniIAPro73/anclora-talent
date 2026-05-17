@@ -6,14 +6,14 @@ import { DocumentImporter } from './DocumentImporter';
 
 export function CreateProjectForm({ copy }: { copy: AppMessages['project'] }) {
   return (
-    <form action={createProjectAction} className="rounded-[32px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 text-[var(--text-primary)] shadow-[var(--shadow-strong)]" data-testid="create-project-form">
-      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">{copy.createFormEyebrow}</p>
-      <h2 className="mt-3 text-2xl font-black tracking-tight text-[var(--text-primary)]">{copy.createFormTitle}</h2>
+    <form action={createProjectAction} className="ac-surface-panel" data-testid="create-project-form">
+      <p className="ac-surface-panel__eyebrow">{copy.createFormEyebrow}</p>
+      <h2 className="ac-surface-panel__title text-2xl">{copy.createFormTitle}</h2>
       <p className="mt-3 max-w-xl text-sm leading-7 text-[var(--text-secondary)]">
         {copy.createFormDescription}
       </p>
-      <label htmlFor="project-title" className="mt-6 block space-y-2">
-        <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.titleLabel}</span>
+      <label htmlFor="project-title" className="ac-form-field mt-2">
+        <span className="ac-form-field__label">{copy.titleLabel}</span>
         <input
           id="project-title"
           data-testid="create-project-title-input"
@@ -21,7 +21,7 @@ export function CreateProjectForm({ copy }: { copy: AppMessages['project'] }) {
           name="title"
           required
           placeholder={copy.titlePlaceholder}
-          className="w-full rounded-[20px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--accent-mint)]"
+          className="field-input"
         />
       </label>
       <DocumentImporter copy={copy} />

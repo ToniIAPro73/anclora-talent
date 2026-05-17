@@ -16,7 +16,6 @@ import {
 import { useCanvasStore } from '@/lib/canvas-store';
 import { addTextToCanvas } from '@/lib/canvas-utils';
 import { createGuideManager } from '@/lib/canvas-guides';
-import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import { createSurfaceSnapshotFromProject } from './advanced-surface-utils';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '@/lib/canvas-utils';
 import { normalizeSurfaceState, type SurfaceKind, type SurfaceState } from '@/lib/projects/cover-surface';
@@ -479,21 +478,31 @@ export function AdvancedSurfaceEditor({
   };
 
   return (
-    <div className="space-y-6" data-testid={`advanced-${surface}-editor`}>
-      <div className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-4 shadow-[var(--shadow-strong)] flex items-center justify-between">
+    <div className="ac-editor-studio" data-testid={`advanced-${surface}-editor`}>
+      <div className="ac-editor-studio__topbar">
+        <div className="ac-editor-studio__headline">
+          <p className="ac-editor-studio__eyebrow">Editorial studio</p>
+          <h3 className="ac-editor-studio__title">
+            {surface === 'cover' ? 'Portada avanzada premium' : 'Contraportada avanzada premium'}
+          </h3>
+          <p className="ac-editor-studio__summary">
+            Ajusta composicion, tipografia y render final sobre una misma estructura canonica del design system.
+          </p>
+        </div>
+
         <CoverToolbar />
-        <div className="flex items-center gap-2">
+        <div className="ac-editor-studio__actions">
           <button
             type="button"
             onClick={handleSaveAndRender}
             disabled={isRendering}
-            className={`${premiumPrimaryDarkButton} px-4 py-2 text-xs`}
+            className="ac-button ac-button--primary ac-button--sm"
           >
             {isRendering ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5" />}
             Guardar Diseño Final
           </button>
           {rendered && (
-            <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]">
+            <span className="ac-editor-studio__status">
               <Check className="h-3 w-3" />
               Guardado
             </span>
@@ -501,39 +510,51 @@ export function AdvancedSurfaceEditor({
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
-        <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-8 shadow-[var(--shadow-strong)] flex flex-col items-center justify-center min-h-[700px]">
-          <CoverCanvas
-            ref={surfaceNodeRef}
-            onCanvasReady={handleCanvasReady}
-            initialPalette={surface === 'cover' ? project.cover.palette : 'obsidian'}
-            backgroundColor={(surface === 'cover'
-              ? {
-                  obsidian: '#0b133f',
-                  teal: '#124a50',
-                  sand: '#f2e3b3',
-                }[project.cover.palette]
-              : '#0b133f') ?? '#0b133f'}
-            backgroundImageUrl={backgroundImageUrl}
-            backgroundImageOpacity={backgroundOpacity}
-          />
+      <div className="ac-editor-studio__layout">
+        <section className="ac-editor-canvas-stage">
+          <div className="ac-editor-canvas-stage__header">
+            <p className="ac-editor-studio__eyebrow">Canvas</p>
+            <h4 className="ac-editor-canvas-stage__title">
+              {surface === 'cover' ? 'Composicion visual de portada' : 'Composicion visual de contraportada'}
+            </h4>
+            <p className="ac-editor-canvas-stage__summary">
+              El lienzo mantiene la disciplina premium compartida, mientras Talent define su tono humano-capital.
+            </p>
+          </div>
+
+          <div className="ac-editor-canvas-stage__viewport">
+            <CoverCanvas
+              ref={surfaceNodeRef}
+              onCanvasReady={handleCanvasReady}
+              initialPalette={surface === 'cover' ? project.cover.palette : 'obsidian'}
+              backgroundColor={(surface === 'cover'
+                ? {
+                    obsidian: '#0b133f',
+                    teal: '#124a50',
+                    sand: '#f2e3b3',
+                  }[project.cover.palette]
+                : '#0b133f') ?? '#0b133f'}
+              backgroundImageUrl={backgroundImageUrl}
+              backgroundImageOpacity={backgroundOpacity}
+            />
+          </div>
 
           {renderedImageUrl && (
-            <div className="mt-8 p-4 rounded-2xl bg-[var(--surface-soft)] border border-[var(--border-subtle)] w-full max-w-md">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)] mb-3">
+            <div className="ac-editor-canvas-stage__preview">
+              <p className="ac-editor-canvas-stage__preview-label">
                 {copy.coverRenderedImageLabel}
               </p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={renderedImageUrl}
                 alt={copy.coverRenderedImageLabel}
-                className="w-24 rounded-lg shadow-lg border border-white/10"
+                className="ac-editor-canvas-stage__preview-image"
               />
             </div>
           )}
         </section>
 
-        <aside className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)] self-start sticky top-8">
+        <aside className="ac-editor-inspector">
           <CoverPropertyPanel />
         </aside>
       </div>

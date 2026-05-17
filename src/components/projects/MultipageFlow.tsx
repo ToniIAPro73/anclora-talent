@@ -139,6 +139,43 @@ export function MultipageFlow({
         .flow-content-root.ProseMirror p + p {
           margin-top: 0.8rem;
         }
+        .flow-content-root.ProseMirror [data-toc-entry="true"] {
+          display: flex;
+          align-items: baseline;
+          gap: 0;
+          margin: 0;
+          padding: 0;
+          white-space: nowrap;
+          list-style: none;
+          line-height: 1.5;
+        }
+        .flow-content-root.ProseMirror [data-toc-entry="true"][data-toc-page]::before {
+          content: "······································································································";
+          order: 1;
+          flex: 1 1 auto;
+          overflow: hidden;
+          margin: 0 0.35em;
+          letter-spacing: 0.15em;
+          color: inherit;
+          white-space: nowrap;
+          font-variant-numeric: tabular-nums;
+        }
+        .flow-content-root.ProseMirror [data-toc-entry="true"][data-toc-page]::after {
+          content: attr(data-toc-page);
+          order: 2;
+          flex: 0 0 auto;
+          font-variant-numeric: tabular-nums;
+        }
+        .flow-content-root.ProseMirror li[data-toc-entry="true"] {
+          list-style: none;
+          margin-left: 0;
+          padding-left: 0;
+        }
+        .flow-content-root.ProseMirror ul.toc-list {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
         .flow-content-root.ProseMirror h1 {
           font-size: 2rem;
           line-height: 1.1;

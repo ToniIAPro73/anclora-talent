@@ -32,7 +32,7 @@ describe('light theme dashboard contract', () => {
   });
 
   test('documents theme-specific premium variants in the app contract', () => {
-    expect(premiumContract).toContain('variantes reales por tema');
-    expect(premiumContract).toContain('Un botón válido en `dark` no puede reciclarse');
+    expect(premiumContract).toContain('variante real por tema');
+    expect(premiumContract).toContain('Si una familia necesita redefinirse entre temas');
   });
 });

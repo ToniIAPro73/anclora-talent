@@ -24,13 +24,13 @@ export default async function ProjectPreviewPage({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">{projectCopy.previewEyebrow}</p>
-          <h2 className="mt-2 text-4xl font-black tracking-tight text-[var(--text-primary)]">{projectCopy.previewTitle}</h2>
+    <div className="ac-workspace-stage talent-workspace-stage">
+      <div className="ac-workspace-stage__header ac-workspace-stage__header--split">
+        <div className="ac-section-heading">
+          <p className="ac-section-heading__eyebrow">{projectCopy.previewEyebrow}</p>
+          <h2 className="ac-section-heading__title mt-2 text-4xl">{projectCopy.previewTitle}</h2>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="ac-workspace-stage__actions">
           <NavigatingLink href={`/projects/${project.id}/editor`} pendingLabel={projectCopy.previewBackToEditor} className={`${premiumSecondaryLightButton} px-5`}>
             {projectCopy.previewBackToEditor}
           </NavigatingLink>

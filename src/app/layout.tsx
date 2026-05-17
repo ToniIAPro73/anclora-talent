@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { ClerkProvider } from '@clerk/nextjs';
 import { UiPreferencesProvider } from '@/components/providers/UiPreferencesProvider';
+import { CookieConsent } from '@/components/legal/CookieConsent';
+import { LegalFooter } from '@/components/legal/LegalFooter';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
 import { TALENT_BRAND } from '@/lib/talent-brand';
 import './globals.css';
@@ -31,8 +33,15 @@ export default async function RootLayout({
         className={`${dmSans.variable} ${jetbrainsMono.variable}`}
         suppressHydrationWarning
       >
-        <body suppressHydrationWarning>
-          <UiPreferencesProvider initialPreferences={preferences}>{children}</UiPreferencesProvider>
+        <body
+          className="tier-premium domain-human-capital archetype-app role-consumer cluster-core product-anclora-talent"
+          suppressHydrationWarning
+        >
+          <UiPreferencesProvider initialPreferences={preferences}>
+            {children}
+            <LegalFooter />
+            <CookieConsent />
+          </UiPreferencesProvider>
         </body>
       </html>
     </ClerkProvider>

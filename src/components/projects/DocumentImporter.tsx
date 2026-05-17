@@ -150,7 +150,6 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
 
   return (
     <div className="mt-5 space-y-3">
-      {/* File size limit notice */}
       <div className="rounded-[20px] border border-blue-200 bg-blue-50 p-4">
         <div className="flex gap-3">
           <Upload className="h-5 w-5 flex-shrink-0 text-blue-600 mt-0.5" />
@@ -164,7 +163,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
       </div>
 
       <div className="space-y-2">
-        <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.sourceDocumentLabel}</span>
+        <span className="ac-form-field__label">{copy.sourceDocumentLabel}</span>
         <label
           htmlFor={inputId}
           data-testid="source-document-dropzone"
@@ -213,7 +212,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                   {['DOCX', 'DOC', 'PDF', 'TXT', 'MD'].map((format) => (
                     <span
                       key={format}
-                      className="rounded-full border border-[var(--border-subtle)] bg-[var(--page-surface)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]"
+                      className="ac-button ac-button--ghost ac-button--sm pointer-events-none"
                     >
                       {format}
                     </span>
@@ -235,8 +234,8 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                   <p className="text-sm font-semibold text-[var(--text-primary)]">{copy.importReady}</p>
                   <p className="text-xs text-[var(--text-secondary)]" data-testid="import-analysis-file-name">{selectedFileName}</p>
                 </div>
-                <div className="grid gap-3 rounded-[22px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-4 sm:grid-cols-2">
-                  <div className="space-y-1">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="ac-surface-panel ac-surface-panel--subtle gap-1 p-4">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
                       {copy.importTitleDetected}
                     </p>
@@ -249,7 +248,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                       </p>
                     ) : null}
                   </div>
-                  <div className="space-y-1">
+                  <div className="ac-surface-panel ac-surface-panel--subtle gap-1 p-4">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
                       {copy.importAuthorDetected}
                     </p>
@@ -262,7 +261,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                   </div>
                 </div>
                 {analysis.chapterTitles.length > 0 ? (
-                  <div className="space-y-2 rounded-[22px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-4">
+                  <div className="ac-surface-panel ac-surface-panel--subtle gap-2 p-4">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
                       {copy.importChapterPreviewLabel}
                     </p>
@@ -277,7 +276,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                   </div>
                 ) : null}
                 {analysis.warnings.length > 0 ? (
-                  <div className="space-y-2 rounded-[22px] border border-amber-400/40 bg-amber-400/10 p-4" data-testid="import-analysis-warnings">
+                  <div className="ac-surface-panel gap-2 border-amber-400/40 bg-amber-400/10 p-4" data-testid="import-analysis-warnings">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-200">
                       {copy.importWarningsLabel}
                     </p>

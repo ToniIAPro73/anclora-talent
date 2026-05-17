@@ -16,26 +16,26 @@ export default function ProjectError({
   }, [error]);
 
   return (
-    <div className="flex min-h-[50vh] flex-col items-center justify-center gap-8 px-6 text-center">
+    <div className="ac-empty-state min-h-[50vh] px-6 text-center">
       <div className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
+        <p className="ac-empty-state__eyebrow">
           Error de proyecto
         </p>
-        <h2 className="text-3xl font-black tracking-tight text-[var(--text-primary)]">
+        <h2 className="ac-empty-state__title">
           No se pudo cargar este proyecto
         </h2>
-        <p className="max-w-md text-sm leading-7 text-[var(--text-secondary)]">
+        <p className="ac-empty-state__summary max-w-md text-sm leading-7">
           Es posible que el proyecto haya sido eliminado o que haya ocurrido un error temporal.
         </p>
         {error.digest && (
           <p className="font-mono text-xs text-[var(--text-tertiary)]">ref: {error.digest}</p>
         )}
       </div>
-      <div className="flex flex-wrap justify-center gap-3">
-        <button onClick={reset} className={`${premiumPrimaryDarkButton} px-5`}>
+      <div className="ac-empty-state__actions">
+        <button onClick={reset} className={premiumPrimaryDarkButton}>
           Reintentar
         </button>
-        <NavigatingLink href="/dashboard" pendingLabel="Volver al dashboard" className={`${premiumSecondaryLightButton} px-5`}>
+        <NavigatingLink href="/dashboard" pendingLabel="Volver al dashboard" className={premiumSecondaryLightButton}>
           Volver al dashboard
         </NavigatingLink>
       </div>

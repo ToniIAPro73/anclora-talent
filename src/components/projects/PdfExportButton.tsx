@@ -363,6 +363,8 @@ function PreviewCapturePage({
           className="relative overflow-hidden rounded-[8px] border border-white/10 bg-[#070c14] shadow-[var(--shadow-strong)]"
           style={{ width: `${preset.viewportWidth}px`, height: `${preset.pagePixelHeight}px` }}
         >
+          {/* Export capture needs a plain img so html-to-image preserves the rendered asset reliably. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={page.coverData.renderedImageUrl}
             alt={copy.previewModalCoverAlt}
@@ -395,6 +397,8 @@ function PreviewCapturePage({
           className="relative overflow-hidden rounded-[8px] border border-white/10 bg-[#070c14] shadow-[var(--shadow-strong)]"
           style={{ width: `${preset.viewportWidth}px`, height: `${preset.pagePixelHeight}px` }}
         >
+          {/* Export capture needs a plain img so html-to-image preserves the rendered asset reliably. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={page.backCoverData.renderedImageUrl}
             alt={copy.previewModalBackCoverAlt}
@@ -432,7 +436,7 @@ export function PdfExportButton({
   project: ProjectRecord;
   projectSlug: string;
   copy: AppMessages['project'];
-  className: string;
+  className?: string;
 }) {
   const { preferences } = useEditorPreferences();
   const [isExporting, setIsExporting] = useState(false);

@@ -55,7 +55,13 @@ export function reconcileOverflowBreaks(
   }
 
   const repaginatedSegments = manualSegments.map((segment) => {
-    const pages = paginateSegmentWithOverflow(segment, config);
+    // 1. Pre-split oversized blocks in this segment (like giant <ul> or <p>)
+    const preSplitHtml = splitOversizedBlocksInHtml(segment, config);
+
+    // 2. Paginate the resulting HTML (which now has smaller siblings)
+    const pages = paginateContent(preSplitHtml, config)
+      .map((page) => page.html.trim())
+      .filter(Boolean);
 
     if (pages.length === 0) {
       return segment.trim();
@@ -67,114 +73,44 @@ export function reconcileOverflowBreaks(
   return repaginatedSegments.join('<hr data-page-break="manual" />');
 }
 
-function paginateSegmentWithOverflow(
+/**
+ * Splits oversized blocks (UL, OL, P) within a segment into smaller siblings
+ * so that paginateContent can distribute them across multiple pages.
+ */
+function splitOversizedBlocksInHtml(
   html: string,
   config: PaginationConfig,
-): string[] {
-  const pages = paginateContent(html, config)
-    .map((page) => page.html.trim())
-    .filter(Boolean);
-
-  if (pages.length > 1) {
-    return pages;
-  }
-
-  if (!hasOversizedSingleBlock(html, config)) {
-    return pages;
-  }
-
-  return splitOversizedBlockSegment(html, config);
-}
-
-function hasOversizedSingleBlock(
-  html: string,
-  config: PaginationConfig,
-): boolean {
+): string {
   const runtime = getPaginationDomRuntime();
   if (!runtime) {
-    return false;
+    return html;
   }
 
   const parser = new runtime.DOMParser();
   const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
   const container = doc.body.firstElementChild;
   if (!container) {
-    return false;
-  }
-
-  const meaningfulChildren = Array.from(container.childNodes).filter((node) => {
-    if (node.nodeType === runtime.Node.TEXT_NODE) {
-      return Boolean(node.textContent?.trim());
-    }
-
-    return node.nodeType === runtime.Node.ELEMENT_NODE;
-  });
-
-  if (meaningfulChildren.length !== 1) {
-    return false;
-  }
-
-  const onlyChild = meaningfulChildren[0];
-  const text = onlyChild.textContent?.trim() ?? '';
-  if (!text) {
-    return false;
-  }
-
-  const contentWidth =
-    config.pageWidth - config.marginLeft - config.marginRight;
-  const availableHeight =
-    config.pageHeight - config.marginTop - config.marginBottom;
-  const lineHeightPx = config.fontSize * config.lineHeight;
-  const charsPerLine = Math.max(
-    1,
-    Math.floor(contentWidth / (config.fontSize * 0.45)),
-  );
-  const linesPerPage = Math.max(
-    1,
-    Math.floor((availableHeight / lineHeightPx) * 0.98),
-  );
-  const charsPerPage = Math.max(charsPerLine, charsPerLine * linesPerPage);
-
-  return text.length > charsPerPage;
-}
-
-function splitOversizedBlockSegment(
-  html: string,
-  config: PaginationConfig,
-): string[] {
-  const runtime = getPaginationDomRuntime();
-  if (!runtime) {
-    return [html.trim()].filter(Boolean);
-  }
-
-  const parser = new runtime.DOMParser();
-  const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
-  const container = doc.body.firstElementChild;
-  if (!container) {
-    return [html.trim()].filter(Boolean);
+    return html;
   }
 
   const contentWidth = config.pageWidth - config.marginLeft - config.marginRight;
   const availableHeight = config.pageHeight - config.marginTop - config.marginBottom;
   const lineHeightPx = config.fontSize * config.lineHeight;
-  const charsPerLine = Math.max(
-    1,
-    Math.floor(contentWidth / (config.fontSize * 0.45)),
-  );
   const linesPerPage = Math.max(
     1,
     Math.floor((availableHeight / lineHeightPx) * 0.98),
   );
+  const charsPerLine = Math.max(
+    1,
+    Math.floor(contentWidth / (config.fontSize * 0.45)),
+  );
   const charsPerPage = Math.max(charsPerLine, charsPerLine * linesPerPage);
 
-  const chunks: string[] = [];
+  const newNodes: string[] = [];
 
   Array.from(container.childNodes).forEach((node) => {
     if (node.nodeType !== runtime.Node.ELEMENT_NODE) {
-      const text = node.textContent?.trim();
-      if (text) {
-        chunks.push(...chunkTextIntoParagraphs(text, charsPerPage));
-      }
+      newNodes.push(node.textContent || '');
       return;
     }
 
@@ -182,15 +118,7 @@ function splitOversizedBlockSegment(
     const tagName = element.tagName.toLowerCase();
     const text = element.textContent?.trim() ?? '';
 
-    if (!text) {
-      const htmlChunk = element.outerHTML.trim();
-      if (htmlChunk) {
-        chunks.push(htmlChunk);
-      }
-      return;
-    }
-
-    // Special handling for lists to preserve structure and split by LINE count
+    // Only attempt splitting for specific large blocks
     if (tagName === 'ul' || tagName === 'ol') {
       const items = Array.from(element.children);
       let currentListItems: string[] = [];
@@ -200,7 +128,7 @@ function splitOversizedBlockSegment(
         const itemText = item.textContent?.trim() ?? '';
         const itemHtml = item.outerHTML;
         
-        // Estimate lines for this item (text + padding + margins)
+        // Estimate lines for this item
         const itemCharsPerLine = Math.floor((contentWidth - 24) / (config.fontSize * 0.45));
         const itemLines = Math.max(1, Math.ceil(itemText.length / itemCharsPerLine)) + (0.35 / config.lineHeight);
 
@@ -208,9 +136,7 @@ function splitOversizedBlockSegment(
           currentListLines + itemLines > linesPerPage &&
           currentListItems.length > 0
         ) {
-          chunks.push(
-            `<${tagName}>${currentListItems.join('')}</${tagName}>`,
-          );
+          newNodes.push(`<${tagName}>${currentListItems.join('')}</${tagName}>`);
           currentListItems = [itemHtml];
           currentListLines = itemLines;
         } else {
@@ -220,23 +146,24 @@ function splitOversizedBlockSegment(
       });
 
       if (currentListItems.length > 0) {
-        chunks.push(
-          `<${tagName}>${currentListItems.join('')}</${tagName}>`,
-        );
+        newNodes.push(`<${tagName}>${currentListItems.join('')}</${tagName}>`);
       }
       return;
     }
 
-    if (text.length <= charsPerPage) {
-      chunks.push(element.outerHTML.trim());
+    if (tagName === 'p' && text.length > charsPerPage) {
+      const chunks = chunkTextIntoWrappedBlocks(text, charsPerPage, 'p');
+      newNodes.push(...chunks);
       return;
     }
 
-    chunks.push(...chunkTextIntoWrappedBlocks(text, charsPerPage, tagName));
+    // Default: keep as is
+    newNodes.push(element.outerHTML);
   });
 
-  return chunks.filter(Boolean);
+  return newNodes.join('');
 }
+
 
 function chunkTextIntoParagraphs(text: string, charsPerPage: number): string[] {
   return chunkTextIntoWrappedBlocks(text, charsPerPage, 'p');
