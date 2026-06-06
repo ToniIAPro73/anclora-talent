@@ -6,6 +6,8 @@ import type { ProjectRecord } from '@/lib/projects/types';
 import { createDefaultSurfaceState } from '@/lib/projects/cover-surface';
 import { saveProjectWorkflowStepAction, syncProjectPaginationAction } from '@/lib/projects/actions';
 
+vi.mock('server-only', () => ({}));
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     refresh: vi.fn(),

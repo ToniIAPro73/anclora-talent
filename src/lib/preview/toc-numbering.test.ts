@@ -83,21 +83,20 @@ function makeProject(overrides?: Partial<ProjectRecord>): ProjectRecord {
 }
 
 describe('buildSyncedTocChapterContent — Actualizar numeración', () => {
-  test('adds data-toc-page on each entry paragraph (no nested spans)', () => {
+  test('adds data-toc-page on each entry paragraph (with title span)', () => {
     const project = makeProject();
     const synced = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
 
     expect(synced).not.toBeNull();
     expect(synced?.html).toContain(
-      '<p data-toc-entry="true" data-toc-level="2" data-toc-page="3">Introducción</p>',
+      '<p data-toc-entry="true" data-toc-level="2" data-toc-page="3"><span class="toc-title">Introducción</span></p>',
     );
     expect(synced?.html).toContain(
-      '<p data-toc-entry="true" data-toc-level="2" data-toc-page="4">Capítulo 1</p>',
+      '<p data-toc-entry="true" data-toc-level="2" data-toc-page="4"><span class="toc-title">Capítulo 1</span></p>',
     );
-    // No se introducen `·` como texto ni spans anidados; el CSS pinta los `·` y el número.
+    // No se introducen `·` como texto ni otros spans anidados; el CSS pinta los `·` y el número.
     expect(synced?.html).not.toContain('····');
     expect(synced?.html).not.toContain('.....');
-    expect(synced?.html).not.toContain('<span class="toc-title"');
     expect(synced?.html).not.toContain('<span class="toc-page"');
   });
 
@@ -128,10 +127,10 @@ describe('buildSyncedTocChapterContent — Actualizar numeración', () => {
     const synced = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
 
     expect(synced?.html).toContain(
-      '<p data-toc-entry="true" data-toc-level="2" data-toc-page="3">Introducción</p>',
+      '<p data-toc-entry="true" data-toc-level="2" data-toc-page="3"><span class="toc-title">Introducción</span></p>',
     );
     expect(synced?.html).toContain(
-      '<p data-toc-entry="true" data-toc-level="2" data-toc-page="4">Capítulo 1</p>',
+      '<p data-toc-entry="true" data-toc-level="2" data-toc-page="4"><span class="toc-title">Capítulo 1</span></p>',
     );
     expect(synced?.html).not.toContain('·········································5');
     expect(synced?.html).not.toContain('·········································9');
@@ -182,9 +181,9 @@ describe('buildSyncedTocChapterContent — Actualizar numeración', () => {
 
     const synced = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
 
-    expect(synced?.html).toMatch(/data-toc-page="5"[^>]*>Capítulo 2/);
-    expect(synced?.html).toMatch(/data-toc-page="3"[^>]*>Introducción/);
-    expect(synced?.html).toMatch(/data-toc-page="4"[^>]*>Capítulo 1/);
+    expect(synced?.html).toMatch(/data-toc-page="5"[^>]*><span class="toc-title">Capítulo 2<\/span>/);
+    expect(synced?.html).toMatch(/data-toc-page="3"[^>]*><span class="toc-title">Introducción<\/span>/);
+    expect(synced?.html).toMatch(/data-toc-page="4"[^>]*><span class="toc-title">Capítulo 1<\/span>/);
   });
 
   test('renumbers remaining entries when a chapter is deleted', () => {
@@ -204,8 +203,8 @@ describe('buildSyncedTocChapterContent — Actualizar numeración', () => {
                 order: 0,
                 content:
                   '<h2>Índice</h2>' +
-                  '<p data-toc-entry="true" data-toc-level="2" data-toc-page="3">Introducción</p>' +
-                  '<p data-toc-entry="true" data-toc-level="2" data-toc-page="4">Capítulo 1</p>',
+                  '<p data-toc-entry="true" data-toc-level="2" data-toc-page="3"><span class="toc-title">Introducción</span></p>' +
+                  '<p data-toc-entry="true" data-toc-level="2" data-toc-page="4"><span class="toc-title">Capítulo 1</span></p>',
               },
             ],
           },
@@ -221,7 +220,7 @@ describe('buildSyncedTocChapterContent — Actualizar numeración', () => {
 
     const synced = buildSyncedTocChapterContent(project, DEVICE_PAGINATION_CONFIGS.laptop);
 
-    expect(synced?.html).toMatch(/data-toc-page="3"[^>]*>Introducción/);
+    expect(synced?.html).toMatch(/data-toc-page="3"[^>]*><span class="toc-title">Introducción<\/span>/);
 
     // Tras borrar el capítulo, al quedarse su entrada sin página calculada, no se
     // re-inyecta con nuevo número (la numeración refleja solo capítulos existentes).

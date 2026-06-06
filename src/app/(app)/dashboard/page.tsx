@@ -18,8 +18,8 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="overflow-hidden rounded-[34px] border border-[var(--border-subtle)] bg-[var(--shell-main-surface)] p-8 text-[var(--text-primary)] shadow-[var(--shadow-strong)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">{dashboardCopy.eyebrow}</p>
+        <div className="ac-surface-panel ac-surface-panel--strong overflow-hidden p-8 text-[var(--text-primary)]">
+          <p className="ac-surface-panel__eyebrow">{dashboardCopy.eyebrow}</p>
           <h2 className="mt-4 max-w-4xl text-4xl font-black tracking-tight sm:text-5xl">
             {dashboardCopy.title}
           </h2>
@@ -32,13 +32,13 @@ export default async function DashboardPage() {
             </NavigatingLink>
           </div>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-4">
-              <p className="text-xs uppercase tracking-[0.22em] text-[var(--text-tertiary)]">{dashboardCopy.projectsEyebrow}</p>
-              <p className="mt-3 text-2xl font-black text-[var(--text-primary)]">{projects.length}</p>
+            <div className="ac-metric-card">
+              <p className="ac-metric-card__eyebrow">{dashboardCopy.projectsEyebrow}</p>
+              <p className="ac-metric-card__value mt-3 text-[var(--text-primary)]">{projects.length}</p>
             </div>
-            <div className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-4">
-              <p className="text-xs uppercase tracking-[0.22em] text-[var(--text-tertiary)]">{dashboardCopy.statusEyebrow}</p>
-              <p className="mt-3 text-sm font-semibold text-[var(--text-primary)]">
+            <div className="ac-metric-card">
+              <p className="ac-metric-card__eyebrow">{dashboardCopy.statusEyebrow}</p>
+              <p className="ac-metric-card__summary mt-3 text-sm font-semibold text-[var(--text-primary)]">
                 {dataAvailable
                   ? hasProjects
                     ? dashboardCopy.statusActive
@@ -46,9 +46,9 @@ export default async function DashboardPage() {
                   : dashboardCopy.statusFallback}
               </p>
             </div>
-            <div className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-4">
-              <p className="text-xs uppercase tracking-[0.22em] text-[var(--text-tertiary)]">{dashboardCopy.contractEyebrow}</p>
-              <p className="mt-3 text-sm font-semibold text-[var(--text-primary)]">
+            <div className="ac-metric-card">
+              <p className="ac-metric-card__eyebrow">{dashboardCopy.contractEyebrow}</p>
+              <p className="ac-metric-card__summary mt-3 text-sm font-semibold text-[var(--text-primary)]">
                 {dataAvailable ? dashboardCopy.contractReady : dashboardCopy.contractFallback}
               </p>
             </div>
@@ -59,7 +59,7 @@ export default async function DashboardPage() {
 
       <section className="space-y-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">{dashboardCopy.sectionEyebrow}</p>
+          <p className="ac-surface-panel__eyebrow">{dashboardCopy.sectionEyebrow}</p>
           <h2 className="mt-2 text-3xl font-black tracking-tight text-[var(--text-primary)]">{dashboardCopy.sectionTitle}</h2>
         </div>
         {hasProjects ? (
@@ -69,23 +69,25 @@ export default async function DashboardPage() {
             ))}
           </div>
         ) : (
-          <div className="rounded-[32px] border border-dashed border-[var(--border-subtle)] bg-[var(--page-surface-muted)] p-8 shadow-[var(--shadow-soft)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--text-tertiary)]">
+          <div className="ac-empty-state">
+            <p className="ac-surface-panel__eyebrow">
               {dataAvailable ? dashboardCopy.emptyEyebrow : dashboardCopy.emptyFallbackEyebrow}
             </p>
-            <h3 className="mt-3 text-2xl font-black tracking-tight text-[var(--text-primary)]">
+            <h3 className="ac-empty-state__title mt-0">
               {dataAvailable
                 ? dashboardCopy.emptyTitle
                 : dashboardCopy.emptyFallbackTitle}
             </h3>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--text-secondary)]">
+            <p className="ac-empty-state__summary mt-0 max-w-2xl text-sm leading-7">
               {dataAvailable
                 ? dashboardCopy.emptyDescription
                 : dashboardCopy.emptyFallbackDescription}
             </p>
-            <NavigatingLink href="/projects/new" pendingLabel={dashboardCopy.emptyAction} className={`mt-6 ${premiumPrimaryDarkButton} min-h-11 px-5`}>
-              {dashboardCopy.emptyAction}
-            </NavigatingLink>
+            <div className="ac-empty-state__actions">
+              <NavigatingLink href="/projects/new" pendingLabel={dashboardCopy.emptyAction} className={`${premiumPrimaryDarkButton} min-h-11 px-5`}>
+                {dashboardCopy.emptyAction}
+              </NavigatingLink>
+            </div>
           </div>
         )}
       </section>

@@ -8,17 +8,35 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { extractImportedDocumentSeed } from '../src/lib/projects/import';
+import {
+  buildImportedDocumentSeed,
+  extractTextFromBuffer,
+  normalizeText,
+} from '../src/lib/projects/import-pipeline';
+
+function normalizeMatch(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '');
+}
 
 async function verifyImport(filePath: string) {
   console.log('Verificando importacion:', filePath);
   
   const buffer = readFileSync(filePath);
-  const file = new File([buffer], 'test.docx', { 
-    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+  const extracted = await extractTextFromBuffer(
+    'test.docx',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    Buffer.from(buffer),
+  );
+  const seed = buildImportedDocumentSeed({
+    fileName: 'test.docx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    text: normalizeText(extracted.text),
+    html: extracted.html,
+    sourcePageCount: extracted.pageCount,
   });
-
-  const seed = await extractImportedDocumentSeed(file);
   
   console.log('\nResultados:');
   console.log('Titulo detectado:', seed.title);
@@ -27,7 +45,7 @@ async function verifyImport(filePath: string) {
   
   // Verificar indice
   const indexChapter = seed.chapters.find(ch => 
-    /indice|table of contents/i.test(ch.title)
+    /indice|table of contents/i.test(normalizeMatch(ch.title))
   );
   
   if (indexChapter) {
@@ -43,16 +61,30 @@ async function verifyImport(filePath: string) {
     const hasNumbers = indexChapter.blocks.some(b => /[·\-–—]{2,}\s*\d+/.test(b.content));
     console.log('  - Tiene numeros?:', hasNumbers ? 'SI (incorrecto)' : 'NO (correcto)');
     
-    // Verificar que no se crearon capitulos falsos desde el indice
-    const falseChapters = seed.chapters.filter(ch => 
-      /^FASE \d+:/i.test(ch.title) || /^Dia \d+:/i.test(ch.title)
-    );
-    
-    if (falseChapters.length > 0) {
-      console.log('\nERROR: Se detectaron capitulos falsos creados desde el indice:');
-      falseChapters.forEach(ch => console.log('  -', ch.title));
+    // Verificar entradas estructurales huérfanas usando outline detectado.
+    // Mucho más fiable que leer texto fusionado de bloques <ul>.
+    const outlineEntries = (seed.detectedOutline ?? [])
+      .map((entry) => normalizeMatch(entry.title))
+      .filter((entry) => entry && entry !== 'indice');
+
+    const realChapterKeys = seed.chapters
+      .filter((ch) => ch.title !== indexChapter.title)
+      .map((ch) => normalizeMatch(ch.title));
+
+    const suspiciousMissingChapters = outlineEntries.filter((entry) => {
+      if (!/^(fase\s+\d+|dia\s+\d+|introduccion|recursos|despues\s+de|cierre)/i.test(entry)) {
+        return false;
+      }
+      return !realChapterKeys.some((chapter) =>
+        chapter === entry || chapter.includes(entry) || entry.includes(chapter),
+      );
+    });
+
+    if (suspiciousMissingChapters.length > 0) {
+      console.log('\nERROR: Hay entradas estructurales en índice sin capítulo real asociado:');
+      suspiciousMissingChapters.forEach(ch => console.log('  -', ch));
     } else {
-      console.log('\nNo se detectaron capitulos falsos');
+      console.log('\nNo se detectaron duplicados ni entradas estructurales huérfanas');
     }
   } else {
     console.log('\nNo se encontro capitulo de indice');
@@ -60,7 +92,7 @@ async function verifyImport(filePath: string) {
   
   // Verificar capitulos reales
   const realChapters = seed.chapters.filter(ch => 
-    !/indice/i.test(ch.title)
+    !/indice/i.test(normalizeMatch(ch.title))
   );
   
   console.log('\nCapitulos reales detectados:');
@@ -69,8 +101,8 @@ async function verifyImport(filePath: string) {
   });
   
   // Verificacion final
-  const hasIntro = realChapters.some(ch => /introduccion/i.test(ch.title));
-  const hasFase1 = realChapters.some(ch => /fase 1/i.test(ch.title));
+  const hasIntro = realChapters.some(ch => /introduccion/i.test(normalizeMatch(ch.title)));
+  const hasFase1 = realChapters.some(ch => /fase 1/i.test(normalizeMatch(ch.title)));
   
   console.log('\nVerificacion final:');
   console.log('  - Tiene Introduccion?:', hasIntro ? 'SI' : 'NO');

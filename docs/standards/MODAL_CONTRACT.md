@@ -3,6 +3,22 @@
 ## Objetivo
 Garantizar un patrón único de modales en todo el ecosistema Anclora: jerarquía clara, acciones visibles y cero scroll evitable.
 
+## Fuente ejecutable
+
+La implementación base de overlays debe salir de `anclora-design-system`:
+- `components` para `dialog`, `sheet`, `drawer` o primitive equivalente
+- `patterns` para formularios densos, selectores visuales, galerías o flows multi-step
+- `tokens` y `foundations` para spacing, radii, elevation, backdrop y focus handling
+
+Regla:
+- un modal de producto no debe nacer como composición local si el caso encaja en una primitive o pattern ya existente.
+
+## Autoridad
+
+- Registro operativo: `docs/governance/contracts-registry.json`
+- Inventario aplicable: `docs/governance/ecosystem-repos.json`
+- Fuente ejecutable relacionada: `anclora-design-system`
+
 ## Reglas obligatorias
 - El modal se dimensiona según contenido y viewport real, no desde un ancho fijo heredado por defecto.
 - La primera estrategia es reorganizar layout y ampliar superficie útil, no introducir scroll.
@@ -27,11 +43,36 @@ Garantizar un patrón único de modales en todo el ecosistema Anclora: jerarquí
 - Footer con secundaria y primaria claramente diferenciadas.
 - En desktop: secundaria a la izquierda o neutralizada; primaria a la derecha.
 
+## Repos a los que aplica
+
+- `anclora-advisor-ai`
+- `anclora-nexus`
+- `anclora-content-generator-ai`
+- `anclora-impulso`
+- `anclora-command-center`
+- `anclora-synergi`
+- `anclora-data-lab`
+- `anclora-talent`
+- `anclora-private-estates`
+- `anclora-portfolio`
+- `anclora-azure-bay-landing`
+- `anclora-playa-viva-uniestate`
+
+Nota:
+- `anclora-group` mantiene autoridad matriz y criterios globales, pero no es target normal de propagación de este contrato transversal.
+
+## Sincronización con repos consumidores
+
+- Contrato fuente en la bóveda: `docs/standards/MODAL_CONTRACT.md`
+- Target normal de propagación: `docs/standards/`
+- Dependencia de auditoría y propagación desde `docs/governance/contracts-registry.json`
+
 ## Modales densos
 - Formularios complejos: usar modal ancho o casi fullscreen.
 - Bibliotecas de resultados: limitar ventana visible y añadir paginación o navegación.
 - Selectores visuales: evitar hover que invada el espacio de cards contiguas.
 - No introducir scroll horizontal salvo casos técnicos extremos.
+- Si la interacción supera el contrato cómodo del modal, debe escalar a `sheet`, `drawer` o página dedicada antes de forzar una implementación local frágil.
 
 ## Adaptación por grupo
 

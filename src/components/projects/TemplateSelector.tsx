@@ -48,20 +48,20 @@ function TemplateGrid({
 }) {
   return (
     <section
-      className="space-y-5 rounded-[32px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-soft)]"
+      className="ac-template-catalog ac-surface-panel talent-workspace-stage__panel p-6"
       data-testid={testId}
     >
-      <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--accent)]">
+      <div className="ac-template-catalog__header">
+        <div className="ac-template-catalog__mark">
           <SquareStack className="h-5 w-5" />
         </div>
-        <div>
-          <h4 className="text-xl font-black tracking-tight text-[var(--text-primary)]">{title}</h4>
-          <p className="mt-1 text-sm text-[var(--text-secondary)]">{description}</p>
+        <div className="ac-template-catalog__titles">
+          <h4 className="ac-template-catalog__title">{title}</h4>
+          <p className="ac-template-catalog__summary">{description}</p>
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div className="ac-template-catalog__grid">
         {templates.map((template) => {
           const isSelected = selectedTemplateId === template.id;
           const features = getTemplateFeatures(template);
@@ -70,44 +70,37 @@ function TemplateGrid({
               key={template.id}
               type="button"
               onClick={() => onSelect(template.id)}
-              className={`group relative flex flex-col overflow-hidden rounded-[28px] border text-left transition-all duration-300 ${
-                isSelected
-                  ? 'border-[var(--accent)] bg-[var(--surface-soft)] ring-4 ring-[var(--accent-glow)]'
-                  : 'border-[var(--border-subtle)] bg-[var(--page-surface)] hover:border-[var(--border-strong)]'
-              }`}
+              className="ac-template-card group"
+              data-selected={isSelected ? 'true' : 'false'}
             >
               <div
-                className={`relative flex aspect-[4/3] w-full items-center justify-center ${PREVIEW_TONE_CLASS[template.previewTone]} transition-transform duration-500 group-hover:scale-[1.02]`}
+                className={`ac-template-card__preview ${PREVIEW_TONE_CLASS[template.previewTone]} transition-transform duration-500 group-hover:scale-[1.02]`}
               >
                 <Book className={`h-12 w-12 ${TONE_ICON_CLASS[template.previewTone]}`} />
                 {isSelected && (
-                  <div className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-white shadow-lg">
+                  <div className="ac-template-card__selected">
                     <Check className="h-4 w-4" />
                   </div>
                 )}
               </div>
 
-              <div className="flex flex-1 flex-col p-5">
-                <h5 className="text-lg font-black tracking-tight text-[var(--text-primary)]">{template.name}</h5>
-                <p className="mt-2 text-xs leading-5 text-[var(--text-tertiary)]">{template.description}</p>
+              <div className="ac-template-card__body">
+                <h5 className="ac-template-card__title">{template.name}</h5>
+                <p className="ac-template-card__summary">{template.description}</p>
 
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="ac-template-card__tags">
                   {features.map((feature) => (
                     <span
                       key={`${template.id}-${feature}`}
-                      className="rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]"
+                      className="ac-template-card__tag"
                     >
                       {feature}
                     </span>
                   ))}
                 </div>
 
-                <div className="mt-auto flex items-center justify-between pt-6">
-                  <span
-                    className={`text-[10px] font-black uppercase tracking-widest ${
-                      isSelected ? 'text-[var(--accent)]' : 'text-[var(--text-tertiary)]'
-                    }`}
-                  >
+                <div className="ac-template-card__footer">
+                  <span className="ac-template-card__status">
                     {isSelected ? 'Seleccionada' : 'Seleccionar'}
                   </span>
                   <Eye className="h-4 w-4 text-[var(--text-tertiary)] opacity-0 transition-opacity group-hover:opacity-100" />
@@ -135,9 +128,9 @@ export function TemplateSelector({
 }) {
   return (
     <div className="space-y-6">
-      <div className="text-center">
-        <h3 className="text-2xl font-black tracking-tight text-[var(--text-primary)]">Sistema de plantillas editoriales</h3>
-        <p className="mt-2 text-sm text-[var(--text-secondary)]">
+      <div className="ac-section-heading place-items-center text-center">
+        <h3 className="ac-section-heading__title max-w-none text-2xl">Sistema de plantillas editoriales</h3>
+        <p className="ac-section-heading__summary mt-2 text-sm">
           Elige por separado la direccion visual de la portada y la composicion de la contraportada.
         </p>
       </div>
@@ -160,7 +153,7 @@ export function TemplateSelector({
         testId="back-cover-template-catalog"
       />
 
-      <div className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--surface-highlight)] p-6 text-center">
+      <div className="ac-surface-panel ac-surface-panel--subtle p-6 text-center">
         <Palette className="mx-auto mb-3 h-6 w-6 text-[var(--accent)]" />
         <p className="text-sm font-semibold text-[var(--text-primary)]">Las plantillas ya no son solo cosmeticas</p>
         <p className="mt-1 text-xs text-[var(--text-secondary)]">

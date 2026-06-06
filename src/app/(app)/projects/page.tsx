@@ -18,7 +18,7 @@ export default async function ProjectsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
+          <p className="ac-surface-panel__eyebrow">
             {dashboardCopy.sectionEyebrow}
           </p>
           <h2 className="mt-2 text-3xl font-black tracking-tight text-[var(--text-primary)]">
@@ -37,19 +37,21 @@ export default async function ProjectsPage() {
           ))}
         </div>
       ) : (
-        <div className="rounded-[32px] border border-dashed border-[var(--border-subtle)] bg-[var(--page-surface-muted)] p-8 shadow-[var(--shadow-soft)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--text-tertiary)]">
+        <div className="ac-empty-state">
+          <p className="ac-surface-panel__eyebrow">
             {dataAvailable ? dashboardCopy.emptyEyebrow : dashboardCopy.emptyFallbackEyebrow}
           </p>
-          <h3 className="mt-3 text-2xl font-black tracking-tight text-[var(--text-primary)]">
+          <h3 className="ac-empty-state__title mt-0">
             {dataAvailable ? dashboardCopy.emptyTitle : dashboardCopy.emptyFallbackTitle}
           </h3>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--text-secondary)]">
+          <p className="ac-empty-state__summary mt-0 max-w-2xl text-sm leading-7">
             {dataAvailable ? dashboardCopy.emptyDescription : dashboardCopy.emptyFallbackDescription}
           </p>
-          <NavigatingLink href="/projects/new" pendingLabel={dashboardCopy.emptyAction} className={`mt-6 inline-flex ${premiumPrimaryMintButton} px-5`}>
-            {dashboardCopy.emptyAction}
-          </NavigatingLink>
+          <div className="ac-empty-state__actions">
+            <NavigatingLink href="/projects/new" pendingLabel={dashboardCopy.emptyAction} className={`${premiumPrimaryMintButton} px-5`}>
+              {dashboardCopy.emptyAction}
+            </NavigatingLink>
+          </div>
         </div>
       )}
     </div>

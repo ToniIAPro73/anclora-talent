@@ -16,6 +16,7 @@
     "db:studio": "dotenv -e .env.local -- drizzle-kit studio"
   },
   "dependencies": {
+    "@anclora/design-system": "https://codeload.github.com/ToniIAPro73/anclora-design-system/tar.gz/6561c71d2afb199ff2be379c1d18d59a0f76f648",
     "@clerk/nextjs": "^7.0.7",
     "@neondatabase/serverless": "^1.0.2",
     "@react-pdf/renderer": "^4.3.2",
