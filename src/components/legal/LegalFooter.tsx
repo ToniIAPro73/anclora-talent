@@ -12,7 +12,7 @@ export function LegalFooter() {
       <div className="mx-auto flex max-w-6xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
           <p>© {year} Anclora Group — {en ? 'All rights reserved.' : 'Todos los derechos reservados.'}</p>
-          <p>{en ? 'Anclora Talent is a commercial brand operated under exclusive license by Anclora Group.' : 'Anclora Talent es una marca comercial operada bajo licencia exclusiva por Anclora Group.'}</p>
+          <p>{en ? 'Anclora Talent is part of the Anclora Group technology ecosystem.' : 'Anclora Talent forma parte del ecosistema tecnológico de Anclora Group.'}</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <Link href="/terms" className="hover:text-[var(--text-primary)]">{en ? 'Terms of service' : 'Términos del servicio'}</Link>
