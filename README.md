@@ -1,74 +1,86 @@
+<!-- markdownlint-disable MD001 MD013 MD033 MD041 MD060 -->
+
+<div align="center">
+
+<img src="./public/brand/paleta_colores_anclora_talent.png" alt="Anclora Talent" width="120" />
+
 # Anclora Talent
 
-Plataforma editorial construida sobre `Next.js App Router`, `Clerk`, `Neon` y `Vercel Blob`, y clonada de Anclora Press y mejorada, manteniendo la esencia de Anclora Group corporation
+### Repositorio interno del ecosistema Anclora para operaciones de familia premium
 
-## Branding canónico
+**Español** · [English](./README.en.md)
 
-- Familia visual: `Premium`
-- Accent objetivo: `#4A9FD8` azul cielo
-- Secondary: `#A0D0F0` azul pálido
-- Tipografía objetivo: `DM Sans` + `JetBrains Mono`
-- Borde de icono: cobre `#C07860`
-- Interior de icono: navy `#141E28`
-- Assets finales: pendientes de sustitución cuando el usuario los entregue
-- Contrato de referencia: `ANCLORA_PREMIUM_APP_CONTRACT`
-- Alcance de esta fase: dejar la app preparada estructuralmente para recibir esos activos sin rehacer el wiring
+<br />
 
-## Estado actual
+![Anclora](https://img.shields.io/badge/Anclora-ecosystem-111827)
+![Documentation](https://img.shields.io/badge/documentation-premium-BFA46A)
+![Languages](https://img.shields.io/badge/languages-ES%20%7C%20EN-047857)
 
-El repo ya no usa Vite. La nueva base incluye:
+</div>
 
-- landing pública
-- autenticación con Clerk
-- dashboard protegido
-- creación de proyecto
-- editor de documento canónico
-- preview del mismo contenido
-- estudio de portada
-- capa de persistencia preparada para Neon
-- subida de assets preparada para Blob
+---
 
-Cuando `DATABASE_URL` no está configurada, el repositorio cae a una store en memoria para no
-bloquear el desarrollo local. En producción, el destino es Neon.
+> [!IMPORTANT]
+> Repositorio interno del ecosistema Anclora. No publicar detalles operativos, credenciales,
+> datos reales ni logica sensible fuera de los canales autorizados.
 
-## Scripts
+## Vista rapida
 
-- `npm run dev`: arranca Next.js en local
-- `npm run build`: compila la app
-- `npm run start`: sirve la build
-- `npm run lint`: ejecuta ESLint
-- `npm run test`: arranca Vitest
-- `npm run test:run`: ejecuta la suite una vez
-- `npm run clean`: limpia `.next` y `coverage`
-- `npm run db:generate`: genera artefactos Drizzle
-- `npm run db:push`: aplica schema a la base definida en `.env.local`
-- `npm run db:studio`: abre Drizzle Studio
+| Area | Definicion |
+| --- | --- |
+| Proposito | Repositorio interno del ecosistema Anclora para operaciones de familia premium |
+| Familia | `premium` |
+| Visibilidad | `private` |
+| Rol | Repositorio de trabajo interno |
 
-## Variables de entorno
+## Flujo conceptual
 
-Ver [.env.example](c:/Users/antonio.ballesterosa/Desktop/Proyectos/anclora-talent/.env.example).
+```text
+Contexto interno
+      ↓
+Configuracion y datos controlados
+      ↓
+Logica de producto
+      ↓
+Revision tecnica
+      ↓
+Entrega o soporte operativo
+```
 
-Claves mínimas:
+## Arranque local
 
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
-- `CLERK_SECRET_KEY`
-- `DATABASE_URL`
-- `BLOB_READ_WRITE_TOKEN`
+```bash
+npm install
+npm run dev
+```
 
-## Arquitectura
+## Tecnologia
 
-- `src/app`: rutas App Router, layouts, auth y área protegida
-- `src/components`: UI de producto
-- `src/lib/auth`: guards y helpers de auth
-- `src/lib/db`: schema Drizzle, Neon lazy y repositorios
-- `src/lib/projects`: tipos, factories y server actions
-- `src/lib/blob`: utilidades de Blob
-- `sdd/`: especificación del producto y roadmap
+| Area | Detalle |
+| --- | --- |
+| Next.js | Detectado en el repositorio |
+| React | Detectado en el repositorio |
+| TypeScript | Detectado en el repositorio |
+| Tailwind CSS | Detectado en el repositorio |
+| Drizzle ORM | Detectado en el repositorio |
+| Zod | Detectado en el repositorio |
+| Vitest | Detectado en el repositorio |
 
-## Flujo MVP implementado
+## Documentacion
 
-`login -> dashboard -> crear proyecto -> editor -> preview -> cover`
+- [Documentacion](./docs)
 
-## Próximo paso lógico
+## Gobernanza
 
-Conectar importación real `txt/docx` y exportación PDF sobre este mismo modelo.
+- Producto canonico: `anclora-talent`
+- Boveda: `/mnt/c/Users/antonio.ballesterosa/Desktop/Proyectos/Boveda-Anclora`
+- Contratos: `contracts/` y `docs/governance/`
+- Asset de marca: `presente`
+
+---
+
+<div align="center">
+
+### Anclora Group · Uso interno
+
+</div>
