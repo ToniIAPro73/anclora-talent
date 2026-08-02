@@ -131,7 +131,6 @@ html[data-theme="dark"] {
   /* ── Surfaces composed ── */
   --surface-soft: rgba(14, 24, 37, 0.72);
   --surface-highlight: linear-gradient(135deg, rgba(74, 159, 216, 0.18) 0%, rgba(22, 37, 53, 0.84) 100%);
-  --surface-elevated: linear-gradient(180deg, rgba(18, 74, 80, 0.96) 0%, rgba(7, 37, 47, 0.98) 100%);
   --shell-surface: radial-gradient(circle at top left, rgba(74, 159, 216, 0.12), transparent 34%),
     linear-gradient(180deg, rgba(12, 20, 30, 0.95) 0%, rgba(14, 24, 37, 0.98) 100%);
   --shell-main-surface: radial-gradient(circle at top, rgba(74, 159, 216, 0.08), transparent 28%),
@@ -270,7 +269,6 @@ html[data-theme="light"] {
   /* ── Surfaces composed ── */
   --surface-soft: rgba(255, 255, 255, 0.7);
   --surface-highlight: linear-gradient(135deg, rgba(58, 136, 190, 0.14) 0%, rgba(255, 255, 255, 0.96) 100%);
-  --surface-elevated: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(232, 240, 248, 0.98) 100%);
   --shell-surface: radial-gradient(circle at top left, rgba(58, 136, 190, 0.10), transparent 32%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(232, 240, 248, 0.98) 100%);
   --shell-main-surface: radial-gradient(circle at top, rgba(58, 136, 190, 0.08), transparent 28%),
