@@ -9,7 +9,7 @@ import { expect, test } from '@playwright/test';
  *
  * Note: the cover studio page itself requires auth. These tests verify the
  * redirect behavior and will be extended with authenticated sessions once
- * a Clerk test token is configured (CLERK_SECRET_KEY in test env).
+ * a seeded test account is available (see e2e/auth-login.spec.ts).
  */
 test.describe('cover studio redirect contract', () => {
   test('cover route redirects unauthenticated users to sign-in', async ({ page }) => {

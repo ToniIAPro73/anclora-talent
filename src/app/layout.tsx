@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { ClerkProvider } from '@clerk/nextjs';
 import { UiPreferencesProvider } from '@/components/providers/UiPreferencesProvider';
 import { CookieConsent } from '@/components/legal/CookieConsent';
 import { LegalFooter } from '@/components/legal/LegalFooter';
@@ -25,25 +24,23 @@ export default async function RootLayout({
   const preferences = await readUiPreferences();
 
   return (
-    <ClerkProvider>
-      <html
-        lang={preferences.locale}
-        data-locale={preferences.locale}
-        data-theme={preferences.theme}
-        className={`${dmSans.variable} ${jetbrainsMono.variable}`}
+    <html
+      lang={preferences.locale}
+      data-locale={preferences.locale}
+      data-theme={preferences.theme}
+      className={`${dmSans.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
+    >
+      <body
+        className="tier-premium domain-human-capital archetype-app role-consumer cluster-core product-anclora-talent"
         suppressHydrationWarning
       >
-        <body
-          className="tier-premium domain-human-capital archetype-app role-consumer cluster-core product-anclora-talent"
-          suppressHydrationWarning
-        >
-          <UiPreferencesProvider initialPreferences={preferences}>
-            {children}
-            <LegalFooter />
-            <CookieConsent />
-          </UiPreferencesProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+        <UiPreferencesProvider initialPreferences={preferences}>
+          {children}
+          <LegalFooter />
+          <CookieConsent />
+        </UiPreferencesProvider>
+      </body>
+    </html>
   );
 }

@@ -4,13 +4,12 @@ import { expect, test } from '@playwright/test';
  * Auth-redirect contract.
  *
  * Unauthenticated users hitting protected routes must be redirected to
- * the sign-in page. This confirms the Clerk middleware is correctly
- * guarding the (app) route group.
+ * the sign-in page. This confirms the own-auth proxy (src/proxy.ts) is
+ * correctly guarding the (app) route group.
  */
 test.describe('auth redirect contract', () => {
   test('dashboard redirects unauthenticated visitors to sign-in', async ({ page }) => {
     await page.goto('/dashboard');
-    // Clerk redirects to /sign-in (possibly with a redirect_url query param)
     await expect(page).toHaveURL(/sign-in/);
   });
 

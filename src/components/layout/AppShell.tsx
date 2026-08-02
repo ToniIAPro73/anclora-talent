@@ -2,19 +2,26 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { UserButton } from '@clerk/nextjs';
 import { ChevronLeft, ChevronRight, FolderOpen, LayoutDashboard, PenSquare } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
+import type { SessionUser } from '@/lib/auth/session';
 import { LocaleToggle } from './LocaleToggle';
 import { ThemeToggle } from './ThemeToggle';
+import { UserMenu } from './UserMenu';
 import { EditorPreferencesSidebar } from '@/components/projects/EditorPreferencesSidebar';
 import { NavigatingLink } from '@/components/ui/NavigatingLink';
 
 const SIDEBAR_KEY = 'anclora-sidebar-collapsed';
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  user,
+  children,
+}: {
+  user: Pick<SessionUser, 'fullName' | 'email'>;
+  children: React.ReactNode;
+}) {
   const { locale } = useUiPreferences();
   const messages = resolveLocaleMessages(locale).shell;
   const pathname = usePathname();
@@ -131,9 +138,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="ac-topbar__actions talent-shell-topbar-actions flex flex-wrap items-center justify-end gap-3">
               <LocaleToggle />
               <ThemeToggle />
-              <div className="talent-shell-user-button rounded-full border border-[var(--border-strong)] bg-[var(--surface-soft)] px-2 py-1 shadow-[var(--shadow-soft)]">
-                <UserButton />
-              </div>
+              <UserMenu user={user} />
             </div>
           </header>
           <div className="pt-6">{children}</div>

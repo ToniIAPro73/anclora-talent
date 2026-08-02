@@ -1,11 +1,11 @@
 import { render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import HomePage from './page';
-import { auth } from '@clerk/nextjs/server';
+import { getCurrentUser } from '@/lib/auth/guards';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
 
-vi.mock('@clerk/nextjs/server', () => ({
-  auth: vi.fn(),
+vi.mock('@/lib/auth/guards', () => ({
+  getCurrentUser: vi.fn(),
 }));
 
 vi.mock('@/lib/ui-preferences/preferences.server', () => ({
@@ -14,12 +14,12 @@ vi.mock('@/lib/ui-preferences/preferences.server', () => ({
 
 describe('HomePage', () => {
   beforeEach(() => {
-    vi.mocked(auth).mockReset();
+    vi.mocked(getCurrentUser).mockReset();
     vi.mocked(readUiPreferences).mockResolvedValue({ locale: 'es', theme: 'dark' });
   });
 
   it('shows the new signup-first hero for anonymous users', { timeout: 10000 }, async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: null } as Awaited<ReturnType<typeof auth>>);
+    vi.mocked(getCurrentUser).mockResolvedValue(null);
 
     render(await HomePage());
 
@@ -44,7 +44,11 @@ describe('HomePage', () => {
   });
 
   it('switches the primary CTA for authenticated users', async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: 'user_123' } as Awaited<ReturnType<typeof auth>>);
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      id: 'user_123',
+      email: 'test@example.com',
+      fullName: 'Test User',
+    });
 
     render(await HomePage());
 

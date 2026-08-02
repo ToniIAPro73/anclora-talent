@@ -831,3 +831,115 @@ ul.toc-list > li {
   margin: 0;
   padding: 0;
 }
+
+/* ── Auth screens (login/register contract, Fase A) ──────────────────────
+   All colors come from design-system tokens so the accent can be
+   re-branded from globals.css without touching these classes. */
+
+.talent-auth-page {
+  background: var(--auth-surface);
+}
+
+.talent-auth-card {
+  background: var(--auth-card-surface);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 32px 80px -40px color-mix(in srgb, var(--accent) 45%, transparent);
+  transition:
+    transform 0.3s ease-out,
+    box-shadow 0.3s ease-out;
+  will-change: transform, box-shadow;
+}
+
+.talent-auth-card:hover {
+  transform: scale(1.018);
+  box-shadow: 0 48px 100px -35px color-mix(in srgb, var(--accent) 65%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .talent-auth-card {
+    transition: none;
+    will-change: auto;
+  }
+
+  .talent-auth-card:hover {
+    transform: none;
+  }
+}
+
+.talent-auth-divider {
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in srgb, var(--accent) 70%, transparent),
+    transparent
+  );
+}
+
+.talent-auth-input {
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-soft);
+  color: var(--text-primary);
+  transition: border-color 0.2s ease-out;
+}
+
+.talent-auth-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.talent-auth-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--focus-ring);
+}
+
+/* Keep autofilled fields on the dark surface in dark theme */
+.talent-auth-input:-webkit-autofill,
+.talent-auth-input:-webkit-autofill:hover,
+.talent-auth-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text-primary);
+  caret-color: var(--text-primary);
+  transition: background-color 999999s ease-in-out 0s;
+}
+
+.talent-auth-submit {
+  background: linear-gradient(135deg, var(--accent-dim) 0%, var(--accent) 55%, var(--accent-hover) 100%);
+  color: var(--button-highlight-fg);
+  box-shadow: var(--shadow-soft);
+  transition:
+    filter 0.2s ease-out,
+    box-shadow 0.2s ease-out;
+}
+
+.talent-auth-submit:hover:not(:disabled),
+.talent-auth-submit:focus-visible:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.talent-auth-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.talent-auth-box {
+  border: 1px solid color-mix(in srgb, var(--accent) 10%, transparent);
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+}
+
+.talent-auth-social-button {
+  border: 1px solid var(--border-subtle);
+  color: var(--text-tertiary);
+}
+
+.talent-auth-separator-line {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.talent-auth-link {
+  color: var(--accent);
+}
+
+.talent-auth-link:hover {
+  color: var(--accent-hover);
+}
