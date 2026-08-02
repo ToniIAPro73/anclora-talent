@@ -49,6 +49,9 @@ export type AppMessages = {
     google: string;
     github: string;
     socialComingSoon: string;
+    oauthCancelled: string;
+    oauthInvalidState: string;
+    oauthError: string;
     legalPrefix: string;
     terms: string;
     legalMiddle: string;
@@ -307,6 +310,9 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       google: 'Google',
       github: 'GitHub',
       socialComingSoon: 'Próximamente',
+      oauthCancelled: 'Has cancelado el acceso mediante {provider}.',
+      oauthInvalidState: 'La solicitud de acceso mediante {provider} ha caducado o no es válida.',
+      oauthError: 'No se ha podido completar el acceso mediante {provider}.',
       legalPrefix: 'Al continuar, aceptas los',
       terms: 'Términos del servicio',
       legalMiddle: 'y la',
@@ -627,6 +633,9 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       google: 'Google',
       github: 'GitHub',
       socialComingSoon: 'Coming soon',
+      oauthCancelled: 'You cancelled signing in with {provider}.',
+      oauthInvalidState: 'The sign-in request with {provider} has expired or is not valid.',
+      oauthError: 'Could not complete signing in with {provider}.',
       legalPrefix: 'By continuing, you accept the',
       terms: 'Terms of service',
       legalMiddle: 'and the',
