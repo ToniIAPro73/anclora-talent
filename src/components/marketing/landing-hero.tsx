@@ -27,7 +27,7 @@ export function LandingHero({
       <div className="relative grid gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.26em] text-[var(--text-secondary)]">
-            <BrandLogo size={16} className="h-4 w-4 rounded-full" priority />
+            <BrandLogo size={16} priority />
             {eyebrow}
           </div>
 
@@ -50,7 +50,7 @@ export function LandingHero({
             {secondaryCta ? (
               <Link
                 href={secondaryCta.href}
-                className="inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-6 py-3 text-sm font-semibold text-[var(--button-secondary-fg)] transition hover:border-[var(--button-secondary-hover-border)] hover:bg-[var(--button-secondary-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-mint)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]"
+                className="inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-6 py-3 text-sm font-semibold text-[var(--button-secondary-fg)] transition hover:border-[var(--button-secondary-hover-border)] hover:bg-[var(--button-secondary-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]"
               >
                 {secondaryCta.label}
               </Link>
@@ -79,7 +79,7 @@ export function LandingHero({
             <div className="rounded-[28px] bg-[var(--surface-elevated)] p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--accent-mint)]">Anclora Talent</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--accent-text)]">Anclora Talent</p>
                   <p className="mt-2 text-2xl font-black tracking-tight">Sistema editorial premium</p>
                 </div>
                 <div className="rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
@@ -103,7 +103,7 @@ export function LandingHero({
               </div>
 
               <div className="mt-6 rounded-[28px] border border-[var(--border-strong)] bg-[linear-gradient(135deg,_rgba(212,175,55,0.18),_rgba(18,74,80,0.28))] p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--accent-mint)]">Flujo recomendado</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--accent-text)]">Flujo recomendado</p>
                 <p className="mt-3 text-lg font-semibold leading-8 text-[var(--text-primary)]">
                   Crea tu cuenta, inicia un proyecto y trabaja con una estructura visual que no te obliga a recomponer todo
                   cada vez.

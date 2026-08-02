@@ -1,7 +1,52 @@
 /* stylelint-disable at-rule-no-unknown */
 
 @import "tailwindcss";
-@import "@anclora/design-system/system.css";
+
+/* Design system: import the exported subpaths directly instead of
+   "@anclora/design-system/system.css". That entry point chains nested
+   `@import url("./…")` which Turbopack/Lightning CSS silently drops
+   (preexisting issue: it broke `next dev` and was also omitted from
+   production builds, leaving every .ac-* class unstyled). */
+@import "@anclora/design-system/tokens/core.css";
+@import "@anclora/design-system/tokens/semantic.css";
+@import "@anclora/design-system/taxonomy/tier.css";
+@import "@anclora/design-system/taxonomy/domain.css";
+@import "@anclora/design-system/taxonomy/archetype.css";
+@import "@anclora/design-system/taxonomy/role.css";
+@import "@anclora/design-system/taxonomy/clusters.css";
+@import "@anclora/design-system/themes/product.css";
+@import "@anclora/design-system/foundations/typography.css";
+@import "@anclora/design-system/foundations/primitives.css";
+@import "@anclora/design-system/components/button.css";
+@import "@anclora/design-system/components/surface-panel.css";
+@import "@anclora/design-system/components/app-tile.css";
+@import "@anclora/design-system/components/metric-card.css";
+@import "@anclora/design-system/components/section-heading.css";
+@import "@anclora/design-system/components/language-switcher.css";
+@import "@anclora/design-system/components/theme-switcher.css";
+@import "@anclora/design-system/components/form-field.css";
+@import "@anclora/design-system/components/sidebar-nav.css";
+@import "@anclora/design-system/components/chapter-rail.css";
+@import "@anclora/design-system/components/template-catalog.css";
+@import "@anclora/design-system/components/stepper.css";
+@import "@anclora/design-system/components/tabs.css";
+@import "@anclora/design-system/components/breadcrumb.css";
+@import "@anclora/design-system/components/subnav.css";
+@import "@anclora/design-system/components/stat-strip.css";
+@import "@anclora/design-system/components/data-table.css";
+@import "@anclora/design-system/components/empty-state.css";
+@import "@anclora/design-system/components/toast.css";
+@import "@anclora/design-system/components/modal.css";
+@import "@anclora/design-system/components/drawer.css";
+@import "@anclora/design-system/components/preview-overlay.css";
+@import "@anclora/design-system/components/preview-controls.css";
+@import "@anclora/design-system/components/workspace-stage.css";
+@import "@anclora/design-system/components/workflow-shell.css";
+@import "@anclora/design-system/components/editor-studio.css";
+@import "@anclora/design-system/components/editor-shell.css";
+@import "@anclora/design-system/components/text-editor.css";
+@import "@anclora/design-system/components/export-suite.css";
+@import "@anclora/design-system/components/topbar.css";
 
 :root,
 html[data-theme="dark"] {
@@ -19,7 +64,8 @@ html[data-theme="dark"] {
   --accent-soft: rgba(74, 159, 216, 0.12);
   --accent-glow: rgba(74, 159, 216, 0.10);
   --accent-border: rgba(74, 159, 216, 0.30);
-  --accent-mint: #c49a24;
+  /* Accent used as foreground (small text/icons) — meets ≥4.5:1 on dark surfaces */
+  --accent-text: #4A9FD8;
 
   /* ── Secondary (pale blue) ── */
   --secondary: #A0D0F0;
@@ -35,7 +81,7 @@ html[data-theme="dark"] {
   --text-primary: #EDF2F8;
   --text-secondary: #B0C4D8;
   --text-muted: #7090A8;
-  --text-on-accent: #FFFFFF;
+  --text-on-accent: #081019;
   --foreground: #EDF2F8;
 
   /* ── Structure (Premium shared) ── */
@@ -116,11 +162,11 @@ html[data-theme="dark"] {
   --button-secondary-border: rgba(74, 159, 216, 0.16);
   --button-secondary-hover-bg: rgba(28, 46, 64, 0.8);
   --button-secondary-hover-border: rgba(74, 159, 216, 0.34);
-  --talent-button-primary-bg: linear-gradient(135deg, #f3d37a 0%, #c49a24 52%, #8c6812 100%);
+  --talent-button-primary-bg: linear-gradient(135deg, #5CB4E8 0%, #4A9FD8 52%, #3A88BE 100%);
   --talent-button-primary-fg: #081019;
-  --talent-button-primary-border: rgba(244, 215, 133, 0.34);
-  --talent-button-primary-shadow: 0 18px 34px rgba(196, 154, 36, 0.24);
-  --talent-button-primary-hover-bg: linear-gradient(135deg, #f7dfa0 0%, #d9ad33 54%, #9d7316 100%);
+  --talent-button-primary-border: rgba(92, 180, 232, 0.42);
+  --talent-button-primary-shadow: 0 18px 34px rgba(74, 159, 216, 0.24);
+  --talent-button-primary-hover-bg: linear-gradient(135deg, #7CC4EF 0%, #5CB4E8 54%, #4A9FD8 100%);
   --talent-button-secondary-bg: rgba(255, 255, 255, 0.055);
   --talent-button-secondary-fg: #f4f8fc;
   --talent-button-secondary-border: rgba(255, 255, 255, 0.16);
@@ -150,13 +196,15 @@ html[data-theme="light"] {
   --elevated: #E8F0F8;
   --hover: #DEE8F4;
 
-  /* ── Accent ── */
-  --accent: #3A88BE;
-  --accent-hover: #2E78A8;
-  --accent-dim: #4A9FD8;
-  --accent-soft: rgba(58, 136, 190, 0.08);
-  --accent-glow: rgba(58, 136, 190, 0.06);
-  --accent-border: rgba(58, 136, 190, 0.20);
+  /* ── Accent (same contractual hex values as dark; text-safe variant for small text) ── */
+  --accent: #4A9FD8;
+  --accent-hover: #5CB4E8;
+  --accent-dim: #3A88BE;
+  --accent-soft: rgba(74, 159, 216, 0.10);
+  --accent-glow: rgba(74, 159, 216, 0.08);
+  --accent-border: rgba(74, 159, 216, 0.26);
+  /* #4A9FD8 on light surfaces only reaches ~2.9:1, so small text/icons use this darker shade (≥4.8:1 on light bg) */
+  --accent-text: #2C729F;
 
   /* ── Secondary ── */
   --secondary: #4878A0;
@@ -172,7 +220,7 @@ html[data-theme="light"] {
   --text-primary: #0C1820;
   --text-secondary: #3A5068;
   --text-muted: #7898B0;
-  --text-on-accent: #FFFFFF;
+  --text-on-accent: #081019;
   --foreground: #0C1820;
 
   /* ── Structure ── */
@@ -195,7 +243,7 @@ html[data-theme="light"] {
   --surface-elevated: #E8F0F8;
   --surface-overlay: rgba(12, 24, 32, 0.72);
   --surface-glass: rgba(255, 255, 255, 0.82);
-  --text-link: var(--accent);
+  --text-link: #2C729F;
   --focus-ring: color-mix(in srgb, var(--accent) 52%, white 10%);
   --focus-ring-offset: rgba(242, 247, 252, 0.92);
   --action-primary-bg: var(--button-highlight-bg);
@@ -240,24 +288,24 @@ html[data-theme="light"] {
   --preview-quote-border: #3A88BE;
 
   /* ── Buttons ── */
-  --button-highlight-bg: #3A88BE;
+  --button-highlight-bg: var(--accent);
   --button-highlight-fg: #050b12;
-  --button-highlight-hover: #2E78A8;
+  --button-highlight-hover: var(--accent-hover);
   --button-highlight-border: rgba(12, 24, 32, 0.14);
   --button-primary-bg: #124a50;
   --button-primary-fg: #fffdf8;
   --button-primary-hover: #0C141E;
-  --button-primary-border: rgba(58, 136, 190, 0.12);
+  --button-primary-border: rgba(74, 159, 216, 0.18);
   --button-secondary-bg: rgba(255, 253, 248, 0.92);
   --button-secondary-fg: #0C1820;
   --button-secondary-border: rgba(12, 24, 32, 0.24);
   --button-secondary-hover-bg: rgba(255, 255, 255, 0.98);
   --button-secondary-hover-border: rgba(12, 24, 32, 0.36);
-  --talent-button-primary-bg: linear-gradient(135deg, #173a5a 0%, #0f2740 100%);
-  --talent-button-primary-fg: #fffaf0;
-  --talent-button-primary-border: rgba(23, 58, 90, 0.14);
-  --talent-button-primary-shadow: 0 18px 32px rgba(15, 39, 64, 0.16);
-  --talent-button-primary-hover-bg: linear-gradient(135deg, #1d466b 0%, #13314d 100%);
+  --talent-button-primary-bg: linear-gradient(135deg, #5CB4E8 0%, #4A9FD8 52%, #3A88BE 100%);
+  --talent-button-primary-fg: #081019;
+  --talent-button-primary-border: rgba(58, 136, 190, 0.32);
+  --talent-button-primary-shadow: 0 18px 32px rgba(74, 159, 216, 0.22);
+  --talent-button-primary-hover-bg: linear-gradient(135deg, #7CC4EF 0%, #5CB4E8 54%, #4A9FD8 100%);
   --talent-button-secondary-bg: rgba(255, 255, 255, 0.88);
   --talent-button-secondary-fg: #10253a;
   --talent-button-secondary-border: rgba(16, 37, 58, 0.12);
@@ -523,10 +571,10 @@ body {
 }
 
 .talent-shell-sidebar-nav .ac-sidebar-nav__item[aria-current="page"] .talent-shell-sidebar-link__icon {
-  border-color: rgba(255, 211, 122, 0.22);
+  border-color: rgba(74, 159, 216, 0.34);
   background:
-    radial-gradient(circle at top left, rgba(255, 235, 188, 0.84) 0%, rgba(225, 173, 120, 0.66) 50%, rgba(145, 95, 127, 0.82) 100%);
-  color: #2a1820;
+    radial-gradient(circle at top left, rgba(160, 208, 240, 0.9) 0%, rgba(92, 180, 232, 0.72) 50%, rgba(58, 136, 190, 0.9) 100%);
+  color: #0C1820;
 }
 
 .talent-shell-switcher {
@@ -565,11 +613,11 @@ body {
 
 .talent-shell-switcher .ac-language-switcher__option[aria-current="true"],
 .talent-shell-switcher .ac-theme-switcher__option[aria-pressed="true"] {
-  border-color: rgba(255, 211, 122, 0.22);
+  border-color: rgba(74, 159, 216, 0.34);
   background:
-    radial-gradient(circle at top left, rgba(255, 235, 188, 0.9) 0%, rgba(225, 173, 120, 0.72) 48%, rgba(145, 95, 127, 0.88) 100%);
-  color: #28161d;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 10px 22px rgba(101, 52, 86, 0.2);
+    radial-gradient(circle at top left, rgba(160, 208, 240, 0.92) 0%, rgba(92, 180, 232, 0.76) 48%, rgba(58, 136, 190, 0.92) 100%);
+  color: #0C1820;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 10px 22px rgba(58, 136, 190, 0.22);
 }
 
 html[data-theme="light"] .talent-shell-switcher {
@@ -578,7 +626,7 @@ html[data-theme="light"] .talent-shell-switcher {
 
 html[data-theme="light"] .talent-shell-switcher .ac-language-switcher__option[aria-current="true"],
 html[data-theme="light"] .talent-shell-switcher .ac-theme-switcher__option[aria-pressed="true"] {
-  color: #32192b;
+  color: #0C1820;
 }
 
 .talent-shell-user-button {
@@ -716,7 +764,7 @@ html[data-theme="light"] .talent-shell-switcher .ac-theme-switcher__option[aria-
 }
 
 .talent-preview-page-input:focus {
-  border-color: var(--accent-mint);
+  border-color: var(--accent);
 }
 
 a {

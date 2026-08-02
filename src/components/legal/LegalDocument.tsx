@@ -177,7 +177,7 @@ export function LegalDocument({ kind }: { kind: Kind }) {
     <main className="min-h-screen bg-(--page-bg) px-5 py-12 text-(--text-primary)">
       <div className="mx-auto max-w-4xl space-y-6">
         <section className="rounded-3xl border border-(--border-subtle) bg-(--surface-elevated) p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--accent-mint)">Anclora Talent</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--accent-text)">Anclora Talent</p>
           <h1 className="mt-3 text-4xl font-semibold">{content.title}</h1>
           <p className="mt-3 text-sm leading-7 text-(--text-secondary)">{content.description}</p>
           <p className="mt-2 text-xs text-(--text-tertiary)">{content.updated}</p>
@@ -204,7 +204,7 @@ export function LegalDocument({ kind }: { kind: Kind }) {
           <Link href="/legal" className="rounded-full border border-(--border-subtle) px-5 py-3">
             Legal
           </Link>
-          <Link href="/" className="rounded-full bg-(--accent-mint) px-5 py-3 font-semibold text-black">
+          <Link href="/" className="rounded-full bg-(--accent) px-5 py-3 font-semibold text-black">
             {en ? 'Back' : 'Volver'}
           </Link>
         </nav>

@@ -46,7 +46,7 @@ export function DocumentStatsCard({ document, project, isLoading = false }: Docu
       <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
         <div className="ac-metric-card">
           <div className="ac-metric-card__header">
-            <BookOpen className="h-5 w-5 text-[var(--accent-mint)]" />
+            <BookOpen className="h-5 w-5 text-[var(--accent-text)]" />
           </div>
           <p className="ac-metric-card__value">{stats.chapterCount}</p>
           <p className="ac-metric-card__caption">
@@ -56,7 +56,7 @@ export function DocumentStatsCard({ document, project, isLoading = false }: Docu
 
         <div className="ac-metric-card">
           <div className="ac-metric-card__header">
-            <FileText className="h-5 w-5 text-[var(--accent-mint)]" />
+            <FileText className="h-5 w-5 text-[var(--accent-text)]" />
           </div>
           <p className="ac-metric-card__value">{formatNumber(stats.wordCount)}</p>
           <p className="ac-metric-card__caption">Palabras</p>
@@ -64,7 +64,7 @@ export function DocumentStatsCard({ document, project, isLoading = false }: Docu
 
         <div className="ac-metric-card">
           <div className="ac-metric-card__header">
-            <BarChart3 className="h-5 w-5 text-[var(--accent-mint)]" />
+            <BarChart3 className="h-5 w-5 text-[var(--accent-text)]" />
           </div>
           <p className="ac-metric-card__value">{formatNumber(stats.characterCount)}</p>
           <p className="ac-metric-card__caption">Caracteres</p>
@@ -72,7 +72,7 @@ export function DocumentStatsCard({ document, project, isLoading = false }: Docu
 
         <div className="ac-metric-card">
           <div className="ac-metric-card__header">
-            <Clock className="h-5 w-5 text-[var(--accent-mint)]" />
+            <Clock className="h-5 w-5 text-[var(--accent-text)]" />
           </div>
           <p className="ac-metric-card__value">{stats.pageCount}</p>
           <p className="ac-metric-card__caption">~Págs (laptop)</p>
@@ -100,7 +100,7 @@ export function DocumentStatsCard({ document, project, isLoading = false }: Docu
       {sourceMetrics && (
         <div className="mt-6 border-t border-[var(--border-subtle)] pt-4">
           <div className="flex items-center gap-2 mb-3">
-            <FileJson className="h-4 w-4 text-[var(--accent-mint)]" />
+            <FileJson className="h-4 w-4 text-[var(--accent-text)]" />
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
               Comparación con documento original
             </p>

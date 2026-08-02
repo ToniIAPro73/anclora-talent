@@ -201,7 +201,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
           <div
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            className="mb-6 rounded-[24px] border-2 border-dashed border-[var(--border-subtle)] bg-[var(--surface-soft)] p-8 text-center transition hover:border-[var(--accent-mint)] hover:bg-[var(--surface-soft)]"
+            className="mb-6 rounded-[24px] border-2 border-dashed border-[var(--border-subtle)] bg-[var(--surface-soft)] p-8 text-center transition hover:border-[var(--accent)] hover:bg-[var(--surface-soft)]"
           >
             <input
               ref={fileInputRef}
@@ -215,7 +215,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
 
             {importState === 'analyzing' && (
               <div className="space-y-3">
-                <Loader2 className="mx-auto h-8 w-8 animate-spin text-[var(--accent-mint)]" />
+                <Loader2 className="mx-auto h-8 w-8 animate-spin text-[var(--accent-text)]" />
                 <p className="text-sm text-[var(--text-secondary)]">Analizando archivo...</p>
               </div>
             )}

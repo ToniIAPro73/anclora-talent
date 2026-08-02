@@ -191,7 +191,7 @@ export function CoverForm({
             {copy.coverSave}
           </button>
           {saved && !isPending && (
-            <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]">
+            <span className="flex items-center gap-1.5 text-xs text-[var(--accent-text)]">
               <Check className="h-3 w-3" />
               Guardado
             </span>

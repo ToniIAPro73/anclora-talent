@@ -105,7 +105,7 @@ export function FontSelector({
               onClick={() => setActiveCategory('all')}
               className={`px-3 py-1.5 text-xs rounded font-medium transition-all ${
                 activeCategory === 'all'
-                  ? 'bg-[var(--accent-mint)] text-black shadow-md'
+                  ? 'bg-[var(--accent)] text-black shadow-md'
                   : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
               }`}
             >
@@ -117,7 +117,7 @@ export function FontSelector({
                 onClick={() => setActiveCategory(cat)}
                 className={`px-3 py-1.5 text-xs rounded capitalize font-medium transition-all ${
                   activeCategory === cat
-                    ? 'bg-[var(--accent-mint)] text-black shadow-md'
+                    ? 'bg-[var(--accent)] text-black shadow-md'
                     : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
                 }`}
               >
@@ -140,7 +140,7 @@ export function FontSelector({
                     onClick={() => handleSelectFont(font.family)}
                     className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-all ${
                       selectedFont === font.family
-                        ? 'bg-[var(--accent-mint)] text-black font-bold shadow-md'
+                        ? 'bg-[var(--accent)] text-black font-bold shadow-md'
                         : 'hover:bg-slate-700 text-slate-100 hover:text-white'
                     }`}
                     style={{ fontFamily: font.family }}

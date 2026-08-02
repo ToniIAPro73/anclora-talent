@@ -75,7 +75,7 @@ export const ImageNodeView = ({
       <div
         ref={containerRef}
         className={`relative inline-block group ${alignmentClasses[align as keyof typeof alignmentClasses]} ${
-          selected ? 'ring-2 ring-[var(--accent-mint)]' : ''
+          selected ? 'ring-2 ring-[var(--accent)]' : ''
         }`}
         style={{
           width: typeof width === 'number' ? `${width}px` : 'auto',
@@ -95,7 +95,7 @@ export const ImageNodeView = ({
         {/* Resize handle - visible on hover or when selected */}
         {selected && !isResizing && (
           <div
-            className="resize-handle absolute bottom-0 right-0 w-5 h-5 bg-[var(--accent-mint)] rounded-tl-[6px] cursor-se-resize opacity-80 hover:opacity-100 flex items-center justify-center text-white text-xs font-bold"
+            className="resize-handle absolute bottom-0 right-0 w-5 h-5 bg-[var(--accent)] rounded-tl-[6px] cursor-se-resize opacity-80 hover:opacity-100 flex items-center justify-center text-[var(--button-highlight-fg)] text-xs font-bold"
             title="Arrastra para redimensionar"
           >
             ⤡
@@ -104,7 +104,7 @@ export const ImageNodeView = ({
 
         {/* Selection indicator */}
         {selected && (
-          <div className="absolute inset-0 border-2 border-[var(--accent-mint)] rounded-[8px] pointer-events-none" />
+          <div className="absolute inset-0 border-2 border-[var(--accent)] rounded-[8px] pointer-events-none" />
         )}
 
         {/* Controls - visible when selected */}
@@ -113,7 +113,7 @@ export const ImageNodeView = ({
             <button
               className={`p-1 rounded-[4px] transition text-sm ${
                 align === 'left'
-                  ? 'bg-[var(--accent-mint)]/20 text-[var(--accent-mint)]'
+                  ? 'bg-[var(--accent)]/20 text-[var(--accent-text)]'
                   : 'hover:bg-[var(--surface-highlight)] text-[var(--text-secondary)]'
               }`}
               onClick={() => updateAttributes({ align: 'left' })}
@@ -124,7 +124,7 @@ export const ImageNodeView = ({
             <button
               className={`p-1 rounded-[4px] transition text-sm ${
                 align === 'center'
-                  ? 'bg-[var(--accent-mint)]/20 text-[var(--accent-mint)]'
+                  ? 'bg-[var(--accent)]/20 text-[var(--accent-text)]'
                   : 'hover:bg-[var(--surface-highlight)] text-[var(--text-secondary)]'
               }`}
               onClick={() => updateAttributes({ align: 'center' })}
@@ -135,7 +135,7 @@ export const ImageNodeView = ({
             <button
               className={`p-1 rounded-[4px] transition text-sm ${
                 align === 'right'
-                  ? 'bg-[var(--accent-mint)]/20 text-[var(--accent-mint)]'
+                  ? 'bg-[var(--accent)]/20 text-[var(--accent-text)]'
                   : 'hover:bg-[var(--surface-highlight)] text-[var(--text-secondary)]'
               }`}
               onClick={() => updateAttributes({ align: 'right' })}

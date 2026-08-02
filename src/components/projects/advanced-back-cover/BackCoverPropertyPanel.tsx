@@ -37,7 +37,7 @@ export function BackCoverPropertyPanel({
           value={title}
           onChange={(e) => onTitleChange(e.target.value)}
           placeholder="Título de la contraportada"
-          className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+          className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
         />
       </label>
 
@@ -48,7 +48,7 @@ export function BackCoverPropertyPanel({
           onChange={(e) => onBodyChange(e.target.value)}
           placeholder="Contenido principal de la contraportada"
           rows={5}
-          className="min-h-28 w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+          className="min-h-28 w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
         />
       </label>
 
@@ -59,7 +59,7 @@ export function BackCoverPropertyPanel({
           onChange={(e) => onAuthorBioChange(e.target.value)}
           placeholder="Biografía del autor"
           rows={3}
-          className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+          className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
         />
       </label>
 
@@ -72,7 +72,7 @@ export function BackCoverPropertyPanel({
               type="button"
               onClick={() => onAccentChange(color)}
               title={color}
-              className={`h-7 w-7 rounded-full border-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-mint)] ${
+              className={`h-7 w-7 rounded-full border-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
                 accentColor === color ? 'border-[var(--text-primary)] scale-110' : 'border-transparent'
               }`}
               style={{ background: color }}

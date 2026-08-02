@@ -363,7 +363,7 @@ export function ProjectWorkspace({
                       data-testid="project-document-title-input"
                       name="title"
                       defaultValue={project.document.title}
-                      className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+                      className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
                     />
                   </label>
                   <label className="block space-y-2">
@@ -372,7 +372,7 @@ export function ProjectWorkspace({
                       data-testid="project-document-author-input"
                       name="author"
                       defaultValue={project.document.author}
-                      className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+                      className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
                     />
                   </label>
                 </div>
@@ -382,7 +382,7 @@ export function ProjectWorkspace({
                     data-testid="project-document-subtitle-input"
                     name="subtitle"
                     defaultValue={project.document.subtitle}
-                    className="min-h-32 w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-mint)]"
+                    className="min-h-32 w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
                   />
                 </label>
                 <div className="flex justify-end">
@@ -568,13 +568,13 @@ export function ProjectWorkspace({
             </span>
           )}
           {saveState === 'saved' && !isPending && (
-            <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]" data-testid="project-save-status-saved">
+            <span className="flex items-center gap-1.5 text-xs text-[var(--accent-text)]" data-testid="project-save-status-saved">
               <Check className="h-3 w-3" />
               Guardado
             </span>
           )}
           {pageNumberSyncFeedback === 'done' && (
-            <span className="flex items-center gap-1.5 text-xs text-[var(--accent-mint)]" data-testid="pagination-sync-feedback-done">
+            <span className="flex items-center gap-1.5 text-xs text-[var(--accent-text)]" data-testid="pagination-sync-feedback-done">
               <Check className="h-3 w-3" />
               {copy.chapterSyncPageNumbersDone}
             </span>

@@ -174,7 +174,7 @@ export function CoverPropertyPanel() {
                 <Textarea
                   value={localProps.text}
                   onChange={(e) => handleTextChange(e.target.value)}
-                  className="min-h-20 bg-[var(--surface-soft)] border-[var(--border-subtle)] focus:border-[var(--accent-mint)] text-sm"
+                  className="min-h-20 bg-[var(--surface-soft)] border-[var(--border-subtle)] focus:border-[var(--accent)] text-sm"
                 />
               </div>
 

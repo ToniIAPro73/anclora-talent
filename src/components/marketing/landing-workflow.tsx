@@ -26,7 +26,7 @@ export function LandingWorkflow({ advanceLabel, description, eyebrow, stepLabel,
       <ol className="mt-8 grid gap-4 lg:grid-cols-3" role="list">
         {steps.map((step, index) => (
           <li key={step.title} className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface-muted)] p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--accent-mint)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--accent-text)]">
               {stepLabel} {index + 1}
             </p>
             <h3 className="mt-3 text-2xl font-black tracking-tight text-[var(--text-primary)]">{step.title}</h3>
