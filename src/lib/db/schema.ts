@@ -8,6 +8,23 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 
+export const users = pgTable('users', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  passwordHash: text('password_hash').notNull(),
+  fullName: varchar('full_name', { length: 255 }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const sessions = pgTable('sessions', {
+  id: varchar('id', { length: 64 }).primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const appUsers = pgTable('app_users', {
   id: uuid('id').defaultRandom().primaryKey(),
   clerkUserId: varchar('clerk_user_id', { length: 191 }).notNull().unique(),

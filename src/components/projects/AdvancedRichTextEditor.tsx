@@ -258,7 +258,7 @@ function ToolbarButton({ onClick, active, disabled, title, children }: ToolbarBu
       disabled={disabled}
       title={title}
       data-active={active ? 'true' : 'false'}
-      className="ac-text-editor__button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-mint)]"
+      className="ac-text-editor__button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
     >
       {children}
     </button>
@@ -427,7 +427,7 @@ const AdvancedFontSelector = ({
         onClick={() => isAvailable && setIsOpen(!isOpen)}
         disabled={!isAvailable}
         title={isAvailable ? 'Familia tipográfica' : unavailableTitle}
-        className="flex h-9 min-w-[140px] items-center justify-between gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--text-primary)] hover:border-[var(--accent-mint)] transition-colors disabled:pointer-events-none disabled:opacity-30"
+        className="flex h-9 min-w-[140px] items-center justify-between gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors disabled:pointer-events-none disabled:opacity-30"
       >
         <span className="truncate">{currentFont}</span>
         <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
@@ -442,7 +442,7 @@ const AdvancedFontSelector = ({
               placeholder="Buscar fuente..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--background)] py-2 pl-8 pr-3 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent-mint)]"
+              className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--background)] py-2 pl-8 pr-3 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
               autoFocus
             />
           </div>
@@ -467,7 +467,7 @@ const AdvancedFontSelector = ({
                 className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm text-[var(--text-primary)] hover:bg-[var(--hover)]"
               >
                 {font.family}
-                {currentFont === font.family && <Check className="h-3 w-3 text-[var(--accent-mint)]" />}
+                {currentFont === font.family && <Check className="h-3 w-3 text-[var(--accent-text)]" />}
               </button>
             ))}
           </div>
@@ -543,7 +543,7 @@ const FontSizeSelector = ({
               }}
               className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                 currentSize === size.value
-                  ? 'bg-[var(--accent-mint)]/20 text-[var(--accent-mint)]'
+                  ? 'bg-[var(--accent)]/20 text-[var(--accent-text)]'
                   : 'text-[var(--text-secondary)] hover:bg-[var(--hover)]'
               }`}
               title={size.name}
@@ -608,9 +608,9 @@ const ColorSelector = ({
         type="button"
         onClick={() => isAvailable && setIsOpen(!isOpen)}
         disabled={!isAvailable}
-        className={`inline-flex h-9 w-9 items-center justify-center rounded-[10px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-mint)] disabled:opacity-30 disabled:cursor-not-allowed ${
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-[10px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] disabled:opacity-30 disabled:cursor-not-allowed ${
           isAvailable && currentColor !== 'inherit'
-            ? 'bg-[var(--accent-mint)] text-white shadow-[0_0_15px_rgba(45,212,191,0.5)]'
+            ? 'bg-[var(--accent)] text-[var(--button-highlight-fg)] shadow-[0_0_15px_rgba(45,212,191,0.5)]'
             : isAvailable
             ? 'text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]'
             : 'text-[var(--text-secondary)]'
@@ -647,8 +647,8 @@ const ColorSelector = ({
                 }}
                 className={`group flex items-center gap-3 rounded-xl border px-3 py-2 text-left transition-all duration-200 ${
                   currentColor === color.value
-                    ? 'border-[var(--accent-mint)] bg-[var(--accent-mint)]/10'
-                    : 'border-[var(--border-subtle)] bg-[var(--background)]/30 hover:border-[var(--accent-mint)]/50'
+                    ? 'border-[var(--accent)] bg-[var(--accent)]/10'
+                    : 'border-[var(--border-subtle)] bg-[var(--background)]/30 hover:border-[var(--accent)]/50'
                 }`}
                 title={color.name}
               >
@@ -1032,8 +1032,8 @@ const MenuBar = ({
                 onClick={() => applyBulletList(option.value)}
                 className={`rounded-lg border px-3 py-2 text-left transition-colors ${
                   currentBulletStyle === option.value
-                    ? 'border-[var(--accent-mint)] bg-[var(--accent-mint)]/10 text-[var(--text-primary)]'
-                    : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--accent-mint)]/50'
+                    ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--text-primary)]'
+                    : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--accent)]/50'
                 }`}
                 title={option.label}
               >
@@ -1057,8 +1057,8 @@ const MenuBar = ({
                 onClick={() => applyOrderedList(option.value)}
                 className={`rounded-lg border px-3 py-2 text-left transition-colors ${
                   currentOrderedStyle === option.value
-                    ? 'border-[var(--accent-mint)] bg-[var(--accent-mint)]/10 text-[var(--text-primary)]'
-                    : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--accent-mint)]/50'
+                    ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--text-primary)]'
+                    : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--accent)]/50'
                 }`}
                 title={option.label}
               >
@@ -1961,7 +1961,7 @@ export function AdvancedRichTextEditor({
           <span className="flex items-center gap-1.5"><Type className="h-3 w-3" /> {editor.storage.characterCount.words()} palabras</span>
           <span className="flex items-center gap-1.5"><Baseline className="h-3 w-3" /> {editor.storage.characterCount.characters()} caracteres</span>
         </div>
-        <div className="text-[var(--accent-mint)]">Premium Editor Active</div>
+        <div className="text-[var(--accent-text)]">Premium Editor Active</div>
       </div>
     </div>
   );

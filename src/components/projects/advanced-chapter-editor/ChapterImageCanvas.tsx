@@ -298,7 +298,7 @@ export function ChapterImageCanvas({
             className="ac-button ac-button--ghost ac-button--sm"
             title="Añadir imagen"
           >
-            <ImageIcon className="h-4 w-4 text-[var(--accent-mint)]" />
+            <ImageIcon className="h-4 w-4 text-[var(--accent-text)]" />
             <span>Imagen</span>
           </button>
         </div>

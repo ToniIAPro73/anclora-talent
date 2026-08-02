@@ -19,6 +19,10 @@ describe('brand logo contract', () => {
   test('uses the uploaded Anclora Talent brand asset in landing and app shell', () => {
     expect(landingHero).toContain('BrandLogo');
     expect(appShell).toContain('BrandLogo');
-    expect(brandLogo).toContain('/brand/logo-anclora-talent.png');
+    // The asset path lives in TALENT_BRAND.logoPath (asserted in talent-brand.test.ts);
+    // BrandLogo must render it without the legacy circular crop.
+    expect(brandLogo).toContain('TALENT_BRAND.logoPath');
+    expect(brandLogo).toContain('object-contain');
+    expect(brandLogo).not.toContain('rounded-full');
   });
 });

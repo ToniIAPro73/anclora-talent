@@ -2,7 +2,28 @@
 
 ## Active entities
 
+### User
+
+Own-auth account (Fase A; replaces Clerk-managed identity).
+
+- `id` (uuid)
+- `email` (unique, lowercase)
+- `passwordHash` (bcrypt)
+- `fullName`
+- `createdAt`
+
+### Session
+
+Opaque login session; only the SHA-256 of the token is persisted.
+
+- `id` (sha256 hex of the opaque token)
+- `userId` (FK → `users.id`, cascade)
+- `expiresAt` (30 days, sliding renewal)
+- `createdAt`
+
 ### AppUser
+
+Legacy Clerk-linked record, kept for historical data; no longer written by auth flows.
 
 - `id`
 - `clerkUserId`

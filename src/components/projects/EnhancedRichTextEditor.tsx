@@ -35,7 +35,7 @@ function ToolbarButton({ onClick, active, disabled, dataTestId, title, children 
       disabled={disabled}
       data-testid={dataTestId}
       title={title}
-      className={`inline-flex h-8 w-8 items-center justify-center rounded-[10px] text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-mint)] disabled:pointer-events-none disabled:opacity-40 ${
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-[10px] text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] disabled:pointer-events-none disabled:opacity-40 ${
         active
           ? 'bg-[var(--button-highlight-bg)] text-[var(--button-highlight-fg)]'
           : 'text-[var(--text-secondary)] hover:bg-[var(--surface-highlight)] hover:text-[var(--text-primary)]'
@@ -94,7 +94,7 @@ export function EnhancedRichTextEditor({
     editorProps: {
       attributes: {
         class:
-          'max-w-none min-h-[400px] p-5 focus:outline-none text-[var(--text-primary)] text-base leading-7 [&_blockquote]:border-l-4 [&_blockquote]:border-[var(--accent-mint)] [&_blockquote]:pl-4 [&_blockquote]:text-[var(--text-secondary)] [&_h1]:text-2xl [&_h1]:font-black [&_h2]:text-xl [&_h2]:font-black [&_h3]:text-lg [&_h3]:font-bold [&_li]:mb-1 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:leading-7 [&_ul]:list-disc [&_ul]:pl-6 [&_img]:max-w-full [&_img]:h-auto [&_a]:text-[var(--accent-mint)] [&_a]:underline',
+          'max-w-none min-h-[400px] p-5 focus:outline-none text-[var(--text-primary)] text-base leading-7 [&_blockquote]:border-l-4 [&_blockquote]:border-[var(--accent)] [&_blockquote]:pl-4 [&_blockquote]:text-[var(--text-secondary)] [&_h1]:text-2xl [&_h1]:font-black [&_h2]:text-xl [&_h2]:font-black [&_h3]:text-lg [&_h3]:font-bold [&_li]:mb-1 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:leading-7 [&_ul]:list-disc [&_ul]:pl-6 [&_img]:max-w-full [&_img]:h-auto [&_a]:text-[var(--accent-text)] [&_a]:underline',
       },
     },
     immediatelyRender: false,
@@ -320,7 +320,7 @@ export function EnhancedRichTextEditor({
             placeholder="Search in content..."
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
-            className="flex-1 px-3 py-1 rounded-lg bg-[var(--page-surface)] border border-[var(--border-subtle)] text-sm focus:outline-none focus:border-[var(--accent-mint)]"
+            className="flex-1 px-3 py-1 rounded-lg bg-[var(--page-surface)] border border-[var(--border-subtle)] text-sm focus:outline-none focus:border-[var(--accent)]"
           />
           <button
             onClick={() => setIsSearchOpen(false)}

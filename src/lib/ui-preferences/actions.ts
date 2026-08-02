@@ -1,20 +1,20 @@
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
+import { getCurrentUser } from '@/lib/auth/guards';
 import { userPreferencesRepository } from '@/lib/db/repositories';
 import { defaultEditorPreferences, type EditorPreferences } from './preferences';
 
 export async function getEditorPreferencesAction(): Promise<EditorPreferences> {
-  const { userId } = await auth();
-  if (!userId) return defaultEditorPreferences;
+  const user = await getCurrentUser();
+  if (!user) return defaultEditorPreferences;
 
-  const stored = await userPreferencesRepository.getEditorPreferences(userId);
+  const stored = await userPreferencesRepository.getEditorPreferences(user.id);
   return stored ? { ...defaultEditorPreferences, ...stored } : defaultEditorPreferences;
 }
 
 export async function saveEditorPreferencesAction(prefs: EditorPreferences): Promise<void> {
-  const { userId } = await auth();
-  if (!userId) return;
+  const user = await getCurrentUser();
+  if (!user) return;
 
-  await userPreferencesRepository.saveEditorPreferences(userId, prefs);
+  await userPreferencesRepository.saveEditorPreferences(user.id, prefs);
 }

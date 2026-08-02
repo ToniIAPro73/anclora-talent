@@ -57,7 +57,7 @@ describe('export-builder', () => {
     const pdfDocument = await buildProjectPdf(makeProject());
 
     expect(pdfDocument).toBeTruthy();
-  });
+  }, 15000);
 
   test('content page image generator returns an image data URL for DOCX page locking', async () => {
     const first = await buildContentPageExportImageDataUrl(

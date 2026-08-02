@@ -32,14 +32,10 @@ vi.mock('./RichTextEditor', () => ({
   ),
 }));
 
-vi.mock('./advanced-cover/AdvancedCoverEditor', () => ({
-  AdvancedCoverEditor: ({ project }: { project: ProjectRecord }) => (
-    <div data-testid="advanced-cover-editor">{project.cover.title}</div>
+vi.mock('./cover-studio/CoverStudio', () => ({
+  CoverStudio: ({ surface }: { surface: string }) => (
+    <div data-testid={`cover-studio-${surface}`} />
   ),
-}));
-
-vi.mock('./advanced-back-cover/AdvancedBackCoverEditor', () => ({
-  AdvancedBackCoverEditor: () => <div data-testid="advanced-back-cover-editor" />,
 }));
 
 const copy = resolveLocaleMessages('es').project;
@@ -241,9 +237,9 @@ describe('ProjectWorkspace', () => {
     expect(screen.getAllByText('3').length).toBeGreaterThan(0);
   });
 
-  test('can switch to advanced cover in Step 4', () => {
+  test('renders the unified cover studio in Step 4', () => {
     render(<ProjectWorkspace project={makeProject()} copy={copy} />);
-    
+
     const nextButton = screen.getByText('Siguiente paso');
     // 1 -> 2
     fireEvent.click(nextButton);
@@ -252,57 +248,19 @@ describe('ProjectWorkspace', () => {
     // 3 -> 4
     fireEvent.click(nextButton);
 
-    const advancedButton = screen.getByText(copy.coverSwitchToAdvanced);
-    fireEvent.click(advancedButton);
-
-    expect(screen.getByTestId('advanced-cover-editor')).toBeInTheDocument();
+    expect(screen.getByTestId('cover-studio-cover')).toBeInTheDocument();
   });
 
-  test('preserves the basic cover draft when switching to the advanced cover editor', () => {
+  test('renders the same unified studio for the back cover in Step 5', () => {
     render(<ProjectWorkspace project={makeProject()} copy={copy} />);
 
     const nextButton = screen.getByText('Siguiente paso');
     fireEvent.click(nextButton);
     fireEvent.click(nextButton);
     fireEvent.click(nextButton);
-
-    fireEvent.change(screen.getByLabelText(copy.coverTitleLabel), {
-      target: { value: 'NUNCA MAS EN LA SOMBRA' },
-    });
-
-    fireEvent.click(screen.getByText(copy.coverSwitchToAdvanced));
-
-    expect(screen.getByTestId('advanced-cover-editor')).toHaveTextContent('NUNCA MAS EN LA SOMBRA');
-  });
-
-  test('basic cover does not reintroduce a removed subtitle', () => {
-    const project = makeProject({
-      cover: {
-        ...makeProject().cover,
-        subtitle: 'Subtítulo antiguo',
-        showSubtitle: true,
-        surfaceState: (() => {
-          const state = createDefaultSurfaceState('cover');
-          state.fields.title.value = 'Mi Proyecto';
-          state.fields.title.visible = true;
-          state.fields.subtitle.value = '';
-          state.fields.subtitle.visible = false;
-          state.fields.author.value = 'Autor Demo';
-          state.fields.author.visible = true;
-          return state;
-        })(),
-      },
-    });
-
-    render(<ProjectWorkspace project={project} copy={copy} />);
-
-    const nextButton = screen.getByText('Siguiente paso');
-    fireEvent.click(nextButton);
-    fireEvent.click(nextButton);
     fireEvent.click(nextButton);
 
-    expect(screen.getByLabelText(copy.coverSubtitleLabel)).toHaveValue('');
-    expect(screen.queryByTestId('cover-preview-subtitle')).not.toBeInTheDocument();
+    expect(screen.getByTestId('cover-studio-back-cover')).toBeInTheDocument();
   });
 
   test('template step shows separate cover and back cover catalogs', () => {
