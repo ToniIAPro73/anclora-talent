@@ -12,6 +12,12 @@ export interface SurfaceTemplateDefinition {
   surface: SurfaceKind;
   visibility?: Partial<Record<SurfaceFieldKey, boolean>>;
   layout: { kind: string };
+  /**
+   * Per-field typography/composition presets applied when the template is
+   * selected. Merged over the field layers; layers missing from the state
+   * are created for visible fields.
+   */
+  layerStyles?: Partial<Record<SurfaceFieldKey, Partial<SurfaceLayer>>>;
 }
 
 export interface SurfaceLayer {
@@ -102,10 +108,36 @@ export function applySurfaceTemplate(
     };
   }
 
+  // Reconcile layers with the template: keep the user's custom geometry for
+  // layers that still exist, create layers for newly visible fields and merge
+  // the template typography presets on top.
+  const layerStyles = template.layerStyles ?? {};
+  const layersByField = new Map(
+    (next.layers ?? [])
+      .filter((layer) => layer.type === 'text' && layer.fieldKey)
+      .map((layer) => [layer.fieldKey as SurfaceFieldKey, layer]),
+  );
+
+  const preservedExtra = (next.layers ?? []).filter(
+    (layer) => !(layer.type === 'text' && layer.fieldKey),
+  );
+
+  const layers: SurfaceLayer[] = [...preservedExtra];
+  for (const [fieldKey, fieldState] of Object.entries(fields) as Array<
+    [SurfaceFieldKey, SurfaceFieldState]
+  >) {
+    if (!fieldState.visible) continue;
+    const existing = layersByField.get(fieldKey);
+    const base: SurfaceLayer =
+      existing ?? { id: `${next.surface}-${fieldKey}`, type: 'text', fieldKey };
+    layers.push({ ...base, ...(layerStyles[fieldKey] ?? {}), fieldKey });
+  }
+
   return {
     ...next,
     layout: template.layout,
     fields,
+    layers,
   };
 }
 

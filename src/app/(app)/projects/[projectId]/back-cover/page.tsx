@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { BackCoverForm } from '@/components/projects/BackCoverForm';
+import { CoverStudio } from '@/components/projects/cover-studio/CoverStudio';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { NavigatingLink } from '@/components/ui/NavigatingLink';
 import { requireUserId } from '@/lib/auth/guards';
@@ -42,7 +42,7 @@ export default async function ProjectBackCoverPage({
           </NavigatingLink>
         </div>
       </div>
-      <BackCoverForm copy={copy} project={project} />
+      <CoverStudio surface="back-cover" project={project} copy={copy} />
     </div>
   );
 }

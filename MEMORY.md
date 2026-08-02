@@ -5,3 +5,40 @@ El ecosistema Anclora tiene arquitecturas distintas por producto. Antes de actua
 
 Caso crítico conocido: Anclora Nexus usa frontend en Vercel (`/frontend`), backend en Render (`/backend`) y Supabase para Auth/DB. No usar Neon como sustituto directo de Supabase en Nexus sin rediseñar auth/datos. No hay Supabase Pro/Branching ni segundo proyecto Supabase si exige upgrade; staging requiere flags/guards si comparte Supabase.
 <!-- ANCLORA-ECOSYSTEM-CONTEXT-END -->
+
+## 2026-08-02 — Auth propia (Fase A), Clerk retirado
+
+- Se eliminó `@clerk/nextjs` por completo. La autenticación ahora es propia, dentro del propio Next.js, sin servicios externos.
+- Modelo de datos: tablas `users` (email único lowercase, `password_hash` bcrypt) y `sessions` (id = SHA-256 del token opaco, FK cascade a `users`, `expires_at` 30 días con renovación deslizante). Migración: `src/db/migrations/0002_cultured_scorpion.sql` + pasos idempotentes en `scripts/ensure-migrations.js`.
+- Sesión: token opaco de 32 bytes (`crypto.randomBytes`) en cookie `anclora_session` (`httpOnly; Secure; SameSite=Lax; Path=/`); en DB solo se persiste el hash. Nombre de cookie y opciones en `src/lib/auth/constants.ts`.
+- Route handlers: `POST /api/auth/register` (409 email duplicado), `POST /api/auth/login` (401 genérico, rate-limit en memoria por IP+email: 5 intentos/10 min, comparación constante con hash dummy), `POST /api/auth/logout`, `GET /api/auth/me`.
+- Guards: `src/lib/auth/guards.ts` expone `getCurrentUser()`, `requireUser()` y `requireUserId()` (misma firma que con Clerk: devuelve `userId` string o redirige a `/sign-in` con `buildAbsoluteAppUrl`).
+- Protección de rutas: `src/proxy.ts` delega en `src/lib/auth/middleware.ts` (`protectRequest`): gate por presencia de cookie en `/dashboard`, `/projects`, `/api/blob`; la validación fuerte sigue en `requireUserId`.
+- Pantallas `/sign-in` y `/sign-up` propias (`LoginPageContent`/`RegisterPageContent`) siguiendo ANCLORA_AUTH_LOGIN_SCREEN_CONTRACT v1.3.0; clases `.talent-auth-*` en `globals.css` consumen solo tokens del design system (sin hex) para heredar el cambio de acento de la Fase B.
+- `AppShell` sustituye `<UserButton>` por `UserMenu` propio con nombre/email y "Cerrar sesión". `LegalFooter` se excluye de rutas de auth.
+- Los `userId` almacenados en `projects`/`activity_log`/`user_preferences` ahora son UUID de `users.id` (caben en `varchar(191)`); la tabla legacy `app_users` (con `clerk_user_id`) se conserva sin uso activo.
+- Credenciales de prueba E2E documentadas en `memory/test_credentials.md`.
+
+## 2026-08-02 — Branding contractual (Fase B), oro retirado como acento
+
+- Acento estructural único: `#4A9FD8` (azul cielo, hue 205°) por mandato de `ANCLORA_BRANDING_MASTER_CONTRACT` (el oro `#D4AF37` pertenece a Nexus/Private Estates). Mismos hex de acento en ambos temas: `--accent #4A9FD8`, `--accent-hover #5CB4E8`, `--accent-dim #3A88BE`.
+- Token `--accent-mint: #c49a24` (dorado) eliminado de `globals.css`; todos sus usos en `src/` se migraron a `var(--accent)` (color estructural: fondos, bordes, anillos de foco) o `var(--accent-text)` (texto pequeño/iconos/enlaces). Nuevo token `--accent-text`: `#4A9FD8` en dark; `#2C729F` en light porque `#4A9FD8` sobre fondos claros solo da ~2.9:1 (mínimo 4.5:1). `--text-link` en light también usa `#2C729F`.
+- Texto sobre acento: foreground oscuro `#050b12`/`#081019` (6.8:1 sobre `#4A9FD8`). Blanco sobre azul queda prohibido (2.9:1). `--text-on-accent` corregido a `#081019` en ambos temas; botones con `bg-[var(--accent)]` que llevaban `text-white` pasan a `text-[var(--button-highlight-fg)]`.
+- Botón primario (`--talent-button-primary-*`): gradiente dorado → gradiente azul (`#5CB4E8 → #4A9FD8 → #3A88BE`) en ambos temas. Gradientes dorados del shell (icono de nav activo, opción seleccionada del switcher de tema/idioma) reemplazados por gradientes azules.
+- Las clases `.talent-auth-*` (Fase A) no se tocaron: heredan el nuevo acento vía tokens (`--accent`, `--auth-card-surface`, etc.), como se diseñó.
+- `docs/standards/TALENT_COLOR_PALETTE.md` reescrito: dirección "azul cielo + teal profundo + navy"; deja constancia de que sustituye a la versión oro por el contrato maestro. Tests de contrato actualizados (`talent-theme-contract.test.ts`).
+- `BrandLogo` pasa al patrón contractual sin círculo (`div relative` + `next/image fill` + `object-contain` + drop-shadow). Login y registro ya lo cumplían (Fase A, inline); AppShell y landing-hero actualizados.
+- DM Sans real: `layout.tsx` usaba variables stub vacías (caía a `system-ui`). Ahora se autohospeda la variable font DM Sans (latin + latin-ext) en `src/app/fonts/` vía `next/font/local`, sin dependencia de red en build. JetBrains Mono sigue con fallback de sistema (solo UI de editor).
+- Oro superviviente (documentado, NO es branding de app): presets de color de texto del editor (`Oro Premium #C49A24` en `AdvancedRichTextEditor`), presets de acento de contraportada (`#d4af37` en `BackCoverForm`/`advanced-back-cover`) y paletas de portada/export (`CoverPreview`, `export-builder`, `export-surface-image`). Son contenido de documento del usuario; se dejaron intactos a propósito.
+- Fix estructural (preexistente): `@import "@anclora/design-system/system.css"` se perdía entero en los builds (Turbopack/Lightning CSS descarta los `@import url("./…")` anidados del paquete — el mismo problema que Fase A vio en `next dev` también vaciaba el CSS de producción: todas las clases `.ac-*` quedaban sin estilar). `globals.css` ahora importa directamente los subpaths exportados del paquete (tokens, taxonomy, themes, foundations y cada componente), en el mismo orden que `system.css`.
+
+## 2026-08-02 — Motor de portada 100% DOM (Fase C), Fabric fuera del render de texto
+
+- Nuevo editor unificado `CoverStudio` (`src/components/projects/cover-studio/`): un solo componente para portada y contraportada con dos modos (simple = plantilla guiada; avanzado = capas libres) sobre el MISMO `SurfaceState`. Sustituye a `CoverForm`, `BackCoverForm`, `advanced-cover/` y `advanced-back-cover/` (eliminados), y al draft ad hoc básico↔avanzado de `ProjectWorkspace`.
+- El texto se renderiza 100% como DOM posicionado (`SurfaceCanvas`): cada capa declara `width` + `white-space: pre-wrap` + `overflow: visible` y nunca altura fija, así que el recorte histórico ("NUNCA M" en vez de "NUNCA MÁS EN LA SOMBRA", ver `Archive/docs/estado-editor-avanzado-portada.md`) es imposible por construcción. Edición inline con doble clic (`contentEditable`) y arrastre con pointer events.
+- WYSIWYG literal: el guardado exporta ese mismo nodo con `html-to-image` y lo sube con `renderCoverImageAction`/`renderBackCoverImageAction`. La geometría (`COVER_SURFACE_CANVAS` 400×600, `computeLayerStyle`/`layerStyleToCss`) replica las convenciones del renderer server-side de `export-surface-image.ts`, así cliente y servidor coinciden.
+- `canvas-store.ts` eliminado. La dependencia `fabric` se CONSERVA únicamente porque `advanced-chapter-editor/ChapterImageCanvas.tsx` (fuera de alcance) usa `canvas-utils.ts`/`canvas-guides.ts`; retirarla del `package.json` queda para la fase que reescriba ese editor.
+- Plantillas: `EditorialTemplate.layerStyles` (preset tipográfico por campo) en `cover-templates.ts`; `applySurfaceTemplate` reconcilia capas y funde presets. El modo simple siempre parte de plantilla.
+- Impresión preparada: `COVER_PRINT_GEOMETRY` (trim 140×210 mm, bleed 3 mm) + `computeSpineWidthMm`/`computeFullCoverSpreadWidthMm` en `cover-layout.ts` para la futura cubierta completa (portada+lomo+contraportada).
+- Contrato persistido intacto (`cover`/`backCover` JSON + mismas server actions); `migration-contract.test.ts` sigue exigiendo `premiumPrimaryDarkButton` en el guardado del estudio.
+- Regresión permanente: tests unitarios anti-recorte en `cover-studio/` y e2e `e2e/cover-studio.spec.ts` (título largo completo dentro del lienzo en portada y contraportada, dark y light, ambos modos; screenshot `test-results/cover-studio-nunca-mas.png`). Decisiones en `sdd/features/feature-dom-cover-engine/spec.md`.

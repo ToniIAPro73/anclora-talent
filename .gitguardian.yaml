@@ -1,0 +1,9 @@
+version: 2
+
+# Test fixtures only: fake credentials used by unit and e2e tests.
+# No real secrets live in these paths.
+paths-ignore:
+  - "src/**/*.test.ts"
+  - "src/**/*.test.tsx"
+  - "e2e/**"
+  - "memory/test_credentials.md"

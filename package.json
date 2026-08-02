@@ -17,7 +17,6 @@
   },
   "dependencies": {
     "@anclora/design-system": "https://codeload.github.com/ToniIAPro73/anclora-design-system/tar.gz/6561c71d2afb199ff2be379c1d18d59a0f76f648",
-    "@clerk/nextjs": "^7.0.7",
     "@neondatabase/serverless": "^1.0.2",
     "@react-pdf/renderer": "^4.3.2",
     "@sparticuz/chromium": "^147.0.0",
@@ -36,6 +35,7 @@
     "@tiptap/starter-kit": "^3.22.2",
     "@types/react-color": "^3.0.13",
     "@vercel/blob": "^2.3.2",
+    "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "docx": "^9.6.1",
     "drizzle-orm": "^0.45.2",

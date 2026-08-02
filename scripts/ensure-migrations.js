@@ -13,6 +13,32 @@ const migrations = [
   // Add show_subtitle column if it doesn't exist
   `ALTER TABLE "cover_designs"
    ADD COLUMN IF NOT EXISTS "show_subtitle" integer DEFAULT 1;`,
+  // Own-auth tables (Fase A): credentials + opaque sessions
+  `CREATE TABLE IF NOT EXISTS "users" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "email" varchar(255) NOT NULL,
+    "password_hash" text NOT NULL,
+    "full_name" varchar(255) NOT NULL,
+    "created_at" timestamp with time zone DEFAULT now() NOT NULL
+  );`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "users_email_unique" ON "users" ("email");`,
+  `CREATE TABLE IF NOT EXISTS "sessions" (
+    "id" varchar(64) PRIMARY KEY NOT NULL,
+    "user_id" uuid NOT NULL,
+    "expires_at" timestamp with time zone NOT NULL,
+    "created_at" timestamp with time zone DEFAULT now() NOT NULL
+  );`,
+  `DO $$
+   BEGIN
+     IF NOT EXISTS (
+       SELECT 1 FROM pg_constraint WHERE conname = 'sessions_user_id_users_id_fk'
+     ) THEN
+       ALTER TABLE "sessions"
+       ADD CONSTRAINT "sessions_user_id_users_id_fk"
+       FOREIGN KEY ("user_id") REFERENCES "public"."users"("id")
+       ON DELETE cascade ON UPDATE no action;
+     END IF;
+   END $$;`,
 ];
 
 async function runMigrations() {

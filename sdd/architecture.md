@@ -5,7 +5,7 @@
 The application now targets a server-first platform:
 
 - `Next.js App Router`
-- `Clerk` for authentication
+- Own authentication (email + bcrypt password, opaque session tokens in `users`/`sessions` tables, httpOnly cookie; Clerk was removed in Fase A)
 - `Neon Postgres` for relational persistence
 - `Vercel Blob` for binary assets
 - `Drizzle ORM` for schema and queries

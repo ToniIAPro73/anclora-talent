@@ -63,6 +63,7 @@ npm run dev
 | TypeScript | Detected in repository |
 | Tailwind CSS | Detected in repository |
 | Drizzle ORM | Detected in repository |
+| Own auth | Credentials (bcrypt) + opaque sessions persisted in Neon; no external providers |
 | Zod | Detected in repository |
 | Vitest | Detected in repository |
 

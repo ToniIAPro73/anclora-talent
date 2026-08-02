@@ -60,3 +60,7 @@ next-env.d.ts
 .mypy_cache/
 .pytest_cache/
 anclora-talent-log-export-*.json
+
+# Playwright
+playwright-report/
+test-results/

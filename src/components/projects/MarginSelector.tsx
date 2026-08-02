@@ -60,7 +60,7 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex h-9 min-w-[100px] items-center justify-between gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--text-primary)] hover:border-[var(--accent-mint)] transition-colors"
+        className="flex h-9 min-w-[100px] items-center justify-between gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors"
         aria-label="Configuración de márgenes"
         title="Configuración de márgenes"
       >
@@ -87,7 +87,7 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
                   margins.bottom === preset.bottom &&
                   margins.left === preset.left &&
                   margins.right === preset.right
-                    ? 'bg-[var(--accent-mint)]/20 text-[var(--accent-mint)]'
+                    ? 'bg-[var(--accent)]/20 text-[var(--accent-text)]'
                     : 'text-[var(--text-secondary)] hover:bg-[var(--hover)]'
                 }`}
               >
@@ -119,7 +119,7 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
                   max="100"
                   value={customMargins.top}
                   onChange={(e) => handleCustomChange('top', parseInt(e.target.value) || 0)}
-                  className="w-full rounded-md border border-[var(--border-subtle)] bg-[var(--background)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--accent-mint)] focus:outline-none"
+                  className="w-full rounded-md border border-[var(--border-subtle)] bg-[var(--background)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
                 />
                 <span className="text-[9px] text-[var(--text-tertiary)]">px</span>
               </div>
@@ -134,7 +134,7 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
                   max="100"
                   value={customMargins.bottom}
                   onChange={(e) => handleCustomChange('bottom', parseInt(e.target.value) || 0)}
-                  className="w-full rounded-md border border-[var(--border-subtle)] bg-[var(--background)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--accent-mint)] focus:outline-none"
+                  className="w-full rounded-md border border-[var(--border-subtle)] bg-[var(--background)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
                 />
                 <span className="text-[9px] text-[var(--text-tertiary)]">px</span>
               </div>
@@ -149,7 +149,7 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
                   max="100"
                   value={customMargins.left}
                   onChange={(e) => handleCustomChange('left', parseInt(e.target.value) || 0)}
-                  className="w-full rounded-md border border-[var(--border-subtle)] bg-[var(--background)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--accent-mint)] focus:outline-none"
+                  className="w-full rounded-md border border-[var(--border-subtle)] bg-[var(--background)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
                 />
                 <span className="text-[9px] text-[var(--text-tertiary)]">px</span>
               </div>
@@ -164,7 +164,7 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
                   max="100"
                   value={customMargins.right}
                   onChange={(e) => handleCustomChange('right', parseInt(e.target.value) || 0)}
-                  className="w-full rounded-md border border-[var(--border-subtle)] bg-[var(--background)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--accent-mint)] focus:outline-none"
+                  className="w-full rounded-md border border-[var(--border-subtle)] bg-[var(--background)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
                 />
                 <span className="text-[9px] text-[var(--text-tertiary)]">px</span>
               </div>
@@ -179,7 +179,7 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
                 <div className="text-[10px] font-semibold text-[var(--text-tertiary)] mb-1">
                   Estimación
                 </div>
-                <div className="text-sm font-bold text-[var(--accent-mint)]">
+                <div className="text-sm font-bold text-[var(--accent-text)]">
                   ~{wordsPerPage.toLocaleString()} palabras/página
                 </div>
               </div>

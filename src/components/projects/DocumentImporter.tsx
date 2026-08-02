@@ -139,13 +139,13 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
   const borderClass = hasError
     ? 'border-red-400 bg-red-50/5'
     : dragActive
-      ? 'border-[var(--accent-mint)] bg-[var(--surface-highlight)]'
+      ? 'border-[var(--accent)] bg-[var(--surface-highlight)]'
       : 'border-[var(--border-strong)] bg-[var(--surface-soft)]';
 
   const iconWrapClass = hasError
     ? 'bg-red-400/15 text-red-400'
     : importState === 'ready'
-      ? 'bg-[var(--button-highlight-bg)]/15 text-[var(--accent-mint)]'
+      ? 'bg-[var(--button-highlight-bg)]/15 text-[var(--accent-text)]'
       : 'bg-[var(--button-highlight-bg)]/15 text-[var(--button-highlight-fg)]';
 
   return (
@@ -173,7 +173,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
           onDragLeave={handleDragEvent}
           onDragOver={handleDragEvent}
           onDrop={handleDrop}
-          className={`block cursor-pointer rounded-[24px] border-2 border-dashed p-6 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-mint)] ${borderClass}`}
+          className={`block cursor-pointer rounded-[24px] border-2 border-dashed p-6 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${borderClass}`}
         >
           <input
             id={inputId}
@@ -255,7 +255,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                     <p className="text-sm font-semibold text-[var(--text-primary)]" data-testid="import-analysis-author">
                       {analysis.author || '—'}
                     </p>
-                    <p className="text-xs font-semibold text-[var(--accent-mint)]" data-testid="import-analysis-chapters">
+                    <p className="text-xs font-semibold text-[var(--accent-text)]" data-testid="import-analysis-chapters">
                       {copy.importChaptersDetected.replace('{count}', String(analysis.chapterCount))}
                     </p>
                   </div>
@@ -268,7 +268,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                     <ul className="space-y-2 text-xs leading-6 text-[var(--text-secondary)]" data-testid="import-analysis-chapter-list">
                       {analysis.chapterTitles.map((chapterTitle, index) => (
                         <li key={`${chapterTitle}-${index}`} className="flex items-start gap-2">
-                          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[var(--accent-mint)]" />
+                          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
                           <span>{chapterTitle}</span>
                         </li>
                       ))}
