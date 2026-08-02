@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import localFont from 'next/font/local';
 import { UiPreferencesProvider } from '@/components/providers/UiPreferencesProvider';
 import { CookieConsent } from '@/components/legal/CookieConsent';
 import { LegalFooter } from '@/components/legal/LegalFooter';
@@ -6,9 +7,22 @@ import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
 import { TALENT_BRAND } from '@/lib/talent-brand';
 import './globals.css';
 
-// Use system fonts instead of Google Fonts to avoid network fetch issues during build
-// Google Fonts will load at runtime via CSS if available
-const dmSans = { variable: '--font-dm-sans' };
+// DM Sans is the contractual app typeface. Self-hosted (variable font,
+// latin subset covers ES/EN) so builds never depend on Google Fonts network.
+const dmSans = localFont({
+  src: [
+    {
+      path: './fonts/dm-sans-latin.woff2',
+      style: 'normal',
+      weight: '100 1000',
+    },
+  ],
+  variable: '--font-dm-sans',
+  display: 'swap',
+});
+
+// JetBrains Mono is only used by editor/numeric UI; keep system mono fallback
+// (no network dependency at build time).
 const jetbrainsMono = { variable: '--font-jetbrains-mono' };
 
 export const metadata: Metadata = {
