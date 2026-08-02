@@ -4,6 +4,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
@@ -11,7 +12,8 @@ import {
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
   email: varchar('email', { length: 255 }).notNull().unique(),
-  passwordHash: text('password_hash').notNull(),
+  // Nullable: accounts created via social OAuth have no password.
+  passwordHash: text('password_hash'),
   fullName: varchar('full_name', { length: 255 }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
@@ -24,6 +26,21 @@ export const sessions = pgTable('sessions', {
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const oauthIdentities = pgTable(
+  'oauth_identities',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    provider: varchar('provider', { length: 16 }).notNull(),
+    providerAccountId: varchar('provider_account_id', { length: 255 }).notNull(),
+    email: varchar('email', { length: 255 }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [unique('oauth_identities_provider_account_unique').on(table.provider, table.providerAccountId)],
+);
 
 export const appUsers = pgTable('app_users', {
   id: uuid('id').defaultRandom().primaryKey(),

@@ -39,6 +39,37 @@ const migrations = [
        ON DELETE cascade ON UPDATE no action;
      END IF;
    END $$;`,
+  // Social OAuth identities (Fase OAuth): users can sign in without password
+  `ALTER TABLE "users" ALTER COLUMN "password_hash" DROP NOT NULL;`,
+  `CREATE TABLE IF NOT EXISTS "oauth_identities" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "user_id" uuid NOT NULL,
+    "provider" varchar(16) NOT NULL,
+    "provider_account_id" varchar(255) NOT NULL,
+    "email" varchar(255) NOT NULL,
+    "created_at" timestamp with time zone DEFAULT now() NOT NULL
+  );`,
+  `DO $$
+   BEGIN
+     IF NOT EXISTS (
+       SELECT 1 FROM pg_constraint WHERE conname = 'oauth_identities_provider_account_unique'
+     ) THEN
+       ALTER TABLE "oauth_identities"
+       ADD CONSTRAINT "oauth_identities_provider_account_unique"
+       UNIQUE ("provider", "provider_account_id");
+     END IF;
+   END $$;`,
+  `DO $$
+   BEGIN
+     IF NOT EXISTS (
+       SELECT 1 FROM pg_constraint WHERE conname = 'oauth_identities_user_id_users_id_fk'
+     ) THEN
+       ALTER TABLE "oauth_identities"
+       ADD CONSTRAINT "oauth_identities_user_id_users_id_fk"
+       FOREIGN KEY ("user_id") REFERENCES "public"."users"("id")
+       ON DELETE cascade ON UPDATE no action;
+     END IF;
+   END $$;`,
 ];
 
 async function runMigrations() {
