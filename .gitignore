@@ -59,3 +59,4 @@ next-env.d.ts
 # Python specific
 .mypy_cache/
 .pytest_cache/
+anclora-talent-log-export-*.json
