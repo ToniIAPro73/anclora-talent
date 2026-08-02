@@ -345,7 +345,7 @@ export class CanvasGuideManager {
     };
   }
 
-  private drawSnapGuides(bounds: Bounds) {
+  private drawSnapGuides() {
     const canvasWidth = this.canvas!.width || 800;
     const canvasHeight = this.canvas!.height || 600;
 
@@ -456,7 +456,7 @@ export class CanvasGuideManager {
 
     const bounds = getBounds(movingObject);
     this.findBestSnapTarget(movingObject, bounds);
-    this.drawSnapGuides(bounds);
+    this.drawSnapGuides();
     this.drawDistanceGuides(movingObject, bounds);
     this.canvas.renderAll();
   }

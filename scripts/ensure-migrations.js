@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 const { neon } = require('@neondatabase/serverless');
 
 const databaseUrl = process.env.DATABASE_URL;

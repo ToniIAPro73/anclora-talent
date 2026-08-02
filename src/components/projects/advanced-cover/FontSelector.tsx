@@ -3,10 +3,7 @@
 import { useState, useMemo, useRef } from 'react';
 import { Search, ChevronDown } from 'lucide-react';
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import type { GoogleFont } from '@/hooks/use-google-fonts';
 
 interface FontSelectorProps {
   selectedFont: string;

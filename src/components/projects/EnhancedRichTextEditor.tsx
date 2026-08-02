@@ -12,8 +12,8 @@ import Highlight from '@tiptap/extension-highlight';
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough, Code,
   Heading2, Quote, List, ListOrdered, Link as LinkIcon, Image as ImageIcon,
-  Search, RotateCcw, RotateCw, Eye, Maximize2, Minimize2,
-  Highlighter, Copy, Trash2, Layers
+  Search, RotateCcw, RotateCw, Maximize2, Minimize2,
+  Highlighter, Layers
 } from 'lucide-react';
 
 const DEBOUNCE_MS = 800;

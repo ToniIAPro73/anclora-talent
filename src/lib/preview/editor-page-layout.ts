@@ -165,10 +165,6 @@ function splitOversizedBlocksInHtml(
 }
 
 
-function chunkTextIntoParagraphs(text: string, charsPerPage: number): string[] {
-  return chunkTextIntoWrappedBlocks(text, charsPerPage, 'p');
-}
-
 function chunkTextIntoWrappedBlocks(
   text: string,
   charsPerPage: number,

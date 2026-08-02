@@ -312,12 +312,6 @@ function normalizeMatchKey(value: string) {
   return normalizeLookupKey(value).replace(/[^\p{Letter}\p{Number}\s]/gu, '');
 }
 
-// Matches major structural headings that should appear as level-1 entries in the
-// generated TOC. Used to identify "extra" entries from source.outline (e.g.,
-// "CIERRE: LA VISIBILIDAD SOSTENIBLE") that were not generated as chapters.
-const MAJOR_HEADING_RE =
-  /^(?:cap[ií]tulo|chapter|introducci[oó]n|pr[oó]logo|prologo|[íi]ndice|indice|fase\s+\d+|parte\s+\d+|secci[oó]n|ep[ií]logo|cierre|despu[eé]s\s+de|recursos(?:\s+recomendados)?|anexos?)(?:\b|:)/i;
-
 function escapeHtml(text: string) {
   return text
     .replace(/&/g, '&amp;')
@@ -474,6 +468,7 @@ function extractTocRenderableEntries(html: string) {
 
   sanitizedHtml.replace(
     /<(p|li|h[1-6])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- positional replace-callback arg required before innerHtml
     (_fullMatch, tagName: string, _rawAttributes = '', innerHtml: string) => {
       const plainText = stripExistingTocSuffix(
         normalizeVisibleText(stripHtmlTags(innerHtml)),

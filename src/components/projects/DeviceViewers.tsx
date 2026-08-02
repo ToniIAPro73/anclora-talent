@@ -70,7 +70,6 @@ export function DeviceFrame({ children, format }: DeviceFrameProps) {
   };
 
   const device = deviceStyles[format] || deviceStyles.laptop;
-  const contentWidth = device.width - device.bezelSides * 2;
   const contentHeight = device.height - device.bezelTop - device.bezelBottom;
 
   if (format === 'mobile') {

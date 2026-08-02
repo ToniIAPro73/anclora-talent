@@ -1,20 +1,17 @@
 'use client';
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { NodeViewWrapper } from '@tiptap/react';
 import type { NodeViewProps } from '@tiptap/react';
-import { X, AlignLeft, AlignCenter, AlignRight, Move } from 'lucide-react';
+import { X, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 
 export const ImageNodeView = ({
   node,
   updateAttributes,
   selected,
-  extension,
   deleteNode,
-  editor,
 }: NodeViewProps) => {
   const [isResizing, setIsResizing] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const startPosRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
 
@@ -87,6 +84,7 @@ export const ImageNodeView = ({
         }}
         onMouseDown={handleMouseDown}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element -- tiptap node view with dynamic data URLs and manual resize; next/image is not applicable here */}
         <img
           src={node.attrs.src}
           alt={node.attrs.alt}

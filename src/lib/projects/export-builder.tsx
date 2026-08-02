@@ -8,6 +8,7 @@ import {
   TextRun,
   SectionType,
 } from 'docx';
+/* eslint-disable jsx-a11y/alt-text -- @react-pdf/renderer <Image> renders into PDF documents, not the DOM */
 import {
   Document,
   Image,

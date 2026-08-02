@@ -14,6 +14,7 @@ import {
   saveProjectCoverAction,
 } from '@/lib/projects/actions';
 import { useCanvasStore } from '@/lib/canvas-store';
+import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import type { CanvasLike } from '@/lib/canvas-store';
 import { addTextToCanvas } from '@/lib/canvas-utils';
 import { createGuideManager } from '@/lib/canvas-guides';
@@ -498,7 +499,7 @@ export function AdvancedSurfaceEditor({
             type="button"
             onClick={handleSaveAndRender}
             disabled={isRendering}
-            className="ac-button ac-button--primary ac-button--sm"
+            className={`${premiumPrimaryDarkButton} px-5 disabled:opacity-60`}
           >
             {isRendering ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5" />}
             Guardar Diseño Final

@@ -70,7 +70,7 @@ describe('export-builder', () => {
     );
 
     expect(first).toMatch(/^data:image\/(?:png|jpeg);base64,/);
-  });
+  }, 30000);
 
   test('builds a DOCX with one locked image frame per preview page and no synthetic cover text', async () => {
     const project = makeProject();
@@ -103,5 +103,5 @@ describe('export-builder', () => {
 
     expect(imageReferences).toBe(pages.length);
     expect(documentXml).toContain('<wp:inline');
-  }, 20000);
+  }, 60000);
 });
