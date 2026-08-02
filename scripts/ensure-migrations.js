@@ -10,6 +10,13 @@ if (!databaseUrl) {
 const sql = neon(databaseUrl);
 
 const migrations = [
+  // FASE C: composition engine columns on project_documents (rules/model/metadata)
+  `ALTER TABLE "project_documents"
+   ADD COLUMN IF NOT EXISTS "rules" jsonb;`,
+  `ALTER TABLE "project_documents"
+   ADD COLUMN IF NOT EXISTS "document_model" jsonb;`,
+  `ALTER TABLE "project_documents"
+   ADD COLUMN IF NOT EXISTS "metadata" jsonb;`,
   // Add show_subtitle column if it doesn't exist
   `ALTER TABLE "cover_designs"
    ADD COLUMN IF NOT EXISTS "show_subtitle" integer DEFAULT 1;`,
@@ -79,7 +86,7 @@ async function runMigrations() {
     for (const migration of migrations) {
       try {
         console.log('   Executing migration...');
-        await sql(migration);
+        await sql.query(migration);
         console.log('   ✓ Column ensured');
       } catch (err) {
         console.warn('   ⚠️ Migration step skipped (might already exist):', err instanceof Error ? err.message : String(err));

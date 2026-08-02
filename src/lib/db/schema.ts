@@ -70,6 +70,12 @@ export const projectDocuments = pgTable('project_documents', {
   author: varchar('author', { length: 255 }).notNull().default(''),
   language: varchar('language', { length: 12 }).notNull(),
   sourceMetadata: jsonb('source_metadata'),
+  // FASE C: declarative composition rules (DocumentRules JSON)
+  rules: jsonb('rules'),
+  // FASE C: canonical semantic document model (SemanticDocument JSON)
+  documentModel: jsonb('document_model'),
+  // FASE C: digital product metadata (DocumentMetadata JSON)
+  metadata: jsonb('metadata'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
