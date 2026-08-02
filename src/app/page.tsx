@@ -1,4 +1,3 @@
-import { auth } from '@clerk/nextjs/server';
 import { LandingBenefits } from '@/components/marketing/landing-benefits';
 import { LandingFinalCta } from '@/components/marketing/landing-final-cta';
 import { LandingHero } from '@/components/marketing/landing-hero';
@@ -6,15 +5,16 @@ import { LandingProductShowcase } from '@/components/marketing/landing-product-s
 import { LandingProofStrip } from '@/components/marketing/landing-proof-strip';
 import { LandingWorkflow } from '@/components/marketing/landing-workflow';
 import { getPrimaryCta, getSecondaryCta } from '@/components/marketing/marketing-helpers';
+import { getCurrentUser } from '@/lib/auth/guards';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
 
 export default async function HomePage() {
-  const { userId } = await auth();
+  const user = await getCurrentUser();
   const { locale } = await readUiPreferences();
   const messages = resolveLocaleMessages(locale).landing;
-  const primaryCta = getPrimaryCta(userId);
-  const secondaryCta = getSecondaryCta(userId);
+  const primaryCta = getPrimaryCta(user?.id ?? null);
+  const secondaryCta = getSecondaryCta(user?.id ?? null);
 
   return (
     <main className="min-h-screen px-4 py-4 text-[var(--text-primary)] sm:px-6 sm:py-6 lg:px-8 lg:py-8">

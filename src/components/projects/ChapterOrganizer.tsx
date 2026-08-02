@@ -114,7 +114,7 @@ export function ChapterOrganizer({
                 data-testid={`chapter-organizer-button-${index + 1}`}
                 onClick={() => onSelect(chapter.id)}
                 aria-current={isActive ? 'page' : undefined}
-                className="ac-chapter-rail__trigger min-w-0 flex-1 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-mint)]"
+                className="ac-chapter-rail__trigger min-w-0 flex-1 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
               >
                 <span className="ac-chapter-rail__index mt-0.5">
                   {index + 1}

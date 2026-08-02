@@ -26,22 +26,37 @@ export type AppMessages = {
     themeLight: string;
     localeSpanish: string;
     localeEnglish: string;
+    userMenuLabel: string;
+    signOut: string;
+    signingOut: string;
   };
   auth: {
-    signIn: {
-      eyebrow: string;
-      title: string;
-      description: string;
-      accent: string;
-    };
-    signUp: {
-      eyebrow: string;
-      title: string;
-      description: string;
-      accent: string;
-    };
-    pillars: readonly string[];
-    contractEyebrow: string;
+    email: string;
+    password: string;
+    fullName: string;
+    showPassword: string;
+    hidePassword: string;
+    signIn: string;
+    signingIn: string;
+    forgotPassword: string;
+    noAccount: string;
+    signUp: string;
+    createAccount: string;
+    creatingAccount: string;
+    haveAccount: string;
+    passwordRequirements: string;
+    socialAccess: string;
+    google: string;
+    github: string;
+    socialComingSoon: string;
+    legalPrefix: string;
+    terms: string;
+    legalMiddle: string;
+    privacy: string;
+    legalSuffix: string;
+    error: string;
+    emailInUse: string;
+    registerError: string;
   };
   landing: {
     eyebrow: string;
@@ -186,6 +201,22 @@ export type AppMessages = {
     coverRenderedImageLabel: string;
     coverSwitchToAdvanced: string;
     coverSwitchToBasic: string;
+    coverStudioEyebrow: string;
+    coverStudioSimpleSummary: string;
+    coverStudioAdvancedSummary: string;
+    coverStudioCanvasLabel: string;
+    coverStudioTemplateLabel: string;
+    coverStudioFieldsLegend: string;
+    coverStudioInspectorEmpty: string;
+    coverStudioContentLabel: string;
+    coverStudioAlignLabel: string;
+    coverStudioFontSizeLabel: string;
+    coverStudioLineHeightLabel: string;
+    coverStudioCharSpacingLabel: string;
+    coverStudioColorLabel: string;
+    coverStudioVisibilityLabel: string;
+    coverStudioSaveDesign: string;
+    coverStudioSaved: string;
     stepContent: string;
     stepChapters: string;
     stepTemplate: string;
@@ -242,7 +273,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       navNewProject: 'Nuevo proyecto',
       navProjects: 'Mis proyectos',
       stackEyebrow: 'Stack activo',
-      stackTitle: 'Clerk + Neon + Blob',
+      stackTitle: 'Auth + Neon + Blob',
       stackDescription:
         'La cuenta individual sigue siendo la unidad activa, pero la experiencia ya se presenta como producto premium, no como shell técnico.',
       topbarEyebrow: 'App shell',
@@ -253,24 +284,37 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       themeLight: 'Light',
       localeSpanish: 'ES',
       localeEnglish: 'EN',
+      userMenuLabel: 'Cuenta',
+      signOut: 'Cerrar sesión',
+      signingOut: 'Cerrando sesión…',
     },
     auth: {
-      signIn: {
-        eyebrow: 'Acceso premium',
-        title: 'Vuelve a tu workspace editorial con una experiencia a la altura del producto.',
-        description:
-          'Accede a tus proyectos, recupera contexto y continúa donde lo dejaste sin romper la continuidad visual ni operativa.',
-        accent: 'Recupera ritmo, foco y consistencia en segundos.',
-      },
-      signUp: {
-        eyebrow: 'Alta premium',
-        title: 'Entra en Anclora Talent con una capa de acceso que ya transmite producto.',
-        description:
-          'Crea tu cuenta y empieza a trabajar sobre un flujo editorial real, persistente y visualmente coherente desde el primer minuto.',
-        accent: 'Registro, proyecto, editor, preview y portada dentro del mismo sistema.',
-      },
-      pillars: ['Identidad protegida', 'Persistencia real', 'Acabado premium'],
-      contractEyebrow: 'Contrato de producto',
+      email: 'Email',
+      password: 'Contraseña',
+      fullName: 'Nombre completo',
+      showPassword: 'Mostrar contraseña',
+      hidePassword: 'Ocultar contraseña',
+      signIn: 'Iniciar sesión',
+      signingIn: 'Iniciando sesión…',
+      forgotPassword: '¿Olvidaste tu contraseña?',
+      noAccount: '¿No tienes cuenta?',
+      signUp: 'Regístrate',
+      createAccount: 'Crear cuenta',
+      creatingAccount: 'Creando cuenta…',
+      haveAccount: '¿Ya tienes cuenta?',
+      passwordRequirements: 'Mínimo 8 caracteres, con al menos una letra y un número',
+      socialAccess: 'Acceso social',
+      google: 'Google',
+      github: 'GitHub',
+      socialComingSoon: 'Próximamente',
+      legalPrefix: 'Al continuar, aceptas los',
+      terms: 'Términos del servicio',
+      legalMiddle: 'y la',
+      privacy: 'Política de privacidad',
+      legalSuffix: 'de Anclora Talent.',
+      error: 'Email o contraseña incorrectos',
+      emailInUse: 'Ya existe una cuenta con este email',
+      registerError: 'No se pudo crear la cuenta. Inténtalo de nuevo.',
     },
     landing: {
       eyebrow: 'Anclora Talent',
@@ -479,6 +523,22 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverRenderedImageLabel: 'Imagen renderizada',
       coverSwitchToAdvanced: 'Editor Avanzado',
       coverSwitchToBasic: 'Editor Básico',
+      coverStudioEyebrow: 'Estudio de cubierta',
+      coverStudioSimpleSummary: 'Parte de una plantilla y ajusta el contenido guiado. Lo que ves es lo que se exporta.',
+      coverStudioAdvancedSummary: 'Mueve y edita cada capa de texto directamente sobre el lienzo.',
+      coverStudioCanvasLabel: 'Lienzo',
+      coverStudioTemplateLabel: 'Plantilla',
+      coverStudioFieldsLegend: 'Contenido',
+      coverStudioInspectorEmpty: 'Haz clic en un texto del lienzo para editarlo.',
+      coverStudioContentLabel: 'Contenido',
+      coverStudioAlignLabel: 'Alineación y estilo',
+      coverStudioFontSizeLabel: 'Tamaño',
+      coverStudioLineHeightLabel: 'Interlineado',
+      coverStudioCharSpacingLabel: 'Espaciado letras',
+      coverStudioColorLabel: 'Color',
+      coverStudioVisibilityLabel: 'Visibilidad',
+      coverStudioSaveDesign: 'Guardar Diseño Final',
+      coverStudioSaved: 'Guardado',
       stepContent: 'Contenido',
       stepChapters: 'Capítulos',
       stepTemplate: 'Plantilla',
@@ -533,7 +593,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       navNewProject: 'New project',
       navProjects: 'My projects',
       stackEyebrow: 'Active stack',
-      stackTitle: 'Clerk + Neon + Blob',
+      stackTitle: 'Auth + Neon + Blob',
       stackDescription:
         'The individual account remains the active unit, but the experience already presents itself as a premium product, not as a technical shell.',
       topbarEyebrow: 'App shell',
@@ -544,24 +604,37 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       themeLight: 'Light',
       localeSpanish: 'ES',
       localeEnglish: 'EN',
+      userMenuLabel: 'Account',
+      signOut: 'Sign out',
+      signingOut: 'Signing out…',
     },
     auth: {
-      signIn: {
-        eyebrow: 'Premium access',
-        title: 'Return to your editorial workspace with an experience that matches the product.',
-        description:
-          'Access your projects, recover context, and continue where you left off without breaking visual or operational continuity.',
-        accent: 'Recover rhythm, focus, and consistency in seconds.',
-      },
-      signUp: {
-        eyebrow: 'Premium signup',
-        title: 'Enter Anclora Talent through an access layer that already feels like product.',
-        description:
-          'Create your account and start working on a real, persistent, and visually coherent editorial flow from the first minute.',
-        accent: 'Signup, project, editor, preview, and cover inside the same system.',
-      },
-      pillars: ['Protected identity', 'Real persistence', 'Premium finish'],
-      contractEyebrow: 'Product contract',
+      email: 'Email',
+      password: 'Password',
+      fullName: 'Full name',
+      showPassword: 'Show password',
+      hidePassword: 'Hide password',
+      signIn: 'Sign in',
+      signingIn: 'Signing in…',
+      forgotPassword: 'Forgot your password?',
+      noAccount: "Don't have an account?",
+      signUp: 'Sign up',
+      createAccount: 'Create account',
+      creatingAccount: 'Creating account…',
+      haveAccount: 'Already have an account?',
+      passwordRequirements: 'At least 8 characters, with one letter and one number',
+      socialAccess: 'Social access',
+      google: 'Google',
+      github: 'GitHub',
+      socialComingSoon: 'Coming soon',
+      legalPrefix: 'By continuing, you accept the',
+      terms: 'Terms of service',
+      legalMiddle: 'and the',
+      privacy: 'Privacy policy',
+      legalSuffix: 'of Anclora Talent.',
+      error: 'Incorrect email or password',
+      emailInUse: 'An account with this email already exists',
+      registerError: 'Could not create the account. Please try again.',
     },
     landing: {
       eyebrow: 'Anclora Talent',
@@ -770,6 +843,22 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverRenderedImageLabel: 'Rendered image',
       coverSwitchToAdvanced: 'Advanced Editor',
       coverSwitchToBasic: 'Basic Editor',
+      coverStudioEyebrow: 'Cover studio',
+      coverStudioSimpleSummary: 'Start from a template and adjust the guided content. What you see is what gets exported.',
+      coverStudioAdvancedSummary: 'Move and edit every text layer directly on the canvas.',
+      coverStudioCanvasLabel: 'Canvas',
+      coverStudioTemplateLabel: 'Template',
+      coverStudioFieldsLegend: 'Content',
+      coverStudioInspectorEmpty: 'Click a text on the canvas to edit it.',
+      coverStudioContentLabel: 'Content',
+      coverStudioAlignLabel: 'Alignment and style',
+      coverStudioFontSizeLabel: 'Size',
+      coverStudioLineHeightLabel: 'Line height',
+      coverStudioCharSpacingLabel: 'Letter spacing',
+      coverStudioColorLabel: 'Color',
+      coverStudioVisibilityLabel: 'Visibility',
+      coverStudioSaveDesign: 'Save Final Design',
+      coverStudioSaved: 'Saved',
       stepContent: 'Content',
       stepChapters: 'Chapters',
       stepTemplate: 'Template',

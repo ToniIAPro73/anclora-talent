@@ -5,7 +5,7 @@ import { describe, expect, test } from 'vitest';
 const globalsCss = readFileSync(resolve(process.cwd(), 'src/app/globals.css'), 'utf8');
 
 describe('button theme consistency contract', () => {
-  test('keeps a stable foreground for gold highlight buttons across themes', () => {
+  test('keeps a stable foreground for accent highlight buttons across themes', () => {
     const highlightMatches = globalsCss.match(/--button-highlight-fg: #050b12;/g) ?? [];
     expect(highlightMatches).toHaveLength(2);
   });

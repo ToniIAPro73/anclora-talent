@@ -13,18 +13,19 @@ export function BrandLogo({
   size?: number;
 }) {
   return (
-    <span
-      className={`inline-flex items-center justify-center overflow-hidden rounded-full ${className}`.trim()}
+    <div
+      style={{ width: size, height: size }}
+      className={`relative flex-shrink-0 ${className}`.trim()}
       aria-hidden="true"
     >
       <Image
-        src="/brand/logo-anclora-talent.png"
+        src={TALENT_BRAND.logoPath}
         alt={TALENT_BRAND.name}
-        width={size}
-        height={size}
+        fill
+        sizes={`${size}px`}
         priority={priority}
-        className={`h-full w-full object-cover ${imageClassName}`.trim()}
+        className={`object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.28)] ${imageClassName}`.trim()}
       />
-    </span>
+    </div>
   );
 }

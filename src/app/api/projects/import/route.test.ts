@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-const authMock = vi.fn();
+const getCurrentUserMock = vi.fn();
 const extractImportedDocumentSeedMock = vi.fn();
 
-vi.mock('@clerk/nextjs/server', () => ({
-  auth: authMock,
+vi.mock('@/lib/auth/guards', () => ({
+  getCurrentUser: getCurrentUserMock,
 }));
 
 vi.mock('@/lib/projects/import', () => ({
@@ -25,7 +25,7 @@ describe('POST /api/projects/import', () => {
   });
 
   test('returns 401 when user is not authenticated', async () => {
-    authMock.mockResolvedValue({ userId: null });
+    getCurrentUserMock.mockResolvedValue(null);
 
     const { POST } = await import('./route');
     const response = await POST(buildRequestWithFile() as never);
@@ -36,7 +36,7 @@ describe('POST /api/projects/import', () => {
   });
 
   test('returns 400 when no file is provided', async () => {
-    authMock.mockResolvedValue({ userId: 'user_123' });
+    getCurrentUserMock.mockResolvedValue({ id: 'user_123', email: 'test@example.com', fullName: 'Test User' });
 
     const { POST } = await import('./route');
     const response = await POST(buildRequestWithFile() as never);
@@ -46,7 +46,7 @@ describe('POST /api/projects/import', () => {
   });
 
   test('returns 413 when file is too large', async () => {
-    authMock.mockResolvedValue({ userId: 'user_123' });
+    getCurrentUserMock.mockResolvedValue({ id: 'user_123', email: 'test@example.com', fullName: 'Test User' });
 
     const oversized = new File(['x'], 'sample.pdf', { type: 'application/pdf' });
     Object.defineProperty(oversized, 'size', { value: 51 * 1024 * 1024 });
@@ -60,7 +60,7 @@ describe('POST /api/projects/import', () => {
   });
 
   test('returns 422 for unsupported extension', async () => {
-    authMock.mockResolvedValue({ userId: 'user_123' });
+    getCurrentUserMock.mockResolvedValue({ id: 'user_123', email: 'test@example.com', fullName: 'Test User' });
 
     const unsupported = new File(['x'], 'sample.odt', { type: 'application/vnd.oasis.opendocument.text' });
 
@@ -73,7 +73,7 @@ describe('POST /api/projects/import', () => {
   });
 
   test('returns summarized analysis on successful import', async () => {
-    authMock.mockResolvedValue({ userId: 'user_123' });
+    getCurrentUserMock.mockResolvedValue({ id: 'user_123', email: 'test@example.com', fullName: 'Test User' });
     extractImportedDocumentSeedMock.mockResolvedValue({
       title: 'NUNCA MÁS EN LA SOMBRA',
       subtitle: 'Subtítulo',
@@ -109,7 +109,7 @@ describe('POST /api/projects/import', () => {
   });
 
   test('returns IMPORT_FAILED when parser throws', async () => {
-    authMock.mockResolvedValue({ userId: 'user_123' });
+    getCurrentUserMock.mockResolvedValue({ id: 'user_123', email: 'test@example.com', fullName: 'Test User' });
     extractImportedDocumentSeedMock.mockRejectedValue(new Error('Parser failed unexpectedly'));
 
     const file = new File(['x'], 'sample.docx', {

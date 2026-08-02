@@ -44,7 +44,7 @@ export function EditorPreferencesPanel({
     <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Settings className="h-5 w-5 text-[var(--accent-mint)]" />
+          <Settings className="h-5 w-5 text-[var(--accent-text)]" />
           <h3 className="text-lg font-bold text-[var(--text-primary)]">
             Preferencias del Editor
           </h3>
@@ -72,7 +72,7 @@ export function EditorPreferencesPanel({
                 onClick={() => handleFontSizeChange(size)}
                 className={`px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
                   currentFontSize === size
-                    ? 'bg-[var(--accent-mint)] text-white'
+                    ? 'bg-[var(--accent)] text-[var(--button-highlight-fg)]'
                     : 'bg-[var(--background)] text-[var(--text-secondary)] hover:bg-[var(--hover)]'
                 }`}
               >
@@ -98,7 +98,7 @@ export function EditorPreferencesPanel({
                 onClick={() => handleDeviceChange(device.id as 'mobile' | 'tablet' | 'desktop')}
                 className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
                   currentDevice === device.id
-                    ? 'bg-[var(--accent-mint)] text-white'
+                    ? 'bg-[var(--accent)] text-[var(--button-highlight-fg)]'
                     : 'bg-[var(--background)] text-[var(--text-secondary)] hover:bg-[var(--hover)]'
                 }`}
               >
@@ -123,7 +123,7 @@ export function EditorPreferencesPanel({
         </div>
 
         {/* Info */}
-        <div className="mt-6 p-4 rounded-lg bg-[var(--accent-mint)]/5 border border-[var(--accent-mint)]/20">
+        <div className="mt-6 p-4 rounded-lg bg-[var(--accent)]/5 border border-[var(--accent)]/20">
           <p className="text-xs text-[var(--text-secondary)]">
             💡 <span className="font-semibold">Consejo:</span> Estas preferencias se aplican automáticamente
             cuando abres un capítulo para editar. Puedes cambiarlas en cualquier momento desde el editor.

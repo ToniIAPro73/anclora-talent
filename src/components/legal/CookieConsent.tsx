@@ -44,7 +44,7 @@ export function CookieConsent() {
 
   return (
     <>
-      <button type="button" aria-label={en ? 'Cookie preferences' : 'Preferencias de cookies'} onClick={() => { setOpen(true); setSettings(true); }} className="fixed bottom-5 left-5 z-50 inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--accent-mint)]/40 bg-[var(--surface-overlay)] text-[var(--accent-mint)] shadow-2xl backdrop-blur">
+      <button type="button" aria-label={en ? 'Cookie preferences' : 'Preferencias de cookies'} onClick={() => { setOpen(true); setSettings(true); }} className="fixed bottom-5 left-5 z-50 inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--accent)]/40 bg-[var(--surface-overlay)] text-[var(--accent-text)] shadow-2xl backdrop-blur">
         <Cookie className="h-5 w-5" aria-hidden="true" />
       </button>
       {open ? (
@@ -60,7 +60,7 @@ export function CookieConsent() {
               </div>
             ) : null}
             <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-              {!settings ? <button type="button" onClick={() => persist({ ...defaults, analytics: true, marketing: true })} className="rounded-full bg-[var(--accent-mint)] px-5 py-3 text-sm font-semibold text-black">{en ? 'Accept all' : 'Aceptar todas'}</button> : null}
+              {!settings ? <button type="button" onClick={() => persist({ ...defaults, analytics: true, marketing: true })} className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-black">{en ? 'Accept all' : 'Aceptar todas'}</button> : null}
               <button type="button" onClick={() => settings ? persist(preferences) : setSettings(true)} className="rounded-full border border-[var(--border-subtle)] px-5 py-3 text-sm font-semibold">{settings ? (en ? 'Save preferences' : 'Guardar preferencias') : (en ? 'Settings' : 'Configuración')}</button>
               <button type="button" onClick={() => persist(defaults)} className="rounded-full px-5 py-3 text-sm font-semibold text-[var(--text-secondary)]">{en ? 'Reject optional' : 'Rechazar opcionales'}</button>
             </div>
@@ -75,7 +75,7 @@ function CookieRow({ title, description, checked, disabled, onChange }: { title:
   return (
     <label className="flex items-start justify-between gap-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-panel)] p-4">
       <span><span className="block text-sm font-semibold">{title}</span><span className="mt-1 block text-xs leading-5 text-[var(--text-secondary)]">{description}</span></span>
-      <input type="checkbox" checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} className="mt-1 h-5 w-5 accent-[var(--accent-mint)]" />
+      <input type="checkbox" checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} className="mt-1 h-5 w-5 accent-[var(--accent)]" />
     </label>
   );
 }

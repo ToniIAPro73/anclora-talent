@@ -1,12 +1,12 @@
 import { AppShell } from '@/components/layout/AppShell';
-import { requireUserId } from '@/lib/auth/guards';
+import { requireUser } from '@/lib/auth/guards';
 
 export default async function ProtectedLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  await requireUserId();
+  const user = await requireUser();
 
-  return <AppShell>{children}</AppShell>;
+  return <AppShell user={user}>{children}</AppShell>;
 }

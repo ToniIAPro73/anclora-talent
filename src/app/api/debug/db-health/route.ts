@@ -15,6 +15,8 @@ function maskUrl(url: string | undefined) {
  */
 const EXPECTED_SCHEMA: Record<string, string[]> = {
   app_users: ['id', 'clerk_user_id', 'email', 'created_at', 'updated_at'],
+  users: ['id', 'email', 'password_hash', 'full_name', 'created_at'],
+  sessions: ['id', 'user_id', 'expires_at', 'created_at'],
   projects: ['id', 'user_id', 'workspace_id', 'slug', 'title', 'status', 'created_at', 'updated_at'],
   project_documents: ['id', 'project_id', 'title', 'subtitle', 'language', 'source_metadata', 'created_at', 'updated_at'],
   document_blocks: ['id', 'project_document_id', 'chapter_id', 'chapter_order', 'chapter_title', 'block_order', 'block_type', 'content', 'created_at'],

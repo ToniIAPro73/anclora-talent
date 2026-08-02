@@ -1,5 +1,5 @@
-import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentUser } from '@/lib/auth/guards';
 import { extractImportedDocumentSeed } from '@/lib/projects/import';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
@@ -11,9 +11,9 @@ function getExtension(fileName: string) {
 }
 
 export async function POST(request: NextRequest) {
-  const { userId } = await auth();
+  const user = await getCurrentUser();
 
-  if (!userId) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const detail = error instanceof Error ? error.message : 'Import failed';
-    console.error('[import-route] extraction failed', { userId, fileName: file.name, detail });
+    console.error('[import-route] extraction failed', { userId: user.id, fileName: file.name, detail });
     return NextResponse.json({ error: 'IMPORT_FAILED', detail }, { status: 422 });
   }
 }

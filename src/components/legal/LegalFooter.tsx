@@ -1,10 +1,19 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
+
+const FOOTERLESS_PATHS = ['/sign-in', '/sign-up'];
 
 export function LegalFooter() {
   const { locale } = useUiPreferences();
+  const pathname = usePathname();
+
+  // Auth screens must render without the global footer (login contract).
+  if (FOOTERLESS_PATHS.some((path) => pathname.startsWith(path))) {
+    return null;
+  }
   const en = locale === 'en';
   const year = new Date().getFullYear();
   return (

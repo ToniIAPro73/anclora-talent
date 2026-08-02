@@ -63,6 +63,7 @@ npm run dev
 | TypeScript | Detectado en el repositorio |
 | Tailwind CSS | Detectado en el repositorio |
 | Drizzle ORM | Detectado en el repositorio |
+| Auth propia | Credenciales (bcrypt) + sesiones opacas persistidas en Neon; sin servicios externos |
 | Zod | Detectado en el repositorio |
 | Vitest | Detectado en el repositorio |
 
