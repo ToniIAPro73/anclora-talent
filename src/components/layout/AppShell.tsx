@@ -71,10 +71,7 @@ export function AppShell({
           </div>
 
           <div className={`flex items-center ${collapsed ? 'justify-center px-3 pb-4' : 'gap-3 px-6 pb-4'}`}>
-            <BrandLogo
-              size={48}
-              className="h-12 w-12 flex-shrink-0 rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-highlight)] shadow-[var(--shadow-soft)]"
-            />
+            <BrandLogo size={40} />
             {!collapsed && (
               <div className="min-w-0 overflow-hidden">
                 <p className="truncate text-lg font-black text-[var(--text-primary)]">{messages.brand}</p>
