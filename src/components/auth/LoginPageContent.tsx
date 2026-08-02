@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -9,7 +9,22 @@ import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { TALENT_BRAND } from '@/lib/talent-brand';
 
-export function LoginPageContent() {
+export type OAuthAvailability = {
+  google: boolean;
+  github: boolean;
+};
+
+type LoginPageContentProps = {
+  oauthAvailability?: OAuthAvailability;
+};
+
+const DEFAULT_OAUTH_AVAILABILITY: OAuthAvailability = { google: false, github: false };
+
+const OAUTH_FEEDBACK_PATTERN = /^(google|github)_(cancelled|invalid_state|error)$/;
+
+export function LoginPageContent({
+  oauthAvailability = DEFAULT_OAUTH_AVAILABILITY,
+}: LoginPageContentProps) {
   const router = useRouter();
   const { locale } = useUiPreferences();
   const t = resolveLocaleMessages(locale).auth;
@@ -19,6 +34,25 @@ export function LoginPageContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Surface the outcome of a social OAuth round-trip (?oauth={provider}_{reason}).
+  useEffect(() => {
+    const value = new URLSearchParams(window.location.search).get('oauth');
+    if (!value) return;
+
+    const match = OAUTH_FEEDBACK_PATTERN.exec(value);
+    if (!match) return;
+
+    const providerName = match[1] === 'google' ? t.google : t.github;
+    const template =
+      match[2] === 'cancelled'
+        ? t.oauthCancelled
+        : match[2] === 'invalid_state'
+          ? t.oauthInvalidState
+          : t.oauthError;
+
+    setError(template.replace('{provider}', providerName));
+  }, [t]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -181,17 +215,35 @@ export function LoginPageContent() {
             <div className="grid grid-cols-2 gap-2.5">
               <button
                 type="button"
-                disabled
-                title={t.socialComingSoon}
-                className="talent-auth-social-button flex h-9 cursor-not-allowed items-center justify-center gap-2 rounded-2xl text-xs font-medium opacity-50"
+                disabled={!oauthAvailability.google}
+                onClick={
+                  oauthAvailability.google
+                    ? () => window.location.assign('/api/auth/oauth/google/start')
+                    : undefined
+                }
+                title={oauthAvailability.google ? undefined : t.socialComingSoon}
+                className={
+                  oauthAvailability.google
+                    ? 'talent-auth-social-button flex h-9 items-center justify-center gap-2 rounded-2xl text-xs font-medium'
+                    : 'talent-auth-social-button flex h-9 cursor-not-allowed items-center justify-center gap-2 rounded-2xl text-xs font-medium opacity-50'
+                }
               >
                 <Mail size={14} aria-hidden="true" /> {t.google}
               </button>
               <button
                 type="button"
-                disabled
-                title={t.socialComingSoon}
-                className="talent-auth-social-button flex h-9 cursor-not-allowed items-center justify-center gap-2 rounded-2xl text-xs font-medium opacity-50"
+                disabled={!oauthAvailability.github}
+                onClick={
+                  oauthAvailability.github
+                    ? () => window.location.assign('/api/auth/oauth/github/start')
+                    : undefined
+                }
+                title={oauthAvailability.github ? undefined : t.socialComingSoon}
+                className={
+                  oauthAvailability.github
+                    ? 'talent-auth-social-button flex h-9 items-center justify-center gap-2 rounded-2xl text-xs font-medium'
+                    : 'talent-auth-social-button flex h-9 cursor-not-allowed items-center justify-center gap-2 rounded-2xl text-xs font-medium opacity-50'
+                }
               >
                 <Github size={14} aria-hidden="true" /> {t.github}
               </button>

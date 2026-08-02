@@ -7,7 +7,8 @@ export type StoredUser = {
   id: string;
   email: string;
   fullName: string;
-  passwordHash: string;
+  // Null for accounts created via social OAuth (no password).
+  passwordHash: string | null;
 };
 
 export async function findUserByEmail(email: string): Promise<StoredUser | null> {
@@ -27,7 +28,7 @@ export async function findUserByEmail(email: string): Promise<StoredUser | null>
 
 export async function createUser(input: {
   email: string;
-  passwordHash: string;
+  passwordHash: string | null;
   fullName: string;
 }): Promise<{ id: string; email: string; fullName: string }> {
   try {
