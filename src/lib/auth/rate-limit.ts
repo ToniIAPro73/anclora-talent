@@ -47,3 +47,44 @@ export function recordLoginAttempt(key: string): void {
 export function resetLoginAttempts(key: string): void {
   attempts.delete(key);
 }
+
+// OAuth start/callback endpoints: 10 requests per 15 minutes per IP.
+const OAUTH_WINDOW_MS = 15 * 60 * 1000;
+const OAUTH_MAX_ATTEMPTS = 10;
+
+const oauthAttempts = new Map<string, RateLimitEntry>();
+
+function pruneOAuthExpired(now: number) {
+  if (oauthAttempts.size <= MAX_TRACKED_KEYS) return;
+  for (const [key, entry] of oauthAttempts) {
+    if (entry.resetAt <= now) oauthAttempts.delete(key);
+  }
+}
+
+export function checkOAuthRateLimit(key: string): { allowed: boolean; retryAfterSeconds: number } {
+  const now = Date.now();
+  const entry = oauthAttempts.get(key);
+
+  if (!entry || entry.resetAt <= now) {
+    return { allowed: true, retryAfterSeconds: 0 };
+  }
+
+  if (entry.count >= OAUTH_MAX_ATTEMPTS) {
+    return { allowed: false, retryAfterSeconds: Math.ceil((entry.resetAt - now) / 1000) };
+  }
+
+  return { allowed: true, retryAfterSeconds: 0 };
+}
+
+export function recordOAuthAttempt(key: string): void {
+  const now = Date.now();
+  pruneOAuthExpired(now);
+
+  const entry = oauthAttempts.get(key);
+  if (!entry || entry.resetAt <= now) {
+    oauthAttempts.set(key, { count: 1, resetAt: now + OAUTH_WINDOW_MS });
+    return;
+  }
+
+  entry.count += 1;
+}

@@ -16,7 +16,8 @@ describe('Anclora Talent premium palette contract', () => {
     expect(globalsCss).toContain('--accent-dim: #3A88BE;');
     expect(globalsCss).toContain('--button-highlight-fg: #050b12;');
     expect(globalsCss).toContain('--button-highlight-border: rgba(5, 11, 18, 0.24);');
-    expect(globalsCss).toContain('--surface-elevated: linear-gradient(180deg, rgba(18, 74, 80, 0.96) 0%, rgba(7, 37, 47, 0.98) 100%);');
+    expect(globalsCss).toContain('--surface-elevated: #1C2E40;');
+    expect(globalsCss).toContain('--surface-elevated: #E8F0F8;');
   });
 
   test('keeps the same contractual accent hex values in both themes', () => {
