@@ -201,6 +201,22 @@ export type AppMessages = {
     coverRenderedImageLabel: string;
     coverSwitchToAdvanced: string;
     coverSwitchToBasic: string;
+    coverStudioEyebrow: string;
+    coverStudioSimpleSummary: string;
+    coverStudioAdvancedSummary: string;
+    coverStudioCanvasLabel: string;
+    coverStudioTemplateLabel: string;
+    coverStudioFieldsLegend: string;
+    coverStudioInspectorEmpty: string;
+    coverStudioContentLabel: string;
+    coverStudioAlignLabel: string;
+    coverStudioFontSizeLabel: string;
+    coverStudioLineHeightLabel: string;
+    coverStudioCharSpacingLabel: string;
+    coverStudioColorLabel: string;
+    coverStudioVisibilityLabel: string;
+    coverStudioSaveDesign: string;
+    coverStudioSaved: string;
     stepContent: string;
     stepChapters: string;
     stepTemplate: string;
@@ -507,6 +523,22 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverRenderedImageLabel: 'Imagen renderizada',
       coverSwitchToAdvanced: 'Editor Avanzado',
       coverSwitchToBasic: 'Editor Básico',
+      coverStudioEyebrow: 'Estudio de cubierta',
+      coverStudioSimpleSummary: 'Parte de una plantilla y ajusta el contenido guiado. Lo que ves es lo que se exporta.',
+      coverStudioAdvancedSummary: 'Mueve y edita cada capa de texto directamente sobre el lienzo.',
+      coverStudioCanvasLabel: 'Lienzo',
+      coverStudioTemplateLabel: 'Plantilla',
+      coverStudioFieldsLegend: 'Contenido',
+      coverStudioInspectorEmpty: 'Haz clic en un texto del lienzo para editarlo.',
+      coverStudioContentLabel: 'Contenido',
+      coverStudioAlignLabel: 'Alineación y estilo',
+      coverStudioFontSizeLabel: 'Tamaño',
+      coverStudioLineHeightLabel: 'Interlineado',
+      coverStudioCharSpacingLabel: 'Espaciado letras',
+      coverStudioColorLabel: 'Color',
+      coverStudioVisibilityLabel: 'Visibilidad',
+      coverStudioSaveDesign: 'Guardar Diseño Final',
+      coverStudioSaved: 'Guardado',
       stepContent: 'Contenido',
       stepChapters: 'Capítulos',
       stepTemplate: 'Plantilla',
@@ -811,6 +843,22 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverRenderedImageLabel: 'Rendered image',
       coverSwitchToAdvanced: 'Advanced Editor',
       coverSwitchToBasic: 'Basic Editor',
+      coverStudioEyebrow: 'Cover studio',
+      coverStudioSimpleSummary: 'Start from a template and adjust the guided content. What you see is what gets exported.',
+      coverStudioAdvancedSummary: 'Move and edit every text layer directly on the canvas.',
+      coverStudioCanvasLabel: 'Canvas',
+      coverStudioTemplateLabel: 'Template',
+      coverStudioFieldsLegend: 'Content',
+      coverStudioInspectorEmpty: 'Click a text on the canvas to edit it.',
+      coverStudioContentLabel: 'Content',
+      coverStudioAlignLabel: 'Alignment and style',
+      coverStudioFontSizeLabel: 'Size',
+      coverStudioLineHeightLabel: 'Line height',
+      coverStudioCharSpacingLabel: 'Letter spacing',
+      coverStudioColorLabel: 'Color',
+      coverStudioVisibilityLabel: 'Visibility',
+      coverStudioSaveDesign: 'Save Final Design',
+      coverStudioSaved: 'Saved',
       stepContent: 'Content',
       stepChapters: 'Chapters',
       stepTemplate: 'Template',

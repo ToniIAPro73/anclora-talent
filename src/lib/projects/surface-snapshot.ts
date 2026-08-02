@@ -5,10 +5,10 @@ import {
   type SurfaceKind,
   type SurfaceLayer,
   type SurfaceState,
-} from '@/lib/projects/cover-surface';
-import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface-resolver';
-import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
-import type { ProjectRecord } from '@/lib/projects/types';
+} from './cover-surface';
+import { resolveBackCoverSurfaceFields } from './back-cover-surface-resolver';
+import { resolveCoverSurfaceFields } from './cover-surface-resolver';
+import type { ProjectRecord } from './types';
 
 type SurfaceFields = SurfaceState['fields'];
 const FIELD_ORDER: Record<SurfaceKind, Array<keyof SurfaceFields>> = {

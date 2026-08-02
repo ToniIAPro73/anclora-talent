@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { AdvancedCoverEditor } from '@/components/projects/advanced-cover/AdvancedCoverEditor';
+import { CoverStudio } from '@/components/projects/cover-studio/CoverStudio';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { NavigatingLink } from '@/components/ui/NavigatingLink';
 import { requireUserId } from '@/lib/auth/guards';
@@ -41,7 +41,7 @@ export default async function ProjectCoverPage({
           </NavigatingLink>
         </div>
       </div>
-      <AdvancedCoverEditor project={project} copy={copy} />
+      <CoverStudio surface="cover" project={project} copy={copy} />
     </div>
   );
 }

@@ -73,14 +73,16 @@ describe('premium button classes contract', () => {
     return readFileSync(resolve(process.cwd(), 'src', relativePath), 'utf8');
   }
 
-  test('advanced cover flow uses premiumPrimaryDarkButton for save', () => {
-    const src = readSrc('components/projects/advanced-cover/AdvancedSurfaceEditor.tsx');
+  test('cover studio save flow uses premiumPrimaryDarkButton for save', () => {
+    const src = readSrc('components/projects/cover-studio/CoverStudio.tsx');
     expect(premiumButtonPattern.test(src)).toBe(true);
   });
 
-  test('BackCoverForm uses premiumPrimaryDarkButton for save', () => {
-    const src = readSrc('components/projects/BackCoverForm.tsx');
-    expect(premiumButtonPattern.test(src)).toBe(true);
+  test('cover studio renders both surfaces through the same component', () => {
+    const coverPage = readSrc('app/(app)/projects/[projectId]/cover/page.tsx');
+    const backCoverPage = readSrc('app/(app)/projects/[projectId]/back-cover/page.tsx');
+    expect(coverPage).toContain('cover-studio/CoverStudio');
+    expect(backCoverPage).toContain('cover-studio/CoverStudio');
   });
 
   test('preview page uses premium button classes for nav actions', () => {

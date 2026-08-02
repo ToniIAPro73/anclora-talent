@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildInitialSurfaceLayers, createSurfaceSnapshotFromProject } from './advanced-surface-utils';
+import { buildInitialSurfaceLayers, createSurfaceSnapshotFromProject } from './surface-snapshot';
 
 function makeSurfaceProject(input: unknown) {
   return input as Parameters<typeof createSurfaceSnapshotFromProject>[1];
