@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { NodeViewWrapper } from '@tiptap/react';
+import type { NodeViewProps } from '@tiptap/react';
 import { X, AlignLeft, AlignCenter, AlignRight, Move } from 'lucide-react';
 
 export const ImageNodeView = ({
@@ -11,7 +12,7 @@ export const ImageNodeView = ({
   extension,
   deleteNode,
   editor,
-}: any) => {
+}: NodeViewProps) => {
   const [isResizing, setIsResizing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);

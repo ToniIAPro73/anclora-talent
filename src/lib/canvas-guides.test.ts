@@ -1,14 +1,22 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
+interface MockShape {
+  type: string;
+  points?: number[];
+  text?: string;
+  options?: Record<string, unknown>;
+  set: ReturnType<typeof vi.fn>;
+}
+
 const mocks = vi.hoisted(() => {
-  const LineMock = vi.fn(function LineMock(this: any, points, options) {
+  const LineMock = vi.fn(function LineMock(this: MockShape, points: number[], options: Record<string, unknown>) {
     this.type = 'line';
     this.points = points;
     this.options = options;
     this.set = vi.fn();
   });
 
-  const TextMock = vi.fn(function TextMock(this: any, text, options) {
+  const TextMock = vi.fn(function TextMock(this: MockShape, text: string, options: Record<string, unknown>) {
     this.type = 'text';
     this.text = text;
     this.options = options;
@@ -25,7 +33,20 @@ vi.mock('fabric', () => ({
 
 import { createGuideManager } from './canvas-guides';
 
-function makeCanvas(objects: any[] = []) {
+interface MockCanvasObject {
+  id: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  scaleX: number;
+  scaleY: number;
+  originX: string;
+  originY: string;
+  set: (props: Record<string, unknown>) => void;
+}
+
+function makeCanvas(objects: MockCanvasObject[] = []) {
   return {
     width: 400,
     height: 600,
@@ -36,7 +57,7 @@ function makeCanvas(objects: any[] = []) {
   };
 }
 
-function makeObject(input: Partial<any>) {
+function makeObject(input: Partial<MockCanvasObject>): MockCanvasObject {
   return {
     id: 'obj',
     left: 0,
@@ -47,7 +68,7 @@ function makeObject(input: Partial<any>) {
     scaleY: 1,
     originX: 'center',
     originY: 'center',
-    set: vi.fn(function (props: Record<string, unknown>) {
+    set: vi.fn(function (this: Record<string, unknown>, props: Record<string, unknown>) {
       Object.assign(this, props);
     }),
     ...input,

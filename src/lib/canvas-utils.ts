@@ -179,10 +179,10 @@ async function waitForFont(fontFamily: string, fontSize: number): Promise<void> 
   }
   
   try {
-    await (document as any).fonts.ready;
+    await document.fonts.ready;
     await Promise.all([
-      (document as any).fonts.load(`${fontSize}px "${fontFamily}"`),
-      (document as any).fonts.load(`bold ${fontSize}px "${fontFamily}"`),
+      document.fonts.load(`${fontSize}px "${fontFamily}"`),
+      document.fonts.load(`bold ${fontSize}px "${fontFamily}"`),
     ]);
   } catch (e) {
     console.warn('[waitForFont] Font loading failed, continuing anyway:', e);

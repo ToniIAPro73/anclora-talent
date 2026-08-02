@@ -1,10 +1,52 @@
 import { create } from 'zustand';
 import { wrapTextToWidth } from './canvas-utils';
 
+/**
+ * Subconjunto estructural de los objetos Fabric (y wrappers propios con
+ * props extra como rawText/wrapWidth/removeFromCanvas) que guarda el store.
+ */
+export interface CanvasFabricObject {
+  id?: string;
+  type?: string;
+  text?: string;
+  rawText?: string;
+  wrapWidth?: number;
+  left?: number;
+  top?: number;
+  originX?: string;
+  originY?: string;
+  fill?: string;
+  opacity?: number;
+  fontSize?: number;
+  fontFamily?: string;
+  fontWeight?: string | number;
+  fontStyle?: string;
+  textAlign?: string;
+  lineHeight?: number;
+  charSpacing?: number;
+  width?: number;
+  set?(props: Record<string, unknown> | string, value?: unknown): void;
+  initDimensions?(): void;
+  setCoords?(): void;
+  removeFromCanvas?(): void;
+  toObject?(props?: string[]): Record<string, unknown>;
+}
+
+/** Subconjunto estructural del canvas Fabric que usa el store. */
+export interface CanvasLike {
+  remove(obj: CanvasFabricObject): void;
+  renderAll(): void;
+  requestRenderAll(): void;
+  getObjects(): CanvasFabricObject[];
+  toJSON(props?: string[]): unknown;
+  toDataURL(options?: Record<string, unknown>): string;
+  loadFromJSON(json: unknown): Promise<unknown>;
+}
+
 export interface CanvasElement {
   id: string;
   type: 'text' | 'image';
-  object: any;
+  object: CanvasFabricObject;
   properties: {
     fill?: string;
     fontSize?: number;
@@ -21,14 +63,14 @@ export interface CanvasElement {
 }
 
 interface CanvasStore {
-  canvas: any | null;
+  canvas: CanvasLike | null;
   selectedElement: CanvasElement | null;
   elements: CanvasElement[];
   history: string[];
   historyStep: number;
   
   // Canvas actions
-  setCanvas: (canvas: any) => void;
+  setCanvas: (canvas: CanvasLike) => void;
   selectElement: (element: CanvasElement | null) => void;
   addElement: (element: CanvasElement) => void;
   removeElement: (id: string) => void;
@@ -43,14 +85,14 @@ interface CanvasStore {
   clear: () => void;
 }
 
-export const useCanvasStore = create<CanvasStore>((set: any, get: any) => ({
+export const useCanvasStore = create<CanvasStore>((set, get) => ({
   canvas: null,
   selectedElement: null,
   elements: [],
   history: [],
   historyStep: -1,
 
-  setCanvas: (canvas: any) => set({ canvas }),
+  setCanvas: (canvas: CanvasLike) => set({ canvas }),
 
   selectElement: (element: CanvasElement | null) => set({ selectedElement: element }),
 
@@ -165,11 +207,11 @@ export const useCanvasStore = create<CanvasStore>((set: any, get: any) => ({
         
         // Sincronizar los elementos del store con los nuevos objetos del canvas
         const canvasObjects = state.canvas.getObjects();
-        const newElements: CanvasElement[] = canvasObjects.map((obj: any) => ({
+        const newElements: CanvasElement[] = canvasObjects.map((obj) => ({
           id: obj.id || `element-${Math.random().toString(36).substr(2, 9)}`,
-          type: obj.type.includes('text') ? 'text' : 'image',
+          type: (obj.type?.includes('text') ? 'text' : 'image') as CanvasElement['type'],
           object: obj,
-          properties: { ...(obj.toObject(['id']) || {}) }
+          properties: { ...(obj.toObject?.(['id']) || {}) as CanvasElement['properties'] }
         }));
         
         state.canvas.renderAll();
@@ -194,11 +236,11 @@ export const useCanvasStore = create<CanvasStore>((set: any, get: any) => ({
         await state.canvas.loadFromJSON(json);
         
         const canvasObjects = state.canvas.getObjects();
-        const newElements: CanvasElement[] = canvasObjects.map((obj: any) => ({
+        const newElements: CanvasElement[] = canvasObjects.map((obj) => ({
           id: obj.id || `element-${Math.random().toString(36).substr(2, 9)}`,
-          type: obj.type.includes('text') ? 'text' : 'image',
+          type: (obj.type?.includes('text') ? 'text' : 'image') as CanvasElement['type'],
           object: obj,
-          properties: { ...(obj.toObject(['id']) || {}) }
+          properties: { ...(obj.toObject?.(['id']) || {}) as CanvasElement['properties'] }
         }));
         
         state.canvas.renderAll();

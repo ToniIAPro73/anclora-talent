@@ -14,11 +14,13 @@ import {
   saveProjectCoverAction,
 } from '@/lib/projects/actions';
 import { useCanvasStore } from '@/lib/canvas-store';
+import type { CanvasLike } from '@/lib/canvas-store';
 import { addTextToCanvas } from '@/lib/canvas-utils';
 import { createGuideManager } from '@/lib/canvas-guides';
+import type { GuideCanvas } from '@/lib/canvas-guides';
 import { createSurfaceSnapshotFromProject } from './advanced-surface-utils';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '@/lib/canvas-utils';
-import { normalizeSurfaceState, type SurfaceKind, type SurfaceState } from '@/lib/projects/cover-surface';
+import { normalizeSurfaceState, type SurfaceKind, type SurfaceLayer, type SurfaceState } from '@/lib/projects/cover-surface';
 import { BACK_COVER_TEXT_LAYOUT, COVER_TEXT_LAYOUT } from '@/lib/projects/cover-layout';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
@@ -292,7 +294,7 @@ export function AdvancedSurfaceEditor({
 
         if (!listenersAttachedRef.current) {
           if (!guideManagerRef.current) {
-            guideManagerRef.current = createGuideManager(fabricCanvas);
+            guideManagerRef.current = createGuideManager(fabricCanvas as unknown as GuideCanvas);
           }
 
           fabricCanvas.on('selection:created', (e: FabricEvent) => {
@@ -354,7 +356,7 @@ export function AdvancedSurfaceEditor({
   const handleCanvasReady = useCallback(
     (fabricCanvas: unknown) => {
       const nextCanvas = fabricCanvas as FabricCanvasLike;
-      setCanvas(nextCanvas);
+      setCanvas(nextCanvas as unknown as CanvasLike);
       loadSurfaceData(nextCanvas);
     },
     [loadSurfaceData, setCanvas],
@@ -392,7 +394,7 @@ export function AdvancedSurfaceEditor({
           fontFamily: typeof obj.fontFamily === 'string' ? obj.fontFamily : layer.fontFamily,
           fontWeight: typeof obj.fontWeight !== 'undefined' ? obj.fontWeight : layer.fontWeight,
           fontStyle: typeof obj.fontStyle === 'string' ? obj.fontStyle : layer.fontStyle,
-          textAlign: obj.textAlign ?? layer.textAlign,
+          textAlign: (obj.textAlign ?? layer.textAlign) as SurfaceLayer['textAlign'],
           lineHeight: typeof obj.lineHeight === 'number' ? obj.lineHeight : layer.lineHeight,
           charSpacing: typeof obj.charSpacing === 'number' ? obj.charSpacing : layer.charSpacing,
           originX: typeof obj.originX === 'string' ? obj.originX : layer.originX,

@@ -88,7 +88,7 @@ export function EnhancedRichTextEditor({
       }),
     ],
     content: defaultContent,
-    onUpdate: ({ editor: ed }: { editor: any }) => {
+    onUpdate: ({ editor: ed }) => {
       handleUpdate(ed.getHTML());
     },
     editorProps: {
@@ -204,7 +204,7 @@ export function EnhancedRichTextEditor({
         </ToolbarButton>
         <ToolbarButton
           dataTestId="editor-toolbar-highlight-button"
-          onClick={() => (editor.chain().focus() as any).toggleHighlight().run()}
+          onClick={() => (editor.chain().focus() as unknown as { toggleHighlight: () => { run: () => void } }).toggleHighlight().run()}
           active={editor.isActive('highlight')}
           title="Highlight"
         >

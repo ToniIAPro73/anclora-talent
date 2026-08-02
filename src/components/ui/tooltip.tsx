@@ -37,7 +37,7 @@ const Tooltip = ({ children, ...props }: TooltipProps) => {
 Tooltip.displayName = 'Tooltip';
 
 const TooltipTrigger = forwardRef<HTMLButtonElement, TooltipTriggerProps>(
-  ({ className = '', children, asChild = false, ...props }, ref: any) => {
+  ({ className = '', children, asChild = false, ...props }, ref) => {
     const { setIsOpen } = useContext(TooltipContext);
 
     const handlers = {
@@ -49,7 +49,7 @@ const TooltipTrigger = forwardRef<HTMLButtonElement, TooltipTriggerProps>(
 
     if (asChild && children) {
       return (
-        <div ref={ref} {...handlers} className="relative inline-flex">
+        <div ref={ref as React.Ref<HTMLDivElement>} {...handlers} className="relative inline-flex">
           {children}
         </div>
       );

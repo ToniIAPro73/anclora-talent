@@ -33,7 +33,11 @@ export function useEditorPreferences() {
 
   // On mount: hydrate from localStorage immediately, then sync from DB
   useEffect(() => {
-    setPreferencesState(readFromLocalStorage());
+    // Deferred one frame: keeps SSR/first-paint on defaults (no hydration
+    // mismatch) and avoids a synchronous setState inside the effect body.
+    const raf = requestAnimationFrame(() => {
+      setPreferencesState(readFromLocalStorage());
+    });
 
     getEditorPreferencesAction().then((dbPrefs) => {
       setPreferencesState(dbPrefs);
@@ -43,6 +47,8 @@ export function useEditorPreferences() {
     }).finally(() => {
       setIsLoaded(true);
     });
+
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   // Cross-tab sync via StorageEvent

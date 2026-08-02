@@ -29,10 +29,49 @@ interface Bounds {
   centerY: number;
 }
 
+interface FabricRect {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Subconjunto estructural de un objeto Fabric que usa el gestor de guías.
+ * Los objetos reales (fabric.FabricObject y mocks de test) lo satisfacen.
+ */
+interface GuideObject {
+  id?: string;
+  type?: string;
+  left?: number;
+  top?: number;
+  width?: number;
+  height?: number;
+  scaleX?: number;
+  scaleY?: number;
+  originX?: string;
+  originY?: string;
+  excludeFromExport?: boolean;
+  getBoundingRect?(absolute?: boolean, calculate?: boolean): FabricRect;
+  set(props: Record<string, unknown>): void;
+}
+
+export type { GuideObject };
+
+/** Subconjunto estructural del canvas Fabric que usa el gestor de guías. */
+export interface GuideCanvas {
+  width?: number;
+  height?: number;
+  add(...objects: GuideObject[]): void;
+  remove(...objects: GuideObject[]): void;
+  renderAll(): void;
+  getObjects(): GuideObject[];
+}
+
 interface AlignmentGuide {
   id: string;
-  line: any;
-  label?: any;
+  line: GuideObject;
+  label?: GuideObject;
   type: GuideType;
   position: number;
   source?: AlignmentSource | 'distance';
@@ -46,7 +85,7 @@ interface SnapTarget {
   source: AlignmentSource;
 }
 
-function getBounds(object: any): Bounds {
+function getBounds(object: GuideObject): Bounds {
   if (typeof object?.getBoundingRect === 'function') {
     const rect = object.getBoundingRect(true, true);
     return {
@@ -102,7 +141,7 @@ function getAnchorValue(bounds: Bounds, axis: Axis, anchor: XAnchor | YAnchor) {
 }
 
 function calculateOriginCoordinate(
-  object: any,
+  object: GuideObject,
   bounds: Bounds,
   axis: Axis,
   anchor: XAnchor | YAnchor,
@@ -133,17 +172,20 @@ function roundPx(value: number) {
 }
 
 export class CanvasGuideManager {
-  private canvas: any;
+  private canvas: GuideCanvas | null;
   private guides: Map<string, AlignmentGuide> = new Map();
-  private activeObject: any = null;
+  private activeObject: GuideObject | null = null;
   private snapTargets: Partial<Record<Axis, SnapTarget>> = {};
 
-  constructor(canvas: any) {
+  constructor(canvas: GuideCanvas) {
     this.canvas = canvas;
   }
 
   private get fabric() {
-    return fabricModule as any;
+    return fabricModule as unknown as {
+      Line: new (points: number[], options: Record<string, unknown>) => GuideObject;
+      Text: new (text: string, options: Record<string, unknown>) => GuideObject;
+    };
   }
 
   private createGuideLine(
@@ -208,12 +250,12 @@ export class CanvasGuideManager {
     id: string,
     type: GuideType,
     position: number,
-    line: any,
-    label?: any,
+    line: GuideObject,
+    label?: GuideObject,
     source: AlignmentSource | 'distance' = 'canvas',
   ) {
-    this.canvas.add(line);
-    if (label) this.canvas.add(label);
+    this.canvas!.add(line);
+    if (label) this.canvas!.add(label);
     this.guides.set(id, { id, type, position, line, label, source });
   }
 
@@ -232,9 +274,9 @@ export class CanvasGuideManager {
     };
   }
 
-  private findBestSnapTarget(movingObject: any, bounds: Bounds) {
-    const canvasWidth = this.canvas.width || 800;
-    const canvasHeight = this.canvas.height || 600;
+  private findBestSnapTarget(movingObject: GuideObject, bounds: Bounds) {
+    const canvasWidth = this.canvas!.width || 800;
+    const canvasHeight = this.canvas!.height || 600;
     const canvasTargets = this.getCanvasAlignmentTargets(canvasWidth, canvasHeight);
     let bestX: SnapTarget | null = null;
     let bestY: SnapTarget | null = null;
@@ -259,7 +301,7 @@ export class CanvasGuideManager {
       }
     }
 
-    this.canvas.getObjects().forEach((obj: any) => {
+    this.canvas!.getObjects().forEach((obj) => {
       if (obj === movingObject || obj?.type === 'line' || obj?.type === 'text' && obj?.excludeFromExport) return;
 
       const other = getBounds(obj);
@@ -304,8 +346,8 @@ export class CanvasGuideManager {
   }
 
   private drawSnapGuides(bounds: Bounds) {
-    const canvasWidth = this.canvas.width || 800;
-    const canvasHeight = this.canvas.height || 600;
+    const canvasWidth = this.canvas!.width || 800;
+    const canvasHeight = this.canvas!.height || 600;
 
     const xSnap = this.snapTargets.x;
     if (xSnap) {
@@ -322,11 +364,11 @@ export class CanvasGuideManager {
     }
   }
 
-  private drawDistanceGuides(movingObject: any, bounds: Bounds) {
+  private drawDistanceGuides(movingObject: GuideObject, bounds: Bounds) {
     let bestHorizontal: { gap: number; x1: number; x2: number; y: number } | null = null;
     let bestVertical: { gap: number; y1: number; y2: number; x: number } | null = null;
 
-    this.canvas.getObjects().forEach((obj: any) => {
+    this.canvas!.getObjects().forEach((obj) => {
       if (obj === movingObject || obj?.type === 'line' || obj?.excludeFromExport) return;
 
       const other = getBounds(obj);
@@ -366,42 +408,47 @@ export class CanvasGuideManager {
       }
     });
 
-    if (bestHorizontal && bestHorizontal.gap > 0) {
+    // Las asignaciones dentro del forEach no las ve el control-flow analysis
+    // de TS (quedaría estrechado a null); re-leer con el tipo declarado.
+    const finalHorizontal = bestHorizontal as { gap: number; x1: number; x2: number; y: number } | null;
+    const finalVertical = bestVertical as { gap: number; y1: number; y2: number; x: number } | null;
+
+    if (finalHorizontal && finalHorizontal.gap > 0) {
       const line = this.createGuideLine(
-        bestHorizontal.x1,
-        bestHorizontal.y,
-        bestHorizontal.x2,
-        bestHorizontal.y,
+        finalHorizontal.x1,
+        finalHorizontal.y,
+        finalHorizontal.x2,
+        finalHorizontal.y,
         'distance-horizontal',
         'distance',
       );
       const label = this.createDistanceLabel(
-        `${roundPx(bestHorizontal.gap)} px`,
-        bestHorizontal.x1 + (bestHorizontal.x2 - bestHorizontal.x1) / 2,
-        bestHorizontal.y - 12,
+        `${roundPx(finalHorizontal.gap)} px`,
+        finalHorizontal.x1 + (finalHorizontal.x2 - finalHorizontal.x1) / 2,
+        finalHorizontal.y - 12,
       );
-      this.registerGuide('distance-horizontal', 'distance-horizontal', bestHorizontal.gap, line, label, 'distance');
+      this.registerGuide('distance-horizontal', 'distance-horizontal', finalHorizontal.gap, line, label, 'distance');
     }
 
-    if (bestVertical && bestVertical.gap > 0) {
+    if (finalVertical && finalVertical.gap > 0) {
       const line = this.createGuideLine(
-        bestVertical.x,
-        bestVertical.y1,
-        bestVertical.x,
-        bestVertical.y2,
+        finalVertical.x,
+        finalVertical.y1,
+        finalVertical.x,
+        finalVertical.y2,
         'distance-vertical',
         'distance',
       );
       const label = this.createDistanceLabel(
-        `${roundPx(bestVertical.gap)} px`,
-        bestVertical.x + 20,
-        bestVertical.y1 + (bestVertical.y2 - bestVertical.y1) / 2,
+        `${roundPx(finalVertical.gap)} px`,
+        finalVertical.x + 20,
+        finalVertical.y1 + (finalVertical.y2 - finalVertical.y1) / 2,
       );
-      this.registerGuide('distance-vertical', 'distance-vertical', bestVertical.gap, line, label, 'distance');
+      this.registerGuide('distance-vertical', 'distance-vertical', finalVertical.gap, line, label, 'distance');
     }
   }
 
-  async showGuides(movingObject: any) {
+  async showGuides(movingObject: GuideObject) {
     if (!this.canvas) return;
 
     this.clearGuides();
@@ -414,7 +461,7 @@ export class CanvasGuideManager {
     this.canvas.renderAll();
   }
 
-  snapToGuides(object: any) {
+  snapToGuides(object: GuideObject) {
     const bounds = getBounds(object);
 
     const xSnap = this.snapTargets.x;
@@ -435,8 +482,8 @@ export class CanvasGuideManager {
 
   clearGuides() {
     this.guides.forEach((guide) => {
-      if (guide.label) this.canvas.remove(guide.label);
-      this.canvas.remove(guide.line);
+      if (guide.label) this.canvas!.remove(guide.label);
+      this.canvas!.remove(guide.line);
     });
     this.guides.clear();
     this.snapTargets = {};
@@ -450,11 +497,11 @@ export class CanvasGuideManager {
       guide.label?.set?.({ opacity: 0 });
     });
 
-    this.canvas.renderAll();
+    this.canvas!.renderAll();
 
     setTimeout(() => {
       this.clearGuides();
-      this.canvas.renderAll();
+      this.canvas!.renderAll();
     }, 200);
   }
 
@@ -465,6 +512,6 @@ export class CanvasGuideManager {
   }
 }
 
-export function createGuideManager(canvas: any): CanvasGuideManager {
+export function createGuideManager(canvas: GuideCanvas): CanvasGuideManager {
   return new CanvasGuideManager(canvas);
 }
