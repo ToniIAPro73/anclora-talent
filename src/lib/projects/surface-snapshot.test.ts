@@ -37,7 +37,7 @@ describe('advanced-surface-utils', () => {
     expect(snapshot.fields.authorBio?.value).toBe('Bio');
   });
 
-  it('prioritizes persisted flat back-cover values over stale surface fields', () => {
+  it('treats divergent persisted back-cover surface values as manual layer overrides (D.3)', () => {
     const snapshot = createSurfaceSnapshotFromProject('back-cover', makeSurfaceProject({
       document: { author: 'Antonio', title: 'Libro', subtitle: 'Resumen documento' },
       cover: { title: 'Portada', subtitle: 'Sub', surfaceState: undefined },
@@ -59,8 +59,8 @@ describe('advanced-surface-utils', () => {
       },
     }));
 
-    expect(snapshot.fields.title?.value).toBe('Antonio');
-    expect(snapshot.fields.body?.value).toBe('Texto sincronizado');
+    expect(snapshot.fields.title?.value).toBe('Autor viejo');
+    expect(snapshot.fields.body?.value).toBe('Texto viejo');
     expect(snapshot.fields.authorBio?.value).toBe('Bio sincronizada');
   });
 
@@ -94,7 +94,7 @@ describe('advanced-surface-utils', () => {
     expect(snapshot.layers?.some((layer) => layer.fieldKey === 'author')).toBe(true);
   });
 
-  it('syncs cover text fields with persisted flat cover values so advanced editor matches the basic editor', () => {
+  it('keeps a divergent persisted surface title as a manual override and syncs the author (D.3)', () => {
     const snapshot = createSurfaceSnapshotFromProject('cover', makeSurfaceProject({
       document: { author: 'Toni', title: 'Titulo documento' },
       cover: {
@@ -121,7 +121,7 @@ describe('advanced-surface-utils', () => {
       },
     }));
 
-    expect(snapshot.fields.title?.value).toBe('NUNCA MAS EN LA SOMBRA');
+    expect(snapshot.fields.title?.value).toBe('Titulo antiguo');
     expect(snapshot.fields.author?.value).toBe('Toni');
     expect(snapshot.fields.author?.visible).toBe(true);
   });
@@ -157,7 +157,7 @@ describe('advanced-surface-utils', () => {
     expect(snapshot.fields.author?.visible).toBe(true);
   });
 
-  it('matches the basic cover editor by prioritizing persisted cover subtitle over stale surface subtitle', () => {
+  it('keeps a divergent persisted surface subtitle as a manual override (D.3)', () => {
     const snapshot = createSurfaceSnapshotFromProject('cover', makeSurfaceProject({
       document: { author: 'Toni', title: 'Titulo documento', subtitle: 'Subtitulo documento' },
       cover: {
@@ -184,7 +184,7 @@ describe('advanced-surface-utils', () => {
       },
     }));
 
-    expect(snapshot.fields.subtitle?.value).toBe('Subtitulo actual de cover');
+    expect(snapshot.fields.subtitle?.value).toBe('Subtitulo viejo de surface');
     expect(snapshot.fields.subtitle?.visible).toBe(true);
   });
 

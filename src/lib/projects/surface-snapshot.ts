@@ -8,6 +8,7 @@ import {
 } from './cover-surface';
 import { resolveBackCoverSurfaceFields } from './back-cover-surface-resolver';
 import { resolveCoverSurfaceFields } from './cover-surface-resolver';
+import { syncedSurfaceValues } from './surface-metadata-sync';
 import type { ProjectRecord } from './types';
 
 type SurfaceFields = SurfaceState['fields'];
@@ -69,15 +70,26 @@ export function createSurfaceSnapshotFromProject(
   surface: SurfaceKind,
   project: Pick<ProjectRecord, 'document' | 'cover' | 'backCover'>,
 ): SurfaceState {
+  const synced = syncedSurfaceValues(project.document);
+  const metadata = project.document.metadata ?? null;
+
   if (surface === 'cover') {
+    // D.3: when the product metadata exists it is the single source; the
+    // design-level columns only seed legacy projects saved before the
+    // metadata chain (divergent values fossilize as manual layer overrides).
+    const legacyTitle = metadata?.title?.trim() ? synced.title : (project.cover.title || synced.title);
+    const legacySubtitle = metadata?.subtitle?.trim()
+      ? synced.subtitle
+      : (project.cover.subtitle || synced.subtitle);
+
     const state = normalizeSurfaceState(
       project.cover.surfaceState ??
         {
           ...createDefaultSurfaceState('cover'),
           fields: {
-            title: field(project.cover.title || project.document.title),
-            subtitle: field(project.cover.subtitle || project.document.subtitle, project.cover.showSubtitle ?? true),
-            author: field(project.document.author),
+            title: field(legacyTitle),
+            subtitle: field(legacySubtitle, project.cover.showSubtitle ?? true),
+            author: field(synced.author),
           },
         },
     );
@@ -94,13 +106,20 @@ export function createSurfaceSnapshotFromProject(
     };
   }
 
+  const legacyBackTitle = metadata?.title?.trim()
+    ? synced.title
+    : (project.backCover.title || synced.title);
+  const legacyBody = metadata?.description?.trim()
+    ? synced.body
+    : (project.backCover.body || synced.body);
+
   const state = normalizeSurfaceState(
     project.backCover.surfaceState ??
       {
         ...createDefaultSurfaceState('back-cover'),
         fields: {
-          title: field(project.backCover.title),
-          body: field(project.backCover.body),
+          title: field(legacyBackTitle),
+          body: field(legacyBody),
           authorBio: field(project.backCover.authorBio),
         },
       },

@@ -179,6 +179,17 @@ export function updateProjectDocument(project: ProjectRecord, input: UpdateDocum
       subtitle: input.subtitle,
       author: input.author,
       chapters: updatedChapters,
+      // D.3: DocumentMetadata mirrors the document's main form; refresh the
+      // mirrored fields on every document save so the cover/back-cover
+      // metadata chain never goes stale.
+      metadata: project.document.metadata
+        ? {
+            ...project.document.metadata,
+            title: input.title,
+            subtitle: input.subtitle || undefined,
+            author: input.author || undefined,
+          }
+        : (project.document.metadata ?? null),
     },
     cover: {
       ...project.cover,
