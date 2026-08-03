@@ -32,7 +32,9 @@ async function createLongTitleProject(page: Page) {
   await page.goto('/projects/new');
   await page.getByTestId('create-project-title-input').fill(LONG_TITLE);
   await page.getByRole('button', { name: 'Crear proyecto y abrir editor' }).click();
-  await expect(page).toHaveURL(/\/projects\/.+\/editor/);
+  // Generous budget: the first creation of a run can hit a cold Neon wake-up
+  // and the redirect lands after the default 5s expect timeout.
+  await expect(page).toHaveURL(/\/projects\/.+\/editor/, { timeout: 15_000 });
 }
 
 async function goToWorkspaceStep(page: Page, step: number) {

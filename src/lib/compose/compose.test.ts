@@ -316,3 +316,44 @@ describe('composeIncremental', () => {
     );
   });
 });
+
+describe('diffCompositions (C5)', () => {
+  it('reports chapter page shifts, TOC delta and new violations', async () => {
+    const { diffCompositions } = await import('./compose');
+    const base = doc([
+      heading('c1', 1, 'Chapter One'),
+      para('p1', 4),
+      heading('c2', 1, 'Chapter Two'),
+      para('p2', 2),
+    ]);
+    const grown = doc([
+      heading('c1', 1, 'Chapter One'),
+      para('p1', 14), // pushes chapter 2 one page forward
+      heading('c2', 1, 'Chapter Two'),
+      para('p2', 2),
+    ]);
+    const prev = compose(base, rules, template);
+    const next = compose(grown, rules, template);
+    const diff = diffCompositions(prev, next);
+    expect(diff.chapterShifts).toHaveLength(1);
+    expect(diff.chapterShifts[0]).toMatchObject({ chapterId: 'c2' });
+    expect(diff.chapterShifts[0].toPage).toBeGreaterThan(diff.chapterShifts[0].fromPage);
+    expect(diff.tocDelta).toBe(0);
+    expect(diff.pageCountDelta).toBeGreaterThan(0);
+    expect(diff.newViolations).toEqual([]);
+  });
+
+  it('detects new violations and TOC growth', async () => {
+    const { diffCompositions } = await import('./compose');
+    const prev = compose(doc([heading('c1', 1, 'One'), para('p1', 2)]), rules, template);
+    const next = compose(
+      doc([heading('c1', 1, 'One'), para('p1', 2), heading('s1', 2, 'New section'), table('t-big', 12)]),
+      rules,
+      template,
+    );
+    const diff = diffCompositions(prev, next);
+    expect(diff.tocDelta).toBe(1);
+    expect(diff.newViolations).toHaveLength(1);
+    expect(diff.newViolations[0].rule).toBe('keepTogether.table');
+  });
+});

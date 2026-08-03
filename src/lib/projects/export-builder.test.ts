@@ -105,3 +105,19 @@ describe('export-builder', () => {
     expect(documentXml).toContain('<wp:inline');
   }, 60000);
 });
+
+describe('export footer (C7)', () => {
+  test('injects a running footer with product title and page number on content pages', async () => {
+    const project = makeProject();
+    project.document.metadata = { title: 'Título del producto' };
+    const html = await renderProjectExportHtml(project);
+    expect(html).toContain('export-page-footer');
+    expect(html).toContain('export-page-footer-title');
+    expect(html).toContain('Título del producto');
+  }, 15000);
+
+  test('falls back to the document title when no metadata exists', async () => {
+    const html = await renderProjectExportHtml(makeProject());
+    expect(html).toContain('export-page-footer-number');
+  }, 15000);
+});
