@@ -238,8 +238,48 @@ export function composeProjectPreview(
   });
 
   let globalPageNumber = 2;
-  const tocHtml = buildGeneratedTocHtml(result, 1);
   const tocChapterServed = new Set<string>();
+
+  // C7: digital product metadata injection — title page (portadilla) and
+  // legal page are generated from DocumentMetadata when present.
+  const metadata = document.metadata;
+  const hasExtendedMetadata = Boolean(
+    project.document.metadata &&
+      (metadata.subtitle || metadata.author || metadata.isbn || metadata.description),
+  );
+  if (hasExtendedMetadata) {
+    const titlePageParts = [
+      `<h1>${escapeHtml(metadata.title)}</h1>`,
+      metadata.subtitle ? `<p class="title-page-subtitle">${escapeHtml(metadata.subtitle)}</p>` : '',
+      metadata.author ? `<p class="title-page-author">${escapeHtml(metadata.author)}</p>` : '',
+    ].filter(Boolean);
+    pages.push({
+      type: 'content',
+      content: `<div class="title-page">${titlePageParts.join('')}</div>`,
+      pageNumber: globalPageNumber,
+    });
+    globalPageNumber += 1;
+
+    const year = new Date(project.createdAt).getFullYear();
+    const legalParts = [
+      `<p>${escapeHtml(metadata.title)}${metadata.author ? ` — ${escapeHtml(metadata.author)}` : ''}</p>`,
+      `<p>© ${year}${metadata.author ? ` ${escapeHtml(metadata.author)}` : ''}</p>`,
+      metadata.isbn ? `<p>ISBN: ${escapeHtml(metadata.isbn)}</p>` : '',
+      metadata.description ? `<p>${escapeHtml(metadata.description)}</p>` : '',
+      metadata.keywords?.length ? `<p>${escapeHtml(metadata.keywords.join(', '))}</p>` : '',
+      metadata.language ? `<p>${escapeHtml(metadata.language)}</p>` : '',
+    ].filter(Boolean);
+    pages.push({
+      type: 'content',
+      content: `<div class="legal-page">${legalParts.join('')}</div>`,
+      pageNumber: globalPageNumber,
+    });
+    globalPageNumber += 1;
+  }
+
+  // TOC page numbers must account for cover (1) + injected front matter.
+  const frontMatterPages = globalPageNumber - 2;
+  const tocHtml = buildGeneratedTocHtml(result, 1 + frontMatterPages);
 
   if (document.blocks.length === 0) {
     pages.push({ type: 'content', content: EMPTY_CHAPTER_PLACEHOLDER, pageNumber: globalPageNumber });

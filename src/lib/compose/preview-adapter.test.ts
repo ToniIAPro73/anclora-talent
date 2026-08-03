@@ -228,3 +228,60 @@ describe('projectToSemanticDocument / templateFromPaginationConfig', () => {
     expect(html).toContain('data-toc-level="1"');
   });
 });
+
+describe('composeProjectPreview — metadata injection (C7)', () => {
+  function projectWithMetadata(): ProjectRecord {
+    const project = createProject({
+      chapters: [
+        {
+          id: 'toc',
+          order: 1,
+          title: 'Índice',
+          blocks: [{ id: 'btoc', type: 'paragraph', order: 1, content: '<p>x</p>' }],
+        },
+        {
+          id: 'ch1',
+          order: 2,
+          title: 'Capítulo 1',
+          blocks: [
+            { id: 'b1', type: 'paragraph', order: 1, content: '<h1>Capítulo 1</h1><p>Texto.</p>' },
+          ],
+        },
+      ],
+    });
+    project.document.metadata = {
+      title: 'Libro',
+      subtitle: 'Subtítulo',
+      author: 'Autora',
+      isbn: '978-84-0000000-0-0',
+      description: 'Descripción del libro',
+      keywords: ['novela', 'ensayo'],
+      language: 'es',
+    };
+    return project;
+  }
+
+  it('injects title page and legal page from DocumentMetadata after the cover', () => {
+    const { pages } = composeProjectPreview(projectWithMetadata(), config);
+    expect(pages[1].content).toContain('class="title-page"');
+    expect(pages[1].content).toContain('Autora');
+    expect(pages[2].content).toContain('class="legal-page"');
+    expect(pages[2].content).toContain('ISBN: 978-84-0000000-0-0');
+    expect(pages[2].content).toContain('novela, ensayo');
+  });
+
+  it('shifts generated TOC page numbers past the injected front matter', () => {
+    const { pages } = composeProjectPreview(projectWithMetadata(), config);
+    const tocPage = pages.find((p) => p.chapterId === 'toc');
+    const ch1First = pages.find((p) => p.chapterId === 'ch1');
+    expect(tocPage!.content).toContain(`data-toc-page="${ch1First!.pageNumber}"`);
+    // cover (1) + title page (2) + legal (3) + toc (4) + ch1 (5)
+    expect(ch1First!.pageNumber).toBe(5);
+  });
+
+  it('does not inject front matter when no extended metadata exists', () => {
+    const { pages } = composeProjectPreview(createProject(), config);
+    expect(pages.some((p) => p.content?.includes('title-page'))).toBe(false);
+    expect(pages.some((p) => p.content?.includes('legal-page'))).toBe(false);
+  });
+});

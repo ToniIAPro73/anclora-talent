@@ -19,6 +19,7 @@ import { Portal } from '@/components/ui/Portal';
 import { PdfExportButton } from './PdfExportButton';
 import { DocumentRulesPanel } from './DocumentRulesPanel';
 import { DocumentHealthPanel } from './DocumentHealthPanel';
+import { ProductMetadataPanel } from './ProductMetadataPanel';
 import { useDocumentComposition } from './useDocumentComposition';
 import { resolveDocumentRules } from '@/lib/compose/rules';
 import {
@@ -369,6 +370,8 @@ export function ProjectWorkspace({
             </section>
 
             <DocumentStatsCard document={project.document} project={project} isLoading={isPending} />
+
+            <ProductMetadataPanel key={`meta-${project.updatedAt}`} project={project} copy={copy} />
 
             <DocumentRulesPanel key={`rules-${project.updatedAt}`} project={project} copy={copy} />
 

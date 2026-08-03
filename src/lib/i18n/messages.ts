@@ -279,6 +279,16 @@ export type AppMessages = {
     healthGoToPreview: string;
     exportGateBlockedMessage: string;
     exportGateWarnMessage: string;
+    metadataPanelEyebrow: string;
+    metadataPanelTitle: string;
+    metadataPanelDescription: string;
+    metadataIsbnLabel: string;
+    metadataDescriptionLabel: string;
+    metadataKeywordsLabel: string;
+    metadataKeywordsHelper: string;
+    metadataLanguageLabel: string;
+    metadataSave: string;
+    metadataSaved: string;
     previewModalZoomOut: string;
     previewModalZoomIn: string;
     previewModalSingleView: string;
@@ -645,6 +655,16 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       healthGoToPreview: 'Abrir preview',
       exportGateBlockedMessage: 'Exportación bloqueada: resuelve las violaciones del documento primero.',
       exportGateWarnMessage: 'Aviso: el documento tiene {count} violaciones de composición.',
+      metadataPanelEyebrow: 'Producto digital',
+      metadataPanelTitle: 'Metadatos de la publicación',
+      metadataPanelDescription: 'Se inyectan en la portadilla, la página legal y la exportación, y sincronizan portada y contraportada.',
+      metadataIsbnLabel: 'ISBN (opcional)',
+      metadataDescriptionLabel: 'Descripción',
+      metadataKeywordsLabel: 'Keywords',
+      metadataKeywordsHelper: 'Separadas por comas',
+      metadataLanguageLabel: 'Idioma',
+      metadataSave: 'Guardar metadatos',
+      metadataSaved: 'Metadatos guardados',
       previewModalZoomOut: 'Reducir zoom',
       previewModalZoomIn: 'Aumentar zoom',
       previewModalSingleView: 'Vista de 1 página',
@@ -1009,6 +1029,16 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       healthGoToPreview: 'Open preview',
       exportGateBlockedMessage: 'Export blocked: resolve the document violations first.',
       exportGateWarnMessage: 'Warning: the document has {count} composition violations.',
+      metadataPanelEyebrow: 'Digital product',
+      metadataPanelTitle: 'Publication metadata',
+      metadataPanelDescription: 'Injected into the title page, legal page and export, and synced with cover and back cover.',
+      metadataIsbnLabel: 'ISBN (optional)',
+      metadataDescriptionLabel: 'Description',
+      metadataKeywordsLabel: 'Keywords',
+      metadataKeywordsHelper: 'Comma separated',
+      metadataLanguageLabel: 'Language',
+      metadataSave: 'Save metadata',
+      metadataSaved: 'Metadata saved',
       previewModalZoomOut: 'Zoom out',
       previewModalZoomIn: 'Zoom in',
       previewModalSingleView: 'Single page view',

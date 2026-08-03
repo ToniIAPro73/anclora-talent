@@ -106,3 +106,28 @@ describe('DocumentHealthPanel', () => {
     expect(screen.getByTestId('document-health-violations')).toHaveTextContent('pág. 14');
   });
 });
+
+describe('ProductMetadataPanel', () => {
+  it('submits DocumentMetadata JSON with parsed keywords', async () => {
+    const saveProjectMetadataAction = vi.fn().mockResolvedValue({ ok: true });
+    vi.doMock('@/lib/projects/actions', () => ({
+      saveProjectMetadataAction: (formData: FormData) => saveProjectMetadataAction(formData),
+    }));
+    const { ProductMetadataPanel } = await import('./ProductMetadataPanel');
+    render(<ProductMetadataPanel project={fakeProject()} copy={copy} />);
+    fireEvent.change(screen.getByTestId('metadata-isbn-input'), {
+      target: { value: '978-84-1111111-1-1' },
+    });
+    fireEvent.change(screen.getByTestId('metadata-keywords-input'), {
+      target: { value: 'novela, ensayo , poesía' },
+    });
+    fireEvent.click(screen.getByTestId('metadata-save-button'));
+    await waitFor(() => expect(saveProjectMetadataAction).toHaveBeenCalled());
+    const metadata = JSON.parse(
+      String((saveProjectMetadataAction.mock.calls[0][0] as FormData).get('metadata')),
+    );
+    expect(metadata.isbn).toBe('978-84-1111111-1-1');
+    expect(metadata.keywords).toEqual(['novela', 'ensayo', 'poesía']);
+    expect(metadata.title).toBe('Book');
+  });
+});
