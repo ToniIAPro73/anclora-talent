@@ -6,13 +6,8 @@ import type { ProjectRecord, CoverDesign } from './types';
 import { parsePageContent, type ParsedContentBlock } from './export-content-blocks';
 import type { PreviewPage } from '@/lib/preview/preview-builder';
 import type { PaginationConfig } from '@/lib/preview/device-configs';
-import {
-  createDefaultSurfaceState,
-  normalizeSurfaceState,
-  type SurfaceLayer,
-} from './cover-surface';
-import { resolveCoverSurfaceFields } from './cover-surface-resolver';
-import { resolveBackCoverSurfaceFields } from './back-cover-surface-resolver';
+import { type SurfaceLayer } from './cover-surface';
+import { createSurfaceSnapshotFromProject } from './surface-snapshot';
 import { COVER_TEXT_LAYOUT, BACK_COVER_TEXT_LAYOUT } from './cover-layout';
 import { fabricCharSpacingToCss, findSurfaceTextLayer } from './cover-layer-style';
 
@@ -219,28 +214,14 @@ async function fetchImageAsDataUrl(imageUrl: string | null | undefined) {
   }
 }
 
+// D.3: every consumer (studio, preview, export) resolves surface text through
+// the same snapshot so the metadata chain behaves identically everywhere.
 function normalizeCoverSurface(project: ProjectRecord) {
-  const fallback = createDefaultSurfaceState('cover');
-  const baseState = normalizeSurfaceState(project.cover.surfaceState ?? fallback);
-  return {
-    ...baseState,
-    fields: {
-      ...baseState.fields,
-      ...resolveCoverSurfaceFields(project, baseState),
-    },
-  };
+  return createSurfaceSnapshotFromProject('cover', project);
 }
 
 function normalizeBackCoverSurface(project: ProjectRecord) {
-  const fallback = createDefaultSurfaceState('back-cover');
-  const baseState = normalizeSurfaceState(project.backCover.surfaceState ?? fallback);
-  return {
-    ...baseState,
-    fields: {
-      ...baseState.fields,
-      ...resolveBackCoverSurfaceFields(project, baseState),
-    },
-  };
+  return createSurfaceSnapshotFromProject('back-cover', project);
 }
 
 async function rasterizeSvg(svg: string) {

@@ -41,6 +41,10 @@ type SurfaceInspectorProps = {
   computed: ComputedLayerStyle;
   value: string;
   copy: AppMessages['project'];
+  /** D.3: the layer no longer follows the product metadata (manual override). */
+  isManualOverride?: boolean;
+  /** D.3: reattach the layer to the product metadata chain. */
+  onResync?: () => void;
   onTextChange: (value: string) => void;
   onStyleChange: (patch: LayerStylePatch) => void;
 };
@@ -54,6 +58,8 @@ export function SurfaceInspector({
   computed,
   value,
   copy,
+  isManualOverride = false,
+  onResync,
   onTextChange,
   onStyleChange,
 }: SurfaceInspectorProps) {
@@ -67,7 +73,20 @@ export function SurfaceInspector({
   return (
     <div className="space-y-5" data-testid={`inspector-${fieldKey}`}>
       <div className="space-y-2">
-        <Label className="text-xs font-semibold">{copy.coverStudioContentLabel}</Label>
+        <div className="flex items-center justify-between gap-2">
+          <Label className="text-xs font-semibold">{copy.coverStudioContentLabel}</Label>
+          {isManualOverride && onResync && (
+            <button
+              type="button"
+              onClick={onResync}
+              data-testid={`inspector-resync-${fieldKey}`}
+              title={copy.coverFieldResync}
+              className="text-xs font-semibold text-[var(--accent)] hover:underline"
+            >
+              {copy.coverFieldResync}
+            </button>
+          )}
+        </div>
         <Textarea
           aria-label={copy.coverStudioContentLabel}
           value={value}
