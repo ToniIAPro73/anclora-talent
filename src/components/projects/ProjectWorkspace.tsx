@@ -17,6 +17,10 @@ import { AddChapterDialog } from './AddChapterDialog';
 import { ImportChapterDialog } from './ImportChapterDialog';
 import { Portal } from '@/components/ui/Portal';
 import { PdfExportButton } from './PdfExportButton';
+import { DocumentRulesPanel } from './DocumentRulesPanel';
+import { DocumentHealthPanel } from './DocumentHealthPanel';
+import { useDocumentComposition } from './useDocumentComposition';
+import { resolveDocumentRules } from '@/lib/compose/rules';
 import {
   saveBackCoverAction,
   saveProjectCoverAction,
@@ -300,6 +304,14 @@ export function ProjectWorkspace({
     });
   };
 
+  // FASE C: composition engine output shared by the health panel and the
+  // export gate (memoized per project revision).
+  const composition = useDocumentComposition(project);
+  const documentViolations = composition.result.violations;
+  const documentViolationCount = documentViolations.length;
+  const exportGate = resolveDocumentRules(project.document.rules).exportGate;
+  const exportBlocked = exportGate === 'block' && documentViolationCount > 0;
+
   const renderStepContent = () => {
     switch (activeStep) {
       case 1: // Content
@@ -357,6 +369,10 @@ export function ProjectWorkspace({
             </section>
 
             <DocumentStatsCard document={project.document} project={project} isLoading={isPending} />
+
+            <DocumentRulesPanel key={`rules-${project.updatedAt}`} project={project} copy={copy} />
+
+            <DocumentHealthPanel project={project} violations={documentViolations} copy={copy} />
           </div>
         );
       case 2: // Chapters
@@ -427,13 +443,28 @@ export function ProjectWorkspace({
               <p className="ac-export-suite__summary">
                 Tu proyecto está listo para ser publicado. Elige el formato de salida deseado.
               </p>
+              {exportGate !== 'off' && documentViolationCount > 0 && (
+                <p
+                  role="alert"
+                  data-testid="export-gate-message"
+                  className={`mt-3 text-sm font-semibold ${exportBlocked ? 'text-red-600' : 'text-[var(--accent)]'}`}
+                >
+                  {exportBlocked
+                    ? copy.exportGateBlockedMessage
+                    : copy.exportGateWarnMessage.replace('{count}', String(documentViolationCount))}
+                </p>
+              )}
             </div>
-            <div className="ac-export-suite__actions">
+            <div
+              className={`ac-export-suite__actions ${exportBlocked ? 'pointer-events-none opacity-50' : ''}`}
+              aria-disabled={exportBlocked}
+            >
                <button
                  onClick={() => {
                    const htmlUrl = `/api/projects/export?projectId=${project.id}&${exportQuery}`;
                    window.open(htmlUrl, '_blank');
                  }}
+                 disabled={exportBlocked}
                  className="ac-button ac-button--secondary"
                >
                   {copy.previewExportButton}
@@ -449,6 +480,7 @@ export function ProjectWorkspace({
                    const docxUrl = `/api/projects/export/docx?projectId=${project.id}&${exportQuery}`;
                    window.open(docxUrl, '_blank');
                  }}
+                 disabled={exportBlocked}
                  className="ac-button ac-button--secondary"
                >
                   {copy.previewExportDocxButton}

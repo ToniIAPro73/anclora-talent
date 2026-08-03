@@ -238,6 +238,47 @@ export type AppMessages = {
     stepCollaborateDesc: string;
     stepAIDesc: string;
     stepExportDesc: string;
+    rulesPanelEyebrow: string;
+    rulesPanelTitle: string;
+    rulesPanelDescription: string;
+    rulesPresetLabel: string;
+    rulesPresetDefault: string;
+    rulesPresetPrint: string;
+    rulesPresetDigital: string;
+    rulesKeepTable: string;
+    rulesTableFillGap: string;
+    rulesFillGapLeaveSpace: string;
+    rulesFillGapNextFloat: string;
+    rulesKeepList: string;
+    rulesKeepCode: string;
+    rulesKeepQuote: string;
+    rulesKeepCallout: string;
+    rulesKeepImageCaption: string;
+    rulesKeepWithNext: string;
+    rulesMinLinesAfter: string;
+    rulesWidowsOrphans: string;
+    rulesChapterOddPage: string;
+    rulesPageBreakBeforeChapter: string;
+    rulesRestartFigures: string;
+    rulesRestartTables: string;
+    rulesPageNumberFormat: string;
+    rulesFormatDecimal: string;
+    rulesFormatLowerRoman: string;
+    rulesFormatUpperRoman: string;
+    rulesExportGate: string;
+    rulesExportGateOff: string;
+    rulesExportGateWarn: string;
+    rulesExportGateBlock: string;
+    rulesSave: string;
+    rulesSaved: string;
+    healthPanelEyebrow: string;
+    healthPanelTitle: string;
+    healthNoViolations: string;
+    healthViolationsCount: string;
+    healthViolationPage: string;
+    healthGoToPreview: string;
+    exportGateBlockedMessage: string;
+    exportGateWarnMessage: string;
     previewModalZoomOut: string;
     previewModalZoomIn: string;
     previewModalSingleView: string;
@@ -563,6 +604,47 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       stepCollaborateDesc: 'Gestiona el acceso de tu equipo y revisores al proyecto.',
       stepAIDesc: 'Potencia tu contenido con sugerencias inteligentes de IA.',
       stepExportDesc: 'Publica y descarga tu obra en múltiples formatos profesionales.',
+      rulesPanelEyebrow: 'Composición',
+      rulesPanelTitle: 'Reglas del documento',
+      rulesPanelDescription: 'Controla cómo el motor compone la paginación: bloques indivisibles, encabezados huérfanos, viudas y numeración.',
+      rulesPresetLabel: 'Preset',
+      rulesPresetDefault: 'Por defecto',
+      rulesPresetPrint: 'Impresión (recto)',
+      rulesPresetDigital: 'Digital',
+      rulesKeepTable: 'No dividir tablas',
+      rulesTableFillGap: 'Hueco al saltar una tabla',
+      rulesFillGapLeaveSpace: 'Dejar espacio',
+      rulesFillGapNextFloat: 'Rellenar con el párrafo siguiente',
+      rulesKeepList: 'No dividir listas de ≤ N ítems',
+      rulesKeepCode: 'No dividir bloques de código',
+      rulesKeepQuote: 'No dividir citas',
+      rulesKeepCallout: 'No dividir avisos (callouts)',
+      rulesKeepImageCaption: 'No separar imagen de su pie',
+      rulesKeepWithNext: 'Los encabezados viajan con el contenido siguiente',
+      rulesMinLinesAfter: 'Líneas mínimas tras un encabezado',
+      rulesWidowsOrphans: 'Líneas mínimas viudas/huérfanas',
+      rulesChapterOddPage: 'Capítulos en página impar (recto)',
+      rulesPageBreakBeforeChapter: 'Salto de página antes de cada capítulo',
+      rulesRestartFigures: 'Renumerar figuras por capítulo',
+      rulesRestartTables: 'Renumerar tablas por capítulo',
+      rulesPageNumberFormat: 'Formato de número de página',
+      rulesFormatDecimal: 'Decimal (1, 2, 3)',
+      rulesFormatLowerRoman: 'Romano minúsculas (i, ii, iii)',
+      rulesFormatUpperRoman: 'Romano mayúsculas (I, II, III)',
+      rulesExportGate: 'Al exportar con violaciones',
+      rulesExportGateOff: 'Permitir sin avisos',
+      rulesExportGateWarn: 'Advertir',
+      rulesExportGateBlock: 'Bloquear exportación',
+      rulesSave: 'Guardar reglas',
+      rulesSaved: 'Reglas guardadas',
+      healthPanelEyebrow: 'Composición',
+      healthPanelTitle: 'Salud del documento',
+      healthNoViolations: 'Cero violaciones. El documento compone limpio.',
+      healthViolationsCount: '{count} violaciones',
+      healthViolationPage: 'pág. {page}',
+      healthGoToPreview: 'Abrir preview',
+      exportGateBlockedMessage: 'Exportación bloqueada: resuelve las violaciones del documento primero.',
+      exportGateWarnMessage: 'Aviso: el documento tiene {count} violaciones de composición.',
       previewModalZoomOut: 'Reducir zoom',
       previewModalZoomIn: 'Aumentar zoom',
       previewModalSingleView: 'Vista de 1 página',
@@ -886,6 +968,47 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       stepCollaborateDesc: 'Manage team and reviewer access to the project.',
       stepAIDesc: 'Enhance your content with smart AI suggestions.',
       stepExportDesc: 'Publish and download your work in multiple professional formats.',
+      rulesPanelEyebrow: 'Composition',
+      rulesPanelTitle: 'Document rules',
+      rulesPanelDescription: 'Control how the engine composes pagination: unbreakable blocks, orphan headings, widows and numbering.',
+      rulesPresetLabel: 'Preset',
+      rulesPresetDefault: 'Default',
+      rulesPresetPrint: 'Print (recto)',
+      rulesPresetDigital: 'Digital',
+      rulesKeepTable: 'Never split tables',
+      rulesTableFillGap: 'Gap when a table jumps',
+      rulesFillGapLeaveSpace: 'Leave space',
+      rulesFillGapNextFloat: 'Fill with next paragraph',
+      rulesKeepList: 'Never split lists of ≤ N items',
+      rulesKeepCode: 'Never split code blocks',
+      rulesKeepQuote: 'Never split quotes',
+      rulesKeepCallout: 'Never split callouts',
+      rulesKeepImageCaption: 'Keep image with its caption',
+      rulesKeepWithNext: 'Headings travel with the following content',
+      rulesMinLinesAfter: 'Minimum lines after a heading',
+      rulesWidowsOrphans: 'Minimum widow/orphan lines',
+      rulesChapterOddPage: 'Chapters start on odd (recto) pages',
+      rulesPageBreakBeforeChapter: 'Page break before each chapter',
+      rulesRestartFigures: 'Restart figure numbering per chapter',
+      rulesRestartTables: 'Restart table numbering per chapter',
+      rulesPageNumberFormat: 'Page number format',
+      rulesFormatDecimal: 'Decimal (1, 2, 3)',
+      rulesFormatLowerRoman: 'Lowercase roman (i, ii, iii)',
+      rulesFormatUpperRoman: 'Uppercase roman (I, II, III)',
+      rulesExportGate: 'When exporting with violations',
+      rulesExportGateOff: 'Allow without warnings',
+      rulesExportGateWarn: 'Warn',
+      rulesExportGateBlock: 'Block export',
+      rulesSave: 'Save rules',
+      rulesSaved: 'Rules saved',
+      healthPanelEyebrow: 'Composition',
+      healthPanelTitle: 'Document health',
+      healthNoViolations: 'Zero violations. The document composes cleanly.',
+      healthViolationsCount: '{count} violations',
+      healthViolationPage: 'page {page}',
+      healthGoToPreview: 'Open preview',
+      exportGateBlockedMessage: 'Export blocked: resolve the document violations first.',
+      exportGateWarnMessage: 'Warning: the document has {count} composition violations.',
       previewModalZoomOut: 'Zoom out',
       previewModalZoomIn: 'Zoom in',
       previewModalSingleView: 'Single page view',
