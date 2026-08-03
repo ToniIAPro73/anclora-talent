@@ -65,3 +65,47 @@ describe('cover-surface', () => {
     expect(next.fields.subtitle?.visible).toBe(false);
   });
 });
+
+describe('surface field provenance (D.3)', () => {
+  it('normalizeSurfaceState preserves the source marker', () => {
+    const state = normalizeSurfaceState({
+      surface: 'cover',
+      fields: {
+        title: { value: 'Título', visible: true, source: 'manual' },
+        author: { value: 'Autor', visible: true, source: 'metadata' },
+      },
+    });
+
+    expect(state.fields.title?.source).toBe('manual');
+    expect(state.fields.author?.source).toBe('metadata');
+    expect(state.fields.subtitle?.source).toBeUndefined();
+  });
+
+  it('mergePartialSurfaceUpdate keeps the source when a partial omits it', () => {
+    const next = mergePartialSurfaceUpdate(
+      {
+        surface: 'cover',
+        layout: { kind: 'stacked-center' },
+        fields: { title: { value: 'Antes', visible: true, source: 'manual' } },
+      },
+      { fields: { title: { value: 'Antes', visible: false } as never } },
+    );
+
+    expect(next.fields.title?.visible).toBe(false);
+    expect(next.fields.title?.source).toBe('manual');
+  });
+
+  it('mergePartialSurfaceUpdate applies an explicit source change', () => {
+    const next = mergePartialSurfaceUpdate(
+      {
+        surface: 'cover',
+        layout: { kind: 'stacked-center' },
+        fields: { title: { value: 'X', visible: true, source: 'manual' } },
+      },
+      { fields: { title: { value: 'Y', visible: true, source: 'metadata' } } },
+    );
+
+    expect(next.fields.title?.value).toBe('Y');
+    expect(next.fields.title?.source).toBe('metadata');
+  });
+});

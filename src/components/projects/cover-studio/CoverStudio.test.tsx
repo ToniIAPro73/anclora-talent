@@ -237,3 +237,41 @@ describe('CoverStudio', () => {
     expect(String(renderData.get('dataUrl'))).toMatch(/^data:image\//);
   });
 });
+
+describe('CoverStudio — D.3 metadata sync', () => {
+  test('manual override shows a resync control that restores the metadata value', () => {
+    const state = createDefaultSurfaceState('cover');
+    state.fields.title = { value: 'Título personalizado', visible: true, source: 'manual' };
+
+    const project = makeProject({
+      document: {
+        ...makeProject().document,
+        title: 'Título documento',
+        metadata: { title: 'Título metadato' },
+      },
+      cover: {
+        ...makeProject().cover,
+        surfaceState: state,
+      },
+    });
+
+    render(<CoverStudio surface="cover" project={project} copy={copy} />);
+
+    const titleInput = screen.getByLabelText(copy.coverTitleLabel);
+    expect(titleInput).toHaveValue('Título personalizado');
+
+    fireEvent.click(screen.getByTestId('cover-field-resync-title'));
+    expect(titleInput).toHaveValue('Título metadato');
+    expect(screen.queryByTestId('cover-field-resync-title')).not.toBeInTheDocument();
+  });
+
+  test('editing a synced field by hand marks it as a manual override', () => {
+    render(<CoverStudio surface="cover" project={makeProject()} copy={copy} />);
+
+    expect(screen.queryByTestId('cover-field-resync-title')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(copy.coverTitleLabel), {
+      target: { value: 'Edición manual' },
+    });
+    expect(screen.getByTestId('cover-field-resync-title')).toBeInTheDocument();
+  });
+});

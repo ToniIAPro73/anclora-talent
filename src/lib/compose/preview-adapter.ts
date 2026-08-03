@@ -21,9 +21,7 @@
 
 import type { ProjectRecord } from '@/lib/projects/types';
 import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
-import { createDefaultSurfaceState, normalizeSurfaceState } from '@/lib/projects/cover-surface';
-import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface-resolver';
-import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
+import { createSurfaceSnapshotFromProject } from '@/lib/projects/surface-snapshot';
 import {
   DocumentBlock,
   SemanticDocument,
@@ -272,12 +270,8 @@ function buildPagesFromResult(
   const pages: PreviewPage[] = [];
 
   // PAGE 1: cover (contract-identical to buildPreviewPages).
-  const coverFallback = createDefaultSurfaceState('cover');
-  const coverState = normalizeSurfaceState(project.cover.surfaceState ?? coverFallback);
-  const coverFields = {
-    ...coverState.fields,
-    ...resolveCoverSurfaceFields(project, coverState),
-  };
+  // D.3: same snapshot resolution as studio/preview/export.
+  const coverFields = createSurfaceSnapshotFromProject('cover', project).fields;
   pages.push({
     type: 'cover',
     content: null,
@@ -381,12 +375,7 @@ function buildPagesFromResult(
 
   // BACK COVER (contract-identical).
   if (project.backCover) {
-    const backFallback = createDefaultSurfaceState('back-cover');
-    const backState = normalizeSurfaceState(project.backCover.surfaceState ?? backFallback);
-    const backFields = {
-      ...backState.fields,
-      ...resolveBackCoverSurfaceFields(project, backState),
-    };
+    const backFields = createSurfaceSnapshotFromProject('back-cover', project).fields;
     pages.push({
       type: 'back-cover',
       content: null,

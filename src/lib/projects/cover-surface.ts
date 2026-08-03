@@ -5,6 +5,13 @@ export type SurfaceFieldKey = 'title' | 'subtitle' | 'author' | 'body' | 'author
 export interface SurfaceFieldState {
   value: string;
   visible: boolean;
+  /**
+   * Provenance of the value (D.3): 'metadata' = follows the product metadata
+   * chain (document title/subtitle/author mirror); 'manual' = the user edited
+   * this layer by hand and it no longer syncs. Undefined = legacy state,
+   * resolved lazily by the surface resolvers.
+   */
+  source?: 'metadata' | 'manual';
 }
 
 export interface SurfaceTemplateDefinition {
@@ -79,6 +86,7 @@ export function normalizeSurfaceState(
     fields[key] = {
       value,
       visible: Boolean(current.visible && trimmed),
+      ...(current.source ? { source: current.source } : {}),
     };
   }
 
@@ -145,13 +153,19 @@ export function mergePartialSurfaceUpdate(
   previous: SurfaceState,
   partial: Partial<SurfaceState>,
 ): SurfaceState {
+  // Merge per field so partial updates ({value, visible}) never drop the
+  // provenance marker (source) carried by the previous field state.
+  const fields = { ...previous.fields };
+  for (const [key, fieldState] of Object.entries(partial.fields ?? {}) as Array<
+    [SurfaceFieldKey, SurfaceFieldState | undefined]
+  >) {
+    fields[key] = { ...previous.fields[key], ...fieldState } as SurfaceState['fields'][SurfaceFieldKey];
+  }
+
   return normalizeSurfaceState({
     ...previous,
     ...partial,
-    fields: {
-      ...previous.fields,
-      ...(partial.fields ?? {}),
-    },
+    fields,
     layers: partial.layers ?? previous.layers ?? [],
   });
 }
