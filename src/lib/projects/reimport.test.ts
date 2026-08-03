@@ -131,6 +131,19 @@ describe('mergeReimportedSeed (C6)', () => {
     );
   });
 
+  it('generates uuid-shaped ids for new chapters and rebuilt blocks (regression: document_blocks uuid columns)', () => {
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-a[0-9a-f]{3}-[0-9a-f]{12}$/;
+    const result = mergeReimportedSeed(baseProject(), seed());
+    const added = result.project.document.chapters.find((c) => c.title === 'Capítulo nuevo');
+    expect(added).toBeDefined();
+    expect(added!.id).toMatch(UUID_RE);
+    added!.blocks.forEach((block) => expect(block.id).toMatch(UUID_RE));
+    // Rebuilt blocks of matched chapters are also persisted: uuid shape required.
+    result.project.document.chapters[0].blocks.forEach((block) =>
+      expect(block.id).toMatch(UUID_RE),
+    );
+  });
+
   it('matches chapter titles ignoring case, accents and extra whitespace', () => {
     expect(chapterMatchKey('  Introducción ')).toBe(chapterMatchKey('introduccion'));
     const accented = seed({
