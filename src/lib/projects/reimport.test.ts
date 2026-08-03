@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ImportedDocumentSeed, ProjectRecord } from './types';
-import { chapterMatchKey, mergeReimportedSeed } from './reimport';
+import { chapterMatchKey, mergeReimportedSeed, summarizeReimport } from './reimport';
 
 function baseProject(): ProjectRecord {
   return {
@@ -131,6 +131,19 @@ describe('mergeReimportedSeed (C6)', () => {
     );
   });
 
+  it('generates uuid-shaped ids for new chapters and rebuilt blocks (regression: document_blocks uuid columns)', () => {
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-a[0-9a-f]{3}-[0-9a-f]{12}$/;
+    const result = mergeReimportedSeed(baseProject(), seed());
+    const added = result.project.document.chapters.find((c) => c.title === 'Capítulo nuevo');
+    expect(added).toBeDefined();
+    expect(added!.id).toMatch(UUID_RE);
+    added!.blocks.forEach((block) => expect(block.id).toMatch(UUID_RE));
+    // Rebuilt blocks of matched chapters are also persisted: uuid shape required.
+    result.project.document.chapters[0].blocks.forEach((block) =>
+      expect(block.id).toMatch(UUID_RE),
+    );
+  });
+
   it('matches chapter titles ignoring case, accents and extra whitespace', () => {
     expect(chapterMatchKey('  Introducción ')).toBe(chapterMatchKey('introduccion'));
     const accented = seed({
@@ -141,5 +154,23 @@ describe('mergeReimportedSeed (C6)', () => {
     const result = mergeReimportedSeed(baseProject(), accented);
     expect(result.changedChapterIds).toEqual(['ch1']);
     expect(result.addedChapterTitles).toEqual([]);
+  });
+});
+
+describe('summarizeReimport (reimport diff preview)', () => {
+  it('classifies detected titles into updated / added / kept', () => {
+    const summary = summarizeReimport(
+      ['Introducción', 'Capítulo 2', 'Apéndice manual'],
+      ['introduccion', 'Capítulo 2', 'Capítulo nuevo'],
+    );
+    expect(summary.matchedTitles).toEqual(['Introducción', 'Capítulo 2']);
+    expect(summary.addedTitles).toEqual(['Capítulo nuevo']);
+    expect(summary.keptTitles).toEqual(['Apéndice manual']);
+  });
+
+  it('handles an empty incoming file gracefully', () => {
+    const summary = summarizeReimport(['A', 'B'], []);
+    expect(summary.matchedTitles).toEqual([]);
+    expect(summary.keptTitles).toEqual(['A', 'B']);
   });
 });

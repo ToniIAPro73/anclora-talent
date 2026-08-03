@@ -131,3 +131,36 @@ describe('ProductMetadataPanel', () => {
     expect(metadata.title).toBe('Book');
   });
 });
+
+describe('DocumentHealthPanel — live diff badge (C5)', () => {
+  it('shows the recomposed-since badge and the structural diff summary', () => {
+    const diff = {
+      chapterShifts: [{ chapterId: 'c4', title: 'Capítulo 4', fromPage: 61, toPage: 63 }],
+      tocDelta: 2,
+      newViolations: [{ page: 3, blockId: 't1', rule: 'keepTogether.table', message: 'x' }],
+      pageCountDelta: 2,
+    };
+    render(
+      <DocumentHealthPanel
+        project={fakeProject()}
+        violations={diff.newViolations}
+        copy={copy}
+        diff={diff}
+        recomposedFromPage={61}
+      />,
+    );
+    expect(screen.getByTestId('document-health-recomposed-badge')).toHaveTextContent(
+      'Recompuesto desde la pág. 61',
+    );
+    const banner = screen.getByTestId('document-health-diff');
+    expect(banner).toHaveTextContent('Capítulo 4: pág. 61 → 63');
+    expect(banner).toHaveTextContent('+2 entradas al índice');
+    expect(banner).toHaveTextContent('1 violaciones nuevas');
+  });
+
+  it('hides badge and banner when there is no diff', () => {
+    render(<DocumentHealthPanel project={fakeProject()} violations={[]} copy={copy} diff={null} />);
+    expect(screen.queryByTestId('document-health-recomposed-badge')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('document-health-diff')).not.toBeInTheDocument();
+  });
+});

@@ -685,8 +685,11 @@ export function composeIncremental(
   if (!prefixChapter) {
     return compose(document, rules, template, measurer, options);
   }
+  const indexOffset = options?.pageIndexOffset ?? 0;
+  // reusedPageCount is in page-index space (first page has index
+  // `indexOffset`); the pages array is 0-based, hence the subtraction.
   const reusedPageCount = prefixChapter.startPage + chapterPageCount(previous, changedChapterIndex - 1);
-  const reusedPages = previous.pages.slice(0, reusedPageCount);
+  const reusedPages = previous.pages.slice(0, reusedPageCount - indexOffset);
 
   const { compositions } = composeChapters(slices.slice(changedChapterIndex), ctx, reusedPageCount);
   const { pages, chapterStartPages, violations } = materialize(
@@ -696,10 +699,9 @@ export function composeIncremental(
     reusedPageCount,
   );
 
-  const allPages = [
-    ...reusedPages.map((page, i) => ({ ...page, index: i })),
-    ...pages,
-  ];
+  // Reused pages keep their original page indexes (index space includes the
+  // pageIndexOffset); recomposed pages were materialized with global indexes.
+  const allPages = [...reusedPages, ...pages];
   // Renumber reused pages' indexes and ensure pageNumber formatting is stable.
   const allStartPages = [
     ...previous.chapters.slice(0, changedChapterIndex).map((c) => c.startPage),
@@ -724,4 +726,57 @@ function chapterPageCount(previous: ComposeResult, chapterIndex: number): number
   const start = previous.chapters[chapterIndex]?.startPage ?? 0;
   const next = previous.chapters[chapterIndex + 1]?.startPage ?? previous.pages.length;
   return next - start;
+}
+
+/**
+ * Structural diff between two compositions (C5). Powers the before/after
+ * summary shown after big changes (paste, reimport): chapter page shifts,
+ * TOC size delta and new violations.
+ */
+export interface ChapterPageShift {
+  chapterId: string;
+  title: string;
+  fromPage: number;
+  toPage: number;
+}
+
+export interface CompositionDiff {
+  /** Chapters whose start page moved (1-based printed numbers). */
+  chapterShifts: ChapterPageShift[];
+  /** Change in generated TOC entry count (next - prev). */
+  tocDelta: number;
+  /** Violations present in next that were not in prev (by blockId+rule). */
+  newViolations: ComposeViolation[];
+  /** Total page count change (next - prev). */
+  pageCountDelta: number;
+}
+
+export function diffCompositions(prev: ComposeResult, next: ComposeResult): CompositionDiff {
+  const prevStart = new Map(prev.chapters.map((chapter) => [chapter.id, chapter.startPage]));
+  const chapterShifts: ChapterPageShift[] = [];
+  for (const chapter of next.chapters) {
+    const before = prevStart.get(chapter.id);
+    if (before !== undefined && before !== chapter.startPage) {
+      chapterShifts.push({
+        chapterId: chapter.id,
+        title: chapter.title,
+        fromPage: before + 1,
+        toPage: chapter.startPage + 1,
+      });
+    }
+  }
+
+  const prevViolationKeys = new Set(
+    prev.violations.map((v) => `${v.blockId}:${v.rule}`),
+  );
+  const newViolations = next.violations.filter(
+    (v) => !prevViolationKeys.has(`${v.blockId}:${v.rule}`),
+  );
+
+  return {
+    chapterShifts,
+    tocDelta: next.toc.length - prev.toc.length,
+    newViolations,
+    pageCountDelta: next.pages.length - prev.pages.length,
+  };
 }

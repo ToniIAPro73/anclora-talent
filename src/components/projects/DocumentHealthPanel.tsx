@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
-import type { ComposeViolation } from '@/lib/compose/compose';
+import type { ComposeViolation, CompositionDiff } from '@/lib/compose/compose';
 
 type Copy = AppMessages['project'];
 
@@ -11,6 +11,10 @@ interface DocumentHealthPanelProps {
   project: ProjectRecord;
   violations: ComposeViolation[];
   copy: Copy;
+  /** C5: structural diff vs. the previous composition (before/after banner). */
+  diff?: CompositionDiff | null;
+  /** C5: first printed page recomposed since the last edit (badge). */
+  recomposedFromPage?: number;
 }
 
 /**
@@ -18,8 +22,9 @@ interface DocumentHealthPanelProps {
  * real time with the affected page, plus an always-visible counter whose
  * goal is zero. Each item links to the preview.
  */
-export function DocumentHealthPanel({ project, violations, copy }: DocumentHealthPanelProps) {
+export function DocumentHealthPanel({ project, violations, copy, diff, recomposedFromPage }: DocumentHealthPanelProps) {
   const count = violations.length;
+  const signed = (value: number) => (value > 0 ? `+${value}` : String(value));
 
   return (
     <section
@@ -46,6 +51,42 @@ export function DocumentHealthPanel({ project, violations, copy }: DocumentHealt
           {count === 0 ? '0' : copy.healthViolationsCount.replace('{count}', String(count))}
         </span>
       </div>
+
+      {recomposedFromPage !== undefined && (
+        <p
+          data-testid="document-health-recomposed-badge"
+          className="mt-4 inline-block rounded-full bg-[var(--accent)] px-3 py-1 text-xs font-bold text-white"
+        >
+          {copy.healthRecomposedBadge.replace('{page}', String(recomposedFromPage))}
+        </p>
+      )}
+
+      {diff && (diff.chapterShifts.length > 0 || diff.tocDelta !== 0 || diff.newViolations.length > 0) && (
+        <div
+          data-testid="document-health-diff"
+          className="mt-4 rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3"
+        >
+          <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-tertiary)]">
+            {copy.healthDiffTitle}
+          </p>
+          <ul className="mt-2 space-y-1 text-sm text-[var(--text-primary)]">
+            {diff.chapterShifts.map((shift) => (
+              <li key={shift.chapterId}>
+                {copy.healthDiffShift
+                  .replace('{title}', shift.title || shift.chapterId)
+                  .replace('{from}', String(shift.fromPage))
+                  .replace('{to}', String(shift.toPage))}
+              </li>
+            ))}
+            {diff.tocDelta !== 0 && (
+              <li>{copy.healthDiffToc.replace('{count}', signed(diff.tocDelta))}</li>
+            )}
+            {diff.newViolations.length > 0 && (
+              <li>{copy.healthDiffViolations.replace('{count}', String(diff.newViolations.length))}</li>
+            )}
+          </ul>
+        </div>
+      )}
 
       {count === 0 ? (
         <p className="mt-4 text-sm text-[var(--text-secondary)]">{copy.healthNoViolations}</p>
