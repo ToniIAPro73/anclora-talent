@@ -382,15 +382,24 @@ function paginateChapter(
 function splitChapters(
   blocks: DocumentBlock[],
   chapterLevel: number,
+  chapterStartIds?: Set<string>,
 ): ChapterSlice[] {
   const chapters: ChapterSlice[] = [];
   let currentSlice: ChapterSlice = { heading: null, blocks: [] };
+  // When explicit chapter starts are provided (project-chapter fidelity in
+  // the preview/export adapter), they are the only boundaries honored.
+  const forcedOnly = (chapterStartIds?.size ?? 0) > 0;
   for (const block of blocks) {
-    if (block.type === 'heading' && block.level === chapterLevel) {
+    const isChapterHeading = block.type === 'heading' && block.level === chapterLevel;
+    const isStart = forcedOnly ? chapterStartIds!.has(block.id) : isChapterHeading;
+    if (isStart) {
       if (currentSlice.heading || currentSlice.blocks.length > 0) {
         chapters.push(currentSlice);
       }
-      currentSlice = { heading: block, blocks: [block] };
+      currentSlice = {
+        heading: isChapterHeading ? block : null,
+        blocks: [block],
+      };
     } else {
       currentSlice.blocks.push(block);
     }
@@ -420,13 +429,13 @@ function buildGlobalIndexes(
   const chapterLevel = template.chapterLevel ?? 1;
   const tocDepth = template.tocDepth ?? chapterLevel + 1;
   const pageOfBlock = new Map<string, number>();
-  for (const page of pages) {
+  pages.forEach((page, position) => {
     for (const placement of page.placements) {
       if (!pageOfBlock.has(placement.blockId)) {
-        pageOfBlock.set(placement.blockId, page.index);
+        pageOfBlock.set(placement.blockId, position);
       }
     }
-  }
+  });
 
   const chapters: ComposedChapter[] = [];
   const toc: TocEntry[] = [];
@@ -440,7 +449,7 @@ function buildGlobalIndexes(
   slices.forEach((slice, chapterIndex) => {
     const chapterNumber = chapterIndex + 1;
     const heading = slice.heading;
-    const chapterId = heading?.id ?? `front-${chapterIndex}`;
+    const chapterId = heading?.id ?? slice.blocks[0]?.id ?? `front-${chapterIndex}`;
     const title = heading?.type === 'heading' ? inlineToPlainText(heading.content) : '';
     chapters.push({ id: chapterId, title, startPage: chapterStartPages[chapterIndex] });
     refs[chapterId] = String(chapterNumber);
@@ -558,7 +567,9 @@ function materialize(
     }
     chapterStartPages.push(indexOffset + pages.length);
     const chapterId =
-      slices[chapterIndex].heading?.id ?? `front-${chapterIndex}`;
+      slices[chapterIndex].heading?.id ??
+      slices[chapterIndex].blocks[0]?.id ??
+      `front-${chapterIndex}`;
     composition.pages.forEach((draft) => {
       const globalIndex = indexOffset + pages.length;
       pages.push({
@@ -574,6 +585,23 @@ function materialize(
   return { pages, chapterStartPages, violations };
 }
 
+/** Optional composition controls beyond layout (template) and rules. */
+export interface ComposeOptions {
+  /**
+   * Block ids that force a new chapter boundary. When provided and non-empty,
+   * they are the only chapter boundaries honored (project-chapter fidelity
+   * for the preview/export adapter).
+   */
+  chapterStartIds?: string[];
+  /**
+   * 0-based index assigned to the first composed page (default 0). The
+   * preview/export adapter passes 1 so printed page numbers include the
+   * cover as page 1, making `chapterStartsOnOddPage` refer to the printed
+   * (recto) page number.
+   */
+  pageIndexOffset?: number;
+}
+
 /**
  * Full composition. Pure and deterministic: same input → same output.
  * `measurer` defaults to the deterministic heuristic; production injects a
@@ -584,6 +612,7 @@ export function compose(
   rules?: Partial<DocumentRules> | null,
   template?: ComposeTemplate,
   measurer?: TextMeasurer,
+  options?: ComposeOptions,
 ): ComposeResult {
   const resolvedRules = resolveDocumentRules(rules);
   const resolvedTemplate: ComposeTemplate = template ?? {
@@ -595,10 +624,12 @@ export function compose(
   };
   const ctx = makeContext(resolvedRules, resolvedTemplate, measurer ?? createHeuristicMeasurer());
   const chapterLevel = resolvedTemplate.chapterLevel ?? 1;
-  const slices = splitChapters(document.blocks, chapterLevel);
+  const startIds = options?.chapterStartIds ? new Set(options.chapterStartIds) : undefined;
+  const slices = splitChapters(document.blocks, chapterLevel, startIds);
 
-  const { compositions } = composeChapters(slices, ctx, 0);
-  const { pages, chapterStartPages, violations } = materialize(compositions, slices, ctx, 0);
+  const firstPageIndex = options?.pageIndexOffset ?? 0;
+  const { compositions } = composeChapters(slices, ctx, firstPageIndex);
+  const { pages, chapterStartPages, violations } = materialize(compositions, slices, ctx, firstPageIndex);
   const indexes = buildGlobalIndexes(
     document,
     pages,
@@ -627,6 +658,7 @@ export function composeIncremental(
   rules?: Partial<DocumentRules> | null,
   template?: ComposeTemplate,
   measurer?: TextMeasurer,
+  options?: ComposeOptions,
 ): ComposeResult {
   const resolvedRules = resolveDocumentRules(rules);
   const resolvedTemplate: ComposeTemplate = template ?? {
@@ -638,19 +670,20 @@ export function composeIncremental(
   };
   const ctx = makeContext(resolvedRules, resolvedTemplate, measurer ?? createHeuristicMeasurer());
   const chapterLevel = resolvedTemplate.chapterLevel ?? 1;
-  const slices = splitChapters(document.blocks, chapterLevel);
+  const startIds = options?.chapterStartIds ? new Set(options.chapterStartIds) : undefined;
+  const slices = splitChapters(document.blocks, chapterLevel, startIds);
 
   // Locate the chapter containing the changed block.
   const changedChapterIndex = slices.findIndex((slice) =>
     slice.blocks.some((block) => block.id === changedBlockId),
   );
   if (changedChapterIndex <= 0) {
-    return compose(document, rules, template, measurer);
+    return compose(document, rules, template, measurer, options);
   }
 
   const prefixChapter = previous.chapters[changedChapterIndex - 1];
   if (!prefixChapter) {
-    return compose(document, rules, template, measurer);
+    return compose(document, rules, template, measurer, options);
   }
   const reusedPageCount = prefixChapter.startPage + chapterPageCount(previous, changedChapterIndex - 1);
   const reusedPages = previous.pages.slice(0, reusedPageCount);
