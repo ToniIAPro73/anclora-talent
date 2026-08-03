@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ImportedDocumentSeed, ProjectRecord } from './types';
-import { chapterMatchKey, mergeReimportedSeed } from './reimport';
+import { chapterMatchKey, mergeReimportedSeed, summarizeReimport } from './reimport';
 
 function baseProject(): ProjectRecord {
   return {
@@ -141,5 +141,23 @@ describe('mergeReimportedSeed (C6)', () => {
     const result = mergeReimportedSeed(baseProject(), accented);
     expect(result.changedChapterIds).toEqual(['ch1']);
     expect(result.addedChapterTitles).toEqual([]);
+  });
+});
+
+describe('summarizeReimport (reimport diff preview)', () => {
+  it('classifies detected titles into updated / added / kept', () => {
+    const summary = summarizeReimport(
+      ['Introducción', 'Capítulo 2', 'Apéndice manual'],
+      ['introduccion', 'Capítulo 2', 'Capítulo nuevo'],
+    );
+    expect(summary.matchedTitles).toEqual(['Introducción', 'Capítulo 2']);
+    expect(summary.addedTitles).toEqual(['Capítulo nuevo']);
+    expect(summary.keptTitles).toEqual(['Apéndice manual']);
+  });
+
+  it('handles an empty incoming file gracefully', () => {
+    const summary = summarizeReimport(['A', 'B'], []);
+    expect(summary.matchedTitles).toEqual([]);
+    expect(summary.keptTitles).toEqual(['A', 'B']);
   });
 });

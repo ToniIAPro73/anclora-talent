@@ -15,6 +15,7 @@ import { AIAssistant } from './AIAssistant';
 import { ChapterEditorModal } from './ChapterEditorModal';
 import { AddChapterDialog } from './AddChapterDialog';
 import { ImportChapterDialog } from './ImportChapterDialog';
+import { ReimportDialog } from './ReimportDialog';
 import { Portal } from '@/components/ui/Portal';
 import { PdfExportButton } from './PdfExportButton';
 import { DocumentRulesPanel } from './DocumentRulesPanel';
@@ -154,6 +155,7 @@ export function ProjectWorkspace({
   const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isReimportDialogOpen, setIsReimportDialogOpen] = useState(false);
 
   const initialCoverSurface = useMemo(() => buildCoverSurface(project), [project]);
   const initialBackCoverSurface = useMemo(() => buildBackCoverSurface(project), [project]);
@@ -381,6 +383,16 @@ export function ProjectWorkspace({
       case 2: // Chapters
         return (
           <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
+            <div className="mb-4 flex justify-end">
+              <button
+                type="button"
+                data-testid="reimport-open-button"
+                onClick={() => setIsReimportDialogOpen(true)}
+                className="ac-button ac-button--secondary ac-button--sm"
+              >
+                {copy.reimportButton}
+              </button>
+            </div>
             <ChapterOrganizer
               projectId={project.id}
               chapters={project.document.chapters}
@@ -602,6 +614,14 @@ export function ProjectWorkspace({
           projectId={project.id}
           chapters={project.document.chapters}
           onClose={() => setIsImportDialogOpen(false)}
+        />
+
+        <ReimportDialog
+          isOpen={isReimportDialogOpen}
+          projectId={project.id}
+          chapters={project.document.chapters}
+          copy={copy}
+          onClose={() => setIsReimportDialogOpen(false)}
         />
       </Portal>
     </div>
