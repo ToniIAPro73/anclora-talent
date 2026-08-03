@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { toJpeg } from 'html-to-image';
 import { PDFDocument } from 'pdf-lib';
-import { buildPreviewPages, type PreviewPage } from '@/lib/preview/preview-builder';
+import { type PreviewPage } from '@/lib/preview/preview-builder';
+import { composeProjectPreview } from '@/lib/compose/preview-adapter';
 import {
   buildPaginationConfig,
   FORMAT_PRESETS,
@@ -448,7 +449,7 @@ export function PdfExportButton({
     () => buildClientPaginationConfig(preferences.device, preferences.fontSize, preferences.margins),
     [preferences.device, preferences.fontSize, preferences.margins],
   );
-  const pages = useMemo(() => buildPreviewPages(project, config), [project, config]);
+  const pages = useMemo(() => composeProjectPreview(project, config).pages, [project, config]);
 
   useEffect(() => {
     if (!isExporting) {
