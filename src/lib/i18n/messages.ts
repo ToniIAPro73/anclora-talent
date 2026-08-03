@@ -301,6 +301,11 @@ export type AppMessages = {
     reimportResultTitle: string;
     reimportDone: string;
     reimportError: string;
+    healthRecomposedBadge: string;
+    healthDiffTitle: string;
+    healthDiffShift: string;
+    healthDiffToc: string;
+    healthDiffViolations: string;
     previewModalZoomOut: string;
     previewModalZoomIn: string;
     previewModalSingleView: string;
@@ -689,6 +694,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       reimportResultTitle: 'Reimportación completada',
       reimportDone: 'Cerrar',
       reimportError: 'No se pudo reimportar el archivo.',
+      healthRecomposedBadge: 'Recompuesto desde la pág. {page}',
+      healthDiffTitle: 'Cambios desde la última edición',
+      healthDiffShift: '{title}: pág. {from} → {to}',
+      healthDiffToc: '{count} entradas al índice',
+      healthDiffViolations: '{count} violaciones nuevas',
       previewModalZoomOut: 'Reducir zoom',
       previewModalZoomIn: 'Aumentar zoom',
       previewModalSingleView: 'Vista de 1 página',
@@ -1075,6 +1085,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       reimportResultTitle: 'Reimport completed',
       reimportDone: 'Close',
       reimportError: 'The file could not be reimported.',
+      healthRecomposedBadge: 'Recomposed from page {page}',
+      healthDiffTitle: 'Changes since last edit',
+      healthDiffShift: '{title}: page {from} → {to}',
+      healthDiffToc: '{count} TOC entries',
+      healthDiffViolations: '{count} new violations',
       previewModalZoomOut: 'Zoom out',
       previewModalZoomIn: 'Zoom in',
       previewModalSingleView: 'Single page view',

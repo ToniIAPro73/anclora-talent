@@ -377,7 +377,13 @@ export function ProjectWorkspace({
 
             <DocumentRulesPanel key={`rules-${project.updatedAt}`} project={project} copy={copy} />
 
-            <DocumentHealthPanel project={project} violations={documentViolations} copy={copy} />
+            <DocumentHealthPanel
+              project={project}
+              violations={documentViolations}
+              copy={copy}
+              diff={composition.diff}
+              recomposedFromPage={composition.recomposedFromPage}
+            />
           </div>
         );
       case 2: // Chapters
