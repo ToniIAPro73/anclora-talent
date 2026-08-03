@@ -61,6 +61,12 @@ export interface DocumentRules {
   /** Digital: force a page break before every chapter. */
   pageBreakBeforeChapter: boolean;
   numbering: NumberingRules;
+  /**
+   * Export gate for document-health violations (C4). Project-level setting
+   * consumed by the UI/export flow; the composer itself ignores it.
+   * 'off': export freely · 'warn': show a warning · 'block': prevent export.
+   */
+  exportGate: 'off' | 'warn' | 'block';
 }
 
 /** Sensible defaults, active out of the box for every project. */
@@ -83,6 +89,7 @@ export const defaultDocumentRules: DocumentRules = {
     restartTablesPerChapter: true,
     pageNumberFormat: 'decimal',
   },
+  exportGate: 'warn',
 };
 
 /** Deep-merges persisted partial rules over the defaults. */
@@ -97,6 +104,7 @@ export function resolveDocumentRules(partial?: Partial<DocumentRules> | null): D
     chapterStartsOnOddPage: partial.chapterStartsOnOddPage ?? base.chapterStartsOnOddPage,
     pageBreakBeforeChapter: partial.pageBreakBeforeChapter ?? base.pageBreakBeforeChapter,
     numbering: { ...base.numbering, ...partial.numbering },
+    exportGate: partial.exportGate ?? base.exportGate,
   };
 }
 
