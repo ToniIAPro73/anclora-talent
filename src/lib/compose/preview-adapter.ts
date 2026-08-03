@@ -34,7 +34,7 @@ import { htmlToBlocks } from '@/lib/document/from-html';
 import { blocksToHtml } from '@/lib/document/to-html';
 import type { PaginationConfig } from '@/lib/preview/device-configs';
 import { isTocChapter, type PreviewPage } from '@/lib/preview/preview-builder';
-import { ComposeResult, ComposeTemplate, compose } from './compose';
+import { ComposeResult, ComposeTemplate, compose, composeIncremental } from './compose';
 import { TextMeasurer, createHeuristicMeasurer, wrapTextLines } from './measure';
 
 export type { PreviewPage };
@@ -43,6 +43,8 @@ export interface ComposedPreview {
   pages: PreviewPage[];
   /** Raw engine output (TOC, numbering, refs, violations). */
   result: ComposeResult;
+  /** First printed page recomposed since the previous composition (incremental path). */
+  recomposedFromPage?: number;
 }
 
 const EMPTY_CHAPTER_PLACEHOLDER = '<p><em>Contenido aún no disponible</em></p>';
@@ -208,6 +210,60 @@ export function composeProjectPreview(
     pageIndexOffset: 1,
   });
 
+  return {
+    pages: buildPagesFromResult(project, document, chapterById, result, template, measurer),
+    result,
+  };
+}
+
+/**
+ * Incremental recomposition at the project level (C5). Reuses the pages of
+ * chapters before the one containing `changedBlockId` and recomposes only
+ * forward; output equals a full `composeProjectPreview` (engine invariant).
+ * `recomposedFromPage` is the first printed page number affected, used for
+ * the "recomposed since last edit" badge.
+ */
+export function composeProjectPreviewIncremental(
+  previous: ComposedPreview,
+  project: ProjectRecord,
+  changedBlockId: string,
+  config: PaginationConfig,
+  measurer?: TextMeasurer,
+): ComposedPreview {
+  const template = templateFromPaginationConfig(config);
+  const { document, chapterStartIds, chapterById } = projectToSemanticDocument(project);
+  const result = composeIncremental(
+    previous.result,
+    document,
+    changedBlockId,
+    project.document.rules,
+    template,
+    measurer,
+    {
+      ...(chapterStartIds.length > 0 ? { chapterStartIds } : {}),
+      pageIndexOffset: 1,
+    },
+  );
+
+  const changedChapter = result.chapters.find((chapter) => chapter.id === changedBlockId);
+  const recomposedFromPage = changedChapter ? changedChapter.startPage + 1 : undefined;
+
+  return {
+    pages: buildPagesFromResult(project, document, chapterById, result, template, measurer),
+    result,
+    recomposedFromPage,
+  };
+}
+
+/** Serializes a ComposeResult into PreviewPage[] (cover, front matter, content, back cover). */
+function buildPagesFromResult(
+  project: ProjectRecord,
+  document: SemanticDocument,
+  chapterById: Map<string, ProjectChapterInfo>,
+  result: ComposeResult,
+  template: ComposeTemplate,
+  measurer?: TextMeasurer,
+): PreviewPage[] {
   const resolvedMeasurer = measurer ?? createHeuristicMeasurer();
   const blockById = new Map(document.blocks.map((block) => [block.id, block]));
   const contentWidth =
@@ -345,7 +401,7 @@ export function composeProjectPreview(
     });
   }
 
-  return { pages, result };
+  return pages;
 }
 
 /**
@@ -358,4 +414,33 @@ export function buildComposedFlowHtml(pages: PreviewPage[]): string {
     .map((page) => page.content ?? '')
     .filter((html) => html.trim().length > 0)
     .join('<hr data-page-break="manual">');
+}
+
+/**
+ * Finds the semantic start-block id of the first project chapter whose
+ * content changed between two project revisions (C5). Returns null when
+ * nothing changed or chapters were added/removed (structural change → the
+ * caller falls back to a full compose).
+ */
+export function findChangedChapterStartId(
+  prevProject: ProjectRecord,
+  project: ProjectRecord,
+): string | null {
+  if (prevProject.document.chapters.length !== project.document.chapters.length) {
+    return null;
+  }
+  const signature = (chapter: ProjectRecord['document']['chapters'][number]) =>
+    chapter.blocks.map((block) => block.content).join(' ');
+  const prevSig = new Map(
+    prevProject.document.chapters.map((chapter) => [chapter.id, signature(chapter)]),
+  );
+
+  for (const chapter of project.document.chapters) {
+    if (prevSig.get(chapter.id) !== signature(chapter)) {
+      const { chapterById } = projectToSemanticDocument(project);
+      const entry = [...chapterById.entries()].find(([, info]) => info.id === chapter.id);
+      return entry ? entry[0] : null;
+    }
+  }
+  return null;
 }

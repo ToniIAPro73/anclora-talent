@@ -7,6 +7,8 @@ import {
   buildComposedFlowHtml,
   buildGeneratedTocHtml,
   composeProjectPreview,
+  composeProjectPreviewIncremental,
+  findChangedChapterStartId,
   projectToSemanticDocument,
   templateFromPaginationConfig,
 } from './preview-adapter';
@@ -283,5 +285,48 @@ describe('composeProjectPreview — metadata injection (C7)', () => {
     const { pages } = composeProjectPreview(createProject(), config);
     expect(pages.some((p) => p.content?.includes('title-page'))).toBe(false);
     expect(pages.some((p) => p.content?.includes('legal-page'))).toBe(false);
+  });
+});
+
+describe('composeProjectPreviewIncremental (C5)', () => {
+  it('recomposes only from the changed chapter and equals a full compose', () => {
+    const longText = `<p>${'palabra '.repeat(300)}</p>`;
+    const project = createProject({
+      chapters: [
+        { id: 'ch1', order: 1, title: 'Capítulo 1', blocks: [{ id: 'b1', type: 'paragraph', order: 1, content: '<h1>Capítulo 1</h1><p>Uno.</p>' }] },
+        { id: 'ch2', order: 2, title: 'Capítulo 2', blocks: [{ id: 'b2', type: 'paragraph', order: 1, content: '<h1>Capítulo 2</h1><p>Dos.</p>' }] },
+        { id: 'ch3', order: 3, title: 'Capítulo 3', blocks: [{ id: 'b3', type: 'paragraph', order: 1, content: '<h1>Capítulo 3</h1><p>Tres.</p>' }] },
+      ],
+    });
+    const prev = composeProjectPreview(project, config);
+
+    const edited = createProject({
+      chapters: [
+        { id: 'ch1', order: 1, title: 'Capítulo 1', blocks: [{ id: 'b1', type: 'paragraph', order: 1, content: '<h1>Capítulo 1</h1><p>Uno.</p>' }] },
+        { id: 'ch2', order: 2, title: 'Capítulo 2', blocks: [{ id: 'b2', type: 'paragraph', order: 1, content: `<h1>Capítulo 2</h1>${longText}` }] },
+        { id: 'ch3', order: 3, title: 'Capítulo 3', blocks: [{ id: 'b3', type: 'paragraph', order: 1, content: '<h1>Capítulo 3</h1><p>Tres.</p>' }] },
+      ],
+    });
+
+    const changedStartId = findChangedChapterStartId(project, edited);
+    expect(changedStartId).not.toBeNull();
+
+    const incremental = composeProjectPreviewIncremental(prev, edited, changedStartId!, config);
+    const full = composeProjectPreview(edited, config);
+
+    expect(incremental.pages).toEqual(full.pages);
+    expect(incremental.result).toEqual(full.result);
+    expect(incremental.recomposedFromPage).toBeDefined();
+    // The badge points at the first page of chapter 2.
+    const ch2First = full.pages.find((p) => p.chapterId === 'ch2');
+    expect(incremental.recomposedFromPage).toBe(ch2First!.pageNumber);
+  });
+
+  it('findChangedChapterStartId returns null when nothing changed or structure changed', () => {
+    const project = createProject();
+    expect(findChangedChapterStartId(project, createProject())).toBeNull();
+    const withExtra = createProject();
+    withExtra.document.chapters.push({ id: 'chX', order: 3, title: 'Extra', blocks: [] });
+    expect(findChangedChapterStartId(project, withExtra)).toBeNull();
   });
 });
