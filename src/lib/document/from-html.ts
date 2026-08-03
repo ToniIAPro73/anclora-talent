@@ -165,7 +165,10 @@ export function htmlToBlocks(html: string): DocumentBlock[] {
   const blocks: DocumentBlock[] = [];
   const push = (block: DocumentBlock) => blocks.push(block);
   let counter = 0;
-  const nextId = (tag: string) => {
+  const nextId = (el: DomElement, tag: string) => {
+    // Prefer the source element id: stable anchors for refs and reimport merge.
+    const sourceId = el.getAttribute('id');
+    if (sourceId) return sourceId;
     counter += 1;
     return `h-${counter}-${tag}`;
   };
@@ -176,17 +179,17 @@ export function htmlToBlocks(html: string): DocumentBlock[] {
     const level = headingLevel(tag);
 
     if (level) {
-      push({ type: 'heading', level, content: parseInline(el), id: nextId(tag) });
+      push({ type: 'heading', level, content: parseInline(el), id: nextId(el, tag) });
     } else if (tag === 'p') {
-      push({ type: 'paragraph', content: parseInline(el), id: nextId(tag) });
+      push({ type: 'paragraph', content: parseInline(el), id: nextId(el, tag) });
     } else if (tag === 'ul' || tag === 'ol') {
-      push(parseList(el, tag === 'ol', nextId(tag)));
+      push(parseList(el, tag === 'ol', nextId(el, tag)));
     } else if (tag === 'table') {
-      push(parseTable(el, nextId(tag)));
+      push(parseTable(el, nextId(el, tag)));
     } else if (tag === 'blockquote') {
-      push({ type: 'quote', content: parseInline(el), id: nextId(tag) });
+      push({ type: 'quote', content: parseInline(el), id: nextId(el, tag) });
     } else if (tag === 'pre') {
-      push({ type: 'code', code: el.textContent ?? '', id: nextId(tag) });
+      push({ type: 'code', code: el.textContent ?? '', id: nextId(el, tag) });
     } else if (tag === 'img') {
       const src = el.getAttribute('src');
       if (src) {
@@ -194,7 +197,7 @@ export function htmlToBlocks(html: string): DocumentBlock[] {
           type: 'image',
           src,
           alt: el.getAttribute('alt') ?? undefined,
-          id: nextId(tag),
+          id: nextId(el, tag),
         });
       }
     } else if (tag === 'figure') {
@@ -206,18 +209,18 @@ export function htmlToBlocks(html: string): DocumentBlock[] {
           src: img.getAttribute('src') as string,
           alt: img.getAttribute('alt') ?? undefined,
           caption: caption ? (caption.textContent ?? '').trim() || undefined : undefined,
-          id: nextId(tag),
+          id: nextId(el, tag),
         });
       }
     } else if (tag === 'hr' && el.getAttribute('data-page-break')) {
-      push({ type: 'pageBreak', id: nextId(tag) });
+      push({ type: 'pageBreak', id: nextId(el, tag) });
     } else if (tag === 'div' || tag === 'section') {
       // Unwrap generic containers one level deep (callouts, wrappers).
       const inner = htmlToBlocks(el.outerHTML ?? '');
       if (inner.length > 0) {
         blocks.push(...inner);
       } else {
-        push({ type: 'paragraph', content: parseInline(el), id: nextId(tag) });
+        push({ type: 'paragraph', content: parseInline(el), id: nextId(el, tag) });
       }
     }
   }
