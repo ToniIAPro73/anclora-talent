@@ -119,23 +119,53 @@ configurable export gate (block vs warn) are pending UI work consuming this arra
 - `src/lib/document/document.test.ts` (7 tests): HTML→blocks mapping, marks, tables,
   figures, ref tokens, stable ids, round-trip serialization with resolved refs.
 
+## Status after round 2 (what landed)
+
+1. **Persistence ✅** — `project_documents` gained `rules` / `document_model` / `metadata`
+   JSONB columns (`schema.ts`, applied to dev DB via `ensure-migrations.js` — the neon
+   tagged-template call was fixed in the same pass). Read/write through `repositories.ts`
+   (`saveDocumentExtras`, `replaceDocument`), factory `updateProjectDocumentExtras`, and
+   actions `saveProjectRulesAction` / `saveProjectMetadataAction` /
+   `saveProjectDocumentModelAction` / `reimportProjectAction`.
+2. **Preview/export adapter ✅** — `src/lib/compose/preview-adapter.ts`:
+   `composeProjectPreview(project, config, measurer?) → { pages: PreviewPage[], result }`,
+   drop-in for `buildPreviewPages` (cover=1, content 2+, back-cover last; project chapters
+   never share a page via `ComposeOptions.chapterStartIds`; generated TOC replaces the TOC
+   chapter with the `data-toc-*` contract; refs materialized; `buildComposedFlowHtml` for
+   `MultipageFlow`). `pageIndexOffset: 1` makes printed numbering include the cover, so
+   `chapterStartsOnOddPage` refers to recto printed pages. Split paragraphs are
+   reconstructed as plain-text fragments via `wrapTextLines` (marks flattened only inside
+   split fragments).
+3. **Rules panel ✅** — `DocumentRulesPanel` in the Content step: presets
+   default/print/digital, every rule adjustable, persists via server action. i18n ES/EN.
+4. **Health panel + export gate ✅** — `DocumentHealthPanel` (always-visible counter,
+   violation list with page references linking to preview) and the per-project gate
+   (`rules.exportGate: 'off'|'warn'|'block'`, default `warn`) enforced in the Export step
+   (block disables actions, warn shows a notice).
+5. **Metadata injection ✅** — `ProductMetadataPanel` (ISBN/description/keywords/language;
+   title/subtitle/author carried from the document) and adapter injection of portadilla +
+   legal page after the cover when extended metadata exists; TOC numbers shift accordingly.
+6. **DOCX reimport ✅ (lib + action)** — `src/lib/projects/reimport.ts`:
+   `mergeReimportedSeed` matches chapters by normalized title anchors, updates only changed
+   chapters (ids/positions preserved), appends new ones, keeps missing ones, never touches
+   cover/backCover/rules/metadata; content-derived stable block ids make it idempotent.
+   `reimportProjectAction` persists and returns the merge summary.
+
 ## Pending work (next phase/agent)
 
-1. **Persistence**: Drizzle migration adding `rules`/`documentModel`/`metadata` JSON(B)
-   columns to the project graph (`src/lib/db/schema.ts`, `repositories.ts`), npm script +
-   `ensure-migrations.js` entry. Lazy migration: keep reading HTML chapters, adapt via
-   `htmlToDocument`, persist the model on next save.
-2. **Rules panel** ("Reglas del documento") in `ProjectWorkspace` with i18n ES/EN
-   (`src/lib/i18n/messages.ts`), presets togglable, `ac-*` classes only.
-3. **Health panel** + always-visible violation counter + export gate config per project.
-4. **Live preview**: debounce → `composeIncremental`, recompose badges, before/after diff
-   dialog for big changes, undo.
-5. **DOCX reimport**: structural merge by stable heading/anchor ids
-   (`import-pipeline.ts` keeps trusting only real `<h1>-<h6>` from Mammoth — archived
-   decision), preserving cover/back-cover/rules/manual tweaks.
-6. **Export integration**: adapter `ComposeResult → PreviewPage[]` so
-   `export-builder.tsx`/`PreviewModal` consume the engine (contract: `PreviewPage`,
-   `PaginationConfig`, `<hr data-page-break>`, TOC `data-toc-*` spans).
-7. **e2e Playwright**: rules panel, health panel, reimport flow.
-8. Formalize archived regression test `Archive/scripts_and_tests/actions.pagination.test.ts`
+1. **Export consumption**: switch `buildExportPreview` (`export-builder.tsx`) and
+   `PreviewModal`/`PreviewCanvas` to `composeProjectPreview` (or keep the adapter as the
+   single source and delete the estimated paginator path). The adapter is contract-compatible
+   and tested; the switch itself was deferred to keep export byte-stable in this round.
+2. **Live preview (C5)**: wire the editor → debounce → `composeIncremental` with
+   recompose badges on pages and a before/after structural diff dialog (chapter page
+   shifts, TOC delta, new violations) with undo. The merge summary of
+   `reimportProjectAction` is the input for the reimport diff dialog (UI pending).
+3. **Reimport UI**: "Reimportar DOCX" button + confirm dialog showing the diff.
+4. **Client canvas measurer**: inject `createCanvasMeasurer` in the browser path for real
+   font metrics (server/tests keep the deterministic measurer).
+5. **Footer injection (C7)**: running footer with title/page in export surfaces.
+6. **e2e Playwright**: rules panel, health panel, reimport flow.
+7. Formalize archived regression test `Archive/scripts_and_tests/actions.pagination.test.ts`
    into `src/lib/projects/`.
+

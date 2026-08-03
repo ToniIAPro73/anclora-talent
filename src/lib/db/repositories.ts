@@ -790,6 +790,30 @@ async function saveDocumentInMemory(userId: string, projectId: string, input: Up
   return nextProject;
 }
 
+/** FASE C (C6): persists a fully merged document after a structural reimport. */
+async function replaceDocumentInDb(userId: string, projectId: string, nextProject: ProjectRecord) {
+  const db = getDb();
+  const current = await getProjectFromDb(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  await persistDocumentUpdate(db, nextProject);
+  return nextProject;
+}
+
+async function replaceDocumentInMemory(userId: string, projectId: string, nextProject: ProjectRecord) {
+  const current = await getProjectFromMemory(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  getMemoryStore().set(nextProject.id, nextProject);
+  return nextProject;
+}
+
 /** FASE C: persists rules / semantic model / product metadata (JSONB columns). */
 async function saveDocumentExtrasInDb(userId: string, projectId: string, input: UpdateDocumentExtrasInput) {
   const db = getDb();
@@ -1035,6 +1059,11 @@ export const projectRepository = {
     return hasDatabase()
       ? saveDocumentExtrasInDb(userId, projectId, input)
       : saveDocumentExtrasInMemory(userId, projectId, input);
+  },
+  replaceDocument(userId: string, projectId: string, nextProject: ProjectRecord) {
+    return hasDatabase()
+      ? replaceDocumentInDb(userId, projectId, nextProject)
+      : replaceDocumentInMemory(userId, projectId, nextProject);
   },
   saveCover(userId: string, projectId: string, input: UpdateCoverInput) {
     return hasDatabase() ? saveCoverInDb(userId, projectId, input) : saveCoverInMemory(userId, projectId, input);
