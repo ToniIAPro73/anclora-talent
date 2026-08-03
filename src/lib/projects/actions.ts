@@ -549,3 +549,76 @@ export async function deleteProjectAction(formData: FormData) {
   revalidatePath('/dashboard');
   redirect('/dashboard');
 }
+
+/**
+ * FASE C: saves the declarative composition rules of a project.
+ * Expects `rules` as a JSON string (DocumentRules); invalid JSON is rejected.
+ */
+export async function saveProjectRulesAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '');
+  if (!projectId) throw new Error('Missing projectId');
+
+  const raw = String(formData.get('rules') ?? '');
+  let rules = null;
+  if (raw.trim()) {
+    try {
+      rules = JSON.parse(raw);
+    } catch {
+      throw new Error('Invalid rules payload');
+    }
+  }
+
+  await projectRepository.saveDocumentExtras(userId, projectId, { rules });
+  revalidatePath(`/projects/${projectId}/editor`);
+  revalidatePath(`/projects/${projectId}/preview`);
+  return { ok: true as const };
+}
+
+/**
+ * FASE C: saves the digital product metadata (DocumentMetadata JSON):
+ * title, subtitle, author, ISBN, description, keywords, language.
+ */
+export async function saveProjectMetadataAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '');
+  if (!projectId) throw new Error('Missing projectId');
+
+  const raw = String(formData.get('metadata') ?? '');
+  let metadata = null;
+  if (raw.trim()) {
+    try {
+      metadata = JSON.parse(raw);
+    } catch {
+      throw new Error('Invalid metadata payload');
+    }
+  }
+
+  await projectRepository.saveDocumentExtras(userId, projectId, { metadata });
+  revalidatePath(`/projects/${projectId}/editor`);
+  revalidatePath(`/projects/${projectId}/preview`);
+  return { ok: true as const };
+}
+
+/**
+ * FASE C: persists the canonical semantic document model (lazy migration
+ * from HTML happens on first save through this action).
+ */
+export async function saveProjectDocumentModelAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '');
+  if (!projectId) throw new Error('Missing projectId');
+
+  const raw = String(formData.get('documentModel') ?? '');
+  if (!raw.trim()) throw new Error('Missing documentModel');
+  let documentModel;
+  try {
+    documentModel = JSON.parse(raw);
+  } catch {
+    throw new Error('Invalid documentModel payload');
+  }
+
+  await projectRepository.saveDocumentExtras(userId, projectId, { documentModel });
+  revalidatePath(`/projects/${projectId}/editor`);
+  return { ok: true as const };
+}

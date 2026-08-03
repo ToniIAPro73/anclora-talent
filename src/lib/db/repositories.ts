@@ -13,6 +13,7 @@ import {
   updateProjectBackCover,
   updateProjectCover,
   updateProjectDocument,
+  updateProjectDocumentExtras,
   updateProjectWorkflowStep,
 } from '@/lib/projects/factories';
 import type {
@@ -21,10 +22,12 @@ import type {
   DocumentBlock,
   DocumentChapter,
   EditorialMapEntry,
+  ProjectDocument,
   ProjectRecord,
   ProjectSummary,
   UpdateBackCoverInput,
   UpdateCoverInput,
+  UpdateDocumentExtrasInput,
   UpdateDocumentInput,
 } from '@/lib/projects/types';
 
@@ -205,6 +208,9 @@ function mapRowsToProject(
       author: documentRow.author,
       language: documentRow.language,
       chapters: reconstructChaptersFromBlockRows(blockRows),
+      rules: (documentRow.rules ?? null) as ProjectDocument['rules'],
+      documentModel: (documentRow.documentModel ?? null) as ProjectDocument['documentModel'],
+      metadata: (documentRow.metadata ?? null) as ProjectDocument['metadata'],
       source:
         documentRow.sourceMetadata && typeof documentRow.sourceMetadata === 'object'
           ? {
@@ -297,6 +303,9 @@ export async function persistProjectGraph(db: ProjectGraphWriter, project: Proje
     author: project.document.author,
     language: project.document.language,
     sourceMetadata: project.document.source,
+    rules: project.document.rules ?? null,
+    documentModel: project.document.documentModel ?? null,
+    metadata: project.document.metadata ?? null,
     createdAt: new Date(project.createdAt),
     updatedAt: new Date(project.updatedAt),
   });
@@ -371,6 +380,9 @@ export async function persistDocumentUpdate(db: ProjectGraphWriterWithQuery, nex
       subtitle: nextProject.document.subtitle,
       author: nextProject.document.author,
       sourceMetadata: nextProject.document.source,
+      rules: nextProject.document.rules ?? null,
+      documentModel: nextProject.document.documentModel ?? null,
+      metadata: nextProject.document.metadata ?? null,
       updatedAt: new Date(nextProject.updatedAt),
     })
     .where(eq(projectDocuments.projectId, nextProject.id));
@@ -778,6 +790,42 @@ async function saveDocumentInMemory(userId: string, projectId: string, input: Up
   return nextProject;
 }
 
+/** FASE C: persists rules / semantic model / product metadata (JSONB columns). */
+async function saveDocumentExtrasInDb(userId: string, projectId: string, input: UpdateDocumentExtrasInput) {
+  const db = getDb();
+  const current = await getProjectFromDb(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  const nextProject = updateProjectDocumentExtras(current, input);
+
+  await db
+    .update(projectDocuments)
+    .set({
+      rules: nextProject.document.rules ?? null,
+      documentModel: nextProject.document.documentModel ?? null,
+      metadata: nextProject.document.metadata ?? null,
+      updatedAt: new Date(nextProject.updatedAt),
+    })
+    .where(eq(projectDocuments.projectId, projectId));
+
+  return nextProject;
+}
+
+async function saveDocumentExtrasInMemory(userId: string, projectId: string, input: UpdateDocumentExtrasInput) {
+  const current = await getProjectFromMemory(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  const nextProject = updateProjectDocumentExtras(current, input);
+  getMemoryStore().set(nextProject.id, nextProject);
+  return nextProject;
+}
+
 async function saveCoverInMemory(userId: string, projectId: string, input: UpdateCoverInput) {
   const current = await getProjectFromMemory(userId, projectId);
 
@@ -982,6 +1030,11 @@ export const projectRepository = {
     return hasDatabase()
       ? saveDocumentInDb(userId, projectId, input)
       : saveDocumentInMemory(userId, projectId, input);
+  },
+  saveDocumentExtras(userId: string, projectId: string, input: UpdateDocumentExtrasInput) {
+    return hasDatabase()
+      ? saveDocumentExtrasInDb(userId, projectId, input)
+      : saveDocumentExtrasInMemory(userId, projectId, input);
   },
   saveCover(userId: string, projectId: string, input: UpdateCoverInput) {
     return hasDatabase() ? saveCoverInDb(userId, projectId, input) : saveCoverInMemory(userId, projectId, input);

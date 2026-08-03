@@ -5,6 +5,7 @@ import type {
   ProjectRecord,
   UpdateBackCoverInput,
   UpdateCoverInput,
+  UpdateDocumentExtrasInput,
   UpdateDocumentInput,
 } from './types';
 
@@ -333,5 +334,29 @@ export function updateProjectWorkflowStep(project: ProjectRecord, workflowStep: 
     ...project,
     workflowStep: Math.min(9, Math.max(1, Math.trunc(workflowStep))),
     updatedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * FASE C: applies a partial update of composition rules / semantic model /
+ * product metadata to the document, leaving chapters untouched.
+ */
+export function updateProjectDocumentExtras(
+  project: ProjectRecord,
+  input: UpdateDocumentExtrasInput,
+): ProjectRecord {
+  return {
+    ...project,
+    updatedAt: new Date().toISOString(),
+    document: {
+      ...project.document,
+      rules: input.rules !== undefined ? input.rules : (project.document.rules ?? null),
+      documentModel:
+        input.documentModel !== undefined
+          ? input.documentModel
+          : (project.document.documentModel ?? null),
+      metadata:
+        input.metadata !== undefined ? input.metadata : (project.document.metadata ?? null),
+    },
   };
 }

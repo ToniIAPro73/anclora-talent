@@ -95,3 +95,34 @@ export function createCanvasMeasurer(fontFamily = 'DM Sans, sans-serif'): TextMe
 export function createServerMeasurer(): TextMeasurer {
   return createHeuristicMeasurer();
 }
+
+/**
+ * Greedy word wrap driven by a measurer: returns the words of each line.
+ * Used by the preview/export adapter to reconstruct paragraph fragments for
+ * split placements with the same measurement the engine used to paginate.
+ */
+export function wrapTextLines(
+  text: string,
+  request: Omit<MeasureRequest, 'text'>,
+  measurer: TextMeasurer,
+): string[] {
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return [''];
+  const lines: string[] = [];
+  let current = '';
+  let currentCount = 1;
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    const candidateCount = measurer.measureLines({ ...request, text: candidate });
+    if (current && candidateCount > currentCount) {
+      lines.push(current);
+      current = word;
+      currentCount = measurer.measureLines({ ...request, text: word });
+    } else {
+      current = candidate;
+      currentCount = candidateCount;
+    }
+  }
+  lines.push(current);
+  return lines;
+}

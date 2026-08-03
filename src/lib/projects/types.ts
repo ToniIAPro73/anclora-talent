@@ -1,3 +1,5 @@
+import type { DocumentMetadata, SemanticDocument } from '@/lib/document/model';
+import type { DocumentRules } from '@/lib/compose/rules';
 import type { SurfaceState } from './cover-surface';
 
 export type ProjectStatus = 'draft' | 'active';
@@ -56,6 +58,19 @@ export interface ProjectDocument {
   language: string;
   chapters: DocumentChapter[];
   source?: ProjectDocumentSource | null;
+  /** FASE C: declarative composition rules (defaults applied when null). */
+  rules?: DocumentRules | null;
+  /** FASE C: canonical semantic model; null until lazily migrated from HTML. */
+  documentModel?: SemanticDocument | null;
+  /** FASE C: digital product metadata (ISBN, description, keywords…). */
+  metadata?: DocumentMetadata | null;
+}
+
+/** FASE C: partial update of rules / semantic model / product metadata. */
+export interface UpdateDocumentExtrasInput {
+  rules?: DocumentRules | null;
+  documentModel?: SemanticDocument | null;
+  metadata?: DocumentMetadata | null;
 }
 
 export interface CoverDesign {
