@@ -2,18 +2,20 @@
 
 <div align="center">
 
-<img src="./public/brand/paleta_colores_anclora_talent.png" alt="Anclora Talent" width="120" />
+<img src="./public/brand/anclora-talent.png" alt="Anclora Talent" width="132" />
 
 # Anclora Talent
 
-### Repositorio interno del ecosistema Anclora para operaciones de familia premium
+### Create and publish editorial projects with clarity
+
+Premium platform for creating, editing, and publishing editorial projects, with its own authentication (credentials + social OAuth).
 
 [Español](./README.md) · **English**
 
 <br />
 
 ![Anclora](https://img.shields.io/badge/Anclora-ecosystem-111827)
-![Documentation](https://img.shields.io/badge/documentation-premium-BFA46A)
+![Category](https://img.shields.io/badge/category-Premium%20(paused)-C07860)
 ![Languages](https://img.shields.io/badge/languages-ES%20%7C%20EN-047857)
 
 </div>
@@ -21,67 +23,64 @@
 ---
 
 > [!IMPORTANT]
-> Internal Anclora ecosystem repository. Do not publish operational details, credentials,
-> real data or sensitive logic outside approved channels.
+> **Project paused** (out of active scope since 2026-08). The brand contract still applies in case it is reactivated. Internal repository: do not publish operational details, credentials, or sensitive logic outside authorized channels.
 
-## At a glance
+## What it is
 
-| Area | Definition |
-| --- | --- |
-| Purpose | Repositorio interno del ecosistema Anclora para operaciones de familia premium |
-| Family | `premium` |
-| Visibility | `private` |
-| Role | Internal working repository |
+Anclora Talent is a premium platform for creating, editing, and publishing editorial projects with clarity. It includes its own authentication (bcrypt credentials + opaque sessions) and social OAuth login (Google, GitHub) hand-implemented with Authorization Code + PKCE, without external OAuth libraries.
 
-## Conceptual workflow
+## Category in the ecosystem
 
-```text
-Internal context
-      ↓
-Controlled configuration and data
-      ↓
-Product logic
-      ↓
-Technical review
-      ↓
-Delivery or operational support
-```
+| Field | Value |
+|---|---|
+| Category | Premium |
+| Status | Paused (since 2026-08) |
+| Brand accent | `#4A9FD8` |
+| Typography | DM Sans |
+| Canonical repository | `anclora-talent` |
 
-## Local start
+## Key features
+
+- Creation, editing, and publishing of editorial projects
+- Rich text editor (TipTap: color, images, alignment, highlight)
+- Own credential authentication (bcrypt) + sessions in Neon
+- Social OAuth login (Google, GitHub) with hand-implemented PKCE
+- PDF export (@react-pdf/renderer, serverless Chromium)
+
+## Technology stack
+
+| Area | Technology |
+|---|---|
+| Framework | Next.js, React |
+| Editor | TipTap |
+| Database | Drizzle ORM, Neon |
+| PDF | @react-pdf/renderer, @sparticuz/chromium |
+| Validation | Zod |
+| Testing | Vitest |
+
+## Local setup
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Technology
+## Supported languages
 
-| Area | Detail |
-| --- | --- |
-| Next.js | Detected in repository |
-| React | Detected in repository |
-| TypeScript | Detected in repository |
-| Tailwind CSS | Detected in repository |
-| Drizzle ORM | Detected in repository |
-| Own auth | Credentials (bcrypt) + opaque sessions persisted in Neon; no external providers |
-| Zod | Detected in repository |
-| Vitest | Detected in repository |
+- Español (default)
+- English
 
-## Documentation
+## Documentation and governance
 
-- [Documentacion](./docs)
-
-## Governance
-
-- Canonical product: `anclora-talent`
-- Vault: `/mnt/c/Users/antonio.ballesterosa/Desktop/Proyectos/Boveda-Anclora`
-- Contracts: `contracts/` and `docs/governance/`
-- Brand asset: `present`
+- Brand and governance contracts: [`docs/standards/`](./docs/standards/)
+- Anclora Vault (source of truth): `contracts/` and `docs/governance/`
 
 ---
 
 <div align="center">
 
-### Anclora Group · Internal use
+### Anclora Group
+
+Internal use. Project paused.
 
 </div>

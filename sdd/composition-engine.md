@@ -151,21 +151,37 @@ configurable export gate (block vs warn) are pending UI work consuming this arra
    cover/backCover/rules/metadata; content-derived stable block ids make it idempotent.
    `reimportProjectAction` persists and returns the merge summary.
 
+## Status after round 3 (what landed)
+
+1. **Export consumption ✅** — `buildExportPreview` (`export-builder.tsx`), `PdfExportButton`
+   and `PreviewModal` all consume `composeProjectPreview`; the adapter is the single
+   pagination source for preview and export.
+2. **Live preview (C5) ✅** — `useDocumentComposition` recomposes on every project change:
+   `composeProjectPreviewIncremental` (`preview-adapter.ts`) reuses unaffected leading pages
+   via `composeIncremental` (fixed reused-page slice/reindexing) and falls back to a full
+   compose when the change is not localizable. `diffCompositions` (`compose.ts`) produces
+   `{chapterShifts, tocDelta, newViolations, pageCountDelta}`; `DocumentHealthPanel` shows a
+   recompose badge (`document-health-recomposed-badge`, first recomposed printed page) and a
+   before/after diff banner (`document-health-diff`). Debounce happens upstream in
+   `useChapterEditor` (the hook recomputes on the already-debounced project state). Undo of
+   the diff was descoped: the banner is informational only.
+3. **Reimport UI ✅** — "Reimportar" button in the Chapters step opens `ReimportDialog`:
+   upload → `/api/projects/import` analysis → `summarizeReimport` structural diff preview
+   (update/add/keep counts) → confirm → `reimportProjectAction` merge summary.
+4. **Client canvas measurer ✅** — `createCanvasMeasurer` is injected in the browser path
+   (`useDocumentComposition`, `PreviewModal`); server and tests keep the deterministic
+   measurer.
+5. **Footer injection (C7) ✅** — running footer with document title + printed page number
+   in the HTML export surface.
+6. **e2e Playwright ✅** — `e2e/composition-engine.spec.ts`: rules panel edit+persist,
+   health counter, full reimport flow with diff preview, against a production build
+   (`BASE_URL=http://localhost:3100`). Archived regression test formalized as
+   `src/lib/projects/actions.pagination.test.ts`.
+
 ## Pending work (next phase/agent)
 
-1. **Export consumption**: switch `buildExportPreview` (`export-builder.tsx`) and
-   `PreviewModal`/`PreviewCanvas` to `composeProjectPreview` (or keep the adapter as the
-   single source and delete the estimated paginator path). The adapter is contract-compatible
-   and tested; the switch itself was deferred to keep export byte-stable in this round.
-2. **Live preview (C5)**: wire the editor → debounce → `composeIncremental` with
-   recompose badges on pages and a before/after structural diff dialog (chapter page
-   shifts, TOC delta, new violations) with undo. The merge summary of
-   `reimportProjectAction` is the input for the reimport diff dialog (UI pending).
-3. **Reimport UI**: "Reimportar DOCX" button + confirm dialog showing the diff.
-4. **Client canvas measurer**: inject `createCanvasMeasurer` in the browser path for real
-   font metrics (server/tests keep the deterministic measurer).
-5. **Footer injection (C7)**: running footer with title/page in export surfaces.
-6. **e2e Playwright**: rules panel, health panel, reimport flow.
-7. Formalize archived regression test `Archive/scripts_and_tests/actions.pagination.test.ts`
-   into `src/lib/projects/`.
+- **Undo for live-preview diffs**: the C5 diff banner is informational; reverting a
+  recomposition from the UI was descoped.
+- **Cover-studio via the model**: cover/back-cover still read the legacy fields; wiring them
+  to `DocumentMetadata` is a later phase.
 
