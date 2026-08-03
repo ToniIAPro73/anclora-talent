@@ -28,6 +28,13 @@ const jetbrainsMono = { variable: '--font-jetbrains-mono' };
 export const metadata: Metadata = {
   title: `${TALENT_BRAND.name} | Crea y publica proyectos editoriales con claridad`,
   description: TALENT_BRAND.description,
+  icons: {
+    icon: [
+      { url: TALENT_BRAND.faviconPath, sizes: 'any' },
+      { url: TALENT_BRAND.favicon32Path, type: 'image/png', sizes: '32x32' },
+    ],
+    apple: [{ url: TALENT_BRAND.appleTouchIconPath, sizes: '180x180' }],
+  },
 };
 
 export default async function RootLayout({

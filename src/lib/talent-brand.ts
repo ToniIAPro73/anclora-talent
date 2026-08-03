@@ -1,8 +1,11 @@
 export const TALENT_BRAND = {
   name: 'Anclora Talent',
   description: 'Plataforma editorial premium para crear, editar y publicar proyectos canónicos con claridad.',
-  logoPath: '/brand/logo-anclora-talent.png',
+  logoPath: '/brand/anclora-talent.png',
   faviconPath: '/favicon.ico',
+  favicon32Path: '/favicon-32.png',
+  favicon512Path: '/favicon-512.png',
+  appleTouchIconPath: '/apple-touch-icon.png',
   premiumAccent: '#4A9FD8',
   premiumSecondary: '#A0D0F0',
   premiumInterior: '#141E28',
