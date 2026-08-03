@@ -289,6 +289,23 @@ export type AppMessages = {
     metadataLanguageLabel: string;
     metadataSave: string;
     metadataSaved: string;
+    reimportButton: string;
+    reimportDialogTitle: string;
+    reimportDialogDescription: string;
+    reimportAnalyzing: string;
+    reimportConfirmLabel: string;
+    reimportCancelLabel: string;
+    reimportSummaryUpdate: string;
+    reimportSummaryAdd: string;
+    reimportSummaryKeep: string;
+    reimportResultTitle: string;
+    reimportDone: string;
+    reimportError: string;
+    healthRecomposedBadge: string;
+    healthDiffTitle: string;
+    healthDiffShift: string;
+    healthDiffToc: string;
+    healthDiffViolations: string;
     previewModalZoomOut: string;
     previewModalZoomIn: string;
     previewModalSingleView: string;
@@ -665,6 +682,23 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       metadataLanguageLabel: 'Idioma',
       metadataSave: 'Guardar metadatos',
       metadataSaved: 'Metadatos guardados',
+      reimportButton: 'Reimportar DOCX',
+      reimportDialogTitle: 'Reimportar documento',
+      reimportDialogDescription: 'Sube la versión revisada del archivo original. El contenido se fusiona por estructura: se conservan portada, contraportada, reglas y ajustes manuales.',
+      reimportAnalyzing: 'Analizando archivo…',
+      reimportConfirmLabel: 'Confirmar reimportación',
+      reimportCancelLabel: 'Cancelar',
+      reimportSummaryUpdate: '{count} capítulos se actualizarán',
+      reimportSummaryAdd: '{count} capítulos se añadirán',
+      reimportSummaryKeep: '{count} capítulos se conservan (no están en el archivo)',
+      reimportResultTitle: 'Reimportación completada',
+      reimportDone: 'Cerrar',
+      reimportError: 'No se pudo reimportar el archivo.',
+      healthRecomposedBadge: 'Recompuesto desde la pág. {page}',
+      healthDiffTitle: 'Cambios desde la última edición',
+      healthDiffShift: '{title}: pág. {from} → {to}',
+      healthDiffToc: '{count} entradas al índice',
+      healthDiffViolations: '{count} violaciones nuevas',
       previewModalZoomOut: 'Reducir zoom',
       previewModalZoomIn: 'Aumentar zoom',
       previewModalSingleView: 'Vista de 1 página',
@@ -1039,6 +1073,23 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       metadataLanguageLabel: 'Language',
       metadataSave: 'Save metadata',
       metadataSaved: 'Metadata saved',
+      reimportButton: 'Reimport DOCX',
+      reimportDialogTitle: 'Reimport document',
+      reimportDialogDescription: 'Upload the revised version of the original file. Content is merged by structure: cover, back cover, rules and manual tweaks are preserved.',
+      reimportAnalyzing: 'Analyzing file…',
+      reimportConfirmLabel: 'Confirm reimport',
+      reimportCancelLabel: 'Cancel',
+      reimportSummaryUpdate: '{count} chapters will be updated',
+      reimportSummaryAdd: '{count} chapters will be added',
+      reimportSummaryKeep: '{count} chapters kept (not in the file)',
+      reimportResultTitle: 'Reimport completed',
+      reimportDone: 'Close',
+      reimportError: 'The file could not be reimported.',
+      healthRecomposedBadge: 'Recomposed from page {page}',
+      healthDiffTitle: 'Changes since last edit',
+      healthDiffShift: '{title}: page {from} → {to}',
+      healthDiffToc: '{count} TOC entries',
+      healthDiffViolations: '{count} new violations',
       previewModalZoomOut: 'Zoom out',
       previewModalZoomIn: 'Zoom in',
       previewModalSingleView: 'Single page view',
