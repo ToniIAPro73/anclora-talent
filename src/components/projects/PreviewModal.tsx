@@ -22,10 +22,12 @@ import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import {
-  buildPreviewContentFlowHtml,
-  buildPreviewPages,
   type PreviewPage,
 } from '@/lib/preview/preview-builder';
+import {
+  buildComposedFlowHtml,
+  composeProjectPreview,
+} from '@/lib/compose/preview-adapter';
 import {
   FORMAT_PRESETS,
   buildPaginationConfig,
@@ -74,17 +76,19 @@ export function PreviewModal({
     [format, preferences.fontSize, preferences.margins],
   );
 
-  // We use the builder ONLY for cover and back-cover now
-  const metaPages = useMemo(() => {
-    return buildPreviewPages(project, paginationConfig);
+  // FASE C: the composition engine is the single source for both the
+  // cover/back-cover meta pages and the paginated content flow.
+  const composed = useMemo(() => {
+    return composeProjectPreview(project, paginationConfig);
   }, [paginationConfig, project]);
 
+  const metaPages = composed.pages;
   const cover = useMemo(() => metaPages.find(p => p.type === 'cover'), [metaPages]);
   const backCover = useMemo(() => metaPages.find(p => p.type === 'back-cover'), [metaPages]);
 
   const contentHtml = useMemo(
-    () => buildPreviewContentFlowHtml(project, paginationConfig),
-    [paginationConfig, project],
+    () => buildComposedFlowHtml(composed.pages),
+    [composed],
   );
 
   // LOGICAL PAGE INDEXING

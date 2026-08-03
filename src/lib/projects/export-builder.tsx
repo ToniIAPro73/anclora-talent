@@ -19,7 +19,8 @@ import {
 } from '@react-pdf/renderer';
 import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 import type { PaginationConfig } from '@/lib/preview/device-configs';
-import { buildPreviewPages, type PreviewPage } from '@/lib/preview/preview-builder';
+import { type PreviewPage } from '@/lib/preview/preview-builder';
+import { composeProjectPreview } from '@/lib/compose/preview-adapter';
 import type { ProjectRecord } from './types';
 import {
   parsePageContent,
@@ -133,14 +134,14 @@ function renderContentPageHtml(page: PreviewPage) {
 }
 
 export function buildExportPreview(project: ProjectRecord) {
-  return buildPreviewPages(project, DEFAULT_EXPORT_CONFIG);
+  return composeProjectPreview(project, DEFAULT_EXPORT_CONFIG).pages;
 }
 
 export async function renderProjectExportHtml(
   project: ProjectRecord,
   exportConfig: PaginationConfig = DEFAULT_EXPORT_CONFIG,
 ) {
-  const pages = buildPreviewPages(project, exportConfig);
+  const pages = composeProjectPreview(project, exportConfig).pages;
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
   const sections = pages
@@ -497,7 +498,7 @@ export async function buildProjectPdfWithConfig(
   const pdfMarginBottom = exportConfig.marginBottom * PDF_SCALE;
   const pdfMarginLeft = exportConfig.marginLeft * PDF_SCALE;
   const pdfMarginRight = exportConfig.marginRight * PDF_SCALE;
-  const pages = buildPreviewPages(project, exportConfig);
+  const pages = composeProjectPreview(project, exportConfig).pages;
   const palette = COVER_PALETTE_COLORS[project.cover.palette] ?? COVER_PALETTE_COLORS.obsidian;
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
@@ -772,7 +773,7 @@ export async function buildProjectDocxBuffer(
   const docxImageWidthPx = Math.round(exportConfig.pageWidth);
   const docxImageHeightPx = Math.round(exportConfig.pageHeight);
 
-  const pages = buildPreviewPages(project, exportConfig);
+  const pages = composeProjectPreview(project, exportConfig).pages;
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
   
