@@ -28,6 +28,7 @@ import {
   buildComposedFlowHtml,
   composeProjectPreview,
 } from '@/lib/compose/preview-adapter';
+import { createCanvasMeasurer } from '@/lib/compose/measure';
 import {
   FORMAT_PRESETS,
   buildPaginationConfig,
@@ -77,10 +78,12 @@ export function PreviewModal({
   );
 
   // FASE C: the composition engine is the single source for both the
-  // cover/back-cover meta pages and the paginated content flow.
+  // cover/back-cover meta pages and the paginated content flow. Canvas
+  // measurement gives real font metrics in the browser.
+  const measurer = useMemo(() => createCanvasMeasurer(), []);
   const composed = useMemo(() => {
-    return composeProjectPreview(project, paginationConfig);
-  }, [paginationConfig, project]);
+    return composeProjectPreview(project, paginationConfig, measurer);
+  }, [paginationConfig, project, measurer]);
 
   const metaPages = composed.pages;
   const cover = useMemo(() => metaPages.find(p => p.type === 'cover'), [metaPages]);

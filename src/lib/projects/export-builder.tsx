@@ -123,12 +123,17 @@ function renderLegacyBackCoverPageHtml(page: PreviewPage) {
   `;
 }
 
-function renderContentPageHtml(page: PreviewPage) {
+function renderContentPageHtml(page: PreviewPage, footerTitle?: string) {
+  // C7: running footer injected from the product metadata (single source).
+  const footer = footerTitle
+    ? `<div class="export-page-footer"><span class="export-page-footer-title">${escapeHtml(footerTitle)}</span><span class="export-page-footer-number">${page.pageNumber}</span></div>`
+    : '';
   return `
     <section class="export-page export-content-page">
       <div class="export-page-inner export-content-inner">
         ${page.content ?? ''}
       </div>
+      ${footer}
     </section>
   `;
 }
@@ -144,6 +149,7 @@ export async function renderProjectExportHtml(
   const pages = composeProjectPreview(project, exportConfig).pages;
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
+  const footerTitle = project.document.metadata?.title ?? project.document.title;
   const sections = pages
     .map((page) => {
       if (page.type === 'cover') {
@@ -156,7 +162,7 @@ export async function renderProjectExportHtml(
           ? renderBackCoverPageHtml(backCoverImageUrl)
           : renderLegacyBackCoverPageHtml(page);
       }
-      return renderContentPageHtml(page);
+      return renderContentPageHtml(page, footerTitle);
     })
     .join('\n');
 
@@ -215,6 +221,25 @@ export async function renderProjectExportHtml(
       min-height: var(--page-height);
       padding: var(--page-margin-top) var(--page-margin-right) var(--page-margin-bottom) var(--page-margin-left);
       z-index: 1;
+    }
+    .export-page-footer {
+      position: absolute;
+      left: var(--page-margin-left);
+      right: var(--page-margin-right);
+      bottom: calc(var(--page-margin-bottom) / 2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: var(--paper-text-muted, #6b7280);
+      z-index: 2;
+    }
+    .export-page-footer-title {
+      text-transform: uppercase;
+    }
+    .export-page-footer-number {
+      font-variant-numeric: tabular-nums;
     }
     .export-full-image {
       position: absolute;
