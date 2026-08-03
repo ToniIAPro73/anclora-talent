@@ -23,6 +23,7 @@ import {
   type SurfaceState,
 } from '@/lib/projects/cover-surface';
 import { createSurfaceSnapshotFromProject } from '@/lib/projects/surface-snapshot';
+import { syncedSurfaceValues } from '@/lib/projects/surface-metadata-sync';
 import { BACK_COVER_TEMPLATES, COVER_TEMPLATES } from '@/lib/projects/cover-templates';
 import { COVER_SURFACE_CANVAS } from '@/lib/projects/cover-layout';
 import { findSurfaceTextLayer } from '@/lib/projects/cover-layer-style';
@@ -141,13 +142,37 @@ export function CoverStudio({ surface, project, copy }: CoverStudioProps) {
 
   const updateFieldValue = useCallback(
     (fieldKey: SurfaceFieldKey, value: string) => {
+      // Editing a layer by hand detaches it from the product metadata (D.3).
       setState((current) =>
         mergePartialSurfaceUpdate(current, {
-          fields: { [fieldKey]: { value, visible: Boolean(value.trim()) } },
+          fields: { [fieldKey]: { value, visible: Boolean(value.trim()), source: 'manual' } },
         }),
       );
     },
     [],
+  );
+
+  // Reattach a manually overridden layer to the product metadata chain (D.3).
+  const resyncField = useCallback(
+    (fieldKey: SurfaceFieldKey) => {
+      const synced = syncedSurfaceValues(project.document);
+      const value =
+        fieldKey === 'title'
+          ? synced.title
+          : fieldKey === 'subtitle'
+            ? synced.subtitle
+            : fieldKey === 'author'
+              ? synced.author
+              : fieldKey === 'body'
+                ? synced.body
+                : '';
+      setState((current) =>
+        mergePartialSurfaceUpdate(current, {
+          fields: { [fieldKey]: { value, visible: Boolean(value.trim()), source: 'metadata' } },
+        }),
+      );
+    },
+    [project.document],
   );
 
   const toggleFieldVisibility = useCallback((fieldKey: SurfaceFieldKey) => {
@@ -420,8 +445,21 @@ export function CoverStudio({ surface, project, copy }: CoverStudioProps) {
               <div className="ac-editor-inspector__section space-y-4">
                 <h3 className="ac-editor-inspector__title">{copy.coverStudioFieldsLegend}</h3>
                 {fieldKeys.map((fieldKey) => (
-                  <label key={fieldKey} className="ac-form-field">
-                    <span className="ac-form-field__label">{fieldLabels[fieldKey]}</span>
+                  <div key={fieldKey} className="ac-form-field">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="ac-form-field__label">{fieldLabels[fieldKey]}</span>
+                      {fieldKey !== 'authorBio' && state.fields[fieldKey]?.source === 'manual' && (
+                        <button
+                          type="button"
+                          onClick={() => resyncField(fieldKey)}
+                          data-testid={`cover-field-resync-${fieldKey}`}
+                          title={copy.coverFieldResync}
+                          className="text-xs font-semibold text-[var(--accent)] hover:underline"
+                        >
+                          {copy.coverFieldResync}
+                        </button>
+                      )}
+                    </div>
                     {fieldKey === 'subtitle' || fieldKey === 'body' || fieldKey === 'authorBio' ? (
                       <textarea
                         aria-label={fieldLabels[fieldKey]}
@@ -438,7 +476,7 @@ export function CoverStudio({ surface, project, copy }: CoverStudioProps) {
                         className="field-input"
                       />
                     )}
-                  </label>
+                  </div>
                 ))}
               </div>
 
@@ -516,6 +554,15 @@ export function CoverStudio({ surface, project, copy }: CoverStudioProps) {
                     computed={selectedComputed}
                     value={state.fields[selectedFieldKey]?.value ?? ''}
                     copy={copy}
+                    isManualOverride={
+                      selectedFieldKey !== 'authorBio' &&
+                      state.fields[selectedFieldKey]?.source === 'manual'
+                    }
+                    onResync={
+                      selectedFieldKey !== 'authorBio'
+                        ? () => resyncField(selectedFieldKey)
+                        : undefined
+                    }
                     onTextChange={(value) => updateFieldValue(selectedFieldKey, value)}
                     onStyleChange={(patch: LayerStylePatch) => patchLayer(selectedFieldKey, patch)}
                   />

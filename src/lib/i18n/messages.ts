@@ -212,6 +212,7 @@ export type AppMessages = {
     coverStudioFieldsLegend: string;
     coverStudioInspectorEmpty: string;
     coverStudioContentLabel: string;
+    coverFieldResync: string;
     coverStudioAlignLabel: string;
     coverStudioFontSizeLabel: string;
     coverStudioLineHeightLabel: string;
@@ -605,6 +606,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverStudioFieldsLegend: 'Contenido',
       coverStudioInspectorEmpty: 'Haz clic en un texto del lienzo para editarlo.',
       coverStudioContentLabel: 'Contenido',
+      coverFieldResync: 'Sincronizar con metadatos',
       coverStudioAlignLabel: 'Alineación y estilo',
       coverStudioFontSizeLabel: 'Tamaño',
       coverStudioLineHeightLabel: 'Interlineado',
@@ -996,6 +998,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverStudioFieldsLegend: 'Content',
       coverStudioInspectorEmpty: 'Click a text on the canvas to edit it.',
       coverStudioContentLabel: 'Content',
+      coverFieldResync: 'Sync with metadata',
       coverStudioAlignLabel: 'Alignment and style',
       coverStudioFontSizeLabel: 'Size',
       coverStudioLineHeightLabel: 'Line height',

@@ -13,9 +13,7 @@
  */
 
 import type { ProjectRecord } from '@/lib/projects/types';
-import { createDefaultSurfaceState, normalizeSurfaceState } from '@/lib/projects/cover-surface';
-import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface-resolver';
-import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
+import { createSurfaceSnapshotFromProject } from '@/lib/projects/surface-snapshot';
 import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
 import { PaginationConfig } from './device-configs';
 import { hasRenderablePageContent, paginateContent } from './content-paginator';
@@ -769,26 +767,12 @@ function decodeHtmlEntities(value: string) {
 
 // ==================== HELPERS ====================
 
+// D.3: every consumer (studio, preview, export) resolves surface text through
+// the same snapshot so the metadata chain behaves identically everywhere.
 function normalizeCoverSurface(project: ProjectRecord) {
-  const fallback = createDefaultSurfaceState('cover');
-  const baseState = normalizeSurfaceState(project.cover.surfaceState ?? fallback);
-  return {
-    ...baseState,
-    fields: {
-      ...baseState.fields,
-      ...resolveCoverSurfaceFields(project, baseState),
-    },
-  };
+  return createSurfaceSnapshotFromProject('cover', project);
 }
 
 function normalizeBackCoverSurface(project: ProjectRecord) {
-  const fallback = createDefaultSurfaceState('back-cover');
-  const baseState = normalizeSurfaceState(project.backCover.surfaceState ?? fallback);
-  return {
-    ...baseState,
-    fields: {
-      ...baseState.fields,
-      ...resolveBackCoverSurfaceFields(project, baseState),
-    },
-  };
+  return createSurfaceSnapshotFromProject('back-cover', project);
 }
