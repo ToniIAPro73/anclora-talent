@@ -12,6 +12,7 @@ import {
   buildSyncedTocChapterContent,
 } from '@/lib/preview/preview-builder';
 import { chapterBlocksToHtml } from './chapter-html';
+import { mergeReimportedSeed } from './reimport';
 import type { CoverDesign, UpdateBackCoverInput, UpdateCoverInput, UpdateDocumentInput } from './types';
 import { defaultEditorPreferences } from '@/lib/ui-preferences/preferences';
 
@@ -621,4 +622,36 @@ export async function saveProjectDocumentModelAction(formData: FormData) {
   await projectRepository.saveDocumentExtras(userId, projectId, { documentModel });
   revalidatePath(`/projects/${projectId}/editor`);
   return { ok: true as const };
+}
+
+/**
+ * FASE C (C6): idempotent reimport. Re-parses the revised DOCX and merges it
+ * by structure into the existing project (stable chapter-title anchors),
+ * preserving cover, back cover, rules, metadata and manual tweaks. Returns
+ * the merge summary so the UI can show the before/after diff and trigger
+ * incremental recomposition only for changed chapters.
+ */
+export async function reimportProjectAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '');
+  const file = formData.get('sourceDocument');
+  if (!projectId) throw new Error('Missing projectId');
+  if (!(file instanceof File) || file.size === 0) throw new Error('Missing sourceDocument');
+
+  const { extractImportedDocumentSeed } = await import('./import');
+  const seed = await extractImportedDocumentSeed(file);
+  const current = await projectRepository.getProjectById(userId, projectId);
+  if (!current) throw new Error('Project not found');
+
+  const merge = mergeReimportedSeed(current, seed);
+  await projectRepository.replaceDocument(userId, projectId, merge.project);
+
+  revalidatePath(`/projects/${projectId}/editor`);
+  revalidatePath(`/projects/${projectId}/preview`);
+  return {
+    ok: true as const,
+    changedChapterIds: merge.changedChapterIds,
+    addedChapterTitles: merge.addedChapterTitles,
+    keptStaleChapterTitles: merge.keptStaleChapterTitles,
+  };
 }
