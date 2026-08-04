@@ -539,6 +539,49 @@ export type AppMessages = {
       notFound: string;
     };
   };
+  publishChannels: {
+    title: string;
+    description: string;
+    kitTitle: string;
+    generateKitButton: string;
+    generatingKit: string;
+    sheetTab: string;
+    landingTab: string;
+    copyButton: string;
+    copiedBadge: string;
+    draftDescriptionBadge: string;
+    assetsLabel: string;
+    disclosureLabel: string;
+    gumroadTitle: string;
+    gumroadDescription: string;
+    gumroadDisabled: string;
+    tokenLabel: string;
+    tokenPlaceholder: string;
+    saveTokenButton: string;
+    savingToken: string;
+    removeTokenButton: string;
+    connectedBadge: string;
+    priceLabel: string;
+    pricePlaceholder: string;
+    pushButton: string;
+    pushing: string;
+    pushSuccessLabel: string;
+    modeApiBadge: string;
+    hotmartTitle: string;
+    hotmartDescription: string;
+    exportButton: string;
+    exporting: string;
+    instructionsTitle: string;
+    modeExportBadge: string;
+    errors: {
+      unavailable: string;
+      notFound: string;
+      notConfigured: string;
+      auth: string;
+      validation: string;
+      circuitOpen: string;
+    };
+  };
   history: {
     title: string;
     description: string;
@@ -1219,6 +1262,52 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         notFound: 'No encontramos este proyecto.',
       },
     },
+    publishChannels: {
+      title: 'Publicar en canales de venta',
+      description:
+        'Genera la ficha de producto y el copy de landing desde el propio libro, crea el borrador en Gumroad o descarga el paquete listo para subir a Hotmart.',
+      kitTitle: 'Ficha de producto y copy de landing',
+      generateKitButton: 'Generar ficha y copy',
+      generatingKit: 'Generando…',
+      sheetTab: 'Ficha de producto',
+      landingTab: 'Copy de landing',
+      copyButton: 'Copiar',
+      copiedBadge: 'Copiado',
+      draftDescriptionBadge: 'Borrador derivado del primer capítulo — revísalo antes de publicar',
+      assetsLabel: 'Archivos del pack para subir',
+      disclosureLabel: 'Declaración de contenido IA',
+      gumroadTitle: 'Gumroad',
+      gumroadDescription:
+        'Crea el producto como borrador en tu cuenta de Gumroad (la API lo fuerza a borrador; lo publicas tú desde su panel).',
+      gumroadDisabled: 'Canal no habilitado en este despliegue (GUMROAD_ENABLED).',
+      tokenLabel: 'Token de acceso de Gumroad',
+      tokenPlaceholder: 'Pega tu access token…',
+      saveTokenButton: 'Conectar Gumroad',
+      savingToken: 'Verificando token…',
+      removeTokenButton: 'Desconectar',
+      connectedBadge: 'Conectado',
+      priceLabel: 'Precio (céntimos)',
+      pricePlaceholder: '900',
+      pushButton: 'Crear borrador en Gumroad',
+      pushing: 'Creando borrador…',
+      pushSuccessLabel: 'Borrador creado en Gumroad',
+      modeApiBadge: 'API · borrador',
+      hotmartTitle: 'Hotmart',
+      hotmartDescription:
+        'Hotmart no tiene API pública de creación de productos: descarga el paquete con la ficha, el copy y los archivos listos para el alta manual.',
+      exportButton: 'Descargar paquete Hotmart',
+      exporting: 'Preparando paquete…',
+      instructionsTitle: 'Pasos para el alta manual',
+      modeExportBadge: 'Export manual',
+      errors: {
+        unavailable: 'No se pudo completar la operación ahora mismo. Inténtalo más tarde.',
+        notFound: 'No encontramos este proyecto.',
+        notConfigured: 'El servidor no tiene clave de cifrado de credenciales configurada.',
+        auth: 'El token de Gumroad no es válido o fue revocado.',
+        validation: 'Gumroad rechazó los datos del producto. Revisa la ficha.',
+        circuitOpen: 'Gumroad no responde; reintentaremos en unos segundos.',
+      },
+    },
     history: {
       title: 'Historial de versiones',
       description:
@@ -1896,6 +1985,52 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       errors: {
         unavailable: 'The pack could not be generated right now. Please try again later.',
         notFound: 'We could not find this project.',
+      },
+    },
+    publishChannels: {
+      title: 'Publish to sales channels',
+      description:
+        'Generates the product sheet and landing copy from the book itself, creates the draft on Gumroad, or downloads the package ready for manual upload to Hotmart.',
+      kitTitle: 'Product sheet & landing copy',
+      generateKitButton: 'Generate sheet & copy',
+      generatingKit: 'Generating…',
+      sheetTab: 'Product sheet',
+      landingTab: 'Landing copy',
+      copyButton: 'Copy',
+      copiedBadge: 'Copied',
+      draftDescriptionBadge: 'Draft derived from the first chapter — review before publishing',
+      assetsLabel: 'Pack files to upload',
+      disclosureLabel: 'AI content declaration',
+      gumroadTitle: 'Gumroad',
+      gumroadDescription:
+        'Creates the product as a draft in your Gumroad account (the API forces draft state; you publish it from their dashboard).',
+      gumroadDisabled: 'Channel not enabled on this deployment (GUMROAD_ENABLED).',
+      tokenLabel: 'Gumroad access token',
+      tokenPlaceholder: 'Paste your access token…',
+      saveTokenButton: 'Connect Gumroad',
+      savingToken: 'Verifying token…',
+      removeTokenButton: 'Disconnect',
+      connectedBadge: 'Connected',
+      priceLabel: 'Price (cents)',
+      pricePlaceholder: '900',
+      pushButton: 'Create draft on Gumroad',
+      pushing: 'Creating draft…',
+      pushSuccessLabel: 'Draft created on Gumroad',
+      modeApiBadge: 'API · draft',
+      hotmartTitle: 'Hotmart',
+      hotmartDescription:
+        'Hotmart has no public product-creation API: download the package with the sheet, the copy and the files ready for manual registration.',
+      exportButton: 'Download Hotmart package',
+      exporting: 'Preparing package…',
+      instructionsTitle: 'Manual registration steps',
+      modeExportBadge: 'Manual export',
+      errors: {
+        unavailable: 'The operation could not be completed right now. Please try again later.',
+        notFound: 'We could not find this project.',
+        notConfigured: 'The server has no credentials encryption key configured.',
+        auth: 'The Gumroad token is invalid or was revoked.',
+        validation: 'Gumroad rejected the product data. Review the sheet.',
+        circuitOpen: 'Gumroad is not responding; we will retry in a few seconds.',
       },
     },
     history: {

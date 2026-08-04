@@ -62,6 +62,7 @@ import type { LaunchPackView } from '@/lib/manifest/view';
 import type { DocumentSnapshotMeta } from '@/lib/snapshots/model';
 import { HistoryPanel } from './HistoryPanel';
 import { LaunchPackPanel } from './LaunchPackPanel';
+import { PublishChannelsPanel } from './PublishChannelsPanel';
 import { CoAuthorPanel } from './CoAuthorPanel';
 import { KdpDisclosurePanel } from './KdpDisclosurePanel';
 import { buildExportQueryString } from '@/lib/projects/export-config';
@@ -156,6 +157,7 @@ export function ProjectWorkspace({
   copy,
   brandProfiles = [],
   launchPack,
+  publishChannels,
   history,
   coAuthor,
   kdpDisclosure,
@@ -168,6 +170,12 @@ export function ProjectWorkspace({
   launchPack?: {
     copy: AppMessages['launchPack'];
     view: LaunchPackView | null;
+  };
+  /** F4: publish-to-sales-channels section; rendered in step 9 below the pack. */
+  publishChannels?: {
+    copy: AppMessages['publishChannels'];
+    gumroadEnabled: boolean;
+    gumroadConnected: boolean;
   };
   /** F2: version history section (copy + snapshot metadata, newest first); rendered in step 1. */
   history?: {
@@ -645,6 +653,14 @@ export function ProjectWorkspace({
                 copy={launchPack.copy}
                 projectId={project.id}
                 view={launchPack.view}
+              />
+            )}
+            {publishChannels && (
+              <PublishChannelsPanel
+                copy={publishChannels.copy}
+                projectId={project.id}
+                gumroadEnabled={publishChannels.gumroadEnabled}
+                gumroadConnected={publishChannels.gumroadConnected}
               />
             )}
           </section>

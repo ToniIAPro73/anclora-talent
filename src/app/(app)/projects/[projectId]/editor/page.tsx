@@ -1,11 +1,13 @@
 import { notFound } from 'next/navigation';
 import { ProjectWorkspace } from '@/components/projects/ProjectWorkspace';
 import { requireUserId } from '@/lib/auth/guards';
-import { hasDatabase } from '@/lib/db';
+import { getDb, hasDatabase } from '@/lib/db';
 import { projectRepository } from '@/lib/db/repositories';
 import { brandProfileRepository } from '@/lib/brand/repository';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { getLaunchPackViewForProject } from '@/lib/manifest/view';
+import { isGumroadFlagEnabled } from '@/lib/sales/config';
+import { hasChannelToken } from '@/lib/sales/credentials';
 import { getSnapshotHistoryViewForProject } from '@/lib/snapshots/view';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
 import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
@@ -36,6 +38,16 @@ export default async function ProjectEditorPage({
   const launchPack = hasDatabase()
     ? { copy: messages.launchPack, view: await getLaunchPackViewForProject(project) }
     : undefined;
+  // F4: publish-to-sales-channels section (same database gate as the pack).
+  // The flag gates the Gumroad connect UI; a stored token implies intent and
+  // keeps the section visible. Only the boolean reaches the client.
+  const publishChannels = hasDatabase()
+    ? {
+        copy: messages.publishChannels,
+        gumroadEnabled: isGumroadFlagEnabled(),
+        gumroadConnected: await hasChannelToken(getDb(), { userId, channel: 'gumroad' }),
+      }
+    : undefined;
   // F2: version history section only with a database (snapshots are persisted);
   // the view carries metadata only — diffs load on demand via server action.
   const history = hasDatabase()
@@ -63,6 +75,7 @@ export default async function ProjectEditorPage({
       copy={projectCopy}
       brandProfiles={brandProfiles}
       launchPack={launchPack}
+      publishChannels={publishChannels}
       history={history}
       coAuthor={coAuthor}
       kdpDisclosure={kdpDisclosure}
