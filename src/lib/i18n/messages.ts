@@ -361,6 +361,38 @@ export type AppMessages = {
     onboardingDone: string;
     onboardingClose: string;
   };
+  filestudio: {
+    badgeLocal: string;
+    badgeService: string;
+    badgeBrowser: string;
+    settingsEyebrow: string;
+    settingsTitle: string;
+    settingsDescription: string;
+    statusLabel: string;
+    statusPaired: string;
+    statusPending: string;
+    statusNone: string;
+    pairTitle: string;
+    pairRequestIdLabel: string;
+    pairRequestIdHint: string;
+    pairCodeLabel: string;
+    pairSubmit: string;
+    pairSubmitting: string;
+    pairSuccess: string;
+    pairError: string;
+    errors: {
+      unavailable: string;
+      pairingCodeInvalid: string;
+      pairingExpired: string;
+      deviceRevoked: string;
+      repairRequired: string;
+      operationUnavailable: string;
+      uploadTooLarge: string;
+      integrityFailed: string;
+      consentRejected: string;
+      agentOffline: string;
+    };
+  };
 };
 
 export const appMessages: Record<UiLocale, AppMessages> = {
@@ -801,6 +833,39 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       onboardingDone: 'Entendido',
       onboardingClose: 'Cerrar introducción',
     },
+    filestudio: {
+      badgeLocal: 'Procesado en tu dispositivo',
+      badgeService: 'Procesado en la nube privada de Anclora',
+      badgeBrowser: 'Procesado en tu navegador',
+      settingsEyebrow: 'Integraciones',
+      settingsTitle: 'FileStudio — conversión de archivos',
+      settingsDescription:
+        'Empareja el Agente Local de FileStudio para convertir y post-procesar archivos en tu propio dispositivo, sin subir el contenido.',
+      statusLabel: 'Estado',
+      statusPaired: 'Agente Local emparejado',
+      statusPending: 'Emparejamiento pendiente',
+      statusNone: 'Sin agente emparejado',
+      pairTitle: 'Emparejar agente local',
+      pairRequestIdLabel: 'ID de solicitud',
+      pairRequestIdHint: 'El Agente Local lo muestra junto al código de emparejamiento.',
+      pairCodeLabel: 'Código de 6 dígitos',
+      pairSubmit: 'Emparejar',
+      pairSubmitting: 'Emparejando…',
+      pairSuccess: 'Agente Local emparejado correctamente.',
+      pairError: 'No se pudo completar el emparejamiento.',
+      errors: {
+        unavailable: 'La conversión no está disponible ahora mismo. Inténtalo más tarde.',
+        pairingCodeInvalid: 'Código incorrecto. Comprueba el código que muestra el Agente Local.',
+        pairingExpired: 'El código ha caducado. Genera uno nuevo en el Agente Local.',
+        deviceRevoked: 'Este dispositivo se ha desvinculado. Vuelve a emparejarlo para procesar en local.',
+        repairRequired: 'El Agente Local necesita reconectarse.',
+        operationUnavailable: 'Esta operación no está disponible en ese modo; la hemos movido a otro procesador.',
+        uploadTooLarge: 'El archivo supera el tamaño máximo para este modo de procesamiento.',
+        integrityFailed: 'El resultado no pasó la verificación de integridad. Vamos a reintentarlo.',
+        consentRejected: 'El procesamiento local fue rechazado en tu dispositivo. Puedes reintentarlo o elegir otro modo.',
+        agentOffline: 'Tu dispositivo está desconectado. El trabajo esperará o puedes procesarlo en la nube privada.',
+      },
+    },
   },
   en: {
     shell: {
@@ -1238,6 +1303,39 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       onboardingSkip: 'Skip introduction',
       onboardingDone: 'Got it',
       onboardingClose: 'Close introduction',
+    },
+    filestudio: {
+      badgeLocal: 'Processed on your device',
+      badgeService: 'Processed in Anclora’s private cloud',
+      badgeBrowser: 'Processed in your browser',
+      settingsEyebrow: 'Integrations',
+      settingsTitle: 'FileStudio — file conversion',
+      settingsDescription:
+        'Pair the FileStudio Local Agent to convert and post-process files on your own device, without uploading the content.',
+      statusLabel: 'Status',
+      statusPaired: 'Local Agent paired',
+      statusPending: 'Pairing pending',
+      statusNone: 'No agent paired',
+      pairTitle: 'Pair local agent',
+      pairRequestIdLabel: 'Request ID',
+      pairRequestIdHint: 'The Local Agent shows it next to the pairing code.',
+      pairCodeLabel: '6-digit code',
+      pairSubmit: 'Pair',
+      pairSubmitting: 'Pairing…',
+      pairSuccess: 'Local Agent paired successfully.',
+      pairError: 'The pairing could not be completed.',
+      errors: {
+        unavailable: 'Conversion is not available right now. Please try again later.',
+        pairingCodeInvalid: 'Incorrect code. Check the code shown by the Local Agent.',
+        pairingExpired: 'The code has expired. Generate a new one in the Local Agent.',
+        deviceRevoked: 'This device has been unlinked. Pair it again to process locally.',
+        repairRequired: 'The Local Agent needs to reconnect.',
+        operationUnavailable: 'This operation is not available in that mode; we moved it to another processor.',
+        uploadTooLarge: 'The file exceeds the maximum size for this processing mode.',
+        integrityFailed: 'The result did not pass the integrity check. We are retrying.',
+        consentRejected: 'Local processing was rejected on your device. You can retry or choose another mode.',
+        agentOffline: 'Your device is offline. The job will wait, or you can process it in the private cloud.',
+      },
     },
   },
 };

@@ -12,9 +12,10 @@ import {
 const KEY = 'c'.repeat(64);
 
 function createDbMock(existingRow?: Record<string, unknown>) {
-  const insertValues = vi.fn(() => ({
-    onConflictDoUpdate: vi.fn().mockResolvedValue(undefined),
-  }));
+  const insertValues = vi.fn((values: Record<string, unknown>) => {
+    void values;
+    return { onConflictDoUpdate: vi.fn().mockResolvedValue(undefined) };
+  });
   const updateWhere = vi.fn().mockResolvedValue(undefined);
   return {
     insert: vi.fn(() => ({ values: insertValues })),
@@ -80,7 +81,7 @@ describe('confirmPairingForUser', () => {
     expect(connection.deviceId).toBe('dev_abc');
 
     // The stored payload must be encrypted (round-trip verifiable), never plaintext.
-    const stored = db.insertValues.mock.calls[0][0].encryptedCredentials as string;
+    const stored = db.insertValues.mock.calls[0]?.[0].encryptedCredentials as string;
     expect(stored).toMatch(/^v1:/);
     expect(stored).not.toContain('refresh-token');
     const { decryptCredentials } = await import('./crypto');

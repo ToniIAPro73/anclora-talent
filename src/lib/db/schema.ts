@@ -208,3 +208,34 @@ export const filestudioConsents = pgTable('filestudio_consents', {
   jobId: varchar('job_id', { length: 64 }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+// F1b — jobs emitted to FileStudio, in the Talent-visible state machine
+// (queued | processing | completed | failed | cancelled | expired).
+export const filestudioJobs = pgTable('filestudio_jobs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: varchar('user_id', { length: 191 }).notNull(),
+  projectId: uuid('project_id'),
+  // FileStudio-side job id (service or agent route).
+  externalJobId: varchar('external_job_id', { length: 64 }).notNull().unique(),
+  operation: varchar('operation', { length: 64 }).notNull(),
+  // local | service | browser
+  mode: varchar('mode', { length: 16 }).notNull(),
+  status: varchar('status', { length: 24 }).notNull().default('queued'),
+  // Mapped FileStudio error code when status = failed (never shown raw in UI).
+  errorCode: varchar('error_code', { length: 64 }),
+  resultAssetUrl: text('result_asset_url'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// F1b — webhook idempotency registry (sdd/integrations/filestudio/webhook-flow.md).
+export const filestudioWebhookEvents = pgTable('filestudio_webhook_events', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  // Dedupe key: derived from `type:externalJobId:signature-timestamp` because
+  // the current FileStudio payload carries no event id (documented gap).
+  dedupeKey: varchar('dedupe_key', { length: 255 }).notNull().unique(),
+  eventType: varchar('event_type', { length: 32 }).notNull(),
+  externalJobId: varchar('external_job_id', { length: 64 }),
+  payload: jsonb('payload').notNull(),
+  processedAt: timestamp('processed_at', { withTimezone: true }).defaultNow().notNull(),
+});
