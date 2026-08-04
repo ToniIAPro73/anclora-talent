@@ -6,6 +6,7 @@ import { projectRepository } from '@/lib/db/repositories';
 import { brandProfileRepository } from '@/lib/brand/repository';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { getLaunchPackViewForProject } from '@/lib/manifest/view';
+import { getSnapshotHistoryViewForProject } from '@/lib/snapshots/view';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
 
 export default async function ProjectEditorPage({
@@ -30,6 +31,11 @@ export default async function ProjectEditorPage({
   const launchPack = hasDatabase()
     ? { copy: messages.launchPack, view: await getLaunchPackViewForProject(project) }
     : undefined;
+  // F2: version history section only with a database (snapshots are persisted);
+  // the view carries metadata only — diffs load on demand via server action.
+  const history = hasDatabase()
+    ? { copy: messages.history, snapshots: await getSnapshotHistoryViewForProject(project.id) }
+    : undefined;
 
   return (
     <ProjectWorkspace
@@ -37,6 +43,7 @@ export default async function ProjectEditorPage({
       copy={projectCopy}
       brandProfiles={brandProfiles}
       launchPack={launchPack}
+      history={history}
     />
   );
 }

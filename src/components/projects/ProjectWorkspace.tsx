@@ -59,6 +59,8 @@ import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { BrandProfile } from '@/lib/brand/brand-profile';
 import type { LaunchPackView } from '@/lib/manifest/view';
+import type { DocumentSnapshotMeta } from '@/lib/snapshots/model';
+import { HistoryPanel } from './HistoryPanel';
 import { LaunchPackPanel } from './LaunchPackPanel';
 import { buildExportQueryString } from '@/lib/projects/export-config';
 
@@ -150,6 +152,7 @@ export function ProjectWorkspace({
   copy,
   brandProfiles = [],
   launchPack,
+  history,
 }: {
   project: ProjectRecord;
   copy: AppMessages['project'];
@@ -158,6 +161,11 @@ export function ProjectWorkspace({
   launchPack?: {
     copy: AppMessages['launchPack'];
     view: LaunchPackView | null;
+  };
+  /** F2: version history section (copy + snapshot metadata, newest first); rendered in step 1. */
+  history?: {
+    copy: AppMessages['history'];
+    snapshots: DocumentSnapshotMeta[];
   };
 }) {
   const router = useRouter();
@@ -463,6 +471,14 @@ export function ProjectWorkspace({
                   : null
               }
             />
+
+            {history && (
+              <HistoryPanel
+                copy={history.copy}
+                projectId={project.id}
+                snapshots={history.snapshots}
+              />
+            )}
           </div>
         );
       case 2: // Chapters

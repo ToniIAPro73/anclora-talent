@@ -480,6 +480,37 @@ export type AppMessages = {
       notFound: string;
     };
   };
+  history: {
+    title: string;
+    description: string;
+    saveVersionButton: string;
+    savingVersion: string;
+    empty: string;
+    versionLabel: string;
+    sourceManualSave: string;
+    sourceReimport: string;
+    sourceRestore: string;
+    compareFrom: string;
+    compareTo: string;
+    compareButton: string;
+    comparing: string;
+    selectVersions: string;
+    diffEmpty: string;
+    diffSummary: string;
+    metadataChangedBadge: string;
+    changeAdded: string;
+    changeRemoved: string;
+    changeChanged: string;
+    changeMoved: string;
+    unchaptered: string;
+    restoreButton: string;
+    restoring: string;
+    errors: {
+      unavailable: string;
+      notFound: string;
+      unchanged: string;
+    };
+  };
 };
 
 export const appMessages: Record<UiLocale, AppMessages> = {
@@ -1066,6 +1097,38 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         notFound: 'No encontramos este proyecto.',
       },
     },
+    history: {
+      title: 'Historial de versiones',
+      description:
+        'Cada versión guarda una copia completa del documento. Compara dos versiones para ver qué cambió por capítulo o restaura una anterior sin perder el historial.',
+      saveVersionButton: 'Guardar versión',
+      savingVersion: 'Guardando versión…',
+      empty: 'Aún no hay versiones guardadas. Se crean al guardar capítulos, reimportar o con «Guardar versión».',
+      versionLabel: 'Versión {version}',
+      sourceManualSave: 'Guardado',
+      sourceReimport: 'Reimportación',
+      sourceRestore: 'Restauración',
+      compareFrom: 'Desde',
+      compareTo: 'Hasta',
+      compareButton: 'Comparar',
+      comparing: 'Comparando…',
+      selectVersions: 'Elige dos versiones distintas para comparar.',
+      diffEmpty: 'No hay cambios entre estas versiones.',
+      diffSummary: '{added} añadidos · {removed} eliminados · {changed} modificados · {moved} movidos',
+      metadataChangedBadge: 'Metadatos modificados',
+      changeAdded: 'Añadido',
+      changeRemoved: 'Eliminado',
+      changeChanged: 'Modificado',
+      changeMoved: 'Movido',
+      unchaptered: 'Sin capítulo',
+      restoreButton: 'Restaurar',
+      restoring: 'Restaurando…',
+      errors: {
+        unavailable: 'No se pudo completar la operación. Inténtalo más tarde.',
+        notFound: 'No encontramos esta versión.',
+        unchanged: 'No hay cambios desde la última versión guardada.',
+      },
+    },
   },
   en: {
     shell: {
@@ -1648,6 +1711,38 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       errors: {
         unavailable: 'The pack could not be generated right now. Please try again later.',
         notFound: 'We could not find this project.',
+      },
+    },
+    history: {
+      title: 'Version history',
+      description:
+        'Every version stores a full copy of the document. Compare two versions to see what changed per chapter, or restore a previous one without losing history.',
+      saveVersionButton: 'Save version',
+      savingVersion: 'Saving version…',
+      empty: 'No saved versions yet. They are created on chapter saves, reimports, or with “Save version”.',
+      versionLabel: 'Version {version}',
+      sourceManualSave: 'Saved',
+      sourceReimport: 'Reimport',
+      sourceRestore: 'Restore',
+      compareFrom: 'From',
+      compareTo: 'To',
+      compareButton: 'Compare',
+      comparing: 'Comparing…',
+      selectVersions: 'Pick two different versions to compare.',
+      diffEmpty: 'No changes between these versions.',
+      diffSummary: '{added} added · {removed} removed · {changed} changed · {moved} moved',
+      metadataChangedBadge: 'Metadata changed',
+      changeAdded: 'Added',
+      changeRemoved: 'Removed',
+      changeChanged: 'Changed',
+      changeMoved: 'Moved',
+      unchaptered: 'No chapter',
+      restoreButton: 'Restore',
+      restoring: 'Restoring…',
+      errors: {
+        unavailable: 'The operation could not be completed. Please try again later.',
+        notFound: 'We could not find this version.',
+        unchanged: 'No changes since the last saved version.',
       },
     },
   },
