@@ -28,6 +28,14 @@ export interface UploadedAssetRef {
   pathname?: string;
 }
 
+export interface LaunchPackDelegationInput {
+  project: ProjectRecord;
+  /** Compositor assets built in this run (epub bytes feed the MOBI/AZW3 jobs). */
+  assets: Array<{ kind: ManifestAssetKind; bytes: Uint8Array | string }>;
+  sourceHash: string;
+  createdAt: string;
+}
+
 export interface LaunchPackDeps {
   db: ManifestStore;
   loadProject: (userId: string, projectId: string) => Promise<ProjectRecord | null>;
@@ -40,6 +48,12 @@ export interface LaunchPackDeps {
   upload: (projectId: string, file: File) => Promise<UploadedAssetRef | null>;
   /** Hash of the current document AST (manifest sourceHash). */
   sourceHashOf: (project: ProjectRecord) => string;
+  /**
+   * Optional FileStudio delegation hook (cover derivatives, MOBI/AZW3). Its
+   * items merge into the same manifest version; a delegation failure never
+   * aborts the pack (the compositor assets land regardless).
+   */
+  delegate?: (input: LaunchPackDelegationInput) => Promise<ProjectAssetManifestItem[]>;
   now?: () => Date;
 }
 
@@ -125,6 +139,7 @@ export async function generateLaunchPack(
   const items: ProjectAssetManifestItem[] = [];
   const generated: ManifestAssetKind[] = [];
   const failed: ManifestAssetKind[] = [];
+  const builtAssets: Array<{ kind: ManifestAssetKind; bytes: Uint8Array | string }> = [];
 
   for (const kind of plan) {
     const spec = ASSET_FILE_SPEC[kind as keyof typeof ASSET_FILE_SPEC];
@@ -147,9 +162,21 @@ export async function generateLaunchPack(
         createdAt,
       });
       generated.push(kind);
+      builtAssets.push({ kind, bytes });
     } catch (error) {
       console.error('[launch-pack] asset generation failed', { projectId: input.projectId, kind, error });
       failed.push(kind);
+    }
+  }
+
+  // FileStudio delegation (cover derivatives, MOBI/AZW3) merges into the same
+  // manifest version; its failure never aborts the compositor pack.
+  if (deps.delegate) {
+    try {
+      const delegated = await deps.delegate({ project, assets: builtAssets, sourceHash, createdAt });
+      items.push(...delegated);
+    } catch (error) {
+      console.error('[launch-pack] delegation failed', { projectId: input.projectId, error });
     }
   }
 

@@ -180,4 +180,48 @@ describe('generateLaunchPack', () => {
     const result = await generateLaunchPack(deps, { userId: USER, projectId: PROJECT });
     expect(result).toEqual({ ok: false, error: 'notFound' });
   });
+
+  test('delegate hook items merge into the same manifest version', async () => {
+    const { deps, inserted } = createDeps({
+      delegate: vi.fn(async ({ assets, sourceHash, createdAt }) => {
+        // The delegation receives the compositor bytes (EPUB feeds MOBI/AZW3).
+        expect(assets.map((asset: { kind: string }) => asset.kind)).toEqual(['epub', 'pdf', 'markdown']);
+        return [
+          {
+            assetId: 'mobi',
+            kind: 'mobi' as const,
+            url: null,
+            blobKey: null,
+            provenance: 'filestudio-service' as const,
+            sourceHash,
+            createdAt,
+            jobId: 'job-row-1',
+          },
+        ];
+      }),
+    });
+    const result = await generateLaunchPack(deps, { userId: USER, projectId: PROJECT });
+
+    expect(result.ok).toBe(true);
+    const items = (inserted[0] as { items: Array<Record<string, unknown>> }).items;
+    expect(items).toHaveLength(4);
+    expect(items[3]).toMatchObject({
+      assetId: 'mobi',
+      provenance: 'filestudio-service',
+      jobId: 'job-row-1',
+      url: null,
+    });
+  });
+
+  test('a failing delegate hook never aborts the compositor pack', async () => {
+    const { deps, inserted } = createDeps({
+      delegate: vi.fn().mockRejectedValue(new Error('filestudio down')),
+    });
+    const result = await generateLaunchPack(deps, { userId: USER, projectId: PROJECT });
+
+    expect(result.ok).toBe(true);
+    const items = (inserted[0] as { items: Array<Record<string, unknown>> }).items;
+    expect(items).toHaveLength(3);
+    expect(items.every((item) => item.provenance === 'compositor')).toBe(true);
+  });
 });

@@ -7,7 +7,10 @@
  * - `rules`: partial composition rules, merged over `defaultDocumentRules`
  *   via `resolveDocumentRules` when the project is created.
  * - `derivedAssets`: declarative list of deliverables the product will
- *   produce (F2.3 turns this into a manifest; here it is only exposed).
+ *   produce. The launch pack (F2) resolves it: `epub`/`pdf`/`html`/`slides`
+ *   are compositor assets, `markdown` is always added, `cover-derivatives`
+ *   and `mobi-azw3` delegate to FileStudio (feature-flagged),
+ *   `audio-video` has no generator yet (documented gap).
  *
  * Templates are structure + rules only: they never carry brand decisions.
  * The BrandProfile (F2, G1) is applied separately as templateOverrides of the
@@ -95,7 +98,7 @@ export const PRODUCT_TEMPLATES: ProductTemplate[] = [
       chapterStartsOnOddPage: true,
       pageBreakBeforeChapter: true,
     },
-    derivedAssets: ['pdf', 'epub', 'docx'],
+    derivedAssets: ['pdf', 'epub', 'docx', 'cover-derivatives', 'mobi-azw3'],
   },
   {
     id: 'technical-manual',
@@ -144,7 +147,7 @@ export const PRODUCT_TEMPLATES: ProductTemplate[] = [
       chapterStartsOnOddPage: false,
       pageBreakBeforeChapter: true,
     },
-    derivedAssets: ['pdf', 'epub', 'landing-copy'],
+    derivedAssets: ['pdf', 'epub', 'landing-copy', 'cover-derivatives', 'mobi-azw3'],
   },
   {
     id: 'modular-course',
@@ -174,7 +177,7 @@ export const PRODUCT_TEMPLATES: ProductTemplate[] = [
       chapterStartsOnOddPage: false,
       pageBreakBeforeChapter: true,
     },
-    derivedAssets: ['pdf', 'epub', 'slides', 'audio-video'],
+    derivedAssets: ['pdf', 'epub', 'slides', 'audio-video', 'cover-derivatives', 'mobi-azw3'],
   },
   {
     id: 'bundle',
@@ -192,7 +195,7 @@ export const PRODUCT_TEMPLATES: ProductTemplate[] = [
       chapterStartsOnOddPage: true,
       pageBreakBeforeChapter: true,
     },
-    derivedAssets: ['pdf', 'epub', 'bundle-manifest'],
+    derivedAssets: ['pdf', 'epub', 'bundle-manifest', 'cover-derivatives', 'mobi-azw3'],
   },
 ];
 

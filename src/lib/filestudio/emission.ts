@@ -132,7 +132,7 @@ export function resolveCoverImageUrl(project: ProjectRecord): string | null {
   return project.cover.renderedImageUrl ?? project.cover.backgroundImageUrl ?? null;
 }
 
-async function countActiveJobs(db: JobsStore, userId: string): Promise<number> {
+export async function countActiveJobs(db: JobsStore, userId: string): Promise<number> {
   const rows = await db
     .select({ id: filestudioJobs.id })
     .from(filestudioJobs)
@@ -140,7 +140,7 @@ async function countActiveJobs(db: JobsStore, userId: string): Promise<number> {
   return rows.length;
 }
 
-async function countJobsSince(db: JobsStore, userId: string, since: Date): Promise<number> {
+export async function countJobsSince(db: JobsStore, userId: string, since: Date): Promise<number> {
   const rows = await db
     .select({ id: filestudioJobs.id })
     .from(filestudioJobs)
@@ -148,7 +148,7 @@ async function countJobsSince(db: JobsStore, userId: string, since: Date): Promi
   return rows.length;
 }
 
-function startOfUtcDay(now: Date): Date {
+export function startOfUtcDay(now: Date): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
 
