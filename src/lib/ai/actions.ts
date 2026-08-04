@@ -25,8 +25,9 @@ import { projectRepository } from '@/lib/db/repositories';
 import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
 import type { ComposeViolation } from '@/lib/compose/compose';
 import type { PreflightCheck } from '@/lib/preflight/preflight';
-import { applyProposal, StaleProposalError, type AiProposal } from './ast-diff-proposal';
+import { applyProposal, proposalAffectedBlockIds, StaleProposalError, type AiProposal } from './ast-diff-proposal';
 import { proposeCoherenceFixes, type CoherenceIssue } from './coherence-agent';
+import { aiOperationsLog } from './operations-log';
 import { deriveProvenanceUpdate } from './provenance';
 import { getAiProvider, isAiCloudEnabled } from './provider';
 import { proposeStructuralFixes, type AiLocale, type AiProcessingMode } from './structural-assistant';
@@ -127,6 +128,11 @@ export async function analyzeCoherenceAction(formData: FormData): Promise<Cohere
  * persists the edited model + provenance through the existing save route.
  * Returns `{ ok: false, error: 'stale' }` when the document changed since
  * the proposal was generated — a stale proposal never writes.
+ *
+ * Every accepted proposal is appended to the AI operations registry
+ * (Capa 2 governance: audit trail + KDP disclosure source). The optional
+ * `mode` field ('cloud' | 'local', declared by the UI at generation time)
+ * is recorded with the operation.
  */
 export async function acceptAiProposalAction(formData: FormData): Promise<AcceptProposalActionResult> {
   const userId = await requireUserId();
@@ -153,6 +159,14 @@ export async function acceptAiProposalAction(formData: FormData): Promise<Accept
   await projectRepository.saveDocumentExtras(userId, projectId, {
     documentModel: edited,
     provenance,
+  });
+
+  await aiOperationsLog.record(userId, projectId, {
+    proposalId: proposal.id,
+    kind: proposal.kind,
+    summary: proposal.summary,
+    mode: formData.get('mode') === 'cloud' ? 'cloud' : 'local',
+    affectedBlockIds: proposalAffectedBlockIds(proposal),
   });
 
   revalidatePath(`/projects/${projectId}/editor`);
