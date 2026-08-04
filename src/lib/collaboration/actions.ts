@@ -15,6 +15,9 @@ import { getDb, hasDatabase } from '@/lib/db';
 import { canPerform, type CollaborationAction } from './permissions';
 import {
   deleteInvitationById,
+  findBlockComment,
+  insertBlockComment,
+  markCommentThreadResolved,
   removeCollaboratorById,
   resolveProjectAccess,
   type ProjectAccess,
@@ -134,4 +137,107 @@ export async function acceptInvitationAction(input: {
 
   revalidateProject(result.projectId);
   return { ok: true, projectId: result.projectId, role: result.role };
+}
+
+// ---------------------------------------------------------------------------
+// Block comments — anchors are stable AST block ids, never offsets.
+// ---------------------------------------------------------------------------
+
+const MAX_COMMENT_BODY_LENGTH = 2000;
+
+function normalizeCommentBody(body: string): string | null {
+  const trimmed = body.trim();
+  if (!trimmed || trimmed.length > MAX_COMMENT_BODY_LENGTH) return null;
+  return trimmed;
+}
+
+/**
+ * Opens a comment thread anchored to an AST block id. Any role can comment
+ * (author/editor/designer — see the matrix in permissions.ts).
+ */
+export async function addBlockCommentAction(input: {
+  projectId: string;
+  blockId: string;
+  body: string;
+}): Promise<Result<{ commentId: string }>> {
+  if (!hasDatabase()) return { ok: false, error: 'unavailable' };
+  const userId = await requireUserId();
+  const gate = await requireProjectAction(userId, input.projectId, 'comment');
+  if ('error' in gate) return { ok: false, error: gate.error };
+
+  const blockId = input.blockId.trim();
+  const body = normalizeCommentBody(input.body);
+  if (!blockId || !body) return { ok: false, error: 'invalid' };
+
+  const { id } = await insertBlockComment(getDb(), {
+    projectId: input.projectId,
+    blockId,
+    authorId: userId,
+    body,
+    parentId: null,
+  });
+  revalidateProject(input.projectId);
+  return { ok: true, commentId: id };
+}
+
+/**
+ * Replies in an existing thread. Threads are flat: the reply inherits the
+ * root's block anchor and points at the root (comments.ts groups them).
+ */
+export async function replyBlockCommentAction(input: {
+  projectId: string;
+  threadRootId: string;
+  body: string;
+}): Promise<Result<{ commentId: string }>> {
+  if (!hasDatabase()) return { ok: false, error: 'unavailable' };
+  const userId = await requireUserId();
+  const gate = await requireProjectAction(userId, input.projectId, 'comment');
+  if ('error' in gate) return { ok: false, error: gate.error };
+
+  const body = normalizeCommentBody(input.body);
+  if (!body) return { ok: false, error: 'invalid' };
+
+  const root = await findBlockComment(getDb(), {
+    projectId: input.projectId,
+    commentId: input.threadRootId,
+  });
+  if (!root || root.parentId) return { ok: false, error: 'notFound' };
+
+  const { id } = await insertBlockComment(getDb(), {
+    projectId: input.projectId,
+    blockId: root.blockId,
+    authorId: userId,
+    body,
+    parentId: root.id,
+  });
+  revalidateProject(input.projectId);
+  return { ok: true, commentId: id };
+}
+
+/**
+ * Resolves a thread (author only — the matrix grants `resolve-comment` to
+ * no other role). Replies inherit the root status in the view.
+ */
+export async function resolveBlockCommentThreadAction(input: {
+  projectId: string;
+  threadRootId: string;
+}): Promise<Result> {
+  if (!hasDatabase()) return { ok: false, error: 'unavailable' };
+  const userId = await requireUserId();
+  const gate = await requireProjectAction(userId, input.projectId, 'resolve-comment');
+  if ('error' in gate) return { ok: false, error: gate.error };
+
+  const root = await findBlockComment(getDb(), {
+    projectId: input.projectId,
+    commentId: input.threadRootId,
+  });
+  if (!root || root.parentId) return { ok: false, error: 'notFound' };
+
+  await markCommentThreadResolved(getDb(), {
+    projectId: input.projectId,
+    commentId: root.id,
+    resolvedBy: userId,
+  });
+  revalidateProject(input.projectId);
+  return { ok: true };
 }
