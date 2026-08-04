@@ -1149,6 +1149,23 @@ export function buildImportedDocumentSeed({
   };
 }
 
+/**
+ * Scanned/image-only PDF heuristic (F2 OCR de ingesta): a PDF whose text
+ * layer is ~empty (below `SCANNED_PDF_MIN_TEXT_CHARS` after normalization)
+ * is a candidate for FileStudio OCR. Non-PDF sources are never candidates.
+ */
+export const SCANNED_PDF_MIN_TEXT_CHARS = 100;
+
+export function isScannedPdfSource(input: {
+  fileName: string;
+  mimeType: string;
+  text: string;
+}): boolean {
+  const isPdf = getExtension(input.fileName) === 'pdf' || input.mimeType === 'application/pdf';
+  if (!isPdf) return false;
+  return normalizeText(input.text).length < SCANNED_PDF_MIN_TEXT_CHARS;
+}
+
 export async function extractTextFromBuffer(fileName: string, mimeType: string, buffer: Buffer) {
   const extension = getExtension(fileName);
 

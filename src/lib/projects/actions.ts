@@ -4,8 +4,11 @@ import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireUserId } from '@/lib/auth/guards';
+import { getDb, hasDatabase } from '@/lib/db';
 import { projectRepository } from '@/lib/db/repositories';
 import { uploadProjectBlob } from '@/lib/blob/client';
+import { captureAutoSaveSnapshot, captureProjectSnapshot } from '@/lib/snapshots/capture';
+import { deriveProvenanceUpdate } from '@/lib/ai/provenance';
 import { normalizeSurfaceState, type SurfaceState } from './cover-surface';
 import { buildPaginationConfig } from '@/lib/preview/device-configs';
 import {
@@ -42,7 +45,11 @@ function parseSurfaceState(
 export async function createProjectAction(formData: FormData) {
   const userId = await requireUserId();
   const title = String(formData.get('title') ?? '').trim();
+  const templateId = String(formData.get('templateId') ?? '').trim() || undefined;
   const sourceDocument = formData.get('sourceDocument');
+  // F3: confirmed structure schema from the governed wizard (G2: the field
+  // only exists after explicit human confirmation in the UI).
+  const structureSchemaRaw = String(formData.get('structureSchema') ?? '').trim();
 
   console.info('[createProjectAction] submit received', {
     userId,
@@ -51,6 +58,7 @@ export async function createProjectAction(formData: FormData) {
     sourceDocumentName: sourceDocument instanceof File ? sourceDocument.name : null,
     sourceDocumentType: sourceDocument instanceof File ? sourceDocument.type : null,
     sourceDocumentSize: sourceDocument instanceof File ? sourceDocument.size : null,
+    hasStructureSchema: Boolean(structureSchemaRaw),
   });
 
   if (!title) {
@@ -58,8 +66,35 @@ export async function createProjectAction(formData: FormData) {
   }
 
   try {
+    // A confirmed structure scaffold takes precedence over an imported
+    // source document: the scaffold is an EMPTY book shaped by the profile
+    // (G3: form, never voice); importing content at the same time would
+    // defeat its purpose.
+    const structureSeed = structureSchemaRaw
+      ? await (async () => {
+          const { buildStructureScaffolding } = await import('@/lib/structure-profile/scaffolding');
+          let parsed: unknown;
+          try {
+            parsed = JSON.parse(structureSchemaRaw);
+          } catch {
+            throw new Error('Invalid structureSchema payload');
+          }
+          const schema = parsed as Parameters<typeof buildStructureScaffolding>[0];
+          if (schema?.profileType !== 'structure') {
+            throw new Error('Invalid structureSchema payload');
+          }
+          const seed = buildStructureScaffolding(schema, { title });
+          console.info('[createProjectAction] structure scaffolding built', {
+            userId,
+            chapters: seed.chapters?.length ?? 0,
+          });
+          return seed;
+        })()
+      : null;
+
     const importedDocument =
-      sourceDocument instanceof File && sourceDocument.size > 0
+      structureSeed ??
+      (sourceDocument instanceof File && sourceDocument.size > 0
         ? await (async () => {
             const { extractImportedDocumentSeed } = await import('./import');
             const result = await extractImportedDocumentSeed(sourceDocument);
@@ -72,9 +107,9 @@ export async function createProjectAction(formData: FormData) {
             });
             return result;
           })()
-        : null;
+        : null);
 
-    const project = await projectRepository.createProject(userId, { title, importedDocument });
+    const project = await projectRepository.createProject(userId, { title, importedDocument, templateId });
 
     console.info('[createProjectAction] project created', {
       userId,
@@ -163,6 +198,20 @@ export async function saveChapterContentAction(formData: FormData) {
   };
 
   await projectRepository.saveDocument(userId, projectId, input);
+
+  // F2: versioned AST snapshot — throttled auto capture on chapter save
+  // (one per editing session, never per keystroke; see snapshots/model.ts).
+  // Best-effort: a capture failure must never break the save itself.
+  if (hasDatabase()) {
+    try {
+      const updated = await projectRepository.getProjectById(userId, projectId);
+      if (updated) {
+        await captureAutoSaveSnapshot(getDb(), { project: updated, createdBy: userId });
+      }
+    } catch (error) {
+      console.error('[saveChapterContentAction] snapshot capture failed', { projectId, error });
+    }
+  }
 
   revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
@@ -604,6 +653,10 @@ export async function saveProjectMetadataAction(formData: FormData) {
 /**
  * FASE C: persists the canonical semantic document model (lazy migration
  * from HTML happens on first save through this action).
+ *
+ * F3 governance: this is a *human* save of the model — the provenance map is
+ * updated marking every block the diff touches as `human` (blocks untouched
+ * keep their recorded origin, so AI-authored blocks stay attributed).
  */
 export async function saveProjectDocumentModelAction(formData: FormData) {
   const userId = await requireUserId();
@@ -619,7 +672,16 @@ export async function saveProjectDocumentModelAction(formData: FormData) {
     throw new Error('Invalid documentModel payload');
   }
 
-  await projectRepository.saveDocumentExtras(userId, projectId, { documentModel });
+  const project = await projectRepository.getProjectById(userId, projectId);
+  if (!project) throw new Error('Project not found');
+  const provenance = deriveProvenanceUpdate(
+    project.document.documentModel ?? null,
+    documentModel,
+    project.document.provenance,
+    'human',
+  );
+
+  await projectRepository.saveDocumentExtras(userId, projectId, { documentModel, provenance });
   revalidatePath(`/projects/${projectId}/editor`);
   return { ok: true as const };
 }
@@ -645,6 +707,20 @@ export async function reimportProjectAction(formData: FormData) {
 
   const merge = mergeReimportedSeed(current, seed);
   await projectRepository.replaceDocument(userId, projectId, merge.project);
+
+  // F2: every reimport leaves a snapshot trace (structural event).
+  // Best-effort: a capture failure must never break the reimport itself.
+  if (hasDatabase()) {
+    try {
+      await captureProjectSnapshot(getDb(), {
+        project: merge.project,
+        source: 'reimport',
+        createdBy: userId,
+      });
+    } catch (error) {
+      console.error('[reimportProjectAction] snapshot capture failed', { projectId, error });
+    }
+  }
 
   revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);

@@ -3,6 +3,7 @@
 import { useId, useState, type ChangeEvent, type DragEvent, type KeyboardEvent } from 'react';
 import { AlertCircle, CheckCircle2, FileText, Loader2, Upload } from 'lucide-react';
 import { supportedImportAccept } from '@/lib/projects/import-config';
+import { ProcessingModeBadge } from '@/components/filestudio/ProcessingModeBadge';
 import type { AppMessages } from '@/lib/i18n/messages';
 
 type ImportState = 'idle' | 'analyzing' | 'ready' | 'error';
@@ -15,6 +16,8 @@ type AnalysisResult = {
   chapterTitles: string[];
   warnings: string[];
   sourceFileName: string;
+  /** F2: declared processing mode when the scanned-PDF OCR ran (null otherwise). */
+  ocrAppliedMode: 'local' | 'service' | null;
 };
 
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
@@ -57,6 +60,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         chapterTitles?: string[];
         warnings?: string[];
         sourceFileName?: string;
+        ocrAppliedMode?: 'local' | 'service' | null;
       } = await response.json();
 
       if (!response.ok) {
@@ -79,6 +83,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         chapterTitles: data.chapterTitles ?? [],
         warnings: data.warnings ?? [],
         sourceFileName: data.sourceFileName ?? file.name,
+        ocrAppliedMode: data.ocrAppliedMode ?? null,
       });
       setImportState('ready');
     } catch {
@@ -233,6 +238,19 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                 <div className="space-y-1 text-center">
                   <p className="text-sm font-semibold text-[var(--text-primary)]">{copy.importReady}</p>
                   <p className="text-xs text-[var(--text-secondary)]" data-testid="import-analysis-file-name">{selectedFileName}</p>
+                  {analysis.ocrAppliedMode && (
+                    <div className="flex flex-wrap items-center justify-center gap-2" data-testid="import-ocr-mode">
+                      <p className="text-xs text-[var(--text-secondary)]">{copy.importOcrAppliedLabel}</p>
+                      <ProcessingModeBadge
+                        mode={analysis.ocrAppliedMode}
+                        labels={{
+                          local: copy.importOcrBadgeLocal,
+                          service: copy.importOcrBadgeService,
+                          browser: copy.importOcrBadgeBrowser,
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="ac-surface-panel ac-surface-panel--subtle gap-1 p-4">

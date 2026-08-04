@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/guards';
+import { buildImportOcrRunner } from '@/lib/filestudio/ocr';
 import { extractImportedDocumentSeed } from '@/lib/projects/import';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
@@ -40,7 +41,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const seed = await extractImportedDocumentSeed(file);
+    // F2 OCR de ingesta: undefined when FileStudio is not configured — the
+    // import then behaves exactly as before.
+    const ocr = await buildImportOcrRunner(user.id);
+    const seed = await extractImportedDocumentSeed(file, { ocr });
 
     return NextResponse.json({
       ok: true,
@@ -51,6 +55,8 @@ export async function POST(request: NextRequest) {
       chapterTitles: seed.chapters?.map((chapter) => chapter.title).slice(0, 4) ?? [],
       warnings: seed.warnings ?? [],
       sourceFileName: seed.sourceFileName,
+      // Declared processing mode when OCR ran (ProcessingModeBadge in the UI).
+      ocrAppliedMode: seed.ocrAppliedMode,
     });
   } catch (error) {
     const detail = error instanceof Error ? error.message : 'Import failed';

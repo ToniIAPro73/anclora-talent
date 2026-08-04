@@ -12,6 +12,17 @@ vi.mock('@/lib/projects/actions', () => ({
   saveProjectRulesAction: (formData: FormData) => saveProjectRulesAction(formData),
 }));
 
+// F3: the health panel imports the governed-AI server actions; stub them (and
+// the server-only/router chain) so the panel tests stay UI-only.
+vi.mock('server-only', () => ({}));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+vi.mock('@/lib/ai/actions', () => ({
+  proposeViolationFixAction: vi.fn(),
+  acceptAiProposalAction: vi.fn(),
+  rejectAiProposalAction: vi.fn(),
+  analyzeCoherenceAction: vi.fn(),
+}));
+
 const copy = resolveLocaleMessages('es').project;
 
 function fakeProject(): ProjectRecord {
