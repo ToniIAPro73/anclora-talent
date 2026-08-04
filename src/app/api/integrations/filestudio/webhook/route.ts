@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import { getFileStudioConfig } from '@/lib/filestudio/config';
+import { finalizeCompletedJobByExternalId } from '@/lib/filestudio/results';
 import {
   deriveEventDedupeKey,
   parseWebhookEvent,
@@ -45,6 +46,13 @@ export async function POST(request: Request) {
 
   const timestamp = Number(signature?.match(/(?:^|,)t=(\d+)/)?.[1]);
   const result = await processWebhookEvent(event, deriveEventDedupeKey(event, timestamp));
+
+  // Deferred reception: the result download (single-use token → Vercel Blob)
+  // runs after the 200 response so FileStudio deliveries stay fast; the
+  // polling fallback covers the failure path (results.ts is idempotent).
+  if (event.type === 'job.completed' && result.jobUpdated) {
+    after(() => finalizeCompletedJobByExternalId(event.jobId));
+  }
 
   return NextResponse.json({ ok: true, duplicate: result.duplicate });
 }
