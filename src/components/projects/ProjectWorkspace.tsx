@@ -153,6 +153,7 @@ export function ProjectWorkspace({
   brandProfiles = [],
   launchPack,
   history,
+  locale = 'es',
 }: {
   project: ProjectRecord;
   copy: AppMessages['project'];
@@ -167,6 +168,8 @@ export function ProjectWorkspace({
     copy: AppMessages['history'];
     snapshots: DocumentSnapshotMeta[];
   };
+  /** F3: UI locale forwarded to the governed-AI section of the health panel. */
+  locale?: 'es' | 'en';
 }) {
   const router = useRouter();
   const { preferences } = useEditorPreferences();
@@ -461,6 +464,7 @@ export function ProjectWorkspace({
               diff={composition.diff}
               recomposedFromPage={composition.recomposedFromPage}
               telemetry={composition.telemetry}
+              locale={locale}
               revert={
                 revertibleSave
                   ? {

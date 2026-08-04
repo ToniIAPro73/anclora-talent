@@ -44,6 +44,7 @@ export default async function ProjectEditorPage({
       brandProfiles={brandProfiles}
       launchPack={launchPack}
       history={history}
+      locale={locale}
     />
   );
 }

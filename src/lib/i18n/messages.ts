@@ -307,6 +307,34 @@ export type AppMessages = {
     preflightSeverityInfo: string;
     /** Localized message templates per preflight rule key (`{param}` placeholders). */
     preflightRules: Record<string, string>;
+    aiAssistantEyebrow: string;
+    aiEthicalCopy: string;
+    aiProposeFix: string;
+    aiProposalLoading: string;
+    aiProposalError: string;
+    aiProposalStale: string;
+    aiProposalAccept: string;
+    aiProposalReject: string;
+    aiProposalApplying: string;
+    aiModeCloud: string;
+    aiModeLocal: string;
+    aiAdvisoryBadge: string;
+    aiDiffBefore: string;
+    aiDiffAfter: string;
+    aiChangeAdded: string;
+    aiChangeRemoved: string;
+    aiChangeChanged: string;
+    aiChangeMoved: string;
+    aiNoProposals: string;
+    aiCoherenceButton: string;
+    aiCoherenceLoading: string;
+    aiCoherenceTitle: string;
+    aiCoherenceEmpty: string;
+    aiIssueBrokenRef: string;
+    aiIssueDuplicateHeading: string;
+    aiIssueMissingChapterHeading: string;
+    aiProvenanceTitle: string;
+    aiProvenanceSummary: string;
     exportGateBlockedMessage: string;
     exportGateWarnMessage: string;
     metadataPanelEyebrow: string;
@@ -940,6 +968,34 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         'kobo.a11y.imageAlt': 'Imagen sin texto alternativo ({src}); la accesibilidad EPUB lo exige.',
         'kobo.a11y.headingJump': 'Salto de jerarquía de encabezados (H{from} → H{to}); rompe la navegación accesible.',
       },
+      aiAssistantEyebrow: 'Asistente IA',
+      aiEthicalCopy: 'Asistente editorial — tú decides. La IA propone cambios sobre el documento; nunca escribe directamente.',
+      aiProposeFix: 'Proponer fix',
+      aiProposalLoading: 'Generando propuesta…',
+      aiProposalError: 'No se pudo generar la propuesta.',
+      aiProposalStale: 'El documento cambió desde que se generó la propuesta. Vuelve a generarla.',
+      aiProposalAccept: 'Aceptar',
+      aiProposalReject: 'Rechazar',
+      aiProposalApplying: 'Aplicando…',
+      aiModeCloud: 'Operación procesada en la nube',
+      aiModeLocal: 'Propuesta local (heurísticas, sin nube)',
+      aiAdvisoryBadge: 'Aviso — sin autocorrección',
+      aiDiffBefore: 'Antes',
+      aiDiffAfter: 'Después',
+      aiChangeAdded: 'añadido',
+      aiChangeRemoved: 'eliminado',
+      aiChangeChanged: 'modificado',
+      aiChangeMoved: 'movido',
+      aiNoProposals: 'Sin propuestas automáticas para esta incidencia.',
+      aiCoherenceButton: 'Revisar coherencia (refs/TOC)',
+      aiCoherenceLoading: 'Analizando coherencia…',
+      aiCoherenceTitle: 'Coherencia de referencias y TOC',
+      aiCoherenceEmpty: 'Sin problemas de coherencia: referencias vivas y TOC correctos.',
+      aiIssueBrokenRef: 'Referencia rota a «{target}»',
+      aiIssueDuplicateHeading: 'Encabezado duplicado: «{text}»',
+      aiIssueMissingChapterHeading: 'Capítulo sin encabezado de nivel 1',
+      aiProvenanceTitle: 'Procedencia del contenido',
+      aiProvenanceSummary: '{ai} bloques IA · {human} bloques humanos',
       exportGateBlockedMessage: 'Exportación bloqueada: resuelve las violaciones del documento primero.',
       exportGateWarnMessage: 'Aviso: el documento tiene {count} violaciones de composición.',
       metadataPanelEyebrow: 'Producto digital',
@@ -1578,6 +1634,34 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         'kobo.a11y.imageAlt': 'Image without alternative text ({src}); EPUB accessibility requires it.',
         'kobo.a11y.headingJump': 'Heading hierarchy jump (H{from} → H{to}); it breaks accessible navigation.',
       },
+      aiAssistantEyebrow: 'AI assistant',
+      aiEthicalCopy: 'Editorial assistant — you decide. AI proposes changes to the document; it never writes directly.',
+      aiProposeFix: 'Propose fix',
+      aiProposalLoading: 'Generating proposal…',
+      aiProposalError: 'The proposal could not be generated.',
+      aiProposalStale: 'The document changed since this proposal was generated. Generate it again.',
+      aiProposalAccept: 'Accept',
+      aiProposalReject: 'Reject',
+      aiProposalApplying: 'Applying…',
+      aiModeCloud: 'Operation processed in the cloud',
+      aiModeLocal: 'Local proposal (heuristics, no cloud)',
+      aiAdvisoryBadge: 'Advisory — no auto-fix',
+      aiDiffBefore: 'Before',
+      aiDiffAfter: 'After',
+      aiChangeAdded: 'added',
+      aiChangeRemoved: 'removed',
+      aiChangeChanged: 'changed',
+      aiChangeMoved: 'moved',
+      aiNoProposals: 'No automatic proposals for this issue.',
+      aiCoherenceButton: 'Check coherence (refs/TOC)',
+      aiCoherenceLoading: 'Analyzing coherence…',
+      aiCoherenceTitle: 'Reference & TOC coherence',
+      aiCoherenceEmpty: 'No coherence issues: live references and TOC are correct.',
+      aiIssueBrokenRef: 'Broken reference to "{target}"',
+      aiIssueDuplicateHeading: 'Duplicated heading: "{text}"',
+      aiIssueMissingChapterHeading: 'Chapter without a level-1 heading',
+      aiProvenanceTitle: 'Content provenance',
+      aiProvenanceSummary: '{ai} AI blocks · {human} human blocks',
       exportGateBlockedMessage: 'Export blocked: resolve the document violations first.',
       exportGateWarnMessage: 'Warning: the document has {count} composition violations.',
       metadataPanelEyebrow: 'Digital product',
