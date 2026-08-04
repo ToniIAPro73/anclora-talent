@@ -17,6 +17,8 @@ import type { ProjectAssetManifest, ProjectAssetManifestItem } from './model';
 
 type ManifestStore = Pick<ReturnType<typeof getDb>, 'insert' | 'select'>;
 
+export type { ManifestStore };
+
 interface ManifestRow {
   id: string;
   projectId: string;

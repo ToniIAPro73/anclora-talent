@@ -60,6 +60,8 @@ export const projects = pgTable('projects', {
   workflowStep: integer('workflow_step').notNull().default(1),
   // F2: optional brand profile applied to exports (G1: brand ≠ structure).
   brandProfileId: uuid('brand_profile_id'),
+  // F2: product template that seeded the project (drives the launch pack).
+  templateId: varchar('template_id', { length: 32 }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });

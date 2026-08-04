@@ -126,6 +126,8 @@ export interface ProjectRecord {
   workflowStep?: number;
   /** F2: optional BrandProfile applied to exports as templateOverrides (G1). */
   brandProfileId?: string | null;
+  /** F2: product template that seeded the project (drives the launch pack). */
+  templateId?: string | null;
   createdAt: string;
   updatedAt: string;
   document: ProjectDocument;

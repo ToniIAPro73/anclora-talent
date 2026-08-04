@@ -200,6 +200,7 @@ function mapRowsToProject(
     status: projectRow.status as ProjectRecord['status'],
     workflowStep: projectRow.workflowStep,
     brandProfileId: projectRow.brandProfileId ?? null,
+    templateId: projectRow.templateId ?? null,
     createdAt: projectRow.createdAt.toISOString(),
     updatedAt: projectRow.updatedAt.toISOString(),
     document: {
@@ -293,6 +294,7 @@ export async function persistProjectGraph(db: ProjectGraphWriter, project: Proje
     status: project.status,
     workflowStep: project.workflowStep,
     brandProfileId: project.brandProfileId ?? null,
+    templateId: project.templateId ?? null,
     createdAt: new Date(project.createdAt),
     updatedAt: new Date(project.updatedAt),
   });
