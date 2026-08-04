@@ -4,6 +4,7 @@ import { normalizeHtmlContent } from '@/lib/preview/html-normalize';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { saveChapterContentAction } from '@/lib/projects/actions';
+import { recordLastChapterSave } from './last-chapter-save';
 import { estimateTotalPages, type PageCalculationConfig } from '@/lib/projects/page-calculator';
 import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
 import { countRenderablePages, paginateContent } from '@/lib/preview/content-paginator';
@@ -153,6 +154,15 @@ export function useChapterEditor({
       formData.set('htmlContent', htmlContent);
 
       await saveChapterContentAction(formData);
+      // F0.3 undo: keep the pre-save HTML so the workspace can offer to
+      // revert the recomposition this save is about to trigger (session
+      // scope, last save only — see last-chapter-save.ts).
+      recordLastChapterSave({
+        projectId,
+        chapterId: currentChapter.id,
+        chapterTitle: title,
+        previousHtml: savedBaselineRef.current,
+      });
       setLocalChapters((current) =>
         current.map((chapter, index) =>
           index === currentIndex

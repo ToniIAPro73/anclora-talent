@@ -111,11 +111,13 @@ export function resolveDocumentRules(partial?: Partial<DocumentRules> | null): D
 const ROMAN_ONES = ['', 'i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix'];
 const ROMAN_TENS = ['', 'x', 'xx', 'xxx', 'xl', 'l', 'lx', 'lxx', 'lxxx', 'xc'];
 const ROMAN_HUNDREDS = ['', 'c', 'cc', 'ccc', 'cd', 'd', 'dc', 'dcc', 'dccc', 'cm'];
+const ROMAN_THOUSANDS = ['', 'm', 'mm', 'mmm'];
 
 export function formatPageNumber(page: number, format: PageNumberFormat): string {
   if (format === 'decimal') return String(page);
   if (page <= 0 || page > 3999) return String(page);
   const roman =
+    ROMAN_THOUSANDS[Math.floor(page / 1000)] +
     ROMAN_HUNDREDS[Math.floor(page / 100) % 10] +
     ROMAN_TENS[Math.floor(page / 10) % 10] +
     ROMAN_ONES[page % 10];

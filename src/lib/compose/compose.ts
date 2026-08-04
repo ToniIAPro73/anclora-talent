@@ -97,7 +97,7 @@ export interface ComposeResult {
   violations: ComposeViolation[];
 }
 
-interface ChapterSlice {
+export interface ChapterSlice {
   heading: DocumentBlock | null;
   blocks: DocumentBlock[];
 }
@@ -379,7 +379,7 @@ function paginateChapter(
   return pages;
 }
 
-function splitChapters(
+export function splitChapters(
   blocks: DocumentBlock[],
   chapterLevel: number,
   chapterStartIds?: Set<string>,

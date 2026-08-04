@@ -1,7 +1,7 @@
 import type { ImportedDocumentSeed } from './types';
 
 const SUPPORTED_IMPORT_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'txt', 'md']);
-const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote)[^>]*>[\s\S]*?<\/\1>/gi;
+const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote|table)[^>]*>[\s\S]*?<\/\1>/gi;
 const ALL_CAPS_RE = /^(?=.{40,})[^a-z]*[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ0-9 .,·:;()\-–—]+$/;
 const MAJOR_HEADING_RE = /^(?:cap[ií]tulo|chapter|introducci[oó]n|pr[oó]logo|prologo|[íi]ndice|indice|fase\s+\d+|parte\s+\d+|secci[oó]n|ep[ií]logo|cierre|despu[eé]s\s+de|recursos(?:\s+recomendados)?|anexos?)(?:\b|:)/i;
 const MINOR_HEADING_RE = /^(?:d[ií]a\s+\d+|tema\s+\d+|idea\s+clave|reto\s+de\s+acci[oó]n|preguntas?\s+de\s+reflexi[oó]n|ejercicio|caso|las\s+cinco\s+claves|cierre\s+de\s+fase)(?:\b|:)/i;
@@ -582,7 +582,7 @@ function parseHtmlBlocks(input: string) {
 
   for (const fragment of matches) {
     const clean = normalizeHtmlFragment(stripImportedTocPageMarkup(fragment));
-    const tag = clean.match(/^<(h[1-6]|p|ul|ol|blockquote)/i)?.[1]?.toLowerCase()?? 'p';
+    const tag = clean.match(/^<(h[1-6]|p|ul|ol|blockquote|table)/i)?.[1]?.toLowerCase()?? 'p';
     const text = textFromHtml(clean);
     if (!text || isDecorativeLine(text)) continue;
 
@@ -809,9 +809,15 @@ function detectSubtitleFromFrontMatter(
 
 function toDocumentBlock(block: ParsedBlock) {
   if (block.kind === 'heading') {
+    // Cuando el HTML fuente ya porta el nivel real del heading (tag <hN> con
+    // N === block.level, p.ej. mammoth/DOCX), se conserva el tag intacto para
+    // que from-html no degrade todo a h2. La heurística de texto (markdown)
+    // genera <h${level+1}>, así que sigue yendo como texto plano.
+    const preservesSourceLevel =
+      block.structural && block.level !== null && block.html.startsWith(`<h${block.level}`);
     return {
       type: 'heading' as const,
-      content: cleanHeadingText(block.text),
+      content: preservesSourceLevel ? block.html : cleanHeadingText(block.text),
     };
   }
 

@@ -66,3 +66,7 @@ playwright-report/
 test-results/
 .vercel
 .vercel-backup/
+
+# EPUB gate (F1): generated EPUBs and the pinned EPUBCheck distribution
+.epub-check/
+.epubcheck/

@@ -15,6 +15,48 @@ vi.mock('next/navigation', () => ({
 }));
 
 import { useChapterEditor } from './useChapterEditor';
+import {
+  clearLastChapterSave,
+  getLastChapterSaveSnapshot,
+  recordLastChapterSave,
+  subscribeLastChapterSave,
+} from './last-chapter-save';
+
+describe('last-chapter-save store (F0.3)', () => {
+  beforeEach(() => {
+    clearLastChapterSave();
+  });
+
+  test('keeps only the last recorded snapshot and notifies subscribers', () => {
+    const listener = vi.fn();
+    const unsubscribe = subscribeLastChapterSave(listener);
+
+    recordLastChapterSave({
+      projectId: 'project-1',
+      chapterId: 'chapter-1',
+      chapterTitle: 'Capítulo 1',
+      previousHtml: '<p>Uno</p>',
+    });
+    recordLastChapterSave({
+      projectId: 'project-1',
+      chapterId: 'chapter-2',
+      chapterTitle: 'Capítulo 2',
+      previousHtml: '<p>Dos</p>',
+    });
+
+    expect(getLastChapterSaveSnapshot()).toMatchObject({
+      chapterId: 'chapter-2',
+      previousHtml: '<p>Dos</p>',
+    });
+    expect(listener).toHaveBeenCalledTimes(2);
+
+    clearLastChapterSave();
+    expect(getLastChapterSaveSnapshot()).toBeNull();
+    expect(listener).toHaveBeenCalledTimes(3);
+
+    unsubscribe();
+  });
+});
 
 describe('useChapterEditor', () => {
   const chapters = [
@@ -39,6 +81,7 @@ describe('useChapterEditor', () => {
     saveChapterContentActionMock.mockReset();
     routerRefreshMock.mockReset();
     vi.restoreAllMocks();
+    clearLastChapterSave();
   });
 
   test('does not mark the chapter as changed when the editor re-emits the baseline html', async () => {
@@ -398,6 +441,65 @@ describe('useChapterEditor', () => {
 
     expect(saveChapterContentActionMock).toHaveBeenCalledTimes(1);
     expect(routerRefreshMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('records a revertible snapshot with the pre-save html after a successful save', async () => {
+    saveChapterContentActionMock.mockResolvedValue(undefined);
+
+    const { result } = renderHook(() =>
+      useChapterEditor({
+        chapters,
+        initialChapterIndex: 0,
+        projectId: 'project-1',
+      }),
+    );
+
+    act(() => {
+      result.current.setHtmlContent('<p>Uno editado</p>');
+    });
+
+    await act(async () => {
+      await result.current.saveChapter();
+    });
+
+    expect(getLastChapterSaveSnapshot()).toMatchObject({
+      projectId: 'project-1',
+      chapterId: 'chapter-1',
+      chapterTitle: 'Capítulo 1',
+      previousHtml: '<p>Uno</p>',
+    });
+
+    // A second save replaces the snapshot: only the last save is revertible.
+    act(() => {
+      result.current.setHtmlContent('<p>Uno reeditado</p>');
+    });
+    await act(async () => {
+      await result.current.saveChapter();
+    });
+
+    expect(getLastChapterSaveSnapshot()?.previousHtml).toBe('<p>Uno editado</p>');
+  });
+
+  test('keeps the previous snapshot when the save fails', async () => {
+    saveChapterContentActionMock.mockRejectedValueOnce(new Error('boom'));
+
+    const { result } = renderHook(() =>
+      useChapterEditor({
+        chapters,
+        initialChapterIndex: 0,
+        projectId: 'project-1',
+      }),
+    );
+
+    act(() => {
+      result.current.setHtmlContent('<p>Uno editado</p>');
+    });
+
+    await act(async () => {
+      await result.current.saveChapter();
+    });
+
+    expect(getLastChapterSaveSnapshot()).toBeNull();
   });
 
   test('saves pending changes before navigating to another chapter when the user confirms', async () => {

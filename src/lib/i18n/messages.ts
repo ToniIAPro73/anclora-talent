@@ -199,6 +199,7 @@ export type AppMessages = {
     previewExportFilename: string;
     previewExportPdfButton: string;
     previewExportDocxButton: string;
+    previewExportEpubButton: string;
     coverRenderImage: string;
     coverRenderImageDone: string;
     coverRenderedImageLabel: string;
@@ -246,6 +247,9 @@ export type AppMessages = {
     rulesPresetDefault: string;
     rulesPresetPrint: string;
     rulesPresetDigital: string;
+    rulesPresetDefaultDesc: string;
+    rulesPresetPrintDesc: string;
+    rulesPresetDigitalDesc: string;
     rulesKeepTable: string;
     rulesTableFillGap: string;
     rulesFillGapLeaveSpace: string;
@@ -278,6 +282,17 @@ export type AppMessages = {
     healthViolationsCount: string;
     healthViolationPage: string;
     healthGoToPreview: string;
+    preflightTitle: string;
+    preflightChannelKdp: string;
+    preflightChannelIngramspark: string;
+    preflightChannelKobo: string;
+    preflightEmpty: string;
+    preflightIssueCount: string;
+    preflightSeverityError: string;
+    preflightSeverityWarning: string;
+    preflightSeverityInfo: string;
+    /** Localized message templates per preflight rule key (`{param}` placeholders). */
+    preflightRules: Record<string, string>;
     exportGateBlockedMessage: string;
     exportGateWarnMessage: string;
     metadataPanelEyebrow: string;
@@ -307,6 +322,10 @@ export type AppMessages = {
     healthDiffShift: string;
     healthDiffToc: string;
     healthDiffViolations: string;
+    healthTelemetrySummary: string;
+    healthRevertLabel: string;
+    healthRevertAction: string;
+    healthReverting: string;
     previewModalZoomOut: string;
     previewModalZoomIn: string;
     previewModalSingleView: string;
@@ -329,6 +348,18 @@ export type AppMessages = {
     previewModalUntitledChapter: string;
     previewModalCoverAlt: string;
     previewModalBackCoverAlt: string;
+    onboardingEyebrow: string;
+    onboardingStepLabel: string;
+    onboardingStep1Title: string;
+    onboardingStep1Body: string;
+    onboardingStep2Title: string;
+    onboardingStep2Body: string;
+    onboardingStep3Title: string;
+    onboardingStep3Body: string;
+    onboardingNext: string;
+    onboardingSkip: string;
+    onboardingDone: string;
+    onboardingClose: string;
   };
 };
 
@@ -593,6 +624,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewExportFilename: 'proyecto',
       previewExportPdfButton: 'Exportar PDF',
       previewExportDocxButton: 'Exportar Word (.docx)',
+      previewExportEpubButton: 'Exportar EPUB (.epub)',
       coverRenderImage: 'Generar imagen',
       coverRenderImageDone: 'Imagen guardada',
       coverRenderedImageLabel: 'Imagen renderizada',
@@ -637,9 +669,12 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       rulesPanelTitle: 'Reglas del documento',
       rulesPanelDescription: 'Controla cómo el motor compone la paginación: bloques indivisibles, encabezados huérfanos, viudas y numeración.',
       rulesPresetLabel: 'Preset',
-      rulesPresetDefault: 'Por defecto',
-      rulesPresetPrint: 'Impresión (recto)',
-      rulesPresetDigital: 'Digital',
+      rulesPresetDefault: 'Empezar con buen pie',
+      rulesPresetPrint: 'Maquetación print sin sustos',
+      rulesPresetDigital: 'Publicar sin rechazos',
+      rulesPresetDefaultDesc: 'Reglas equilibradas, listas para editar y publicar sin ajustes.',
+      rulesPresetPrintDesc: 'Capítulos en página impar y saltos de página listos para imprenta.',
+      rulesPresetDigitalDesc: 'Paginación fluida pensada para la lectura en pantalla.',
       rulesKeepTable: 'No dividir tablas',
       rulesTableFillGap: 'Hueco al saltar una tabla',
       rulesFillGapLeaveSpace: 'Dejar espacio',
@@ -672,6 +707,32 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       healthViolationsCount: '{count} violaciones',
       healthViolationPage: 'pág. {page}',
       healthGoToPreview: 'Abrir preview',
+      preflightTitle: 'Pre-flight por canal',
+      preflightChannelKdp: 'KDP',
+      preflightChannelIngramspark: 'IngramSpark',
+      preflightChannelKobo: 'Kobo',
+      preflightEmpty: 'Sin incidencias. El documento está listo para este canal.',
+      preflightIssueCount: '{count} incidencias',
+      preflightSeverityError: 'error',
+      preflightSeverityWarning: 'aviso',
+      preflightSeverityInfo: 'info',
+      preflightRules: {
+        'kdp.metadata.title': 'KDP exige un título en los metadatos de la publicación.',
+        'kdp.metadata.author': 'KDP exige autor/a en los metadatos de la publicación.',
+        'kdp.metadata.isbn': 'Sin ISBN: KDP asignará un ASIN propio. Añade el ISBN si lo tienes.',
+        'kdp.metadata.language': 'Idioma no declarado: KDP lo usa para el catálogo y los lectores.',
+        'kdp.image.alt': 'Imagen sin texto alternativo ({src}); KDP lo exige en el contenido.',
+        'kdp.image.resolution': 'Imagen muy pequeña ({lines} líneas estimadas); verifica su resolución antes de publicar.',
+        'kdp.fonts.embed': 'La fuente «{font}» no es embebible; el EPUB incrusta Liberation y el resto cae a fuentes del sistema.',
+        'ingram.metadata.isbn': 'IngramSpark exige un ISBN propio para publicar.',
+        'ingram.metadata.description': 'Descripción recomendada para la ficha de distribución de IngramSpark.',
+        'ingram.image.packaging': 'Imagen con origen no empaquetable ({src}); súbela como asset del proyecto.',
+        'kobo.metadata.title': 'Kobo exige un título en los metadatos.',
+        'kobo.metadata.author': 'Kobo exige autor/a en los metadatos.',
+        'kobo.metadata.language': 'Kobo exige el idioma declarado (accesibilidad EPUB).',
+        'kobo.a11y.imageAlt': 'Imagen sin texto alternativo ({src}); la accesibilidad EPUB lo exige.',
+        'kobo.a11y.headingJump': 'Salto de jerarquía de encabezados (H{from} → H{to}); rompe la navegación accesible.',
+      },
       exportGateBlockedMessage: 'Exportación bloqueada: resuelve las violaciones del documento primero.',
       exportGateWarnMessage: 'Aviso: el documento tiene {count} violaciones de composición.',
       metadataPanelEyebrow: 'Producto digital',
@@ -701,6 +762,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       healthDiffShift: '{title}: pág. {from} → {to}',
       healthDiffToc: '{count} entradas al índice',
       healthDiffViolations: '{count} violaciones nuevas',
+      healthTelemetrySummary: '{count} recomposiciones · última {lastMs} ms · media {avgMs} ms',
+      healthRevertLabel: 'Recompuesto tras tu último guardado en «{chapter}». Puedes restaurar el contenido anterior.',
+      healthRevertAction: 'Revertir',
+      healthReverting: 'Revirtiendo…',
       previewModalZoomOut: 'Reducir zoom',
       previewModalZoomIn: 'Aumentar zoom',
       previewModalSingleView: 'Vista de 1 página',
@@ -723,6 +788,18 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewModalUntitledChapter: 'Capítulo sin título',
       previewModalCoverAlt: 'Portada de vista previa',
       previewModalBackCoverAlt: 'Contraportada de vista previa',
+      onboardingEyebrow: 'Bienvenido a tu workspace editorial',
+      onboardingStepLabel: 'Paso {step} de {total}',
+      onboardingStep1Title: 'Revisa sin miedo',
+      onboardingStep1Body: 'Edita, reordena y reescribe a tu ritmo: el documento se recompone solo con cada cambio.',
+      onboardingStep2Title: 'Nunca más un índice desactualizado',
+      onboardingStep2Body: 'El índice y la paginación se regeneran solos mientras trabajas. Tu libro siempre está al día.',
+      onboardingStep3Title: 'Publica sin rechazos',
+      onboardingStep3Body: 'El panel de salud y las reglas del documento vigilan cada detalle antes de exportar.',
+      onboardingNext: 'Siguiente',
+      onboardingSkip: 'Saltar introducción',
+      onboardingDone: 'Entendido',
+      onboardingClose: 'Cerrar introducción',
     },
   },
   en: {
@@ -985,6 +1062,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewExportFilename: 'project',
       previewExportPdfButton: 'Export PDF',
       previewExportDocxButton: 'Export Word (.docx)',
+      previewExportEpubButton: 'Export EPUB (.epub)',
       coverRenderImage: 'Generate image',
       coverRenderImageDone: 'Image saved',
       coverRenderedImageLabel: 'Rendered image',
@@ -1029,9 +1107,12 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       rulesPanelTitle: 'Document rules',
       rulesPanelDescription: 'Control how the engine composes pagination: unbreakable blocks, orphan headings, widows and numbering.',
       rulesPresetLabel: 'Preset',
-      rulesPresetDefault: 'Default',
-      rulesPresetPrint: 'Print (recto)',
-      rulesPresetDigital: 'Digital',
+      rulesPresetDefault: 'Start on the right foot',
+      rulesPresetPrint: 'Print layout, no surprises',
+      rulesPresetDigital: 'Publish without rejections',
+      rulesPresetDefaultDesc: 'Balanced rules, ready to edit and publish with no tweaks.',
+      rulesPresetPrintDesc: 'Odd-page chapter starts and page breaks, ready for the printer.',
+      rulesPresetDigitalDesc: 'Fluid pagination designed for on-screen reading.',
       rulesKeepTable: 'Never split tables',
       rulesTableFillGap: 'Gap when a table jumps',
       rulesFillGapLeaveSpace: 'Leave space',
@@ -1064,6 +1145,32 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       healthViolationsCount: '{count} violations',
       healthViolationPage: 'page {page}',
       healthGoToPreview: 'Open preview',
+      preflightTitle: 'Channel pre-flight',
+      preflightChannelKdp: 'KDP',
+      preflightChannelIngramspark: 'IngramSpark',
+      preflightChannelKobo: 'Kobo',
+      preflightEmpty: 'No findings. The document is ready for this channel.',
+      preflightIssueCount: '{count} findings',
+      preflightSeverityError: 'error',
+      preflightSeverityWarning: 'warning',
+      preflightSeverityInfo: 'info',
+      preflightRules: {
+        'kdp.metadata.title': 'KDP requires a title in the publication metadata.',
+        'kdp.metadata.author': 'KDP requires an author in the publication metadata.',
+        'kdp.metadata.isbn': 'No ISBN: KDP will assign its own ASIN. Add the ISBN if you have one.',
+        'kdp.metadata.language': 'No language declared: KDP uses it for the catalog and readers.',
+        'kdp.image.alt': 'Image without alternative text ({src}); KDP requires it in the content.',
+        'kdp.image.resolution': 'Very small image ({lines} estimated lines); double-check its resolution before publishing.',
+        'kdp.fonts.embed': 'The font “{font}” is not embeddable; the EPUB embeds Liberation and the rest falls back to system fonts.',
+        'ingram.metadata.isbn': 'IngramSpark requires your own ISBN to publish.',
+        'ingram.metadata.description': 'Description recommended for the IngramSpark distribution record.',
+        'ingram.image.packaging': 'Image with a non-packageable source ({src}); upload it as a project asset.',
+        'kobo.metadata.title': 'Kobo requires a title in the metadata.',
+        'kobo.metadata.author': 'Kobo requires an author in the metadata.',
+        'kobo.metadata.language': 'Kobo requires the declared language (EPUB accessibility).',
+        'kobo.a11y.imageAlt': 'Image without alternative text ({src}); EPUB accessibility requires it.',
+        'kobo.a11y.headingJump': 'Heading hierarchy jump (H{from} → H{to}); it breaks accessible navigation.',
+      },
       exportGateBlockedMessage: 'Export blocked: resolve the document violations first.',
       exportGateWarnMessage: 'Warning: the document has {count} composition violations.',
       metadataPanelEyebrow: 'Digital product',
@@ -1093,6 +1200,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       healthDiffShift: '{title}: page {from} → {to}',
       healthDiffToc: '{count} TOC entries',
       healthDiffViolations: '{count} new violations',
+      healthTelemetrySummary: '{count} recompositions · last {lastMs} ms · avg {avgMs} ms',
+      healthRevertLabel: 'Recomposed after your last save in "{chapter}". You can restore the previous content.',
+      healthRevertAction: 'Revert',
+      healthReverting: 'Reverting…',
       previewModalZoomOut: 'Zoom out',
       previewModalZoomIn: 'Zoom in',
       previewModalSingleView: 'Single page view',
@@ -1115,6 +1226,18 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewModalUntitledChapter: 'Untitled chapter',
       previewModalCoverAlt: 'Preview cover',
       previewModalBackCoverAlt: 'Preview back cover',
+      onboardingEyebrow: 'Welcome to your editorial workspace',
+      onboardingStepLabel: 'Step {step} of {total}',
+      onboardingStep1Title: 'Edit without fear',
+      onboardingStep1Body: 'Edit, reorder and rewrite at your own pace: the document recomposes itself with every change.',
+      onboardingStep2Title: 'Never an outdated table of contents again',
+      onboardingStep2Body: 'TOC and pagination regenerate automatically as you work. Your book is always up to date.',
+      onboardingStep3Title: 'Publish without rejections',
+      onboardingStep3Body: 'The health panel and document rules watch every detail before export.',
+      onboardingNext: 'Next',
+      onboardingSkip: 'Skip introduction',
+      onboardingDone: 'Got it',
+      onboardingClose: 'Close introduction',
     },
   },
 };

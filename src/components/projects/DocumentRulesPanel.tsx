@@ -84,22 +84,26 @@ export function DocumentRulesPanel({ project, copy }: DocumentRulesPanelProps) {
       <h3 className="mt-2 text-xl font-semibold text-[var(--text-primary)]">{copy.rulesPanelTitle}</h3>
       <p className="mt-1 text-sm text-[var(--text-secondary)]">{copy.rulesPanelDescription}</p>
 
-      <div className="mt-6 flex flex-wrap items-center gap-3">
-        <span className={labelClass}>{copy.rulesPresetLabel}</span>
-        {(['default', 'print', 'digital'] as const).map((preset) => (
-          <button
-            key={preset}
-            type="button"
-            data-testid={`rules-preset-${preset}`}
-            onClick={() => applyPreset(preset)}
-            className="ac-button ac-button--secondary ac-button--sm"
-          >
-            {preset === 'default'
-              ? copy.rulesPresetDefault
-              : preset === 'print'
-                ? copy.rulesPresetPrint
-                : copy.rulesPresetDigital}
-          </button>
+      <div className="mt-6 flex flex-wrap items-stretch gap-3">
+        <span className={`${labelClass} self-center`}>{copy.rulesPresetLabel}</span>
+        {(
+          [
+            ['default', copy.rulesPresetDefault, copy.rulesPresetDefaultDesc],
+            ['print', copy.rulesPresetPrint, copy.rulesPresetPrintDesc],
+            ['digital', copy.rulesPresetDigital, copy.rulesPresetDigitalDesc],
+          ] as const
+        ).map(([preset, name, description]) => (
+          <div key={preset} className="max-w-56">
+            <button
+              type="button"
+              data-testid={`rules-preset-${preset}`}
+              onClick={() => applyPreset(preset)}
+              className="ac-button ac-button--secondary ac-button--sm"
+            >
+              {name}
+            </button>
+            <p className="mt-1 text-xs text-[var(--text-tertiary)]">{description}</p>
+          </div>
         ))}
       </div>
 
