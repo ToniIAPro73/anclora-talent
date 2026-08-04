@@ -28,6 +28,12 @@ export type AiProposalKind =
   | 'chapter-heading'
   /** LLM-suggested fix (schema-validated before it reaches the UI). */
   | 'llm-suggested'
+  /** F3 Capa 2: co-author style rewrite of chapter paragraphs. */
+  | 'style-rewrite'
+  /** F3 Capa 2: co-author content architecture (moves + split headings). */
+  | 'content-architecture'
+  /** F3 Capa 2: co-author derived summary chapter appended at the end. */
+  | 'derived-summary'
   /** R6: doubtful cases are never auto-fixed — advisory only, no operations. */
   | 'advisory';
 
