@@ -43,7 +43,7 @@ Secuencia estricta F0 → F1 (+F1b paralela) → F2 → F3 → F4. Specs por fas
 
 - **F0 — Productización del motor**: ✅ cerrada 2026-08-04 con fixture real (`feature-f0-productizacion-motor.md`): presupuesto 300 ms verificado (media 1,73 ms) y demo de salida en gate automatizado.
 - **F1 — EPUB propio + pre-flight por canal** (KDP/IngramSpark/Kobo). EPUBCheck en CI. Criterio de salida sobre `fixtures/exito_sin_compania.docx`.
-- **F1b — Integración FileStudio (Agente Local)**: contrato en `sdd/integrations/filestudio/`, cliente en `src/lib/filestudio/`, prototipo portada 3 resoluciones, indicador de modo de procesamiento.
+- **F1b — Integración FileStudio (Agente Local)**: contrato documentado en `sdd/integrations/filestudio/` (overview, api-flow, authentication, webhook-flow, routing-policy, error-mapping, exclusions, hardening). Pendiente: cliente en `src/lib/filestudio/`, prototipo portada 3 resoluciones, indicador de modo de procesamiento.
 - **F2 — Plantillas + multi-formato coordinado** (manifiesto versionado con procedencia), OCR de ingesta, historial de versiones del AST.
 - **F3 — IA gobernada sobre el motor** (fixes de violations como diffs, co-autor con gates, procedencia humano/IA, disclosure KDP).
 - **F4 — Distribución y colaboración** (Gumroad/Hotmart, comentarios por roles, API de salida).
