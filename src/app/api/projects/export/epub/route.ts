@@ -5,6 +5,7 @@ import { composeProjectPreview } from '@/lib/compose/preview-adapter';
 import { resolveDocumentRules } from '@/lib/compose/rules';
 import { buildEpub } from '@/lib/epub';
 import { resolveExportPaginationConfig } from '@/lib/projects/export-config';
+import { resolveProjectBrandTemplateOverrides } from '@/lib/brand/resolve';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -24,9 +25,15 @@ export async function GET(request: NextRequest) {
     }
 
     const exportConfig = resolveExportPaginationConfig(request.nextUrl.searchParams);
+    // F2: optional brand theme — the same overrides feed the composition and
+    // the EPUB stylesheet (R3: one canonical model).
+    const brandOverrides = (await resolveProjectBrandTemplateOverrides(userId, project)) ?? {};
     // EPUB is reflowable: the pagination config only drives refs/numbering;
     // the engine TOC is forced to depth 3 (NAV + NCX carry real H1-H3 levels).
-    const composed = composeProjectPreview(project, exportConfig, undefined, { tocDepth: 3 });
+    const composed = composeProjectPreview(project, exportConfig, undefined, {
+      tocDepth: 3,
+      ...brandOverrides,
+    });
 
     // Server-side export gate (C4): same rules the client enforces in the UI.
     const exportGate = resolveDocumentRules(project.document.rules).exportGate;
@@ -38,7 +45,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const buffer = await buildEpub(project, composed);
+    const buffer = await buildEpub(project, composed, { template: brandOverrides });
     const slug = project.slug || 'proyecto';
     const filename = `${slug}.epub`;
 

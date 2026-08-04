@@ -85,6 +85,7 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
     title: input.title,
     status: 'draft',
     workflowStep: 1,
+    brandProfileId: null,
     createdAt: now,
     updatedAt: now,
     document: {

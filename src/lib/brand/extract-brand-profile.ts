@@ -89,7 +89,7 @@ function findColorCandidates(text: string): ColorCandidate[] {
 function extractPalette(text: string): BrandPaletteColor[] {
   const candidates = findColorCandidates(text);
   const assignedRoles = new Set<BrandColorRole>();
-  const palette: Array<BrandPaletteColor & { order: number }> = [];
+  const palette: BrandPaletteColor[] = [];
 
   for (const candidate of candidates) {
     const context = [candidate.nameLine ?? '', ...candidate.followingLines].join('\n');
@@ -107,7 +107,6 @@ function extractPalette(text: string): BrandPaletteColor[] {
       name: candidate.nameLine,
       usagePercent: null,
       confidence,
-      order: candidate.index,
     });
     if (role) assignedRoles.add(role);
   }
@@ -136,7 +135,7 @@ function extractPalette(text: string): BrandPaletteColor[] {
   }
 
   return palette
-    .map(({ order: _order, ...color }) => color)
+    .slice()
     .sort((a, b) => BRAND_COLOR_ROLES.indexOf(a.role) - BRAND_COLOR_ROLES.indexOf(b.role));
 }
 

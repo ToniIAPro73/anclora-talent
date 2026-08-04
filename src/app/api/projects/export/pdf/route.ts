@@ -4,6 +4,7 @@ import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
 import { buildProjectPdfWithConfig } from '@/lib/projects/export-builder';
 import { resolveExportPaginationConfig } from '@/lib/projects/export-config';
+import { resolveProjectBrandTemplateOverrides } from '@/lib/brand/resolve';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -23,7 +24,9 @@ export async function GET(request: NextRequest) {
     }
 
     const exportConfig = resolveExportPaginationConfig(request.nextUrl.searchParams);
-    const pdfDoc = await buildProjectPdfWithConfig(project, exportConfig);
+    // F2: optional brand theme, applied as composer template overrides (R3).
+    const brandOverrides = await resolveProjectBrandTemplateOverrides(userId, project);
+    const pdfDoc = await buildProjectPdfWithConfig(project, exportConfig, brandOverrides);
     const buffer = await renderToBuffer(pdfDoc);
 
     const slug = project.slug || 'proyecto';

@@ -58,6 +58,8 @@ export const projects = pgTable('projects', {
   title: varchar('title', { length: 255 }).notNull(),
   status: varchar('status', { length: 24 }).notNull(),
   workflowStep: integer('workflow_step').notNull().default(1),
+  // F2: optional brand profile applied to exports (G1: brand ≠ structure).
+  brandProfileId: uuid('brand_profile_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });

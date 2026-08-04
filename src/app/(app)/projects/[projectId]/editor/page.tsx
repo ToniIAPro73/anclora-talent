@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { ProjectWorkspace } from '@/components/projects/ProjectWorkspace';
 import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
+import { brandProfileRepository } from '@/lib/brand/repository';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
 
@@ -20,5 +21,7 @@ export default async function ProjectEditorPage({
     notFound();
   }
 
-  return <ProjectWorkspace project={project} copy={projectCopy} />;
+  const brandProfiles = await brandProfileRepository.listBrandProfilesForUser(userId);
+
+  return <ProjectWorkspace project={project} copy={projectCopy} brandProfiles={brandProfiles} />;
 }

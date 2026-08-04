@@ -305,6 +305,20 @@ export type AppMessages = {
     metadataLanguageLabel: string;
     metadataSave: string;
     metadataSaved: string;
+    brandPanelEyebrow: string;
+    brandPanelTitle: string;
+    brandPanelDescription: string;
+    brandSelectLabel: string;
+    brandNoneOption: string;
+    brandStatusDraft: string;
+    brandStatusActive: string;
+    brandStatusDeprecated: string;
+    brandActivateAction: string;
+    brandUploadLabel: string;
+    brandUploadAction: string;
+    brandUploading: string;
+    brandSaved: string;
+    brandVersionLabel: string;
     reimportButton: string;
     reimportDialogTitle: string;
     reimportDialogDescription: string;
@@ -805,6 +819,21 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       metadataLanguageLabel: 'Idioma',
       metadataSave: 'Guardar metadatos',
       metadataSaved: 'Metadatos guardados',
+      brandPanelEyebrow: 'Identidad de marca',
+      brandPanelTitle: 'Perfil de marca',
+      brandPanelDescription:
+        'Tema de marca opcional (paleta, tipografía y proporciones) aplicado a los exports. Independiente de las reglas de estructura.',
+      brandSelectLabel: 'Perfil aplicado al proyecto',
+      brandNoneOption: 'Sin perfil de marca',
+      brandStatusDraft: 'Borrador',
+      brandStatusActive: 'Activo',
+      brandStatusDeprecated: 'Obsoleto',
+      brandActivateAction: 'Activar',
+      brandUploadLabel: 'Crear perfil desde manual de identidad (PDF)',
+      brandUploadAction: 'Extraer perfil',
+      brandUploading: 'Extrayendo…',
+      brandSaved: 'Perfil de marca actualizado',
+      brandVersionLabel: 'versión',
       reimportButton: 'Reimportar DOCX',
       reimportDialogTitle: 'Reimportar documento',
       reimportDialogDescription: 'Sube la versión revisada del archivo original. El contenido se fusiona por estructura: se conservan portada, contraportada, reglas y ajustes manuales.',
@@ -1305,6 +1334,21 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       metadataLanguageLabel: 'Language',
       metadataSave: 'Save metadata',
       metadataSaved: 'Metadata saved',
+      brandPanelEyebrow: 'Brand identity',
+      brandPanelTitle: 'Brand profile',
+      brandPanelDescription:
+        'Optional brand theme (palette, typography and proportions) applied to exports. Independent from structure rules.',
+      brandSelectLabel: 'Profile applied to the project',
+      brandNoneOption: 'No brand profile',
+      brandStatusDraft: 'Draft',
+      brandStatusActive: 'Active',
+      brandStatusDeprecated: 'Deprecated',
+      brandActivateAction: 'Activate',
+      brandUploadLabel: 'Create profile from identity manual (PDF)',
+      brandUploadAction: 'Extract profile',
+      brandUploading: 'Extracting…',
+      brandSaved: 'Brand profile updated',
+      brandVersionLabel: 'version',
       reimportButton: 'Reimport DOCX',
       reimportDialogTitle: 'Reimport document',
       reimportDialogDescription: 'Upload the revised version of the original file. Content is merged by structure: cover, back cover, rules and manual tweaks are preserved.',

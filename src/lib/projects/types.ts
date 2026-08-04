@@ -124,6 +124,8 @@ export interface ProjectRecord {
   title: string;
   status: ProjectStatus;
   workflowStep?: number;
+  /** F2: optional BrandProfile applied to exports as templateOverrides (G1). */
+  brandProfileId?: string | null;
   createdAt: string;
   updatedAt: string;
   document: ProjectDocument;

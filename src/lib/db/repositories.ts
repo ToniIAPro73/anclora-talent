@@ -199,6 +199,7 @@ function mapRowsToProject(
     title: projectRow.title,
     status: projectRow.status as ProjectRecord['status'],
     workflowStep: projectRow.workflowStep,
+    brandProfileId: projectRow.brandProfileId ?? null,
     createdAt: projectRow.createdAt.toISOString(),
     updatedAt: projectRow.updatedAt.toISOString(),
     document: {
@@ -291,6 +292,7 @@ export async function persistProjectGraph(db: ProjectGraphWriter, project: Proje
     title: project.title,
     status: project.status,
     workflowStep: project.workflowStep,
+    brandProfileId: project.brandProfileId ?? null,
     createdAt: new Date(project.createdAt),
     updatedAt: new Date(project.updatedAt),
   });
@@ -634,6 +636,36 @@ async function saveWorkflowStepInDb(userId: string, projectId: string, workflowS
     .where(and(eq(projects.id, projectId), eq(projects.userId, userId)));
 
   return nextProject;
+}
+
+// F2: assigns (or clears, null) the brand profile applied to exports (G1).
+async function saveProjectBrandProfileInDb(userId: string, projectId: string, brandProfileId: string | null) {
+  const db = getDb();
+  const current = await getProjectFromDb(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  const updatedAt = new Date().toISOString();
+  await db
+    .update(projects)
+    .set({ brandProfileId, updatedAt: new Date(updatedAt) })
+    .where(and(eq(projects.id, projectId), eq(projects.userId, userId)));
+
+  return { ...current, brandProfileId, updatedAt };
+}
+
+async function saveProjectBrandProfileInMemory(userId: string, projectId: string, brandProfileId: string | null) {
+  const current = await getProjectFromMemory(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  const next = { ...current, brandProfileId, updatedAt: new Date().toISOString() };
+  getMemoryStore().set(projectId, next);
+  return next;
 }
 
 async function saveRenderedCoverUrlInDb(userId: string, projectId: string, renderedImageUrl: string) {
@@ -1072,6 +1104,11 @@ export const projectRepository = {
     return hasDatabase()
       ? saveWorkflowStepInDb(userId, projectId, workflowStep)
       : saveWorkflowStepInMemory(userId, projectId, workflowStep);
+  },
+  saveProjectBrandProfile(userId: string, projectId: string, brandProfileId: string | null) {
+    return hasDatabase()
+      ? saveProjectBrandProfileInDb(userId, projectId, brandProfileId)
+      : saveProjectBrandProfileInMemory(userId, projectId, brandProfileId);
   },
   deleteProject(userId: string, projectId: string) {
     return hasDatabase() ? deleteProjectInDb(userId, projectId) : deleteProjectInMemory(userId, projectId);
