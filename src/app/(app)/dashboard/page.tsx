@@ -1,8 +1,12 @@
 import { CreateProjectForm } from '@/components/projects/CreateProjectForm';
 import { ProjectCard } from '@/components/projects/ProjectCard';
+import { FileStudioConnectionCard } from '@/components/filestudio/FileStudioConnectionCard';
 import { premiumPrimaryDarkButton, premiumPrimaryMintButton } from '@/components/ui/button-styles';
 import { NavigatingLink } from '@/components/ui/NavigatingLink';
 import { requireUserId } from '@/lib/auth/guards';
+import { hasDatabase } from '@/lib/db';
+import { isFileStudioEnabled } from '@/lib/filestudio/config';
+import { getConnection } from '@/lib/filestudio/pairing';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
 import { loadDashboardData } from './dashboard-data';
@@ -12,8 +16,15 @@ export default async function DashboardPage() {
   const { locale } = await readUiPreferences();
   const dashboardCopy = resolveLocaleMessages(locale).dashboard;
   const projectCopy = resolveLocaleMessages(locale).project;
+  const filestudioCopy = resolveLocaleMessages(locale).filestudio;
   const { projects, dataAvailable } = await loadDashboardData(userId);
   const hasProjects = projects.length > 0;
+
+  // Feature flag (config.ts): without FILESTUDIO_API_URL the whole
+  // integration surface stays hidden and nothing else changes.
+  const filestudioConnection = isFileStudioEnabled() && hasDatabase()
+    ? await getConnection(userId).catch(() => null)
+    : null;
 
   return (
     <div className="space-y-8">
@@ -91,6 +102,23 @@ export default async function DashboardPage() {
           </div>
         )}
       </section>
+
+      {isFileStudioEnabled() && (
+        <section aria-label={filestudioCopy.settingsTitle}>
+          <FileStudioConnectionCard
+            copy={filestudioCopy}
+            initialConnection={
+              filestudioConnection
+                ? {
+                    status: filestudioConnection.status,
+                    deviceId: filestudioConnection.deviceId,
+                    preferredMode: filestudioConnection.preferredMode,
+                  }
+                : null
+            }
+          />
+        </section>
+      )}
     </div>
   );
 }

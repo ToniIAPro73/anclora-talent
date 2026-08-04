@@ -25,7 +25,7 @@ import { createRequire } from 'node:module';
 import JSZip from 'jszip';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { type ComposedPreview, projectToSemanticDocument } from '@/lib/compose/preview-adapter';
-import { splitChapters, type TocEntry } from '@/lib/compose/compose';
+import { splitChapters, type ComposeTemplate, type TocEntry } from '@/lib/compose/compose';
 import { isTocChapter } from '@/lib/preview/preview-builder';
 import { blocksToHtml, type ResolvedRefs } from '@/lib/document/to-html';
 import { inlineToPlainText, type DocumentBlock } from '@/lib/document/model';
@@ -33,6 +33,12 @@ import { inlineToPlainText, type DocumentBlock } from '@/lib/document/model';
 export interface BuildEpubOptions {
   /** Embed Liberation TTF fonts when available (default true). */
   fonts?: boolean;
+  /**
+   * F2 brand theme: composer template overrides (from
+   * `brandProfileToTemplateOverrides`) applied to the stylesheet — same
+   * overrides passed to `composeProjectPreview` (R3: one canonical model).
+   */
+  template?: Partial<ComposeTemplate>;
 }
 
 interface EmbeddedImage {
@@ -259,7 +265,12 @@ ${body}
 `;
 }
 
-function buildStylesheet(fonts: EmbeddedFont[]): string {
+/** CSS-safe single-quoted font family (strips quotes/backslashes). */
+function cssFontFamily(family: string): string {
+  return `'${family.replace(/['\\]/g, '')}'`;
+}
+
+function buildStylesheet(fonts: EmbeddedFont[], template?: Partial<ComposeTemplate>): string {
   const fontFaces = fonts
     .map((font) => {
       const weight = font.fileName.includes('Bold') ? 'bold' : 'normal';
@@ -271,8 +282,27 @@ function buildStylesheet(fonts: EmbeddedFont[]): string {
     })
     .join('\n');
   const bodyFont = fonts.length > 0 ? "'Liberation Sans', Georgia, serif" : 'Georgia, serif';
+  // F2 brand theme: declared families lead the stack; the embedded/system
+  // fonts remain as fallback so the EPUB stays self-contained (EPUBCheck).
+  const brandBodyFont = template?.bodyFontFamily
+    ? `${cssFontFamily(template.bodyFontFamily)}, ${bodyFont}`
+    : bodyFont;
+  const brandRules = [
+    template?.displayFontFamily
+      ? `h1, h2, h3 { font-family: ${cssFontFamily(template.displayFontFamily)}, Georgia, serif; }`
+      : '',
+    template?.headingColor ? `h1, h2, h3 { color: ${template.headingColor}; }` : '',
+    template?.bodyColor ? `body { color: ${template.bodyColor}; }` : '',
+    template?.paperColor ? `body { background-color: ${template.paperColor}; }` : '',
+    template?.accentColor ? `blockquote { border-left-color: ${template.accentColor}; }` : '',
+    template?.accentMutedColor
+      ? `caption, figcaption { color: ${template.accentMutedColor}; }`
+      : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
   return `${fontFaces}
-body { font-family: ${bodyFont}; line-height: 1.5; margin: 5%; }
+body { font-family: ${brandBodyFont}; line-height: 1.5; margin: 5%; }
 h1 { font-size: 1.6em; margin: 1em 0 0.6em; }
 h2 { font-size: 1.3em; margin: 0.9em 0 0.5em; }
 h3 { font-size: 1.1em; margin: 0.8em 0 0.4em; }
@@ -289,7 +319,7 @@ pre { font-family: monospace; white-space: pre-wrap; }
 .cover h1 { font-size: 2em; }
 .cover-subtitle { font-size: 1.2em; color: #555; }
 .cover-author { margin-top: 2em; font-weight: bold; }
-`;
+${brandRules ? `${brandRules}\n` : ''}`;
 }
 
 /**
@@ -465,7 +495,7 @@ ${metadata.author ? `<p class="cover-author">${escapeXml(metadata.author)}</p>` 
   zip.file('OEBPS/nav.xhtml', navXhtml);
   zip.file('OEBPS/toc.ncx', ncx);
   zip.file('OEBPS/cover.xhtml', coverXhtml);
-  zip.file('OEBPS/styles/epub.css', buildStylesheet(fonts));
+  zip.file('OEBPS/styles/epub.css', buildStylesheet(fonts, options.template));
   for (const [path, content] of chapterFiles) {
     zip.file(path, content);
   }

@@ -21,6 +21,7 @@ import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 import type { PaginationConfig } from '@/lib/preview/device-configs';
 import { type PreviewPage } from '@/lib/preview/preview-builder';
 import { composeProjectPreview } from '@/lib/compose/preview-adapter';
+import type { ComposeTemplate } from '@/lib/compose/compose';
 import type { ProjectRecord } from './types';
 import {
   parsePageContent,
@@ -142,11 +143,58 @@ export function buildExportPreview(project: ProjectRecord) {
   return composeProjectPreview(project, DEFAULT_EXPORT_CONFIG).pages;
 }
 
+/** CSS-safe single-quoted font family (strips quotes/backslashes). */
+function cssFontFamily(family: string): string {
+  return `'${family.replace(/['\\]/g, '')}'`;
+}
+
+/**
+ * F2 brand theme for the HTML export: extra CSS derived from the composer
+ * template overrides (R3). Appended after the base stylesheet so the brand
+ * rules win the cascade; empty when no overrides are given (base styles
+ * unchanged).
+ */
+export function buildBrandExportCss(overrides?: Partial<ComposeTemplate>): string {
+  if (!overrides) return '';
+  const rules: string[] = [];
+  if (overrides.bodyFontFamily) {
+    rules.push(
+      `body { font-family: ${cssFontFamily(overrides.bodyFontFamily)}, system-ui, 'Segoe UI', sans-serif; }`,
+    );
+  }
+  if (overrides.displayFontFamily) {
+    rules.push(
+      `.export-content-inner h1, .export-content-inner h2, .export-content-inner h3, .export-content-inner h4, .export-content-inner h5, .export-content-inner h6 { font-family: ${cssFontFamily(overrides.displayFontFamily)}, Georgia, serif; }`,
+    );
+  }
+  if (overrides.headingColor) {
+    rules.push(
+      `.export-content-inner h1, .export-content-inner h2, .export-content-inner h3, .export-content-inner h4, .export-content-inner h5, .export-content-inner h6 { color: ${overrides.headingColor}; }`,
+    );
+  }
+  if (overrides.bodyColor) {
+    rules.push(
+      `.export-content-page .export-content-inner p, .export-content-page .export-content-inner li { color: ${overrides.bodyColor}; }`,
+    );
+  }
+  if (overrides.paperColor) {
+    rules.push(`.export-content-page { background-color: ${overrides.paperColor}; }`);
+  }
+  if (overrides.accentColor) {
+    rules.push(`.export-content-inner blockquote { border-left-color: ${overrides.accentColor}; }`);
+  }
+  if (overrides.accentMutedColor) {
+    rules.push(`.export-content-inner blockquote { color: ${overrides.accentMutedColor}; }`);
+  }
+  return rules.join('\n    ');
+}
+
 export async function renderProjectExportHtml(
   project: ProjectRecord,
   exportConfig: PaginationConfig = DEFAULT_EXPORT_CONFIG,
+  templateOverrides?: Partial<ComposeTemplate>,
 ) {
-  const pages = composeProjectPreview(project, exportConfig).pages;
+  const pages = composeProjectPreview(project, exportConfig, undefined, templateOverrides).pages;
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
   const footerTitle = project.document.metadata?.title ?? project.document.title;
@@ -359,6 +407,7 @@ export async function renderProjectExportHtml(
         min-height: 9in;
       }
     }
+    ${buildBrandExportCss(templateOverrides)}
   </style>
 </head>
 <body>
@@ -367,6 +416,55 @@ export async function renderProjectExportHtml(
   </main>
 </body>
 </html>`;
+}
+
+/**
+ * Maps a declared brand family to the closest PDF base-14 font.
+ *
+ * Font decision (F2): Libre Baskerville / Inter TTFs are not vendored in this
+ * repo nor in `pdfjs-dist/standard_fonts` (only Liberation Sans ships there),
+ * so `Font.register` is skipped for now and brand families map to base-14:
+ * serif display (e.g. Libre Baskerville) → Times, sans body (e.g. Inter) →
+ * Helvetica. The EPUB export instead declares the brand families first in the
+ * CSS stack with the embedded Liberation Sans as fallback, and the HTML
+ * export declares them with system fallbacks.
+ */
+function toBase14Font(family: string, bold: boolean): string {
+  if (/mono|courier|code/i.test(family)) return bold ? 'Courier-Bold' : 'Courier';
+  if (/sans|inter|helvetica|arial|roboto|verdana/i.test(family)) {
+    return bold ? 'Helvetica-Bold' : 'Helvetica';
+  }
+  if (/baskerville|georgia|garamond|playfair|times|serif|libre/i.test(family)) {
+    return bold ? 'Times-Bold' : 'Times-Roman';
+  }
+  return bold ? 'Helvetica-Bold' : 'Helvetica';
+}
+
+/** Resolved PDF theme from composer template overrides (defaults = current styles). */
+export interface PdfBrandTheme {
+  headingFont: string;
+  bodyFont: string;
+  quoteFont: string;
+  headingColor: string;
+  bodyColor: string;
+  mutedColor: string;
+  accentColor: string;
+}
+
+export function resolvePdfBrandTheme(overrides?: Partial<ComposeTemplate>): PdfBrandTheme {
+  return {
+    headingFont: overrides?.displayFontFamily
+      ? toBase14Font(overrides.displayFontFamily, true)
+      : 'Helvetica-Bold',
+    bodyFont: overrides?.bodyFontFamily ? toBase14Font(overrides.bodyFontFamily, false) : 'Helvetica',
+    quoteFont: overrides?.displayFontFamily
+      ? toBase14Font(overrides.displayFontFamily, false)
+      : 'Helvetica',
+    headingColor: overrides?.headingColor ?? '#111827',
+    bodyColor: overrides?.bodyColor ?? '#2b3442',
+    mutedColor: overrides?.accentMutedColor ?? '#5f6b7a',
+    accentColor: overrides?.accentColor ?? '#d4af37',
+  };
 }
 
 const pdfStyles = StyleSheet.create({
@@ -480,30 +578,56 @@ const pdfStyles = StyleSheet.create({
   },
 });
 
-function renderPdfContentBlock(block: ParsedContentBlock, index: number) {
+function renderPdfContentBlock(
+  block: ParsedContentBlock,
+  index: number,
+  theme: PdfBrandTheme = resolvePdfBrandTheme(),
+) {
   if (block.type === 'heading') {
     return (
-      <Text key={`pdf-heading-${index}`} style={block.level <= 1 ? pdfStyles.heading1 : pdfStyles.heading2}>
+      <Text
+        key={`pdf-heading-${index}`}
+        style={[
+          block.level <= 1 ? pdfStyles.heading1 : pdfStyles.heading2,
+          { fontFamily: theme.headingFont, color: theme.headingColor },
+        ]}
+      >
         {block.text}
       </Text>
     );
   }
   if (block.type === 'quote') {
     return (
-      <Text key={`pdf-quote-${index}`} style={pdfStyles.quote}>
+      <Text
+        key={`pdf-quote-${index}`}
+        style={[
+          pdfStyles.quote,
+          {
+            fontFamily: theme.quoteFont,
+            borderLeftColor: theme.accentColor,
+            color: theme.mutedColor,
+          },
+        ]}
+      >
         {block.text}
       </Text>
     );
   }
   if (block.type === 'list-item') {
     return (
-      <Text key={`pdf-li-${index}`} style={pdfStyles.listItem}>
+      <Text
+        key={`pdf-li-${index}`}
+        style={[pdfStyles.listItem, { fontFamily: theme.bodyFont, color: theme.bodyColor }]}
+      >
         • {block.text}
       </Text>
     );
   }
   return (
-    <Text key={`pdf-p-${index}`} style={pdfStyles.paragraph}>
+    <Text
+      key={`pdf-p-${index}`}
+      style={[pdfStyles.paragraph, { fontFamily: theme.bodyFont, color: theme.bodyColor }]}
+    >
       {block.text}
     </Text>
   );
@@ -516,6 +640,7 @@ export async function buildProjectPdf(project: ProjectRecord) {
 export async function buildProjectPdfWithConfig(
   project: ProjectRecord,
   exportConfig: PaginationConfig,
+  templateOverrides?: Partial<ComposeTemplate>,
 ) {
   const pdfPageWidth = exportConfig.pageWidth * PDF_SCALE;
   const pdfPageHeight = exportConfig.pageHeight * PDF_SCALE;
@@ -523,7 +648,8 @@ export async function buildProjectPdfWithConfig(
   const pdfMarginBottom = exportConfig.marginBottom * PDF_SCALE;
   const pdfMarginLeft = exportConfig.marginLeft * PDF_SCALE;
   const pdfMarginRight = exportConfig.marginRight * PDF_SCALE;
-  const pages = composeProjectPreview(project, exportConfig).pages;
+  const pages = composeProjectPreview(project, exportConfig, undefined, templateOverrides).pages;
+  const theme = resolvePdfBrandTheme(templateOverrides);
   const palette = COVER_PALETTE_COLORS[project.cover.palette] ?? COVER_PALETTE_COLORS.obsidian;
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
@@ -620,7 +746,7 @@ export async function buildProjectPdfWithConfig(
         return (
           <Page key={`pdf-content-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight }]}>
             <View style={[pdfStyles.pageInner, { paddingTop: pdfMarginTop, paddingBottom: pdfMarginBottom, paddingLeft: pdfMarginLeft, paddingRight: pdfMarginRight }]}>
-              {blocks.map((block, index) => renderPdfContentBlock(block, index))}
+              {blocks.map((block, index) => renderPdfContentBlock(block, index, theme))}
             </View>
           </Page>
         );

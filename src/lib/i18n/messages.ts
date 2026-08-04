@@ -361,6 +361,66 @@ export type AppMessages = {
     onboardingDone: string;
     onboardingClose: string;
   };
+  filestudio: {
+    badgeLocal: string;
+    badgeService: string;
+    badgeBrowser: string;
+    settingsEyebrow: string;
+    settingsTitle: string;
+    settingsDescription: string;
+    statusLabel: string;
+    statusPaired: string;
+    statusPending: string;
+    statusNone: string;
+    pairTitle: string;
+    pairRequestIdLabel: string;
+    pairRequestIdHint: string;
+    pairCodeLabel: string;
+    pairSubmit: string;
+    pairSubmitting: string;
+    pairSuccess: string;
+    pairError: string;
+    optimizeButton: string;
+    optimizeWorking: string;
+    optimizeNoCover: string;
+    optimizeSuccess: string;
+    consentTitle: string;
+    consentDescription: string;
+    consentOperationLabel: string;
+    consentModeLabel: string;
+    consentFileLabel: string;
+    consentFileCover: string;
+    consentConfirm: string;
+    consentReject: string;
+    derivativesTitle: string;
+    derivativesEmpty: string;
+    derivativeView: string;
+    operationResizeLabel: string;
+    jobStatus: {
+      queued: string;
+      processing: string;
+      completed: string;
+      failed: string;
+      cancelled: string;
+      expired: string;
+    };
+    errors: {
+      unavailable: string;
+      limitConcurrent: string;
+      limitDaily: string;
+      noCover: string;
+      notFound: string;
+      pairingCodeInvalid: string;
+      pairingExpired: string;
+      deviceRevoked: string;
+      repairRequired: string;
+      operationUnavailable: string;
+      uploadTooLarge: string;
+      integrityFailed: string;
+      consentRejected: string;
+      agentOffline: string;
+    };
+  };
 };
 
 export const appMessages: Record<UiLocale, AppMessages> = {
@@ -801,6 +861,68 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       onboardingDone: 'Entendido',
       onboardingClose: 'Cerrar introducción',
     },
+    filestudio: {
+      badgeLocal: 'Procesado en tu dispositivo',
+      badgeService: 'Procesado en la nube privada de Anclora',
+      badgeBrowser: 'Procesado en tu navegador',
+      settingsEyebrow: 'Integraciones',
+      settingsTitle: 'FileStudio — conversión de archivos',
+      settingsDescription:
+        'Empareja el Agente Local de FileStudio para convertir y post-procesar archivos en tu propio dispositivo, sin subir el contenido.',
+      statusLabel: 'Estado',
+      statusPaired: 'Agente Local emparejado',
+      statusPending: 'Emparejamiento pendiente',
+      statusNone: 'Sin agente emparejado',
+      pairTitle: 'Emparejar agente local',
+      pairRequestIdLabel: 'ID de solicitud',
+      pairRequestIdHint: 'El Agente Local lo muestra junto al código de emparejamiento.',
+      pairCodeLabel: 'Código de 6 dígitos',
+      pairSubmit: 'Emparejar',
+      pairSubmitting: 'Emparejando…',
+      pairSuccess: 'Agente Local emparejado correctamente.',
+      pairError: 'No se pudo completar el emparejamiento.',
+      optimizeButton: 'Optimizar portada (3 tamaños)',
+      optimizeWorking: 'Enviando a FileStudio…',
+      optimizeNoCover: 'Genera o sube primero una imagen de portada.',
+      optimizeSuccess: 'Optimización enviada. Los derivados aparecerán aquí al completarse.',
+      consentTitle: 'Confirmar procesamiento local',
+      consentDescription:
+        'FileStudio procesará este archivo en tu dispositivo emparejado. Declaramos la operación y el modo antes de enviar nada.',
+      consentOperationLabel: 'Operación',
+      consentModeLabel: 'Modo',
+      consentFileLabel: 'Archivo',
+      consentFileCover: 'Portada del proyecto',
+      consentConfirm: 'Autorizar y enviar',
+      consentReject: 'Rechazar',
+      derivativesTitle: 'Derivados generados',
+      derivativesEmpty: 'Aún no hay derivados. Lanza la optimización para generar los 3 tamaños.',
+      derivativeView: 'Ver',
+      operationResizeLabel: 'Redimensionar imagen a 1600 / 800 / 400 px',
+      jobStatus: {
+        queued: 'En cola',
+        processing: 'Procesando',
+        completed: 'Completado',
+        failed: 'Fallido',
+        cancelled: 'Cancelado',
+        expired: 'Caducado',
+      },
+      errors: {
+        unavailable: 'La conversión no está disponible ahora mismo. Inténtalo más tarde.',
+        limitConcurrent: 'Ya tienes 3 trabajos en curso. Espera a que termine alguno.',
+        limitDaily: 'Has alcanzado tu límite diario de trabajos de conversión.',
+        noCover: 'Genera o sube primero una imagen de portada.',
+        notFound: 'No encontramos este proyecto.',
+        pairingCodeInvalid: 'Código incorrecto. Comprueba el código que muestra el Agente Local.',
+        pairingExpired: 'El código ha caducado. Genera uno nuevo en el Agente Local.',
+        deviceRevoked: 'Este dispositivo se ha desvinculado. Vuelve a emparejarlo para procesar en local.',
+        repairRequired: 'El Agente Local necesita reconectarse.',
+        operationUnavailable: 'Esta operación no está disponible en ese modo; la hemos movido a otro procesador.',
+        uploadTooLarge: 'El archivo supera el tamaño máximo para este modo de procesamiento.',
+        integrityFailed: 'El resultado no pasó la verificación de integridad. Vamos a reintentarlo.',
+        consentRejected: 'El procesamiento local fue rechazado en tu dispositivo. Puedes reintentarlo o elegir otro modo.',
+        agentOffline: 'Tu dispositivo está desconectado. El trabajo esperará o puedes procesarlo en la nube privada.',
+      },
+    },
   },
   en: {
     shell: {
@@ -1238,6 +1360,68 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       onboardingSkip: 'Skip introduction',
       onboardingDone: 'Got it',
       onboardingClose: 'Close introduction',
+    },
+    filestudio: {
+      badgeLocal: 'Processed on your device',
+      badgeService: 'Processed in Anclora’s private cloud',
+      badgeBrowser: 'Processed in your browser',
+      settingsEyebrow: 'Integrations',
+      settingsTitle: 'FileStudio — file conversion',
+      settingsDescription:
+        'Pair the FileStudio Local Agent to convert and post-process files on your own device, without uploading the content.',
+      statusLabel: 'Status',
+      statusPaired: 'Local Agent paired',
+      statusPending: 'Pairing pending',
+      statusNone: 'No agent paired',
+      pairTitle: 'Pair local agent',
+      pairRequestIdLabel: 'Request ID',
+      pairRequestIdHint: 'The Local Agent shows it next to the pairing code.',
+      pairCodeLabel: '6-digit code',
+      pairSubmit: 'Pair',
+      pairSubmitting: 'Pairing…',
+      pairSuccess: 'Local Agent paired successfully.',
+      pairError: 'The pairing could not be completed.',
+      optimizeButton: 'Optimize cover (3 sizes)',
+      optimizeWorking: 'Sending to FileStudio…',
+      optimizeNoCover: 'Generate or upload a cover image first.',
+      optimizeSuccess: 'Optimization sent. The derivatives will appear here when done.',
+      consentTitle: 'Confirm local processing',
+      consentDescription:
+        'FileStudio will process this file on your paired device. We declare the operation and the mode before sending anything.',
+      consentOperationLabel: 'Operation',
+      consentModeLabel: 'Mode',
+      consentFileLabel: 'File',
+      consentFileCover: 'Project cover',
+      consentConfirm: 'Authorize and send',
+      consentReject: 'Reject',
+      derivativesTitle: 'Generated derivatives',
+      derivativesEmpty: 'No derivatives yet. Run the optimization to generate the 3 sizes.',
+      derivativeView: 'View',
+      operationResizeLabel: 'Resize image to 1600 / 800 / 400 px',
+      jobStatus: {
+        queued: 'Queued',
+        processing: 'Processing',
+        completed: 'Completed',
+        failed: 'Failed',
+        cancelled: 'Cancelled',
+        expired: 'Expired',
+      },
+      errors: {
+        unavailable: 'Conversion is not available right now. Please try again later.',
+        limitConcurrent: 'You already have 3 jobs in progress. Wait for one to finish.',
+        limitDaily: 'You have reached your daily conversion job limit.',
+        noCover: 'Generate or upload a cover image first.',
+        notFound: 'We could not find this project.',
+        pairingCodeInvalid: 'Incorrect code. Check the code shown by the Local Agent.',
+        pairingExpired: 'The code has expired. Generate a new one in the Local Agent.',
+        deviceRevoked: 'This device has been unlinked. Pair it again to process locally.',
+        repairRequired: 'The Local Agent needs to reconnect.',
+        operationUnavailable: 'This operation is not available in that mode; we moved it to another processor.',
+        uploadTooLarge: 'The file exceeds the maximum size for this processing mode.',
+        integrityFailed: 'The result did not pass the integrity check. We are retrying.',
+        consentRejected: 'Local processing was rejected on your device. You can retry or choose another mode.',
+        agentOffline: 'Your device is offline. The job will wait, or you can process it in the private cloud.',
+      },
     },
   },
 };
