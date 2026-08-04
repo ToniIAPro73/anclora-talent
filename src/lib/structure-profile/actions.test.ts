@@ -38,6 +38,8 @@ const MINIMAL_SCHEMA: InferredStructureSchema = {
     nombre: null,
     numPartes: 1,
     secuencia: [{ parte: 'Parte única', funcionRetorica: null }],
+    capitulosDeApertura: 0,
+    capitulosPorParte: [1],
     regla: 'regla',
     confianza: 'inferido_de_un_documento',
   },

@@ -97,6 +97,11 @@ describe.skipIf(!fixtureAvailable)(
         { parte: 'La reconstrucción', funcionRetorica: 'ofrecer vía de salida' },
         { parte: 'El sistema que sostiene', funcionRetorica: 'convertir la solución en hábito sostenible' },
       ]);
+      // One opening chapter before the first part; the rest belong to parts.
+      expect(schema.macroPattern.capitulosDeApertura).toBe(1);
+      expect(
+        schema.macroPattern.capitulosPorParte.reduce((sum, count) => sum + count, 0),
+      ).toBe(11);
       // Heuristic field: confidence marked, never mandatory.
       expect(schema.macroPattern.confianza).toBe('inferido_de_un_documento');
     });

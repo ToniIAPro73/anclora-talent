@@ -143,6 +143,22 @@ describe('extractStructureFromDocument', () => {
     expect(plain.enumerationStyle).toBeNull();
   });
 
+  it('attributes chapters to their owning part (capitulosPorParte) for scaffolding', () => {
+    const schema = extractStructureFromDocument(
+      doc([
+        heading(2, 'Capítulo de apertura'),
+        heading(1, 'Parte uno'),
+        heading(2, 'Capítulo 1.1'),
+        heading(2, 'Capítulo 1.2'),
+        heading(1, 'Parte dos'),
+        heading(2, 'Capítulo 2.1'),
+      ]),
+    );
+
+    expect(schema.macroPattern.capitulosDeApertura).toBe(1);
+    expect(schema.macroPattern.capitulosPorParte).toEqual([2, 1]);
+  });
+
   it('computes the per-chapter subsection distribution, average and range', () => {
     const schema = extractStructureFromDocument(
       doc([

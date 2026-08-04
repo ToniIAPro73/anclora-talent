@@ -345,6 +345,26 @@ export type AppMessages = {
     reimportResultTitle: string;
     reimportDone: string;
     reimportError: string;
+    structureToggleLabel: string;
+    structureToggleHint: string;
+    structureConfigureAction: string;
+    structureConfiguredBadge: string;
+    structureDialogTitle: string;
+    structureDialogDescription: string;
+    structureSourceUploadLabel: string;
+    structureSourceSavedLabel: string;
+    structureNoSavedProfiles: string;
+    structureAnalyzing: string;
+    structureConfirmTitle: string;
+    structureHierarchyLine: string;
+    structureSummaryLine: string;
+    structureFunctionMissing: string;
+    structureConfidencePrefix: string;
+    structureSaveProfileLabel: string;
+    structureProfileNamePlaceholder: string;
+    structureConfirmAction: string;
+    structureDiscardAction: string;
+    structureError: string;
     healthRecomposedBadge: string;
     healthDiffTitle: string;
     healthDiffShift: string;
@@ -959,6 +979,28 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       reimportResultTitle: 'Reimportación completada',
       reimportDone: 'Cerrar',
       reimportError: 'No se pudo reimportar el archivo.',
+      structureToggleLabel: 'Aplicar estructura de referencia',
+      structureToggleHint:
+        'Genera un andamiaje vacío (partes, capítulos y subsecciones) a partir de la estructura de un documento de referencia. Nunca copia contenido ni voz de la fuente.',
+      structureConfigureAction: 'Configurar estructura de referencia',
+      structureConfiguredBadge: 'Estructura confirmada: {summary}',
+      structureDialogTitle: 'Estructura de referencia',
+      structureDialogDescription:
+        'Sube un documento de referencia o elige un perfil guardado. Revisarás el esquema inferido antes de aplicarlo: nada se aplica sin tu confirmación.',
+      structureSourceUploadLabel: 'Subir documento de referencia',
+      structureSourceSavedLabel: 'Perfiles de estructura guardados',
+      structureNoSavedProfiles: 'Aún no tienes perfiles de estructura guardados.',
+      structureAnalyzing: 'Analizando estructura…',
+      structureConfirmTitle: 'Confirma el esquema inferido',
+      structureHierarchyLine: 'Jerarquía: {levels} (profundidad {depth})',
+      structureSummaryLine: '{parts} partes · {chapters} capítulos · {subsections} subsecciones',
+      structureFunctionMissing: 'sin inferir (edítala después)',
+      structureConfidencePrefix: 'confianza:',
+      structureSaveProfileLabel: 'Guardar como perfil reutilizable',
+      structureProfileNamePlaceholder: 'Nombre del perfil',
+      structureConfirmAction: 'Confirmar estructura',
+      structureDiscardAction: 'Descartar',
+      structureError: 'No se pudo analizar el documento de referencia.',
       healthRecomposedBadge: 'Recompuesto desde la pág. {page}',
       healthDiffTitle: 'Cambios desde la última edición',
       healthDiffShift: '{title}: pág. {from} → {to}',
@@ -1575,6 +1617,28 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       reimportResultTitle: 'Reimport completed',
       reimportDone: 'Close',
       reimportError: 'The file could not be reimported.',
+      structureToggleLabel: 'Apply reference structure',
+      structureToggleHint:
+        'Generates an empty scaffold (parts, chapters and subsections) from the structure of a reference document. It never copies content or voice from the source.',
+      structureConfigureAction: 'Configure reference structure',
+      structureConfiguredBadge: 'Structure confirmed: {summary}',
+      structureDialogTitle: 'Reference structure',
+      structureDialogDescription:
+        'Upload a reference document or pick a saved profile. You will review the inferred schema before applying it: nothing is applied without your confirmation.',
+      structureSourceUploadLabel: 'Upload reference document',
+      structureSourceSavedLabel: 'Saved structure profiles',
+      structureNoSavedProfiles: 'You have no saved structure profiles yet.',
+      structureAnalyzing: 'Analyzing structure…',
+      structureConfirmTitle: 'Confirm the inferred schema',
+      structureHierarchyLine: 'Hierarchy: {levels} (depth {depth})',
+      structureSummaryLine: '{parts} parts · {chapters} chapters · {subsections} subsections',
+      structureFunctionMissing: 'not inferred (edit it later)',
+      structureConfidencePrefix: 'confidence:',
+      structureSaveProfileLabel: 'Save as reusable profile',
+      structureProfileNamePlaceholder: 'Profile name',
+      structureConfirmAction: 'Confirm structure',
+      structureDiscardAction: 'Discard',
+      structureError: 'The reference document could not be analyzed.',
       healthRecomposedBadge: 'Recomposed from page {page}',
       healthDiffTitle: 'Changes since last edit',
       healthDiffShift: '{title}: page {from} → {to}',

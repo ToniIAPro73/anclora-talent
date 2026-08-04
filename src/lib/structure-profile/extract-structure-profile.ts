@@ -87,6 +87,8 @@ const CLOSE_HINT_RE = /paso\s+a\s+paso|c[oó]mo\s+se\s+practica|lo\s+que\s+no\s+
 
 interface ChapterSpan {
   title: string;
+  /** Index of the owning part (H1); -1 for chapters before the first part. */
+  parteIndex: number;
   subsections: string[];
   firstParagraph: string | null;
   lastText: string | null;
@@ -166,7 +168,13 @@ function walkDocument(document: SemanticDocument): DocumentWalk {
       partes.push(text);
       currentChapter = null;
     } else if (block.level === 2) {
-      currentChapter = { title: text, subsections: [], firstParagraph: null, lastText: null };
+      currentChapter = {
+        title: text,
+        parteIndex: partes.length - 1,
+        subsections: [],
+        firstParagraph: null,
+        lastText: null,
+      };
       chapters.push(currentChapter);
     } else if (block.level === 3) {
       subsectionCount += 1;
@@ -208,16 +216,31 @@ function inferRhetoricalFunction(partTitle: string): string | null {
   return null;
 }
 
-function buildMacroPattern(partes: string[]): InferredStructureSchema['macroPattern'] {
+function buildMacroPattern(
+  partes: string[],
+  chapters: ChapterSpan[],
+): InferredStructureSchema['macroPattern'] {
   const secuencia: MacroPatternPart[] = partes.map((parte) => ({
     parte,
     funcionRetorica: inferRhetoricalFunction(parte),
   }));
 
+  const capitulosPorParte = partes.map(() => 0);
+  let capitulosDeApertura = 0;
+  for (const chapter of chapters) {
+    if (chapter.parteIndex < 0) {
+      capitulosDeApertura += 1;
+    } else if (chapter.parteIndex < capitulosPorParte.length) {
+      capitulosPorParte[chapter.parteIndex] += 1;
+    }
+  }
+
   return {
     nombre: null,
     numPartes: partes.length,
     secuencia,
+    capitulosDeApertura,
+    capitulosPorParte,
     regla: MACRO_PATTERN_RULE,
     // The part titles are observed; the rhetorical functions are heuristic.
     confianza: 'inferido_de_un_documento',
@@ -332,7 +355,7 @@ export function extractStructureFromDocument(
   return {
     profileType: 'structure',
     hierarchy: buildHierarchy(walk),
-    macroPattern: buildMacroPattern(walk.partes),
+    macroPattern: buildMacroPattern(walk.partes, walk.chapters),
     chapterPattern: buildChapterPattern(walk.chapters),
     enumerationStyle: buildEnumerationStyle(walk.chapters),
     tableUsage: {

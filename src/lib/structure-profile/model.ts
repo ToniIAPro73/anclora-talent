@@ -55,6 +55,10 @@ export interface StructureMacroPattern {
   nombre: string | null;
   numPartes: number;
   secuencia: MacroPatternPart[];
+  /** Chapters observed before the first part (book opening; usually 0 or 1). */
+  capitulosDeApertura: number;
+  /** Chapters per part, in part order (sums to numCapitulos - capitulosDeApertura). */
+  capitulosPorParte: number[];
   regla: string;
   confianza: StructureConfidence;
 }

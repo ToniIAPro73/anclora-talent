@@ -46,6 +46,9 @@ export async function createProjectAction(formData: FormData) {
   const title = String(formData.get('title') ?? '').trim();
   const templateId = String(formData.get('templateId') ?? '').trim() || undefined;
   const sourceDocument = formData.get('sourceDocument');
+  // F3: confirmed structure schema from the governed wizard (G2: the field
+  // only exists after explicit human confirmation in the UI).
+  const structureSchemaRaw = String(formData.get('structureSchema') ?? '').trim();
 
   console.info('[createProjectAction] submit received', {
     userId,
@@ -54,6 +57,7 @@ export async function createProjectAction(formData: FormData) {
     sourceDocumentName: sourceDocument instanceof File ? sourceDocument.name : null,
     sourceDocumentType: sourceDocument instanceof File ? sourceDocument.type : null,
     sourceDocumentSize: sourceDocument instanceof File ? sourceDocument.size : null,
+    hasStructureSchema: Boolean(structureSchemaRaw),
   });
 
   if (!title) {
@@ -61,8 +65,35 @@ export async function createProjectAction(formData: FormData) {
   }
 
   try {
+    // A confirmed structure scaffold takes precedence over an imported
+    // source document: the scaffold is an EMPTY book shaped by the profile
+    // (G3: form, never voice); importing content at the same time would
+    // defeat its purpose.
+    const structureSeed = structureSchemaRaw
+      ? await (async () => {
+          const { buildStructureScaffolding } = await import('@/lib/structure-profile/scaffolding');
+          let parsed: unknown;
+          try {
+            parsed = JSON.parse(structureSchemaRaw);
+          } catch {
+            throw new Error('Invalid structureSchema payload');
+          }
+          const schema = parsed as Parameters<typeof buildStructureScaffolding>[0];
+          if (schema?.profileType !== 'structure') {
+            throw new Error('Invalid structureSchema payload');
+          }
+          const seed = buildStructureScaffolding(schema, { title });
+          console.info('[createProjectAction] structure scaffolding built', {
+            userId,
+            chapters: seed.chapters?.length ?? 0,
+          });
+          return seed;
+        })()
+      : null;
+
     const importedDocument =
-      sourceDocument instanceof File && sourceDocument.size > 0
+      structureSeed ??
+      (sourceDocument instanceof File && sourceDocument.size > 0
         ? await (async () => {
             const { extractImportedDocumentSeed } = await import('./import');
             const result = await extractImportedDocumentSeed(sourceDocument);
@@ -75,7 +106,7 @@ export async function createProjectAction(formData: FormData) {
             });
             return result;
           })()
-        : null;
+        : null);
 
     const project = await projectRepository.createProject(userId, { title, importedDocument, templateId });
 
