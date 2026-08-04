@@ -282,6 +282,17 @@ export type AppMessages = {
     healthViolationsCount: string;
     healthViolationPage: string;
     healthGoToPreview: string;
+    preflightTitle: string;
+    preflightChannelKdp: string;
+    preflightChannelIngramspark: string;
+    preflightChannelKobo: string;
+    preflightEmpty: string;
+    preflightIssueCount: string;
+    preflightSeverityError: string;
+    preflightSeverityWarning: string;
+    preflightSeverityInfo: string;
+    /** Localized message templates per preflight rule key (`{param}` placeholders). */
+    preflightRules: Record<string, string>;
     exportGateBlockedMessage: string;
     exportGateWarnMessage: string;
     metadataPanelEyebrow: string;
@@ -696,6 +707,32 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       healthViolationsCount: '{count} violaciones',
       healthViolationPage: 'pág. {page}',
       healthGoToPreview: 'Abrir preview',
+      preflightTitle: 'Pre-flight por canal',
+      preflightChannelKdp: 'KDP',
+      preflightChannelIngramspark: 'IngramSpark',
+      preflightChannelKobo: 'Kobo',
+      preflightEmpty: 'Sin incidencias. El documento está listo para este canal.',
+      preflightIssueCount: '{count} incidencias',
+      preflightSeverityError: 'error',
+      preflightSeverityWarning: 'aviso',
+      preflightSeverityInfo: 'info',
+      preflightRules: {
+        'kdp.metadata.title': 'KDP exige un título en los metadatos de la publicación.',
+        'kdp.metadata.author': 'KDP exige autor/a en los metadatos de la publicación.',
+        'kdp.metadata.isbn': 'Sin ISBN: KDP asignará un ASIN propio. Añade el ISBN si lo tienes.',
+        'kdp.metadata.language': 'Idioma no declarado: KDP lo usa para el catálogo y los lectores.',
+        'kdp.image.alt': 'Imagen sin texto alternativo ({src}); KDP lo exige en el contenido.',
+        'kdp.image.resolution': 'Imagen muy pequeña ({lines} líneas estimadas); verifica su resolución antes de publicar.',
+        'kdp.fonts.embed': 'La fuente «{font}» no es embebible; el EPUB incrusta Liberation y el resto cae a fuentes del sistema.',
+        'ingram.metadata.isbn': 'IngramSpark exige un ISBN propio para publicar.',
+        'ingram.metadata.description': 'Descripción recomendada para la ficha de distribución de IngramSpark.',
+        'ingram.image.packaging': 'Imagen con origen no empaquetable ({src}); súbela como asset del proyecto.',
+        'kobo.metadata.title': 'Kobo exige un título en los metadatos.',
+        'kobo.metadata.author': 'Kobo exige autor/a en los metadatos.',
+        'kobo.metadata.language': 'Kobo exige el idioma declarado (accesibilidad EPUB).',
+        'kobo.a11y.imageAlt': 'Imagen sin texto alternativo ({src}); la accesibilidad EPUB lo exige.',
+        'kobo.a11y.headingJump': 'Salto de jerarquía de encabezados (H{from} → H{to}); rompe la navegación accesible.',
+      },
       exportGateBlockedMessage: 'Exportación bloqueada: resuelve las violaciones del documento primero.',
       exportGateWarnMessage: 'Aviso: el documento tiene {count} violaciones de composición.',
       metadataPanelEyebrow: 'Producto digital',
@@ -1108,6 +1145,32 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       healthViolationsCount: '{count} violations',
       healthViolationPage: 'page {page}',
       healthGoToPreview: 'Open preview',
+      preflightTitle: 'Channel pre-flight',
+      preflightChannelKdp: 'KDP',
+      preflightChannelIngramspark: 'IngramSpark',
+      preflightChannelKobo: 'Kobo',
+      preflightEmpty: 'No findings. The document is ready for this channel.',
+      preflightIssueCount: '{count} findings',
+      preflightSeverityError: 'error',
+      preflightSeverityWarning: 'warning',
+      preflightSeverityInfo: 'info',
+      preflightRules: {
+        'kdp.metadata.title': 'KDP requires a title in the publication metadata.',
+        'kdp.metadata.author': 'KDP requires an author in the publication metadata.',
+        'kdp.metadata.isbn': 'No ISBN: KDP will assign its own ASIN. Add the ISBN if you have one.',
+        'kdp.metadata.language': 'No language declared: KDP uses it for the catalog and readers.',
+        'kdp.image.alt': 'Image without alternative text ({src}); KDP requires it in the content.',
+        'kdp.image.resolution': 'Very small image ({lines} estimated lines); double-check its resolution before publishing.',
+        'kdp.fonts.embed': 'The font “{font}” is not embeddable; the EPUB embeds Liberation and the rest falls back to system fonts.',
+        'ingram.metadata.isbn': 'IngramSpark requires your own ISBN to publish.',
+        'ingram.metadata.description': 'Description recommended for the IngramSpark distribution record.',
+        'ingram.image.packaging': 'Image with a non-packageable source ({src}); upload it as a project asset.',
+        'kobo.metadata.title': 'Kobo requires a title in the metadata.',
+        'kobo.metadata.author': 'Kobo requires an author in the metadata.',
+        'kobo.metadata.language': 'Kobo requires the declared language (EPUB accessibility).',
+        'kobo.a11y.imageAlt': 'Image without alternative text ({src}); EPUB accessibility requires it.',
+        'kobo.a11y.headingJump': 'Heading hierarchy jump (H{from} → H{to}); it breaks accessible navigation.',
+      },
       exportGateBlockedMessage: 'Export blocked: resolve the document violations first.',
       exportGateWarnMessage: 'Warning: the document has {count} composition violations.',
       metadataPanelEyebrow: 'Digital product',

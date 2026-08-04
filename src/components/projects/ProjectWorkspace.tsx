@@ -24,6 +24,8 @@ import { WorkspaceOnboarding } from './WorkspaceOnboarding';
 import { ProductMetadataPanel } from './ProductMetadataPanel';
 import { useDocumentComposition } from './useDocumentComposition';
 import { resolveDocumentRules } from '@/lib/compose/rules';
+import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
+import { countPreflightErrors, preflight } from '@/lib/preflight/preflight';
 import {
   saveBackCoverAction,
   saveChapterContentAction,
@@ -319,8 +321,17 @@ export function ProjectWorkspace({
   const composition = useDocumentComposition(project);
   const documentViolations = composition.result.violations;
   const documentViolationCount = documentViolations.length;
+  // F1: channel pre-flight (KDP/IngramSpark/Kobo) over the same inputs the
+  // composition used; merged into the health panel, errors feed the gate.
+  const preflightInput = useMemo(() => {
+    const { document } = projectToSemanticDocument(project);
+    return { document, composed: composition.result, metadata: document.metadata };
+  }, [project, composition.result]);
+  const preflightChecks = useMemo(() => preflight(preflightInput), [preflightInput]);
+  const preflightErrorCount = countPreflightErrors(preflightChecks);
   const exportGate = resolveDocumentRules(project.document.rules).exportGate;
-  const exportBlocked = exportGate === 'block' && documentViolationCount > 0;
+  const gateIssueCount = documentViolationCount + preflightErrorCount;
+  const exportBlocked = exportGate === 'block' && gateIssueCount > 0;
 
   // F0.3 undo: last chapter save of the session (recorded by the chapter
   // editor). Reverting re-saves the pre-save HTML through the regular save
@@ -419,6 +430,7 @@ export function ProjectWorkspace({
               project={project}
               violations={documentViolations}
               copy={copy}
+              checks={preflightChecks}
               diff={composition.diff}
               recomposedFromPage={composition.recomposedFromPage}
               telemetry={composition.telemetry}
@@ -512,7 +524,7 @@ export function ProjectWorkspace({
               <p className="ac-export-suite__summary">
                 Tu proyecto está listo para ser publicado. Elige el formato de salida deseado.
               </p>
-              {exportGate !== 'off' && documentViolationCount > 0 && (
+              {exportGate !== 'off' && gateIssueCount > 0 && (
                 <p
                   role="alert"
                   data-testid="export-gate-message"
@@ -520,7 +532,7 @@ export function ProjectWorkspace({
                 >
                   {exportBlocked
                     ? copy.exportGateBlockedMessage
-                    : copy.exportGateWarnMessage.replace('{count}', String(documentViolationCount))}
+                    : copy.exportGateWarnMessage.replace('{count}', String(gateIssueCount))}
                 </p>
               )}
             </div>

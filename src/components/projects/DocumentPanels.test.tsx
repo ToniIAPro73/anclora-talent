@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { resolveDocumentRules } from '@/lib/compose/rules';
+import type { PreflightCheck } from '@/lib/preflight/preflight';
 import { DocumentRulesPanel } from './DocumentRulesPanel';
 import { DocumentHealthPanel } from './DocumentHealthPanel';
 
@@ -104,6 +105,55 @@ describe('DocumentHealthPanel', () => {
     expect(screen.getByTestId('document-health-counter')).toHaveTextContent('1 violaciones');
     expect(screen.getByTestId('document-health-violations')).toHaveTextContent('keepTogether.table');
     expect(screen.getByTestId('document-health-violations')).toHaveTextContent('pág. 14');
+  });
+});
+
+describe('DocumentHealthPanel — pre-flight por canal (F1)', () => {
+  const checks: PreflightCheck[] = [
+    { channel: 'kdp', severity: 'error', rule: 'kdp.metadata.author', params: {} },
+    {
+      channel: 'kobo',
+      severity: 'warning',
+      rule: 'kobo.a11y.headingJump',
+      params: { from: '1', to: '3' },
+      page: 4,
+      blockId: 'h3',
+    },
+  ];
+
+  it('renders channel chips and the selected channel checks with localized message', () => {
+    render(<DocumentHealthPanel project={fakeProject()} violations={[]} copy={copy} checks={checks} />);
+    expect(screen.getByTestId('document-preflight')).toBeInTheDocument();
+    expect(screen.getByTestId('preflight-tab-kdp')).toHaveTextContent('KDP');
+    expect(screen.getByTestId('preflight-tab-ingramspark')).toHaveTextContent('IngramSpark');
+    expect(screen.getByTestId('preflight-tab-kobo')).toHaveTextContent('Kobo');
+    // KDP selected by default: the error check renders with severity + copy.
+    const list = screen.getByTestId('document-preflight-checks');
+    expect(list).toHaveTextContent('kdp.metadata.author');
+    expect(list).toHaveTextContent('KDP exige autor/a en los metadatos de la publicación.');
+    expect(screen.getByTestId('preflight-check-severity')).toHaveTextContent('error');
+  });
+
+  it('switches channels via chips and links page-anchored checks to the preview', () => {
+    render(<DocumentHealthPanel project={fakeProject()} violations={[]} copy={copy} checks={checks} />);
+    fireEvent.click(screen.getByTestId('preflight-tab-kobo'));
+    const list = screen.getByTestId('document-preflight-checks');
+    expect(list).toHaveTextContent('kobo.a11y.headingJump');
+    expect(list).toHaveTextContent('Salto de jerarquía de encabezados (H1 → H3)');
+    const link = screen.getByRole('link', { name: 'pág. 5' });
+    expect(link).toHaveAttribute('href', '/projects/proj-1/preview');
+  });
+
+  it('shows the empty state for a clean channel and stays hidden without checks', () => {
+    render(<DocumentHealthPanel project={fakeProject()} violations={[]} copy={copy} checks={[]} />);
+    expect(screen.getByTestId('document-preflight')).toHaveTextContent(
+      'Sin incidencias. El documento está listo para este canal.',
+    );
+  });
+
+  it('does not render the section when checks are not provided', () => {
+    render(<DocumentHealthPanel project={fakeProject()} violations={[]} copy={copy} />);
+    expect(screen.queryByTestId('document-preflight')).not.toBeInTheDocument();
   });
 });
 
