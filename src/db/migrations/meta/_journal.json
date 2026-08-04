@@ -29,6 +29,13 @@
       "when": 1785697903725,
       "tag": "0003_hard_nitro",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785833802272,
+      "tag": "0004_clumsy_menace",
+      "breakpoints": true
     }
   ]
 }
