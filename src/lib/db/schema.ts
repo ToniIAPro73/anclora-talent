@@ -209,6 +209,31 @@ export const brandProfiles = pgTable(
   (table) => [unique('brand_profiles_user_name_version_unique').on(table.userId, table.name, table.version)],
 );
 
+// F3 — versioned structure profiles (dual-profiles addendum: brand ≠ structure).
+// A StructureProfile is a governed scaffolding contract (hierarchy, rhetorical
+// macro-pattern, chapter open/close patterns, enumeration style, table usage
+// and source metrics as one jsonb schema); it never captures tone or lexicon
+// (G3). Status draft ≙ pendiente_confirmacion_usuario: no structural profile
+// is applied without explicit human confirmation of the inferred schema (G2),
+// and every profile records its source document (G4).
+export const structureProfiles = pgTable(
+  'structure_profiles',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: varchar('user_id', { length: 191 }).notNull(),
+    name: varchar('name', { length: 255 }).notNull(),
+    version: integer('version').notNull().default(1),
+    // draft | active | deprecated
+    status: varchar('status', { length: 16 }).notNull().default('draft'),
+    // InferredStructureSchema JSON
+    schema: jsonb('schema').notNull(),
+    sourceFileName: varchar('source_file_name', { length: 255 }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [unique('structure_profiles_user_name_version_unique').on(table.userId, table.name, table.version)],
+);
+
 // F1b — FileStudio Local Agent pairing (sdd/integrations/filestudio/authentication.md).
 // One row per user; credentials are AES-256-GCM encrypted at rest (never logged).
 export const filestudioConnections = pgTable('filestudio_connections', {
