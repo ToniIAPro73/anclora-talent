@@ -246,6 +246,9 @@ export type AppMessages = {
     rulesPresetDefault: string;
     rulesPresetPrint: string;
     rulesPresetDigital: string;
+    rulesPresetDefaultDesc: string;
+    rulesPresetPrintDesc: string;
+    rulesPresetDigitalDesc: string;
     rulesKeepTable: string;
     rulesTableFillGap: string;
     rulesFillGapLeaveSpace: string;
@@ -329,6 +332,18 @@ export type AppMessages = {
     previewModalUntitledChapter: string;
     previewModalCoverAlt: string;
     previewModalBackCoverAlt: string;
+    onboardingEyebrow: string;
+    onboardingStepLabel: string;
+    onboardingStep1Title: string;
+    onboardingStep1Body: string;
+    onboardingStep2Title: string;
+    onboardingStep2Body: string;
+    onboardingStep3Title: string;
+    onboardingStep3Body: string;
+    onboardingNext: string;
+    onboardingSkip: string;
+    onboardingDone: string;
+    onboardingClose: string;
   };
 };
 
@@ -637,9 +652,12 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       rulesPanelTitle: 'Reglas del documento',
       rulesPanelDescription: 'Controla cómo el motor compone la paginación: bloques indivisibles, encabezados huérfanos, viudas y numeración.',
       rulesPresetLabel: 'Preset',
-      rulesPresetDefault: 'Por defecto',
-      rulesPresetPrint: 'Impresión (recto)',
-      rulesPresetDigital: 'Digital',
+      rulesPresetDefault: 'Empezar con buen pie',
+      rulesPresetPrint: 'Maquetación print sin sustos',
+      rulesPresetDigital: 'Publicar sin rechazos',
+      rulesPresetDefaultDesc: 'Reglas equilibradas, listas para editar y publicar sin ajustes.',
+      rulesPresetPrintDesc: 'Capítulos en página impar y saltos de página listos para imprenta.',
+      rulesPresetDigitalDesc: 'Paginación fluida pensada para la lectura en pantalla.',
       rulesKeepTable: 'No dividir tablas',
       rulesTableFillGap: 'Hueco al saltar una tabla',
       rulesFillGapLeaveSpace: 'Dejar espacio',
@@ -723,6 +741,18 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewModalUntitledChapter: 'Capítulo sin título',
       previewModalCoverAlt: 'Portada de vista previa',
       previewModalBackCoverAlt: 'Contraportada de vista previa',
+      onboardingEyebrow: 'Bienvenido a tu workspace editorial',
+      onboardingStepLabel: 'Paso {step} de {total}',
+      onboardingStep1Title: 'Revisa sin miedo',
+      onboardingStep1Body: 'Edita, reordena y reescribe a tu ritmo: el documento se recompone solo con cada cambio.',
+      onboardingStep2Title: 'Nunca más un índice desactualizado',
+      onboardingStep2Body: 'El índice y la paginación se regeneran solos mientras trabajas. Tu libro siempre está al día.',
+      onboardingStep3Title: 'Publica sin rechazos',
+      onboardingStep3Body: 'El panel de salud y las reglas del documento vigilan cada detalle antes de exportar.',
+      onboardingNext: 'Siguiente',
+      onboardingSkip: 'Saltar introducción',
+      onboardingDone: 'Entendido',
+      onboardingClose: 'Cerrar introducción',
     },
   },
   en: {
@@ -1029,9 +1059,12 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       rulesPanelTitle: 'Document rules',
       rulesPanelDescription: 'Control how the engine composes pagination: unbreakable blocks, orphan headings, widows and numbering.',
       rulesPresetLabel: 'Preset',
-      rulesPresetDefault: 'Default',
-      rulesPresetPrint: 'Print (recto)',
-      rulesPresetDigital: 'Digital',
+      rulesPresetDefault: 'Start on the right foot',
+      rulesPresetPrint: 'Print layout, no surprises',
+      rulesPresetDigital: 'Publish without rejections',
+      rulesPresetDefaultDesc: 'Balanced rules, ready to edit and publish with no tweaks.',
+      rulesPresetPrintDesc: 'Odd-page chapter starts and page breaks, ready for the printer.',
+      rulesPresetDigitalDesc: 'Fluid pagination designed for on-screen reading.',
       rulesKeepTable: 'Never split tables',
       rulesTableFillGap: 'Gap when a table jumps',
       rulesFillGapLeaveSpace: 'Leave space',
@@ -1115,6 +1148,18 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewModalUntitledChapter: 'Untitled chapter',
       previewModalCoverAlt: 'Preview cover',
       previewModalBackCoverAlt: 'Preview back cover',
+      onboardingEyebrow: 'Welcome to your editorial workspace',
+      onboardingStepLabel: 'Step {step} of {total}',
+      onboardingStep1Title: 'Edit without fear',
+      onboardingStep1Body: 'Edit, reorder and rewrite at your own pace: the document recomposes itself with every change.',
+      onboardingStep2Title: 'Never an outdated table of contents again',
+      onboardingStep2Body: 'TOC and pagination regenerate automatically as you work. Your book is always up to date.',
+      onboardingStep3Title: 'Publish without rejections',
+      onboardingStep3Body: 'The health panel and document rules watch every detail before export.',
+      onboardingNext: 'Next',
+      onboardingSkip: 'Skip introduction',
+      onboardingDone: 'Got it',
+      onboardingClose: 'Close introduction',
     },
   },
 };

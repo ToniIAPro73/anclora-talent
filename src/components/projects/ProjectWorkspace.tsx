@@ -20,6 +20,7 @@ import { Portal } from '@/components/ui/Portal';
 import { PdfExportButton } from './PdfExportButton';
 import { DocumentRulesPanel } from './DocumentRulesPanel';
 import { DocumentHealthPanel } from './DocumentHealthPanel';
+import { WorkspaceOnboarding } from './WorkspaceOnboarding';
 import { ProductMetadataPanel } from './ProductMetadataPanel';
 import { useDocumentComposition } from './useDocumentComposition';
 import { resolveDocumentRules } from '@/lib/compose/rules';
@@ -629,6 +630,8 @@ export function ProjectWorkspace({
           copy={copy}
           onClose={() => setIsReimportDialogOpen(false)}
         />
+
+        <WorkspaceOnboarding copy={copy} />
       </Portal>
     </div>
   );
