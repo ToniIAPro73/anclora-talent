@@ -170,6 +170,8 @@ export interface ImportedDocumentSeed {
 export interface CreateProjectInput {
   title: string;
   importedDocument?: ImportedDocumentSeed | null;
+  /** F2: product template id; seeds structure + rules when no document is imported. */
+  templateId?: string | null;
 }
 
 export interface UpdateDocumentInput {
