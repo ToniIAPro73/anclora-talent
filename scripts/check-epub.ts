@@ -7,6 +7,12 @@
  *
  * Usage:
  *   EPUBCHECK_JAR=.epubcheck/epubcheck-5.1.0/epubcheck.jar npx tsx scripts/check-epub.ts
+ *   npx tsx scripts/check-epub.ts --brand   # + BrandProfile theme (F2 gate)
+ *
+ * `--brand` extracts the BrandProfile from the real identity manual
+ * (`fixtures/anclora_insights_manual_identidad.pdf`) and applies it as
+ * composer template overrides (R3) to both the composition and the EPUB
+ * stylesheet, validating that a themed EPUB stays EPUBCheck-clean.
  *
  * EPUBCheck is a Java tool (pinned v5.1.0); CI downloads the distribution
  * into `.epubcheck/` (see .github/workflows/ci.yml). The npm `epubcheck`
@@ -25,9 +31,17 @@ import { createProjectRecord } from '../src/lib/projects/factories';
 import { composeProjectPreview } from '../src/lib/compose/preview-adapter';
 import { DEVICE_PAGINATION_CONFIGS } from '../src/lib/preview/device-configs';
 import { buildEpub } from '../src/lib/epub';
+import { extractBrandProfileFromPdf } from '../src/lib/brand/extract-brand-profile';
+import { createBrandProfileRecord } from '../src/lib/brand/brand-profile';
+import { brandProfileToTemplateOverrides } from '../src/lib/brand/brand-template-overrides';
 
 const FIXTURE_NAME = 'exito_sin_compania.docx';
 const FIXTURE_PATH = resolve(process.cwd(), 'fixtures', FIXTURE_NAME);
+const BRAND_FIXTURE_PATH = resolve(
+  process.cwd(),
+  'fixtures',
+  'anclora_insights_manual_identidad.pdf',
+);
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const OUTPUT_DIR = resolve(process.cwd(), '.epub-check');
 const EPUBCHECK_JAR = resolve(
@@ -62,15 +76,45 @@ async function main() {
     importedDocument: seed,
   });
 
+  // F2: with --brand, extract the BrandProfile from the identity manual and
+  // apply it as composer template overrides (same object feeds the compose
+  // and the EPUB stylesheet — R3, one canonical model).
+  const withBrand = process.argv.includes('--brand');
+  let brandOverrides: ReturnType<typeof brandProfileToTemplateOverrides> = {};
+  if (withBrand) {
+    const extraction = await extractBrandProfileFromPdf(
+      readFileSync(BRAND_FIXTURE_PATH),
+      'anclora_insights_manual_identidad.pdf',
+    );
+    const profile = createBrandProfileRecord('epub-check-user', {
+      ...extraction.profile,
+      status: 'active',
+    });
+    brandOverrides = brandProfileToTemplateOverrides(profile);
+    console.info('[check-epub] BrandProfile activo', {
+      name: profile.name,
+      palette: profile.palette.map((color) => `${color.role}:${color.hex}`),
+      typography: {
+        display: profile.typography.display?.family,
+        body: profile.typography.body?.family,
+      },
+      warnings: extraction.warnings,
+    });
+  }
+
   // EPUB is reflowable: the laptop template only drives refs/numbering; the
   // engine TOC is forced to depth 3 (NAV + NCX carry real H1-H3 levels).
   const composed = composeProjectPreview(project, DEVICE_PAGINATION_CONFIGS.laptop, undefined, {
     tocDepth: 3,
+    ...brandOverrides,
   });
-  const epub = await buildEpub(project, composed);
+  const epub = await buildEpub(project, composed, { template: brandOverrides });
 
   mkdirSync(OUTPUT_DIR, { recursive: true });
-  const epubPath = resolve(OUTPUT_DIR, 'exito_sin_compania.epub');
+  const epubPath = resolve(
+    OUTPUT_DIR,
+    withBrand ? 'exito_sin_compania_brand.epub' : 'exito_sin_compania.epub',
+  );
   writeFileSync(epubPath, epub);
   const tocLevels = [...new Set(composed.result.toc.map((entry) => entry.level))].sort();
   console.info('[check-epub] EPUB generado desde el fixture real', {
