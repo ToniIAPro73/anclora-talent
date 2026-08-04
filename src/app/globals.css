@@ -976,6 +976,11 @@ ul.toc-list > li {
 .talent-auth-social-button {
   border: 1px solid var(--border-subtle);
   color: var(--text-tertiary);
+  cursor: pointer;
+}
+
+.talent-auth-social-button:disabled {
+  cursor: not-allowed;
 }
 
 .talent-auth-separator-line {
