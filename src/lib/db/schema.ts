@@ -223,6 +223,9 @@ export const filestudioJobs = pgTable('filestudio_jobs', {
   status: varchar('status', { length: 24 }).notNull().default('queued'),
   // Mapped FileStudio error code when status = failed (never shown raw in UI).
   errorCode: varchar('error_code', { length: 64 }),
+  // Operation options sent to FileStudio (e.g. { width, fit, quality } for
+  // image:resize) — provenance for the F2 processing manifest.
+  options: jsonb('options'),
   resultAssetUrl: text('result_asset_url'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

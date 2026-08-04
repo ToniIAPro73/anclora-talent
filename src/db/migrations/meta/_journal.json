@@ -50,6 +50,13 @@
       "when": 1785834047135,
       "tag": "0006_thankful_talon",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1785835480249,
+      "tag": "0007_filestudio_jobs_options",
+      "breakpoints": true
     }
   ]
 }
