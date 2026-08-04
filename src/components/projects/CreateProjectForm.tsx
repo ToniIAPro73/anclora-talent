@@ -3,6 +3,7 @@ import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import type { AppMessages } from '@/lib/i18n/messages';
 import { DocumentImporter } from './DocumentImporter';
+import { ProductTemplateSelector } from './ProductTemplateSelector';
 
 export function CreateProjectForm({ copy }: { copy: AppMessages['project'] }) {
   return (
@@ -24,6 +25,7 @@ export function CreateProjectForm({ copy }: { copy: AppMessages['project'] }) {
           className="field-input"
         />
       </label>
+      <ProductTemplateSelector copy={copy} />
       <DocumentImporter copy={copy} />
       <div className="mt-6 flex flex-col gap-4">
         <p className="text-xs leading-6 text-[var(--text-tertiary)]">

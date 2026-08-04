@@ -1,4 +1,5 @@
 import type { UiLocale } from '@/lib/ui-preferences/preferences';
+import type { ProductTemplateCopyKey } from '@/lib/templates/product-templates';
 import type {
   MarketingBenefit,
   MarketingShowcasePanel,
@@ -120,6 +121,15 @@ export type AppMessages = {
     sourceDocumentHint: string;
     createProjectHint: string;
     createProjectAction: string;
+    templateSelectorEyebrow: string;
+    templateSelectorTitle: string;
+    templateSelectorDescription: string;
+    templateSelectorSelected: string;
+    templateSelectorSelect: string;
+    productTemplates: Record<
+      ProductTemplateCopyKey,
+      { name: string; description: string }
+    >;
     cardPremium: string;
     cardUpdated: string;
     cardOpenEditor: string;
@@ -615,6 +625,39 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       createProjectHint:
         'La creación persiste sobre Neon desde el primer paso y abre el editor con base importada si has adjuntado documento.',
       createProjectAction: 'Crear proyecto y abrir editor',
+      templateSelectorEyebrow: 'Plantilla de producto',
+      templateSelectorTitle: 'Elige la estructura inicial',
+      templateSelectorDescription:
+        'Cada plantilla siembra capítulos guía y reglas de composición. La marca se aplica después, por separado.',
+      templateSelectorSelected: 'Seleccionada',
+      templateSelectorSelect: 'Seleccionar',
+      productTemplates: {
+        standardBook: {
+          name: 'Libro estándar',
+          description:
+            'Portadilla, legal, prólogo, capítulos y epílogo: el esqueleto completo de un libro listo para escribir desde el minuto uno.',
+        },
+        technicalManual: {
+          name: 'Manual técnico',
+          description:
+            'Secciones numeradas, referencia y apéndices, con reglas que protegen el código y las listas largas en cada página.',
+        },
+        leadMagnet: {
+          name: 'Guía / lead magnet',
+          description:
+            'Secciones cortas y un cierre con CTA: una guía que se lee de un tirón y convierte lectores en leads.',
+        },
+        modularCourse: {
+          name: 'Curso modular',
+          description:
+            'Módulos con lecciones y recursos ya ordenados para convertir tu método en un producto formativo publicable.',
+        },
+        bundle: {
+          name: 'Bundle',
+          description:
+            'Un documento con partes agrupadas para empaquetar libro, workbook y recursos en un solo producto.',
+        },
+      },
       cardPremium: 'Premium',
       cardUpdated: 'Actualizado',
       cardOpenEditor: 'Abrir editor',
@@ -1130,6 +1173,39 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       createProjectHint:
         'Creation persists to Neon from the first step and opens the editor with imported content if you attached a document.',
       createProjectAction: 'Create project and open editor',
+      templateSelectorEyebrow: 'Product template',
+      templateSelectorTitle: 'Choose the starting structure',
+      templateSelectorDescription:
+        'Each template seeds guide chapters and composition rules. Brand is applied later, separately.',
+      templateSelectorSelected: 'Selected',
+      templateSelectorSelect: 'Select',
+      productTemplates: {
+        standardBook: {
+          name: 'Standard book',
+          description:
+            'Title page, legal, prologue, chapters and epilogue: the full skeleton of a book ready to write from minute one.',
+        },
+        technicalManual: {
+          name: 'Technical manual',
+          description:
+            'Numbered sections, reference and appendices, with rules that protect code and long lists on every page.',
+        },
+        leadMagnet: {
+          name: 'Guide / lead magnet',
+          description:
+            'Short sections and a closing CTA: a guide that reads in one sitting and turns readers into leads.',
+        },
+        modularCourse: {
+          name: 'Modular course',
+          description:
+            'Modules with lessons and resources already laid out to turn your method into a publishable course product.',
+        },
+        bundle: {
+          name: 'Bundle',
+          description:
+            'One document with grouped parts to package book, workbook and resources into a single product.',
+        },
+      },
       cardPremium: 'Premium',
       cardUpdated: 'Updated',
       cardOpenEditor: 'Open editor',

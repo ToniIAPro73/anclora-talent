@@ -42,6 +42,7 @@ function parseSurfaceState(
 export async function createProjectAction(formData: FormData) {
   const userId = await requireUserId();
   const title = String(formData.get('title') ?? '').trim();
+  const templateId = String(formData.get('templateId') ?? '').trim() || undefined;
   const sourceDocument = formData.get('sourceDocument');
 
   console.info('[createProjectAction] submit received', {
@@ -74,7 +75,7 @@ export async function createProjectAction(formData: FormData) {
           })()
         : null;
 
-    const project = await projectRepository.createProject(userId, { title, importedDocument });
+    const project = await projectRepository.createProject(userId, { title, importedDocument, templateId });
 
     console.info('[createProjectAction] project created', {
       userId,

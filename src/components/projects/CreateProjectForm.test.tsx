@@ -19,4 +19,13 @@ describe('CreateProjectForm', () => {
       '.pdf,.doc,.docx,.txt,.md,text/plain,text/markdown,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     );
   });
+
+  test('includes the product template selector inside the creation form', () => {
+    render(<CreateProjectForm copy={resolveLocaleMessages('es').project} />);
+
+    const form = screen.getByTestId('create-project-form');
+    const selector = screen.getByTestId('product-template-selector');
+    expect(form).toContainElement(selector);
+    expect(screen.getByTestId('product-template-input')).toHaveValue('standard-book');
+  });
 });
