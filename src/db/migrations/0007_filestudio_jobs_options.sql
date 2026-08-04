@@ -1,0 +1,1 @@
+ALTER TABLE "filestudio_jobs" ADD COLUMN "options" jsonb;

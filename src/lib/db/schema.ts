@@ -174,3 +174,101 @@ export const userPreferences = pgTable('user_preferences', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+// F2 — versioned brand profiles (dual-profiles addendum: brand ≠ structure).
+// A BrandProfile is a theme pack (palette with roles, typographic pair, usage
+// proportions, governance and voice rules as jsonb); it never captures
+// document hierarchy and is applied to exports as templateOverrides (R3).
+export const brandProfiles = pgTable(
+  'brand_profiles',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: varchar('user_id', { length: 191 }).notNull(),
+    name: varchar('name', { length: 255 }).notNull(),
+    version: integer('version').notNull().default(1),
+    // draft | active | deprecated
+    status: varchar('status', { length: 16 }).notNull().default('draft'),
+    // BrandPaletteColor[] JSON
+    palette: jsonb('palette').notNull(),
+    // BrandTypography JSON
+    typography: jsonb('typography').notNull(),
+    // BrandUsageProportions JSON
+    usageProportions: jsonb('usage_proportions'),
+    // string[] JSON
+    governanceRules: jsonb('governance_rules'),
+    // BrandVoicePair[] JSON
+    voicePairs: jsonb('voice_pairs'),
+    sourceFileName: varchar('source_file_name', { length: 255 }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [unique('brand_profiles_user_name_version_unique').on(table.userId, table.name, table.version)],
+);
+
+// F1b — FileStudio Local Agent pairing (sdd/integrations/filestudio/authentication.md).
+// One row per user; credentials are AES-256-GCM encrypted at rest (never logged).
+export const filestudioConnections = pgTable('filestudio_connections', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: varchar('user_id', { length: 191 }).notNull().unique(),
+  // FileStudio device id (dev_...) once the pairing is approved.
+  deviceId: varchar('device_id', { length: 64 }),
+  deviceName: varchar('device_name', { length: 255 }),
+  // Ed25519 public key of the paired device. Nullable: the current FileStudio
+  // approve response does not return it (documented contract gap).
+  publicKey: text('public_key'),
+  // AES-256-GCM payload (v1:<iv>:<tag>:<ciphertext>, base64) with the
+  // access/refresh tokens issued on pairing approval.
+  encryptedCredentials: text('encrypted_credentials'),
+  // pending | paired | revoked
+  status: varchar('status', { length: 24 }).notNull().default('pending'),
+  // local | service | browser (sdd/integrations/filestudio/routing-policy.md)
+  preferredMode: varchar('preferred_mode', { length: 16 }).notNull().default('local'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// F1b — per-job ask-always consent registry (sdd/integrations/filestudio/routing-policy.md).
+export const filestudioConsents = pgTable('filestudio_consents', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: varchar('user_id', { length: 191 }).notNull(),
+  operation: varchar('operation', { length: 64 }).notNull(),
+  mode: varchar('mode', { length: 16 }).notNull(),
+  // granted | denied
+  decision: varchar('decision', { length: 16 }).notNull(),
+  jobId: varchar('job_id', { length: 64 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// F1b — jobs emitted to FileStudio, in the Talent-visible state machine
+// (queued | processing | completed | failed | cancelled | expired).
+export const filestudioJobs = pgTable('filestudio_jobs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: varchar('user_id', { length: 191 }).notNull(),
+  projectId: uuid('project_id'),
+  // FileStudio-side job id (service or agent route).
+  externalJobId: varchar('external_job_id', { length: 64 }).notNull().unique(),
+  operation: varchar('operation', { length: 64 }).notNull(),
+  // local | service | browser
+  mode: varchar('mode', { length: 16 }).notNull(),
+  status: varchar('status', { length: 24 }).notNull().default('queued'),
+  // Mapped FileStudio error code when status = failed (never shown raw in UI).
+  errorCode: varchar('error_code', { length: 64 }),
+  // Operation options sent to FileStudio (e.g. { width, fit, quality } for
+  // image:resize) — provenance for the F2 processing manifest.
+  options: jsonb('options'),
+  resultAssetUrl: text('result_asset_url'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// F1b — webhook idempotency registry (sdd/integrations/filestudio/webhook-flow.md).
+export const filestudioWebhookEvents = pgTable('filestudio_webhook_events', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  // Dedupe key: derived from `type:externalJobId:signature-timestamp` because
+  // the current FileStudio payload carries no event id (documented gap).
+  dedupeKey: varchar('dedupe_key', { length: 255 }).notNull().unique(),
+  eventType: varchar('event_type', { length: 32 }).notNull(),
+  externalJobId: varchar('external_job_id', { length: 64 }),
+  payload: jsonb('payload').notNull(),
+  processedAt: timestamp('processed_at', { withTimezone: true }).defaultNow().notNull(),
+});
