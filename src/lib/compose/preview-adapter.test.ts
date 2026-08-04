@@ -330,3 +330,164 @@ describe('composeProjectPreviewIncremental (C5)', () => {
     expect(findChangedChapterStartId(project, withExtra)).toBeNull();
   });
 });
+
+describe('findChangedChapterStartId — chapter localization', () => {
+  const defaultCh2: ProjectRecord['document']['chapters'][number] = {
+    id: 'ch2',
+    order: 2,
+    title: 'Capítulo 2',
+    blocks: [
+      { id: 'b2', type: 'paragraph', order: 1, content: '<h1>Capítulo 2</h1><p>Contenido del capítulo dos.</p>' },
+    ],
+  };
+
+  it('locates the change in the FIRST chapter', () => {
+    const prev = createProject();
+    const edited = createProject({
+      chapters: [
+        {
+          id: 'ch1',
+          order: 1,
+          title: 'Capítulo 1',
+          blocks: [
+            { id: 'b1', type: 'paragraph', order: 1, content: '<h1>Capítulo 1</h1><p>Contenido EDITADO.</p>' },
+          ],
+        },
+        defaultCh2,
+      ],
+    });
+    const startId = findChangedChapterStartId(prev, edited);
+    const { chapterStartIds, chapterById } = projectToSemanticDocument(edited);
+    expect(startId).toBe(chapterStartIds[0]);
+    expect(chapterById.get(startId!)?.id).toBe('ch1');
+  });
+
+  it('locates the change in the LAST chapter', () => {
+    const prev = createProject();
+    const edited = createProject({
+      chapters: [
+        {
+          id: 'ch1',
+          order: 1,
+          title: 'Capítulo 1',
+          blocks: [
+            { id: 'b1', type: 'paragraph', order: 1, content: '<h1>Capítulo 1</h1><p>Contenido del capítulo uno.</p>' },
+          ],
+        },
+        {
+          ...defaultCh2,
+          blocks: [
+            { id: 'b2', type: 'paragraph', order: 1, content: '<h1>Capítulo 2</h1><p>Contenido EDITADO.</p>' },
+          ],
+        },
+      ],
+    });
+    const startId = findChangedChapterStartId(prev, edited);
+    const { chapterStartIds, chapterById } = projectToSemanticDocument(edited);
+    expect(startId).toBe(chapterStartIds[1]);
+    expect(chapterById.get(startId!)?.id).toBe('ch2');
+  });
+});
+
+describe('buildGeneratedTocHtml — structure contract', () => {
+  function projectWithNestedHeadings(): ProjectRecord {
+    return createProject({
+      chapters: [
+        {
+          id: 'ch1',
+          order: 1,
+          title: 'Capítulo 1',
+          blocks: [
+            {
+              id: 'b1',
+              type: 'paragraph',
+              order: 1,
+              content: '<h1>Título &amp; Más</h1><h2>Sección "citas"</h2><p>Texto.</p>',
+            },
+          ],
+        },
+      ],
+    });
+  }
+
+  it('reflects the heading structure: levels, document order and escaped text', () => {
+    const { result } = composeProjectPreview(projectWithNestedHeadings(), config);
+    const html = buildGeneratedTocHtml(result, 2);
+    expect(result.toc.map((e) => e.level)).toEqual([1, 2]);
+    const level1 = html.indexOf('data-toc-level="1"');
+    const level2 = html.indexOf('data-toc-level="2"');
+    expect(level1).toBeGreaterThanOrEqual(0);
+    expect(level2).toBeGreaterThan(level1);
+    // Titles are HTML-escaped inside the toc-title span.
+    expect(html).toContain('<span class="toc-title">Título &amp; Más</span>');
+    expect(html).toContain('Sección &quot;citas&quot;');
+    expect(html).not.toContain('Sección "citas"');
+  });
+
+  it('shifts every entry by the given pageNumberOffset', () => {
+    const { result } = composeProjectPreview(projectWithNestedHeadings(), config);
+    const pagesOf = (html: string) =>
+      [...html.matchAll(/data-toc-page="(\d+)"/g)].map((m) => Number(m[1]));
+    const at2 = pagesOf(buildGeneratedTocHtml(result, 2));
+    const at5 = pagesOf(buildGeneratedTocHtml(result, 5));
+    expect(at2.length).toBeGreaterThan(0);
+    expect(at5).toEqual(at2.map((n) => n + 3));
+  });
+
+  it('regenerates the TOC from the AST when a new heading appears (never from persisted HTML)', () => {
+    const project = createProject({
+      chapters: [
+        {
+          id: 'toc',
+          order: 1,
+          title: 'Índice',
+          blocks: [{ id: 'btoc', type: 'paragraph', order: 1, content: '<p>manual toc</p>' }],
+        },
+        {
+          id: 'ch1',
+          order: 2,
+          title: 'Capítulo 1',
+          blocks: [
+            {
+              id: 'b1',
+              type: 'paragraph',
+              order: 1,
+              content: '<h1>Capítulo 1</h1><h2>Sección nueva</h2><p>Texto.</p>',
+            },
+          ],
+        },
+      ],
+    });
+    const { pages } = composeProjectPreview(project, config);
+    const tocPage = pages.find((p) => p.chapterId === 'toc');
+    expect(tocPage!.content).toContain('Sección nueva');
+    expect(tocPage!.content).not.toContain('manual toc');
+  });
+});
+
+describe('templateFromPaginationConfig — full mapping', () => {
+  it('maps every PaginationConfig field 1:1 into the ComposeTemplate', () => {
+    expect(templateFromPaginationConfig(config)).toEqual({
+      pageWidth: config.pageWidth,
+      pageHeight: config.pageHeight,
+      margins: {
+        top: config.marginTop,
+        bottom: config.marginBottom,
+        left: config.marginLeft,
+        right: config.marginRight,
+      },
+      baseFontSize: config.fontSize,
+      lineHeight: config.lineHeight,
+    });
+  });
+});
+
+describe('composeProjectPreview — determinism', () => {
+  it('the same project composes to byte-identical pages and engine result', () => {
+    const project = createProject();
+    const first = composeProjectPreview(project, config);
+    const second = composeProjectPreview(project, config);
+    expect(first.pages).toEqual(second.pages);
+    expect(first.result).toEqual(second.result);
+  });
+});

@@ -4,7 +4,11 @@ import { ProjectWorkspace } from './ProjectWorkspace';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { createDefaultSurfaceState } from '@/lib/projects/cover-surface';
-import { saveProjectWorkflowStepAction, syncProjectPaginationAction } from '@/lib/projects/actions';
+import { saveProjectWorkflowStepAction, saveChapterContentAction, syncProjectPaginationAction } from '@/lib/projects/actions';
+import {
+  clearLastChapterSave,
+  recordLastChapterSave,
+} from './advanced-chapter-editor/last-chapter-save';
 
 vi.mock('server-only', () => ({}));
 
@@ -118,6 +122,7 @@ function makeProject(overrides: Partial<ProjectRecord> = {}): ProjectRecord {
 describe('ProjectWorkspace', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    clearLastChapterSave();
     vi.mocked(syncProjectPaginationAction).mockResolvedValue({ status: 'updated' });
   });
 
@@ -275,5 +280,38 @@ describe('ProjectWorkspace', () => {
     expect(screen.getByText('Ficcion literaria')).toBeInTheDocument();
     expect(screen.getByText('Workbook / guia practica')).toBeInTheDocument();
     expect(screen.getByText('Statement back')).toBeInTheDocument();
+  });
+
+  test('offers reverting the recomposition of the last chapter save (F0.3)', async () => {
+    recordLastChapterSave({
+      projectId: 'proj-1',
+      chapterId: 'ch-2',
+      chapterTitle: 'Capítulo 2',
+      previousHtml: '<p>Contenido previo</p>',
+    });
+
+    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+
+    const banner = screen.getByTestId('document-health-revert');
+    expect(banner).toHaveTextContent('Capítulo 2');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Revertir' }));
+
+    await waitFor(() => expect(vi.mocked(saveChapterContentAction)).toHaveBeenCalledTimes(1));
+    const formData = vi.mocked(saveChapterContentAction).mock.calls[0][0] as FormData;
+    expect(formData.get('projectId')).toBe('proj-1');
+    expect(formData.get('chapterId')).toBe('ch-2');
+    expect(formData.get('chapterTitle')).toBe('Capítulo 2');
+    expect(formData.get('htmlContent')).toBe('<p>Contenido previo</p>');
+
+    // The snapshot is consumed: the banner disappears after the revert.
+    await waitFor(() =>
+      expect(screen.queryByTestId('document-health-revert')).not.toBeInTheDocument(),
+    );
+  });
+
+  test('hides the revert banner when there is no revertible save', () => {
+    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+    expect(screen.queryByTestId('document-health-revert')).not.toBeInTheDocument();
   });
 });
