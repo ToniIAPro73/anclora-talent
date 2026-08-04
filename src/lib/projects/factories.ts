@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { resolveDocumentRules } from '@/lib/compose/rules';
+import { getProductTemplate } from '@/lib/templates/product-templates';
 import { createDefaultSurfaceState } from './cover-surface';
 import type {
   CreateProjectInput,
@@ -34,6 +36,8 @@ function buildChapterBlocks(
 export function createProjectRecord(userId: string, input: CreateProjectInput): ProjectRecord {
   const now = new Date().toISOString();
   const imported = input.importedDocument;
+  // Imported content wins: a template only seeds projects created from scratch.
+  const template = imported ? undefined : getProductTemplate(input.templateId);
   const documentTitle = imported?.title || input.title;
   const documentSubtitle = imported?.subtitle || 'Documento editorial inicial listo para evolución.';
   const documentAuthor = imported?.author || '';
@@ -68,7 +72,14 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
           title: chapter.title || `Capítulo ${chapterIndex + 1}`,
           blocks: buildChapterBlocks(chapter.blocks),
         }))
-      : [
+      : template
+        ? template.chapters.map((chapter, chapterIndex) => ({
+            id: randomUUID(),
+            order: chapterIndex + 1,
+            title: chapter.title,
+            blocks: buildChapterBlocks(chapter.blocks),
+          }))
+        : [
           {
             id: randomUUID(),
             order: 1,
@@ -85,6 +96,8 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
     title: input.title,
     status: 'draft',
     workflowStep: 1,
+    brandProfileId: null,
+    templateId: template?.id ?? null,
     createdAt: now,
     updatedAt: now,
     document: {
@@ -93,6 +106,8 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
       subtitle: documentSubtitle,
       author: documentAuthor,
       language: 'es',
+      // F2: template rules merged over the defaults; null keeps defaults lazy.
+      rules: template ? resolveDocumentRules(template.rules) : null,
       chapters,
       source: imported
         ? {
@@ -368,6 +383,10 @@ export function updateProjectDocumentExtras(
           : (project.document.documentModel ?? null),
       metadata:
         input.metadata !== undefined ? input.metadata : (project.document.metadata ?? null),
+      provenance:
+        input.provenance !== undefined
+          ? input.provenance
+          : (project.document.provenance ?? null),
     },
   };
 }

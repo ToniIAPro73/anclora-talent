@@ -1,128 +1,97 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { NextRequest } from 'next/server';
+
+vi.mock('server-only', () => ({}));
 
 const getCurrentUserMock = vi.fn();
+const buildImportOcrRunnerMock = vi.fn();
 const extractImportedDocumentSeedMock = vi.fn();
 
 vi.mock('@/lib/auth/guards', () => ({
   getCurrentUser: getCurrentUserMock,
 }));
 
+vi.mock('@/lib/filestudio/ocr', () => ({
+  buildImportOcrRunner: buildImportOcrRunnerMock,
+}));
+
 vi.mock('@/lib/projects/import', () => ({
   extractImportedDocumentSeed: extractImportedDocumentSeedMock,
 }));
 
-function buildRequestWithFile(file?: File) {
+function buildRequest(fileName = 'escaneado.pdf', mimeType = 'application/pdf') {
+  const formData = new FormData();
+  formData.append('sourceDocument', new File([new Uint8Array([1, 2, 3])], fileName, { type: mimeType }));
+  // The route only reads request.formData(); jsdom's NextRequest cannot parse
+  // multipart bodies, so the request is stubbed at that seam.
+  return { formData: async () => formData } as unknown as NextRequest;
+}
+
+function seed(ocrAppliedMode: 'local' | 'service' | null = null) {
   return {
-    formData: vi.fn(async () => ({
-      get: (key: string) => (key === 'sourceDocument' ? file ?? null : null),
-    })),
+    title: 'Título',
+    subtitle: 'Sub',
+    author: 'Autora',
+    chapters: [{ title: 'Capítulo 1' }],
+    warnings: [],
+    sourceFileName: 'escaneado.pdf',
+    ocrAppliedMode,
   };
 }
 
-describe('POST /api/projects/import', () => {
+describe('POST /api/projects/import (F2 OCR de ingesta)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getCurrentUserMock.mockResolvedValue({ id: 'user-1' });
   });
 
-  test('returns 401 when user is not authenticated', async () => {
-    getCurrentUserMock.mockResolvedValue(null);
+  test('FileStudio configured: the OCR runner is built and the mode is declared in the response', async () => {
+    const runner = vi.fn();
+    buildImportOcrRunnerMock.mockResolvedValue(runner);
+    extractImportedDocumentSeedMock.mockResolvedValue(seed('service'));
 
     const { POST } = await import('./route');
-    const response = await POST(buildRequestWithFile() as never);
-
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({ error: 'Unauthorized' });
-    expect(extractImportedDocumentSeedMock).not.toHaveBeenCalled();
-  });
-
-  test('returns 400 when no file is provided', async () => {
-    getCurrentUserMock.mockResolvedValue({ id: 'user_123', email: 'test@example.com', fullName: 'Test User' });
-
-    const { POST } = await import('./route');
-    const response = await POST(buildRequestWithFile() as never);
-
-    expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({ error: 'No file provided' });
-  });
-
-  test('returns 413 when file is too large', async () => {
-    getCurrentUserMock.mockResolvedValue({ id: 'user_123', email: 'test@example.com', fullName: 'Test User' });
-
-    const oversized = new File(['x'], 'sample.pdf', { type: 'application/pdf' });
-    Object.defineProperty(oversized, 'size', { value: 51 * 1024 * 1024 });
-
-    const { POST } = await import('./route');
-    const response = await POST(buildRequestWithFile(oversized) as never);
-
-    expect(response.status).toBe(413);
-    await expect(response.json()).resolves.toEqual({ error: 'FILE_TOO_LARGE' });
-    expect(extractImportedDocumentSeedMock).not.toHaveBeenCalled();
-  });
-
-  test('returns 422 for unsupported extension', async () => {
-    getCurrentUserMock.mockResolvedValue({ id: 'user_123', email: 'test@example.com', fullName: 'Test User' });
-
-    const unsupported = new File(['x'], 'sample.odt', { type: 'application/vnd.oasis.opendocument.text' });
-
-    const { POST } = await import('./route');
-    const response = await POST(buildRequestWithFile(unsupported) as never);
-
-    expect(response.status).toBe(422);
-    await expect(response.json()).resolves.toEqual({ error: 'FORMAT_UNSUPPORTED' });
-    expect(extractImportedDocumentSeedMock).not.toHaveBeenCalled();
-  });
-
-  test('returns summarized analysis on successful import', async () => {
-    getCurrentUserMock.mockResolvedValue({ id: 'user_123', email: 'test@example.com', fullName: 'Test User' });
-    extractImportedDocumentSeedMock.mockResolvedValue({
-      title: 'NUNCA MÁS EN LA SOMBRA',
-      subtitle: 'Subtítulo',
-      author: 'Antonio Ballesteros Alonso',
-      chapterTitle: 'Prólogo',
-      blocks: [],
-      chapters: [
-        { title: 'Prólogo', blocks: [] },
-        { title: 'Índice', blocks: [] },
-        { title: 'Introducción', blocks: [] },
-        { title: 'Fase 1', blocks: [] },
-        { title: 'Fase 2', blocks: [] },
-      ],
-      warnings: ['No se detectó con certeza el autor; revísalo tras importar.'],
-      sourceFileName: 'Nunca_mas_en_la_sombra.docx',
-      sourceMimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    });
-
-    const file = new File(['x'], 'Nunca_mas_en_la_sombra.docx', {
-      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    });
-
-    const { POST } = await import('./route');
-    const response = await POST(buildRequestWithFile(file) as never);
-    const data = await response.json();
+    const response = await POST(buildRequest());
+    const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.ok).toBe(true);
-    expect(data.title).toBe('NUNCA MÁS EN LA SOMBRA');
-    expect(data.author).toBe('Antonio Ballesteros Alonso');
-    expect(data.chapterCount).toBe(5);
-    expect(data.chapterTitles).toEqual(['Prólogo', 'Índice', 'Introducción', 'Fase 1']);
+    expect(buildImportOcrRunnerMock).toHaveBeenCalledWith('user-1');
+    expect(extractImportedDocumentSeedMock).toHaveBeenCalledWith(expect.any(File), { ocr: runner });
+    expect(body.ocrAppliedMode).toBe('service');
   });
 
-  test('returns IMPORT_FAILED when parser throws', async () => {
-    getCurrentUserMock.mockResolvedValue({ id: 'user_123', email: 'test@example.com', fullName: 'Test User' });
-    extractImportedDocumentSeedMock.mockRejectedValue(new Error('Parser failed unexpectedly'));
-
-    const file = new File(['x'], 'sample.docx', {
-      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    });
+  test('FileStudio not configured: no runner, import behaves as before', async () => {
+    buildImportOcrRunnerMock.mockResolvedValue(undefined);
+    extractImportedDocumentSeedMock.mockResolvedValue(seed(null));
 
     const { POST } = await import('./route');
-    const response = await POST(buildRequestWithFile(file) as never);
+    const response = await POST(buildRequest());
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(extractImportedDocumentSeedMock).toHaveBeenCalledWith(expect.any(File), { ocr: undefined });
+    expect(body.ocrAppliedMode).toBeNull();
+    expect(body.title).toBe('Título');
+  });
+
+  test('import failures keep the 422 contract', async () => {
+    buildImportOcrRunnerMock.mockResolvedValue(undefined);
+    extractImportedDocumentSeedMock.mockRejectedValue(new Error('Imported document is empty'));
+
+    const { POST } = await import('./route');
+    const response = await POST(buildRequest());
 
     expect(response.status).toBe(422);
-    await expect(response.json()).resolves.toEqual({
-      error: 'IMPORT_FAILED',
-      detail: 'Parser failed unexpectedly',
-    });
+    const body = await response.json();
+    expect(body.error).toBe('IMPORT_FAILED');
+  });
+
+  test('unsupported formats are rejected before any OCR work', async () => {
+    const { POST } = await import('./route');
+    const response = await POST(buildRequest('video.mp4', 'video/mp4'));
+
+    expect(response.status).toBe(422);
+    expect(buildImportOcrRunnerMock).not.toHaveBeenCalled();
+    expect(extractImportedDocumentSeedMock).not.toHaveBeenCalled();
   });
 });

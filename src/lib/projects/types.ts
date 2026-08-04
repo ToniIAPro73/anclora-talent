@@ -1,5 +1,6 @@
 import type { DocumentMetadata, SemanticDocument } from '@/lib/document/model';
 import type { DocumentRules } from '@/lib/compose/rules';
+import type { ProvenanceMap } from '@/lib/ai/provenance';
 import type { SurfaceState } from './cover-surface';
 
 export type ProjectStatus = 'draft' | 'active';
@@ -64,6 +65,8 @@ export interface ProjectDocument {
   documentModel?: SemanticDocument | null;
   /** FASE C: digital product metadata (ISBN, description, keywords…). */
   metadata?: DocumentMetadata | null;
+  /** F3: per-block content provenance (blockId → human|ai governance map). */
+  provenance?: ProvenanceMap | null;
 }
 
 /** FASE C: partial update of rules / semantic model / product metadata. */
@@ -71,6 +74,8 @@ export interface UpdateDocumentExtrasInput {
   rules?: DocumentRules | null;
   documentModel?: SemanticDocument | null;
   metadata?: DocumentMetadata | null;
+  /** F3: provenance map update (AI accept / human model save). */
+  provenance?: ProvenanceMap | null;
 }
 
 export interface CoverDesign {
@@ -124,6 +129,10 @@ export interface ProjectRecord {
   title: string;
   status: ProjectStatus;
   workflowStep?: number;
+  /** F2: optional BrandProfile applied to exports as templateOverrides (G1). */
+  brandProfileId?: string | null;
+  /** F2: product template that seeded the project (drives the launch pack). */
+  templateId?: string | null;
   createdAt: string;
   updatedAt: string;
   document: ProjectDocument;
@@ -168,6 +177,8 @@ export interface ImportedDocumentSeed {
 export interface CreateProjectInput {
   title: string;
   importedDocument?: ImportedDocumentSeed | null;
+  /** F2: product template id; seeds structure + rules when no document is imported. */
+  templateId?: string | null;
 }
 
 export interface UpdateDocumentInput {
