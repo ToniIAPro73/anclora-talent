@@ -429,7 +429,7 @@ body {
   display: grid;
   min-height: 100vh;
   gap: 20px;
-  max-width: 80rem;
+  max-width: 96rem;
   margin-inline: auto;
   padding: 16px;
   transition: grid-template-columns 300ms ease;
@@ -633,6 +633,23 @@ html[data-theme="light"] .talent-shell-switcher .ac-theme-switcher__option[aria-
   justify-content: center;
   min-height: 52px;
   min-width: 52px;
+}
+
+/* CreateProjectForm lives inside a narrow grid column: the design-system
+   catalog grid (fixed 3/2/1 columns at viewport breakpoints) squeezes cards
+   to ~100px and clips text. Auto-fit with a minimum card width keeps every
+   card readable regardless of the column width. */
+.talent-create-form .ac-template-catalog__grid {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--space-4);
+}
+
+.talent-create-form .ac-template-card__summary {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .talent-shell-user-button .cl-userButtonTrigger,

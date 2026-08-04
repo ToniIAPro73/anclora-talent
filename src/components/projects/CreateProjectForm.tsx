@@ -15,7 +15,7 @@ export function CreateProjectForm({
   structureProfiles?: StructureProfile[];
 }) {
   return (
-    <form action={createProjectAction} className="ac-surface-panel" data-testid="create-project-form">
+    <form action={createProjectAction} className="ac-surface-panel talent-create-form" data-testid="create-project-form">
       <p className="ac-surface-panel__eyebrow">{copy.createFormEyebrow}</p>
       <h2 className="ac-surface-panel__title text-2xl">{copy.createFormTitle}</h2>
       <p className="mt-3 max-w-xl text-sm leading-7 text-[var(--text-secondary)]">
