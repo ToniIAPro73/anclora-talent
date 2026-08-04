@@ -68,6 +68,7 @@ import { KdpDisclosurePanel } from './KdpDisclosurePanel';
 import { buildExportQueryString } from '@/lib/projects/export-config';
 import type { CoAuthorChapter } from '@/lib/ai/co-author';
 import type { KdpDisclosure } from '@/lib/ai/kdp-disclosure';
+import type { CollaborationView } from '@/lib/collaboration/view';
 
 const TEMPLATE_TONE_TO_PALETTE: Record<EditorialTemplate['previewTone'], ProjectRecord['cover']['palette']> = {
   obsidian: 'obsidian',
@@ -161,6 +162,7 @@ export function ProjectWorkspace({
   history,
   coAuthor,
   kdpDisclosure,
+  collaboration,
   locale = 'es',
 }: {
   project: ProjectRecord;
@@ -189,6 +191,11 @@ export function ProjectWorkspace({
   };
   /** F3 Capa 2: KDP AI-content disclosure; rendered in the export step (9). */
   kdpDisclosure?: KdpDisclosure;
+  /** F4: collaboration section (copy + server-loaded view); rendered in step 7. */
+  collaboration?: {
+    copy: AppMessages['collaboration'];
+    view: CollaborationView;
+  };
   /** F3: UI locale forwarded to the governed-AI section of the health panel. */
   locale?: 'es' | 'en';
 }) {
@@ -580,7 +587,14 @@ export function ProjectWorkspace({
       case 6: // Preview
         return <PreviewCanvas project={project} copy={copy} />;
       case 7: // Collaborate
-        return <CollaborationPanel />;
+        return collaboration ? (
+          <CollaborationPanel
+            copy={collaboration.copy}
+            projectId={project.id}
+            view={collaboration.view}
+            locale={locale}
+          />
+        ) : null;
       case 8: // AI
         return <AIAssistant />;
       case 9: // Export

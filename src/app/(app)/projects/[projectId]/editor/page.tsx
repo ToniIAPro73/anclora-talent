@@ -15,6 +15,7 @@ import { listCoAuthorChapters } from '@/lib/ai/co-author';
 import { isAiCloudEnabled } from '@/lib/ai/provider';
 import { aiOperationsLog } from '@/lib/ai/operations-log';
 import { buildKdpDisclosure } from '@/lib/ai/kdp-disclosure';
+import { getCollaborationViewForProject } from '@/lib/collaboration/view';
 
 export default async function ProjectEditorPage({
   params,
@@ -69,6 +70,15 @@ export default async function ProjectEditorPage({
     locale,
   });
 
+  // F4: collaboration section (step 7). The view resolves the caller's role
+  // server-side; without a database the panel stays hidden.
+  const collaborationView = hasDatabase()
+    ? await getCollaborationViewForProject({ project, userId })
+    : null;
+  const collaboration = collaborationView
+    ? { copy: messages.collaboration, view: collaborationView }
+    : undefined;
+
   return (
     <ProjectWorkspace
       project={project}
@@ -79,6 +89,7 @@ export default async function ProjectEditorPage({
       history={history}
       coAuthor={coAuthor}
       kdpDisclosure={kdpDisclosure}
+      collaboration={collaboration}
       locale={locale}
     />
   );

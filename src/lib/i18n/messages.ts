@@ -582,6 +582,75 @@ export type AppMessages = {
       circuitOpen: string;
     };
   };
+  collaboration: {
+    title: string;
+    description: string;
+    openThreadsBadge: string;
+    viewerRoleLabel: string;
+    roleBadges: { author: string; editor: string; designer: string };
+    teamTitle: string;
+    emptyTeam: string;
+    revokeButton: string;
+    inviteTitle: string;
+    inviteDescription: string;
+    inviteEmailLabel: string;
+    inviteEmailPlaceholder: string;
+    inviteRoleLabel: string;
+    inviteButton: string;
+    invitingButton: string;
+    inviteLinkLabel: string;
+    copyButton: string;
+    copiedBadge: string;
+    noSeatTollNote: string;
+    pendingInvitationsTitle: string;
+    invitationExpiresLabel: string;
+    cancelInvitationButton: string;
+    commentsTitle: string;
+    emptyComments: string;
+    frontMatterChapter: string;
+    commentPlaceholder: string;
+    commentButton: string;
+    replyPlaceholder: string;
+    replyButton: string;
+    resolveButton: string;
+    openBadge: string;
+    resolvedBadge: string;
+    resolvedByLabel: string;
+    suggestionsTitle: string;
+    emptySuggestions: string;
+    proposeButton: string;
+    proposeSummaryPlaceholder: string;
+    proposeTextPlaceholder: string;
+    proposeSubmitButton: string;
+    proposingButton: string;
+    suggestionStatusBadges: { pending: string; accepted: string; rejected: string };
+    decidedByLabel: string;
+    acceptButton: string;
+    rejectButton: string;
+    invite: {
+      title: string;
+      description: string;
+      roleLabel: string;
+      acceptButton: string;
+      acceptingButton: string;
+      acceptedTitle: string;
+      acceptedDescription: string;
+      goToDashboardButton: string;
+    };
+    errors: {
+      unavailable: string;
+      forbidden: string;
+      notFound: string;
+      invalid: string;
+      invalidEmail: string;
+      invalidRole: string;
+      alreadyCollaborator: string;
+      expired: string;
+      emailMismatch: string;
+      alreadyAccepted: string;
+      stale: string;
+    };
+  };
   history: {
     title: string;
     description: string;
@@ -1308,6 +1377,78 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         circuitOpen: 'Gumroad no responde; reintentaremos en unos segundos.',
       },
     },
+    collaboration: {
+      title: 'Colaboración editorial',
+      description:
+        'Invita a tu corrector y maquetador, comenta bloques concretos del libro y decide qué correcciones entran al documento.',
+      openThreadsBadge: '{count} hilos abiertos',
+      viewerRoleLabel: 'Tu rol',
+      roleBadges: { author: 'Autor', editor: 'Corrector', designer: 'Maquetador' },
+      teamTitle: 'Equipo con acceso',
+      emptyTeam: 'Aún no hay colaboradores. Invita a tu corrector o maquetador con un enlace.',
+      revokeButton: 'Revocar acceso',
+      inviteTitle: 'Invitar colaborador',
+      inviteDescription:
+        'Genera un enlace de invitación con rol. El invitado lo acepta con su cuenta (o se registra gratis con ese email).',
+      inviteEmailLabel: 'Email del invitado',
+      inviteEmailPlaceholder: 'corrector@ejemplo.com',
+      inviteRoleLabel: 'Rol',
+      inviteButton: 'Generar invitación',
+      invitingButton: 'Generando…',
+      inviteLinkLabel: 'Enlace para compartir (caduca en 7 días)',
+      copyButton: 'Copiar',
+      copiedBadge: 'Copiado',
+      noSeatTollNote:
+        'Aceptar una invitación nunca exige plan ni pago al invitado: el producto aún no tiene facturación por asientos.',
+      pendingInvitationsTitle: 'Invitaciones pendientes',
+      invitationExpiresLabel: 'Caduca el {date}',
+      cancelInvitationButton: 'Cancelar',
+      commentsTitle: 'Comentarios por bloque',
+      emptyComments: 'Todavía no hay comentarios. Cualquier rol puede comentar sobre un bloque del libro.',
+      frontMatterChapter: 'Preliminares',
+      commentPlaceholder: 'Comenta este bloque…',
+      commentButton: 'Comentar',
+      replyPlaceholder: 'Responde al hilo…',
+      replyButton: 'Responder',
+      resolveButton: 'Resolver hilo',
+      openBadge: 'Abierto',
+      resolvedBadge: 'Resuelto',
+      resolvedByLabel: 'Resuelto por {name}',
+      suggestionsTitle: 'Correcciones propuestas',
+      emptySuggestions: 'El corrector aún no ha propuesto correcciones.',
+      proposeButton: 'Proponer corrección',
+      proposeSummaryPlaceholder: 'Resumen (p. ej. «Errata en el segundo párrafo»)…',
+      proposeTextPlaceholder: 'Texto corregido del bloque…',
+      proposeSubmitButton: 'Enviar propuesta',
+      proposingButton: 'Enviando…',
+      suggestionStatusBadges: { pending: 'Pendiente', accepted: 'Aceptada', rejected: 'Rechazada' },
+      decidedByLabel: 'Decidido por {name}',
+      acceptButton: 'Aceptar',
+      rejectButton: 'Rechazar',
+      invite: {
+        title: 'Invitación de colaboración',
+        description: 'Te han invitado a colaborar en un proyecto de Anclora Talent.',
+        roleLabel: 'Rol asignado',
+        acceptButton: 'Aceptar invitación',
+        acceptingButton: 'Aceptando…',
+        acceptedTitle: 'Invitación aceptada',
+        acceptedDescription: 'Ya formas parte del equipo del proyecto. Sin planes ni pagos: el acceso es directo.',
+        goToDashboardButton: 'Ir al panel',
+      },
+      errors: {
+        unavailable: 'No se pudo completar la operación ahora mismo. Inténtalo más tarde.',
+        forbidden: 'Tu rol no permite esta acción.',
+        notFound: 'No encontramos el proyecto o el elemento.',
+        invalid: 'Revisa los datos: faltan campos o no son válidos.',
+        invalidEmail: 'El email de la invitación no es válido.',
+        invalidRole: 'El rol de la invitación no es válido.',
+        alreadyCollaborator: 'Ese email ya forma parte del equipo del proyecto.',
+        expired: 'La invitación ha caducado. Pide una nueva al autor.',
+        emailMismatch: 'Esta invitación es para otro email. Entra con la cuenta invitada.',
+        alreadyAccepted: 'Esta invitación ya fue aceptada por otra cuenta.',
+        stale: 'El documento cambió desde que se propuso la corrección; la propuesta ya no aplica.',
+      },
+    },
     history: {
       title: 'Historial de versiones',
       description:
@@ -2031,6 +2172,78 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         auth: 'The Gumroad token is invalid or was revoked.',
         validation: 'Gumroad rejected the product data. Review the sheet.',
         circuitOpen: 'Gumroad is not responding; we will retry in a few seconds.',
+      },
+    },
+    collaboration: {
+      title: 'Editorial collaboration',
+      description:
+        'Invite your proofreader and layout designer, comment on concrete blocks of the book, and decide which corrections enter the document.',
+      openThreadsBadge: '{count} open threads',
+      viewerRoleLabel: 'Your role',
+      roleBadges: { author: 'Author', editor: 'Proofreader', designer: 'Layout designer' },
+      teamTitle: 'Team with access',
+      emptyTeam: 'No collaborators yet. Invite your proofreader or layout designer with a link.',
+      revokeButton: 'Revoke access',
+      inviteTitle: 'Invite collaborator',
+      inviteDescription:
+        'Generates an invitation link with a role. The invitee accepts it with their account (or registers for free with that email).',
+      inviteEmailLabel: 'Invitee email',
+      inviteEmailPlaceholder: 'proofreader@example.com',
+      inviteRoleLabel: 'Role',
+      inviteButton: 'Generate invitation',
+      invitingButton: 'Generating…',
+      inviteLinkLabel: 'Link to share (expires in 7 days)',
+      copyButton: 'Copy',
+      copiedBadge: 'Copied',
+      noSeatTollNote:
+        'Accepting an invitation never requires a plan or payment from the invitee: the product has no per-seat billing yet.',
+      pendingInvitationsTitle: 'Pending invitations',
+      invitationExpiresLabel: 'Expires on {date}',
+      cancelInvitationButton: 'Cancel',
+      commentsTitle: 'Comments per block',
+      emptyComments: 'No comments yet. Any role can comment on a block of the book.',
+      frontMatterChapter: 'Front matter',
+      commentPlaceholder: 'Comment on this block…',
+      commentButton: 'Comment',
+      replyPlaceholder: 'Reply to the thread…',
+      replyButton: 'Reply',
+      resolveButton: 'Resolve thread',
+      openBadge: 'Open',
+      resolvedBadge: 'Resolved',
+      resolvedByLabel: 'Resolved by {name}',
+      suggestionsTitle: 'Proposed corrections',
+      emptySuggestions: 'The proofreader has not proposed corrections yet.',
+      proposeButton: 'Propose correction',
+      proposeSummaryPlaceholder: 'Summary (e.g. “Typo in the second paragraph”)…',
+      proposeTextPlaceholder: 'Corrected block text…',
+      proposeSubmitButton: 'Send proposal',
+      proposingButton: 'Sending…',
+      suggestionStatusBadges: { pending: 'Pending', accepted: 'Accepted', rejected: 'Rejected' },
+      decidedByLabel: 'Decided by {name}',
+      acceptButton: 'Accept',
+      rejectButton: 'Reject',
+      invite: {
+        title: 'Collaboration invitation',
+        description: 'You have been invited to collaborate on an Anclora Talent project.',
+        roleLabel: 'Assigned role',
+        acceptButton: 'Accept invitation',
+        acceptingButton: 'Accepting…',
+        acceptedTitle: 'Invitation accepted',
+        acceptedDescription: 'You are now part of the project team. No plans or payments: access is immediate.',
+        goToDashboardButton: 'Go to dashboard',
+      },
+      errors: {
+        unavailable: 'The operation could not be completed right now. Please try again later.',
+        forbidden: 'Your role does not allow this action.',
+        notFound: 'We could not find the project or the item.',
+        invalid: 'Check the data: fields are missing or invalid.',
+        invalidEmail: 'The invitation email is not valid.',
+        invalidRole: 'The invitation role is not valid.',
+        alreadyCollaborator: 'That email is already part of the project team.',
+        expired: 'The invitation has expired. Ask the author for a new one.',
+        emailMismatch: 'This invitation is for another email. Sign in with the invited account.',
+        alreadyAccepted: 'This invitation was already accepted by another account.',
+        stale: 'The document changed since the correction was proposed; the proposal no longer applies.',
       },
     },
     history: {
