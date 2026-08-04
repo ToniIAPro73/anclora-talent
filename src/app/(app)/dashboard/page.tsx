@@ -28,7 +28,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+      <section className="grid gap-6 xl:grid-cols-2">
         <div className="ac-surface-panel ac-surface-panel--strong overflow-hidden p-8 text-[var(--text-primary)]">
           <p className="ac-surface-panel__eyebrow">{dashboardCopy.eyebrow}</p>
           <h2 className="mt-4 max-w-4xl text-4xl font-black tracking-tight sm:text-5xl">
@@ -37,7 +37,7 @@ export default async function DashboardPage() {
           <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--text-secondary)]">
             {dashboardCopy.description}
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             <NavigatingLink href="/projects/new" pendingLabel={dashboardCopy.createProject} className={`${premiumPrimaryMintButton} px-5`}>
               {dashboardCopy.createProject}
             </NavigatingLink>

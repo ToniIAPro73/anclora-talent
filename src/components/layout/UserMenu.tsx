@@ -71,7 +71,7 @@ export function UserMenu({ user }: { user: UserMenuUser }) {
         <div
           role="menu"
           aria-label={messages.userMenuLabel}
-          className="absolute right-0 top-full z-50 mt-2 w-64 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-3 shadow-[var(--shadow-soft)] backdrop-blur-xl"
+          className="absolute right-0 top-full z-50 mt-2 w-64 rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] p-3 shadow-[var(--shadow-lg)] backdrop-blur-xl"
         >
           <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{user.fullName}</p>
           <p className="truncate text-xs text-[var(--text-tertiary)]">{user.email}</p>
@@ -80,7 +80,7 @@ export function UserMenu({ user }: { user: UserMenuUser }) {
             role="menuitem"
             onClick={handleSignOut}
             disabled={isSigningOut}
-            className="mt-3 flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-[var(--border-subtle)] text-sm font-semibold text-[var(--text-primary)] hover:border-[var(--border-strong)] disabled:opacity-60"
+            className="mt-3 flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-[var(--action-secondary-border)] bg-[var(--action-secondary-bg)] text-sm font-semibold text-[var(--action-secondary-fg)] hover:border-[var(--border-strong)] disabled:opacity-60"
           >
             <LogOut className="h-4 w-4" aria-hidden="true" />
             {isSigningOut ? messages.signingOut : messages.signOut}
