@@ -22,7 +22,10 @@ const inputClass =
   'rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]';
 const labelClass = 'text-sm font-medium text-[var(--text-primary)]';
 
-const STATUS_COPY_KEYS: Record<BrandProfileStatus, keyof Copy> = {
+const STATUS_COPY_KEYS: Record<
+  BrandProfileStatus,
+  'brandStatusDraft' | 'brandStatusActive' | 'brandStatusDeprecated'
+> = {
   draft: 'brandStatusDraft',
   active: 'brandStatusActive',
   deprecated: 'brandStatusDeprecated',

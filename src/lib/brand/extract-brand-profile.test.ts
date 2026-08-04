@@ -58,9 +58,10 @@ describe('brand extraction contract (fixture manual v3.0)', () => {
       'Nunca se intercambian los papeles; nunca entra una tercera familia.',
     );
     expect(profile.governanceRules).toContain('No se introducen terceras familias.');
-    expect(profile.voicePairs.length).toBeGreaterThanOrEqual(2);
-    expect(profile.voicePairs[0].soundsLike).toContain('La evidencia sugiere');
-    expect(profile.voicePairs[0].doesntSoundLike).toContain('Descubre los 10 secretos');
+    const pairs = profile.voicePairs ?? [];
+    expect(pairs.length).toBeGreaterThanOrEqual(2);
+    expect(pairs[0].soundsLike).toContain('La evidencia sugiere');
+    expect(pairs[0].doesntSoundLike).toContain('Descubre los 10 secretos');
   });
 
   it('is deterministic: two runs over the fixture produce identical drafts', async () => {

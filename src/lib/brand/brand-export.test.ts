@@ -56,7 +56,11 @@ function buildProject() {
 }
 
 describe('brand theme in exports', () => {
-  it('HTML export carries the four palette hexes in their roles and both families', async () => {
+  // HTML export renders cover/page images; under full-suite parallel load it
+  // can exceed the 5s default timeout.
+  const EXPORT_TIMEOUT = 30_000;
+
+  it('HTML export carries the four palette hexes in their roles and both families', { timeout: EXPORT_TIMEOUT }, async () => {
     const html = await renderProjectExportHtml(
       buildProject(),
       DEVICE_PAGINATION_CONFIGS.laptop,
@@ -77,7 +81,7 @@ describe('brand theme in exports', () => {
     expect(html).toContain("font-family: 'Inter', system-ui");
   });
 
-  it('HTML export without overrides keeps the base stylesheet (no brand rules)', async () => {
+  it('HTML export without overrides keeps the base stylesheet (no brand rules)', { timeout: EXPORT_TIMEOUT }, async () => {
     const html = await renderProjectExportHtml(buildProject(), DEVICE_PAGINATION_CONFIGS.laptop);
 
     expect(html).not.toContain('#0F172A');
