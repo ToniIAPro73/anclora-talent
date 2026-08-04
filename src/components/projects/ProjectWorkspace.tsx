@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useTransition, useState, useMemo } from 'react';
+import { useEffect, useTransition, useState, useMemo, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Loader2, Download } from 'lucide-react';
 import { Stepper, type Step } from '@/components/ui/Stepper';
@@ -20,16 +20,25 @@ import { Portal } from '@/components/ui/Portal';
 import { PdfExportButton } from './PdfExportButton';
 import { DocumentRulesPanel } from './DocumentRulesPanel';
 import { DocumentHealthPanel } from './DocumentHealthPanel';
+import { WorkspaceOnboarding } from './WorkspaceOnboarding';
 import { ProductMetadataPanel } from './ProductMetadataPanel';
 import { useDocumentComposition } from './useDocumentComposition';
 import { resolveDocumentRules } from '@/lib/compose/rules';
+import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
+import { countPreflightErrors, preflight } from '@/lib/preflight/preflight';
 import {
   saveBackCoverAction,
+  saveChapterContentAction,
   saveProjectCoverAction,
   saveProjectDocumentAction,
   saveProjectWorkflowStepAction,
   syncProjectPaginationAction,
 } from '@/lib/projects/actions';
+import {
+  clearLastChapterSave,
+  getLastChapterSaveSnapshot,
+  subscribeLastChapterSave,
+} from './advanced-chapter-editor/last-chapter-save';
 import { computeChapterPageMetrics } from '@/lib/preview/metrics';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
@@ -312,8 +321,48 @@ export function ProjectWorkspace({
   const composition = useDocumentComposition(project);
   const documentViolations = composition.result.violations;
   const documentViolationCount = documentViolations.length;
+  // F1: channel pre-flight (KDP/IngramSpark/Kobo) over the same inputs the
+  // composition used; merged into the health panel, errors feed the gate.
+  const preflightInput = useMemo(() => {
+    const { document } = projectToSemanticDocument(project);
+    return { document, composed: composition.result, metadata: document.metadata };
+  }, [project, composition.result]);
+  const preflightChecks = useMemo(() => preflight(preflightInput), [preflightInput]);
+  const preflightErrorCount = countPreflightErrors(preflightChecks);
   const exportGate = resolveDocumentRules(project.document.rules).exportGate;
-  const exportBlocked = exportGate === 'block' && documentViolationCount > 0;
+  const gateIssueCount = documentViolationCount + preflightErrorCount;
+  const exportBlocked = exportGate === 'block' && gateIssueCount > 0;
+
+  // F0.3 undo: last chapter save of the session (recorded by the chapter
+  // editor). Reverting re-saves the pre-save HTML through the regular save
+  // action — no new endpoints; the recomposition after router.refresh()
+  // happens on its own.
+  const lastChapterSave = useSyncExternalStore(
+    subscribeLastChapterSave,
+    getLastChapterSaveSnapshot,
+    () => null,
+  );
+  const revertibleSave =
+    lastChapterSave &&
+    lastChapterSave.projectId === project.id &&
+    project.document.chapters.some((chapter) => chapter.id === lastChapterSave.chapterId)
+      ? lastChapterSave
+      : null;
+
+  const handleRevertLastSave = () => {
+    if (!revertibleSave) return;
+    const snapshot = revertibleSave;
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.set('projectId', project.id);
+      formData.set('chapterId', snapshot.chapterId);
+      formData.set('chapterTitle', snapshot.chapterTitle);
+      formData.set('htmlContent', snapshot.previousHtml);
+      await saveChapterContentAction(formData);
+      clearLastChapterSave();
+      router.refresh();
+    });
+  };
 
   const renderStepContent = () => {
     switch (activeStep) {
@@ -381,8 +430,19 @@ export function ProjectWorkspace({
               project={project}
               violations={documentViolations}
               copy={copy}
+              checks={preflightChecks}
               diff={composition.diff}
               recomposedFromPage={composition.recomposedFromPage}
+              telemetry={composition.telemetry}
+              revert={
+                revertibleSave
+                  ? {
+                      chapterTitle: revertibleSave.chapterTitle,
+                      pending: isPending,
+                      onRevert: handleRevertLastSave,
+                    }
+                  : null
+              }
             />
           </div>
         );
@@ -464,7 +524,7 @@ export function ProjectWorkspace({
               <p className="ac-export-suite__summary">
                 Tu proyecto está listo para ser publicado. Elige el formato de salida deseado.
               </p>
-              {exportGate !== 'off' && documentViolationCount > 0 && (
+              {exportGate !== 'off' && gateIssueCount > 0 && (
                 <p
                   role="alert"
                   data-testid="export-gate-message"
@@ -472,7 +532,7 @@ export function ProjectWorkspace({
                 >
                   {exportBlocked
                     ? copy.exportGateBlockedMessage
-                    : copy.exportGateWarnMessage.replace('{count}', String(documentViolationCount))}
+                    : copy.exportGateWarnMessage.replace('{count}', String(gateIssueCount))}
                 </p>
               )}
             </div>
@@ -506,8 +566,15 @@ export function ProjectWorkspace({
                >
                   {copy.previewExportDocxButton}
                </button>
-               <button className="ac-button ac-button--secondary" disabled>
-                  Exportar EPUB (Próximamente)
+               <button
+                 onClick={() => {
+                   const epubUrl = `/api/projects/export/epub?projectId=${project.id}&${exportQuery}`;
+                   window.open(epubUrl, '_blank');
+                 }}
+                 disabled={exportBlocked}
+                 className="ac-button ac-button--secondary"
+               >
+                  {copy.previewExportEpubButton}
                </button>
             </div>
           </section>
@@ -629,6 +696,8 @@ export function ProjectWorkspace({
           copy={copy}
           onClose={() => setIsReimportDialogOpen(false)}
         />
+
+        <WorkspaceOnboarding copy={copy} />
       </Portal>
     </div>
   );

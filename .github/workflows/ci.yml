@@ -34,5 +34,26 @@ jobs:
       - name: Test
         run: npm test
 
+      # F1 EPUB gate: validate the EPUB built from the real fixture
+      # (fixtures/exito_sin_compania.docx) with EPUBCheck. The distribution is
+      # pinned by version AND sha256; the npm `epubcheck` package was
+      # discarded (abandoned 0.x wrapper). Any FATAL/ERROR fails the job.
+      - name: Setup Java (EPUBCheck)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Download pinned EPUBCheck 5.1.0
+        run: |
+          mkdir -p .epubcheck
+          curl -sSL -o .epubcheck/epubcheck-5.1.0.zip \
+            https://github.com/w3c/epubcheck/releases/download/v5.1.0/epubcheck-5.1.0.zip
+          echo "74a59af8602bf59b1d04266a450d9cdcb5986e36d825adc403cde0d95e88c9e8  .epubcheck/epubcheck-5.1.0.zip" | sha256sum -c -
+          unzip -q .epubcheck/epubcheck-5.1.0.zip -d .epubcheck
+
+      - name: EPUB gate (EPUBCheck over the real fixture)
+        run: npx tsx scripts/check-epub.ts
+
       - name: Build
         run: npm run build
