@@ -27,6 +27,14 @@ Cerrada: 2026-08-04. Rama `development`. Prompt: `sdd/features/prompt_maestro_im
 - Baseline tsc del repo: 92 errores preexistentes en `Archive/` y tests antiguos; criterio aplicado = cero errores nuevos.
 - Presupuesto 300 ms y demo de salida quedan pendientes de que el dueño coloque `fixtures/exito_sin_compania.docx` (el test se auto-activa).
 
-## Pendiente para cierre formal del hito
+## Cierre formal del hito (2026-08-04, fixture recibido)
 
-- Colocar `fixtures/exito_sin_compania.docx` → correr `compose.perf.test.ts` y demo: añadir párrafo en "La paradoja del éxito solitario", índice H1-H3 y paginación se actualizan solos, 14 tablas intactas (keepTogether).
+Fixture `fixtures/exito_sin_compania.docx` (9,5 MB) commiteado. Resultados del gate `compose.perf.test.ts`:
+- Presupuesto: recomposición incremental media **1,73 ms** (5 iteraciones) — muy bajo los 300 ms.
+- Estructura real importada (mammoth): 4 H1, 12 H2, **41 H3** (el plan decía 42; gana el código, R8), **14 tablas**, TOC con niveles [1,2,3].
+- Demo de salida verificada en test: párrafo añadido en "La paradoja del éxito solitario" → incremental ≡ completa, TOC/paginación actualizados, 0 violaciones `keepTogether.table`, sin páginas vacías no-blank.
+- Bug real encontrado y corregido: `import-pipeline.ts` aplanaba headings a H2 y descartaba tablas (`fa52151`).
+
+Commits extra tras el cierre inicial:
+- `fa52151` fix(import): preservar niveles de heading y tablas del DOCX en importación premium
+- `34cf98e` test(f0): gate de aceptación demo sobre fixture real exito_sin_compania
