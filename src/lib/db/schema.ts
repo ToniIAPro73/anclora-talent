@@ -277,6 +277,30 @@ export const filestudioWebhookEvents = pgTable('filestudio_webhook_events', {
   processedAt: timestamp('processed_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+// F2 — versioned document snapshots (document history). Every captured
+// version stores the full SemanticDocument AST; `version` is monotonic per
+// project and rows are append-only (restores create a new version, history
+// is never rewritten). `sourceHash` is the same SHA-256 of the AST the asset
+// manifest uses (src/lib/manifest/hash.ts), so a snapshot can be referenced
+// from a future manifest version.
+export const documentSnapshots = pgTable(
+  'document_snapshots',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    projectId: uuid('project_id').notNull(),
+    version: integer('version').notNull(),
+    // SemanticDocument JSON (full AST snapshot)
+    document: jsonb('document').notNull(),
+    label: varchar('label', { length: 255 }).notNull(),
+    // manual-save | reimport | restore
+    source: varchar('source', { length: 24 }).notNull(),
+    sourceHash: varchar('source_hash', { length: 64 }).notNull(),
+    createdBy: varchar('created_by', { length: 191 }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [unique('document_snapshots_project_version_unique').on(table.projectId, table.version)],
+);
+
 // F2 — versioned asset manifests (launch pack). Every coordinated export
 // appends a new version; `items` is ProjectAssetManifestItem[] JSON
 // (src/lib/manifest/model.ts). Stale detection is computed at read time by

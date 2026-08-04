@@ -4,8 +4,10 @@ import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireUserId } from '@/lib/auth/guards';
+import { getDb, hasDatabase } from '@/lib/db';
 import { projectRepository } from '@/lib/db/repositories';
 import { uploadProjectBlob } from '@/lib/blob/client';
+import { captureAutoSaveSnapshot, captureProjectSnapshot } from '@/lib/snapshots/capture';
 import { normalizeSurfaceState, type SurfaceState } from './cover-surface';
 import { buildPaginationConfig } from '@/lib/preview/device-configs';
 import {
@@ -164,6 +166,20 @@ export async function saveChapterContentAction(formData: FormData) {
   };
 
   await projectRepository.saveDocument(userId, projectId, input);
+
+  // F2: versioned AST snapshot — throttled auto capture on chapter save
+  // (one per editing session, never per keystroke; see snapshots/model.ts).
+  // Best-effort: a capture failure must never break the save itself.
+  if (hasDatabase()) {
+    try {
+      const updated = await projectRepository.getProjectById(userId, projectId);
+      if (updated) {
+        await captureAutoSaveSnapshot(getDb(), { project: updated, createdBy: userId });
+      }
+    } catch (error) {
+      console.error('[saveChapterContentAction] snapshot capture failed', { projectId, error });
+    }
+  }
 
   revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
@@ -646,6 +662,20 @@ export async function reimportProjectAction(formData: FormData) {
 
   const merge = mergeReimportedSeed(current, seed);
   await projectRepository.replaceDocument(userId, projectId, merge.project);
+
+  // F2: every reimport leaves a snapshot trace (structural event).
+  // Best-effort: a capture failure must never break the reimport itself.
+  if (hasDatabase()) {
+    try {
+      await captureProjectSnapshot(getDb(), {
+        project: merge.project,
+        source: 'reimport',
+        createdBy: userId,
+      });
+    } catch (error) {
+      console.error('[reimportProjectAction] snapshot capture failed', { projectId, error });
+    }
+  }
 
   revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
