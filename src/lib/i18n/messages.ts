@@ -311,6 +311,9 @@ export type AppMessages = {
     healthDiffToc: string;
     healthDiffViolations: string;
     healthTelemetrySummary: string;
+    healthRevertLabel: string;
+    healthRevertAction: string;
+    healthReverting: string;
     previewModalZoomOut: string;
     previewModalZoomIn: string;
     previewModalSingleView: string;
@@ -721,6 +724,9 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       healthDiffToc: '{count} entradas al índice',
       healthDiffViolations: '{count} violaciones nuevas',
       healthTelemetrySummary: '{count} recomposiciones · última {lastMs} ms · media {avgMs} ms',
+      healthRevertLabel: 'Recompuesto tras tu último guardado en «{chapter}». Puedes restaurar el contenido anterior.',
+      healthRevertAction: 'Revertir',
+      healthReverting: 'Revirtiendo…',
       previewModalZoomOut: 'Reducir zoom',
       previewModalZoomIn: 'Aumentar zoom',
       previewModalSingleView: 'Vista de 1 página',
@@ -1129,6 +1135,9 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       healthDiffToc: '{count} TOC entries',
       healthDiffViolations: '{count} new violations',
       healthTelemetrySummary: '{count} recompositions · last {lastMs} ms · avg {avgMs} ms',
+      healthRevertLabel: 'Recomposed after your last save in "{chapter}". You can restore the previous content.',
+      healthRevertAction: 'Revert',
+      healthReverting: 'Reverting…',
       previewModalZoomOut: 'Zoom out',
       previewModalZoomIn: 'Zoom in',
       previewModalSingleView: 'Single page view',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useTransition, useState, useMemo } from 'react';
+import { useEffect, useTransition, useState, useMemo, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Loader2, Download } from 'lucide-react';
 import { Stepper, type Step } from '@/components/ui/Stepper';
@@ -26,11 +26,17 @@ import { useDocumentComposition } from './useDocumentComposition';
 import { resolveDocumentRules } from '@/lib/compose/rules';
 import {
   saveBackCoverAction,
+  saveChapterContentAction,
   saveProjectCoverAction,
   saveProjectDocumentAction,
   saveProjectWorkflowStepAction,
   syncProjectPaginationAction,
 } from '@/lib/projects/actions';
+import {
+  clearLastChapterSave,
+  getLastChapterSaveSnapshot,
+  subscribeLastChapterSave,
+} from './advanced-chapter-editor/last-chapter-save';
 import { computeChapterPageMetrics } from '@/lib/preview/metrics';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
@@ -316,6 +322,37 @@ export function ProjectWorkspace({
   const exportGate = resolveDocumentRules(project.document.rules).exportGate;
   const exportBlocked = exportGate === 'block' && documentViolationCount > 0;
 
+  // F0.3 undo: last chapter save of the session (recorded by the chapter
+  // editor). Reverting re-saves the pre-save HTML through the regular save
+  // action — no new endpoints; the recomposition after router.refresh()
+  // happens on its own.
+  const lastChapterSave = useSyncExternalStore(
+    subscribeLastChapterSave,
+    getLastChapterSaveSnapshot,
+    () => null,
+  );
+  const revertibleSave =
+    lastChapterSave &&
+    lastChapterSave.projectId === project.id &&
+    project.document.chapters.some((chapter) => chapter.id === lastChapterSave.chapterId)
+      ? lastChapterSave
+      : null;
+
+  const handleRevertLastSave = () => {
+    if (!revertibleSave) return;
+    const snapshot = revertibleSave;
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.set('projectId', project.id);
+      formData.set('chapterId', snapshot.chapterId);
+      formData.set('chapterTitle', snapshot.chapterTitle);
+      formData.set('htmlContent', snapshot.previousHtml);
+      await saveChapterContentAction(formData);
+      clearLastChapterSave();
+      router.refresh();
+    });
+  };
+
   const renderStepContent = () => {
     switch (activeStep) {
       case 1: // Content
@@ -385,6 +422,15 @@ export function ProjectWorkspace({
               diff={composition.diff}
               recomposedFromPage={composition.recomposedFromPage}
               telemetry={composition.telemetry}
+              revert={
+                revertibleSave
+                  ? {
+                      chapterTitle: revertibleSave.chapterTitle,
+                      pending: isPending,
+                      onRevert: handleRevertLastSave,
+                    }
+                  : null
+              }
             />
           </div>
         );

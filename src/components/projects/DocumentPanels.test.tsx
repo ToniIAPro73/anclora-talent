@@ -165,6 +165,43 @@ describe('DocumentHealthPanel — live diff badge (C5)', () => {
   });
 });
 
+describe('DocumentHealthPanel — revert banner (F0.3)', () => {
+  it('shows the banner with the revert action and calls onRevert', () => {
+    const onRevert = vi.fn();
+    render(
+      <DocumentHealthPanel
+        project={fakeProject()}
+        violations={[]}
+        copy={copy}
+        revert={{ chapterTitle: 'Capítulo 2', pending: false, onRevert }}
+      />,
+    );
+    const banner = screen.getByTestId('document-health-revert');
+    expect(banner).toHaveTextContent('Capítulo 2');
+    fireEvent.click(screen.getByRole('button', { name: 'Revertir' }));
+    expect(onRevert).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables the action while the revert is pending', () => {
+    render(
+      <DocumentHealthPanel
+        project={fakeProject()}
+        violations={[]}
+        copy={copy}
+        revert={{ chapterTitle: 'Capítulo 2', pending: true, onRevert: vi.fn() }}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Revirtiendo…' })).toBeDisabled();
+  });
+
+  it('stays hidden when there is nothing revertible', () => {
+    render(
+      <DocumentHealthPanel project={fakeProject()} violations={[]} copy={copy} revert={null} />,
+    );
+    expect(screen.queryByTestId('document-health-revert')).not.toBeInTheDocument();
+  });
+});
+
 describe('DocumentHealthPanel — recomposition telemetry (F0.2)', () => {
   it('shows the rolling count, last duration and average', () => {
     render(

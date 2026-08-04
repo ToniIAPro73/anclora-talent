@@ -18,6 +18,15 @@ interface DocumentHealthPanelProps {
   recomposedFromPage?: number;
   /** F0.2: rolling recomposition timings from the live composition hook. */
   telemetry?: RecompositionTelemetry;
+  /**
+   * F0.3: revert of the recomposition caused by the last chapter save of the
+   * session. Null/absent when there is nothing revertible (banner hidden).
+   */
+  revert?: {
+    chapterTitle: string;
+    pending: boolean;
+    onRevert: () => void;
+  } | null;
 }
 
 /**
@@ -25,7 +34,7 @@ interface DocumentHealthPanelProps {
  * real time with the affected page, plus an always-visible counter whose
  * goal is zero. Each item links to the preview.
  */
-export function DocumentHealthPanel({ project, violations, copy, diff, recomposedFromPage, telemetry }: DocumentHealthPanelProps) {
+export function DocumentHealthPanel({ project, violations, copy, diff, recomposedFromPage, telemetry, revert }: DocumentHealthPanelProps) {
   const count = violations.length;
   const signed = (value: number) => (value > 0 ? `+${value}` : String(value));
 
@@ -74,6 +83,25 @@ export function DocumentHealthPanel({ project, violations, copy, diff, recompose
             .replace('{lastMs}', String(Math.round(telemetry.lastMs)))
             .replace('{avgMs}', String(Math.round(telemetry.avgMs ?? telemetry.lastMs)))}
         </p>
+      )}
+
+      {revert && (
+        <div
+          data-testid="document-health-revert"
+          className="mt-4 flex items-center justify-between gap-4 rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3"
+        >
+          <p className="text-sm text-[var(--text-primary)]">
+            {copy.healthRevertLabel.replace('{chapter}', revert.chapterTitle)}
+          </p>
+          <button
+            type="button"
+            onClick={revert.onRevert}
+            disabled={revert.pending}
+            className="ac-button ac-button--secondary ac-button--sm shrink-0"
+          >
+            {revert.pending ? copy.healthReverting : copy.healthRevertAction}
+          </button>
+        </div>
       )}
 
       {diff && (diff.chapterShifts.length > 0 || diff.tocDelta !== 0 || diff.newViolations.length > 0) && (
