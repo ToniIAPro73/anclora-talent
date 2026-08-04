@@ -164,3 +164,24 @@ describe('DocumentHealthPanel — live diff badge (C5)', () => {
     expect(screen.queryByTestId('document-health-diff')).not.toBeInTheDocument();
   });
 });
+
+describe('DocumentHealthPanel — recomposition telemetry (F0.2)', () => {
+  it('shows the rolling count, last duration and average', () => {
+    render(
+      <DocumentHealthPanel
+        project={fakeProject()}
+        violations={[]}
+        copy={copy}
+        telemetry={{ count: 2, lastMs: 60, avgMs: 90 }}
+      />,
+    );
+    expect(screen.getByTestId('document-health-telemetry')).toHaveTextContent(
+      '2 recomposiciones · última 60 ms · media 90 ms',
+    );
+  });
+
+  it('stays hidden without measurements', () => {
+    render(<DocumentHealthPanel project={fakeProject()} violations={[]} copy={copy} />);
+    expect(screen.queryByTestId('document-health-telemetry')).not.toBeInTheDocument();
+  });
+});

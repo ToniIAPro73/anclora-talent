@@ -384,6 +384,7 @@ export function ProjectWorkspace({
               copy={copy}
               diff={composition.diff}
               recomposedFromPage={composition.recomposedFromPage}
+              telemetry={composition.telemetry}
             />
           </div>
         );

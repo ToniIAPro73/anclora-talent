@@ -310,6 +310,7 @@ export type AppMessages = {
     healthDiffShift: string;
     healthDiffToc: string;
     healthDiffViolations: string;
+    healthTelemetrySummary: string;
     previewModalZoomOut: string;
     previewModalZoomIn: string;
     previewModalSingleView: string;
@@ -719,6 +720,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       healthDiffShift: '{title}: pág. {from} → {to}',
       healthDiffToc: '{count} entradas al índice',
       healthDiffViolations: '{count} violaciones nuevas',
+      healthTelemetrySummary: '{count} recomposiciones · última {lastMs} ms · media {avgMs} ms',
       previewModalZoomOut: 'Reducir zoom',
       previewModalZoomIn: 'Aumentar zoom',
       previewModalSingleView: 'Vista de 1 página',
@@ -1126,6 +1128,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       healthDiffShift: '{title}: page {from} → {to}',
       healthDiffToc: '{count} TOC entries',
       healthDiffViolations: '{count} new violations',
+      healthTelemetrySummary: '{count} recompositions · last {lastMs} ms · avg {avgMs} ms',
       previewModalZoomOut: 'Zoom out',
       previewModalZoomIn: 'Zoom in',
       previewModalSingleView: 'Single page view',

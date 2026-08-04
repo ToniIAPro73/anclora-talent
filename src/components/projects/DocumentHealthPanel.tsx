@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { ComposeViolation, CompositionDiff } from '@/lib/compose/compose';
+import type { RecompositionTelemetry } from './useDocumentComposition';
 
 type Copy = AppMessages['project'];
 
@@ -15,6 +16,8 @@ interface DocumentHealthPanelProps {
   diff?: CompositionDiff | null;
   /** C5: first printed page recomposed since the last edit (badge). */
   recomposedFromPage?: number;
+  /** F0.2: rolling recomposition timings from the live composition hook. */
+  telemetry?: RecompositionTelemetry;
 }
 
 /**
@@ -22,7 +25,7 @@ interface DocumentHealthPanelProps {
  * real time with the affected page, plus an always-visible counter whose
  * goal is zero. Each item links to the preview.
  */
-export function DocumentHealthPanel({ project, violations, copy, diff, recomposedFromPage }: DocumentHealthPanelProps) {
+export function DocumentHealthPanel({ project, violations, copy, diff, recomposedFromPage, telemetry }: DocumentHealthPanelProps) {
   const count = violations.length;
   const signed = (value: number) => (value > 0 ? `+${value}` : String(value));
 
@@ -58,6 +61,18 @@ export function DocumentHealthPanel({ project, violations, copy, diff, recompose
           className="mt-4 inline-block rounded-full bg-[var(--accent)] px-3 py-1 text-xs font-bold text-white"
         >
           {copy.healthRecomposedBadge.replace('{page}', String(recomposedFromPage))}
+        </p>
+      )}
+
+      {telemetry && telemetry.count > 0 && telemetry.lastMs !== null && (
+        <p
+          data-testid="document-health-telemetry"
+          className="mt-3 text-xs text-[var(--text-tertiary)]"
+        >
+          {copy.healthTelemetrySummary
+            .replace('{count}', String(telemetry.count))
+            .replace('{lastMs}', String(Math.round(telemetry.lastMs)))
+            .replace('{avgMs}', String(Math.round(telemetry.avgMs ?? telemetry.lastMs)))}
         </p>
       )}
 
