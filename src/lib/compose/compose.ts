@@ -39,6 +39,26 @@ export interface ComposeTemplate {
   tocDepth?: number;
   /** Content font family, forwarded to canvas measurers. */
   fontFamily?: string;
+  /**
+   * F2 brand theme (dual-profiles addendum): display family for headings and
+   * quotes. Consumed by the exports (PDF/EPUB/HTML); the engine ignores it —
+   * brand styling never changes pagination.
+   */
+  displayFontFamily?: string;
+  /** F2 brand theme: body family for paragraphs/lists. Exports only. */
+  bodyFontFamily?: string;
+  /** F2 brand palette roles (exports only): heading/ink color. */
+  headingColor?: string;
+  /** F2 brand palette roles (exports only): body text color. */
+  bodyColor?: string;
+  /** F2 brand palette roles (exports only): accent (quotes, rules, details). */
+  accentColor?: string;
+  /** F2 brand palette roles (exports only): muted accent (captions, secondary emphasis). */
+  accentMutedColor?: string;
+  /** F2 brand palette roles (exports only): paper/background color. */
+  paperColor?: string;
+  /** F2 brand palette roles (exports only): ink color (immersive surfaces). */
+  inkColor?: string;
 }
 
 export interface BlockPlacement {
