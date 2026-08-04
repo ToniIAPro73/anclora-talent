@@ -383,6 +383,10 @@ export function updateProjectDocumentExtras(
           : (project.document.documentModel ?? null),
       metadata:
         input.metadata !== undefined ? input.metadata : (project.document.metadata ?? null),
+      provenance:
+        input.provenance !== undefined
+          ? input.provenance
+          : (project.document.provenance ?? null),
     },
   };
 }

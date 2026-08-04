@@ -213,6 +213,7 @@ function mapRowsToProject(
       rules: (documentRow.rules ?? null) as ProjectDocument['rules'],
       documentModel: (documentRow.documentModel ?? null) as ProjectDocument['documentModel'],
       metadata: (documentRow.metadata ?? null) as ProjectDocument['metadata'],
+      provenance: (documentRow.provenance ?? null) as ProjectDocument['provenance'],
       source:
         documentRow.sourceMetadata && typeof documentRow.sourceMetadata === 'object'
           ? {
@@ -310,6 +311,7 @@ export async function persistProjectGraph(db: ProjectGraphWriter, project: Proje
     rules: project.document.rules ?? null,
     documentModel: project.document.documentModel ?? null,
     metadata: project.document.metadata ?? null,
+    provenance: project.document.provenance ?? null,
     createdAt: new Date(project.createdAt),
     updatedAt: new Date(project.updatedAt),
   });
@@ -387,6 +389,7 @@ export async function persistDocumentUpdate(db: ProjectGraphWriterWithQuery, nex
       rules: nextProject.document.rules ?? null,
       documentModel: nextProject.document.documentModel ?? null,
       metadata: nextProject.document.metadata ?? null,
+      provenance: nextProject.document.provenance ?? null,
       updatedAt: new Date(nextProject.updatedAt),
     })
     .where(eq(projectDocuments.projectId, nextProject.id));
@@ -865,6 +868,7 @@ async function saveDocumentExtrasInDb(userId: string, projectId: string, input: 
       rules: nextProject.document.rules ?? null,
       documentModel: nextProject.document.documentModel ?? null,
       metadata: nextProject.document.metadata ?? null,
+      provenance: nextProject.document.provenance ?? null,
       updatedAt: new Date(nextProject.updatedAt),
     })
     .where(eq(projectDocuments.projectId, projectId));

@@ -8,6 +8,7 @@ import { getDb, hasDatabase } from '@/lib/db';
 import { projectRepository } from '@/lib/db/repositories';
 import { uploadProjectBlob } from '@/lib/blob/client';
 import { captureAutoSaveSnapshot, captureProjectSnapshot } from '@/lib/snapshots/capture';
+import { deriveProvenanceUpdate } from '@/lib/ai/provenance';
 import { normalizeSurfaceState, type SurfaceState } from './cover-surface';
 import { buildPaginationConfig } from '@/lib/preview/device-configs';
 import {
@@ -652,6 +653,10 @@ export async function saveProjectMetadataAction(formData: FormData) {
 /**
  * FASE C: persists the canonical semantic document model (lazy migration
  * from HTML happens on first save through this action).
+ *
+ * F3 governance: this is a *human* save of the model — the provenance map is
+ * updated marking every block the diff touches as `human` (blocks untouched
+ * keep their recorded origin, so AI-authored blocks stay attributed).
  */
 export async function saveProjectDocumentModelAction(formData: FormData) {
   const userId = await requireUserId();
@@ -667,7 +672,16 @@ export async function saveProjectDocumentModelAction(formData: FormData) {
     throw new Error('Invalid documentModel payload');
   }
 
-  await projectRepository.saveDocumentExtras(userId, projectId, { documentModel });
+  const project = await projectRepository.getProjectById(userId, projectId);
+  if (!project) throw new Error('Project not found');
+  const provenance = deriveProvenanceUpdate(
+    project.document.documentModel ?? null,
+    documentModel,
+    project.document.provenance,
+    'human',
+  );
+
+  await projectRepository.saveDocumentExtras(userId, projectId, { documentModel, provenance });
   revalidatePath(`/projects/${projectId}/editor`);
   return { ok: true as const };
 }

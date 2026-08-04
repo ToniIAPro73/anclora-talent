@@ -80,6 +80,8 @@ export const projectDocuments = pgTable('project_documents', {
   documentModel: jsonb('document_model'),
   // FASE C: digital product metadata (DocumentMetadata JSON)
   metadata: jsonb('metadata'),
+  // F3: per-block content provenance registry (blockId → 'human' | 'ai')
+  provenance: jsonb('provenance'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });

@@ -1,5 +1,6 @@
 import type { DocumentMetadata, SemanticDocument } from '@/lib/document/model';
 import type { DocumentRules } from '@/lib/compose/rules';
+import type { ProvenanceMap } from '@/lib/ai/provenance';
 import type { SurfaceState } from './cover-surface';
 
 export type ProjectStatus = 'draft' | 'active';
@@ -64,6 +65,8 @@ export interface ProjectDocument {
   documentModel?: SemanticDocument | null;
   /** FASE C: digital product metadata (ISBN, description, keywords…). */
   metadata?: DocumentMetadata | null;
+  /** F3: per-block content provenance (blockId → human|ai governance map). */
+  provenance?: ProvenanceMap | null;
 }
 
 /** FASE C: partial update of rules / semantic model / product metadata. */
@@ -71,6 +74,8 @@ export interface UpdateDocumentExtrasInput {
   rules?: DocumentRules | null;
   documentModel?: SemanticDocument | null;
   metadata?: DocumentMetadata | null;
+  /** F3: provenance map update (AI accept / human model save). */
+  provenance?: ProvenanceMap | null;
 }
 
 export interface CoverDesign {
