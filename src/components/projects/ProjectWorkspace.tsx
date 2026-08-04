@@ -58,6 +58,8 @@ import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { BrandProfile } from '@/lib/brand/brand-profile';
+import type { LaunchPackView } from '@/lib/manifest/view';
+import { LaunchPackPanel } from './LaunchPackPanel';
 import { buildExportQueryString } from '@/lib/projects/export-config';
 
 const TEMPLATE_TONE_TO_PALETTE: Record<EditorialTemplate['previewTone'], ProjectRecord['cover']['palette']> = {
@@ -147,10 +149,16 @@ export function ProjectWorkspace({
   project,
   copy,
   brandProfiles = [],
+  launchPack,
 }: {
   project: ProjectRecord;
   copy: AppMessages['project'];
   brandProfiles?: BrandProfile[];
+  /** F2: launch pack section (copy + manifest view); rendered in step 9. */
+  launchPack?: {
+    copy: AppMessages['launchPack'];
+    view: LaunchPackView | null;
+  };
 }) {
   const router = useRouter();
   const { preferences } = useEditorPreferences();
@@ -588,6 +596,13 @@ export function ProjectWorkspace({
                   {copy.previewExportEpubButton}
                </button>
             </div>
+            {launchPack && (
+              <LaunchPackPanel
+                copy={launchPack.copy}
+                projectId={project.id}
+                view={launchPack.view}
+              />
+            )}
           </section>
         );
       default:

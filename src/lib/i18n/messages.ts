@@ -178,6 +178,10 @@ export type AppMessages = {
     paletteSand: string;
     importAnalyzing: string;
     importReady: string;
+    importOcrAppliedLabel: string;
+    importOcrBadgeLocal: string;
+    importOcrBadgeService: string;
+    importOcrBadgeBrowser: string;
     importChaptersDetected: string;
     importTitleDetected: string;
     importAuthorDetected: string;
@@ -445,6 +449,37 @@ export type AppMessages = {
       agentOffline: string;
     };
   };
+  launchPack: {
+    title: string;
+    description: string;
+    generateButton: string;
+    regenerateButton: string;
+    generating: string;
+    empty: string;
+    versionLabel: string;
+    staleBadge: string;
+    pendingBadge: string;
+    viewAsset: string;
+    provenanceCompositor: string;
+    provenanceService: string;
+    provenanceLocal: string;
+    kinds: {
+      epub: string;
+      pdf: string;
+      html: string;
+      markdown: string;
+      slides: string;
+      image: string;
+      mobi: string;
+      azw3: string;
+      audio: string;
+      video: string;
+    };
+    errors: {
+      unavailable: string;
+      notFound: string;
+    };
+  };
 };
 
 export const appMessages: Record<UiLocale, AppMessages> = {
@@ -709,6 +744,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       paletteSand: 'Sand',
       importAnalyzing: 'Analizando documento...',
       importReady: 'Listo para importar',
+      importOcrAppliedLabel: 'PDF escaneado: texto reconocido mediante OCR. Modo declarado:',
+      importOcrBadgeLocal: 'Procesado en tu dispositivo',
+      importOcrBadgeService: 'Procesado en la nube privada de Anclora',
+      importOcrBadgeBrowser: 'Procesado en tu navegador',
       importChaptersDetected: '{count} capítulos detectados',
       importTitleDetected: 'Título detectado',
       importAuthorDetected: 'Autor detectado',
@@ -995,6 +1034,38 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         agentOffline: 'Tu dispositivo está desconectado. El trabajo esperará o puedes procesarlo en la nube privada.',
       },
     },
+    launchPack: {
+      title: 'Pack de lanzamiento',
+      description:
+        'Genera todos los formatos del producto en una operación y deja constancia de su procedencia. Si editas el documento después, marcamos los activos desactualizados.',
+      generateButton: 'Generar pack de lanzamiento',
+      regenerateButton: 'Regenerar pack',
+      generating: 'Generando pack…',
+      empty: 'Aún no hay pack generado. Lanza la generación para crear todos los formatos coordinados.',
+      versionLabel: 'Versión {version}',
+      staleBadge: 'Desactualizado',
+      pendingBadge: 'En proceso',
+      viewAsset: 'Abrir',
+      provenanceCompositor: 'Compositor',
+      provenanceService: 'FileStudio · nube',
+      provenanceLocal: 'FileStudio · tu dispositivo',
+      kinds: {
+        epub: 'EPUB',
+        pdf: 'PDF',
+        html: 'HTML',
+        markdown: 'Markdown (blog)',
+        slides: 'Slides',
+        image: 'Imagen',
+        mobi: 'MOBI',
+        azw3: 'AZW3',
+        audio: 'Audio',
+        video: 'Vídeo',
+      },
+      errors: {
+        unavailable: 'No se pudo generar el pack ahora mismo. Inténtalo más tarde.',
+        notFound: 'No encontramos este proyecto.',
+      },
+    },
   },
   en: {
     shell: {
@@ -1257,6 +1328,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       paletteSand: 'Sand',
       importAnalyzing: 'Analyzing document...',
       importReady: 'Ready to import',
+      importOcrAppliedLabel: 'Scanned PDF: text recognized via OCR. Declared mode:',
+      importOcrBadgeLocal: 'Processed on your device',
+      importOcrBadgeService: 'Processed in Anclora’s private cloud',
+      importOcrBadgeBrowser: 'Processed in your browser',
       importChaptersDetected: '{count} chapters detected',
       importTitleDetected: 'Detected title',
       importAuthorDetected: 'Detected author',
@@ -1541,6 +1616,38 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         integrityFailed: 'The result did not pass the integrity check. We are retrying.',
         consentRejected: 'Local processing was rejected on your device. You can retry or choose another mode.',
         agentOffline: 'Your device is offline. The job will wait, or you can process it in the private cloud.',
+      },
+    },
+    launchPack: {
+      title: 'Launch pack',
+      description:
+        'Generates every product format in one operation and records its provenance. If you edit the document afterwards, we flag the outdated assets.',
+      generateButton: 'Generate launch pack',
+      regenerateButton: 'Regenerate pack',
+      generating: 'Generating pack…',
+      empty: 'No pack generated yet. Run the generation to create every coordinated format.',
+      versionLabel: 'Version {version}',
+      staleBadge: 'Outdated',
+      pendingBadge: 'In progress',
+      viewAsset: 'Open',
+      provenanceCompositor: 'Compositor',
+      provenanceService: 'FileStudio · cloud',
+      provenanceLocal: 'FileStudio · your device',
+      kinds: {
+        epub: 'EPUB',
+        pdf: 'PDF',
+        html: 'HTML',
+        markdown: 'Markdown (blog)',
+        slides: 'Slides',
+        image: 'Image',
+        mobi: 'MOBI',
+        azw3: 'AZW3',
+        audio: 'Audio',
+        video: 'Video',
+      },
+      errors: {
+        unavailable: 'The pack could not be generated right now. Please try again later.',
+        notFound: 'We could not find this project.',
       },
     },
   },
