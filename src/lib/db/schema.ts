@@ -344,6 +344,79 @@ export const projectAssetManifests = pgTable(
   (table) => [unique('project_asset_manifests_project_version_unique').on(table.projectId, table.version)],
 );
 
+// F4 — project collaboration (roles: author = owner, editor = corrector,
+// designer = maquetador). One row per (project, user); the owner never has a
+// row — ownership of `projects.userId` implies the `author` role. Inviting a
+// collaborator carries no seat/plan requirement for the invitee (no billing
+// exists yet): accepting the invitation is enough.
+export const projectCollaborators = pgTable(
+  'project_collaborators',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    projectId: uuid('project_id').notNull(),
+    userId: uuid('user_id').notNull(),
+    // editor | designer (author is the project owner, never a row here)
+    role: varchar('role', { length: 16 }).notNull(),
+    invitedBy: uuid('invited_by').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [unique('project_collaborators_project_user_unique').on(table.projectId, table.userId)],
+);
+
+// F4 — email invitations with a signed random token (SHA-256 stored, never
+// the raw token) and expiration. If the invited email has no account yet, the
+// same link works after registering with that email.
+export const projectInvitations = pgTable('project_invitations', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull(),
+  email: varchar('email', { length: 255 }).notNull(),
+  // editor | designer
+  role: varchar('role', { length: 16 }).notNull(),
+  tokenHash: varchar('token_hash', { length: 64 }).notNull().unique(),
+  invitedBy: uuid('invited_by').notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+  acceptedBy: uuid('accepted_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// F4 — comments anchored to the stable block ids of the document AST
+// (never text offsets). `parent_id` points at the thread root (flat replies);
+// resolving a thread marks the root, replies inherit its status in the view.
+export const blockComments = pgTable('block_comments', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull(),
+  blockId: varchar('block_id', { length: 191 }).notNull(),
+  authorId: uuid('author_id').notNull(),
+  body: text('body').notNull(),
+  // open | resolved
+  status: varchar('status', { length: 16 }).notNull().default('open'),
+  parentId: uuid('parent_id'),
+  resolvedBy: uuid('resolved_by'),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// F4 — human editor (corrector) corrections as accept/rejectable AST
+// patches: same BlockOperation[] + DocumentDiff shape as F3 AI proposals
+// (src/lib/ai/ast-diff-proposal.ts), provenance human. Only the author
+// decides; applying re-saves the document through the regular save route.
+export const editorSuggestions = pgTable('editor_suggestions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull(),
+  authorId: uuid('author_id').notNull(),
+  summary: varchar('summary', { length: 500 }).notNull(),
+  // BlockOperation[] JSON (src/lib/ai/ast-diff-proposal.ts)
+  operations: jsonb('operations').notNull(),
+  // DocumentDiff JSON (src/lib/document/diff.ts)
+  diff: jsonb('diff').notNull(),
+  // pending | accepted | rejected
+  status: varchar('status', { length: 16 }).notNull().default('pending'),
+  decidedBy: uuid('decided_by'),
+  decidedAt: timestamp('decided_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 // F4 — sales channel credentials (Gumroad access token, one row per
 // user+channel). Tokens are AES-256-GCM encrypted at rest
 // (src/lib/sales/credentials.ts, same scheme as filestudio/crypto.ts) and
