@@ -199,6 +199,7 @@ export type AppMessages = {
     previewExportFilename: string;
     previewExportPdfButton: string;
     previewExportDocxButton: string;
+    previewExportEpubButton: string;
     coverRenderImage: string;
     coverRenderImageDone: string;
     coverRenderedImageLabel: string;
@@ -612,6 +613,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewExportFilename: 'proyecto',
       previewExportPdfButton: 'Exportar PDF',
       previewExportDocxButton: 'Exportar Word (.docx)',
+      previewExportEpubButton: 'Exportar EPUB (.epub)',
       coverRenderImage: 'Generar imagen',
       coverRenderImageDone: 'Imagen guardada',
       coverRenderedImageLabel: 'Imagen renderizada',
@@ -1023,6 +1025,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewExportFilename: 'project',
       previewExportPdfButton: 'Export PDF',
       previewExportDocxButton: 'Export Word (.docx)',
+      previewExportEpubButton: 'Export EPUB (.epub)',
       coverRenderImage: 'Generate image',
       coverRenderImageDone: 'Image saved',
       coverRenderedImageLabel: 'Rendered image',

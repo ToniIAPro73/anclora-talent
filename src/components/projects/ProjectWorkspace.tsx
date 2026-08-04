@@ -554,8 +554,15 @@ export function ProjectWorkspace({
                >
                   {copy.previewExportDocxButton}
                </button>
-               <button className="ac-button ac-button--secondary" disabled>
-                  Exportar EPUB (Próximamente)
+               <button
+                 onClick={() => {
+                   const epubUrl = `/api/projects/export/epub?projectId=${project.id}&${exportQuery}`;
+                   window.open(epubUrl, '_blank');
+                 }}
+                 disabled={exportBlocked}
+                 className="ac-button ac-button--secondary"
+               >
+                  {copy.previewExportEpubButton}
                </button>
             </div>
           </section>
