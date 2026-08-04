@@ -1,0 +1,1 @@
+ALTER TABLE "projects" ADD COLUMN "template_id" varchar(32);

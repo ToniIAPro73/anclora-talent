@@ -199,6 +199,8 @@ function mapRowsToProject(
     title: projectRow.title,
     status: projectRow.status as ProjectRecord['status'],
     workflowStep: projectRow.workflowStep,
+    brandProfileId: projectRow.brandProfileId ?? null,
+    templateId: projectRow.templateId ?? null,
     createdAt: projectRow.createdAt.toISOString(),
     updatedAt: projectRow.updatedAt.toISOString(),
     document: {
@@ -211,6 +213,7 @@ function mapRowsToProject(
       rules: (documentRow.rules ?? null) as ProjectDocument['rules'],
       documentModel: (documentRow.documentModel ?? null) as ProjectDocument['documentModel'],
       metadata: (documentRow.metadata ?? null) as ProjectDocument['metadata'],
+      provenance: (documentRow.provenance ?? null) as ProjectDocument['provenance'],
       source:
         documentRow.sourceMetadata && typeof documentRow.sourceMetadata === 'object'
           ? {
@@ -291,6 +294,8 @@ export async function persistProjectGraph(db: ProjectGraphWriter, project: Proje
     title: project.title,
     status: project.status,
     workflowStep: project.workflowStep,
+    brandProfileId: project.brandProfileId ?? null,
+    templateId: project.templateId ?? null,
     createdAt: new Date(project.createdAt),
     updatedAt: new Date(project.updatedAt),
   });
@@ -306,6 +311,7 @@ export async function persistProjectGraph(db: ProjectGraphWriter, project: Proje
     rules: project.document.rules ?? null,
     documentModel: project.document.documentModel ?? null,
     metadata: project.document.metadata ?? null,
+    provenance: project.document.provenance ?? null,
     createdAt: new Date(project.createdAt),
     updatedAt: new Date(project.updatedAt),
   });
@@ -383,6 +389,7 @@ export async function persistDocumentUpdate(db: ProjectGraphWriterWithQuery, nex
       rules: nextProject.document.rules ?? null,
       documentModel: nextProject.document.documentModel ?? null,
       metadata: nextProject.document.metadata ?? null,
+      provenance: nextProject.document.provenance ?? null,
       updatedAt: new Date(nextProject.updatedAt),
     })
     .where(eq(projectDocuments.projectId, nextProject.id));
@@ -636,6 +643,36 @@ async function saveWorkflowStepInDb(userId: string, projectId: string, workflowS
   return nextProject;
 }
 
+// F2: assigns (or clears, null) the brand profile applied to exports (G1).
+async function saveProjectBrandProfileInDb(userId: string, projectId: string, brandProfileId: string | null) {
+  const db = getDb();
+  const current = await getProjectFromDb(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  const updatedAt = new Date().toISOString();
+  await db
+    .update(projects)
+    .set({ brandProfileId, updatedAt: new Date(updatedAt) })
+    .where(and(eq(projects.id, projectId), eq(projects.userId, userId)));
+
+  return { ...current, brandProfileId, updatedAt };
+}
+
+async function saveProjectBrandProfileInMemory(userId: string, projectId: string, brandProfileId: string | null) {
+  const current = await getProjectFromMemory(userId, projectId);
+
+  if (!current) {
+    throw new Error('Project not found');
+  }
+
+  const next = { ...current, brandProfileId, updatedAt: new Date().toISOString() };
+  getMemoryStore().set(projectId, next);
+  return next;
+}
+
 async function saveRenderedCoverUrlInDb(userId: string, projectId: string, renderedImageUrl: string) {
   const db = getDb();
   const current = await getProjectFromDb(userId, projectId);
@@ -831,6 +868,7 @@ async function saveDocumentExtrasInDb(userId: string, projectId: string, input: 
       rules: nextProject.document.rules ?? null,
       documentModel: nextProject.document.documentModel ?? null,
       metadata: nextProject.document.metadata ?? null,
+      provenance: nextProject.document.provenance ?? null,
       updatedAt: new Date(nextProject.updatedAt),
     })
     .where(eq(projectDocuments.projectId, projectId));
@@ -1072,6 +1110,11 @@ export const projectRepository = {
     return hasDatabase()
       ? saveWorkflowStepInDb(userId, projectId, workflowStep)
       : saveWorkflowStepInMemory(userId, projectId, workflowStep);
+  },
+  saveProjectBrandProfile(userId: string, projectId: string, brandProfileId: string | null) {
+    return hasDatabase()
+      ? saveProjectBrandProfileInDb(userId, projectId, brandProfileId)
+      : saveProjectBrandProfileInMemory(userId, projectId, brandProfileId);
   },
   deleteProject(userId: string, projectId: string) {
     return hasDatabase() ? deleteProjectInDb(userId, projectId) : deleteProjectInMemory(userId, projectId);

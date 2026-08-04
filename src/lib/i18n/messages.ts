@@ -1,4 +1,5 @@
 import type { UiLocale } from '@/lib/ui-preferences/preferences';
+import type { ProductTemplateCopyKey } from '@/lib/templates/product-templates';
 import type {
   MarketingBenefit,
   MarketingShowcasePanel,
@@ -120,6 +121,15 @@ export type AppMessages = {
     sourceDocumentHint: string;
     createProjectHint: string;
     createProjectAction: string;
+    templateSelectorEyebrow: string;
+    templateSelectorTitle: string;
+    templateSelectorDescription: string;
+    templateSelectorSelected: string;
+    templateSelectorSelect: string;
+    productTemplates: Record<
+      ProductTemplateCopyKey,
+      { name: string; description: string }
+    >;
     cardPremium: string;
     cardUpdated: string;
     cardOpenEditor: string;
@@ -168,6 +178,10 @@ export type AppMessages = {
     paletteSand: string;
     importAnalyzing: string;
     importReady: string;
+    importOcrAppliedLabel: string;
+    importOcrBadgeLocal: string;
+    importOcrBadgeService: string;
+    importOcrBadgeBrowser: string;
     importChaptersDetected: string;
     importTitleDetected: string;
     importAuthorDetected: string;
@@ -293,6 +307,45 @@ export type AppMessages = {
     preflightSeverityInfo: string;
     /** Localized message templates per preflight rule key (`{param}` placeholders). */
     preflightRules: Record<string, string>;
+    aiAssistantEyebrow: string;
+    aiEthicalCopy: string;
+    aiProposeFix: string;
+    aiProposalLoading: string;
+    aiProposalError: string;
+    aiProposalStale: string;
+    aiProposalAccept: string;
+    aiProposalReject: string;
+    aiProposalApplying: string;
+    aiModeCloud: string;
+    aiModeLocal: string;
+    aiAdvisoryBadge: string;
+    aiDiffBefore: string;
+    aiDiffAfter: string;
+    aiChangeAdded: string;
+    aiChangeRemoved: string;
+    aiChangeChanged: string;
+    aiChangeMoved: string;
+    aiNoProposals: string;
+    aiCoherenceButton: string;
+    aiCoherenceLoading: string;
+    aiCoherenceTitle: string;
+    aiCoherenceEmpty: string;
+    aiIssueBrokenRef: string;
+    aiIssueDuplicateHeading: string;
+    aiIssueMissingChapterHeading: string;
+    aiProvenanceTitle: string;
+    aiProvenanceSummary: string;
+    aiCoAuthorEyebrow: string;
+    aiCoAuthorEthicalCopy: string;
+    aiCoAuthorChapterLabel: string;
+    aiCoAuthorStyleAction: string;
+    aiCoAuthorArchitectureAction: string;
+    aiCoAuthorSummaryAction: string;
+    aiCoAuthorNoProposal: string;
+    kdpDisclosureTitle: string;
+    kdpDisclosureRequiredBadge: string;
+    kdpDisclosureExemptBadge: string;
+    kdpDisclosureHelper: string;
     exportGateBlockedMessage: string;
     exportGateWarnMessage: string;
     metadataPanelEyebrow: string;
@@ -305,6 +358,20 @@ export type AppMessages = {
     metadataLanguageLabel: string;
     metadataSave: string;
     metadataSaved: string;
+    brandPanelEyebrow: string;
+    brandPanelTitle: string;
+    brandPanelDescription: string;
+    brandSelectLabel: string;
+    brandNoneOption: string;
+    brandStatusDraft: string;
+    brandStatusActive: string;
+    brandStatusDeprecated: string;
+    brandActivateAction: string;
+    brandUploadLabel: string;
+    brandUploadAction: string;
+    brandUploading: string;
+    brandSaved: string;
+    brandVersionLabel: string;
     reimportButton: string;
     reimportDialogTitle: string;
     reimportDialogDescription: string;
@@ -317,6 +384,26 @@ export type AppMessages = {
     reimportResultTitle: string;
     reimportDone: string;
     reimportError: string;
+    structureToggleLabel: string;
+    structureToggleHint: string;
+    structureConfigureAction: string;
+    structureConfiguredBadge: string;
+    structureDialogTitle: string;
+    structureDialogDescription: string;
+    structureSourceUploadLabel: string;
+    structureSourceSavedLabel: string;
+    structureNoSavedProfiles: string;
+    structureAnalyzing: string;
+    structureConfirmTitle: string;
+    structureHierarchyLine: string;
+    structureSummaryLine: string;
+    structureFunctionMissing: string;
+    structureConfidencePrefix: string;
+    structureSaveProfileLabel: string;
+    structureProfileNamePlaceholder: string;
+    structureConfirmAction: string;
+    structureDiscardAction: string;
+    structureError: string;
     healthRecomposedBadge: string;
     healthDiffTitle: string;
     healthDiffShift: string;
@@ -419,6 +506,180 @@ export type AppMessages = {
       integrityFailed: string;
       consentRejected: string;
       agentOffline: string;
+    };
+  };
+  launchPack: {
+    title: string;
+    description: string;
+    generateButton: string;
+    regenerateButton: string;
+    generating: string;
+    empty: string;
+    versionLabel: string;
+    staleBadge: string;
+    pendingBadge: string;
+    viewAsset: string;
+    provenanceCompositor: string;
+    provenanceService: string;
+    provenanceLocal: string;
+    kinds: {
+      epub: string;
+      pdf: string;
+      html: string;
+      markdown: string;
+      slides: string;
+      image: string;
+      mobi: string;
+      azw3: string;
+      audio: string;
+      video: string;
+    };
+    errors: {
+      unavailable: string;
+      notFound: string;
+    };
+  };
+  publishChannels: {
+    title: string;
+    description: string;
+    kitTitle: string;
+    generateKitButton: string;
+    generatingKit: string;
+    sheetTab: string;
+    landingTab: string;
+    copyButton: string;
+    copiedBadge: string;
+    draftDescriptionBadge: string;
+    assetsLabel: string;
+    disclosureLabel: string;
+    gumroadTitle: string;
+    gumroadDescription: string;
+    gumroadDisabled: string;
+    tokenLabel: string;
+    tokenPlaceholder: string;
+    saveTokenButton: string;
+    savingToken: string;
+    removeTokenButton: string;
+    connectedBadge: string;
+    priceLabel: string;
+    pricePlaceholder: string;
+    pushButton: string;
+    pushing: string;
+    pushSuccessLabel: string;
+    modeApiBadge: string;
+    hotmartTitle: string;
+    hotmartDescription: string;
+    exportButton: string;
+    exporting: string;
+    instructionsTitle: string;
+    modeExportBadge: string;
+    errors: {
+      unavailable: string;
+      notFound: string;
+      notConfigured: string;
+      auth: string;
+      validation: string;
+      circuitOpen: string;
+    };
+  };
+  collaboration: {
+    title: string;
+    description: string;
+    openThreadsBadge: string;
+    viewerRoleLabel: string;
+    roleBadges: { author: string; editor: string; designer: string };
+    teamTitle: string;
+    emptyTeam: string;
+    revokeButton: string;
+    inviteTitle: string;
+    inviteDescription: string;
+    inviteEmailLabel: string;
+    inviteEmailPlaceholder: string;
+    inviteRoleLabel: string;
+    inviteButton: string;
+    invitingButton: string;
+    inviteLinkLabel: string;
+    copyButton: string;
+    copiedBadge: string;
+    noSeatTollNote: string;
+    pendingInvitationsTitle: string;
+    invitationExpiresLabel: string;
+    cancelInvitationButton: string;
+    commentsTitle: string;
+    emptyComments: string;
+    frontMatterChapter: string;
+    commentPlaceholder: string;
+    commentButton: string;
+    replyPlaceholder: string;
+    replyButton: string;
+    resolveButton: string;
+    openBadge: string;
+    resolvedBadge: string;
+    resolvedByLabel: string;
+    suggestionsTitle: string;
+    emptySuggestions: string;
+    proposeButton: string;
+    proposeSummaryPlaceholder: string;
+    proposeTextPlaceholder: string;
+    proposeSubmitButton: string;
+    proposingButton: string;
+    suggestionStatusBadges: { pending: string; accepted: string; rejected: string };
+    decidedByLabel: string;
+    acceptButton: string;
+    rejectButton: string;
+    invite: {
+      title: string;
+      description: string;
+      roleLabel: string;
+      acceptButton: string;
+      acceptingButton: string;
+      acceptedTitle: string;
+      acceptedDescription: string;
+      goToDashboardButton: string;
+    };
+    errors: {
+      unavailable: string;
+      forbidden: string;
+      notFound: string;
+      invalid: string;
+      invalidEmail: string;
+      invalidRole: string;
+      alreadyCollaborator: string;
+      expired: string;
+      emailMismatch: string;
+      alreadyAccepted: string;
+      stale: string;
+    };
+  };
+  history: {
+    title: string;
+    description: string;
+    saveVersionButton: string;
+    savingVersion: string;
+    empty: string;
+    versionLabel: string;
+    sourceManualSave: string;
+    sourceReimport: string;
+    sourceRestore: string;
+    compareFrom: string;
+    compareTo: string;
+    compareButton: string;
+    comparing: string;
+    selectVersions: string;
+    diffEmpty: string;
+    diffSummary: string;
+    metadataChangedBadge: string;
+    changeAdded: string;
+    changeRemoved: string;
+    changeChanged: string;
+    changeMoved: string;
+    unchaptered: string;
+    restoreButton: string;
+    restoring: string;
+    errors: {
+      unavailable: string;
+      notFound: string;
+      unchanged: string;
     };
   };
 };
@@ -601,6 +862,39 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       createProjectHint:
         'La creación persiste sobre Neon desde el primer paso y abre el editor con base importada si has adjuntado documento.',
       createProjectAction: 'Crear proyecto y abrir editor',
+      templateSelectorEyebrow: 'Plantilla de producto',
+      templateSelectorTitle: 'Elige la estructura inicial',
+      templateSelectorDescription:
+        'Cada plantilla siembra capítulos guía y reglas de composición. La marca se aplica después, por separado.',
+      templateSelectorSelected: 'Seleccionada',
+      templateSelectorSelect: 'Seleccionar',
+      productTemplates: {
+        standardBook: {
+          name: 'Libro estándar',
+          description:
+            'Portadilla, legal, prólogo, capítulos y epílogo: el esqueleto completo de un libro listo para escribir desde el minuto uno.',
+        },
+        technicalManual: {
+          name: 'Manual técnico',
+          description:
+            'Secciones numeradas, referencia y apéndices, con reglas que protegen el código y las listas largas en cada página.',
+        },
+        leadMagnet: {
+          name: 'Guía / lead magnet',
+          description:
+            'Secciones cortas y un cierre con CTA: una guía que se lee de un tirón y convierte lectores en leads.',
+        },
+        modularCourse: {
+          name: 'Curso modular',
+          description:
+            'Módulos con lecciones y recursos ya ordenados para convertir tu método en un producto formativo publicable.',
+        },
+        bundle: {
+          name: 'Bundle',
+          description:
+            'Un documento con partes agrupadas para empaquetar libro, workbook y recursos en un solo producto.',
+        },
+      },
       cardPremium: 'Premium',
       cardUpdated: 'Actualizado',
       cardOpenEditor: 'Abrir editor',
@@ -652,6 +946,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       paletteSand: 'Sand',
       importAnalyzing: 'Analizando documento...',
       importReady: 'Listo para importar',
+      importOcrAppliedLabel: 'PDF escaneado: texto reconocido mediante OCR. Modo declarado:',
+      importOcrBadgeLocal: 'Procesado en tu dispositivo',
+      importOcrBadgeService: 'Procesado en la nube privada de Anclora',
+      importOcrBadgeBrowser: 'Procesado en tu navegador',
       importChaptersDetected: '{count} capítulos detectados',
       importTitleDetected: 'Título detectado',
       importAuthorDetected: 'Autor detectado',
@@ -793,6 +1091,47 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         'kobo.a11y.imageAlt': 'Imagen sin texto alternativo ({src}); la accesibilidad EPUB lo exige.',
         'kobo.a11y.headingJump': 'Salto de jerarquía de encabezados (H{from} → H{to}); rompe la navegación accesible.',
       },
+      aiAssistantEyebrow: 'Asistente IA',
+      aiEthicalCopy: 'Asistente editorial — tú decides. La IA propone cambios sobre el documento; nunca escribe directamente.',
+      aiProposeFix: 'Proponer fix',
+      aiProposalLoading: 'Generando propuesta…',
+      aiProposalError: 'No se pudo generar la propuesta.',
+      aiProposalStale: 'El documento cambió desde que se generó la propuesta. Vuelve a generarla.',
+      aiProposalAccept: 'Aceptar',
+      aiProposalReject: 'Rechazar',
+      aiProposalApplying: 'Aplicando…',
+      aiModeCloud: 'Operación procesada en la nube',
+      aiModeLocal: 'Propuesta local (heurísticas, sin nube)',
+      aiAdvisoryBadge: 'Aviso — sin autocorrección',
+      aiDiffBefore: 'Antes',
+      aiDiffAfter: 'Después',
+      aiChangeAdded: 'añadido',
+      aiChangeRemoved: 'eliminado',
+      aiChangeChanged: 'modificado',
+      aiChangeMoved: 'movido',
+      aiNoProposals: 'Sin propuestas automáticas para esta incidencia.',
+      aiCoherenceButton: 'Revisar coherencia (refs/TOC)',
+      aiCoherenceLoading: 'Analizando coherencia…',
+      aiCoherenceTitle: 'Coherencia de referencias y TOC',
+      aiCoherenceEmpty: 'Sin problemas de coherencia: referencias vivas y TOC correctos.',
+      aiIssueBrokenRef: 'Referencia rota a «{target}»',
+      aiIssueDuplicateHeading: 'Encabezado duplicado: «{text}»',
+      aiIssueMissingChapterHeading: 'Capítulo sin encabezado de nivel 1',
+      aiProvenanceTitle: 'Procedencia del contenido',
+      aiProvenanceSummary: '{ai} bloques IA · {human} bloques humanos',
+      aiCoAuthorEyebrow: 'Co-autor IA',
+      aiCoAuthorEthicalCopy:
+        'Asistente editorial, no escritor fantasma: la IA propone y tú decides qué entra en tu libro.',
+      aiCoAuthorChapterLabel: 'Capítulo',
+      aiCoAuthorStyleAction: 'Reescritura de estilo',
+      aiCoAuthorArchitectureAction: 'Arquitectura de contenido',
+      aiCoAuthorSummaryAction: 'Resumen derivado',
+      aiCoAuthorNoProposal: 'Sin propuesta: la IA no devolvió cambios válidos para esta acción.',
+      kdpDisclosureTitle: 'Declaración de contenido IA (KDP)',
+      kdpDisclosureRequiredBadge: 'Requerida: contenido AI-assisted',
+      kdpDisclosureExemptBadge: 'Exenta: contenido 100% humano',
+      kdpDisclosureHelper:
+        'Copia este texto en la pregunta de Amazon KDP sobre contenido generado con IA al publicar.',
       exportGateBlockedMessage: 'Exportación bloqueada: resuelve las violaciones del documento primero.',
       exportGateWarnMessage: 'Aviso: el documento tiene {count} violaciones de composición.',
       metadataPanelEyebrow: 'Producto digital',
@@ -805,6 +1144,21 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       metadataLanguageLabel: 'Idioma',
       metadataSave: 'Guardar metadatos',
       metadataSaved: 'Metadatos guardados',
+      brandPanelEyebrow: 'Identidad de marca',
+      brandPanelTitle: 'Perfil de marca',
+      brandPanelDescription:
+        'Tema de marca opcional (paleta, tipografía y proporciones) aplicado a los exports. Independiente de las reglas de estructura.',
+      brandSelectLabel: 'Perfil aplicado al proyecto',
+      brandNoneOption: 'Sin perfil de marca',
+      brandStatusDraft: 'Borrador',
+      brandStatusActive: 'Activo',
+      brandStatusDeprecated: 'Obsoleto',
+      brandActivateAction: 'Activar',
+      brandUploadLabel: 'Crear perfil desde manual de identidad (PDF)',
+      brandUploadAction: 'Extraer perfil',
+      brandUploading: 'Extrayendo…',
+      brandSaved: 'Perfil de marca actualizado',
+      brandVersionLabel: 'versión',
       reimportButton: 'Reimportar DOCX',
       reimportDialogTitle: 'Reimportar documento',
       reimportDialogDescription: 'Sube la versión revisada del archivo original. El contenido se fusiona por estructura: se conservan portada, contraportada, reglas y ajustes manuales.',
@@ -817,6 +1171,28 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       reimportResultTitle: 'Reimportación completada',
       reimportDone: 'Cerrar',
       reimportError: 'No se pudo reimportar el archivo.',
+      structureToggleLabel: 'Aplicar estructura de referencia',
+      structureToggleHint:
+        'Genera un andamiaje vacío (partes, capítulos y subsecciones) a partir de la estructura de un documento de referencia. Nunca copia contenido ni voz de la fuente.',
+      structureConfigureAction: 'Configurar estructura de referencia',
+      structureConfiguredBadge: 'Estructura confirmada: {summary}',
+      structureDialogTitle: 'Estructura de referencia',
+      structureDialogDescription:
+        'Sube un documento de referencia o elige un perfil guardado. Revisarás el esquema inferido antes de aplicarlo: nada se aplica sin tu confirmación.',
+      structureSourceUploadLabel: 'Subir documento de referencia',
+      structureSourceSavedLabel: 'Perfiles de estructura guardados',
+      structureNoSavedProfiles: 'Aún no tienes perfiles de estructura guardados.',
+      structureAnalyzing: 'Analizando estructura…',
+      structureConfirmTitle: 'Confirma el esquema inferido',
+      structureHierarchyLine: 'Jerarquía: {levels} (profundidad {depth})',
+      structureSummaryLine: '{parts} partes · {chapters} capítulos · {subsections} subsecciones',
+      structureFunctionMissing: 'sin inferir (edítala después)',
+      structureConfidencePrefix: 'confianza:',
+      structureSaveProfileLabel: 'Guardar como perfil reutilizable',
+      structureProfileNamePlaceholder: 'Nombre del perfil',
+      structureConfirmAction: 'Confirmar estructura',
+      structureDiscardAction: 'Descartar',
+      structureError: 'No se pudo analizar el documento de referencia.',
       healthRecomposedBadge: 'Recompuesto desde la pág. {page}',
       healthDiffTitle: 'Cambios desde la última edición',
       healthDiffShift: '{title}: pág. {from} → {to}',
@@ -921,6 +1297,188 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         integrityFailed: 'El resultado no pasó la verificación de integridad. Vamos a reintentarlo.',
         consentRejected: 'El procesamiento local fue rechazado en tu dispositivo. Puedes reintentarlo o elegir otro modo.',
         agentOffline: 'Tu dispositivo está desconectado. El trabajo esperará o puedes procesarlo en la nube privada.',
+      },
+    },
+    launchPack: {
+      title: 'Pack de lanzamiento',
+      description:
+        'Genera todos los formatos del producto en una operación y deja constancia de su procedencia. Si editas el documento después, marcamos los activos desactualizados.',
+      generateButton: 'Generar pack de lanzamiento',
+      regenerateButton: 'Regenerar pack',
+      generating: 'Generando pack…',
+      empty: 'Aún no hay pack generado. Lanza la generación para crear todos los formatos coordinados.',
+      versionLabel: 'Versión {version}',
+      staleBadge: 'Desactualizado',
+      pendingBadge: 'En proceso',
+      viewAsset: 'Abrir',
+      provenanceCompositor: 'Compositor',
+      provenanceService: 'FileStudio · nube',
+      provenanceLocal: 'FileStudio · tu dispositivo',
+      kinds: {
+        epub: 'EPUB',
+        pdf: 'PDF',
+        html: 'HTML',
+        markdown: 'Markdown (blog)',
+        slides: 'Slides',
+        image: 'Imagen',
+        mobi: 'MOBI',
+        azw3: 'AZW3',
+        audio: 'Audio',
+        video: 'Vídeo',
+      },
+      errors: {
+        unavailable: 'No se pudo generar el pack ahora mismo. Inténtalo más tarde.',
+        notFound: 'No encontramos este proyecto.',
+      },
+    },
+    publishChannels: {
+      title: 'Publicar en canales de venta',
+      description:
+        'Genera la ficha de producto y el copy de landing desde el propio libro, crea el borrador en Gumroad o descarga el paquete listo para subir a Hotmart.',
+      kitTitle: 'Ficha de producto y copy de landing',
+      generateKitButton: 'Generar ficha y copy',
+      generatingKit: 'Generando…',
+      sheetTab: 'Ficha de producto',
+      landingTab: 'Copy de landing',
+      copyButton: 'Copiar',
+      copiedBadge: 'Copiado',
+      draftDescriptionBadge: 'Borrador derivado del primer capítulo — revísalo antes de publicar',
+      assetsLabel: 'Archivos del pack para subir',
+      disclosureLabel: 'Declaración de contenido IA',
+      gumroadTitle: 'Gumroad',
+      gumroadDescription:
+        'Crea el producto como borrador en tu cuenta de Gumroad (la API lo fuerza a borrador; lo publicas tú desde su panel).',
+      gumroadDisabled: 'Canal no habilitado en este despliegue (GUMROAD_ENABLED).',
+      tokenLabel: 'Token de acceso de Gumroad',
+      tokenPlaceholder: 'Pega tu access token…',
+      saveTokenButton: 'Conectar Gumroad',
+      savingToken: 'Verificando token…',
+      removeTokenButton: 'Desconectar',
+      connectedBadge: 'Conectado',
+      priceLabel: 'Precio (céntimos)',
+      pricePlaceholder: '900',
+      pushButton: 'Crear borrador en Gumroad',
+      pushing: 'Creando borrador…',
+      pushSuccessLabel: 'Borrador creado en Gumroad',
+      modeApiBadge: 'API · borrador',
+      hotmartTitle: 'Hotmart',
+      hotmartDescription:
+        'Hotmart no tiene API pública de creación de productos: descarga el paquete con la ficha, el copy y los archivos listos para el alta manual.',
+      exportButton: 'Descargar paquete Hotmart',
+      exporting: 'Preparando paquete…',
+      instructionsTitle: 'Pasos para el alta manual',
+      modeExportBadge: 'Export manual',
+      errors: {
+        unavailable: 'No se pudo completar la operación ahora mismo. Inténtalo más tarde.',
+        notFound: 'No encontramos este proyecto.',
+        notConfigured: 'El servidor no tiene clave de cifrado de credenciales configurada.',
+        auth: 'El token de Gumroad no es válido o fue revocado.',
+        validation: 'Gumroad rechazó los datos del producto. Revisa la ficha.',
+        circuitOpen: 'Gumroad no responde; reintentaremos en unos segundos.',
+      },
+    },
+    collaboration: {
+      title: 'Colaboración editorial',
+      description:
+        'Invita a tu corrector y maquetador, comenta bloques concretos del libro y decide qué correcciones entran al documento.',
+      openThreadsBadge: '{count} hilos abiertos',
+      viewerRoleLabel: 'Tu rol',
+      roleBadges: { author: 'Autor', editor: 'Corrector', designer: 'Maquetador' },
+      teamTitle: 'Equipo con acceso',
+      emptyTeam: 'Aún no hay colaboradores. Invita a tu corrector o maquetador con un enlace.',
+      revokeButton: 'Revocar acceso',
+      inviteTitle: 'Invitar colaborador',
+      inviteDescription:
+        'Genera un enlace de invitación con rol. El invitado lo acepta con su cuenta (o se registra gratis con ese email).',
+      inviteEmailLabel: 'Email del invitado',
+      inviteEmailPlaceholder: 'corrector@ejemplo.com',
+      inviteRoleLabel: 'Rol',
+      inviteButton: 'Generar invitación',
+      invitingButton: 'Generando…',
+      inviteLinkLabel: 'Enlace para compartir (caduca en 7 días)',
+      copyButton: 'Copiar',
+      copiedBadge: 'Copiado',
+      noSeatTollNote:
+        'Aceptar una invitación nunca exige plan ni pago al invitado: el producto aún no tiene facturación por asientos.',
+      pendingInvitationsTitle: 'Invitaciones pendientes',
+      invitationExpiresLabel: 'Caduca el {date}',
+      cancelInvitationButton: 'Cancelar',
+      commentsTitle: 'Comentarios por bloque',
+      emptyComments: 'Todavía no hay comentarios. Cualquier rol puede comentar sobre un bloque del libro.',
+      frontMatterChapter: 'Preliminares',
+      commentPlaceholder: 'Comenta este bloque…',
+      commentButton: 'Comentar',
+      replyPlaceholder: 'Responde al hilo…',
+      replyButton: 'Responder',
+      resolveButton: 'Resolver hilo',
+      openBadge: 'Abierto',
+      resolvedBadge: 'Resuelto',
+      resolvedByLabel: 'Resuelto por {name}',
+      suggestionsTitle: 'Correcciones propuestas',
+      emptySuggestions: 'El corrector aún no ha propuesto correcciones.',
+      proposeButton: 'Proponer corrección',
+      proposeSummaryPlaceholder: 'Resumen (p. ej. «Errata en el segundo párrafo»)…',
+      proposeTextPlaceholder: 'Texto corregido del bloque…',
+      proposeSubmitButton: 'Enviar propuesta',
+      proposingButton: 'Enviando…',
+      suggestionStatusBadges: { pending: 'Pendiente', accepted: 'Aceptada', rejected: 'Rechazada' },
+      decidedByLabel: 'Decidido por {name}',
+      acceptButton: 'Aceptar',
+      rejectButton: 'Rechazar',
+      invite: {
+        title: 'Invitación de colaboración',
+        description: 'Te han invitado a colaborar en un proyecto de Anclora Talent.',
+        roleLabel: 'Rol asignado',
+        acceptButton: 'Aceptar invitación',
+        acceptingButton: 'Aceptando…',
+        acceptedTitle: 'Invitación aceptada',
+        acceptedDescription: 'Ya formas parte del equipo del proyecto. Sin planes ni pagos: el acceso es directo.',
+        goToDashboardButton: 'Ir al panel',
+      },
+      errors: {
+        unavailable: 'No se pudo completar la operación ahora mismo. Inténtalo más tarde.',
+        forbidden: 'Tu rol no permite esta acción.',
+        notFound: 'No encontramos el proyecto o el elemento.',
+        invalid: 'Revisa los datos: faltan campos o no son válidos.',
+        invalidEmail: 'El email de la invitación no es válido.',
+        invalidRole: 'El rol de la invitación no es válido.',
+        alreadyCollaborator: 'Ese email ya forma parte del equipo del proyecto.',
+        expired: 'La invitación ha caducado. Pide una nueva al autor.',
+        emailMismatch: 'Esta invitación es para otro email. Entra con la cuenta invitada.',
+        alreadyAccepted: 'Esta invitación ya fue aceptada por otra cuenta.',
+        stale: 'El documento cambió desde que se propuso la corrección; la propuesta ya no aplica.',
+      },
+    },
+    history: {
+      title: 'Historial de versiones',
+      description:
+        'Cada versión guarda una copia completa del documento. Compara dos versiones para ver qué cambió por capítulo o restaura una anterior sin perder el historial.',
+      saveVersionButton: 'Guardar versión',
+      savingVersion: 'Guardando versión…',
+      empty: 'Aún no hay versiones guardadas. Se crean al guardar capítulos, reimportar o con «Guardar versión».',
+      versionLabel: 'Versión {version}',
+      sourceManualSave: 'Guardado',
+      sourceReimport: 'Reimportación',
+      sourceRestore: 'Restauración',
+      compareFrom: 'Desde',
+      compareTo: 'Hasta',
+      compareButton: 'Comparar',
+      comparing: 'Comparando…',
+      selectVersions: 'Elige dos versiones distintas para comparar.',
+      diffEmpty: 'No hay cambios entre estas versiones.',
+      diffSummary: '{added} añadidos · {removed} eliminados · {changed} modificados · {moved} movidos',
+      metadataChangedBadge: 'Metadatos modificados',
+      changeAdded: 'Añadido',
+      changeRemoved: 'Eliminado',
+      changeChanged: 'Modificado',
+      changeMoved: 'Movido',
+      unchaptered: 'Sin capítulo',
+      restoreButton: 'Restaurar',
+      restoring: 'Restaurando…',
+      errors: {
+        unavailable: 'No se pudo completar la operación. Inténtalo más tarde.',
+        notFound: 'No encontramos esta versión.',
+        unchanged: 'No hay cambios desde la última versión guardada.',
       },
     },
   },
@@ -1101,6 +1659,39 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       createProjectHint:
         'Creation persists to Neon from the first step and opens the editor with imported content if you attached a document.',
       createProjectAction: 'Create project and open editor',
+      templateSelectorEyebrow: 'Product template',
+      templateSelectorTitle: 'Choose the starting structure',
+      templateSelectorDescription:
+        'Each template seeds guide chapters and composition rules. Brand is applied later, separately.',
+      templateSelectorSelected: 'Selected',
+      templateSelectorSelect: 'Select',
+      productTemplates: {
+        standardBook: {
+          name: 'Standard book',
+          description:
+            'Title page, legal, prologue, chapters and epilogue: the full skeleton of a book ready to write from minute one.',
+        },
+        technicalManual: {
+          name: 'Technical manual',
+          description:
+            'Numbered sections, reference and appendices, with rules that protect code and long lists on every page.',
+        },
+        leadMagnet: {
+          name: 'Guide / lead magnet',
+          description:
+            'Short sections and a closing CTA: a guide that reads in one sitting and turns readers into leads.',
+        },
+        modularCourse: {
+          name: 'Modular course',
+          description:
+            'Modules with lessons and resources already laid out to turn your method into a publishable course product.',
+        },
+        bundle: {
+          name: 'Bundle',
+          description:
+            'One document with grouped parts to package book, workbook and resources into a single product.',
+        },
+      },
       cardPremium: 'Premium',
       cardUpdated: 'Updated',
       cardOpenEditor: 'Open editor',
@@ -1152,6 +1743,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       paletteSand: 'Sand',
       importAnalyzing: 'Analyzing document...',
       importReady: 'Ready to import',
+      importOcrAppliedLabel: 'Scanned PDF: text recognized via OCR. Declared mode:',
+      importOcrBadgeLocal: 'Processed on your device',
+      importOcrBadgeService: 'Processed in Anclora’s private cloud',
+      importOcrBadgeBrowser: 'Processed in your browser',
       importChaptersDetected: '{count} chapters detected',
       importTitleDetected: 'Detected title',
       importAuthorDetected: 'Detected author',
@@ -1293,6 +1888,47 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         'kobo.a11y.imageAlt': 'Image without alternative text ({src}); EPUB accessibility requires it.',
         'kobo.a11y.headingJump': 'Heading hierarchy jump (H{from} → H{to}); it breaks accessible navigation.',
       },
+      aiAssistantEyebrow: 'AI assistant',
+      aiEthicalCopy: 'Editorial assistant — you decide. AI proposes changes to the document; it never writes directly.',
+      aiProposeFix: 'Propose fix',
+      aiProposalLoading: 'Generating proposal…',
+      aiProposalError: 'The proposal could not be generated.',
+      aiProposalStale: 'The document changed since this proposal was generated. Generate it again.',
+      aiProposalAccept: 'Accept',
+      aiProposalReject: 'Reject',
+      aiProposalApplying: 'Applying…',
+      aiModeCloud: 'Operation processed in the cloud',
+      aiModeLocal: 'Local proposal (heuristics, no cloud)',
+      aiAdvisoryBadge: 'Advisory — no auto-fix',
+      aiDiffBefore: 'Before',
+      aiDiffAfter: 'After',
+      aiChangeAdded: 'added',
+      aiChangeRemoved: 'removed',
+      aiChangeChanged: 'changed',
+      aiChangeMoved: 'moved',
+      aiNoProposals: 'No automatic proposals for this issue.',
+      aiCoherenceButton: 'Check coherence (refs/TOC)',
+      aiCoherenceLoading: 'Analyzing coherence…',
+      aiCoherenceTitle: 'Reference & TOC coherence',
+      aiCoherenceEmpty: 'No coherence issues: live references and TOC are correct.',
+      aiIssueBrokenRef: 'Broken reference to "{target}"',
+      aiIssueDuplicateHeading: 'Duplicated heading: "{text}"',
+      aiIssueMissingChapterHeading: 'Chapter without a level-1 heading',
+      aiProvenanceTitle: 'Content provenance',
+      aiProvenanceSummary: '{ai} AI blocks · {human} human blocks',
+      aiCoAuthorEyebrow: 'AI co-author',
+      aiCoAuthorEthicalCopy:
+        'Editorial assistant, not a ghostwriter: AI proposes and you decide what goes into your book.',
+      aiCoAuthorChapterLabel: 'Chapter',
+      aiCoAuthorStyleAction: 'Style rewrite',
+      aiCoAuthorArchitectureAction: 'Content architecture',
+      aiCoAuthorSummaryAction: 'Derived summary',
+      aiCoAuthorNoProposal: 'No proposal: AI returned no valid changes for this action.',
+      kdpDisclosureTitle: 'AI content disclosure (KDP)',
+      kdpDisclosureRequiredBadge: 'Required: AI-assisted content',
+      kdpDisclosureExemptBadge: 'Exempt: 100% human content',
+      kdpDisclosureHelper:
+        'Paste this text into Amazon KDP’s AI-generated content question when publishing.',
       exportGateBlockedMessage: 'Export blocked: resolve the document violations first.',
       exportGateWarnMessage: 'Warning: the document has {count} composition violations.',
       metadataPanelEyebrow: 'Digital product',
@@ -1305,6 +1941,21 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       metadataLanguageLabel: 'Language',
       metadataSave: 'Save metadata',
       metadataSaved: 'Metadata saved',
+      brandPanelEyebrow: 'Brand identity',
+      brandPanelTitle: 'Brand profile',
+      brandPanelDescription:
+        'Optional brand theme (palette, typography and proportions) applied to exports. Independent from structure rules.',
+      brandSelectLabel: 'Profile applied to the project',
+      brandNoneOption: 'No brand profile',
+      brandStatusDraft: 'Draft',
+      brandStatusActive: 'Active',
+      brandStatusDeprecated: 'Deprecated',
+      brandActivateAction: 'Activate',
+      brandUploadLabel: 'Create profile from identity manual (PDF)',
+      brandUploadAction: 'Extract profile',
+      brandUploading: 'Extracting…',
+      brandSaved: 'Brand profile updated',
+      brandVersionLabel: 'version',
       reimportButton: 'Reimport DOCX',
       reimportDialogTitle: 'Reimport document',
       reimportDialogDescription: 'Upload the revised version of the original file. Content is merged by structure: cover, back cover, rules and manual tweaks are preserved.',
@@ -1317,6 +1968,28 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       reimportResultTitle: 'Reimport completed',
       reimportDone: 'Close',
       reimportError: 'The file could not be reimported.',
+      structureToggleLabel: 'Apply reference structure',
+      structureToggleHint:
+        'Generates an empty scaffold (parts, chapters and subsections) from the structure of a reference document. It never copies content or voice from the source.',
+      structureConfigureAction: 'Configure reference structure',
+      structureConfiguredBadge: 'Structure confirmed: {summary}',
+      structureDialogTitle: 'Reference structure',
+      structureDialogDescription:
+        'Upload a reference document or pick a saved profile. You will review the inferred schema before applying it: nothing is applied without your confirmation.',
+      structureSourceUploadLabel: 'Upload reference document',
+      structureSourceSavedLabel: 'Saved structure profiles',
+      structureNoSavedProfiles: 'You have no saved structure profiles yet.',
+      structureAnalyzing: 'Analyzing structure…',
+      structureConfirmTitle: 'Confirm the inferred schema',
+      structureHierarchyLine: 'Hierarchy: {levels} (depth {depth})',
+      structureSummaryLine: '{parts} parts · {chapters} chapters · {subsections} subsections',
+      structureFunctionMissing: 'not inferred (edit it later)',
+      structureConfidencePrefix: 'confidence:',
+      structureSaveProfileLabel: 'Save as reusable profile',
+      structureProfileNamePlaceholder: 'Profile name',
+      structureConfirmAction: 'Confirm structure',
+      structureDiscardAction: 'Discard',
+      structureError: 'The reference document could not be analyzed.',
       healthRecomposedBadge: 'Recomposed from page {page}',
       healthDiffTitle: 'Changes since last edit',
       healthDiffShift: '{title}: page {from} → {to}',
@@ -1421,6 +2094,188 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         integrityFailed: 'The result did not pass the integrity check. We are retrying.',
         consentRejected: 'Local processing was rejected on your device. You can retry or choose another mode.',
         agentOffline: 'Your device is offline. The job will wait, or you can process it in the private cloud.',
+      },
+    },
+    launchPack: {
+      title: 'Launch pack',
+      description:
+        'Generates every product format in one operation and records its provenance. If you edit the document afterwards, we flag the outdated assets.',
+      generateButton: 'Generate launch pack',
+      regenerateButton: 'Regenerate pack',
+      generating: 'Generating pack…',
+      empty: 'No pack generated yet. Run the generation to create every coordinated format.',
+      versionLabel: 'Version {version}',
+      staleBadge: 'Outdated',
+      pendingBadge: 'In progress',
+      viewAsset: 'Open',
+      provenanceCompositor: 'Compositor',
+      provenanceService: 'FileStudio · cloud',
+      provenanceLocal: 'FileStudio · your device',
+      kinds: {
+        epub: 'EPUB',
+        pdf: 'PDF',
+        html: 'HTML',
+        markdown: 'Markdown (blog)',
+        slides: 'Slides',
+        image: 'Image',
+        mobi: 'MOBI',
+        azw3: 'AZW3',
+        audio: 'Audio',
+        video: 'Video',
+      },
+      errors: {
+        unavailable: 'The pack could not be generated right now. Please try again later.',
+        notFound: 'We could not find this project.',
+      },
+    },
+    publishChannels: {
+      title: 'Publish to sales channels',
+      description:
+        'Generates the product sheet and landing copy from the book itself, creates the draft on Gumroad, or downloads the package ready for manual upload to Hotmart.',
+      kitTitle: 'Product sheet & landing copy',
+      generateKitButton: 'Generate sheet & copy',
+      generatingKit: 'Generating…',
+      sheetTab: 'Product sheet',
+      landingTab: 'Landing copy',
+      copyButton: 'Copy',
+      copiedBadge: 'Copied',
+      draftDescriptionBadge: 'Draft derived from the first chapter — review before publishing',
+      assetsLabel: 'Pack files to upload',
+      disclosureLabel: 'AI content declaration',
+      gumroadTitle: 'Gumroad',
+      gumroadDescription:
+        'Creates the product as a draft in your Gumroad account (the API forces draft state; you publish it from their dashboard).',
+      gumroadDisabled: 'Channel not enabled on this deployment (GUMROAD_ENABLED).',
+      tokenLabel: 'Gumroad access token',
+      tokenPlaceholder: 'Paste your access token…',
+      saveTokenButton: 'Connect Gumroad',
+      savingToken: 'Verifying token…',
+      removeTokenButton: 'Disconnect',
+      connectedBadge: 'Connected',
+      priceLabel: 'Price (cents)',
+      pricePlaceholder: '900',
+      pushButton: 'Create draft on Gumroad',
+      pushing: 'Creating draft…',
+      pushSuccessLabel: 'Draft created on Gumroad',
+      modeApiBadge: 'API · draft',
+      hotmartTitle: 'Hotmart',
+      hotmartDescription:
+        'Hotmart has no public product-creation API: download the package with the sheet, the copy and the files ready for manual registration.',
+      exportButton: 'Download Hotmart package',
+      exporting: 'Preparing package…',
+      instructionsTitle: 'Manual registration steps',
+      modeExportBadge: 'Manual export',
+      errors: {
+        unavailable: 'The operation could not be completed right now. Please try again later.',
+        notFound: 'We could not find this project.',
+        notConfigured: 'The server has no credentials encryption key configured.',
+        auth: 'The Gumroad token is invalid or was revoked.',
+        validation: 'Gumroad rejected the product data. Review the sheet.',
+        circuitOpen: 'Gumroad is not responding; we will retry in a few seconds.',
+      },
+    },
+    collaboration: {
+      title: 'Editorial collaboration',
+      description:
+        'Invite your proofreader and layout designer, comment on concrete blocks of the book, and decide which corrections enter the document.',
+      openThreadsBadge: '{count} open threads',
+      viewerRoleLabel: 'Your role',
+      roleBadges: { author: 'Author', editor: 'Proofreader', designer: 'Layout designer' },
+      teamTitle: 'Team with access',
+      emptyTeam: 'No collaborators yet. Invite your proofreader or layout designer with a link.',
+      revokeButton: 'Revoke access',
+      inviteTitle: 'Invite collaborator',
+      inviteDescription:
+        'Generates an invitation link with a role. The invitee accepts it with their account (or registers for free with that email).',
+      inviteEmailLabel: 'Invitee email',
+      inviteEmailPlaceholder: 'proofreader@example.com',
+      inviteRoleLabel: 'Role',
+      inviteButton: 'Generate invitation',
+      invitingButton: 'Generating…',
+      inviteLinkLabel: 'Link to share (expires in 7 days)',
+      copyButton: 'Copy',
+      copiedBadge: 'Copied',
+      noSeatTollNote:
+        'Accepting an invitation never requires a plan or payment from the invitee: the product has no per-seat billing yet.',
+      pendingInvitationsTitle: 'Pending invitations',
+      invitationExpiresLabel: 'Expires on {date}',
+      cancelInvitationButton: 'Cancel',
+      commentsTitle: 'Comments per block',
+      emptyComments: 'No comments yet. Any role can comment on a block of the book.',
+      frontMatterChapter: 'Front matter',
+      commentPlaceholder: 'Comment on this block…',
+      commentButton: 'Comment',
+      replyPlaceholder: 'Reply to the thread…',
+      replyButton: 'Reply',
+      resolveButton: 'Resolve thread',
+      openBadge: 'Open',
+      resolvedBadge: 'Resolved',
+      resolvedByLabel: 'Resolved by {name}',
+      suggestionsTitle: 'Proposed corrections',
+      emptySuggestions: 'The proofreader has not proposed corrections yet.',
+      proposeButton: 'Propose correction',
+      proposeSummaryPlaceholder: 'Summary (e.g. “Typo in the second paragraph”)…',
+      proposeTextPlaceholder: 'Corrected block text…',
+      proposeSubmitButton: 'Send proposal',
+      proposingButton: 'Sending…',
+      suggestionStatusBadges: { pending: 'Pending', accepted: 'Accepted', rejected: 'Rejected' },
+      decidedByLabel: 'Decided by {name}',
+      acceptButton: 'Accept',
+      rejectButton: 'Reject',
+      invite: {
+        title: 'Collaboration invitation',
+        description: 'You have been invited to collaborate on an Anclora Talent project.',
+        roleLabel: 'Assigned role',
+        acceptButton: 'Accept invitation',
+        acceptingButton: 'Accepting…',
+        acceptedTitle: 'Invitation accepted',
+        acceptedDescription: 'You are now part of the project team. No plans or payments: access is immediate.',
+        goToDashboardButton: 'Go to dashboard',
+      },
+      errors: {
+        unavailable: 'The operation could not be completed right now. Please try again later.',
+        forbidden: 'Your role does not allow this action.',
+        notFound: 'We could not find the project or the item.',
+        invalid: 'Check the data: fields are missing or invalid.',
+        invalidEmail: 'The invitation email is not valid.',
+        invalidRole: 'The invitation role is not valid.',
+        alreadyCollaborator: 'That email is already part of the project team.',
+        expired: 'The invitation has expired. Ask the author for a new one.',
+        emailMismatch: 'This invitation is for another email. Sign in with the invited account.',
+        alreadyAccepted: 'This invitation was already accepted by another account.',
+        stale: 'The document changed since the correction was proposed; the proposal no longer applies.',
+      },
+    },
+    history: {
+      title: 'Version history',
+      description:
+        'Every version stores a full copy of the document. Compare two versions to see what changed per chapter, or restore a previous one without losing history.',
+      saveVersionButton: 'Save version',
+      savingVersion: 'Saving version…',
+      empty: 'No saved versions yet. They are created on chapter saves, reimports, or with “Save version”.',
+      versionLabel: 'Version {version}',
+      sourceManualSave: 'Saved',
+      sourceReimport: 'Reimport',
+      sourceRestore: 'Restore',
+      compareFrom: 'From',
+      compareTo: 'To',
+      compareButton: 'Compare',
+      comparing: 'Comparing…',
+      selectVersions: 'Pick two different versions to compare.',
+      diffEmpty: 'No changes between these versions.',
+      diffSummary: '{added} added · {removed} removed · {changed} changed · {moved} moved',
+      metadataChangedBadge: 'Metadata changed',
+      changeAdded: 'Added',
+      changeRemoved: 'Removed',
+      changeChanged: 'Changed',
+      changeMoved: 'Moved',
+      unchaptered: 'No chapter',
+      restoreButton: 'Restore',
+      restoring: 'Restoring…',
+      errors: {
+        unavailable: 'The operation could not be completed. Please try again later.',
+        notFound: 'We could not find this version.',
+        unchanged: 'No changes since the last saved version.',
       },
     },
   },

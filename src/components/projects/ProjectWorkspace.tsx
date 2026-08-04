@@ -20,6 +20,7 @@ import { Portal } from '@/components/ui/Portal';
 import { PdfExportButton } from './PdfExportButton';
 import { DocumentRulesPanel } from './DocumentRulesPanel';
 import { DocumentHealthPanel } from './DocumentHealthPanel';
+import { BrandProfilePanel } from './BrandProfilePanel';
 import { WorkspaceOnboarding } from './WorkspaceOnboarding';
 import { ProductMetadataPanel } from './ProductMetadataPanel';
 import { useDocumentComposition } from './useDocumentComposition';
@@ -56,7 +57,18 @@ import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface
 import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
+import type { BrandProfile } from '@/lib/brand/brand-profile';
+import type { LaunchPackView } from '@/lib/manifest/view';
+import type { DocumentSnapshotMeta } from '@/lib/snapshots/model';
+import { HistoryPanel } from './HistoryPanel';
+import { LaunchPackPanel } from './LaunchPackPanel';
+import { PublishChannelsPanel } from './PublishChannelsPanel';
+import { CoAuthorPanel } from './CoAuthorPanel';
+import { KdpDisclosurePanel } from './KdpDisclosurePanel';
 import { buildExportQueryString } from '@/lib/projects/export-config';
+import type { CoAuthorChapter } from '@/lib/ai/co-author';
+import type { KdpDisclosure } from '@/lib/ai/kdp-disclosure';
+import type { CollaborationView } from '@/lib/collaboration/view';
 
 const TEMPLATE_TONE_TO_PALETTE: Record<EditorialTemplate['previewTone'], ProjectRecord['cover']['palette']> = {
   obsidian: 'obsidian',
@@ -144,9 +156,48 @@ function writeStoredWorkflowStep(projectId: string, step: number) {
 export function ProjectWorkspace({
   project,
   copy,
+  brandProfiles = [],
+  launchPack,
+  publishChannels,
+  history,
+  coAuthor,
+  kdpDisclosure,
+  collaboration,
+  locale = 'es',
 }: {
   project: ProjectRecord;
   copy: AppMessages['project'];
+  brandProfiles?: BrandProfile[];
+  /** F2: launch pack section (copy + manifest view); rendered in step 9. */
+  launchPack?: {
+    copy: AppMessages['launchPack'];
+    view: LaunchPackView | null;
+  };
+  /** F4: publish-to-sales-channels section; rendered in step 9 below the pack. */
+  publishChannels?: {
+    copy: AppMessages['publishChannels'];
+    gumroadEnabled: boolean;
+    gumroadConnected: boolean;
+  };
+  /** F2: version history section (copy + snapshot metadata, newest first); rendered in step 1. */
+  history?: {
+    copy: AppMessages['history'];
+    snapshots: DocumentSnapshotMeta[];
+  };
+  /** F3 Capa 2: co-author section (AST chapters + provider flag); rendered in step 1. */
+  coAuthor?: {
+    chapters: CoAuthorChapter[];
+    cloudAvailable: boolean;
+  };
+  /** F3 Capa 2: KDP AI-content disclosure; rendered in the export step (9). */
+  kdpDisclosure?: KdpDisclosure;
+  /** F4: collaboration section (copy + server-loaded view); rendered in step 7. */
+  collaboration?: {
+    copy: AppMessages['collaboration'];
+    view: CollaborationView;
+  };
+  /** F3: UI locale forwarded to the governed-AI section of the health panel. */
+  locale?: 'es' | 'en';
 }) {
   const router = useRouter();
   const { preferences } = useEditorPreferences();
@@ -426,6 +477,13 @@ export function ProjectWorkspace({
 
             <DocumentRulesPanel key={`rules-${project.updatedAt}`} project={project} copy={copy} />
 
+            <BrandProfilePanel
+              key={`brand-${project.updatedAt}`}
+              project={project}
+              profiles={brandProfiles}
+              copy={copy}
+            />
+
             <DocumentHealthPanel
               project={project}
               violations={documentViolations}
@@ -434,6 +492,7 @@ export function ProjectWorkspace({
               diff={composition.diff}
               recomposedFromPage={composition.recomposedFromPage}
               telemetry={composition.telemetry}
+              locale={locale}
               revert={
                 revertibleSave
                   ? {
@@ -444,6 +503,24 @@ export function ProjectWorkspace({
                   : null
               }
             />
+
+            {coAuthor && (
+              <CoAuthorPanel
+                projectId={project.id}
+                chapters={coAuthor.chapters}
+                cloudAvailable={coAuthor.cloudAvailable}
+                copy={copy}
+                locale={locale}
+              />
+            )}
+
+            {history && (
+              <HistoryPanel
+                copy={history.copy}
+                projectId={project.id}
+                snapshots={history.snapshots}
+              />
+            )}
           </div>
         );
       case 2: // Chapters
@@ -510,7 +587,14 @@ export function ProjectWorkspace({
       case 6: // Preview
         return <PreviewCanvas project={project} copy={copy} />;
       case 7: // Collaborate
-        return <CollaborationPanel />;
+        return collaboration ? (
+          <CollaborationPanel
+            copy={collaboration.copy}
+            projectId={project.id}
+            view={collaboration.view}
+            locale={locale}
+          />
+        ) : null;
       case 8: // AI
         return <AIAssistant />;
       case 9: // Export
@@ -577,6 +661,22 @@ export function ProjectWorkspace({
                   {copy.previewExportEpubButton}
                </button>
             </div>
+            {kdpDisclosure && <KdpDisclosurePanel disclosure={kdpDisclosure} copy={copy} />}
+            {launchPack && (
+              <LaunchPackPanel
+                copy={launchPack.copy}
+                projectId={project.id}
+                view={launchPack.view}
+              />
+            )}
+            {publishChannels && (
+              <PublishChannelsPanel
+                copy={publishChannels.copy}
+                projectId={project.id}
+                gumroadEnabled={publishChannels.gumroadEnabled}
+                gumroadConnected={publishChannels.gumroadConnected}
+              />
+            )}
           </section>
         );
       default:

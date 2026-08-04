@@ -3,6 +3,7 @@ import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
 import { renderProjectExportHtml } from '@/lib/projects/export-builder';
 import { resolveExportPaginationConfig } from '@/lib/projects/export-config';
+import { resolveProjectBrandTemplateOverrides } from '@/lib/brand/resolve';
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +23,9 @@ export async function GET(request: NextRequest) {
     const filename = `${slug}.html`;
     // HTML shell starts with <!DOCTYPE html>, includes <html> and </html> tags in the generated payload.
     const exportConfig = resolveExportPaginationConfig(request.nextUrl.searchParams);
-    const html = await renderProjectExportHtml(project, exportConfig);
+    // F2: optional brand theme, applied as composer template overrides (R3).
+    const brandOverrides = await resolveProjectBrandTemplateOverrides(userId, project);
+    const html = await renderProjectExportHtml(project, exportConfig, brandOverrides);
 
     return new NextResponse(html, {
       status: 200,
