@@ -22,10 +22,18 @@
 import { revalidatePath } from 'next/cache';
 import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
+import { brandProfileRepository } from '@/lib/brand/repository';
+import type { BrandVoicePair } from '@/lib/brand/brand-profile';
 import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
 import type { ComposeViolation } from '@/lib/compose/compose';
 import type { PreflightCheck } from '@/lib/preflight/preflight';
 import { applyProposal, proposalAffectedBlockIds, StaleProposalError, type AiProposal } from './ast-diff-proposal';
+import {
+  proposeChapterArchitecture,
+  proposeDerivedSummary,
+  proposeStyleRewrite,
+  type CoAuthorOperation,
+} from './co-author';
 import { proposeCoherenceFixes, type CoherenceIssue } from './coherence-agent';
 import { aiOperationsLog } from './operations-log';
 import { deriveProvenanceUpdate } from './provenance';
@@ -47,6 +55,15 @@ export interface CoherenceActionResult extends ProposeFixActionResult {
 export interface AcceptProposalActionResult {
   ok: boolean;
   error?: 'stale' | 'invalid';
+}
+
+export interface CoAuthorActionResult {
+  ok: boolean;
+  /** False without a cloud provider: co-author operations are LLM-obligatory. */
+  available: boolean;
+  mode: AiProcessingMode;
+  cloudAvailable: boolean;
+  proposal: AiProposal | null;
 }
 
 const FAILED_PROPOSE: ProposeFixActionResult = {
@@ -120,6 +137,64 @@ export async function analyzeCoherenceAction(formData: FormData): Promise<Cohere
     cloudAvailable,
     issues: result.issues,
     proposals: result.proposals,
+  };
+}
+
+const FAILED_CO_AUTHOR: CoAuthorActionResult = {
+  ok: false,
+  available: false,
+  mode: 'cloud',
+  cloudAvailable: false,
+  proposal: null,
+};
+
+const CO_AUTHOR_OPERATIONS: CoAuthorOperation[] = ['style', 'architecture', 'summary'];
+
+/**
+ * Runs one co-author operation (Capa 2) and returns the resulting proposal.
+ * LLM-obligatory: without the cloud flag the result is `available: false`
+ * and the UI keeps the entry point hidden. When the project has an active
+ * BrandProfile linked, its voice pairs are injected as few-shot style
+ * examples (F2 contract).
+ */
+export async function proposeCoAuthorAction(formData: FormData): Promise<CoAuthorActionResult> {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '').trim();
+  const operation = String(formData.get('operation') ?? '') as CoAuthorOperation;
+  const chapterKey = String(formData.get('chapterKey') ?? '').trim() || undefined;
+  if (!projectId || !CO_AUTHOR_OPERATIONS.includes(operation)) return FAILED_CO_AUTHOR;
+
+  const project = await projectRepository.getProjectById(userId, projectId);
+  if (!project) return FAILED_CO_AUTHOR;
+
+  const cloudAvailable = isAiCloudEnabled();
+  if (!cloudAvailable) {
+    return { ok: true, available: false, mode: 'cloud', cloudAvailable, proposal: null };
+  }
+
+  const { document } = projectToSemanticDocument(project);
+
+  let voicePairs: BrandVoicePair[] | undefined;
+  if (project.brandProfileId) {
+    const profile = await brandProfileRepository.getBrandProfileById(userId, project.brandProfileId);
+    if (profile?.status === 'active') voicePairs = profile.voicePairs;
+  }
+
+  const input = { document, chapterKey, voicePairs, locale: parseLocale(formData.get('locale')) };
+  const provider = getAiProvider();
+  const result =
+    operation === 'style'
+      ? await proposeStyleRewrite(input, provider)
+      : operation === 'architecture'
+        ? await proposeChapterArchitecture(input, provider)
+        : await proposeDerivedSummary(input, provider);
+
+  return {
+    ok: true,
+    available: result.available,
+    mode: result.mode,
+    cloudAvailable,
+    proposal: result.proposal,
   };
 }
 

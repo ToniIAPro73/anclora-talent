@@ -8,6 +8,11 @@ import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { getLaunchPackViewForProject } from '@/lib/manifest/view';
 import { getSnapshotHistoryViewForProject } from '@/lib/snapshots/view';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
+import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
+import { listCoAuthorChapters } from '@/lib/ai/co-author';
+import { isAiCloudEnabled } from '@/lib/ai/provider';
+import { aiOperationsLog } from '@/lib/ai/operations-log';
+import { buildKdpDisclosure } from '@/lib/ai/kdp-disclosure';
 
 export default async function ProjectEditorPage({
   params,
@@ -37,6 +42,21 @@ export default async function ProjectEditorPage({
     ? { copy: messages.history, snapshots: await getSnapshotHistoryViewForProject(project.id) }
     : undefined;
 
+  // F3 Capa 2: co-author entry (step 1). Chapters come from the document AST
+  // (level-1 slices); the panel hides itself without a cloud provider.
+  const { document } = projectToSemanticDocument(project);
+  const coAuthor = {
+    chapters: listCoAuthorChapters(document),
+    cloudAvailable: isAiCloudEnabled(),
+  };
+  // F3 Capa 2 (governance): KDP AI-content disclosure shown in the export
+  // step, derived from the provenance registry + accepted-operations log.
+  const kdpDisclosure = buildKdpDisclosure({
+    provenance: project.document.provenance,
+    operations: await aiOperationsLog.list(userId, project.id),
+    locale,
+  });
+
   return (
     <ProjectWorkspace
       project={project}
@@ -44,6 +64,8 @@ export default async function ProjectEditorPage({
       brandProfiles={brandProfiles}
       launchPack={launchPack}
       history={history}
+      coAuthor={coAuthor}
+      kdpDisclosure={kdpDisclosure}
       locale={locale}
     />
   );

@@ -335,6 +335,17 @@ export type AppMessages = {
     aiIssueMissingChapterHeading: string;
     aiProvenanceTitle: string;
     aiProvenanceSummary: string;
+    aiCoAuthorEyebrow: string;
+    aiCoAuthorEthicalCopy: string;
+    aiCoAuthorChapterLabel: string;
+    aiCoAuthorStyleAction: string;
+    aiCoAuthorArchitectureAction: string;
+    aiCoAuthorSummaryAction: string;
+    aiCoAuthorNoProposal: string;
+    kdpDisclosureTitle: string;
+    kdpDisclosureRequiredBadge: string;
+    kdpDisclosureExemptBadge: string;
+    kdpDisclosureHelper: string;
     exportGateBlockedMessage: string;
     exportGateWarnMessage: string;
     metadataPanelEyebrow: string;
@@ -996,6 +1007,19 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       aiIssueMissingChapterHeading: 'Capítulo sin encabezado de nivel 1',
       aiProvenanceTitle: 'Procedencia del contenido',
       aiProvenanceSummary: '{ai} bloques IA · {human} bloques humanos',
+      aiCoAuthorEyebrow: 'Co-autor IA',
+      aiCoAuthorEthicalCopy:
+        'Asistente editorial, no escritor fantasma: la IA propone y tú decides qué entra en tu libro.',
+      aiCoAuthorChapterLabel: 'Capítulo',
+      aiCoAuthorStyleAction: 'Reescritura de estilo',
+      aiCoAuthorArchitectureAction: 'Arquitectura de contenido',
+      aiCoAuthorSummaryAction: 'Resumen derivado',
+      aiCoAuthorNoProposal: 'Sin propuesta: la IA no devolvió cambios válidos para esta acción.',
+      kdpDisclosureTitle: 'Declaración de contenido IA (KDP)',
+      kdpDisclosureRequiredBadge: 'Requerida: contenido AI-assisted',
+      kdpDisclosureExemptBadge: 'Exenta: contenido 100% humano',
+      kdpDisclosureHelper:
+        'Copia este texto en la pregunta de Amazon KDP sobre contenido generado con IA al publicar.',
       exportGateBlockedMessage: 'Exportación bloqueada: resuelve las violaciones del documento primero.',
       exportGateWarnMessage: 'Aviso: el documento tiene {count} violaciones de composición.',
       metadataPanelEyebrow: 'Producto digital',
@@ -1662,6 +1686,19 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       aiIssueMissingChapterHeading: 'Chapter without a level-1 heading',
       aiProvenanceTitle: 'Content provenance',
       aiProvenanceSummary: '{ai} AI blocks · {human} human blocks',
+      aiCoAuthorEyebrow: 'AI co-author',
+      aiCoAuthorEthicalCopy:
+        'Editorial assistant, not a ghostwriter: AI proposes and you decide what goes into your book.',
+      aiCoAuthorChapterLabel: 'Chapter',
+      aiCoAuthorStyleAction: 'Style rewrite',
+      aiCoAuthorArchitectureAction: 'Content architecture',
+      aiCoAuthorSummaryAction: 'Derived summary',
+      aiCoAuthorNoProposal: 'No proposal: AI returned no valid changes for this action.',
+      kdpDisclosureTitle: 'AI content disclosure (KDP)',
+      kdpDisclosureRequiredBadge: 'Required: AI-assisted content',
+      kdpDisclosureExemptBadge: 'Exempt: 100% human content',
+      kdpDisclosureHelper:
+        'Paste this text into Amazon KDP’s AI-generated content question when publishing.',
       exportGateBlockedMessage: 'Export blocked: resolve the document violations first.',
       exportGateWarnMessage: 'Warning: the document has {count} composition violations.',
       metadataPanelEyebrow: 'Digital product',

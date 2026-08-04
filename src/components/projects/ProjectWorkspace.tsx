@@ -62,7 +62,11 @@ import type { LaunchPackView } from '@/lib/manifest/view';
 import type { DocumentSnapshotMeta } from '@/lib/snapshots/model';
 import { HistoryPanel } from './HistoryPanel';
 import { LaunchPackPanel } from './LaunchPackPanel';
+import { CoAuthorPanel } from './CoAuthorPanel';
+import { KdpDisclosurePanel } from './KdpDisclosurePanel';
 import { buildExportQueryString } from '@/lib/projects/export-config';
+import type { CoAuthorChapter } from '@/lib/ai/co-author';
+import type { KdpDisclosure } from '@/lib/ai/kdp-disclosure';
 
 const TEMPLATE_TONE_TO_PALETTE: Record<EditorialTemplate['previewTone'], ProjectRecord['cover']['palette']> = {
   obsidian: 'obsidian',
@@ -153,6 +157,8 @@ export function ProjectWorkspace({
   brandProfiles = [],
   launchPack,
   history,
+  coAuthor,
+  kdpDisclosure,
   locale = 'es',
 }: {
   project: ProjectRecord;
@@ -168,6 +174,13 @@ export function ProjectWorkspace({
     copy: AppMessages['history'];
     snapshots: DocumentSnapshotMeta[];
   };
+  /** F3 Capa 2: co-author section (AST chapters + provider flag); rendered in step 1. */
+  coAuthor?: {
+    chapters: CoAuthorChapter[];
+    cloudAvailable: boolean;
+  };
+  /** F3 Capa 2: KDP AI-content disclosure; rendered in the export step (9). */
+  kdpDisclosure?: KdpDisclosure;
   /** F3: UI locale forwarded to the governed-AI section of the health panel. */
   locale?: 'es' | 'en';
 }) {
@@ -476,6 +489,16 @@ export function ProjectWorkspace({
               }
             />
 
+            {coAuthor && (
+              <CoAuthorPanel
+                projectId={project.id}
+                chapters={coAuthor.chapters}
+                cloudAvailable={coAuthor.cloudAvailable}
+                copy={copy}
+                locale={locale}
+              />
+            )}
+
             {history && (
               <HistoryPanel
                 copy={history.copy}
@@ -616,6 +639,7 @@ export function ProjectWorkspace({
                   {copy.previewExportEpubButton}
                </button>
             </div>
+            {kdpDisclosure && <KdpDisclosurePanel disclosure={kdpDisclosure} copy={copy} />}
             {launchPack && (
               <LaunchPackPanel
                 copy={launchPack.copy}
