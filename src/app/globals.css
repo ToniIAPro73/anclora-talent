@@ -299,11 +299,15 @@ html[data-theme="light"] {
   --button-secondary-border: rgba(12, 24, 32, 0.24);
   --button-secondary-hover-bg: rgba(255, 255, 255, 0.98);
   --button-secondary-hover-border: rgba(12, 24, 32, 0.36);
-  --talent-button-primary-bg: linear-gradient(135deg, #5CB4E8 0%, #4A9FD8 52%, #3A88BE 100%);
+  /* Light theme: the full-strength 3-stop gradient reads oversaturated on
+     white surfaces, so the light CTA uses a dimmer 2-stop gradient built only
+     from contracted accent hexes (#4A9FD8/#3A88BE). Hover recovers the
+     contracted 3-stop gradient. Foreground stays #081019 (≥4.5:1). */
+  --talent-button-primary-bg: linear-gradient(135deg, #4A9FD8 0%, #3A88BE 100%);
   --talent-button-primary-fg: #081019;
   --talent-button-primary-border: rgba(58, 136, 190, 0.32);
   --talent-button-primary-shadow: 0 18px 32px rgba(74, 159, 216, 0.22);
-  --talent-button-primary-hover-bg: linear-gradient(135deg, #7CC4EF 0%, #5CB4E8 54%, #4A9FD8 100%);
+  --talent-button-primary-hover-bg: linear-gradient(135deg, #5CB4E8 0%, #4A9FD8 52%, #3A88BE 100%);
   --talent-button-secondary-bg: rgba(255, 255, 255, 0.88);
   --talent-button-secondary-fg: #10253a;
   --talent-button-secondary-border: rgba(16, 37, 58, 0.12);
@@ -429,7 +433,7 @@ body {
   display: grid;
   min-height: 100vh;
   gap: 20px;
-  max-width: 80rem;
+  max-width: 96rem;
   margin-inline: auto;
   padding: 16px;
   transition: grid-template-columns 300ms ease;
@@ -633,6 +637,23 @@ html[data-theme="light"] .talent-shell-switcher .ac-theme-switcher__option[aria-
   justify-content: center;
   min-height: 52px;
   min-width: 52px;
+}
+
+/* CreateProjectForm lives inside a narrow grid column: the design-system
+   catalog grid (fixed 3/2/1 columns at viewport breakpoints) squeezes cards
+   to ~100px and clips text. Auto-fit with a minimum card width keeps every
+   card readable regardless of the column width. */
+.talent-create-form .ac-template-catalog__grid {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--space-4);
+}
+
+.talent-create-form .ac-template-card__summary {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .talent-shell-user-button .cl-userButtonTrigger,
