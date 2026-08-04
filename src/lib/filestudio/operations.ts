@@ -69,3 +69,36 @@ export function ebookConvertOptions(
     ...(metadata.language ? { language: metadata.language } : {}),
   };
 }
+
+// ── Scanned-PDF OCR (Tesseract) ─────────────────────────────────────────────
+
+/**
+ * Scanned-PDF OCR for the import pipeline. Verified against the real
+ * operation catalog (anclora-filestudio `src/lib/domain/operations.ts`,
+ * code wins): operation `pdf:ocr` (tesseract engine), options
+ * `{ lang: "spa" | "eng" | "spa+eng", maxPages: 1..50 }` — the catalog caps
+ * `maxPages` at 50, which is the contract limit Talent declares to the user.
+ *
+ * Documented gap: same as the ebook delegation — Tesseract is a desktop-only
+ * engine and the Local Agent registry ships no OCR operation, so Talent
+ * always emits OCR in Mode 2 (service).
+ */
+export const PDF_OCR_OPERATION = 'pdf:ocr';
+
+/** Hard cap from the FileStudio `pdf:ocr` optionsSchema (min 1, max 50). */
+export const PDF_OCR_MAX_PAGES = 50;
+
+export type PdfOcrLang = 'spa' | 'eng' | 'spa+eng';
+
+export type PdfOcrOptions = {
+  lang: PdfOcrLang;
+  maxPages: number;
+};
+
+/** Options payload matching the `pdf:ocr` optionsSchema in FileStudio. */
+export function pdfOcrOptions(
+  lang: PdfOcrLang = 'spa',
+  maxPages: number = PDF_OCR_MAX_PAGES,
+): PdfOcrOptions {
+  return { lang, maxPages: Math.min(Math.max(1, maxPages), PDF_OCR_MAX_PAGES) };
+}
