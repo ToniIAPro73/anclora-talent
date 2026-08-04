@@ -1,9 +1,13 @@
 import { notFound } from 'next/navigation';
+import { CoverOptimizePanel } from '@/components/filestudio/CoverOptimizePanel';
 import { CoverStudio } from '@/components/projects/cover-studio/CoverStudio';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { NavigatingLink } from '@/components/ui/NavigatingLink';
 import { requireUserId } from '@/lib/auth/guards';
+import { hasDatabase } from '@/lib/db';
 import { projectRepository } from '@/lib/db/repositories';
+import { isFileStudioEnabled } from '@/lib/filestudio/config';
+import { listProjectFileStudioJobs } from '@/lib/filestudio/emission';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
 
@@ -21,6 +25,14 @@ export default async function ProjectCoverPage({
   if (!project) {
     notFound();
   }
+
+  // Feature flag (config.ts): without FILESTUDIO_API_URL the FileStudio
+  // surface stays hidden and the cover studio behaves exactly as before.
+  const filestudioCopy = resolveLocaleMessages(locale).filestudio;
+  const filestudioJobs = isFileStudioEnabled() && hasDatabase()
+    ? await listProjectFileStudioJobs(userId, projectId).catch(() => [])
+    : null;
+  const hasCover = Boolean(project.cover.renderedImageUrl ?? project.cover.backgroundImageUrl);
 
   return (
     <div className="ac-workspace-stage talent-workspace-stage">
@@ -42,6 +54,16 @@ export default async function ProjectCoverPage({
         </div>
       </div>
       <CoverStudio surface="cover" project={project} copy={copy} />
+      {filestudioJobs && (
+        <section aria-label={filestudioCopy.derivativesTitle} className="mt-8">
+          <CoverOptimizePanel
+            copy={filestudioCopy}
+            projectId={project.id}
+            hasCover={hasCover}
+            initialJobs={filestudioJobs}
+          />
+        </section>
+      )}
     </div>
   );
 }
