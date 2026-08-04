@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   buildImportedDocumentSeed,
@@ -7,6 +7,7 @@ import {
   normalizeText,
 } from '@/lib/projects/import-pipeline';
 import { createProjectRecord } from '@/lib/projects/factories';
+import { inlineToPlainText } from '@/lib/document/model';
 import {
   projectToSemanticDocument,
   templateFromPaginationConfig,
@@ -26,7 +27,7 @@ import { createHeuristicMeasurer } from './measure';
  */
 
 const FIXTURE_NAME = 'exito_sin_compania.docx';
-const FIXTURE_PATH = fileURLToPath(new URL(`../../../fixtures/${FIXTURE_NAME}`, import.meta.url));
+const FIXTURE_PATH = resolve(process.cwd(), 'fixtures', FIXTURE_NAME);
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
 const fixtureAvailable = existsSync(FIXTURE_PATH);
@@ -131,6 +132,91 @@ describe.skipIf(!fixtureAvailable)(
         );
 
         expect(avgMs).toBeLessThan(BUDGET_MS);
+      },
+      60_000,
+    );
+
+    it(
+      'demo exit criteria: TOC H1-H3 regenerado, tablas intactas, recomposición en vivo',
+      async () => {
+        const { document, chapterStartIds } = await importFixtureToSemanticDocument();
+        const measurer = createHeuristicMeasurer();
+        const baseTemplate = templateFromPaginationConfig(DEVICE_PAGINATION_CONFIGS.laptop);
+        const template = { ...baseTemplate, tocDepth: 3 };
+        const options = { chapterStartIds };
+
+        // The canonical chapter from the exit criteria exists after import.
+        const chapterHeading = document.blocks.find(
+          (block) =>
+            block.type === 'heading' &&
+            inlineToPlainText(block.content).toLowerCase().includes('paradoja del éxito solitario'),
+        );
+        expect(chapterHeading).toBeDefined();
+
+        // TOC is 100% generated with H1-H3 depth: the H3 sections appear.
+        const base = compose(document, null, template, measurer, options);
+        const tocLevels = new Set(base.toc.map((entry) => entry.level));
+        const h3Count = base.toc.filter((entry) => entry.level === 3).length;
+        console.info('[compose.perf] estructura TOC del fixture', {
+          levels: [...tocLevels].sort(),
+          entries: base.toc.length,
+          h3: h3Count,
+          tables: document.blocks.filter((block) => block.type === 'table').length,
+        });
+        expect(tocLevels.has(1)).toBe(true);
+        expect(tocLevels.has(2)).toBe(true);
+        expect(tocLevels.has(3)).toBe(true);
+
+        // The 14 tables stay intact: no keepTogether.table violation is emitted.
+        const tableViolations = base.violations.filter((violation) =>
+          violation.rule.includes('table'),
+        );
+        expect(tableViolations).toEqual([]);
+
+        // No empty intermediate pages (blank padding pages for odd-page
+        // chapter starts are legitimate).
+        for (const page of base.pages) {
+          if (page.blank) continue;
+          expect(page.placements.length).toBeGreaterThan(0);
+        }
+
+        // Live edit: add a paragraph in "La paradoja del éxito solitario".
+        const insertAfter = document.blocks.findIndex((block) => block.id === chapterHeading!.id);
+        const editedParagraph = {
+          type: 'paragraph' as const,
+          id: 'demo-edit-paragraph',
+          content: [
+            {
+              type: 'text' as const,
+              text: 'Párrafo añadido en la demo: el índice y la paginación se actualizan solos.',
+            },
+          ],
+        };
+        const edited = {
+          ...document,
+          blocks: [
+            ...document.blocks.slice(0, insertAfter + 1),
+            editedParagraph,
+            ...document.blocks.slice(insertAfter + 1),
+          ],
+        };
+
+        // Incremental recomposition matches a full recompose exactly: TOC and
+        // pagination update themselves, earlier pages reused verbatim.
+        const incremental = composeIncremental(
+          base,
+          edited,
+          editedParagraph.id,
+          null,
+          template,
+          measurer,
+          options,
+        );
+        const full = compose(edited, null, template, measurer, options);
+        expect(incremental.pages.length).toBe(full.pages.length);
+        expect(incremental.toc).toEqual(full.toc);
+        expect(incremental.pages[0]).toBe(base.pages[0]);
+        expect(incremental.violations.filter((v) => v.rule.includes('table'))).toEqual([]);
       },
       60_000,
     );
