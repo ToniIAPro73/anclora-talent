@@ -174,3 +174,37 @@ export const userPreferences = pgTable('user_preferences', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+// F1b — FileStudio Local Agent pairing (sdd/integrations/filestudio/authentication.md).
+// One row per user; credentials are AES-256-GCM encrypted at rest (never logged).
+export const filestudioConnections = pgTable('filestudio_connections', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: varchar('user_id', { length: 191 }).notNull().unique(),
+  // FileStudio device id (dev_...) once the pairing is approved.
+  deviceId: varchar('device_id', { length: 64 }),
+  deviceName: varchar('device_name', { length: 255 }),
+  // Ed25519 public key of the paired device. Nullable: the current FileStudio
+  // approve response does not return it (documented contract gap).
+  publicKey: text('public_key'),
+  // AES-256-GCM payload (v1:<iv>:<tag>:<ciphertext>, base64) with the
+  // access/refresh tokens issued on pairing approval.
+  encryptedCredentials: text('encrypted_credentials'),
+  // pending | paired | revoked
+  status: varchar('status', { length: 24 }).notNull().default('pending'),
+  // local | service | browser (sdd/integrations/filestudio/routing-policy.md)
+  preferredMode: varchar('preferred_mode', { length: 16 }).notNull().default('local'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// F1b — per-job ask-always consent registry (sdd/integrations/filestudio/routing-policy.md).
+export const filestudioConsents = pgTable('filestudio_consents', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: varchar('user_id', { length: 191 }).notNull(),
+  operation: varchar('operation', { length: 64 }).notNull(),
+  mode: varchar('mode', { length: 16 }).notNull(),
+  // granted | denied
+  decision: varchar('decision', { length: 16 }).notNull(),
+  jobId: varchar('job_id', { length: 64 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});

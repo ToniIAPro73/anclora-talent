@@ -197,6 +197,15 @@ export interface AgentJobEnqueueResult {
   status: AgentJobInternalStatus;
 }
 
+/** Response of the pairing approval endpoint (tokens issued to the device). */
+export interface PairingApproval {
+  deviceId: string;
+  accessToken: string;
+  refreshToken: string;
+  accessTokenExpiresAt: number;
+  refreshTokenExpiresAt: number;
+}
+
 function defaultSleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -422,6 +431,19 @@ export class FileStudioClient {
   /** POST /api/v1/jobs/:id/cancel. */
   async cancelJob(jobId: string): Promise<void> {
     await this.request('POST', `/api/v1/jobs/${jobId}/cancel`);
+  }
+
+  /**
+   * POST /api/v1/admin/agent-pairing-requests/:requestId/approve
+   * (scope `filestudio:admin`). Approves a Local Agent pairing with the
+   * 6-digit code shown by the agent; the response carries the device tokens.
+   */
+  async approvePairing(requestId: string, code: string): Promise<PairingApproval> {
+    return this.request<PairingApproval>(
+      'POST',
+      `/api/v1/admin/agent-pairing-requests/${encodeURIComponent(requestId)}/approve`,
+      { body: { code } },
+    );
   }
 
   /** POST /api/v1/jobs/:id/result-token — single-use download token (TTL 15 min). */
