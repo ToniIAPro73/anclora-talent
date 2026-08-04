@@ -194,13 +194,16 @@ export function buildGeneratedTocHtml(
 /**
  * Composes a project with the engine and adapts the result to the stable
  * `PreviewPage[]` contract. Drop-in replacement for `buildPreviewPages`.
+ * `templateOverrides` lets exports tune engine defaults (e.g. EPUB forces a
+ * deeper TOC than the print templates).
  */
 export function composeProjectPreview(
   project: ProjectRecord,
   config: PaginationConfig,
   measurer?: TextMeasurer,
+  templateOverrides?: Partial<ComposeTemplate>,
 ): ComposedPreview {
-  const template = templateFromPaginationConfig(config);
+  const template = { ...templateFromPaginationConfig(config), ...templateOverrides };
   const { document, chapterStartIds, chapterById } = projectToSemanticDocument(project);
   const result = compose(document, project.document.rules, template, measurer, {
     ...(chapterStartIds.length > 0 ? { chapterStartIds } : {}),
