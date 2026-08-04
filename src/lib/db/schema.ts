@@ -175,6 +175,36 @@ export const userPreferences = pgTable('user_preferences', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+// F2 — versioned brand profiles (dual-profiles addendum: brand ≠ structure).
+// A BrandProfile is a theme pack (palette with roles, typographic pair, usage
+// proportions, governance and voice rules as jsonb); it never captures
+// document hierarchy and is applied to exports as templateOverrides (R3).
+export const brandProfiles = pgTable(
+  'brand_profiles',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: varchar('user_id', { length: 191 }).notNull(),
+    name: varchar('name', { length: 255 }).notNull(),
+    version: integer('version').notNull().default(1),
+    // draft | active | deprecated
+    status: varchar('status', { length: 16 }).notNull().default('draft'),
+    // BrandPaletteColor[] JSON
+    palette: jsonb('palette').notNull(),
+    // BrandTypography JSON
+    typography: jsonb('typography').notNull(),
+    // BrandUsageProportions JSON
+    usageProportions: jsonb('usage_proportions'),
+    // string[] JSON
+    governanceRules: jsonb('governance_rules'),
+    // BrandVoicePair[] JSON
+    voicePairs: jsonb('voice_pairs'),
+    sourceFileName: varchar('source_file_name', { length: 255 }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [unique('brand_profiles_user_name_version_unique').on(table.userId, table.name, table.version)],
+);
+
 // F1b — FileStudio Local Agent pairing (sdd/integrations/filestudio/authentication.md).
 // One row per user; credentials are AES-256-GCM encrypted at rest (never logged).
 export const filestudioConnections = pgTable('filestudio_connections', {
