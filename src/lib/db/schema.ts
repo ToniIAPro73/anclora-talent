@@ -343,3 +343,22 @@ export const projectAssetManifests = pgTable(
   },
   (table) => [unique('project_asset_manifests_project_version_unique').on(table.projectId, table.version)],
 );
+
+// F4 — sales channel credentials (Gumroad access token, one row per
+// user+channel). Tokens are AES-256-GCM encrypted at rest
+// (src/lib/sales/credentials.ts, same scheme as filestudio/crypto.ts) and
+// never logged. Hotmart has no credentials: its channel is a manual export.
+export const salesChannelCredentials = pgTable(
+  'sales_channel_credentials',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: varchar('user_id', { length: 191 }).notNull(),
+    // gumroad (hotmart needs no token — export-only channel)
+    channel: varchar('channel', { length: 32 }).notNull(),
+    // AES-256-GCM payload (v1:<iv>:<tag>:<ciphertext>, base64)
+    encryptedToken: text('encrypted_token').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [unique('sales_channel_credentials_user_channel_unique').on(table.userId, table.channel)],
+);
