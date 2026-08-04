@@ -274,3 +274,19 @@ export const filestudioWebhookEvents = pgTable('filestudio_webhook_events', {
   payload: jsonb('payload').notNull(),
   processedAt: timestamp('processed_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+// F2 — versioned asset manifests (launch pack). Every coordinated export
+// appends a new version; `items` is ProjectAssetManifestItem[] JSON
+// (src/lib/manifest/model.ts). Stale detection is computed at read time by
+// comparing each item's sourceHash with the current document AST hash.
+export const projectAssetManifests = pgTable(
+  'project_asset_manifests',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    projectId: uuid('project_id').notNull(),
+    version: integer('version').notNull(),
+    items: jsonb('items').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [unique('project_asset_manifests_project_version_unique').on(table.projectId, table.version)],
+);
