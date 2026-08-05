@@ -173,6 +173,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
                 <p className="ac-modal__summary mt-1 text-xs">Importa contenido como nuevo capítulo</p>
               </div>
               <button
+                data-testid="import-chapter-close-button"
                 onClick={handleClose}
                 disabled={importState === 'importing'}
                 className="ac-button ac-button--ghost ac-button--icon disabled:opacity-50"
@@ -224,6 +225,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
               <div className="space-y-4">
                 <button
                   type="button"
+                  data-testid="import-chapter-select-file-button"
                   onClick={() => fileInputRef.current?.click()}
                   className="ac-button ac-button--primary inline-flex items-center gap-2"
                 >
@@ -251,6 +253,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
                 </div>
                 <button
                   type="button"
+                  data-testid="import-chapter-change-file-button"
                   onClick={() => {
                     setAnalysis(null);
                     setSelectedFile(null);
@@ -271,6 +274,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
               <span className="ac-form-field__label">Título del capítulo</span>
               <input
                 type="text"
+                data-testid="import-chapter-title-input"
                 value={chapterTitle}
                 onChange={(e) => setChapterTitle(e.target.value)}
                 disabled={importState === 'importing'}
@@ -282,6 +286,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
             <label className="ac-form-field">
               <span className="ac-form-field__label">Posición</span>
               <select
+                data-testid="import-chapter-position-select"
                 value={position}
                 onChange={(e) => setPosition(e.target.value as ImportPositionValue)}
                 disabled={importState === 'importing'}
@@ -315,6 +320,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
 
         <div className="ac-modal__footer">
           <button
+            data-testid="import-chapter-cancel-button"
             onClick={handleClose}
             disabled={importState === 'importing'}
             className="ac-button ac-button--secondary flex-1 disabled:cursor-not-allowed disabled:opacity-50"
@@ -323,6 +329,7 @@ export function ImportChapterDialog({ isOpen, projectId, chapters, onClose, onCh
           </button>
           {analysis && (
             <button
+              data-testid="import-chapter-import-button"
               onClick={handleImport}
               disabled={importState !== 'ready' || !chapterTitle.trim()}
               className="ac-button ac-button--primary inline-flex flex-1 items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"

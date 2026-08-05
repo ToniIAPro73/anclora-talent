@@ -22,7 +22,7 @@ export function ProjectDeleteButton({
         }
       }}
     >
-      <input type="hidden" name="projectId" value={projectId} />
+      <input type="hidden" name="projectId" value={projectId} data-testid="delete-project-id-input" />
       <SubmitButton className="ac-button ac-button--destructive ac-button--lg talent-action-button talent-action-button--destructive">
         <Trash2 className="h-4 w-4" />
         {label}

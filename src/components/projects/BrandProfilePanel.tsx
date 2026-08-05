@@ -151,6 +151,7 @@ export function BrandProfilePanel({ project, profiles, copy }: BrandProfilePanel
                   </span>
                   <button
                     type="button"
+                    data-testid={`brand-profile-activate-button-${profile.id}`}
                     className={`${inputClass} text-xs font-semibold`}
                     disabled={isPending}
                     onClick={() => handleActivate(profile.id)}
@@ -179,7 +180,7 @@ export function BrandProfilePanel({ project, profiles, copy }: BrandProfilePanel
             {saved ? (
               <span className="text-xs font-medium text-[var(--accent)]">{copy.brandSaved}</span>
             ) : null}
-            <button type="submit" className={`${inputClass} text-xs font-semibold`} disabled={isPending}>
+            <button type="submit" data-testid="brand-profile-upload-button" className={`${inputClass} text-xs font-semibold`} disabled={isPending}>
               {isPending ? copy.brandUploading : copy.brandUploadAction}
             </button>
           </div>

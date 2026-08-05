@@ -313,6 +313,7 @@ export function CoverStudio({ surface, project, copy }: CoverStudioProps) {
         <input
           type="file"
           accept="image/*"
+          data-testid="cover-studio-background-input"
           aria-label={copy.coverBackgroundLabel}
           onChange={(event) => handleBackgroundFileChange(event.target.files?.[0] ?? null)}
           className="block w-full text-sm text-[var(--text-secondary)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--button-highlight-bg)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--button-highlight-fg)]"
@@ -366,6 +367,7 @@ export function CoverStudio({ surface, project, copy }: CoverStudioProps) {
             type="button"
             onClick={handleSaveAndRender}
             disabled={isRendering}
+            data-testid={`cover-studio-save-render-button-${surface}`}
             className={`${premiumPrimaryDarkButton} px-5 disabled:opacity-60`}
           >
             {isRendering ? (
@@ -430,6 +432,7 @@ export function CoverStudio({ surface, project, copy }: CoverStudioProps) {
                 <h3 className="ac-editor-inspector__title">{copy.coverStudioTemplateLabel}</h3>
                 <select
                   aria-label={copy.coverStudioTemplateLabel}
+                  data-testid={`cover-studio-template-select-${surface}`}
                   value={selectedTemplateId}
                   onChange={(event) => handleTemplateSelect(event.target.value)}
                   className="field-select"
@@ -463,6 +466,7 @@ export function CoverStudio({ surface, project, copy }: CoverStudioProps) {
                     {fieldKey === 'subtitle' || fieldKey === 'body' || fieldKey === 'authorBio' ? (
                       <textarea
                         aria-label={fieldLabels[fieldKey]}
+                        data-testid={`cover-field-${fieldKey}-input`}
                         value={state.fields[fieldKey]?.value ?? ''}
                         onChange={(event) => updateFieldValue(fieldKey, event.target.value)}
                         rows={fieldKey === 'subtitle' ? 2 : 4}
@@ -471,6 +475,7 @@ export function CoverStudio({ surface, project, copy }: CoverStudioProps) {
                     ) : (
                       <input
                         aria-label={fieldLabels[fieldKey]}
+                        data-testid={`cover-field-${fieldKey}-input`}
                         value={state.fields[fieldKey]?.value ?? ''}
                         onChange={(event) => updateFieldValue(fieldKey, event.target.value)}
                         className="field-input"
@@ -486,6 +491,7 @@ export function CoverStudio({ surface, project, copy }: CoverStudioProps) {
                     <span className="ac-form-field__label">{copy.coverPaletteLabel}</span>
                     <select
                       aria-label={copy.coverPaletteLabel}
+                      data-testid="cover-studio-palette-select"
                       value={palette}
                       onChange={(event) =>
                         setPalette(event.target.value as CoverDesign['palette'])
@@ -508,6 +514,7 @@ export function CoverStudio({ surface, project, copy }: CoverStudioProps) {
                           key={color}
                           type="button"
                           aria-label={color}
+                          data-testid={`cover-studio-palette-color-${color.slice(1)}`}
                           onClick={() => setAccentColor(color)}
                           className={`block h-7 w-7 rounded-full transition hover:scale-110 ${
                             accentColor === color
@@ -536,6 +543,7 @@ export function CoverStudio({ surface, project, copy }: CoverStudioProps) {
                         key={fieldKey}
                         type="button"
                         disabled={!hasValue}
+                        data-testid={`cover-field-visibility-${fieldKey}-button`}
                         onClick={() => toggleFieldVisibility(fieldKey)}
                         data-active={field?.visible ? 'true' : 'false'}
                         className="ac-button ac-button--ghost ac-button--sm disabled:opacity-30"

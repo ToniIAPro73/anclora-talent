@@ -59,6 +59,7 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
     <div className="relative" ref={dropdownRef}>
       <button
         type="button"
+        data-testid="margin-selector-toggle"
         onClick={() => setIsOpen(!isOpen)}
         className="flex h-9 min-w-[100px] items-center justify-between gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors"
         aria-label="Configuración de márgenes"
@@ -80,6 +81,7 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
               <button
                 key={key}
                 type="button"
+                data-testid={`margin-preset-${key.replace(/([A-Z])/g, (m) => `-${m.toLowerCase()}`)}-button`}
                 onClick={() => applyPreset(preset)}
                 className={`text-left px-3 py-2 rounded-lg text-xs transition-colors ${
                   !isCustom &&
@@ -115,6 +117,7 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
                 </label>
                 <input
                   type="number"
+                  data-testid="margin-custom-top-input"
                   min="0"
                   max="100"
                   value={customMargins.top}
@@ -130,6 +133,7 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
                 </label>
                 <input
                   type="number"
+                  data-testid="margin-custom-bottom-input"
                   min="0"
                   max="100"
                   value={customMargins.bottom}
@@ -145,6 +149,7 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
                 </label>
                 <input
                   type="number"
+                  data-testid="margin-custom-left-input"
                   min="0"
                   max="100"
                   value={customMargins.left}
@@ -160,6 +165,7 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
                 </label>
                 <input
                   type="number"
+                  data-testid="margin-custom-right-input"
                   min="0"
                   max="100"
                   value={customMargins.right}

@@ -154,6 +154,7 @@ export function EnhancedRichTextEditor({
             onClick={() => setIsFullscreen(false)}
             className="p-2 hover:bg-[var(--surface-highlight)] rounded-lg transition"
             title="Exit fullscreen"
+            data-testid="editor-exit-fullscreen-button"
           >
             <Minimize2 className="h-5 w-5" />
           </button>
@@ -320,10 +321,12 @@ export function EnhancedRichTextEditor({
             placeholder="Search in content..."
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
+            data-testid="editor-search-input"
             className="flex-1 px-3 py-1 rounded-lg bg-[var(--page-surface)] border border-[var(--border-subtle)] text-sm focus:outline-none focus:border-[var(--accent)]"
           />
           <button
             onClick={() => setIsSearchOpen(false)}
+            data-testid="editor-search-close-button"
             className="px-3 py-1 text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-highlight)] rounded-lg transition"
           >
             Close

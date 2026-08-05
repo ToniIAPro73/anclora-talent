@@ -260,6 +260,7 @@ export function DocumentHealthPanel({ project, violations, copy, checks, diff, r
           </p>
           <button
             type="button"
+            data-testid="document-health-revert-button"
             onClick={revert.onRevert}
             disabled={revert.pending}
             className="ac-button ac-button--secondary ac-button--sm shrink-0"

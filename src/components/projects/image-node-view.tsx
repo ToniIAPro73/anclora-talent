@@ -117,6 +117,7 @@ export const ImageNodeView = ({
                   : 'hover:bg-[var(--surface-highlight)] text-[var(--text-secondary)]'
               }`}
               onClick={() => updateAttributes({ align: 'left' })}
+              data-testid="image-node-align-left-button"
               title="Alinear izquierda (texto fluye a la derecha)"
             >
               <AlignLeft className="h-3.5 w-3.5" />
@@ -128,6 +129,7 @@ export const ImageNodeView = ({
                   : 'hover:bg-[var(--surface-highlight)] text-[var(--text-secondary)]'
               }`}
               onClick={() => updateAttributes({ align: 'center' })}
+              data-testid="image-node-align-center-button"
               title="Centrar (sin texto alrededor)"
             >
               <AlignCenter className="h-3.5 w-3.5" />
@@ -139,6 +141,7 @@ export const ImageNodeView = ({
                   : 'hover:bg-[var(--surface-highlight)] text-[var(--text-secondary)]'
               }`}
               onClick={() => updateAttributes({ align: 'right' })}
+              data-testid="image-node-align-right-button"
               title="Alinear derecha (texto fluye a la izquierda)"
             >
               <AlignRight className="h-3.5 w-3.5" />
@@ -147,6 +150,7 @@ export const ImageNodeView = ({
             <button
               className="p-1 hover:bg-red-500/20 rounded-[4px] transition text-red-500"
               onClick={deleteNode}
+              data-testid="image-node-delete-button"
               title="Eliminar imagen"
             >
               <X className="h-3.5 w-3.5" />

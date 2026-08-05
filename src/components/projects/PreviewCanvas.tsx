@@ -37,6 +37,7 @@ export function PreviewCanvas({
   return (
     <div className="ac-surface-panel ac-surface-panel--subtle flex min-h-[400px] items-center justify-center p-8">
       <button
+        data-testid="open-full-preview-button"
         onClick={() => setShowModal(true)}
         className="ac-button ac-button--primary"
       >
