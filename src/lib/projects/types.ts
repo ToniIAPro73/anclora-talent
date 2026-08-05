@@ -151,12 +151,21 @@ export interface ProjectSummary {
   coverPalette: CoverDesign['palette'];
 }
 
+/** M4 — heuristic confidence for a detected import field (no AI involved). */
+export type ImportFieldConfidence = 'high' | 'medium' | 'low';
+
 export interface ImportedDocumentSeed {
   title: string;
   subtitle: string;
   author: string;
   sourcePageCount?: number;
   warnings?: string[];
+  /** M4 — per-field detection confidence (title/author/chapters). */
+  confidence?: {
+    title: ImportFieldConfidence;
+    author: ImportFieldConfidence;
+    chapters: ImportFieldConfidence;
+  };
   detectedOutline?: EditorialMapEntry[];
   chapterTitle: string;
   blocks: Array<{

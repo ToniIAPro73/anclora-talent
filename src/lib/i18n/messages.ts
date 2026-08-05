@@ -185,6 +185,9 @@ export type AppMessages = {
     importChaptersDetected: string;
     importTitleDetected: string;
     importAuthorDetected: string;
+    importConfidenceHigh: string;
+    importConfidenceMedium: string;
+    importConfidenceLow: string;
     importWarningsLabel: string;
     importChapterPreviewLabel: string;
     importErrorGeneric: string;
@@ -953,6 +956,9 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       importChaptersDetected: '{count} capítulos detectados',
       importTitleDetected: 'Título detectado',
       importAuthorDetected: 'Autor detectado',
+      importConfidenceHigh: 'Confianza alta',
+      importConfidenceMedium: 'Confianza media',
+      importConfidenceLow: 'Confianza baja',
       importWarningsLabel: 'Revisión recomendada',
       importChapterPreviewLabel: 'Estructura detectada',
       importErrorGeneric: 'No se pudo analizar el documento',
@@ -1750,6 +1756,9 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       importChaptersDetected: '{count} chapters detected',
       importTitleDetected: 'Detected title',
       importAuthorDetected: 'Detected author',
+      importConfidenceHigh: 'High confidence',
+      importConfidenceMedium: 'Medium confidence',
+      importConfidenceLow: 'Low confidence',
       importWarningsLabel: 'Recommended review',
       importChapterPreviewLabel: 'Detected structure',
       importErrorGeneric: 'Could not analyze the document',

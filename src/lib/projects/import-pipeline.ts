@@ -1,4 +1,4 @@
-import type { ImportedDocumentSeed } from './types';
+import type { ImportedDocumentSeed, ImportFieldConfidence } from './types';
 
 const SUPPORTED_IMPORT_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'txt', 'md']);
 const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote|table)[^>]*>[\s\S]*?<\/\1>/gi;
@@ -758,7 +758,10 @@ function findTitleCandidate(frontMatter: ParsedBlock[]) {
 
 function detectTitleFromFrontMatter(frontMatter: ParsedBlock[], fallbackTitle: string) {
   const candidate = findTitleCandidate(frontMatter);
-  return stripMarkdownInline(candidate?.block.text || fallbackTitle);
+  return {
+    title: stripMarkdownInline(candidate?.block.text || fallbackTitle),
+    foundCandidate: candidate !== null,
+  };
 }
 
 function detectAuthorFromFrontMatter(frontMatter: ParsedBlock[], fallbackText: string) {
@@ -982,6 +985,47 @@ function fileNameToTitle(fileName: string) {
     .trim();
 }
 
+/**
+ * M4 — per-field detection confidence, purely from heuristic signals already
+ * produced during extraction (no AI). Documented rules:
+ *  - title: 'high' when `findTitleCandidate` matched a genuine front-matter
+ *    line; 'medium' when it fell back to the document's first paragraph as a
+ *    guess; 'low' when even that failed and the filename itself was used.
+ *  - author: 'low' when nothing was found; 'high' when the detected name
+ *    appears near the top of the source text (front-matter byline, the
+ *    common case for a real title-page author); 'medium' when it was only
+ *    recovered via the whole-text fallback regex (e.g. a copyright line).
+ *  - chapters: keyed off the same signal as the "no clear sections" warning
+ *    — 'low' for a single conservative chapter, 'medium' for a couple, and
+ *    'high' once several structural sections were detected.
+ */
+function computeImportConfidence(input: {
+  titleFoundCandidate: boolean;
+  title: string;
+  fallbackTitle: string;
+  author: string;
+  sourceText: string;
+  chapterCount: number;
+}): ImportedDocumentSeed['confidence'] {
+  const titleConfidence: ImportFieldConfidence = input.titleFoundCandidate
+    ? 'high'
+    : input.title === input.fallbackTitle
+      ? 'low'
+      : 'medium';
+
+  const authorIndex = input.author ? input.sourceText.indexOf(input.author) : -1;
+  const authorConfidence: ImportFieldConfidence = !input.author
+    ? 'low'
+    : authorIndex >= 0 && authorIndex < 600
+      ? 'high'
+      : 'medium';
+
+  const chaptersConfidence: ImportFieldConfidence =
+    input.chapterCount <= 1 ? 'low' : input.chapterCount >= 3 ? 'high' : 'medium';
+
+  return { title: titleConfidence, author: authorConfidence, chapters: chaptersConfidence };
+}
+
 export function buildImportedDocumentSeed({
   fileName,
   mimeType,
@@ -1008,7 +1052,8 @@ export function buildImportedDocumentSeed({
   const parsedBlocks = normalizedHtml && htmlBlocks.length > 0? htmlBlocks : textBlocks;
 
   const frontMatterSource = buildChaptersFromBlocks(parsedBlocks, fallbackTitle, extractAuthorFromText(text));
-  const title = detectTitleFromFrontMatter(frontMatterSource.frontMatter, rawTitle);
+  const titleDetection = detectTitleFromFrontMatter(frontMatterSource.frontMatter, rawTitle);
+  const title = titleDetection.title;
   const author = detectAuthorFromFrontMatter(frontMatterSource.frontMatter, text);
   const subtitleDetection = detectSubtitleFromFrontMatter(frontMatterSource.frontMatter, title, author);
   const subtitle = subtitleDetection.subtitle
@@ -1134,12 +1179,22 @@ export function buildImportedDocumentSeed({
   if (subtitleDetection.candidateCount > 2) warnings.push('La portada contenía varias líneas y se han condensado en un único subtítulo editable.');
   if (detectedChapters.length <= 1) warnings.push('No se detectaron secciones principales claras; se mantuvo una estructura conservadora.');
 
+  const confidence = computeImportConfidence({
+    titleFoundCandidate: titleDetection.foundCandidate,
+    title,
+    fallbackTitle,
+    author,
+    sourceText: text,
+    chapterCount: detectedChapters.length,
+  });
+
   return {
     title,
     subtitle,
     author,
     sourcePageCount,
     warnings,
+    confidence,
     detectedOutline,
     chapterTitle: detectedChapters[0]?.title || title,
     blocks,

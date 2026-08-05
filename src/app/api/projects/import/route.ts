@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
       chapterCount: seed.chapters?.length ?? 1,
       chapterTitles: seed.chapters?.map((chapter) => chapter.title).slice(0, 4) ?? [],
       warnings: seed.warnings ?? [],
+      confidence: seed.confidence,
       sourceFileName: seed.sourceFileName,
       // Declared processing mode when OCR ran (ProcessingModeBadge in the UI).
       ocrAppliedMode: seed.ocrAppliedMode,

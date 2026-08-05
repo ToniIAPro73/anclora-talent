@@ -291,4 +291,54 @@ describe('document import parser isolation', () => {
     expect(chapterHtml).toContain('Primera línea cortada por ancho de página');
     expect(chapterHtml).toContain('Nuevo párrafo');
   });
+
+  test('M4 — confidence is low across the board with no usable structure', async () => {
+    vi.doMock('server-only', () => ({}));
+
+    const { buildImportedDocumentSeed } = await import('./import');
+    // A single paragraph over 140 chars: too long to be a title candidate
+    // (findTitleCandidate) and over the 120-char rawTitle guess too, so both
+    // fall back to the filename-derived title, with no author and one
+    // conservative chapter.
+    const result = buildImportedDocumentSeed({
+      fileName: 'sin-estructura.txt',
+      mimeType: 'text/plain',
+      text: 'Un parrafo muy largo sin titulo claro ni capitulos detectables en el texto de entrada que supera con holgura el limite de ciento cuarenta caracteres fijado para candidatos de titulo.',
+    });
+
+    expect(result.confidence?.title).toBe('low');
+    expect(result.confidence?.author).toBe('low');
+    expect(result.confidence?.chapters).toBe('low');
+  });
+
+  test('M4 — confidence is high with clear front-matter title/author and multiple chapters', async () => {
+    vi.doMock('server-only', () => ({}));
+
+    const { buildImportedDocumentSeed } = await import('./import');
+    const result = buildImportedDocumentSeed({
+      fileName: 'libro.md',
+      mimeType: 'text/markdown',
+      text: [
+        'Título del libro',
+        '',
+        'Nombre Autor Real',
+        '',
+        '# Capítulo uno',
+        '',
+        'Contenido uno.',
+        '',
+        '# Capítulo dos',
+        '',
+        'Contenido dos.',
+        '',
+        '# Capítulo tres',
+        '',
+        'Contenido tres.',
+      ].join('\n'),
+    });
+
+    expect(result.confidence?.title).toBe('high');
+    expect(result.confidence?.author).toBe('high');
+    expect(result.confidence?.chapters).toBe('high');
+  });
 });
