@@ -1,10 +1,56 @@
-import type { ImportedDocumentSeed } from './types';
+import type { ImportedDocumentSeed, ImportFieldConfidence } from './types';
 
 const SUPPORTED_IMPORT_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'txt', 'md']);
 const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote|table)[^>]*>[\s\S]*?<\/\1>/gi;
 const ALL_CAPS_RE = /^(?=.{40,})[^a-z]*[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ0-9 .,·:;()\-–—]+$/;
 const MAJOR_HEADING_RE = /^(?:cap[ií]tulo|chapter|introducci[oó]n|pr[oó]logo|prologo|[íi]ndice|indice|fase\s+\d+|parte\s+\d+|secci[oó]n|ep[ií]logo|cierre|despu[eé]s\s+de|recursos(?:\s+recomendados)?|anexos?)(?:\b|:)/i;
 const MINOR_HEADING_RE = /^(?:d[ií]a\s+\d+|tema\s+\d+|idea\s+clave|reto\s+de\s+acci[oó]n|preguntas?\s+de\s+reflexi[oó]n|ejercicio|caso|las\s+cinco\s+claves|cierre\s+de\s+fase)(?:\b|:)/i;
+
+/** M5 — manuscript type, used only to preset chapter-splitting granularity. */
+export type ManuscriptType = 'essay' | 'guide' | 'novel' | 'non-fiction';
+
+const DIALOGUE_LINE_RE = /^[-—–]\s*\S|^["“][^"”]+["”]\s*(?:,|\.)?\s*(?:dijo|preguntó|respondió|murmuró|gritó)\b/im;
+const IMPERATIVE_MARKER_RE = /\b(paso\s+\d+|ejercicio|checklist|reflexi[oó]n|reto\s+de\s+acci[oó]n)\b/gi;
+const CITATION_MARKER_RE = /\b(seg[uú]n|estudios?\s+(?:muestran|indican)|\[\d+\])\b/gi;
+
+/**
+ * M5 — cheap, documented, non-AI heuristic for the manuscript's likely genre,
+ * used only to preset the chapter-splitting granularity (see
+ * `MANUSCRIPT_TYPE_CHAPTER_LEVEL`). Signals: dialogue-tag density → novel;
+ * step/exercise markers → guide; citation/claim markers with long paragraphs
+ * → essay; otherwise non-fiction (the safe default — same as auto-detection
+ * with no preset applied).
+ */
+export function detectManuscriptType(text: string): ManuscriptType {
+  const paragraphs = paragraphsFromText(text);
+  if (paragraphs.length === 0) return 'non-fiction';
+
+  const dialogueLines = paragraphs.filter((p) => DIALOGUE_LINE_RE.test(p)).length;
+  if (dialogueLines / paragraphs.length > 0.15) return 'novel';
+
+  const imperativeHits = (text.match(IMPERATIVE_MARKER_RE) ?? []).length;
+  if (imperativeHits >= 3) return 'guide';
+
+  const citationHits = (text.match(CITATION_MARKER_RE) ?? []).length;
+  const avgParagraphLength = text.length / paragraphs.length;
+  if (citationHits >= 2 && avgParagraphLength > 400) return 'essay';
+
+  return 'non-fiction';
+}
+
+/**
+ * M5 — chapter-boundary heading level to force for a manuscript type, or
+ * `null` to keep the existing auto-detection (`determineChapterBoundaryLevel`)
+ * untouched. Only 'guide' gets a concrete preset: guides commonly nest many
+ * numbered sub-sections that read better as their own chapters, so prefer
+ * the finer (H2) boundary when one exists.
+ */
+const MANUSCRIPT_TYPE_CHAPTER_LEVEL: Record<ManuscriptType, 1 | 2 | null> = {
+  guide: 2,
+  novel: null,
+  essay: null,
+  'non-fiction': null,
+};
 
 function getExtension(fileName: string) {
   const parts = fileName.toLowerCase().split('.');
@@ -758,7 +804,10 @@ function findTitleCandidate(frontMatter: ParsedBlock[]) {
 
 function detectTitleFromFrontMatter(frontMatter: ParsedBlock[], fallbackTitle: string) {
   const candidate = findTitleCandidate(frontMatter);
-  return stripMarkdownInline(candidate?.block.text || fallbackTitle);
+  return {
+    title: stripMarkdownInline(candidate?.block.text || fallbackTitle),
+    foundCandidate: candidate !== null,
+  };
 }
 
 function detectAuthorFromFrontMatter(frontMatter: ParsedBlock[], fallbackText: string) {
@@ -853,12 +902,24 @@ function extractPrologueBlocksFromFrontMatter(frontMatter: ParsedBlock[], title:
     });
 }
 
-function buildChaptersFromBlocks(blocks: ParsedBlock[], title: string, author: string) {
+function buildChaptersFromBlocks(
+  blocks: ParsedBlock[],
+  title: string,
+  author: string,
+  chapterBoundaryLevelOverride?: 1 | 2 | null,
+) {
   const chapters: NonNullable<ImportedDocumentSeed['chapters']> = [];
   const frontMatter: ParsedBlock[] = [];
   let currentTitle: string | null = null;
   let currentBlocks: ParsedBlock[] = [];
-  const chapterBoundaryLevel = determineChapterBoundaryLevel(blocks);
+  const autoLevel = determineChapterBoundaryLevel(blocks);
+  // M5: only override when the preset's boundary level actually exists in
+  // this document (e.g. forcing H2 on a doc with no H2 headings would merge
+  // everything into one chapter) — otherwise fall back to auto-detection.
+  const hasOverrideLevel =
+    chapterBoundaryLevelOverride != null &&
+    blocks.some((block) => block.kind === 'heading' && block.structural && block.level === chapterBoundaryLevelOverride);
+  const chapterBoundaryLevel = hasOverrideLevel ? chapterBoundaryLevelOverride! : autoLevel;
 
   const flushCurrent = () => {
     if (!currentTitle) return;
@@ -982,18 +1043,63 @@ function fileNameToTitle(fileName: string) {
     .trim();
 }
 
+/**
+ * M4 — per-field detection confidence, purely from heuristic signals already
+ * produced during extraction (no AI). Documented rules:
+ *  - title: 'high' when `findTitleCandidate` matched a genuine front-matter
+ *    line; 'medium' when it fell back to the document's first paragraph as a
+ *    guess; 'low' when even that failed and the filename itself was used.
+ *  - author: 'low' when nothing was found; 'high' when the detected name
+ *    appears near the top of the source text (front-matter byline, the
+ *    common case for a real title-page author); 'medium' when it was only
+ *    recovered via the whole-text fallback regex (e.g. a copyright line).
+ *  - chapters: keyed off the same signal as the "no clear sections" warning
+ *    — 'low' for a single conservative chapter, 'medium' for a couple, and
+ *    'high' once several structural sections were detected.
+ */
+function computeImportConfidence(input: {
+  titleFoundCandidate: boolean;
+  title: string;
+  fallbackTitle: string;
+  author: string;
+  sourceText: string;
+  chapterCount: number;
+}): ImportedDocumentSeed['confidence'] {
+  const titleConfidence: ImportFieldConfidence = input.titleFoundCandidate
+    ? 'high'
+    : input.title === input.fallbackTitle
+      ? 'low'
+      : 'medium';
+
+  const authorIndex = input.author ? input.sourceText.indexOf(input.author) : -1;
+  const authorConfidence: ImportFieldConfidence = !input.author
+    ? 'low'
+    : authorIndex >= 0 && authorIndex < 600
+      ? 'high'
+      : 'medium';
+
+  const chaptersConfidence: ImportFieldConfidence =
+    input.chapterCount <= 1 ? 'low' : input.chapterCount >= 3 ? 'high' : 'medium';
+
+  return { title: titleConfidence, author: authorConfidence, chapters: chaptersConfidence };
+}
+
 export function buildImportedDocumentSeed({
   fileName,
   mimeType,
   text,
   html,
   sourcePageCount,
+  manuscriptTypeOverride,
 }: {
   fileName: string;
   mimeType: string;
   text: string;
   html?: string | null;
   sourcePageCount?: number;
+  /** M5 — explicit preset from the analysis panel selector; leave unset to
+   *  keep today's auto-detected chapter-splitting behavior unchanged. */
+  manuscriptTypeOverride?: ManuscriptType;
 }): ImportedDocumentSeed {
   const paragraphs = paragraphsFromText(text);
   const fallbackTitle = fileNameToTitle(fileName) || 'Documento importado';
@@ -1007,8 +1113,18 @@ export function buildImportedDocumentSeed({
   // Usa siempre HTML cuando viene de DOCX (ya lleva el TOC fusionado en splitHtmlListBlocks)
   const parsedBlocks = normalizedHtml && htmlBlocks.length > 0? htmlBlocks : textBlocks;
 
-  const frontMatterSource = buildChaptersFromBlocks(parsedBlocks, fallbackTitle, extractAuthorFromText(text));
-  const title = detectTitleFromFrontMatter(frontMatterSource.frontMatter, rawTitle);
+  const detectedManuscriptType = detectManuscriptType(text);
+  const chapterBoundaryLevelOverride = manuscriptTypeOverride
+    ? MANUSCRIPT_TYPE_CHAPTER_LEVEL[manuscriptTypeOverride]
+    : null;
+  const frontMatterSource = buildChaptersFromBlocks(
+    parsedBlocks,
+    fallbackTitle,
+    extractAuthorFromText(text),
+    chapterBoundaryLevelOverride,
+  );
+  const titleDetection = detectTitleFromFrontMatter(frontMatterSource.frontMatter, rawTitle);
+  const title = titleDetection.title;
   const author = detectAuthorFromFrontMatter(frontMatterSource.frontMatter, text);
   const subtitleDetection = detectSubtitleFromFrontMatter(frontMatterSource.frontMatter, title, author);
   const subtitle = subtitleDetection.subtitle
@@ -1134,12 +1250,24 @@ export function buildImportedDocumentSeed({
   if (subtitleDetection.candidateCount > 2) warnings.push('La portada contenía varias líneas y se han condensado en un único subtítulo editable.');
   if (detectedChapters.length <= 1) warnings.push('No se detectaron secciones principales claras; se mantuvo una estructura conservadora.');
 
+  const confidence = computeImportConfidence({
+    titleFoundCandidate: titleDetection.foundCandidate,
+    title,
+    fallbackTitle,
+    author,
+    sourceText: text,
+    chapterCount: detectedChapters.length,
+  });
+
   return {
     title,
     subtitle,
     author,
     sourcePageCount,
     warnings,
+    confidence,
+    manuscriptType: manuscriptTypeOverride ?? detectedManuscriptType,
+    detectedManuscriptType,
     detectedOutline,
     chapterTitle: detectedChapters[0]?.title || title,
     blocks,

@@ -4,7 +4,7 @@ import {
   type SurfaceFieldState,
   type SurfaceState,
 } from './cover-surface';
-import { syncedSurfaceValues } from './surface-metadata-sync';
+import { condenseSubtitle, syncedSurfaceValues } from './surface-metadata-sync';
 import type { ProjectRecord } from './types';
 
 type CoverProjectSubset = Pick<ProjectRecord, 'document' | 'cover'>;
@@ -100,7 +100,9 @@ export function resolveCoverSurfaceFields(
     };
   }
 
-  const syncedSubtitle = sameText(synced.subtitle, author.value) ? '' : synced.subtitle;
+  const syncedSubtitle = sameText(synced.subtitle, author.value)
+    ? ''
+    : condenseSubtitle(synced.subtitle);
   const subtitleVisibilityBase = persistedState
     ? (subtitleState?.visible ?? (project.cover.showSubtitle ?? true))
     : (project.cover.showSubtitle ?? true);
