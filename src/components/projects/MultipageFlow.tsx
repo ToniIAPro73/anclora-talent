@@ -213,6 +213,28 @@ export function MultipageFlow({
           color: var(--text-primary);
         }
 
+        .flow-content-root.ProseMirror table {
+          /* !important: imported .docx tables carry an inline width (from the
+             source Word column widths) that otherwise wins by specificity and
+             lets the table bleed past the column edge. */
+          width: var(--column-width) !important;
+          max-width: var(--column-width) !important;
+          table-layout: fixed;
+          border-collapse: collapse;
+          margin: 0 0 1rem 0;
+          /* Tables taller than the remaining column space must move whole to
+             the next column — a mid-table split makes Chromium bleed the
+             tail past the column's right edge instead of wrapping it. */
+          break-inside: avoid-column;
+          -webkit-column-break-inside: avoid;
+        }
+        .flow-content-root.ProseMirror td,
+        .flow-content-root.ProseMirror th {
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          vertical-align: top;
+        }
+
         .flow-content-root.ProseMirror ul,
         .flow-content-root.ProseMirror ol {
           margin: 0 0 1rem 1.5rem;
@@ -370,6 +392,7 @@ export function MultipageFlow({
       <div
         ref={multipageFlowRef}
         className="multipage-flow-container prose prose-invert max-w-none prose-img:rounded-lg prose-img:shadow-md"
+        style={{ ['--column-width' as string]: `${contentWidth}px` }}
       >
         <div
           className="multipage-flow-track"
