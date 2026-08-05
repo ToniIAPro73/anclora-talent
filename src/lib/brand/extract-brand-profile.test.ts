@@ -36,7 +36,9 @@ describe('brand extraction contract (fixture manual v3.0)', () => {
       { role: 'accent', hex: '#F59E0B', name: 'Oro Metálico', usagePercent: 10, confidence: 'high' },
       { role: 'accentMuted', hex: '#D97706', name: 'Oro Mitigado', usagePercent: 5, confidence: 'high' },
     ]);
-  });
+    // First real PDF parse of the run pays pdfjs-dist's cold-start cost (~7s
+    // here); default 5s test timeout isn't enough for the actual work done.
+  }, 15_000);
 
   it('extracts the typographic pair: Libre Baskerville display, Inter body', async () => {
     const { profile } = await extractFixture();
