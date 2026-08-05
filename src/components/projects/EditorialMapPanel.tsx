@@ -11,7 +11,7 @@ type PageSummary = {
 type ColumnEntry = {
   label: string;
   meta?: string;
-  tone?: 'default' | 'generated' | 'inferred';
+  tone?: 'default' | 'generated' | 'inferred' | 'added' | 'removed' | 'merged';
 };
 
 function Column({
@@ -33,7 +33,13 @@ function Column({
                 ? 'border-amber-300/30 bg-amber-300/10'
                 : entry.tone === 'inferred'
                   ? 'border-sky-300/30 bg-sky-300/10'
-                  : 'border-[var(--border-subtle)] bg-[var(--surface-soft)]'
+                  : entry.tone === 'added'
+                    ? 'border-[var(--success)]/40 bg-[var(--success-soft)]'
+                    : entry.tone === 'removed'
+                      ? 'border-[var(--danger)]/40 bg-[var(--danger-soft)]'
+                      : entry.tone === 'merged'
+                        ? 'border-[var(--warning)]/40 bg-[var(--warning-soft)]'
+                        : 'border-[var(--border-subtle)] bg-[var(--surface-soft)]'
             }`}
           >
             <p className="text-sm font-semibold text-[var(--text-primary)]">{entry.label}</p>
@@ -45,19 +51,43 @@ function Column({
   );
 }
 
-function outlineToEntries(outline: EditorialMapEntry[] | undefined): ColumnEntry[] {
+function normalizeTitle(title: string) {
+  return title.trim().toLocaleLowerCase();
+}
+
+/**
+ * M6 — outline vs. final chapters diff. A detected outline entry that has no
+ * matching final chapter title either got dropped (top-level, `level === 1`
+ * → 'removed') or folded into a parent chapter's body (a nested sub-heading,
+ * `level > 1` → 'merged'). A final chapter with no matching detected entry
+ * is new structure ('added').
+ */
+function outlineToEntries(outline: EditorialMapEntry[] | undefined, finalTitles: Set<string>, copy: AppMessages['project']): ColumnEntry[] {
   if (!outline || outline.length === 0) return [];
 
-  return outline.map((entry) => ({
-    label: `${'· '.repeat(Math.max(0, entry.level - 1))}${entry.title}`,
-    meta:
-      entry.origin === 'generated'
-        ? 'Índice generado automáticamente'
-        : entry.origin === 'inferred'
-          ? 'Bloque inferido durante la importación'
-          : undefined,
-    tone: entry.origin === 'generated' ? 'generated' : entry.origin === 'inferred' ? 'inferred' : 'default',
-  }));
+  return outline.map((entry) => {
+    if (entry.origin === 'generated') {
+      return {
+        label: `${'· '.repeat(Math.max(0, entry.level - 1))}${entry.title}`,
+        meta: copy.editorialMapGeneratedMeta,
+        tone: 'generated' as const,
+      };
+    }
+    if (entry.origin === 'inferred') {
+      return {
+        label: `${'· '.repeat(Math.max(0, entry.level - 1))}${entry.title}`,
+        meta: copy.editorialMapInferredMeta,
+        tone: 'inferred' as const,
+      };
+    }
+    const matched = finalTitles.has(normalizeTitle(entry.title));
+    const tone: ColumnEntry['tone'] = matched ? 'default' : entry.level === 1 ? 'removed' : 'merged';
+    return {
+      label: `${'· '.repeat(Math.max(0, entry.level - 1))}${entry.title}`,
+      meta: matched ? undefined : tone === 'removed' ? copy.editorialMapRemovedMeta : copy.editorialMapMergedMeta,
+      tone,
+    };
+  });
 }
 
 export function EditorialMapPanel({
@@ -69,15 +99,22 @@ export function EditorialMapPanel({
   pageSummaries: PageSummary[];
   project: ProjectRecord;
 }) {
-  const originalEntries = outlineToEntries(project.document.source?.outline);
-  const chapterEntries: ColumnEntry[] = project.document.chapters.map((chapter, index) => ({
-    label: `${index + 1}. ${chapter.title}`,
-    meta: `${chapter.blocks.length} bloques`,
-    tone:
-      chapter.title.toLowerCase() === 'índice' && project.document.source?.outline?.some((entry) => entry.title === 'Índice' && entry.origin === 'generated')
-        ? ('generated' as const)
-        : 'default',
-  }));
+  const outline = project.document.source?.outline;
+  const detectedTitles = new Set(
+    (outline ?? []).filter((entry) => !entry.origin || entry.origin === 'detected').map((entry) => normalizeTitle(entry.title)),
+  );
+  const finalTitles = new Set(project.document.chapters.map((chapter) => normalizeTitle(chapter.title)));
+  const originalEntries = outlineToEntries(outline, finalTitles, copy);
+  const chapterEntries: ColumnEntry[] = project.document.chapters.map((chapter, index) => {
+    const isGeneratedIndex =
+      chapter.title.toLowerCase() === 'índice' && outline?.some((entry) => entry.title === 'Índice' && entry.origin === 'generated');
+    const isNew = Boolean(outline?.length) && !isGeneratedIndex && !detectedTitles.has(normalizeTitle(chapter.title));
+    return {
+      label: `${index + 1}. ${chapter.title}`,
+      meta: isNew ? copy.editorialMapAddedMeta : `${chapter.blocks.length} bloques`,
+      tone: isGeneratedIndex ? ('generated' as const) : isNew ? ('added' as const) : 'default',
+    };
+  });
   const pageEntries: ColumnEntry[] = pageSummaries.map((page) => ({
     label: `Página ${page.pageNumber}`,
     meta: page.label,
