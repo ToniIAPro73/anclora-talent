@@ -71,6 +71,7 @@ export function FontSelector({
     <div className="relative w-full" ref={containerRef}>
       <button
         onClick={() => (isOpen ? setIsOpen(false) : handleOpenDropdown())}
+        data-testid="font-selector-toggle"
         className="w-full h-10 px-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-primary)] text-sm flex items-center justify-between hover:bg-[var(--surface-highlight)] transition-colors"
       >
         <span className="truncate">{selectedFont}</span>
@@ -91,6 +92,7 @@ export function FontSelector({
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-[var(--text-tertiary)]" />
               <Input
                 placeholder="Busca fuentes..."
+                data-testid="font-selector-search-input"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8 h-8 text-sm bg-[var(--surface-soft)] border-[var(--border-subtle)]"
@@ -103,6 +105,7 @@ export function FontSelector({
           <div className="flex gap-2 p-3 border-b border-[var(--border-subtle)] flex-wrap" style={{ backgroundColor: 'rgba(15, 23, 42, 0.7)' }}>
             <button
               onClick={() => setActiveCategory('all')}
+              data-testid="font-selector-category-all-button"
               className={`px-3 py-1.5 text-xs rounded font-medium transition-all ${
                 activeCategory === 'all'
                   ? 'bg-[var(--accent)] text-black shadow-md'
@@ -115,6 +118,7 @@ export function FontSelector({
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
+                data-testid={`font-selector-category-${cat}-button`}
                 className={`px-3 py-1.5 text-xs rounded capitalize font-medium transition-all ${
                   activeCategory === cat
                     ? 'bg-[var(--accent)] text-black shadow-md'
@@ -138,6 +142,7 @@ export function FontSelector({
                   <button
                     key={font.family}
                     onClick={() => handleSelectFont(font.family)}
+                    data-testid={`font-option-${font.family.replace(/\s+/g, '-').toLowerCase()}`}
                     className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-all ${
                       selectedFont === font.family
                         ? 'bg-[var(--accent)] text-black font-bold shadow-md'

@@ -513,7 +513,7 @@ export function PdfExportButton({
 
   return (
     <>
-      <button type="button" onClick={handleExport} disabled={isExporting} className={className}>
+      <button type="button" data-testid="pdf-export-button" onClick={handleExport} disabled={isExporting} className={className}>
         {isExporting ? (
           <span className="inline-flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" />

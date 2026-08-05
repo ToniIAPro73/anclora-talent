@@ -197,6 +197,7 @@ export function PreviewModal({
             <div className="ac-preview-overlay__toolbar flex shrink-0 items-center gap-1">
               <div className="ac-preview-overlay__toolbar-group talent-preview-toolbar">
                 <button
+                  data-testid="preview-modal-single-view-button"
                   aria-label={copy.previewModalSingleView}
                   aria-pressed={viewMode === 'single'}
                   onClick={() => setViewMode('single')}
@@ -205,6 +206,7 @@ export function PreviewModal({
                   <Eye className="h-4 w-4" />
                 </button>
                 <button
+                  data-testid="preview-modal-spread-view-button"
                   aria-label={copy.previewModalSpreadView}
                   aria-pressed={viewMode === 'spread'}
                   onClick={() => setViewMode('spread')}
@@ -216,6 +218,7 @@ export function PreviewModal({
                 {(['mobile', 'tablet', 'laptop'] as const).map(fmt => (
                   <button
                     key={fmt}
+                    data-testid={`preview-modal-format-${fmt}-button`}
                     aria-label={fmt === 'mobile' ? copy.previewModalMobile : fmt === 'tablet' ? copy.previewModalTablet : copy.previewModalLaptop}
                     aria-pressed={format === fmt}
                     onClick={() => setFormat(fmt)}
@@ -226,6 +229,7 @@ export function PreviewModal({
                 ))}
                 <div className="ac-preview-control-divider" />
                 <button
+                  data-testid="preview-modal-zoom-out-button"
                   aria-label={copy.previewModalZoomOut}
                   onClick={() => handleZoomChange(zoom - 10)}
                   className="ac-button ac-button--ghost ac-button--sm"
@@ -234,6 +238,7 @@ export function PreviewModal({
                 </button>
                 <span className="ac-preview-control-value">{zoom}%</span>
                 <button
+                  data-testid="preview-modal-zoom-in-button"
                   aria-label={copy.previewModalZoomIn}
                   onClick={() => handleZoomChange(zoom + 10)}
                   className="ac-button ac-button--ghost ac-button--sm"
@@ -242,6 +247,7 @@ export function PreviewModal({
                 </button>
               </div>
               <button
+                data-testid="preview-modal-close-button"
                 aria-label={copy.previewModalClose}
                 onClick={onClose}
                 className="ac-button ac-button--secondary flex-shrink-0"
@@ -300,6 +306,7 @@ export function PreviewModal({
               <div />
               <div className="ac-preview-overlay__footer ac-preview-pagination talent-preview-pagination">
                 <button
+                  data-testid="preview-modal-prev-page-button"
                   aria-label={copy.previewModalPrevious}
                   onClick={prevPage}
                   disabled={currentPage === 0}
@@ -311,6 +318,7 @@ export function PreviewModal({
                   <span className="sr-only">{copy.previewModalPage}</span>
                   <span className="text-white/75">Página</span>
                   <input
+                    data-testid="preview-modal-page-input"
                     aria-label={copy.previewModalPage}
                     type="number"
                     min={1}
@@ -332,6 +340,7 @@ export function PreviewModal({
                   <span className="text-white/55">de {logicalTotalPages}</span>
                 </label>
                 <button
+                  data-testid="preview-modal-next-page-button"
                   aria-label={copy.previewModalNext}
                   onClick={nextPage}
                   disabled={currentPage >= logicalTotalPages - 1}

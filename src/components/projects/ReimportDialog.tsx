@@ -130,7 +130,7 @@ export function ReimportDialog({ isOpen, projectId, chapters, copy, onClose }: R
               {copy.reimportDialogDescription}
             </p>
           </div>
-          <button type="button" onClick={handleClose} aria-label={copy.reimportCancelLabel}>
+          <button type="button" data-testid="reimport-close-button" onClick={handleClose} aria-label={copy.reimportCancelLabel}>
             <X className="h-5 w-5 text-[var(--text-tertiary)]" />
           </button>
         </div>
@@ -174,7 +174,7 @@ export function ReimportDialog({ isOpen, projectId, chapters, copy, onClose }: R
               {count(copy.reimportSummaryKeep, summary.keptTitles.length)}
             </p>
             <div className="flex justify-end gap-3 pt-2">
-              <button type="button" onClick={handleClose} className="ac-button ac-button--secondary">
+              <button type="button" data-testid="reimport-cancel-button" onClick={handleClose} className="ac-button ac-button--secondary">
                 {copy.reimportCancelLabel}
               </button>
               <button

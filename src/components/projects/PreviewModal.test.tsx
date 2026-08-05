@@ -147,6 +147,22 @@ describe('PreviewModal', () => {
     expect(zoomInButton.closest('footer')).toBeNull();
   });
 
+  test('exposes stable data-testids on all interactive controls', () => {
+    render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
+
+    expect(screen.getByTestId('preview-modal-single-view-button')).toBeVisible();
+    expect(screen.getByTestId('preview-modal-spread-view-button')).toBeVisible();
+    expect(screen.getByTestId('preview-modal-format-mobile-button')).toBeVisible();
+    expect(screen.getByTestId('preview-modal-format-tablet-button')).toBeVisible();
+    expect(screen.getByTestId('preview-modal-format-laptop-button')).toBeVisible();
+    expect(screen.getByTestId('preview-modal-zoom-out-button')).toBeVisible();
+    expect(screen.getByTestId('preview-modal-zoom-in-button')).toBeVisible();
+    expect(screen.getByTestId('preview-modal-close-button')).toBeVisible();
+    expect(screen.getByTestId('preview-modal-prev-page-button')).toBeVisible();
+    expect(screen.getByTestId('preview-modal-page-input')).toHaveValue(1);
+    expect(screen.getByTestId('preview-modal-next-page-button')).toBeVisible();
+  });
+
   test('opens in laptop spread mode with fitted zoom and allows switching to single page mode', async () => {
     render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
 

@@ -155,7 +155,7 @@ export function StructureScaffoldingDialog({
               {copy.structureDialogDescription}
             </p>
           </div>
-          <button type="button" onClick={handleClose} aria-label={copy.structureDiscardAction}>
+          <button type="button" data-testid="structure-close-button" onClick={handleClose} aria-label={copy.structureDiscardAction}>
             <X className="h-5 w-5 text-[var(--text-tertiary)]" />
           </button>
         </div>

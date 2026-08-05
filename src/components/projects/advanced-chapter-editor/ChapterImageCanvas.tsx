@@ -294,6 +294,7 @@ export function ChapterImageCanvas({
         <div className="ac-editor-toolbar__group">
           <button
             type="button"
+            data-testid="image-canvas-add-image-button"
             onClick={handleAddImage}
             className="ac-button ac-button--ghost ac-button--sm"
             title="Añadir imagen"
@@ -306,6 +307,7 @@ export function ChapterImageCanvas({
         <div className="ac-editor-toolbar__group">
           <button
             type="button"
+            data-testid="image-canvas-undo-button"
             onClick={handleUndo}
             disabled={historyStep <= 0}
             className="ac-button ac-button--ghost ac-button--sm disabled:opacity-30"
@@ -315,6 +317,7 @@ export function ChapterImageCanvas({
           </button>
           <button
             type="button"
+            data-testid="image-canvas-redo-button"
             onClick={handleRedo}
             disabled={historyStep >= history.length - 1}
             className="ac-button ac-button--ghost ac-button--sm disabled:opacity-30"
@@ -326,6 +329,7 @@ export function ChapterImageCanvas({
 
         <button
           type="button"
+          data-testid="image-canvas-guides-toggle"
           onClick={() => setShowGuides(!showGuides)}
           className="ac-text-editor__button"
           data-active={showGuides ? 'true' : 'false'}
@@ -336,6 +340,7 @@ export function ChapterImageCanvas({
 
         <button
           type="button"
+          data-testid="image-canvas-delete-button"
           onClick={handleDeleteSelected}
           disabled={!selectedImageId}
           className="ac-button ac-button--destructive ac-button--sm disabled:opacity-30"
@@ -354,6 +359,7 @@ export function ChapterImageCanvas({
       <input
         ref={fileInputRef}
         type="file"
+        data-testid="image-canvas-file-input"
         accept="image/*"
         onChange={handleImageUpload}
         className="hidden"
