@@ -58,7 +58,7 @@ export function AppShell({
         className="talent-shell-grid"
         style={{ gridTemplateColumns: sidebarCols }}
       >
-        <aside className="talent-shell-sidebar ac-sidebar-nav">
+        <aside className="talent-shell-sidebar ac-sidebar-nav min-w-0 overflow-hidden">
           <div className={`flex ${collapsed ? 'justify-center px-3 py-4' : 'justify-end px-6 pt-4'}`}>
             <button
               onClick={toggle}
@@ -85,17 +85,24 @@ export function AppShell({
                   <NavigatingLink
                     key={href}
                     href={href}
-                    pendingLabel={label}
+                    pendingLabel={collapsed ? undefined : label}
                     title={collapsed ? label : undefined}
+                    aria-label={collapsed ? label : undefined}
                     aria-current={isActive(href) ? 'page' : undefined}
                     className={`ac-sidebar-nav__item talent-shell-sidebar-link ${collapsed ? 'justify-center px-2' : 'justify-start px-0'}`}
                   >
-                    <span className="ac-sidebar-nav__item-label talent-shell-sidebar-link__label">
+                    {collapsed ? (
                       <span className="talent-shell-sidebar-link__icon">
                         <Icon className="h-4 w-4 flex-shrink-0" />
                       </span>
-                      {!collapsed && <span className="talent-shell-sidebar-link__text">{label}</span>}
-                    </span>
+                    ) : (
+                      <span className="ac-sidebar-nav__item-label talent-shell-sidebar-link__label">
+                        <span className="talent-shell-sidebar-link__icon">
+                          <Icon className="h-4 w-4 flex-shrink-0" />
+                        </span>
+                        <span className="talent-shell-sidebar-link__text">{label}</span>
+                      </span>
+                    )}
                   </NavigatingLink>
                 ))}
               </div>
@@ -109,7 +116,7 @@ export function AppShell({
           )}
         </aside>
 
-        <div className="talent-shell-main xl:p-8">
+        <div className="talent-shell-main min-w-0 xl:p-8">
           <header className="ac-topbar talent-shell-topbar flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="ac-topbar__titles">
               <h1 className="text-3xl font-black tracking-tight text-[var(--text-primary)]">{messages.topbarTitle}</h1>
