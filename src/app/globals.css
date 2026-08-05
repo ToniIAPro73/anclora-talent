@@ -7,7 +7,10 @@
    `@import url("./…")` which Turbopack/Lightning CSS silently drops
    (preexisting issue: it broke `next dev` and was also omitted from
    production builds, leaving every .ac-* class unstyled). */
-@import "@anclora/design-system/tokens/core.css";
+/* tokens/core.css ships an `@import url(google fonts)` AFTER @font-face rules,
+   which Lightning CSS rejects. Import the hoisted local copy instead
+   (identical tokens; see the shim header). */
+@import "./styles/anclora-core-tokens.css";
 @import "@anclora/design-system/tokens/semantic.css";
 @import "@anclora/design-system/taxonomy/tier.css";
 @import "@anclora/design-system/taxonomy/domain.css";

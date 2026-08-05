@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { ChevronLeft, ChevronRight, FolderOpen, LayoutDashboard, PenSquare } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FolderOpen, LayoutDashboard } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
@@ -41,7 +41,6 @@ export function AppShell({
 
   const navLinks = [
     { href: '/dashboard', icon: LayoutDashboard, label: messages.navDashboard },
-    { href: '/projects/new', icon: PenSquare, label: messages.navNewProject },
     { href: '/projects', icon: FolderOpen, label: messages.navProjects },
   ];
 
@@ -75,18 +74,9 @@ export function AppShell({
             {!collapsed && (
               <div className="min-w-0 overflow-hidden">
                 <p className="truncate text-lg font-black text-[var(--text-primary)]">{messages.brand}</p>
-                <p className="text-xs uppercase tracking-[0.24em] text-[var(--text-tertiary)]">{messages.badge}</p>
               </div>
             )}
           </div>
-
-          {!collapsed && (
-            <div className="ac-surface-panel ac-surface-panel--strong mx-6 text-[var(--text-primary)]">
-              <p className="ac-surface-panel__eyebrow">{messages.contractEyebrow}</p>
-              <p className="text-lg font-bold">{messages.contractTitle}</p>
-              <p className="text-sm leading-6 text-[var(--text-secondary)]">{messages.contractDescription}</p>
-            </div>
-          )}
 
           <nav className={`talent-shell-sidebar-nav ac-sidebar-nav mt-8 text-sm font-semibold ${collapsed ? 'px-3' : 'px-6'}`}>
             <div className="ac-sidebar-nav__group">
@@ -111,14 +101,6 @@ export function AppShell({
               </div>
             </div>
           </nav>
-
-          {!collapsed && (
-            <div className="ac-surface-panel ac-surface-panel--subtle mx-6 mt-10">
-              <p className="ac-surface-panel__eyebrow">{messages.stackEyebrow}</p>
-              <p className="text-lg font-bold text-[var(--text-primary)]">{messages.stackTitle}</p>
-              <p className="text-sm leading-6 text-[var(--text-secondary)]">{messages.stackDescription}</p>
-            </div>
-          )}
 
           {!collapsed && (
             <div className="mx-6 mt-10 flex-1">

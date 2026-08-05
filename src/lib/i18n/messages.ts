@@ -9,16 +9,8 @@ import type {
 export type AppMessages = {
   shell: {
     brand: string;
-    badge: string;
-    contractEyebrow: string;
-    contractTitle: string;
-    contractDescription: string;
     navDashboard: string;
-    navNewProject: string;
     navProjects: string;
-    stackEyebrow: string;
-    stackTitle: string;
-    stackDescription: string;
     topbarEyebrow: string;
     topbarTitle: string;
     themeLabel: string;
@@ -701,18 +693,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
   es: {
     shell: {
       brand: 'Anclora Talent',
-      badge: 'Premium App',
-      contractEyebrow: 'Contrato',
-      contractTitle: 'Editorial workspace premium',
-      contractDescription:
-        'Identidad protegida, persistencia real y una experiencia que mantiene el mismo nivel visual desde la entrada hasta la producción.',
       navDashboard: 'Dashboard',
-      navNewProject: 'Nuevo proyecto',
       navProjects: 'Mis proyectos',
-      stackEyebrow: 'Stack activo',
-      stackTitle: 'Auth + Neon + Blob',
-      stackDescription:
-        'La cuenta individual sigue siendo la unidad activa, pero la experiencia ya se presenta como producto premium, no como shell técnico.',
       topbarEyebrow: 'App shell',
       topbarTitle: 'Workspace editorial personal',
       themeLabel: 'Tema',
@@ -1511,18 +1493,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
   en: {
     shell: {
       brand: 'Anclora Talent',
-      badge: 'Premium App',
-      contractEyebrow: 'Contract',
-      contractTitle: 'Premium editorial workspace',
-      contractDescription:
-        'Protected identity, real persistence, and an experience that keeps the same visual level from entry to production.',
       navDashboard: 'Dashboard',
-      navNewProject: 'New project',
       navProjects: 'My projects',
-      stackEyebrow: 'Active stack',
-      stackTitle: 'Auth + Neon + Blob',
-      stackDescription:
-        'The individual account remains the active unit, but the experience already presents itself as a premium product, not as a technical shell.',
       topbarEyebrow: 'App shell',
       topbarTitle: 'Personal editorial workspace',
       themeLabel: 'Theme',
