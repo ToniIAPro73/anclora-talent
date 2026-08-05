@@ -50,6 +50,7 @@ export function EditorPreferencesPanel({
           </h3>
         </div>
         <button
+          data-testid="editor-preferences-reset-button"
           onClick={handleReset}
           className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover)] rounded-lg transition-colors"
           title="Restaurar valores por defecto"
@@ -69,6 +70,7 @@ export function EditorPreferencesPanel({
             {['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px'].map((size) => (
               <button
                 key={size}
+                data-testid={`editor-preferences-font-size-${size.replace('px', '')}-button`}
                 onClick={() => handleFontSizeChange(size)}
                 className={`px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
                   currentFontSize === size
@@ -95,6 +97,7 @@ export function EditorPreferencesPanel({
             ].map((device) => (
               <button
                 key={device.id}
+                data-testid={`editor-preferences-device-${device.id}-button`}
                 onClick={() => handleDeviceChange(device.id as 'mobile' | 'tablet' | 'desktop')}
                 className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
                   currentDevice === device.id

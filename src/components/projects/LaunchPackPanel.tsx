@@ -80,6 +80,7 @@ export function LaunchPackPanel({
         </div>
         <button
           type="button"
+          data-testid="launch-pack-generate-button"
           onClick={handleGenerate}
           disabled={isPending}
           className="ac-button ac-button--primary inline-flex items-center gap-2"

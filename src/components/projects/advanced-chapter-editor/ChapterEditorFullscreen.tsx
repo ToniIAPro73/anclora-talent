@@ -143,6 +143,7 @@ export function ChapterEditorFullscreen({
         <div className="ac-editor-shell__controls">
           <div className="ac-preview-control-group">
           <button
+            data-testid="chapter-editor-prev-chapter-button"
             onClick={editor.goToPrevChapter}
             disabled={!editor.canNavigatePrev || editor.isSaving}
             className="ac-button ac-button--ghost ac-button--sm disabled:opacity-50"
@@ -152,6 +153,7 @@ export function ChapterEditorFullscreen({
           </button>
 
           <button
+            data-testid="chapter-editor-next-chapter-button"
             onClick={editor.goToNextChapter}
             disabled={!editor.canNavigateNext || editor.isSaving}
             className="ac-button ac-button--ghost ac-button--sm disabled:opacity-50"
@@ -164,6 +166,7 @@ export function ChapterEditorFullscreen({
           {editor.totalPages > 1 && (
             <div className="ac-preview-pagination">
               <button
+                data-testid="chapter-editor-prev-page-button"
                 onClick={editor.goToPagePrev}
                 disabled={!editor.canNavigatePagePrev || editor.isSaving}
                 className="ac-button ac-button--ghost ac-button--sm disabled:opacity-50"
@@ -177,6 +180,7 @@ export function ChapterEditorFullscreen({
               </span>
 
               <button
+                data-testid="chapter-editor-next-page-button"
                 onClick={editor.goToPageNext}
                 disabled={!editor.canNavigatePageNext || editor.isSaving}
                 className="ac-button ac-button--ghost ac-button--sm disabled:opacity-50"
@@ -190,6 +194,7 @@ export function ChapterEditorFullscreen({
           <div className="ac-preview-control-group">
           <button
             type="button"
+            data-testid="chapter-editor-zoom-out-button"
             onClick={() => handleZoomChange(zoom - 10)}
             className="ac-button ac-button--ghost ac-button--sm"
             title="Reducir zoom"
@@ -201,6 +206,7 @@ export function ChapterEditorFullscreen({
           </span>
           <button
             type="button"
+            data-testid="chapter-editor-zoom-in-button"
             onClick={() => handleZoomChange(zoom + 10)}
             className="ac-button ac-button--ghost ac-button--sm"
             title="Aumentar zoom"
@@ -217,6 +223,7 @@ export function ChapterEditorFullscreen({
             </span>
           )}
           <button
+            data-testid="chapter-editor-close-button"
             onClick={handleClose}
             disabled={editor.isSaving}
             className="ac-button ac-button--secondary"
@@ -248,6 +255,7 @@ export function ChapterEditorFullscreen({
 
       <footer className="ac-editor-shell__footer">
         <button
+          data-testid="chapter-editor-cancel-button"
           onClick={handleClose}
           disabled={editor.isSaving}
           className="ac-button ac-button--secondary"
@@ -256,6 +264,7 @@ export function ChapterEditorFullscreen({
         </button>
 
         <button
+          data-testid="chapter-editor-save-button"
           onClick={handleSave}
           disabled={editor.isSaving || (!editor.hasChanges && editor.lastSaved !== null)}
           className="ac-button ac-button--primary"

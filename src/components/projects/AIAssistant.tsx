@@ -52,8 +52,18 @@ export function AIAssistant() {
                   </div>
                   <p className="text-sm leading-6 text-[var(--text-primary)] font-medium">&quot;{suggestion.content}&quot;</p>
                   <div className="mt-4 flex gap-3">
-                    <button className="ac-button ac-button--primary ac-button--sm">Aplicar cambio</button>
-                    <button className="ac-button ac-button--ghost ac-button--sm">Descartar</button>
+                    <button
+                      data-testid={`ai-assistant-apply-button-${suggestion.id}`}
+                      className="ac-button ac-button--primary ac-button--sm"
+                    >
+                      Aplicar cambio
+                    </button>
+                    <button
+                      data-testid={`ai-assistant-discard-button-${suggestion.id}`}
+                      className="ac-button ac-button--ghost ac-button--sm"
+                    >
+                      Descartar
+                    </button>
                   </div>
                 </div>
               ))}
@@ -63,7 +73,7 @@ export function AIAssistant() {
           <div className="ac-empty-state">
              <MessageSquare className="mx-auto h-10 w-10 text-[var(--text-muted)] mb-4" />
              <p className="text-sm text-[var(--text-secondary)]">Interactúa con el asistente para refinar partes específicas del texto.</p>
-             <button className="ac-button ac-button--secondary mt-6">
+             <button data-testid="ai-assistant-open-chat-button" className="ac-button ac-button--secondary mt-6">
                 Abrir Chat de Edición
              </button>
           </div>
@@ -75,7 +85,8 @@ export function AIAssistant() {
             <h4 className="text-sm font-bold">Generación Rápida</h4>
             <p className="mt-2 text-xs leading-5 opacity-90">Analiza todo el proyecto para sugerir mejoras estructurales.</p>
             
-            <button 
+            <button
+              data-testid="ai-assistant-generate-button"
               onClick={handleGenerate}
               disabled={isGenerating}
               className="ac-button ac-button--primary mt-6 w-full"

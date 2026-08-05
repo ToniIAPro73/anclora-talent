@@ -89,6 +89,7 @@ export function SurfaceInspector({
         </div>
         <Textarea
           aria-label={copy.coverStudioContentLabel}
+          data-testid={`inspector-${fieldKey}-content-input`}
           value={value}
           onChange={(event) => onTextChange(event.target.value)}
           className="min-h-20 border-[var(--border-subtle)] bg-[var(--surface-soft)] text-sm focus:border-[var(--accent)]"
@@ -109,6 +110,7 @@ export function SurfaceInspector({
           <button
             type="button"
             onClick={() => onStyleChange({ textAlign: 'left' })}
+            data-testid={`inspector-${fieldKey}-align-left-button`}
             className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
             data-active={computed.textAlign === 'left' ? 'true' : 'false'}
             title="Left"
@@ -118,6 +120,7 @@ export function SurfaceInspector({
           <button
             type="button"
             onClick={() => onStyleChange({ textAlign: 'center' })}
+            data-testid={`inspector-${fieldKey}-align-center-button`}
             className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
             data-active={computed.textAlign === 'center' ? 'true' : 'false'}
             title="Center"
@@ -127,6 +130,7 @@ export function SurfaceInspector({
           <button
             type="button"
             onClick={() => onStyleChange({ textAlign: 'right' })}
+            data-testid={`inspector-${fieldKey}-align-right-button`}
             className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
             data-active={computed.textAlign === 'right' ? 'true' : 'false'}
             title="Right"
@@ -136,6 +140,7 @@ export function SurfaceInspector({
           <button
             type="button"
             onClick={() => onStyleChange({ fontWeight: isBold ? 400 : 700 })}
+            data-testid={`inspector-${fieldKey}-bold-button`}
             className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
             data-active={isBold ? 'true' : 'false'}
             title="Bold"
@@ -145,6 +150,7 @@ export function SurfaceInspector({
           <button
             type="button"
             onClick={() => onStyleChange({ fontStyle: isItalic ? 'normal' : 'italic' })}
+            data-testid={`inspector-${fieldKey}-italic-button`}
             className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
             data-active={isItalic ? 'true' : 'false'}
             title="Italic"
@@ -209,6 +215,7 @@ export function SurfaceInspector({
           <button
             type="button"
             onClick={() => setShowColorPicker((open) => !open)}
+            data-testid={`inspector-${fieldKey}-color-button`}
             className="flex h-10 w-full items-center gap-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3"
           >
             <div

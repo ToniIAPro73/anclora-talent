@@ -41,10 +41,13 @@ const PAIRED: FileStudioConnection = {
 function createDbMock(opts: { selectResults?: unknown[][]; jobIds?: string[] } = {}) {
   const selectQueue = [...(opts.selectResults ?? [])];
   const jobIdQueue = [...(opts.jobIds ?? [])];
-  const insertValues = vi.fn((_values: unknown) => ({
-    returning: vi.fn().mockResolvedValue([{ id: jobIdQueue.shift() ?? 'job-row' }]),
-    then: (resolve: (value: unknown) => void) => resolve(undefined),
-  }));
+  const insertValues = vi.fn((values: unknown) => {
+    void values;
+    return {
+      returning: vi.fn().mockResolvedValue([{ id: jobIdQueue.shift() ?? 'job-row' }]),
+      then: (resolve: (value: unknown) => void) => resolve(undefined),
+    };
+  });
 
   return {
     insert: vi.fn(() => ({ values: insertValues })),

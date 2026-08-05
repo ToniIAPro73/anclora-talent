@@ -69,6 +69,7 @@ function TemplateGrid({
             <button
               key={template.id}
               type="button"
+              data-testid={`${testId}-option-${template.id}`}
               onClick={() => onSelect(template.id)}
               className="ac-template-card group"
               data-selected={isSelected ? 'true' : 'false'}

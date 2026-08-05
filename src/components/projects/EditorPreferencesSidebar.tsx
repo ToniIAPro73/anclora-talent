@@ -32,7 +32,7 @@ export function EditorPreferencesSidebar() {
 
   return (
     <div className="ac-editor-panel">
-      <button onClick={() => setIsExpanded(!isExpanded)} className="ac-editor-panel__trigger">
+      <button data-testid="editor-sidebar-toggle" onClick={() => setIsExpanded(!isExpanded)} className="ac-editor-panel__trigger">
         <div className="ac-editor-panel__titles">
           <span className="ac-editor-panel__icon">
             <Settings className="h-4 w-4" />
@@ -57,6 +57,7 @@ export function EditorPreferencesSidebar() {
               {['12px', '16px', '20px', '24px'].map((size) => (
                 <button
                   key={size}
+                  data-testid={`editor-sidebar-font-size-${size.replace('px', '')}-button`}
                   onClick={() => setPreferences({ fontSize: size })}
                   className={
                     currentFontSize === size
@@ -74,6 +75,7 @@ export function EditorPreferencesSidebar() {
           <div className="ac-editor-panel__group">
             <p className="ac-editor-panel__label">Vista</p>
             <select
+              data-testid="editor-sidebar-device-select"
               value={currentDevice}
               onChange={(e) =>
                 setPreferences({ device: e.target.value as 'mobile' | 'tablet' | 'desktop' })
@@ -98,7 +100,7 @@ export function EditorPreferencesSidebar() {
             </div>
           </div>
 
-          <button onClick={resetPreferences} className="ac-button ac-button--ghost ac-button--sm">
+          <button data-testid="editor-sidebar-reset-button" onClick={resetPreferences} className="ac-button ac-button--ghost ac-button--sm">
             Restaurar
           </button>
 
