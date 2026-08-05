@@ -80,16 +80,9 @@ export type AppMessages = {
   dashboard: {
     eyebrow: string;
     title: string;
-    description: string;
+    activeProjectsOne: string;
+    activeProjectsMany: string;
     createProject: string;
-    projectsEyebrow: string;
-    statusEyebrow: string;
-    contractEyebrow: string;
-    statusActive: string;
-    statusEmpty: string;
-    statusFallback: string;
-    contractReady: string;
-    contractFallback: string;
     sectionEyebrow: string;
     sectionTitle: string;
     emptyEyebrow: string;
@@ -815,19 +808,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       ],
     },
     dashboard: {
-      eyebrow: 'Dashboard premium',
-      title: 'Tus proyectos editoriales ya viven dentro de una app que parece producto de verdad.',
-      description:
-        'Auth, documento, preview y portada ya están alineados. Ahora el acceso diario también tiene que transmitir valor, control y acabado premium.',
+      eyebrow: 'Dashboard',
+      title: 'Tus proyectos editoriales, en un solo lugar.',
+      activeProjectsOne: '{count} proyecto activo',
+      activeProjectsMany: '{count} proyectos activos',
       createProject: 'Crear nuevo proyecto',
-      projectsEyebrow: 'Proyectos',
-      statusEyebrow: 'Estado',
-      contractEyebrow: 'Contrato',
-      statusActive: 'Base activa y persistente',
-      statusEmpty: 'Listo para primer proyecto',
-      statusFallback: 'Fallback operativo activo',
-      contractReady: 'Premium app operativa',
-      contractFallback: 'Acceso sin caída ante fallo de datos',
       sectionEyebrow: 'Mis proyectos',
       sectionTitle: 'Base editorial individual',
       emptyEyebrow: 'Estado inicial',
@@ -1615,19 +1600,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       ],
     },
     dashboard: {
-      eyebrow: 'Premium dashboard',
-      title: 'Your editorial projects already live inside an app that feels like a real product.',
-      description:
-        'Auth, document, preview, and cover are already aligned. Now daily access also has to communicate value, control, and premium finish.',
+      eyebrow: 'Dashboard',
+      title: 'Your editorial projects, all in one place.',
+      activeProjectsOne: '{count} active project',
+      activeProjectsMany: '{count} active projects',
       createProject: 'Create new project',
-      projectsEyebrow: 'Projects',
-      statusEyebrow: 'Status',
-      contractEyebrow: 'Contract',
-      statusActive: 'Active and persistent base',
-      statusEmpty: 'Ready for the first project',
-      statusFallback: 'Operational fallback enabled',
-      contractReady: 'Premium app operational',
-      contractFallback: 'Access stays up during data failure',
       sectionEyebrow: 'My projects',
       sectionTitle: 'Individual editorial base',
       emptyEyebrow: 'Initial state',

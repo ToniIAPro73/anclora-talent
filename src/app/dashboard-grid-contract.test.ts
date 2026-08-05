@@ -13,13 +13,15 @@ const createProjectForm = readFileSync(
 );
 
 describe('dashboard grid balance contract', () => {
-  test('splits hero and create form into balanced columns', () => {
-    expect(dashboardPage).toContain('xl:grid-cols-2');
-    expect(dashboardPage).not.toContain('1.2fr_0.8fr');
+  test('lays projects and create form out in a two-column grid', () => {
+    expect(dashboardPage).toContain('xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]');
+    expect(dashboardPage).not.toContain('gap-6 xl:grid-cols-2');
   });
 
-  test('keeps the hero CTA from stretching into a tall card', () => {
-    expect(dashboardPage).toContain('flex flex-wrap items-center gap-3');
+  test('keeps a compact hero without metric cards, description or hero CTA', () => {
+    expect(dashboardPage).not.toContain('ac-metric-card');
+    expect(dashboardPage).not.toContain('dashboardCopy.description');
+    expect(dashboardPage).toContain('data-testid="dashboard-active-count"');
   });
 
   test('gives the shell enough width to avoid a narrow central band', () => {
