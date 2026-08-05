@@ -31,8 +31,9 @@ const nextConfig: NextConfig = {
   ],
   experimental: {
     serverActions: {
-      // Imported source documents are uploaded through a server action.
-      bodySizeLimit: '8mb',
+      // Imported source documents are uploaded through a server action; the
+      // importer accepts files up to 50MB, plus multipart form overhead.
+      bodySizeLimit: '55mb',
     },
   },
 };

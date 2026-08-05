@@ -145,9 +145,9 @@ export function ChapterOrganizer({
                   <Edit2 className="h-3.5 w-3.5" />
                 </button>
                 <form action={moveChapterAction}>
-                  <input type="hidden" name="projectId" value={projectId} />
-                  <input type="hidden" name="chapterId" value={chapter.id} />
-                  <input type="hidden" name="direction" value="up" />
+                  <input type="hidden" name="projectId" value={projectId} data-testid={`chapter-move-up-project-id-input-${index + 1}`} />
+                  <input type="hidden" name="chapterId" value={chapter.id} data-testid={`chapter-move-up-chapter-id-input-${index + 1}`} />
+                  <input type="hidden" name="direction" value="up" data-testid={`chapter-move-up-direction-input-${index + 1}`} />
                   <button
                     type="submit"
                     data-testid={`chapter-move-up-button-${index + 1}`}
@@ -158,9 +158,9 @@ export function ChapterOrganizer({
                   </button>
                 </form>
                 <form action={moveChapterAction}>
-                  <input type="hidden" name="projectId" value={projectId} />
-                  <input type="hidden" name="chapterId" value={chapter.id} />
-                  <input type="hidden" name="direction" value="down" />
+                  <input type="hidden" name="projectId" value={projectId} data-testid={`chapter-move-down-project-id-input-${index + 1}`} />
+                  <input type="hidden" name="chapterId" value={chapter.id} data-testid={`chapter-move-down-chapter-id-input-${index + 1}`} />
+                  <input type="hidden" name="direction" value="down" data-testid={`chapter-move-down-direction-input-${index + 1}`} />
                   <button
                     type="submit"
                     data-testid={`chapter-move-down-button-${index + 1}`}
@@ -171,8 +171,8 @@ export function ChapterOrganizer({
                   </button>
                 </form>
                 <form action={deleteChapterAction}>
-                  <input type="hidden" name="projectId" value={projectId} />
-                  <input type="hidden" name="chapterId" value={chapter.id} />
+                  <input type="hidden" name="projectId" value={projectId} data-testid={`chapter-delete-project-id-input-${index + 1}`} />
+                  <input type="hidden" name="chapterId" value={chapter.id} data-testid={`chapter-delete-chapter-id-input-${index + 1}`} />
                   <button
                     type="submit"
                     data-testid={`chapter-delete-button-${index + 1}`}

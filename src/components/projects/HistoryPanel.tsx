@@ -142,6 +142,7 @@ export function HistoryPanel({
         </div>
         <button
           type="button"
+          data-testid="history-save-version-button"
           onClick={handleSaveVersion}
           disabled={isPending}
           className="ac-button ac-button--primary inline-flex items-center gap-2"
@@ -230,6 +231,7 @@ export function HistoryPanel({
             </label>
             <button
               type="button"
+              data-testid="history-compare-button"
               onClick={handleCompare}
               disabled={isPending}
               className="ac-button ac-button--secondary inline-flex items-center gap-2"

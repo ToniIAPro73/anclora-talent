@@ -73,6 +73,7 @@ type ToolbarButtonProps = {
   onClick: () => void;
   active?: boolean;
   disabled?: boolean;
+  dataTestId?: string;
   title: string;
   children: React.ReactNode;
 };
@@ -82,6 +83,8 @@ type SplitToolbarButtonProps = {
   title: string;
   active?: boolean;
   disabled?: boolean;
+  dataTestId?: string;
+  toggleDataTestId?: string;
   onPrimaryClick: () => void;
   children: React.ReactNode;
 };
@@ -250,12 +253,13 @@ const TocInlineAttributes = Extension.create({
   },
 });
 
-function ToolbarButton({ onClick, active, disabled, title, children }: ToolbarButtonProps) {
+function ToolbarButton({ onClick, active, disabled, dataTestId, title, children }: ToolbarButtonProps) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
+      data-testid={dataTestId}
       title={title}
       data-active={active ? 'true' : 'false'}
       className="ac-text-editor__button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
@@ -270,6 +274,8 @@ function SplitToolbarButton({
   title,
   active,
   disabled,
+  dataTestId,
+  toggleDataTestId,
   onPrimaryClick,
   children,
 }: SplitToolbarButtonProps) {
@@ -297,6 +303,7 @@ function SplitToolbarButton({
           type="button"
           onClick={onPrimaryClick}
           disabled={disabled}
+          data-testid={dataTestId}
           title={title}
           className="ac-text-editor__split-main"
         >
@@ -306,6 +313,7 @@ function SplitToolbarButton({
           type="button"
           onClick={() => !disabled && setIsOpen((open) => !open)}
           disabled={disabled}
+          data-testid={toggleDataTestId}
           title={`Opciones de ${title.toLowerCase()}`}
           className="ac-text-editor__split-toggle"
         >
@@ -426,6 +434,7 @@ const AdvancedFontSelector = ({
         type="button"
         onClick={() => isAvailable && setIsOpen(!isOpen)}
         disabled={!isAvailable}
+        data-testid="editor-toolbar-font-family-button"
         title={isAvailable ? 'Familia tipográfica' : unavailableTitle}
         className="flex h-9 min-w-[140px] items-center justify-between gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors disabled:pointer-events-none disabled:opacity-30"
       >
@@ -442,6 +451,7 @@ const AdvancedFontSelector = ({
               placeholder="Buscar fuente..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              data-testid="editor-toolbar-font-search-input"
               className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--background)] py-2 pl-8 pr-3 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
               autoFocus
             />
@@ -453,6 +463,7 @@ const AdvancedFontSelector = ({
                 applyToWordOrSelection((chain) => chain.unsetFontFamily());
                 setIsOpen(false);
               }}
+              data-testid="font-option-default"
               className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]"
             >
               Default
@@ -463,6 +474,7 @@ const AdvancedFontSelector = ({
                 type="button"
                 key={font.family}
                 onClick={() => selectFont(font.family)}
+                data-testid={`font-option-${font.family.replace(/\s+/g, '-').toLowerCase()}`}
                 style={{ fontFamily: font.family }}
                 className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm text-[var(--text-primary)] hover:bg-[var(--hover)]"
               >
@@ -525,6 +537,7 @@ const FontSizeSelector = ({
       <ToolbarButton
         onClick={() => isAvailable && setIsOpen(!isOpen)}
         disabled={!isAvailable}
+        dataTestId="editor-toolbar-font-size-button"
         title={isAvailable ? 'Tamaño de fuente' : unavailableTitle}
       >
         <Type className="h-4 w-4" />
@@ -541,6 +554,7 @@ const FontSizeSelector = ({
                 onFontSizeChange?.(size.value);
                 setIsOpen(false);
               }}
+              data-testid={`font-size-option-${size.name}`}
               className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                 currentSize === size.value
                   ? 'bg-[var(--accent)]/20 text-[var(--accent-text)]'
@@ -608,6 +622,7 @@ const ColorSelector = ({
         type="button"
         onClick={() => isAvailable && setIsOpen(!isOpen)}
         disabled={!isAvailable}
+        data-testid="editor-toolbar-text-color-button"
         className={`inline-flex h-9 w-9 items-center justify-center rounded-[10px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] disabled:opacity-30 disabled:cursor-not-allowed ${
           isAvailable && currentColor !== 'inherit'
             ? 'bg-[var(--accent)] text-[var(--button-highlight-fg)] shadow-[0_0_15px_rgba(45,212,191,0.5)]'
@@ -645,6 +660,7 @@ const ColorSelector = ({
                   else applyToWordOrSelection((chain) => chain.setColor(color.value));
                   setIsOpen(false);
                 }}
+                data-testid={`color-option-${color.value.replace('#', '')}`}
                 className={`group flex items-center gap-3 rounded-xl border px-3 py-2 text-left transition-all duration-200 ${
                   currentColor === color.value
                     ? 'border-[var(--accent)] bg-[var(--accent)]/10'
@@ -853,19 +869,20 @@ const MenuBar = ({
   return (
     <div className="ac-text-editor__toolbar">
       <div className="ac-text-editor__toolbar-section">
-        <ToolbarButton onClick={() => setDevice('mobile')} active={device === 'mobile'} title="Vista Móvil">
+        <ToolbarButton onClick={() => setDevice('mobile')} active={device === 'mobile'} dataTestId="editor-toolbar-device-mobile-button" title="Vista Móvil">
           <Smartphone className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={() => setDevice('tablet')} active={device === 'tablet'} title="Vista Tablet">
+        <ToolbarButton onClick={() => setDevice('tablet')} active={device === 'tablet'} dataTestId="editor-toolbar-device-tablet-button" title="Vista Tablet">
           <Tablet className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={() => setDevice('desktop')} active={device === 'desktop'} title="Vista Escritorio">
+        <ToolbarButton onClick={() => setDevice('desktop')} active={device === 'desktop'} dataTestId="editor-toolbar-device-desktop-button" title="Vista Escritorio">
           <Monitor className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => setViewMode(viewMode === 'single' ? 'double' : 'single')}
           active={viewMode === 'double'}
           disabled={device === 'mobile'}
+          dataTestId="editor-toolbar-double-page-button"
           title="Modo Dos Hojas (no disponible en móvil)"
         >
           <Columns className="h-4 w-4" />
@@ -900,6 +917,7 @@ const MenuBar = ({
           onClick={() => applyToWordOrSelection((chain) => chain.toggleBold())}
           active={editor.isActive('bold')}
           disabled={!inlineTargetAvailable}
+          dataTestId="editor-toolbar-bold-button"
           title={inlineTargetAvailable ? 'Negrita' : inlineUnavailableTitle}
         >
           <Bold className="h-4 w-4" />
@@ -908,6 +926,7 @@ const MenuBar = ({
           onClick={() => applyToWordOrSelection((chain) => chain.toggleItalic())}
           active={editor.isActive('italic')}
           disabled={!inlineTargetAvailable}
+          dataTestId="editor-toolbar-italic-button"
           title={inlineTargetAvailable ? 'Cursiva' : inlineUnavailableTitle}
         >
           <Italic className="h-4 w-4" />
@@ -916,6 +935,7 @@ const MenuBar = ({
           onClick={() => applyToWordOrSelection((chain) => chain.toggleStrike())}
           active={editor.isActive('strike')}
           disabled={!inlineTargetAvailable}
+          dataTestId="editor-toolbar-strikethrough-button"
           title={inlineTargetAvailable ? 'Tachado' : inlineUnavailableTitle}
         >
           <Strikethrough className="h-4 w-4" />
@@ -927,6 +947,7 @@ const MenuBar = ({
           onClick={() => applyToParagraphOrSelection((chain) => chain.setTextAlign('left'))}
           active={editor.isActive({ textAlign: 'left' })}
           disabled={!blockTargetAvailable}
+          dataTestId="editor-toolbar-align-left-button"
           title={blockTargetAvailable ? 'Alinear izquierda' : blockUnavailableTitle}
         >
           <AlignLeft className="h-4 w-4" />
@@ -935,6 +956,7 @@ const MenuBar = ({
           onClick={() => applyToParagraphOrSelection((chain) => chain.setTextAlign('center'))}
           active={editor.isActive({ textAlign: 'center' })}
           disabled={!blockTargetAvailable}
+          dataTestId="editor-toolbar-align-center-button"
           title={blockTargetAvailable ? 'Centrar' : blockUnavailableTitle}
         >
           <AlignCenter className="h-4 w-4" />
@@ -943,6 +965,7 @@ const MenuBar = ({
           onClick={() => applyToParagraphOrSelection((chain) => chain.setTextAlign('right'))}
           active={editor.isActive({ textAlign: 'right' })}
           disabled={!blockTargetAvailable}
+          dataTestId="editor-toolbar-align-right-button"
           title={blockTargetAvailable ? 'Alinear derecha' : blockUnavailableTitle}
         >
           <AlignRight className="h-4 w-4" />
@@ -951,6 +974,7 @@ const MenuBar = ({
           onClick={() => applyToParagraphOrSelection((chain) => chain.setTextAlign('justify'))}
           active={editor.isActive({ textAlign: 'justify' })}
           disabled={!blockTargetAvailable}
+          dataTestId="editor-toolbar-align-justify-button"
           title={blockTargetAvailable ? 'Justificar' : blockUnavailableTitle}
         >
           <AlignJustify className="h-4 w-4" />
@@ -962,6 +986,7 @@ const MenuBar = ({
           onClick={() => applyToParagraphOrSelection((chain) => chain.toggleHeading({ level: 1 }))}
           active={editor.isActive('heading', { level: 1 })}
           disabled={!blockTargetAvailable}
+          dataTestId="editor-toolbar-heading-1-button"
           title={blockTargetAvailable ? 'Encabezado 1' : blockUnavailableTitle}
         >
           <Heading1 className="h-4 w-4" />
@@ -970,6 +995,7 @@ const MenuBar = ({
           onClick={() => applyToParagraphOrSelection((chain) => chain.toggleHeading({ level: 2 }))}
           active={editor.isActive('heading', { level: 2 })}
           disabled={!blockTargetAvailable}
+          dataTestId="editor-toolbar-heading-2-button"
           title={blockTargetAvailable ? 'Encabezado 2' : blockUnavailableTitle}
         >
           <Heading2 className="h-4 w-4" />
@@ -978,6 +1004,7 @@ const MenuBar = ({
           onClick={() => applyToParagraphOrSelection((chain) => chain.toggleHeading({ level: 3 }))}
           active={editor.isActive('heading', { level: 3 })}
           disabled={!blockTargetAvailable}
+          dataTestId="editor-toolbar-heading-3-button"
           title={blockTargetAvailable ? 'Encabezado 3' : blockUnavailableTitle}
         >
           <Heading3 className="h-4 w-4" />
@@ -986,6 +1013,7 @@ const MenuBar = ({
           onClick={() => applyToParagraphOrSelection((chain) => chain.toggleHeading({ level: 4 }))}
           active={editor.isActive('heading', { level: 4 })}
           disabled={!blockTargetAvailable}
+          dataTestId="editor-toolbar-heading-4-button"
           title={blockTargetAvailable ? 'Encabezado 4' : blockUnavailableTitle}
         >
           <span className="text-[11px] font-bold">H4</span>
@@ -994,6 +1022,7 @@ const MenuBar = ({
           onClick={() => applyToParagraphOrSelection((chain) => chain.toggleHeading({ level: 5 }))}
           active={editor.isActive('heading', { level: 5 })}
           disabled={!blockTargetAvailable}
+          dataTestId="editor-toolbar-heading-5-button"
           title={blockTargetAvailable ? 'Encabezado 5' : blockUnavailableTitle}
         >
           <span className="text-[11px] font-bold">H5</span>
@@ -1002,18 +1031,21 @@ const MenuBar = ({
           onClick={() => applyToParagraphOrSelection((chain) => chain.toggleHeading({ level: 6 }))}
           active={editor.isActive('heading', { level: 6 })}
           disabled={!blockTargetAvailable}
+          dataTestId="editor-toolbar-heading-6-button"
           title={blockTargetAvailable ? 'Encabezado 6' : blockUnavailableTitle}
         >
           <span className="text-[11px] font-bold">H6</span>
         </ToolbarButton>
         <ToolbarButton
           onClick={outdentListItem}
+          dataTestId="editor-toolbar-outdent-button"
           title="Tabular a la izquierda"
         >
           <IndentDecrease className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton
           onClick={indentListItem}
+          dataTestId="editor-toolbar-indent-button"
           title="Tabular a la derecha"
         >
           <IndentIncrease className="h-4 w-4" />
@@ -1022,6 +1054,8 @@ const MenuBar = ({
           icon={<List className="h-4 w-4" />}
           title="Lista con viñetas"
           active={editor.isActive('bulletList')}
+          dataTestId="editor-toolbar-bullet-list-button"
+          toggleDataTestId="editor-toolbar-bullet-list-options-toggle"
           onPrimaryClick={() => applyBulletList()}
         >
           <div className="grid grid-cols-3 gap-2">
@@ -1030,6 +1064,7 @@ const MenuBar = ({
                 key={option.value}
                 type="button"
                 onClick={() => applyBulletList(option.value)}
+                data-testid={`bullet-style-option-${option.value}`}
                 className={`rounded-lg border px-3 py-2 text-left transition-colors ${
                   currentBulletStyle === option.value
                     ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--text-primary)]'
@@ -1047,6 +1082,8 @@ const MenuBar = ({
           icon={<ListOrdered className="h-4 w-4" />}
           title="Lista numerada"
           active={editor.isActive('orderedList')}
+          dataTestId="editor-toolbar-ordered-list-button"
+          toggleDataTestId="editor-toolbar-ordered-list-options-toggle"
           onPrimaryClick={() => applyOrderedList()}
         >
           <div className="grid grid-cols-2 gap-2">
@@ -1055,6 +1092,7 @@ const MenuBar = ({
                 key={option.value}
                 type="button"
                 onClick={() => applyOrderedList(option.value)}
+                data-testid={`ordered-style-option-${option.value}`}
                 className={`rounded-lg border px-3 py-2 text-left transition-colors ${
                   currentOrderedStyle === option.value
                     ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--text-primary)]'
@@ -1070,6 +1108,7 @@ const MenuBar = ({
         </SplitToolbarButton>
         <ToolbarButton
           onClick={() => fileInputRef.current?.click()}
+          dataTestId="editor-toolbar-insert-image-button"
           title="Insertar Imagen (click para archivo o pegar URL)"
         >
           <ImageIcon className="h-4 w-4" />
@@ -1079,16 +1118,19 @@ const MenuBar = ({
           type="file"
           accept="image/*"
           onChange={handleImageUpload}
+          data-testid="editor-toolbar-image-file-input"
           className="hidden"
         />
         <ToolbarButton
           onClick={() => editor.chain().focus().insertContent(PAGE_BREAK_HTML).run()}
+          dataTestId="editor-toolbar-insert-page-break-button"
           title="Insertar Salto de Página (Ctrl+Shift+Enter)"
         >
           <Minus className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton
           onClick={removeNextPageBreak}
+          dataTestId="editor-toolbar-remove-page-break-button"
           title="Eliminar el primer salto de página por debajo del cursor"
         >
           <X className="h-4 w-4" />
@@ -1096,10 +1138,10 @@ const MenuBar = ({
       </div>
 
       <div className="ac-text-editor__toolbar-actions">
-        <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Deshacer">
+        <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} dataTestId="editor-toolbar-undo-button" title="Deshacer">
           <Undo2 className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Rehacer">
+        <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} dataTestId="editor-toolbar-redo-button" title="Rehacer">
           <Redo2 className="h-4 w-4" />
         </ToolbarButton>
       </div>

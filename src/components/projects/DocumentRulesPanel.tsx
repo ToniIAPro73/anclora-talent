@@ -66,6 +66,7 @@ export function DocumentRulesPanel({ project, copy }: DocumentRulesPanelProps) {
       <span className={labelClass}>{label}</span>
       <input
         type="checkbox"
+        data-testid={`rules-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}-toggle`}
         checked={Boolean(rules[key])}
         onChange={(event) => patch({ [key]: event.target.checked } as Partial<DocumentRules>)}
         className="h-4 w-4 accent-[var(--accent)]"
@@ -122,6 +123,7 @@ export function DocumentRulesPanel({ project, copy }: DocumentRulesPanelProps) {
           <label className="flex items-center justify-between gap-4">
             <span className={labelClass}>{copy.rulesTableFillGap}</span>
             <select
+              data-testid="rules-table-fill-gap-select"
               value={rules.keepTogether.tableFillGap}
               onChange={(event) =>
                 patchKeepTogether({ tableFillGap: event.target.value as 'next-float' | 'leave-space' })
@@ -136,6 +138,7 @@ export function DocumentRulesPanel({ project, copy }: DocumentRulesPanelProps) {
             <span className={labelClass}>{copy.rulesKeepList}</span>
             <input
               type="number"
+              data-testid="rules-keep-list-input"
               min={1}
               max={20}
               value={rules.keepTogether.list.maxItems}
@@ -159,6 +162,7 @@ export function DocumentRulesPanel({ project, copy }: DocumentRulesPanelProps) {
               <span className={labelClass}>{label}</span>
               <input
                 type="checkbox"
+                data-testid={`rules-keep-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`}
                 checked={rules.keepTogether[key]}
                 onChange={(event) => patchKeepTogether({ [key]: event.target.checked })}
                 className="h-4 w-4 accent-[var(--accent)]"
@@ -174,6 +178,7 @@ export function DocumentRulesPanel({ project, copy }: DocumentRulesPanelProps) {
             <span className={labelClass}>{copy.rulesMinLinesAfter}</span>
             <input
               type="number"
+              data-testid="rules-min-lines-after-input"
               min={1}
               max={10}
               value={rules.keepWithNext.minLinesAfter}
@@ -192,6 +197,7 @@ export function DocumentRulesPanel({ project, copy }: DocumentRulesPanelProps) {
             <span className={labelClass}>{copy.rulesWidowsOrphans}</span>
             <input
               type="number"
+              data-testid="rules-widows-orphans-input"
               min={2}
               max={10}
               value={rules.widowsOrphans.minLines}
@@ -207,6 +213,7 @@ export function DocumentRulesPanel({ project, copy }: DocumentRulesPanelProps) {
             <span className={labelClass}>{copy.rulesRestartFigures}</span>
             <input
               type="checkbox"
+              data-testid="rules-restart-figures-toggle"
               checked={rules.numbering.restartFiguresPerChapter}
               onChange={(event) => patchNumbering({ restartFiguresPerChapter: event.target.checked })}
               className="h-4 w-4 accent-[var(--accent)]"
@@ -216,6 +223,7 @@ export function DocumentRulesPanel({ project, copy }: DocumentRulesPanelProps) {
             <span className={labelClass}>{copy.rulesRestartTables}</span>
             <input
               type="checkbox"
+              data-testid="rules-restart-tables-toggle"
               checked={rules.numbering.restartTablesPerChapter}
               onChange={(event) => patchNumbering({ restartTablesPerChapter: event.target.checked })}
               className="h-4 w-4 accent-[var(--accent)]"
@@ -224,6 +232,7 @@ export function DocumentRulesPanel({ project, copy }: DocumentRulesPanelProps) {
           <label className="flex items-center justify-between gap-4">
             <span className={labelClass}>{copy.rulesPageNumberFormat}</span>
             <select
+              data-testid="rules-page-number-format-select"
               value={rules.numbering.pageNumberFormat}
               onChange={(event) =>
                 patchNumbering({

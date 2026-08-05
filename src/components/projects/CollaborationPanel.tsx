@@ -606,7 +606,7 @@ export function CollaborationPanel({
                       {copy.inviteLinkLabel}
                     </p>
                     <div className="flex items-center gap-2">
-                      <input readOnly value={inviteUrl} className="field-input min-w-0 flex-1 text-xs" />
+                      <input readOnly data-testid="invite-url-input" value={inviteUrl} className="field-input min-w-0 flex-1 text-xs" />
                       <button
                         type="button"
                         data-testid="invite-copy-button"

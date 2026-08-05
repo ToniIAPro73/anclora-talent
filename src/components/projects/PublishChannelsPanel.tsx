@@ -171,6 +171,7 @@ export function PublishChannelsPanel({
         </div>
         <button
           type="button"
+          data-testid="generate-kit-button"
           onClick={handleGenerateKit}
           disabled={isPending}
           className="ac-button ac-button--secondary inline-flex items-center gap-2"
@@ -193,6 +194,7 @@ export function PublishChannelsPanel({
             <div className="flex items-center gap-2">
               <button
                 type="button"
+                data-testid="kit-sheet-tab-button"
                 onClick={() => setTab('sheet')}
                 aria-pressed={tab === 'sheet'}
                 className="ac-button ac-button--secondary text-xs"
@@ -201,6 +203,7 @@ export function PublishChannelsPanel({
               </button>
               <button
                 type="button"
+                data-testid="kit-landing-tab-button"
                 onClick={() => setTab('landing')}
                 aria-pressed={tab === 'landing'}
                 className="ac-button ac-button--secondary text-xs"
@@ -209,6 +212,7 @@ export function PublishChannelsPanel({
               </button>
               <button
                 type="button"
+                data-testid="kit-copy-button"
                 onClick={handleCopy}
                 className="ac-button ac-button--secondary inline-flex items-center gap-1 text-xs"
               >
@@ -289,6 +293,7 @@ export function PublishChannelsPanel({
               </label>
               <input
                 id="gumroad-token"
+                data-testid="gumroad-token-input"
                 type="password"
                 value={token}
                 onChange={(event) => setToken(event.target.value)}
@@ -297,6 +302,7 @@ export function PublishChannelsPanel({
               />
               <button
                 type="button"
+                data-testid="gumroad-save-token-button"
                 onClick={handleSaveToken}
                 disabled={isPending || !token.trim()}
                 className="ac-button ac-button--primary inline-flex items-center gap-2"
@@ -311,6 +317,7 @@ export function PublishChannelsPanel({
               </label>
               <input
                 id="gumroad-price"
+                data-testid="gumroad-price-input"
                 type="number"
                 min={0}
                 value={priceCents}
@@ -320,6 +327,7 @@ export function PublishChannelsPanel({
               />
               <button
                 type="button"
+                data-testid="gumroad-push-button"
                 onClick={handlePush}
                 disabled={isPending || !priceCents}
                 className="ac-button ac-button--primary inline-flex items-center gap-2"
@@ -329,6 +337,7 @@ export function PublishChannelsPanel({
               </button>
               <button
                 type="button"
+                data-testid="gumroad-remove-token-button"
                 onClick={handleRemoveToken}
                 disabled={isPending}
                 className="ac-button ac-button--secondary inline-flex items-center gap-1"
@@ -369,6 +378,7 @@ export function PublishChannelsPanel({
         <p className="mt-1 text-xs text-[var(--muted)]">{copy.hotmartDescription}</p>
         <button
           type="button"
+          data-testid="hotmart-export-button"
           onClick={handleExportHotmart}
           disabled={isPending}
           className="ac-button ac-button--secondary mt-3 inline-flex items-center gap-2"

@@ -2,7 +2,7 @@
 
 **Módulo:** Aplicación de identidad y estructura a documentos
 **Ecosistema:** Anclora Insights / Anclora Group
-**Estado:** Propuesta v0.1 · Pendiente de validación técnica
+**Estado:** Validado técnicamente v1.0 (2026-08-05) — ver «VII. Evidencia de validación»
 **Fecha:** 2026-08-04
 
 ---
@@ -73,6 +73,21 @@ Véase `structure_profile_exito_sin_compania.json` como implementación de refer
 2. Definir el extractor de marca (ya cubierto por el Manual de Identidad de Anclora Insights v3.0 como caso de prueba).
 3. Prototipar el motor de generación combinada sobre un documento de prueba con ambos perfiles activos.
 4. Establecer el repositorio de perfiles versionados dentro de la Bóveda de Anclora.
+
+---
+
+## VII. Evidencia de validación (2026-08-05)
+
+Validación técnica ejecutada con los fixtures reales en `fixtures/` (`exito_sin_compania.docx`, 46 págs.; `anclora_insights_manual_identidad.pdf`, Manual v3.0). Sin cambios de código: la implementación existente cumple la especificación.
+
+- **Perfil de marca** (`extract-brand-profile.test.ts`, 8 tests PASS): 4 hex en roles (ink `#0F172A`, paper `#F8FAFC`, accent `#F59E0B`, accentMuted `#D97706`), pareja Libre Baskerville (display) + Inter (cuerpo), proporción 55·30·10·5, reglas de gobernanza y pares de voz. Validación determinista, sin warnings.
+- **Perfil de estructura** (`extract-structure-profile.contract.test.ts`, 7 tests PASS): JSON v2 de referencia (`structure_profile_exito_sin_compania_v2.json`) reproducido exacto — 4 H1 / 12 H2 / 41 H3, 14 tablas, 3 imágenes, macro-patrón de 4 partes, enumeración «Concepto N · …», `voice_scope_note` declarado.
+- **Aplicación combinada**: `scripts/check-epub.ts --brand` — EPUB tematizado con EPUBCheck 0 FATAL/ERROR/warnings, NAV/NCX 3 niveles; PDF con mapeo a base-14 (Baskerville→Times, Inter→Helvetica) y HTML con CSS de marca en cascada (`brand-export.test.ts`).
+- **Gobernanza**: G1 (aplicación de marca como `templateOverrides`, R3) y G2/G3 (confirmación humana + andamiaje sin voz: 16 capítulos, cero 6-gramas de la fuente) verificados en `scaffolding.test.ts`.
+- **Independencia funcional** (regla V.4): exports sin overrides conservan la hoja base (`brand-export.test.ts`).
+- **CI local**: `lint` 0 errores · `vitest run` 163 archivos / 1058 tests PASS · `next build` OK · `tsc` 77 errores baseline (cero nuevos).
+
+Desviaciones respecto a la spec: ninguna.
 
 ---
 

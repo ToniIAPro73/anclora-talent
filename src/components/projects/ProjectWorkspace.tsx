@@ -431,9 +431,9 @@ export function ProjectWorkspace({
                 </span>
               </div>
               <form key={project.updatedAt} action={saveProjectDocumentAction} className="space-y-6" data-testid="project-metadata-form">
-                <input type="hidden" name="projectId" value={project.id} />
-                <input type="hidden" name="chapterId" value={activeChapter.id} />
-                <input type="hidden" name="chapterTitle" value={activeChapter.title} />
+                <input type="hidden" name="projectId" value={project.id} data-testid="project-document-project-id-input" />
+                <input type="hidden" name="chapterId" value={activeChapter.id} data-testid="project-document-chapter-id-input" />
+                <input type="hidden" name="chapterTitle" value={activeChapter.title} data-testid="project-document-chapter-title-input" />
                 <div className="grid gap-6 md:grid-cols-2">
                   <label className="block space-y-2">
                     <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorTitleLabel}</span>
@@ -625,6 +625,7 @@ export function ProjectWorkspace({
               aria-disabled={exportBlocked}
             >
                <button
+                 data-testid="export-html-button"
                  onClick={() => {
                    const htmlUrl = `/api/projects/export?projectId=${project.id}&${exportQuery}`;
                    window.open(htmlUrl, '_blank');
@@ -641,6 +642,7 @@ export function ProjectWorkspace({
                  className="ac-button ac-button--primary"
                />
                <button
+                 data-testid="export-docx-button"
                  onClick={() => {
                    const docxUrl = `/api/projects/export/docx?projectId=${project.id}&${exportQuery}`;
                    window.open(docxUrl, '_blank');
@@ -651,6 +653,7 @@ export function ProjectWorkspace({
                   {copy.previewExportDocxButton}
                </button>
                <button
+                 data-testid="export-epub-button"
                  onClick={() => {
                    const epubUrl = `/api/projects/export/epub?projectId=${project.id}&${exportQuery}`;
                    window.open(epubUrl, '_blank');
@@ -741,6 +744,7 @@ export function ProjectWorkspace({
 
            <div className="ac-workflow-shell__actions">
               <button
+                data-testid="previous-step-button"
                 onClick={() => setActiveStep(prev => Math.max(1, prev - 1))}
                 disabled={activeStep === 1}
                 className={`${premiumSecondaryLightButton} w-full py-3 text-xs disabled:opacity-30 disabled:cursor-default cursor-pointer`}
@@ -748,6 +752,7 @@ export function ProjectWorkspace({
                  Paso anterior
               </button>
               <button
+                data-testid="next-step-button"
                 onClick={() => setActiveStep(prev => Math.min(9, prev + 1))}
                 disabled={activeStep === 9}
                 className={`${premiumPrimaryDarkButton} w-full py-3 text-xs disabled:opacity-30 disabled:cursor-default cursor-pointer`}
