@@ -8,6 +8,25 @@ import type { AppMessages } from '@/lib/i18n/messages';
 
 type ImportState = 'idle' | 'analyzing' | 'ready' | 'error';
 
+type FieldConfidence = 'high' | 'medium' | 'low';
+
+type ManuscriptType = 'essay' | 'guide' | 'novel' | 'non-fiction';
+
+const MANUSCRIPT_TYPES: ManuscriptType[] = ['non-fiction', 'essay', 'guide', 'novel'];
+
+function manuscriptTypeLabel(type: ManuscriptType, copy: AppMessages['project']) {
+  switch (type) {
+    case 'essay':
+      return copy.importManuscriptTypeEssay;
+    case 'guide':
+      return copy.importManuscriptTypeGuide;
+    case 'novel':
+      return copy.importManuscriptTypeNovel;
+    case 'non-fiction':
+      return copy.importManuscriptTypeNonFiction;
+  }
+}
+
 type AnalysisResult = {
   title: string;
   subtitle?: string;
@@ -18,20 +37,46 @@ type AnalysisResult = {
   sourceFileName: string;
   /** F2: declared processing mode when the scanned-PDF OCR ran (null otherwise). */
   ocrAppliedMode: 'local' | 'service' | null;
+  /** M4: heuristic per-field detection confidence. */
+  confidence?: { title: FieldConfidence; author: FieldConfidence; chapters: FieldConfidence };
+  /** M5: effective type (override if set) and the auto-detected baseline. */
+  manuscriptType?: ManuscriptType;
+  detectedManuscriptType?: ManuscriptType;
 };
+
+function ConfidenceBadge({ level, copy, testId }: { level: FieldConfidence; copy: AppMessages['project']; testId: string }) {
+  const label =
+    level === 'high' ? copy.importConfidenceHigh : level === 'medium' ? copy.importConfidenceMedium : copy.importConfidenceLow;
+  const toneClass =
+    level === 'high'
+      ? 'text-[var(--success)] border-[var(--success)]/40 bg-[var(--success)]/10'
+      : level === 'medium'
+        ? 'text-[var(--warning)] border-[var(--warning)]/40 bg-[var(--warning)]/10'
+        : 'text-[var(--text-tertiary)] border-[var(--border-subtle)] bg-transparent';
+  return (
+    <span
+      data-testid={testId}
+      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${toneClass}`}
+    >
+      {label}
+    </span>
+  );
+}
 
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
 export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
   const inputId = useId();
   const [selectedFileName, setSelectedFileName] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [importState, setImportState] = useState<ImportState>('idle');
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const analyzeFile = async (file: File) => {
+  const analyzeFile = async (file: File, manuscriptTypeOverride?: ManuscriptType) => {
     setSelectedFileName(file.name);
+    setSelectedFile(file);
     setImportState('analyzing');
     setAnalysis(null);
     setErrorMessage('');
@@ -45,6 +90,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
     try {
       const formData = new FormData();
       formData.append('sourceDocument', file);
+      if (manuscriptTypeOverride) formData.append('manuscriptType', manuscriptTypeOverride);
       const response = await fetch('/api/projects/import', {
         method: 'POST',
         body: formData,
@@ -61,6 +107,9 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         warnings?: string[];
         sourceFileName?: string;
         ocrAppliedMode?: 'local' | 'service' | null;
+        confidence?: { title: FieldConfidence; author: FieldConfidence; chapters: FieldConfidence };
+        manuscriptType?: ManuscriptType;
+        detectedManuscriptType?: ManuscriptType;
       } = await response.json();
 
       if (!response.ok) {
@@ -84,12 +133,20 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         warnings: data.warnings ?? [],
         sourceFileName: data.sourceFileName ?? file.name,
         ocrAppliedMode: data.ocrAppliedMode ?? null,
+        confidence: data.confidence,
+        manuscriptType: data.manuscriptType,
+        detectedManuscriptType: data.detectedManuscriptType,
       });
       setImportState('ready');
     } catch {
       setImportState('error');
       setErrorMessage(copy.importErrorGeneric);
     }
+  };
+
+  const handleManuscriptTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    if (!selectedFile) return;
+    analyzeFile(selectedFile, event.target.value as ManuscriptType);
   };
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -254,9 +311,14 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="ac-surface-panel ac-surface-panel--subtle gap-1 p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
-                      {copy.importTitleDetected}
-                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                        {copy.importTitleDetected}
+                      </p>
+                      {analysis.confidence ? (
+                        <ConfidenceBadge level={analysis.confidence.title} copy={copy} testId="import-analysis-title-confidence" />
+                      ) : null}
+                    </div>
                     <p className="text-sm font-semibold text-[var(--text-primary)]" data-testid="import-analysis-title">
                       {analysis.title}
                     </p>
@@ -267,17 +329,50 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                     ) : null}
                   </div>
                   <div className="ac-surface-panel ac-surface-panel--subtle gap-1 p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
-                      {copy.importAuthorDetected}
-                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                        {copy.importAuthorDetected}
+                      </p>
+                      {analysis.confidence ? (
+                        <ConfidenceBadge level={analysis.confidence.author} copy={copy} testId="import-analysis-author-confidence" />
+                      ) : null}
+                    </div>
                     <p className="text-sm font-semibold text-[var(--text-primary)]" data-testid="import-analysis-author">
                       {analysis.author || '—'}
                     </p>
-                    <p className="text-xs font-semibold text-[var(--accent-text)]" data-testid="import-analysis-chapters">
-                      {copy.importChaptersDetected.replace('{count}', String(analysis.chapterCount))}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-semibold text-[var(--accent-text)]" data-testid="import-analysis-chapters">
+                        {copy.importChaptersDetected.replace('{count}', String(analysis.chapterCount))}
+                      </p>
+                      {analysis.confidence ? (
+                        <ConfidenceBadge level={analysis.confidence.chapters} copy={copy} testId="import-analysis-chapters-confidence" />
+                      ) : null}
+                    </div>
                   </div>
                 </div>
+                {analysis.manuscriptType ? (
+                  <div className="ac-surface-panel ac-surface-panel--subtle gap-2 p-4">
+                    <label
+                      htmlFor={`${inputId}-manuscript-type`}
+                      className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]"
+                    >
+                      {copy.importManuscriptTypeLabel}
+                    </label>
+                    <select
+                      id={`${inputId}-manuscript-type`}
+                      data-testid="import-analysis-manuscript-type"
+                      value={analysis.manuscriptType}
+                      onChange={handleManuscriptTypeChange}
+                      className="rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
+                    >
+                      {MANUSCRIPT_TYPES.map((type) => (
+                        <option key={type} value={type}>
+                          {manuscriptTypeLabel(type, copy)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
                 {analysis.chapterTitles.length > 0 ? (
                   <div className="ac-surface-panel ac-surface-panel--subtle gap-2 p-4">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
