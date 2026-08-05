@@ -188,6 +188,11 @@ export type AppMessages = {
     importConfidenceHigh: string;
     importConfidenceMedium: string;
     importConfidenceLow: string;
+    importManuscriptTypeLabel: string;
+    importManuscriptTypeEssay: string;
+    importManuscriptTypeGuide: string;
+    importManuscriptTypeNovel: string;
+    importManuscriptTypeNonFiction: string;
     importWarningsLabel: string;
     importChapterPreviewLabel: string;
     importErrorGeneric: string;
@@ -959,6 +964,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       importConfidenceHigh: 'Confianza alta',
       importConfidenceMedium: 'Confianza media',
       importConfidenceLow: 'Confianza baja',
+      importManuscriptTypeLabel: 'Tipo de manuscrito',
+      importManuscriptTypeEssay: 'Ensayo',
+      importManuscriptTypeGuide: 'Guía práctica',
+      importManuscriptTypeNovel: 'Novela',
+      importManuscriptTypeNonFiction: 'No ficción',
       importWarningsLabel: 'Revisión recomendada',
       importChapterPreviewLabel: 'Estructura detectada',
       importErrorGeneric: 'No se pudo analizar el documento',
@@ -1759,6 +1769,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       importConfidenceHigh: 'High confidence',
       importConfidenceMedium: 'Medium confidence',
       importConfidenceLow: 'Low confidence',
+      importManuscriptTypeLabel: 'Manuscript type',
+      importManuscriptTypeEssay: 'Essay',
+      importManuscriptTypeGuide: 'Practical guide',
+      importManuscriptTypeNovel: 'Novel',
+      importManuscriptTypeNonFiction: 'Non-fiction',
       importWarningsLabel: 'Recommended review',
       importChapterPreviewLabel: 'Detected structure',
       importErrorGeneric: 'Could not analyze the document',

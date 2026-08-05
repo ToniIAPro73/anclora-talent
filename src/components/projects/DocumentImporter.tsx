@@ -10,6 +10,23 @@ type ImportState = 'idle' | 'analyzing' | 'ready' | 'error';
 
 type FieldConfidence = 'high' | 'medium' | 'low';
 
+type ManuscriptType = 'essay' | 'guide' | 'novel' | 'non-fiction';
+
+const MANUSCRIPT_TYPES: ManuscriptType[] = ['non-fiction', 'essay', 'guide', 'novel'];
+
+function manuscriptTypeLabel(type: ManuscriptType, copy: AppMessages['project']) {
+  switch (type) {
+    case 'essay':
+      return copy.importManuscriptTypeEssay;
+    case 'guide':
+      return copy.importManuscriptTypeGuide;
+    case 'novel':
+      return copy.importManuscriptTypeNovel;
+    case 'non-fiction':
+      return copy.importManuscriptTypeNonFiction;
+  }
+}
+
 type AnalysisResult = {
   title: string;
   subtitle?: string;
@@ -22,6 +39,9 @@ type AnalysisResult = {
   ocrAppliedMode: 'local' | 'service' | null;
   /** M4: heuristic per-field detection confidence. */
   confidence?: { title: FieldConfidence; author: FieldConfidence; chapters: FieldConfidence };
+  /** M5: effective type (override if set) and the auto-detected baseline. */
+  manuscriptType?: ManuscriptType;
+  detectedManuscriptType?: ManuscriptType;
 };
 
 function ConfidenceBadge({ level, copy, testId }: { level: FieldConfidence; copy: AppMessages['project']; testId: string }) {
@@ -48,13 +68,15 @@ const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
   const inputId = useId();
   const [selectedFileName, setSelectedFileName] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [importState, setImportState] = useState<ImportState>('idle');
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const analyzeFile = async (file: File) => {
+  const analyzeFile = async (file: File, manuscriptTypeOverride?: ManuscriptType) => {
     setSelectedFileName(file.name);
+    setSelectedFile(file);
     setImportState('analyzing');
     setAnalysis(null);
     setErrorMessage('');
@@ -68,6 +90,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
     try {
       const formData = new FormData();
       formData.append('sourceDocument', file);
+      if (manuscriptTypeOverride) formData.append('manuscriptType', manuscriptTypeOverride);
       const response = await fetch('/api/projects/import', {
         method: 'POST',
         body: formData,
@@ -85,6 +108,8 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         sourceFileName?: string;
         ocrAppliedMode?: 'local' | 'service' | null;
         confidence?: { title: FieldConfidence; author: FieldConfidence; chapters: FieldConfidence };
+        manuscriptType?: ManuscriptType;
+        detectedManuscriptType?: ManuscriptType;
       } = await response.json();
 
       if (!response.ok) {
@@ -109,12 +134,19 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         sourceFileName: data.sourceFileName ?? file.name,
         ocrAppliedMode: data.ocrAppliedMode ?? null,
         confidence: data.confidence,
+        manuscriptType: data.manuscriptType,
+        detectedManuscriptType: data.detectedManuscriptType,
       });
       setImportState('ready');
     } catch {
       setImportState('error');
       setErrorMessage(copy.importErrorGeneric);
     }
+  };
+
+  const handleManuscriptTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    if (!selectedFile) return;
+    analyzeFile(selectedFile, event.target.value as ManuscriptType);
   };
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -318,6 +350,29 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                     </div>
                   </div>
                 </div>
+                {analysis.manuscriptType ? (
+                  <div className="ac-surface-panel ac-surface-panel--subtle gap-2 p-4">
+                    <label
+                      htmlFor={`${inputId}-manuscript-type`}
+                      className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]"
+                    >
+                      {copy.importManuscriptTypeLabel}
+                    </label>
+                    <select
+                      id={`${inputId}-manuscript-type`}
+                      data-testid="import-analysis-manuscript-type"
+                      value={analysis.manuscriptType}
+                      onChange={handleManuscriptTypeChange}
+                      className="rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
+                    >
+                      {MANUSCRIPT_TYPES.map((type) => (
+                        <option key={type} value={type}>
+                          {manuscriptTypeLabel(type, copy)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
                 {analysis.chapterTitles.length > 0 ? (
                   <div className="ac-surface-panel ac-surface-panel--subtle gap-2 p-4">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">

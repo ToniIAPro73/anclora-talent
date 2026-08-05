@@ -341,4 +341,86 @@ describe('document import parser isolation', () => {
     expect(result.confidence?.author).toBe('high');
     expect(result.confidence?.chapters).toBe('high');
   });
+
+  test('M5 — detects a guide from step/exercise markers', async () => {
+    vi.doMock('server-only', () => ({}));
+    const { detectManuscriptType } = await import('./import-pipeline');
+
+    const text = [
+      'Paso 1: define tu objetivo.',
+      '',
+      'Ejercicio: escribe tres metas concretas para esta semana.',
+      '',
+      'Reflexión: qué te impide empezar hoy mismo.',
+    ].join('\n');
+
+    expect(detectManuscriptType(text)).toBe('guide');
+  });
+
+  test('M5 — detects a novel from dialogue-line density', async () => {
+    vi.doMock('server-only', () => ({}));
+    const { detectManuscriptType } = await import('./import-pipeline');
+
+    const text = [
+      '—¿Vienes? —preguntó ella.',
+      '',
+      '—Todavía no —respondió él.',
+      '',
+      '—Pues yo me voy —dijo ella, y cerró la puerta.',
+      '',
+      'El silencio se quedó solo en la habitación.',
+    ].join('\n');
+
+    expect(detectManuscriptType(text)).toBe('novel');
+  });
+
+  test('M5 — falls back to non-fiction with no strong signal', async () => {
+    vi.doMock('server-only', () => ({}));
+    const { detectManuscriptType } = await import('./import-pipeline');
+
+    expect(detectManuscriptType('Un texto corto y directo sobre un tema cualquiera.')).toBe('non-fiction');
+  });
+
+  test('M5 — explicit override forces the guide chapter-boundary preset', async () => {
+    vi.doMock('server-only', () => ({}));
+    const { buildImportedDocumentSeed } = await import('./import');
+
+    const text = [
+      '# Parte uno',
+      '',
+      '## Tema A',
+      '',
+      'Contenido A.',
+      '',
+      '## Tema B',
+      '',
+      'Contenido B.',
+      '',
+      '# Parte dos',
+      '',
+      '## Tema C',
+      '',
+      'Contenido C.',
+      '',
+      '## Tema D',
+      '',
+      'Contenido D.',
+    ].join('\n');
+
+    const auto = buildImportedDocumentSeed({ fileName: 'g.md', mimeType: 'text/markdown', text });
+    const guided = buildImportedDocumentSeed({
+      fileName: 'g.md',
+      mimeType: 'text/markdown',
+      text,
+      manuscriptTypeOverride: 'guide',
+    });
+
+    // Two H1 parts: auto-detection stays at the coarse H1 boundary (one
+    // chapter per Parte, plus the synthesized index); the guide preset
+    // forces the finer H2 boundary, splitting each Parte into its Temas.
+    expect(auto.chapters?.length).toBe(3);
+    expect(guided.chapters?.length).toBeGreaterThan(auto.chapters!.length);
+    expect(guided.manuscriptType).toBe('guide');
+    expect(guided.detectedManuscriptType).toBe(auto.manuscriptType);
+  });
 });

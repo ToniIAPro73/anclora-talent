@@ -154,6 +154,9 @@ export interface ProjectSummary {
 /** M4 — heuristic confidence for a detected import field (no AI involved). */
 export type ImportFieldConfidence = 'high' | 'medium' | 'low';
 
+/** M5 — manuscript genre preset, used only to adjust chapter-splitting granularity. */
+export type ManuscriptType = 'essay' | 'guide' | 'novel' | 'non-fiction';
+
 export interface ImportedDocumentSeed {
   title: string;
   subtitle: string;
@@ -166,6 +169,10 @@ export interface ImportedDocumentSeed {
     author: ImportFieldConfidence;
     chapters: ImportFieldConfidence;
   };
+  /** M5 — effective manuscript type (override if provided, else auto-detected). */
+  manuscriptType?: ManuscriptType;
+  /** M5 — auto-detected manuscript type, independent of any override. */
+  detectedManuscriptType?: ManuscriptType;
   detectedOutline?: EditorialMapEntry[];
   chapterTitle: string;
   blocks: Array<{
