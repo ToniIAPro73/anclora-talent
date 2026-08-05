@@ -158,6 +158,11 @@ export type AppMessages = {
     editorialMapOriginalColumn: string;
     editorialMapChaptersColumn: string;
     editorialMapPagesColumn: string;
+    editorialMapGeneratedMeta: string;
+    editorialMapInferredMeta: string;
+    editorialMapAddedMeta: string;
+    editorialMapRemovedMeta: string;
+    editorialMapMergedMeta: string;
     coverEyebrow: string;
     coverTitle: string;
     coverBackEditor: string;
@@ -932,6 +937,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       editorialMapOriginalColumn: 'Documento detectado',
       editorialMapChaptersColumn: 'Capítulos actuales',
       editorialMapPagesColumn: 'Páginas del preview',
+      editorialMapGeneratedMeta: 'Índice generado automáticamente',
+      editorialMapInferredMeta: 'Bloque inferido durante la importación',
+      editorialMapAddedMeta: 'Añadido tras la importación',
+      editorialMapRemovedMeta: 'Detectado en el original, ya no está en los capítulos',
+      editorialMapMergedMeta: 'Fusionado dentro de un capítulo',
       coverEyebrow: 'Cover studio',
       coverTitle: 'Diseña y guarda la portada del proyecto',
       coverBackEditor: 'Editor',
@@ -1737,6 +1747,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       editorialMapOriginalColumn: 'Detected document',
       editorialMapChaptersColumn: 'Current chapters',
       editorialMapPagesColumn: 'Preview pages',
+      editorialMapGeneratedMeta: 'Automatically generated index',
+      editorialMapInferredMeta: 'Block inferred during import',
+      editorialMapAddedMeta: 'Added after import',
+      editorialMapRemovedMeta: 'Detected in the source, no longer in the chapters',
+      editorialMapMergedMeta: 'Merged into a chapter',
       coverEyebrow: 'Cover studio',
       coverTitle: 'Design and save the project cover',
       coverBackEditor: 'Editor',
