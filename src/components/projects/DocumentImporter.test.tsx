@@ -157,4 +157,36 @@ describe('DocumentImporter', () => {
       expect(screen.getByText('No se pudo analizar el documento')).toBeInTheDocument();
     });
   });
+
+  test('shows a non-blocking warning when the server reports a parse failure', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          ok: true,
+          title: 'roto',
+          chapterCount: 1,
+          chapterTitles: [],
+          warnings: [],
+          sourceFileName: 'roto.pdf',
+          parseWarning: true,
+        }),
+      }),
+    );
+    render(<DocumentImporter copy={copy} />);
+
+    const fileInput = screen.getByTestId('source-document-input');
+    fireEvent.change(fileInput, {
+      target: { files: [new File(['x'], 'roto.pdf', { type: 'application/pdf' })] },
+    });
+
+    // U4: the flow must reach the ready state — never the error state.
+    await waitFor(() => {
+      expect(screen.getByText('Listo para importar')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('import-analysis-warnings')).toHaveTextContent(copy.importParseWarning);
+    expect(screen.queryByText(copy.importErrorGeneric)).not.toBeInTheDocument();
+  });
 });

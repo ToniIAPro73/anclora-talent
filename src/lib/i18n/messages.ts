@@ -184,6 +184,7 @@ export type AppMessages = {
     importManuscriptTypeNovel: string;
     importManuscriptTypeNonFiction: string;
     importWarningsLabel: string;
+    importParseWarning: string;
     importChapterPreviewLabel: string;
     importErrorGeneric: string;
     importFileTooLarge: string;
@@ -947,6 +948,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       importManuscriptTypeNovel: 'Novela',
       importManuscriptTypeNonFiction: 'No ficción',
       importWarningsLabel: 'Revisión recomendada',
+      importParseWarning:
+        'No se pudo analizar el contenido del documento. El proyecto se creará vacío para que puedas empezar desde cero.',
       importChapterPreviewLabel: 'Estructura detectada',
       importErrorGeneric: 'No se pudo analizar el documento',
       importFileTooLarge: 'El archivo es demasiado grande (máx. 50 MB)',
@@ -1739,6 +1742,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       importManuscriptTypeNovel: 'Novel',
       importManuscriptTypeNonFiction: 'Non-fiction',
       importWarningsLabel: 'Recommended review',
+      importParseWarning:
+        'The document content could not be analyzed. The project will be created empty so you can start from scratch.',
       importChapterPreviewLabel: 'Detected structure',
       importErrorGeneric: 'Could not analyze the document',
       importFileTooLarge: 'File is too large (max. 50 MB)',

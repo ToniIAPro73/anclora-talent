@@ -1310,19 +1310,27 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
   }
 
   if (extension === 'pdf' || mimeType === 'application/pdf') {
-    const { PDFParse } = await import('pdf-parse');
-    const parser = new PDFParse({ data: buffer });
-    const parsed = await parser.getText();
-    await parser.destroy();
-    return {
-      text: parsed.text,
-      html: null,
-      pageCount: typeof (parsed as { total?: number; numpages?: number }).numpages === 'number'
-        ? Number((parsed as { total?: number; numpages?: number }).numpages)
-        : typeof (parsed as { total?: number; numpages?: number }).total === 'number'
-          ? Number((parsed as { total?: number; numpages?: number }).total)
-          : undefined,
-    } satisfies ExtractedImportSource;
+    try {
+      const { PDFParse } = await import('pdf-parse');
+      const parser = new PDFParse({ data: buffer });
+      const parsed = await parser.getText();
+      await parser.destroy();
+      return {
+        text: parsed.text,
+        html: null,
+        pageCount: typeof (parsed as { total?: number; numpages?: number }).numpages === 'number'
+          ? Number((parsed as { total?: number; numpages?: number }).numpages)
+          : typeof (parsed as { total?: number; numpages?: number }).total === 'number'
+            ? Number((parsed as { total?: number; numpages?: number }).total)
+            : undefined,
+      } satisfies ExtractedImportSource;
+    } catch (error) {
+      // U4: surface parser failures as a normalized error so the caller can
+      // degrade to an empty shell document + non-blocking warning instead of
+      // propagating an opaque pdf-parse exception.
+      const detail = error instanceof Error ? error.message : 'unknown error';
+      throw new Error(`PDF parse failed: ${detail}`);
+    }
   }
 
   if (extension === 'docx') {

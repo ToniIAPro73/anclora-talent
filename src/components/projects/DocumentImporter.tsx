@@ -110,6 +110,9 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         confidence?: { title: FieldConfidence; author: FieldConfidence; chapters: FieldConfidence };
         manuscriptType?: ManuscriptType;
         detectedManuscriptType?: ManuscriptType;
+        /** U4: true when the source parser failed and the import degraded to
+         *  an empty shell document — surfaced as a non-blocking warning. */
+        parseWarning?: boolean;
       } = await response.json();
 
       if (!response.ok) {
@@ -130,7 +133,9 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         author: data.author ?? '',
         chapterCount: data.chapterCount ?? 1,
         chapterTitles: data.chapterTitles ?? [],
-        warnings: data.warnings ?? [],
+        warnings: data.parseWarning
+          ? [copy.importParseWarning, ...(data.warnings ?? [])]
+          : data.warnings ?? [],
         sourceFileName: data.sourceFileName ?? file.name,
         ocrAppliedMode: data.ocrAppliedMode ?? null,
         confidence: data.confidence,

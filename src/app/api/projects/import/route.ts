@@ -68,6 +68,9 @@ export async function POST(request: NextRequest) {
       sourceFileName: seed.sourceFileName,
       // Declared processing mode when OCR ran (ProcessingModeBadge in the UI).
       ocrAppliedMode: seed.ocrAppliedMode,
+      // U4: true when the source parser failed and the import degraded to an
+      // empty shell document — the UI shows a non-blocking warning.
+      parseWarning: Boolean(seed.parseFailed),
     });
   } catch (error) {
     const detail = error instanceof Error ? error.message : 'Import failed';
