@@ -84,9 +84,21 @@ async function expectContentNodesNotClipped(page: Page, rootSelector: string) {
       // Hidden measurement flows (visibility:hidden) are not clipping either.
       if (typeof el.checkVisibility === 'function' && !el.checkVisibility({ checkVisibilityCSS: true })) continue;
       // Horizontal fit only: vertical extent inside a scroll container is not clipping.
-      const surface = el.closest('[data-testid="editable-page-surface"]') ?? root;
+      // MultipageFlow mounts every flowed page in one wide CSS-column track and
+      // relies on `.multipage-flow-container{overflow:hidden}` to show only the
+      // current page — content outside that container's bounds is off-page by
+      // design, not a rendering clip.
+      const surface =
+        el.closest('[data-testid="editable-page-surface"]') ??
+        el.closest('.multipage-flow-container') ??
+        root;
       const surfaceRect = surface.getBoundingClientRect();
       const bounds = surface === root ? rootRect : surfaceRect;
+      // A node with zero overlap with its clip container is off-page (mounted
+      // for measurement, hidden by the container's overflow:hidden) — not
+      // rendered to the user. Only a *partial* overlap is a genuine bleed.
+      const noOverlap = rect.right <= bounds.left || rect.left >= bounds.right;
+      if (noOverlap) continue;
       const selfClipped = el.scrollWidth > el.clientWidth + 1;
       const outsideX = rect.left < bounds.left - 1 || rect.right > bounds.right + 1;
       if (selfClipped || outsideX) {

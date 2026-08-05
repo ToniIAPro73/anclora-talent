@@ -37,3 +37,31 @@ overlap on the imported content nodes.
   shell overflow (identical scrollWidth to M1 baseline).
 - Gates: lint 0, vitest suite green, build green, tsc with zero new errors (baseline 92).
 - Atomic commit on `development`, no push. Screenshots never committed.
+
+## Closure (2026-08-05)
+
+- Real bug found and fixed: imported .docx tables have an implicit Word column
+  width that, unconstrained, bled 12–80px past the preview's CSS-column page
+  edge (Chromium multicol positions an unbreakable box that doesn't fit the
+  remaining column height by shifting it, not reflowing it). Fixed in
+  `MultipageFlow.tsx`: table width pinned to a `--column-width` CSS var
+  (computed from the same `contentWidth` the column layout uses) with
+  `!important` (docx-imported tables carry an inline width that otherwise
+  wins by specificity) plus `table-layout: fixed` and
+  `break-inside: avoid-column`.
+- Also fixed the e2e clipping heuristic itself (R8): it flagged tables mounted
+  off-page (MultipageFlow keeps every flowed page mounted for measurement,
+  clipped by `.multipage-flow-container{overflow:hidden}`) as false positives.
+  Now skips nodes with zero geometric overlap with their clip container —
+  those are invisible by design, not a render defect — and only flags a
+  *partial* overlap (a real bleed).
+- Deviation (R8): "chapter editor renders imported lists…" intermittently
+  times out (180s) with `Target page, context or browser has been closed`
+  when run standalone in this dev sandbox — root cause traced once to a
+  Turbopack production ChunkLoadError (500 on a lazy chunk) but reproduced
+  even after a from-scratch rebuild+restart with no chunk error logged,
+  pointing to renderer resource contention (this box runs several concurrent
+  Claude Code sessions sharing 7.6GB RAM) rather than an app bug. The other
+  3/4 tests (import, preview clipping — the test covering the real bug above
+  — and export surface) pass consistently. Left undispatched for CI, which
+  runs on a dedicated runner without this contention; re-verify there.

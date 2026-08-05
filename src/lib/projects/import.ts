@@ -18,7 +18,7 @@ export type ImportOcrRunner = (input: {
 
 export async function extractImportedDocumentSeed(
   file: File,
-  options: { ocr?: ImportOcrRunner } = {},
+  options: { ocr?: ImportOcrRunner; manuscriptTypeOverride?: import('./types').ManuscriptType } = {},
 ) {
   const fileName = file.name || 'documento-importado';
   const mimeType = file.type || 'application/octet-stream';
@@ -56,6 +56,7 @@ export async function extractImportedDocumentSeed(
     text: normalized,
     html: extractedSource.html,
     sourcePageCount: extractedSource.pageCount,
+    manuscriptTypeOverride: options.manuscriptTypeOverride,
   });
 
   return { ...seed, ocrAppliedMode };
