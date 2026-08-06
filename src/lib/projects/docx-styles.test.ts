@@ -55,16 +55,9 @@ describe('extractDocxNormalStyle', () => {
     const buffer = await readFile(fixturePath);
     const result = await extractDocxNormalStyle(buffer);
 
-    // The fixture declares an empty Normal style (typography lives in
-    // docDefaults), so extraction must degrade to null without throwing. If a
-    // future fixture version defines the Normal style, family and/or size
-    // must come through instead.
-    if (result === null) {
-      expect(result).toBeNull();
-    } else {
-      expect(result.fontFamily === undefined || typeof result.fontFamily === 'string').toBe(true);
-      expect(result.fontSizePt === undefined || result.fontSizePt > 0).toBe(true);
-      expect(result.fontFamily !== undefined || result.fontSizePt !== undefined).toBe(true);
-    }
+    expect(result).toEqual({
+      fontFamily: 'Calibri',
+      fontSizePt: 11.5,
+    });
   });
 });

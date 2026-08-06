@@ -28,6 +28,10 @@ vi.mock('mammoth', () => ({
   })),
 }));
 
+vi.mock('@/lib/projects/docx-styles', () => ({
+  extractDocxNormalStyle: vi.fn(async () => ({ fontFamily: 'Aptos', fontSizePt: 11 })),
+}));
+
 const copy = resolveLocaleMessages('es').project;
 
 function mockFetchSuccess(chapterCount = 3, title = 'El título detectado') {
@@ -204,6 +208,9 @@ describe('DocumentImporter', () => {
 
     expect(screen.getByTestId('import-analysis-title')).toHaveTextContent('Éxito sin compañía');
     expect(screen.getByTestId('import-analysis-warnings')).toHaveTextContent(copy.importLocalFallbackWarning);
+    expect(screen.getByText(copy.documentDataSourceBadgeVerified)).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Aptos')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('11')).toBeInTheDocument();
     expect(screen.queryByText(copy.importErrorGeneric)).not.toBeInTheDocument();
   });
 
