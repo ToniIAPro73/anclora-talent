@@ -6,6 +6,7 @@ import type { StructureProfile } from '@/lib/structure-profile/model';
 import { DocumentImporter } from './DocumentImporter';
 import { ProductTemplateSelector } from './ProductTemplateSelector';
 import { StructureReferenceSection } from './StructureReferenceSection';
+import { BrandManualInput } from './BrandManualInput';
 
 export function CreateProjectForm({
   copy,
@@ -34,8 +35,16 @@ export function CreateProjectForm({
         />
       </label>
       <ProductTemplateSelector copy={copy} />
-      <DocumentImporter copy={copy} />
-      <StructureReferenceSection copy={copy} profiles={structureProfiles} />
+      <div data-testid="create-optional-manuscript">
+        <span className="ac-form-field__label mt-5 block">{copy.createOptionalManuscriptLabel}</span>
+        <DocumentImporter copy={copy} />
+        <p className="mt-1 text-xs leading-6 text-[var(--text-tertiary)]">{copy.createOptionalManuscriptHint}</p>
+      </div>
+      <div data-testid="create-optional-structure">
+        <span className="ac-form-field__label mt-5 block">{copy.createOptionalStructureLabel}</span>
+        <StructureReferenceSection copy={copy} profiles={structureProfiles} />
+      </div>
+      <BrandManualInput copy={copy} />
       <div className="mt-6 flex flex-col gap-4">
         <p className="text-xs leading-6 text-[var(--text-tertiary)]">
           {copy.createProjectHint}

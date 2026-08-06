@@ -106,6 +106,11 @@ export type AppMessages = {
     titlePlaceholder: string;
     sourceDocumentLabel: string;
     sourceDocumentHint: string;
+    createOptionalManuscriptLabel: string;
+    createOptionalManuscriptHint: string;
+    createOptionalStructureLabel: string;
+    brandManualLabel: string;
+    brandManualHint: string;
     createProjectHint: string;
     createProjectAction: string;
     templateSelectorEyebrow: string;
@@ -845,6 +850,12 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       sourceDocumentLabel: 'Documento base opcional',
       sourceDocumentHint:
         'Soporta `pdf`, `doc`, `docx`, `txt` y `md`. Si el archivo se puede extraer bien, el editor arrancará ya sembrado con ese contenido.',
+      createOptionalManuscriptLabel: 'Manuscrito (opcional)',
+      createOptionalManuscriptHint: 'Sube tu documento si ya lo tienes; si no, puedes empezar en blanco.',
+      createOptionalStructureLabel: 'Referencia de estructura (opcional)',
+      brandManualLabel: 'Manual de marca (opcional)',
+      brandManualHint:
+        'Adjunta el PDF del manual de identidad y extraeremos la marca para vincularla al proyecto. Si la extracción falla, el proyecto se crea igualmente.',
       createProjectHint:
         'La creación persiste sobre Neon desde el primer paso y abre el editor con base importada si has adjuntado documento.',
       createProjectAction: 'Crear proyecto y abrir editor',
@@ -1642,6 +1653,12 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       sourceDocumentLabel: 'Optional source document',
       sourceDocumentHint:
         'Supports `pdf`, `doc`, `docx`, `txt`, and `md`. If extraction succeeds, the editor starts already seeded with that content.',
+      createOptionalManuscriptLabel: 'Manuscript (optional)',
+      createOptionalManuscriptHint: 'Upload your document if you have it; otherwise, you can start blank.',
+      createOptionalStructureLabel: 'Structure reference (optional)',
+      brandManualLabel: 'Brand manual (optional)',
+      brandManualHint:
+        'Attach the identity manual PDF and we will extract the brand and link it to the project. If extraction fails, the project is still created.',
       createProjectHint:
         'Creation persists to Neon from the first step and opens the editor with imported content if you attached a document.',
       createProjectAction: 'Create project and open editor',
