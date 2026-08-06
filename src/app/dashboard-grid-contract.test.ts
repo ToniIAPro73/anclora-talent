@@ -37,6 +37,7 @@ describe('dashboard v3 contract', () => {
     expect(createProjectForm).toContain('talent-create-form__optional');
     expect(globalsCss).toMatch(/\.talent-create-form--dashboard\s*\{[^}]*grid-template-columns: minmax\(0, 1\.25fr\) minmax\(22rem, 0\.75fr\)/);
     expect(globalsCss).toMatch(/\.talent-create-form--dashboard \.ac-template-catalog__grid\s*\{[^}]*display: flex/);
+    expect(globalsCss).not.toMatch(/\.talent-create-form--dashboard \.talent-create-form__optional\s*\{[^}]*overflow-y: auto/);
   });
 
   test('projects are exposed by modal-table query state, not dashboard cards', () => {

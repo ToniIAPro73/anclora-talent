@@ -152,29 +152,40 @@ export async function createProjectAction(formData: FormData) {
     }
 
     if (brandManual instanceof File && brandManual.size > 0) {
-      try {
-        const { extractBrandProfileFromPdf } = await import('@/lib/brand/extract-brand-profile');
-        const { brandProfileRepository } = await import('@/lib/brand/repository');
-        const buffer = Buffer.from(await brandManual.arrayBuffer());
-        const extraction = await extractBrandProfileFromPdf(buffer, brandManual.name);
-        const profile = await brandProfileRepository.createBrandProfile(userId, extraction.profile);
-        if (profile.status !== 'active') {
-          await brandProfileRepository.setBrandProfileStatus(userId, profile.id, 'active');
-        }
-        await projectRepository.saveProjectBrandProfile(userId, project.id, profile.id);
-        console.info('[createProjectAction] brand profile linked', {
-          userId,
-          projectId: project.id,
-          brandProfileId: profile.id,
-          warnings: extraction.warnings,
-        });
-      } catch (brandError) {
-        console.error('[createProjectAction] brand manual extraction failed; project kept', {
+      const brandManualIsPdf =
+        brandManual.type === 'application/pdf' || brandManual.name.toLowerCase().endsWith('.pdf');
+      if (!brandManualIsPdf) {
+        console.info('[createProjectAction] brand manual skipped; only PDF manuals are supported', {
           userId,
           projectId: project.id,
           brandManualName: brandManual.name,
-          brandError,
+          brandManualType: brandManual.type,
         });
+      } else {
+        try {
+          const { extractBrandProfileFromPdf } = await import('@/lib/brand/extract-brand-profile');
+          const { brandProfileRepository } = await import('@/lib/brand/repository');
+          const buffer = Buffer.from(await brandManual.arrayBuffer());
+          const extraction = await extractBrandProfileFromPdf(buffer, brandManual.name);
+          const profile = await brandProfileRepository.createBrandProfile(userId, extraction.profile);
+          if (profile.status !== 'active') {
+            await brandProfileRepository.setBrandProfileStatus(userId, profile.id, 'active');
+          }
+          await projectRepository.saveProjectBrandProfile(userId, project.id, profile.id);
+          console.info('[createProjectAction] brand profile linked', {
+            userId,
+            projectId: project.id,
+            brandProfileId: profile.id,
+            warnings: extraction.warnings,
+          });
+        } catch (brandError) {
+          console.error('[createProjectAction] brand manual extraction failed; project kept', {
+            userId,
+            projectId: project.id,
+            brandManualName: brandManual.name,
+            brandError,
+          });
+        }
       }
     }
 
