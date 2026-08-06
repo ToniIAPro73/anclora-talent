@@ -24,12 +24,12 @@ export function CreateProjectForm({
       data-testid="create-project-form"
     >
       <div className="talent-create-form__primary">
-        <p className="ac-surface-panel__eyebrow">{copy.createFormEyebrow}</p>
-        <h2 className="ac-surface-panel__title text-2xl">{copy.createFormTitle}</h2>
-        <p className="mt-3 max-w-xl text-sm leading-7 text-[var(--text-secondary)]">
-          {copy.createFormDescription}
-        </p>
-        <label htmlFor="project-title" className="ac-form-field mt-2">
+        <div className="talent-create-form__intro">
+          <p className="ac-surface-panel__eyebrow">{copy.createFormEyebrow}</p>
+          <h2 className="ac-surface-panel__title">{copy.createFormTitle}</h2>
+          <p>{copy.createFormDescription}</p>
+        </div>
+        <label htmlFor="project-title" className="ac-form-field mt-5">
           <span className="ac-form-field__label">{copy.titleLabel}</span>
           <input
             id="project-title"

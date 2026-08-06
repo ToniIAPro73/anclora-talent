@@ -74,6 +74,67 @@ function ConfidenceBadge({ level, copy, testId }: { level: FieldConfidence; copy
 
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
+function isDocxFile(file: File) {
+  return (
+    file.name.toLowerCase().endsWith('.docx') ||
+    file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  );
+}
+
+function titleFromFileName(fileName: string) {
+  return fileName
+    .replace(/\.[^.]+$/, '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function textFromHtml(html: string) {
+  if (typeof DOMParser === 'undefined') {
+    return html.replace(/<[^>]+>/g, ' ');
+  }
+  const document = new DOMParser().parseFromString(html, 'text/html');
+  return document.body.textContent ?? '';
+}
+
+async function analyzeDocxLocally(file: File, copy: AppMessages['project']): Promise<AnalysisResult | null> {
+  if (!isDocxFile(file)) return null;
+
+  try {
+    const mammoth = await import('mammoth');
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.convertToHtml({ arrayBuffer });
+    const html = result.value ?? '';
+    const plainText = textFromHtml(html).replace(/\s+/g, ' ').trim();
+    const title =
+      (html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim() ||
+      plainText.split(/[.!?\n]/).find(Boolean)?.trim() ||
+      titleFromFileName(file.name);
+    const chapterTitles = Array.from(html.matchAll(/<h[12][^>]*>([\s\S]*?)<\/h[12]>/gi))
+      .map((match) => match[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim())
+      .filter(Boolean)
+      .slice(0, 4);
+
+    return {
+      title,
+      subtitle: '',
+      author: '',
+      chapterCount: Math.max(chapterTitles.length, 1),
+      chapterTitles,
+      warnings: [copy.importLocalFallbackWarning],
+      sourceFileName: file.name,
+      ocrAppliedMode: null,
+      manuscriptType: 'non-fiction',
+      detectedManuscriptType: 'non-fiction',
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
   const inputId = useId();
   const [selectedFileName, setSelectedFileName] = useState('');
@@ -128,9 +189,20 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         parseWarning?: boolean;
         /** U6: composition detected from the source file. */
         composition?: { settings: CompositionSettings; source: CompositionSource };
-      } = await response.json();
+      } = await response.json().catch(() => ({
+        error: response.status === 413 ? 'FILE_TOO_LARGE' : 'IMPORT_FAILED',
+      }));
 
       if (!response.ok) {
+        const localAnalysis = await analyzeDocxLocally(file, copy);
+        if (localAnalysis) {
+          setAnalysis(localAnalysis);
+          setConfirmedComposition(null);
+          setIsDocumentDataOpen(true);
+          setImportState('ready');
+          return;
+        }
+
         const message =
           data.error === 'FILE_TOO_LARGE'
             ? copy.importFileTooLarge
@@ -164,6 +236,14 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
       setIsDocumentDataOpen(true);
       setImportState('ready');
     } catch {
+      const localAnalysis = await analyzeDocxLocally(file, copy);
+      if (localAnalysis) {
+        setAnalysis(localAnalysis);
+        setConfirmedComposition(null);
+        setIsDocumentDataOpen(true);
+        setImportState('ready');
+        return;
+      }
       setImportState('error');
       setErrorMessage(copy.importErrorGeneric);
     }

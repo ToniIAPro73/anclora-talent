@@ -130,6 +130,7 @@ export type AppMessages = {
     titlePlaceholder: string;
     sourceDocumentLabel: string;
     sourceDocumentHint: string;
+    importLocalFallbackWarning: string;
     createOptionalManuscriptLabel: string;
     createOptionalManuscriptHint: string;
     createOptionalStructureLabel: string;
@@ -942,6 +943,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       sourceDocumentLabel: 'Documento base opcional',
       sourceDocumentHint:
         'Soporta `pdf`, `doc`, `docx`, `txt` y `md`. Si el archivo se puede extraer bien, el editor arrancará ya sembrado con ese contenido.',
+      importLocalFallbackWarning:
+        'El servidor no pudo analizar el archivo en este intento, así que se hizo una lectura local de emergencia del DOCX. Puedes crear el proyecto igualmente.',
       createOptionalManuscriptLabel: 'Manuscrito (opcional)',
       createOptionalManuscriptHint: 'Sube tu documento si ya lo tienes; si no, puedes empezar en blanco.',
       createOptionalStructureLabel: 'Referencia de estructura (opcional)',
@@ -1815,6 +1818,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       sourceDocumentLabel: 'Optional source document',
       sourceDocumentHint:
         'Supports `pdf`, `doc`, `docx`, `txt`, and `md`. If extraction succeeds, the editor starts already seeded with that content.',
+      importLocalFallbackWarning:
+        'The server could not analyze the file on this attempt, so a local emergency DOCX read was used. You can still create the project.',
       createOptionalManuscriptLabel: 'Manuscript (optional)',
       createOptionalManuscriptHint: 'Upload your document if you have it; otherwise, you can start blank.',
       createOptionalStructureLabel: 'Structure reference (optional)',
