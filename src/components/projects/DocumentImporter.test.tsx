@@ -3,6 +3,24 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { DocumentImporter } from './DocumentImporter';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 
+vi.mock('server-only', () => ({}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
+
+// U6: DocumentImporter renders DocumentDataModal, which imports server
+// actions — stub them so the db/neon chain never loads in jsdom.
+vi.mock('@/lib/projects/actions', () => ({
+  saveProjectCompositionAction: vi.fn(),
+  saveUserCompositionDefaultsAction: vi.fn(),
+  setBrandForAllProjectsAction: vi.fn(),
+}));
+
+vi.mock('@/lib/brand/actions', () => ({
+  setProjectBrandProfileAction: vi.fn(),
+}));
+
 const copy = resolveLocaleMessages('es').project;
 
 function mockFetchSuccess(chapterCount = 3, title = 'El título detectado') {

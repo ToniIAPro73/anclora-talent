@@ -454,6 +454,50 @@ export type AppMessages = {
     onboardingSkip: string;
     onboardingDone: string;
     onboardingClose: string;
+    documentDataOpen: string;
+    documentDataModalTitle: string;
+    documentDataModalDescriptionPreCreate: string;
+    documentDataModalDescriptionProject: string;
+    documentDataCloseLabel: string;
+    documentDataSourceBadgeVerified: string;
+    documentDataSourceBadgeNotExtracted: string;
+    documentDataCompositionHeading: string;
+    documentDataFontFamilyLabel: string;
+    documentDataFontSizeLabel: string;
+    documentDataLineHeightLabel: string;
+    documentDataMarginPresetLabel: string;
+    documentDataMarginPresetCompact: string;
+    documentDataMarginPresetNormal: string;
+    documentDataMarginPresetSpacious: string;
+    documentDataMarginPresetBookStyle: string;
+    documentDataMarginPresetMinimal: string;
+    documentDataMarginPresetCustom: string;
+    documentDataMarginTopLabel: string;
+    documentDataMarginBottomLabel: string;
+    documentDataMarginLeftLabel: string;
+    documentDataMarginRightLabel: string;
+    documentDataStructureHeading: string;
+    documentDataStructureHierarchyLabel: string;
+    documentDataStructureMacroLabel: string;
+    documentDataStructureVerified: string;
+    documentDataStructureInferred: string;
+    documentDataScopeHeading: string;
+    documentDataScopeProjectLabel: string;
+    documentDataScopeGlobalLabel: string;
+    documentDataOverwriteLabel: string;
+    documentDataBrandHeading: string;
+    documentDataBrandProfileLabel: string;
+    documentDataBrandNoneOption: string;
+    documentDataBrandScopeProductLabel: string;
+    documentDataBrandScopeAllLabel: string;
+    documentDataBrandScopeHeading: string;
+    documentDataHierarchyHint: string;
+    documentDataCancelLabel: string;
+    documentDataSaveLabel: string;
+    documentDataSavingLabel: string;
+    documentDataSaveError: string;
+    documentDataConfirmLabel: string;
+    documentDataReopenButton: string;
   };
   filestudio: {
     badgeLocal: string;
@@ -840,7 +884,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       newEyebrow: 'Proyecto nuevo',
       newTitle: 'Crea el contenedor editorial base',
       newDescription:
-        'Al crear el proyecto se generan documento, portada y contrato de edición para que el flujo completo arranque ya sobre el modelo canónico.',
+        'Al crear el proyecto se generan el documento y la portada para que empieces a trabajar desde el primer minuto sobre tu contenido.',
       createFormEyebrow: 'Nuevo proyecto',
       createFormTitle: 'Crea una base editorial con estándar premium',
       createFormDescription:
@@ -1249,6 +1293,52 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       onboardingSkip: 'Saltar introducción',
       onboardingDone: 'Entendido',
       onboardingClose: 'Cerrar introducción',
+      documentDataOpen: 'Datos del documento',
+      documentDataModalTitle: 'Datos del documento',
+      documentDataModalDescriptionPreCreate:
+        'Revisa la composición detectada en el archivo antes de crear el proyecto.',
+      documentDataModalDescriptionProject: 'Composición, estructura y marca de este documento.',
+      documentDataCloseLabel: 'Cerrar',
+      documentDataSourceBadgeVerified: 'Verificado en fuente',
+      documentDataSourceBadgeNotExtracted: 'No extraído',
+      documentDataCompositionHeading: 'Composición',
+      documentDataFontFamilyLabel: 'Familia tipográfica',
+      documentDataFontSizeLabel: 'Tamaño (pt)',
+      documentDataLineHeightLabel: 'Interlineado',
+      documentDataMarginPresetLabel: 'Preset de márgenes',
+      documentDataMarginPresetCompact: 'Compacto',
+      documentDataMarginPresetNormal: 'Normal',
+      documentDataMarginPresetSpacious: 'Espacioso',
+      documentDataMarginPresetBookStyle: 'Estilo libro',
+      documentDataMarginPresetMinimal: 'Mínimo',
+      documentDataMarginPresetCustom: 'Personalizado',
+      documentDataMarginTopLabel: 'Superior',
+      documentDataMarginBottomLabel: 'Inferior',
+      documentDataMarginLeftLabel: 'Izquierdo',
+      documentDataMarginRightLabel: 'Derecho',
+      documentDataStructureHeading: 'Estructura detectada',
+      documentDataStructureHierarchyLabel: 'Jerarquía',
+      documentDataStructureMacroLabel: 'Patrón macro',
+      documentDataStructureVerified: 'Verificado en fuente',
+      documentDataStructureInferred: 'Inferido de un documento',
+      documentDataScopeHeading: 'Ámbito de la composición',
+      documentDataScopeProjectLabel: 'Solo este proyecto',
+      documentDataScopeGlobalLabel: 'Todos mis proyectos',
+      documentDataOverwriteLabel: 'Sobrescribir personalizados',
+      documentDataBrandHeading: 'Marca',
+      documentDataBrandProfileLabel: 'Perfil de marca',
+      documentDataBrandNoneOption: 'Sin marca',
+      documentDataBrandScopeProductLabel: 'Este producto',
+      documentDataBrandScopeAllLabel: 'Todos mis proyectos',
+      documentDataBrandScopeHeading: 'Ámbito de la marca',
+      documentDataHierarchyHint:
+        'La composición se resuelve: proyecto > global > sistema. La marca: explícita > predeterminada > ninguna. La marca aporta familias y paleta; la composición aporta tamaño, márgenes e interlineado.',
+      documentDataCancelLabel: 'Cancelar',
+      documentDataSaveLabel: 'Guardar',
+      documentDataSavingLabel: 'Guardando…',
+      documentDataSaveError: 'No se pudo guardar. Inténtalo de nuevo.',
+      documentDataConfirmLabel: 'Confirmar',
+      documentDataReopenButton: 'Revisar datos del documento',
     },
     filestudio: {
       badgeLocal: 'Procesado en tu dispositivo',
@@ -1643,7 +1733,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       newEyebrow: 'New project',
       newTitle: 'Create the base editorial container',
       newDescription:
-        'Creating the project generates the document, cover, and editing contract so the full flow starts on the canonical model.',
+        'Creating the project generates the document and cover so you can start working on your content from the first minute.',
       createFormEyebrow: 'New project',
       createFormTitle: 'Create an editorial base with premium standards',
       createFormDescription:
@@ -2052,6 +2142,52 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       onboardingSkip: 'Skip introduction',
       onboardingDone: 'Got it',
       onboardingClose: 'Close introduction',
+      documentDataOpen: 'Document data',
+      documentDataModalTitle: 'Document data',
+      documentDataModalDescriptionPreCreate:
+        'Review the composition detected in the file before creating the project.',
+      documentDataModalDescriptionProject: 'Composition, structure and brand of this document.',
+      documentDataCloseLabel: 'Close',
+      documentDataSourceBadgeVerified: 'Verified in source',
+      documentDataSourceBadgeNotExtracted: 'Not extracted',
+      documentDataCompositionHeading: 'Composition',
+      documentDataFontFamilyLabel: 'Font family',
+      documentDataFontSizeLabel: 'Size (pt)',
+      documentDataLineHeightLabel: 'Line height',
+      documentDataMarginPresetLabel: 'Margin preset',
+      documentDataMarginPresetCompact: 'Compact',
+      documentDataMarginPresetNormal: 'Normal',
+      documentDataMarginPresetSpacious: 'Spacious',
+      documentDataMarginPresetBookStyle: 'Book style',
+      documentDataMarginPresetMinimal: 'Minimal',
+      documentDataMarginPresetCustom: 'Custom',
+      documentDataMarginTopLabel: 'Top',
+      documentDataMarginBottomLabel: 'Bottom',
+      documentDataMarginLeftLabel: 'Left',
+      documentDataMarginRightLabel: 'Right',
+      documentDataStructureHeading: 'Detected structure',
+      documentDataStructureHierarchyLabel: 'Hierarchy',
+      documentDataStructureMacroLabel: 'Macro pattern',
+      documentDataStructureVerified: 'Verified in source',
+      documentDataStructureInferred: 'Inferred from a document',
+      documentDataScopeHeading: 'Composition scope',
+      documentDataScopeProjectLabel: 'Only this project',
+      documentDataScopeGlobalLabel: 'All my projects',
+      documentDataOverwriteLabel: 'Overwrite customized projects',
+      documentDataBrandHeading: 'Brand',
+      documentDataBrandProfileLabel: 'Brand profile',
+      documentDataBrandNoneOption: 'No brand',
+      documentDataBrandScopeProductLabel: 'This product',
+      documentDataBrandScopeAllLabel: 'All my projects',
+      documentDataBrandScopeHeading: 'Brand scope',
+      documentDataHierarchyHint:
+        'Composition resolves as: project > global > system. Brand: explicit > default > none. Brand contributes families and palette; composition contributes size, margins and line height.',
+      documentDataCancelLabel: 'Cancel',
+      documentDataSaveLabel: 'Save',
+      documentDataSavingLabel: 'Saving…',
+      documentDataSaveError: 'Could not save. Please try again.',
+      documentDataConfirmLabel: 'Confirm',
+      documentDataReopenButton: 'Review document data',
     },
     filestudio: {
       badgeLocal: 'Processed on your device',

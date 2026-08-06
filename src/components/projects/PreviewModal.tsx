@@ -48,7 +48,7 @@ export function PreviewModal({
   copy,
   onClose,
 }: PreviewModalProps) {
-  const { preferences } = useEditorPreferences();
+  const { preferences, setPreferences } = useEditorPreferences();
   const preferredFormat = preferences.device === 'desktop' ? 'laptop' : preferences.device;
   
   // View state
@@ -221,7 +221,12 @@ export function PreviewModal({
                     data-testid={`preview-modal-format-${fmt}-button`}
                     aria-label={fmt === 'mobile' ? copy.previewModalMobile : fmt === 'tablet' ? copy.previewModalTablet : copy.previewModalLaptop}
                     aria-pressed={format === fmt}
-                    onClick={() => setFormat(fmt)}
+                    onClick={() => {
+                      setFormat(fmt);
+                      // U6: the preview format doubles as the preferred
+                      // device, persisted across sessions.
+                      setPreferences({ device: fmt === 'laptop' ? 'desktop' : fmt });
+                    }}
                     className={format === fmt ? 'ac-button ac-button--primary ac-button--sm' : 'ac-button ac-button--ghost ac-button--sm'}
                   >
                     {fmt === 'mobile' ? <Smartphone className="h-4 w-4" /> : fmt === 'tablet' ? <Tablet className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}

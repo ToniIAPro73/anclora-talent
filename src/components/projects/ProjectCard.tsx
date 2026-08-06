@@ -57,6 +57,7 @@ export function ProjectCard({
           menuLabel={copy.cardActionsMenu}
           deleteLabel={copy.cardDelete}
           confirmMessage={copy.cardDeleteConfirm.replace('{title}', project.title)}
+          documentDataLabel={copy.documentDataOpen}
         />
         </div>
       </div>

@@ -5,6 +5,13 @@ import { AlertCircle, CheckCircle2, FileText, Loader2, Upload } from 'lucide-rea
 import { supportedImportAccept } from '@/lib/projects/import-config';
 import { ProcessingModeBadge } from '@/components/filestudio/ProcessingModeBadge';
 import type { AppMessages } from '@/lib/i18n/messages';
+import { Portal } from '@/components/ui/Portal';
+import { DocumentDataModal } from './DocumentDataModal';
+import {
+  serializeCompositionSettings,
+  type CompositionSettings,
+  type CompositionSource,
+} from '@/lib/projects/composition';
 
 type ImportState = 'idle' | 'analyzing' | 'ready' | 'error';
 
@@ -42,6 +49,8 @@ type AnalysisResult = {
   /** M5: effective type (override if set) and the auto-detected baseline. */
   manuscriptType?: ManuscriptType;
   detectedManuscriptType?: ManuscriptType;
+  /** U6: composition detected from the source file (DOCX Normal style). */
+  composition?: { settings: CompositionSettings; source: CompositionSource };
 };
 
 function ConfidenceBadge({ level, copy, testId }: { level: FieldConfidence; copy: AppMessages['project']; testId: string }) {
@@ -73,6 +82,10 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
   const [importState, setImportState] = useState<ImportState>('idle');
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  // U6: composition reviewed in the pre-create document-data modal; written
+  // as a hidden `composition` form field once confirmed.
+  const [confirmedComposition, setConfirmedComposition] = useState<CompositionSettings | null>(null);
+  const [isDocumentDataOpen, setIsDocumentDataOpen] = useState(false);
 
   const analyzeFile = async (file: File, manuscriptTypeOverride?: ManuscriptType) => {
     setSelectedFileName(file.name);
@@ -113,6 +126,8 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         /** U4: true when the source parser failed and the import degraded to
          *  an empty shell document — surfaced as a non-blocking warning. */
         parseWarning?: boolean;
+        /** U6: composition detected from the source file. */
+        composition?: { settings: CompositionSettings; source: CompositionSource };
       } = await response.json();
 
       if (!response.ok) {
@@ -141,7 +156,12 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         confidence: data.confidence,
         manuscriptType: data.manuscriptType,
         detectedManuscriptType: data.detectedManuscriptType,
+        composition: data.composition,
       });
+      // U6: a fresh analysis resets any previously confirmed composition and
+      // auto-opens the pre-create document-data modal.
+      setConfirmedComposition(null);
+      setIsDocumentDataOpen(true);
       setImportState('ready');
     } catch {
       setImportState('error');
@@ -408,6 +428,17 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                 <p className="text-xs text-center text-[var(--text-secondary)]">
                   El proyecto se creará con esta estructura y podrás afinar lo mínimo desde el editor.
                 </p>
+                <button
+                  type="button"
+                  data-testid="document-data-reopen-button"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setIsDocumentDataOpen(true);
+                  }}
+                  className="ac-button ac-button--secondary ac-button--sm"
+                >
+                  {copy.documentDataReopenButton}
+                </button>
               </div>
             )}
 
@@ -421,6 +452,27 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         </label>
       </div>
       <p className="text-xs leading-6 text-[var(--text-tertiary)]">{copy.sourceDocumentHint}</p>
+
+      {confirmedComposition && (
+        <input
+          type="hidden"
+          name="composition"
+          data-testid="composition-hidden-input"
+          value={serializeCompositionSettings(confirmedComposition)}
+        />
+      )}
+
+      <Portal>
+        <DocumentDataModal
+          isOpen={isDocumentDataOpen}
+          mode="pre-create"
+          copy={copy}
+          initialSettings={analysis?.composition?.settings}
+          source={analysis?.composition?.source ?? 'not-extracted'}
+          onConfirm={(settings) => setConfirmedComposition(settings)}
+          onClose={() => setIsDocumentDataOpen(false)}
+        />
+      </Portal>
     </div>
   );
 }

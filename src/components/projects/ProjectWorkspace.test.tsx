@@ -27,6 +27,15 @@ vi.mock('@/lib/projects/actions', () => ({
   deleteChapterAction: vi.fn().mockResolvedValue(undefined),
   saveProjectCoverAction: vi.fn().mockResolvedValue(undefined),
   saveBackCoverAction: vi.fn().mockResolvedValue(undefined),
+  saveProjectCompositionAction: vi.fn().mockResolvedValue({ ok: true }),
+  saveUserCompositionDefaultsAction: vi.fn().mockResolvedValue({ ok: true }),
+  setBrandForAllProjectsAction: vi.fn().mockResolvedValue({ ok: true }),
+}));
+
+// U6: DocumentDataModal imports the brand server action — stub it so the
+// real brand module never pulls the db/neon chain into jsdom.
+vi.mock('@/lib/brand/actions', () => ({
+  setProjectBrandProfileAction: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
 // Tiptap requires a real browser DOM — stub it out for jsdom

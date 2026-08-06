@@ -803,6 +803,48 @@ html[data-theme="light"] .talent-shell-switcher .ac-theme-switcher__option[aria-
   }
 }
 
+/* ── Modal overlay shell (MODAL_CONTRACT) ─────────────────────────────
+   The app's `.ac-modal` markup (overlay + __backdrop + __panel) predates
+   the design-system modal.css, which styles `.ac-modal` as the PANEL
+   (720px card). These rules reclaim `.ac-modal` as the fixed overlay,
+   neutralize the DS panel properties on it, dim the backdrop and center
+   the viewport-bounded panel. */
+.ac-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  width: auto;
+  gap: 0;
+  padding: 1rem;
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  overflow-y: auto;
+}
+
+.ac-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 10, 18, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.ac-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  /* Solid surface: the design-system `.ac-modal` background is translucent
+     and (unlayered) beats Tailwind's layered bg-[...] utilities. */
+  background: var(--page-surface);
+}
+
 .talent-preview-overlay {
   color-scheme: dark;
 }

@@ -19,11 +19,14 @@ import { getCollaborationViewForProject } from '@/lib/collaboration/view';
 
 export default async function ProjectEditorPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ projectId: string }>;
+  searchParams: Promise<{ documentData?: string }>;
 }) {
   const userId = await requireUserId();
   const { projectId } = await params;
+  const { documentData } = await searchParams;
   const { locale } = await readUiPreferences();
   const messages = resolveLocaleMessages(locale);
   const projectCopy = messages.project;
@@ -91,6 +94,7 @@ export default async function ProjectEditorPage({
       kdpDisclosure={kdpDisclosure}
       collaboration={collaboration}
       locale={locale}
+      initialOpenDocumentData={documentData === 'open'}
     />
   );
 }

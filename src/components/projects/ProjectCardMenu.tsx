@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { MoreVertical } from 'lucide-react';
 import { ProjectDeleteButton } from './ProjectDeleteButton';
 
@@ -14,11 +15,13 @@ export function ProjectCardMenu({
   menuLabel,
   deleteLabel,
   confirmMessage,
+  documentDataLabel,
 }: {
   projectId: string;
   menuLabel: string;
   deleteLabel: string;
   confirmMessage: string;
+  documentDataLabel: string;
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -56,6 +59,15 @@ export function ProjectCardMenu({
           aria-label={menuLabel}
           className="absolute right-0 top-full z-50 mt-2 w-56 rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] p-3 shadow-[var(--shadow-lg)] backdrop-blur-xl"
         >
+          <Link
+            role="menuitem"
+            data-testid="project-card-document-data-link"
+            href={`/projects/${projectId}/editor?documentData=open`}
+            onClick={() => setOpen(false)}
+            className="mb-2 flex w-full items-center rounded-xl px-3 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-highlight)]"
+          >
+            {documentDataLabel}
+          </Link>
           <ProjectDeleteButton
             projectId={projectId}
             label={deleteLabel}

@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireUserId } from '@/lib/auth/guards';
 import { getDb, hasDatabase } from '@/lib/db';
-import { projectRepository } from '@/lib/db/repositories';
+import { projectRepository, userPreferencesRepository } from '@/lib/db/repositories';
 import { uploadProjectBlob } from '@/lib/blob/client';
 import { captureAutoSaveSnapshot, captureProjectSnapshot } from '@/lib/snapshots/capture';
 import { deriveProvenanceUpdate } from '@/lib/ai/provenance';
@@ -16,8 +16,9 @@ import {
 } from '@/lib/preview/preview-builder';
 import { chapterBlocksToHtml } from './chapter-html';
 import { mergeReimportedSeed } from './reimport';
+import { parseCompositionSettings } from './composition';
 import type { CoverDesign, UpdateBackCoverInput, UpdateCoverInput, UpdateDocumentInput } from './types';
-import { defaultEditorPreferences } from '@/lib/ui-preferences/preferences';
+import { defaultEditorPreferences, type EditorPreferences } from '@/lib/ui-preferences/preferences';
 
 function parsePalette(value: FormDataEntryValue | null): CoverDesign['palette'] {
   if (value === 'teal' || value === 'sand') {
@@ -54,6 +55,8 @@ export async function createProjectAction(formData: FormData) {
   // active and linked to the new project. Any failure here is logged but
   // NEVER blocks project creation.
   const brandManual = formData.get('brandManual');
+  // U6: composition reviewed in the pre-create document-data modal (JSON).
+  const compositionRaw = String(formData.get('composition') ?? '').trim();
 
   console.info('[createProjectAction] submit received', {
     userId,
@@ -122,6 +125,32 @@ export async function createProjectAction(formData: FormData) {
       hasImportedDocument: Boolean(importedDocument),
     });
 
+    // U6: a composition confirmed in the pre-create modal is persisted into
+    // the new project's metadata (merged, never blocking creation).
+    if (compositionRaw) {
+      try {
+        const composition = parseCompositionSettings(JSON.parse(compositionRaw));
+        if (composition) {
+          const current = await projectRepository.getProjectById(userId, project.id);
+          const metadata = {
+            ...(current?.document.metadata ?? { title: project.title }),
+            composition,
+          };
+          await projectRepository.saveDocumentExtras(userId, project.id, { metadata });
+          console.info('[createProjectAction] composition persisted', {
+            userId,
+            projectId: project.id,
+          });
+        }
+      } catch (compositionError) {
+        console.error('[createProjectAction] composition persistence failed; project kept', {
+          userId,
+          projectId: project.id,
+          compositionError,
+        });
+      }
+    }
+
     if (brandManual instanceof File && brandManual.size > 0) {
       try {
         const { extractBrandProfileFromPdf } = await import('@/lib/brand/extract-brand-profile');
@@ -149,7 +178,13 @@ export async function createProjectAction(formData: FormData) {
       }
     }
 
-    redirect(`/projects/${project.id}/editor`);
+    // U6: when a manuscript was imported but the user did NOT review the
+    // composition pre-create (no `composition` field submitted), open the
+    // document-data modal right after landing in the editor.
+    const manuscriptImported =
+      !structureSeed && sourceDocument instanceof File && sourceDocument.size > 0;
+    const editorSuffix = manuscriptImported && !compositionRaw ? '?documentData=open' : '';
+    redirect(`/projects/${project.id}/editor${editorSuffix}`);
   } catch (error) {
     console.error('[createProjectAction] failed', {
       userId,
@@ -653,6 +688,130 @@ export async function saveProjectRulesAction(formData: FormData) {
   await projectRepository.saveDocumentExtras(userId, projectId, { rules });
   revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
+  return { ok: true as const };
+}
+
+/**
+ * U6: saves the per-project composition (CompositionSettings JSON, or
+ * clears it with 'null') into `metadata.composition`, and optionally the
+ * explicit "no brand" marker (`brandChoice` field: 'none' | 'clear').
+ * The metadata jsonb is merged with the current value — never overwritten.
+ */
+export async function saveProjectCompositionAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '');
+  if (!projectId) throw new Error('Missing projectId');
+
+  const hasCompositionField = formData.get('composition') !== null;
+  const brandChoiceField = formData.get('brandChoice');
+  if (!hasCompositionField && brandChoiceField === null) {
+    throw new Error('Missing composition payload');
+  }
+
+  let composition: ReturnType<typeof parseCompositionSettings> = null;
+  if (hasCompositionField) {
+    const raw = String(formData.get('composition') ?? '').trim();
+    if (raw) {
+      try {
+        composition = parseCompositionSettings(JSON.parse(raw));
+      } catch {
+        throw new Error('Invalid composition payload');
+      }
+    }
+  }
+
+  const project = await projectRepository.getProjectById(userId, projectId);
+  if (!project) throw new Error('Project not found');
+
+  const metadata = { ...(project.document.metadata ?? { title: project.title }) };
+  if (hasCompositionField) {
+    metadata.composition = composition;
+  }
+  if (brandChoiceField === 'none') {
+    metadata.brandChoice = 'none';
+  } else if (brandChoiceField === 'clear') {
+    delete metadata.brandChoice;
+  }
+
+  await projectRepository.saveDocumentExtras(userId, projectId, { metadata });
+  revalidatePath(`/projects/${projectId}/editor`);
+  revalidatePath(`/projects/${projectId}/preview`);
+  return { ok: true as const };
+}
+
+/**
+ * U6: saves the user-level composition defaults
+ * (`editor_preferences.compositionDefaults`). When `overwriteCustom` is true,
+ * every project that has its own composition is overwritten with the new
+ * defaults.
+ */
+export async function saveUserCompositionDefaultsAction(formData: FormData) {
+  const userId = await requireUserId();
+  const raw = String(formData.get('defaults') ?? '').trim();
+  const overwriteCustom = String(formData.get('overwriteCustom') ?? '') === 'true';
+
+  let defaults: ReturnType<typeof parseCompositionSettings> = null;
+  if (raw) {
+    try {
+      defaults = parseCompositionSettings(JSON.parse(raw));
+    } catch {
+      throw new Error('Invalid composition payload');
+    }
+  }
+
+  const stored = await userPreferencesRepository.getEditorPreferences(userId);
+  const preferences: EditorPreferences = {
+    ...(stored ?? defaultEditorPreferences),
+    compositionDefaults: defaults ?? undefined,
+  };
+  await userPreferencesRepository.saveEditorPreferences(userId, preferences);
+
+  if (overwriteCustom && defaults) {
+    const summaries = await projectRepository.listProjectsForUser(userId);
+    for (const summary of summaries) {
+      const project = await projectRepository.getProjectById(userId, summary.id);
+      if (!project) continue;
+      if (!parseCompositionSettings(project.document.metadata?.composition)) continue;
+      const metadata = {
+        ...(project.document.metadata ?? { title: project.title }),
+        composition: defaults,
+      };
+      await projectRepository.saveDocumentExtras(userId, project.id, { metadata });
+    }
+  }
+
+  revalidatePath('/dashboard');
+  revalidatePath('/projects');
+  return { ok: true as const };
+}
+
+/**
+ * U6: global brand scope sets (or clears) the DEFAULT brand profile of the
+ * user — it never touches `projects.brandProfileId`. Per-project explicit
+ * choices (an explicit `brandProfileId`, incl. the `metadata.brandChoice:
+ * 'none'` marker) keep winning at resolve time (resolveBrandProfileId:
+ * explicit > default > none).
+ */
+export async function setBrandForAllProjectsAction(formData: FormData) {
+  const userId = await requireUserId();
+  const brandProfileId = String(formData.get('brandProfileId') ?? '').trim() || null;
+
+  const { brandProfileRepository } = await import('@/lib/brand/repository');
+  if (brandProfileId) {
+    // Selecting a profile globally makes it the active default.
+    await brandProfileRepository.setBrandProfileStatus(userId, brandProfileId, 'active');
+  } else {
+    // "No brand" globally clears the default: active profiles become drafts.
+    const profiles = await brandProfileRepository.listBrandProfilesForUser(userId);
+    for (const profile of profiles) {
+      if (profile.status === 'active') {
+        await brandProfileRepository.setBrandProfileStatus(userId, profile.id, 'draft');
+      }
+    }
+  }
+
+  revalidatePath('/dashboard');
+  revalidatePath('/projects');
   return { ok: true as const };
 }
 
