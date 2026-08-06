@@ -146,8 +146,13 @@ export interface ProjectSummary {
   slug: string;
   title: string;
   status: ProjectStatus;
+  createdAt: string;
   updatedAt: string;
+  documentSubtitle: string;
+  documentAuthor: string;
   documentTitle: string;
+  pageCount: number | null;
+  chapterCount: number;
   coverPalette: CoverDesign['palette'];
 }
 

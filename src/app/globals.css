@@ -444,238 +444,172 @@ body {
 }
 
 .talent-shell-grid {
-  display: grid;
   min-height: 100vh;
-  gap: 20px;
   /* P-SHELL-01: fluid cap — 96rem floor, grows with the viewport up to
      128rem, so large monitors no longer get ~500px dead bands per side. */
   max-width: clamp(96rem, 92vw, 128rem);
   margin-inline: auto;
   padding: 16px;
-  transition: grid-template-columns 300ms ease;
 }
 
-/* On narrow viewports the fixed sidebar track cannot fit next to the main
-   panel; stack the shell into a single column instead. `!important` is
-   required because the expanded/collapsed columns are set inline. */
-@media (max-width: 768px) {
-  .talent-shell-grid {
-    grid-template-columns: minmax(0, 1fr) !important;
-  }
-}
-
-.talent-shell-sidebar {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border-radius: 36px;
-  background: var(--shell-surface);
-  box-shadow: var(--shadow-strong);
-}
-
-/* The aside also carries .ac-sidebar-nav, whose `min-width: 240px` is
-   unlayered and would keep the collapsed rail from shrinking into its
-   88px grid track (Tailwind's min-w-0 lives in @layer utilities and
-   loses against it). */
-aside.talent-shell-sidebar {
-  min-width: 0;
-}
-
-.talent-shell-sidebar-toggle {
-  display: inline-flex;
-  height: 40px;
-  width: 40px;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border-default);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface-panel) 82%, transparent);
-  color: var(--text-secondary);
-  box-shadow: var(--shadow-soft);
-  transition:
-    transform var(--dur-base) var(--ease-spring),
-    border-color var(--dur-base) ease,
-    color var(--dur-base) ease,
-    background-color var(--dur-base) ease;
-}
-
-.talent-shell-sidebar-toggle:hover,
-.talent-shell-sidebar-toggle:focus-visible {
-  transform: translateY(var(--motion-hover-lift-button));
-  border-color: var(--border-strong);
-  color: var(--text-primary);
+.talent-app-shell-frame + footer {
+  display: none;
 }
 
 .talent-shell-main {
+  height: calc(100vh - 32px);
   border: 1px solid var(--border-subtle);
-  border-radius: 40px;
+  border-radius: 32px;
   background: var(--shell-main-surface);
-  padding: 24px;
+  padding: 18px;
   box-shadow: var(--shadow-strong);
+  overflow: hidden;
 }
 
 .talent-shell-topbar {
-  border: 0;
+  display: grid;
+  grid-template-columns: minmax(18rem, 1fr) auto auto;
+  gap: 18px;
+  align-items: center;
+  min-height: 72px;
   border-bottom: 1px solid var(--border-subtle);
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  padding: 0 0 24px;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  padding: 0 0 16px;
+  position: relative;
 }
 
-.talent-shell-topbar-actions {
+.talent-shell-brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
   gap: 12px;
 }
 
-.talent-shell-sidebar-nav {
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  min-width: auto;
-  padding: 0;
+.talent-shell-brand__name {
+  flex-shrink: 0;
+  font-size: 1.02rem;
+  font-weight: 900;
 }
 
-.talent-shell-sidebar-nav .ac-sidebar-nav__item {
-  min-height: 64px;
-  border-radius: 1.25rem;
-  padding-inline: 0;
+.talent-shell-brand__copy {
+  min-width: 0;
+  padding-left: 12px;
+  border-left: 1px solid var(--border-subtle);
 }
 
-.talent-shell-sidebar-nav .ac-sidebar-nav__list {
-  gap: 18px;
+.talent-shell-brand__copy p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.15;
 }
 
-.talent-shell-sidebar-link {
-  width: 100%;
-  justify-content: flex-start;
+.talent-shell-brand__copy span {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-tertiary);
+  font-size: 0.84rem;
+  line-height: 1.25;
 }
 
-.talent-shell-sidebar-link__label {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 42px minmax(0, 1fr);
-  column-gap: 26px;
-  justify-content: flex-start;
+.talent-shell-nav,
+.talent-shell-topbar-actions {
+  display: flex;
   align-items: center;
-  text-align: left;
+  gap: 8px;
 }
 
-.talent-shell-sidebar-link__icon {
+.talent-shell-nav__link,
+.talent-shell-mobile-menu__link {
+  min-height: 40px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+}
+
+.talent-shell-nav__link:hover,
+.talent-shell-nav__link:focus-visible,
+.talent-shell-nav__link[aria-current="page"] {
+  border-color: rgba(74, 159, 216, 0.34);
+  background: color-mix(in srgb, var(--surface-panel-strong) 86%, transparent);
+  color: var(--text-primary);
+}
+
+.talent-shell-locale-pill,
+.talent-shell-theme-flip,
+.talent-shell-mobile-menu-button {
   display: inline-flex;
   height: 42px;
   width: 42px;
   align-items: center;
   justify-content: center;
-  border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border-default));
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--surface-panel-strong) 88%, transparent) 0%,
-      color-mix(in srgb, var(--surface-panel) 74%, transparent) 100%);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border-strong));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-panel) 92%, transparent);
   color: var(--text-primary);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 10px 22px rgba(7, 16, 25, 0.14);
+  box-shadow: 0 12px 24px rgba(7, 16, 25, 0.14);
 }
 
-.talent-shell-sidebar-link__text {
-  font-size: 1rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-
-.talent-shell-sidebar-nav .ac-sidebar-nav__item {
-  background: transparent;
-}
-
-.talent-shell-sidebar-nav .ac-sidebar-nav__item:hover,
-.talent-shell-sidebar-nav .ac-sidebar-nav__item:focus-visible {
-  background: color-mix(in srgb, var(--surface-panel-strong) 82%, transparent);
-}
-
-.talent-shell-sidebar-nav .ac-sidebar-nav__item[aria-current="page"] {
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--surface-panel-strong) 92%, transparent) 0%,
-      color-mix(in srgb, var(--surface-panel) 90%, transparent) 100%);
-}
-
-.talent-shell-sidebar-nav .ac-sidebar-nav__item[aria-current="page"] .talent-shell-sidebar-link__icon {
-  border-color: rgba(74, 159, 216, 0.34);
-  background:
-    radial-gradient(circle at top left, rgba(160, 208, 240, 0.9) 0%, rgba(92, 180, 232, 0.72) 50%, rgba(58, 136, 190, 0.9) 100%);
-  color: #0C1820;
-}
-
-.talent-shell-switcher {
-  gap: 8px;
-  padding: 6px;
-  border-color: color-mix(in srgb, var(--accent) 14%, var(--border-strong));
-  border-radius: 999px;
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--surface-panel) 94%, transparent) 0%,
-      color-mix(in srgb, var(--surface-panel-strong) 96%, transparent) 100%);
-  box-shadow: 0 18px 36px rgba(7, 16, 25, 0.16);
-}
-
-.talent-shell-switcher__leading-icon {
-  color: var(--text-tertiary);
-  margin-left: 10px;
-  margin-right: 2px;
-  flex-shrink: 0;
-}
-
-.talent-shell-switcher__option {
-  min-height: 40px;
-  padding-inline: 15px;
+.talent-shell-locale-pill {
+  width: auto;
+  min-width: 48px;
+  padding: 0 13px;
   font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-weight: 900;
 }
 
-.talent-shell-switcher__option--theme {
-  min-width: 42px;
-  padding-inline: 0;
-  border-radius: 999px;
+.talent-shell-theme-flip {
+  perspective: 120px;
+  overflow: hidden;
 }
 
-.talent-shell-switcher .ac-language-switcher__option[aria-current="true"],
-.talent-shell-switcher .ac-theme-switcher__option[aria-pressed="true"] {
-  border-color: rgba(74, 159, 216, 0.34);
-  background:
-    radial-gradient(circle at top left, rgba(160, 208, 240, 0.92) 0%, rgba(92, 180, 232, 0.76) 48%, rgba(58, 136, 190, 0.92) 100%);
-  color: #0C1820;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 10px 22px rgba(58, 136, 190, 0.22);
+.talent-shell-theme-flip__cube {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  transform-style: preserve-3d;
+  transition: transform 360ms var(--ease-spring);
 }
 
-html[data-theme="light"] .talent-shell-switcher {
-  box-shadow: 0 16px 32px rgba(16, 37, 58, 0.08);
+.talent-shell-theme-flip__cube[data-theme-state="light"] {
+  transform: rotateY(180deg);
 }
 
-html[data-theme="light"] .talent-shell-switcher .ac-language-switcher__option[aria-current="true"],
-html[data-theme="light"] .talent-shell-switcher .ac-theme-switcher__option[aria-pressed="true"] {
-  color: #0C1820;
+.talent-shell-theme-flip__face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  backface-visibility: hidden;
 }
 
-.talent-shell-user-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 52px;
-  min-width: 52px;
+.talent-shell-theme-flip__face--back {
+  transform: rotateY(180deg);
 }
 
-/* CreateProjectForm lives inside a narrow grid column: the design-system
-   catalog grid (fixed 3/2/1 columns at viewport breakpoints) squeezes cards
-   to ~100px and clips text. Auto-fit with a minimum card width keeps every
-   card readable regardless of the column width. */
+@media (prefers-reduced-motion: reduce) {
+  .talent-shell-theme-flip__cube {
+    transition: none;
+  }
+}
+
+.talent-shell-mobile-menu-button,
+.talent-shell-mobile-menu {
+  display: none;
+}
+
+.talent-shell-content {
+  height: calc(100% - 89px);
+  min-height: 0;
+  overflow: hidden;
+  padding-top: 16px;
+}
+
 .talent-create-form .ac-template-catalog__grid {
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: var(--space-4);
@@ -689,9 +623,245 @@ html[data-theme="light"] .talent-shell-switcher .ac-theme-switcher__option[aria-
   overflow: hidden;
 }
 
+.talent-dashboard-v3 {
+  display: grid;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.talent-dashboard-create {
+  display: grid;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.talent-create-form--dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(22rem, 0.75fr);
+  gap: 24px;
+  align-items: start;
+  height: 100%;
+  min-height: 0;
+  padding: clamp(18px, 2vw, 28px);
+  overflow: hidden;
+}
+
+.talent-create-form--dashboard .talent-create-form__primary,
+.talent-create-form--dashboard .talent-create-form__optional {
+  min-width: 0;
+  min-height: 0;
+}
+
+.talent-create-form--dashboard .talent-create-form__optional {
+  border-left: 1px solid var(--border-subtle);
+  padding-left: 22px;
+  max-height: 100%;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.talent-create-form--dashboard .ac-template-catalog__grid {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-bottom: 8px;
+}
+
+.talent-create-form--dashboard .ac-template-card {
+  min-width: 205px;
+  max-width: 228px;
+}
+
 .talent-shell-user-button .cl-userButtonTrigger,
 .talent-shell-user-button .cl-rootBox {
   border-radius: 999px;
+}
+
+.talent-projects-modal__panel {
+  max-width: min(1180px, calc(100vw - 2rem));
+  padding: 0;
+}
+
+.talent-projects-modal__header,
+.talent-projects-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+}
+
+.talent-projects-modal__header {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.talent-projects-modal__footer {
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-tertiary);
+  font-size: 0.82rem;
+}
+
+.talent-projects-modal__title {
+  margin: 0;
+  font-size: 1.55rem;
+  font-weight: 900;
+}
+
+.talent-projects-table-wrap {
+  max-height: min(62vh, 620px);
+  overflow: auto;
+}
+
+.talent-projects-table {
+  width: 100%;
+  min-width: 1060px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.86rem;
+}
+
+.talent-projects-table th,
+.talent-projects-table td {
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.talent-projects-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--page-surface);
+  color: var(--text-tertiary);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.talent-projects-table__sticky {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  max-width: 260px;
+  background: var(--page-surface);
+  font-weight: 800;
+}
+
+.talent-projects-table__status {
+  display: inline-flex;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border-subtle));
+  border-radius: 999px;
+  padding: 4px 9px;
+  color: var(--accent-text);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.talent-projects-table__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .talent-shell-topbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .talent-shell-brand__copy span {
+    display: none;
+  }
+
+  .talent-shell-nav {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .talent-create-form--dashboard {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .talent-create-form--dashboard .talent-create-form__optional {
+    border-left: 0;
+    border-top: 1px solid var(--border-subtle);
+    padding-left: 0;
+    padding-top: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .talent-shell-grid {
+    max-width: none;
+    padding: 8px;
+  }
+
+  .talent-shell-main {
+    height: auto;
+    min-height: calc(100vh - 16px);
+    border-radius: 22px;
+    padding: 12px;
+    overflow: visible;
+  }
+
+  .talent-shell-topbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .talent-shell-brand {
+    gap: 8px;
+  }
+
+  .talent-shell-brand__name {
+    font-size: 0.9rem;
+  }
+
+  .talent-shell-brand__copy {
+    display: none;
+  }
+
+  .talent-shell-nav {
+    display: none;
+  }
+
+  .talent-shell-mobile-menu-button {
+    display: inline-flex;
+  }
+
+  .talent-shell-mobile-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 30;
+    display: grid;
+    min-width: 210px;
+    gap: 6px;
+    border: 1px solid var(--border-strong);
+    border-radius: 18px;
+    background: var(--surface-elevated);
+    padding: 10px;
+    box-shadow: var(--shadow-strong);
+  }
+
+  .talent-shell-mobile-menu__link {
+    justify-content: flex-start;
+  }
+
+  .talent-dashboard-create {
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .talent-shell-content,
+  .talent-dashboard-v3,
+  .talent-create-form--dashboard {
+    height: auto;
+    overflow: visible;
+  }
 }
 
 .talent-project-card {

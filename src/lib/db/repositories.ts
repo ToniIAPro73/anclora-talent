@@ -51,10 +51,21 @@ function toSummary(project: ProjectRecord): ProjectSummary {
     slug: project.slug,
     title: project.title,
     status: project.status,
+    createdAt: project.createdAt,
     updatedAt: project.updatedAt,
+    documentSubtitle: project.document.subtitle,
+    documentAuthor: project.document.author,
     documentTitle: project.document.title,
+    pageCount: project.document.source?.pageCount ?? null,
+    chapterCount: project.document.chapters.length,
     coverPalette: project.cover.palette,
   };
+}
+
+function sourcePageCount(sourceMetadata: unknown) {
+  if (!sourceMetadata || typeof sourceMetadata !== 'object') return null;
+  const pageCount = (sourceMetadata as Record<string, unknown>).pageCount;
+  return typeof pageCount === 'number' && Number.isFinite(pageCount) ? pageCount : null;
 }
 
 const COVER_SURFACE_STATE_KIND = 'surface-state-cover';
@@ -461,8 +472,13 @@ async function listProjectsFromDb(userId: string) {
       slug: projects.slug,
       title: projects.title,
       status: projects.status,
+      createdAt: projects.createdAt,
       updatedAt: projects.updatedAt,
+      documentId: projectDocuments.id,
       documentTitle: projectDocuments.title,
+      documentSubtitle: projectDocuments.subtitle,
+      documentAuthor: projectDocuments.author,
+      sourceMetadata: projectDocuments.sourceMetadata,
       coverPalette: coverDesigns.palette,
     })
     .from(projects)
@@ -471,13 +487,35 @@ async function listProjectsFromDb(userId: string) {
     .where(eq(projects.userId, userId))
     .orderBy(asc(projects.updatedAt));
 
+  const documentIds = rows.map((row) => row.documentId);
+  const blockRows = documentIds.length > 0
+    ? await db
+        .select({
+          projectDocumentId: documentBlocks.projectDocumentId,
+          chapterId: documentBlocks.chapterId,
+        })
+        .from(documentBlocks)
+        .where(inArray(documentBlocks.projectDocumentId, documentIds))
+    : [];
+  const chapterCounts = new Map<string, Set<string>>();
+  for (const row of blockRows) {
+    const chapters = chapterCounts.get(row.projectDocumentId) ?? new Set<string>();
+    chapters.add(row.chapterId);
+    chapterCounts.set(row.projectDocumentId, chapters);
+  }
+
   return rows.map((row) => ({
     id: row.id,
     slug: row.slug,
     title: row.title,
     status: row.status as ProjectSummary['status'],
+    createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+    documentSubtitle: row.documentSubtitle,
+    documentAuthor: row.documentAuthor,
     documentTitle: row.documentTitle,
+    pageCount: sourcePageCount(row.sourceMetadata),
+    chapterCount: chapterCounts.get(row.documentId)?.size ?? 0,
     coverPalette: row.coverPalette as CoverDesign['palette'],
   }));
 }
