@@ -1,0 +1,126 @@
+/* =========================================================
+   CORE TOKENS — local shim of @anclora/design-system/src/tokens/core.css
+   =========================================================
+   The packaged file declares @font-face rules BEFORE its Google Fonts
+   `@import url(...)`, which is invalid CSS ("@import rules must precede
+   all rules aside from @charset and @layer"). Lightning CSS (Turbopack,
+   Next 16) rejects the whole stylesheet because of it. The package is a
+   pinned GitHub tarball, so the fix lives here: same content, with the
+   font @import hoisted to the very top of globals.css. Keep in sync when
+   the package is re-pinned. */
+
+@font-face{font-family:"Fraunces";src:url("./fonts/Fraunces_72pt-Regular.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Fraunces";src:url("./fonts/Fraunces_72pt-SemiBold.ttf") format("truetype");font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:"Fraunces";src:url("./fonts/Fraunces_72pt-Bold.ttf") format("truetype");font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:"Inter";src:url("./fonts/Inter_18pt-Regular.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Inter";src:url("./fonts/Inter_18pt-Medium.ttf") format("truetype");font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:"Inter";src:url("./fonts/Inter_18pt-SemiBold.ttf") format("truetype");font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:"Inter";src:url("./fonts/Inter_18pt-Bold.ttf") format("truetype");font-weight:700;font-style:normal;font-display:swap}
+
+:root {
+  --group-ink: #0f1520;
+  --group-slate: #151c28;
+  --group-surface: #1a2230;
+  --group-surface-2: #202a38;
+  --group-copy: rgba(236, 240, 245, 1);
+  --group-muted: rgba(236, 240, 245, 0.72);
+  --group-border: rgba(168, 174, 184, 0.25);
+  --group-silver: #a8aeb8;
+  --group-silver-2: #8a909a;
+  --group-glow: rgba(168, 174, 184, 0.08);
+
+  --portfolio-navy: #0f172a;
+  --portfolio-azure: #1e293b;
+  --portfolio-ivory: #f8f5f2;
+  --portfolio-cream: #faf9f6;
+  --portfolio-gold: #c5a059;
+  --portfolio-gold-light: #d4b77a;
+  --portfolio-gold-dark: #a8893d;
+  --portfolio-border: rgba(15, 23, 42, 0.10);
+  --portfolio-border-soft: rgba(15, 23, 42, 0.06);
+  --portfolio-glass-dark: rgba(15, 23, 42, 0.78);
+  --portfolio-glass-light: rgba(250, 249, 246, 0.82);
+
+  --internal-base: #120f0d;
+  --internal-base-2: #1a1410;
+  --internal-panel: #241d19;
+  --internal-panel-2: #2b221d;
+  --internal-copy: #f2eee9;
+  --internal-copy-muted: rgba(242, 238, 233, 0.72);
+  --internal-coral: #e06848;
+  --internal-coral-soft: rgba(224, 104, 72, 0.12);
+  --internal-sage: #5a9a78;
+  --internal-sage-soft: rgba(90, 154, 120, 0.16);
+  --internal-border: rgba(242, 238, 233, 0.10);
+  --internal-border-strong: rgba(242, 238, 233, 0.16);
+
+  --coin-group: #a8aeb8;
+  --coin-pe: #c9a95f;
+  --coin-synergi: #8c5ab4;
+  --coin-data-lab: #2da078;
+  --coin-nexus: #d4af37;
+  --coin-content: #c07860;
+  --coin-advisor: #7ec6c0;
+  --coin-talent: #6ca8e0;
+  --coin-impulso: #e07a3c;
+  --coin-command: #c24a4a;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  --radius-sm: 0.75rem;
+  --radius-md: 1.125rem;
+  --radius-lg: 1.5rem;
+  --radius-xl: 2rem;
+  --radius-2xl: 2.125rem;
+  --radius-pill: 999px;
+
+  --shadow-xs: 0 6px 14px rgba(2, 6, 12, 0.22);
+  --shadow-sm: 0 14px 34px rgba(0, 0, 0, 0.30);
+  --shadow-md: 0 18px 38px rgba(0, 0, 0, 0.34);
+  --shadow-lg: 0 28px 70px rgba(0, 0, 0, 0.40);
+  --shadow-xl: 0 38px 90px rgba(0, 0, 0, 0.45);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-focus: 0 0 0 1px rgba(229, 201, 255, 0.34), 0 18px 40px rgba(9, 4, 18, 0.24);
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 160ms;
+  --dur-base: 220ms;
+  --dur-slow: 360ms;
+
+  --font-display: "Fraunces", "Georgia", serif;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-internal: "Inter", system-ui, sans-serif;
+  --font-saas: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  --font-portfolio-display: "Cormorant Garamond", "Fraunces", "Georgia", serif;
+  --font-portfolio-sans: "Montserrat", "Inter", system-ui, sans-serif;
+  --font-portfolio-script: "Allura", cursive;
+
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-base: 1rem;
+  --fs-md: 1.125rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.5rem;
+  --fs-2xl: 1.875rem;
+  --fs-3xl: 2.25rem;
+  --fs-4xl: 3rem;
+  --fs-5xl: 3.75rem;
+  --fs-6xl: 4.5rem;
+
+  --track-eyebrow: 0.22em;
+  --track-button: 0.18em;
+  --track-title: -0.02em;
+}

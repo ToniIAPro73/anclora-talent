@@ -1,5 +1,11 @@
 /* stylelint-disable at-rule-no-unknown */
 
+/* Google Fonts for the design-system tokens (Manrope, DM Sans, JetBrains Mono,
+   Montserrat, Cormorant Garamond, Allura). Must stay the first rule in this
+   file: Lightning CSS rejects `@import url(...)` that follows any other rule,
+   and the inlined `tailwindcss` import below expands to thousands of rules. */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Montserrat:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&family=Allura&display=swap');
+
 @import "tailwindcss";
 
 /* Design system: import the exported subpaths directly instead of
@@ -7,7 +13,10 @@
    `@import url("./…")` which Turbopack/Lightning CSS silently drops
    (preexisting issue: it broke `next dev` and was also omitted from
    production builds, leaving every .ac-* class unstyled). */
-@import "@anclora/design-system/tokens/core.css";
+/* tokens/core.css ships an `@import url(google fonts)` AFTER @font-face rules,
+   which Lightning CSS rejects. Import the hoisted local copy instead
+   (identical tokens; see the shim header). */
+@import "./styles/anclora-core-tokens.css";
 @import "@anclora/design-system/tokens/semantic.css";
 @import "@anclora/design-system/taxonomy/tier.css";
 @import "@anclora/design-system/taxonomy/domain.css";
@@ -439,6 +448,15 @@ body {
   transition: grid-template-columns 300ms ease;
 }
 
+/* On narrow viewports the fixed sidebar track cannot fit next to the main
+   panel; stack the shell into a single column instead. `!important` is
+   required because the expanded/collapsed columns are set inline. */
+@media (max-width: 768px) {
+  .talent-shell-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
 .talent-shell-sidebar {
   display: flex;
   flex-direction: column;
@@ -446,6 +464,14 @@ body {
   border-radius: 36px;
   background: var(--shell-surface);
   box-shadow: var(--shadow-strong);
+}
+
+/* The aside also carries .ac-sidebar-nav, whose `min-width: 240px` is
+   unlayered and would keep the collapsed rail from shrinking into its
+   88px grid track (Tailwind's min-w-0 lives in @layer utilities and
+   loses against it). */
+aside.talent-shell-sidebar {
+  min-width: 0;
 }
 
 .talent-shell-sidebar-toggle {

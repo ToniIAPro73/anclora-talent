@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { ChevronLeft, ChevronRight, FolderOpen, LayoutDashboard, PenSquare } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FolderOpen, LayoutDashboard } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
@@ -41,7 +41,6 @@ export function AppShell({
 
   const navLinks = [
     { href: '/dashboard', icon: LayoutDashboard, label: messages.navDashboard },
-    { href: '/projects/new', icon: PenSquare, label: messages.navNewProject },
     { href: '/projects', icon: FolderOpen, label: messages.navProjects },
   ];
 
@@ -59,7 +58,7 @@ export function AppShell({
         className="talent-shell-grid"
         style={{ gridTemplateColumns: sidebarCols }}
       >
-        <aside className="talent-shell-sidebar ac-sidebar-nav">
+        <aside className="talent-shell-sidebar ac-sidebar-nav min-w-0 overflow-hidden">
           <div className={`flex ${collapsed ? 'justify-center px-3 py-4' : 'justify-end px-6 pt-4'}`}>
             <button
               onClick={toggle}
@@ -75,18 +74,9 @@ export function AppShell({
             {!collapsed && (
               <div className="min-w-0 overflow-hidden">
                 <p className="truncate text-lg font-black text-[var(--text-primary)]">{messages.brand}</p>
-                <p className="text-xs uppercase tracking-[0.24em] text-[var(--text-tertiary)]">{messages.badge}</p>
               </div>
             )}
           </div>
-
-          {!collapsed && (
-            <div className="ac-surface-panel ac-surface-panel--strong mx-6 text-[var(--text-primary)]">
-              <p className="ac-surface-panel__eyebrow">{messages.contractEyebrow}</p>
-              <p className="text-lg font-bold">{messages.contractTitle}</p>
-              <p className="text-sm leading-6 text-[var(--text-secondary)]">{messages.contractDescription}</p>
-            </div>
-          )}
 
           <nav className={`talent-shell-sidebar-nav ac-sidebar-nav mt-8 text-sm font-semibold ${collapsed ? 'px-3' : 'px-6'}`}>
             <div className="ac-sidebar-nav__group">
@@ -95,30 +85,29 @@ export function AppShell({
                   <NavigatingLink
                     key={href}
                     href={href}
-                    pendingLabel={label}
+                    pendingLabel={collapsed ? undefined : label}
                     title={collapsed ? label : undefined}
+                    aria-label={collapsed ? label : undefined}
                     aria-current={isActive(href) ? 'page' : undefined}
                     className={`ac-sidebar-nav__item talent-shell-sidebar-link ${collapsed ? 'justify-center px-2' : 'justify-start px-0'}`}
                   >
-                    <span className="ac-sidebar-nav__item-label talent-shell-sidebar-link__label">
+                    {collapsed ? (
                       <span className="talent-shell-sidebar-link__icon">
                         <Icon className="h-4 w-4 flex-shrink-0" />
                       </span>
-                      {!collapsed && <span className="talent-shell-sidebar-link__text">{label}</span>}
-                    </span>
+                    ) : (
+                      <span className="ac-sidebar-nav__item-label talent-shell-sidebar-link__label">
+                        <span className="talent-shell-sidebar-link__icon">
+                          <Icon className="h-4 w-4 flex-shrink-0" />
+                        </span>
+                        <span className="talent-shell-sidebar-link__text">{label}</span>
+                      </span>
+                    )}
                   </NavigatingLink>
                 ))}
               </div>
             </div>
           </nav>
-
-          {!collapsed && (
-            <div className="ac-surface-panel ac-surface-panel--subtle mx-6 mt-10">
-              <p className="ac-surface-panel__eyebrow">{messages.stackEyebrow}</p>
-              <p className="text-lg font-bold text-[var(--text-primary)]">{messages.stackTitle}</p>
-              <p className="text-sm leading-6 text-[var(--text-secondary)]">{messages.stackDescription}</p>
-            </div>
-          )}
 
           {!collapsed && (
             <div className="mx-6 mt-10 flex-1">
@@ -127,7 +116,7 @@ export function AppShell({
           )}
         </aside>
 
-        <div className="talent-shell-main xl:p-8">
+        <div className="talent-shell-main min-w-0 xl:p-8">
           <header className="ac-topbar talent-shell-topbar flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="ac-topbar__titles">
               <h1 className="text-3xl font-black tracking-tight text-[var(--text-primary)]">{messages.topbarTitle}</h1>

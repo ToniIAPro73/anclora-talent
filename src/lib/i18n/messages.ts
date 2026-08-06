@@ -9,16 +9,8 @@ import type {
 export type AppMessages = {
   shell: {
     brand: string;
-    badge: string;
-    contractEyebrow: string;
-    contractTitle: string;
-    contractDescription: string;
     navDashboard: string;
-    navNewProject: string;
     navProjects: string;
-    stackEyebrow: string;
-    stackTitle: string;
-    stackDescription: string;
     topbarEyebrow: string;
     topbarTitle: string;
     themeLabel: string;
@@ -88,16 +80,9 @@ export type AppMessages = {
   dashboard: {
     eyebrow: string;
     title: string;
-    description: string;
+    activeProjectsOne: string;
+    activeProjectsMany: string;
     createProject: string;
-    projectsEyebrow: string;
-    statusEyebrow: string;
-    contractEyebrow: string;
-    statusActive: string;
-    statusEmpty: string;
-    statusFallback: string;
-    contractReady: string;
-    contractFallback: string;
     sectionEyebrow: string;
     sectionTitle: string;
     emptyEyebrow: string;
@@ -701,18 +686,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
   es: {
     shell: {
       brand: 'Anclora Talent',
-      badge: 'Premium App',
-      contractEyebrow: 'Contrato',
-      contractTitle: 'Editorial workspace premium',
-      contractDescription:
-        'Identidad protegida, persistencia real y una experiencia que mantiene el mismo nivel visual desde la entrada hasta la producción.',
       navDashboard: 'Dashboard',
-      navNewProject: 'Nuevo proyecto',
       navProjects: 'Mis proyectos',
-      stackEyebrow: 'Stack activo',
-      stackTitle: 'Auth + Neon + Blob',
-      stackDescription:
-        'La cuenta individual sigue siendo la unidad activa, pero la experiencia ya se presenta como producto premium, no como shell técnico.',
       topbarEyebrow: 'App shell',
       topbarTitle: 'Workspace editorial personal',
       themeLabel: 'Tema',
@@ -833,19 +808,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       ],
     },
     dashboard: {
-      eyebrow: 'Dashboard premium',
-      title: 'Tus proyectos editoriales ya viven dentro de una app que parece producto de verdad.',
-      description:
-        'Auth, documento, preview y portada ya están alineados. Ahora el acceso diario también tiene que transmitir valor, control y acabado premium.',
+      eyebrow: 'Dashboard',
+      title: 'Tus proyectos editoriales, en un solo lugar.',
+      activeProjectsOne: '{count} proyecto activo',
+      activeProjectsMany: '{count} proyectos activos',
       createProject: 'Crear nuevo proyecto',
-      projectsEyebrow: 'Proyectos',
-      statusEyebrow: 'Estado',
-      contractEyebrow: 'Contrato',
-      statusActive: 'Base activa y persistente',
-      statusEmpty: 'Listo para primer proyecto',
-      statusFallback: 'Fallback operativo activo',
-      contractReady: 'Premium app operativa',
-      contractFallback: 'Acceso sin caída ante fallo de datos',
       sectionEyebrow: 'Mis proyectos',
       sectionTitle: 'Base editorial individual',
       emptyEyebrow: 'Estado inicial',
@@ -1511,18 +1478,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
   en: {
     shell: {
       brand: 'Anclora Talent',
-      badge: 'Premium App',
-      contractEyebrow: 'Contract',
-      contractTitle: 'Premium editorial workspace',
-      contractDescription:
-        'Protected identity, real persistence, and an experience that keeps the same visual level from entry to production.',
       navDashboard: 'Dashboard',
-      navNewProject: 'New project',
       navProjects: 'My projects',
-      stackEyebrow: 'Active stack',
-      stackTitle: 'Auth + Neon + Blob',
-      stackDescription:
-        'The individual account remains the active unit, but the experience already presents itself as a premium product, not as a technical shell.',
       topbarEyebrow: 'App shell',
       topbarTitle: 'Personal editorial workspace',
       themeLabel: 'Theme',
@@ -1643,19 +1600,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       ],
     },
     dashboard: {
-      eyebrow: 'Premium dashboard',
-      title: 'Your editorial projects already live inside an app that feels like a real product.',
-      description:
-        'Auth, document, preview, and cover are already aligned. Now daily access also has to communicate value, control, and premium finish.',
+      eyebrow: 'Dashboard',
+      title: 'Your editorial projects, all in one place.',
+      activeProjectsOne: '{count} active project',
+      activeProjectsMany: '{count} active projects',
       createProject: 'Create new project',
-      projectsEyebrow: 'Projects',
-      statusEyebrow: 'Status',
-      contractEyebrow: 'Contract',
-      statusActive: 'Active and persistent base',
-      statusEmpty: 'Ready for the first project',
-      statusFallback: 'Operational fallback enabled',
-      contractReady: 'Premium app operational',
-      contractFallback: 'Access stays up during data failure',
       sectionEyebrow: 'My projects',
       sectionTitle: 'Individual editorial base',
       emptyEyebrow: 'Initial state',
