@@ -9,10 +9,14 @@ import type {
 export type AppMessages = {
   shell: {
     brand: string;
+    navLabel: string;
     navDashboard: string;
+    navNewProject: string;
     navProjects: string;
     topbarEyebrow: string;
     topbarTitle: string;
+    topbarSubtitle: string;
+    mobileMenuLabel: string;
     themeLabel: string;
     localeLabel: string;
     themeDark: string;
@@ -87,6 +91,26 @@ export type AppMessages = {
     sectionTitle: string;
     sectionNewProject: string;
     loadMore: string;
+    projectsModalTitle: string;
+    projectsModalClose: string;
+    projectsModalCountOne: string;
+    projectsModalCountMany: string;
+    projectsTableTitle: string;
+    projectsTableSubtitle: string;
+    projectsTableAuthor: string;
+    projectsTableCreated: string;
+    projectsTableUpdated: string;
+    projectsTablePages: string;
+    projectsTableChapters: string;
+    projectsTableStatus: string;
+    projectsTableActions: string;
+    projectsTableEmptyTitle: string;
+    projectsTableEmptyDescription: string;
+    projectsTablePageStatus: string;
+    projectsTablePrevious: string;
+    projectsTableNext: string;
+    projectsStatusDraft: string;
+    projectsStatusActive: string;
     emptyEyebrow: string;
     emptyFallbackEyebrow: string;
     emptyTitle: string;
@@ -739,10 +763,14 @@ export const appMessages: Record<UiLocale, AppMessages> = {
   es: {
     shell: {
       brand: 'Anclora Talent',
+      navLabel: 'Navegación principal',
       navDashboard: 'Dashboard',
+      navNewProject: 'Nuevo proyecto',
       navProjects: 'Mis proyectos',
       topbarEyebrow: 'App shell',
       topbarTitle: 'Workspace editorial personal',
+      topbarSubtitle: 'Tus proyectos editoriales, en un solo lugar.',
+      mobileMenuLabel: 'Abrir navegación',
       themeLabel: 'Tema',
       localeLabel: 'Idioma',
       themeDark: 'Dark',
@@ -870,6 +898,26 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       sectionTitle: 'Base editorial individual',
       sectionNewProject: 'Nuevo proyecto',
       loadMore: 'Cargar más',
+      projectsModalTitle: 'Mis proyectos',
+      projectsModalClose: 'Cerrar',
+      projectsModalCountOne: '{count} proyecto activo',
+      projectsModalCountMany: '{count} proyectos activos',
+      projectsTableTitle: 'Título',
+      projectsTableSubtitle: 'Subtítulo',
+      projectsTableAuthor: 'Autor',
+      projectsTableCreated: 'Creado',
+      projectsTableUpdated: 'Actualizado',
+      projectsTablePages: 'Páginas',
+      projectsTableChapters: 'Capítulos',
+      projectsTableStatus: 'Estado',
+      projectsTableActions: 'Acciones',
+      projectsTableEmptyTitle: 'Todavía no hay proyectos.',
+      projectsTableEmptyDescription: 'Crea el primero desde el panel para verlo aquí.',
+      projectsTablePageStatus: 'Página {page} de {total}',
+      projectsTablePrevious: 'Anterior',
+      projectsTableNext: 'Siguiente',
+      projectsStatusDraft: 'Borrador',
+      projectsStatusActive: 'Activo',
       emptyEyebrow: 'Estado inicial',
       emptyFallbackEyebrow: 'Modo degradado',
       emptyTitle: 'Aún no hay proyectos, pero el workspace ya está listo para abrir el primero.',
@@ -1588,10 +1636,14 @@ export const appMessages: Record<UiLocale, AppMessages> = {
   en: {
     shell: {
       brand: 'Anclora Talent',
+      navLabel: 'Primary navigation',
       navDashboard: 'Dashboard',
+      navNewProject: 'New project',
       navProjects: 'My projects',
       topbarEyebrow: 'App shell',
       topbarTitle: 'Personal editorial workspace',
+      topbarSubtitle: 'Your editorial projects, all in one place.',
+      mobileMenuLabel: 'Open navigation',
       themeLabel: 'Theme',
       localeLabel: 'Language',
       themeDark: 'Dark',
@@ -1719,6 +1771,26 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       sectionTitle: 'Individual editorial base',
       sectionNewProject: 'New project',
       loadMore: 'Load more',
+      projectsModalTitle: 'My projects',
+      projectsModalClose: 'Close',
+      projectsModalCountOne: '{count} active project',
+      projectsModalCountMany: '{count} active projects',
+      projectsTableTitle: 'Title',
+      projectsTableSubtitle: 'Subtitle',
+      projectsTableAuthor: 'Author',
+      projectsTableCreated: 'Created',
+      projectsTableUpdated: 'Updated',
+      projectsTablePages: 'Pages',
+      projectsTableChapters: 'Chapters',
+      projectsTableStatus: 'Status',
+      projectsTableActions: 'Actions',
+      projectsTableEmptyTitle: 'No projects yet.',
+      projectsTableEmptyDescription: 'Create the first one from the dashboard to see it here.',
+      projectsTablePageStatus: 'Page {page} of {total}',
+      projectsTablePrevious: 'Previous',
+      projectsTableNext: 'Next',
+      projectsStatusDraft: 'Draft',
+      projectsStatusActive: 'Active',
       emptyEyebrow: 'Initial state',
       emptyFallbackEyebrow: 'Degraded mode',
       emptyTitle: 'There are no projects yet, but the workspace is ready to open the first one.',
