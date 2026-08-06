@@ -53,5 +53,8 @@ describe('dashboard v3 contract', () => {
     expect(dashboardPage).toContain("params?.projects === '1'");
     expect(globalsCss).toContain('.talent-projects-table');
     expect(globalsCss).toContain('position: sticky');
+    expect(globalsCss).toMatch(/\.talent-projects-modal__panel\s*\{[^}]*max-width: min\(1480px, calc\(100vw - 2rem\)\)/);
+    expect(globalsCss).toMatch(/\.talent-projects-modal__panel\s*\{[^}]*border-radius: 24px/);
+    expect(globalsCss).toContain('.talent-projects-table__action');
   });
 });
