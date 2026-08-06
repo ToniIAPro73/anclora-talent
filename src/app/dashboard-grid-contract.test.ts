@@ -28,8 +28,15 @@ describe('dashboard grid balance contract', () => {
     expect(dashboardPage).toContain('data-testid="dashboard-active-count"');
   });
 
-  test('gives the shell enough width to avoid a narrow central band', () => {
-    expect(globalsCss).toMatch(/\.talent-shell-grid\s*\{[^}]*max-width: 96rem/);
+  test('gives the shell a fluid max-width so large viewports leave no dead bands (P-SHELL-01)', () => {
+    expect(globalsCss).toMatch(
+      /\.talent-shell-grid\s*\{[^}]*max-width: clamp\(96rem, 92vw, 128rem\)/,
+    );
+  });
+
+  test('P-SHELL-01: projects grid grows to a third column on very large viewports', () => {
+    expect(globalsCss).toMatch(/--breakpoint-3xl:\s*137\.5rem/);
+    expect(paginatedGrid).toContain('3xl:grid-cols-3');
   });
 
   test('auto-fits template cards inside the create form instead of fixed columns', () => {

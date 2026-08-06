@@ -29,7 +29,7 @@ export function PaginatedProjectGrid({
 
   return (
     <>
-      <div className="grid gap-4 2xl:grid-cols-2" data-testid="dashboard-projects-grid">
+      <div className="grid gap-4 2xl:grid-cols-2 3xl:grid-cols-3" data-testid="dashboard-projects-grid">
         {visible.map((project) => (
           <ProjectCard key={project.id} copy={copy} locale={locale} project={project} />
         ))}

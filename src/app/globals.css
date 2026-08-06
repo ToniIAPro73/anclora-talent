@@ -345,6 +345,11 @@ html[data-theme="light"] {
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 }
 
+@theme {
+  /* P-SHELL-01: named breakpoint so the 3rd projects column sorts after 2xl in the cascade */
+  --breakpoint-3xl: 137.5rem; /* 2200px */
+}
+
 * {
   box-sizing: border-box;
 }
@@ -442,7 +447,9 @@ body {
   display: grid;
   min-height: 100vh;
   gap: 20px;
-  max-width: 96rem;
+  /* P-SHELL-01: fluid cap — 96rem floor, grows with the viewport up to
+     128rem, so large monitors no longer get ~500px dead bands per side. */
+  max-width: clamp(96rem, 92vw, 128rem);
   margin-inline: auto;
   padding: 16px;
   transition: grid-template-columns 300ms ease;
