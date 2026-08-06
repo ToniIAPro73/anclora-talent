@@ -21,6 +21,13 @@ vi.mock('@/lib/brand/actions', () => ({
   setProjectBrandProfileAction: vi.fn(),
 }));
 
+vi.mock('mammoth', () => ({
+  convertToHtml: vi.fn(async () => ({
+    value: '<h1>Éxito sin compañía</h1><h2>Introducción</h2><h2>Concepto 1</h2>',
+    messages: [],
+  })),
+}));
+
 const copy = resolveLocaleMessages('es').project;
 
 function mockFetchSuccess(chapterCount = 3, title = 'El título detectado') {
@@ -174,6 +181,30 @@ describe('DocumentImporter', () => {
     await waitFor(() => {
       expect(screen.getByText('No se pudo analizar el documento')).toBeInTheDocument();
     });
+  });
+
+  test('falls back to local DOCX analysis when the server upload cannot be parsed', async () => {
+    mockFetchNetworkError();
+    render(<DocumentImporter copy={copy} />);
+
+    const fileInput = screen.getByTestId('source-document-input');
+    fireEvent.change(fileInput, {
+      target: {
+        files: [
+          new File(['docx bytes'], 'exito_sin_compania.docx', {
+            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          }),
+        ],
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Listo para importar')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('import-analysis-title')).toHaveTextContent('Éxito sin compañía');
+    expect(screen.getByTestId('import-analysis-warnings')).toHaveTextContent(copy.importLocalFallbackWarning);
+    expect(screen.queryByText(copy.importErrorGeneric)).not.toBeInTheDocument();
   });
 
   test('shows a non-blocking warning when the server reports a parse failure', async () => {

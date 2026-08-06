@@ -35,9 +35,17 @@ describe('dashboard v3 contract', () => {
   test('create form splits primary and optional sections for desktop dashboard layout', () => {
     expect(createProjectForm).toContain('talent-create-form__primary');
     expect(createProjectForm).toContain('talent-create-form__optional');
+    expect(createProjectForm).toContain('talent-create-form__intro');
     expect(globalsCss).toMatch(/\.talent-create-form--dashboard\s*\{[^}]*grid-template-columns: minmax\(0, 1\.25fr\) minmax\(22rem, 0\.75fr\)/);
     expect(globalsCss).toMatch(/\.talent-create-form--dashboard \.ac-template-catalog__grid\s*\{[^}]*display: flex/);
+    expect(globalsCss).toMatch(/\.talent-create-form--dashboard \.ac-template-catalog__grid\s*\{[^}]*padding-top: 14px/);
     expect(globalsCss).not.toMatch(/\.talent-create-form--dashboard \.talent-create-form__optional\s*\{[^}]*overflow-y: auto/);
+  });
+
+  test('required inputs get a visible asterisk by global form contract', () => {
+    expect(createProjectForm).toContain('required');
+    expect(globalsCss).toContain('label:has(:is(input, select, textarea)[required])');
+    expect(globalsCss).toContain('content: " *"');
   });
 
   test('projects are exposed by modal-table query state, not dashboard cards', () => {

@@ -631,6 +631,14 @@ body {
   overflow: hidden;
 }
 
+.ac-form-field:has(:is(input, select, textarea)[required]) .ac-form-field__label::after,
+label:has(:is(input, select, textarea)[required]) > .ac-form-field__label::after,
+label:has(:is(input, select, textarea)[required]) > span:first-child::after {
+  content: " *";
+  color: var(--accent-text);
+  font-weight: 900;
+}
+
 .talent-dashboard-v3 {
   display: grid;
   gap: 16px;
@@ -642,6 +650,26 @@ body {
   display: grid;
   min-height: 0;
   overflow: visible;
+}
+
+.talent-create-form__intro {
+  display: grid;
+  max-width: 60rem;
+  gap: 12px;
+  padding-bottom: 8px;
+}
+
+.talent-create-form__intro .ac-surface-panel__title {
+  max-width: 48rem;
+  font-size: clamp(1.55rem, 1.7vw, 2.05rem);
+  line-height: 1.16;
+}
+
+.talent-create-form__intro p:last-child {
+  max-width: 50rem;
+  color: var(--text-secondary);
+  font-size: 0.98rem;
+  line-height: 1.9;
 }
 
 .talent-create-form--dashboard {
@@ -670,7 +698,9 @@ body {
   gap: 14px;
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  padding-bottom: 8px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  scroll-padding-inline: 8px;
 }
 
 .talent-create-form--dashboard .ac-template-card {
