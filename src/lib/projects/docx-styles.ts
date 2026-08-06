@@ -1,7 +1,8 @@
 /**
- * U6: best-effort extraction of the DOCX `Normal` paragraph style typography
- * (font family + size) from `word/styles.xml`. Used by the import route to
- * pre-fill the document-data modal with values verified in the source file.
+ * U6: best-effort extraction of DOCX body typography (font family + size)
+ * from `word/styles.xml`. It prefers the `Normal` paragraph style and falls
+ * back to `docDefaults`. Used by the import flow to pre-fill the
+ * document-data modal with values verified in the source file.
  *
  * The XML is scanned with simple regexes instead of a full XML parser: the
  * document is a zip part we control the read of, and a parse miss must simply
@@ -50,10 +51,14 @@ function extractFontSizePt(rpr: string): number | undefined {
   return halfPoints / 2;
 }
 
+function findDefaultRunProperties(xml: string): string | null {
+  return xml.match(/<w:docDefaults\b[\s\S]*?<w:rPrDefault\b[\s\S]*?<w:rPr>([\s\S]*?)<\/w:rPr>/)?.[1] ?? null;
+}
+
 /**
- * Reads `word/styles.xml` from a .docx buffer and returns the `Normal`
- * paragraph style typography, or null when the file is not a valid docx, the
- * style is missing, or it declares neither family nor size.
+ * Reads `word/styles.xml` from a .docx buffer and returns the body typography
+ * from `Normal` or document defaults, or null when the file declares neither
+ * family nor size.
  */
 export async function extractDocxNormalStyle(
   buffer: Buffer | ArrayBuffer,
@@ -65,9 +70,7 @@ export async function extractDocxNormalStyle(
 
     const xml = await stylesFile.async('string');
     const styleBlock = findNormalStyleBlock(xml);
-    if (!styleBlock) return null;
-
-    const rpr = styleBlock.match(/<w:rPr>([\s\S]*?)<\/w:rPr>/)?.[1];
+    const rpr = styleBlock?.match(/<w:rPr>([\s\S]*?)<\/w:rPr>/)?.[1] ?? findDefaultRunProperties(xml);
     if (!rpr) return null;
 
     const result: DocxNormalStyle = {};
