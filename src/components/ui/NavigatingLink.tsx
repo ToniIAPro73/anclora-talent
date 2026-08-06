@@ -59,15 +59,17 @@ export function NavigatingLink({
       data-testid={dataTestId}
       className={className}
       data-navigation-state={isNavigating ? 'loading' : 'idle'}
+      data-pending-label={isNavigating && typeof pendingLabel === 'string' ? pendingLabel : undefined}
+      aria-busy={isNavigating}
     >
-      {isNavigating ? (
-        <span className="inline-flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span>{pendingLabel ?? children}</span>
-        </span>
-      ) : (
-        children
-      )}
+      <span className="relative inline-flex items-center justify-center">
+        <span className={isNavigating ? 'opacity-0' : undefined}>{children}</span>
+        {isNavigating ? (
+          <span className="absolute inset-0 inline-flex items-center justify-center">
+            <Loader2 className="h-4 w-4 animate-spin" />
+          </span>
+        ) : null}
+      </span>
     </button>
   );
 }
