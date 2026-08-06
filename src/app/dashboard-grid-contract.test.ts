@@ -11,6 +11,10 @@ const createProjectForm = readFileSync(
   resolve(process.cwd(), 'src/components/projects/CreateProjectForm.tsx'),
   'utf8',
 );
+const paginatedGrid = readFileSync(
+  resolve(process.cwd(), 'src/components/projects/PaginatedProjectGrid.tsx'),
+  'utf8',
+);
 
 describe('dashboard grid balance contract', () => {
   test('lays projects and create form out in a two-column grid', () => {
@@ -34,5 +38,25 @@ describe('dashboard grid balance contract', () => {
       /\.talent-create-form \.ac-template-catalog__grid\s*\{[^}]*repeat\(auto-fit, minmax\(190px, 1fr\)\)/,
     );
     expect(globalsCss).toMatch(/\.talent-create-form \.ac-template-card__summary\s*\{[^}]*-webkit-line-clamp: 3/);
+  });
+
+  test('P-U3-01: projects render through the paginated grid with a load-more control', () => {
+    expect(dashboardPage).toContain('PaginatedProjectGrid');
+    expect(paginatedGrid).toContain('data-testid="dashboard-load-more"');
+    expect(paginatedGrid).toContain('slice(0, visibleCount)');
+  });
+
+  test('P-E2-03: the projects section header exposes a visible new-project action', () => {
+    expect(dashboardPage).toContain('data-testid="dashboard-new-project"');
+    expect(dashboardPage).toContain('dashboardCopy.sectionNewProject');
+  });
+
+  test('P-U3-03: the create form column is self-start and sticky so long lists leave no gap', () => {
+    expect(dashboardPage).toContain('self-start xl:sticky xl:top-8');
+  });
+
+  test('P-E6-01: hero typography scales down on small viewports', () => {
+    expect(dashboardPage).toContain('text-3xl font-black tracking-tight sm:text-5xl');
+    expect(dashboardPage).toContain('p-5 text-[var(--text-primary)] sm:p-8');
   });
 });

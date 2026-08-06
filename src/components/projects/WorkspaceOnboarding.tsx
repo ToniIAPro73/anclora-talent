@@ -78,7 +78,7 @@ export function WorkspaceOnboarding({ copy }: WorkspaceOnboardingProps) {
 
         <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">{steps[step].body}</p>
 
-        <div className="mt-6 flex items-center justify-between gap-4">
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
           <button
             type="button"
             onClick={dismiss}

@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // P-E1-04/P-U3-02: keep the dev-only issues badge anchored to the content
+  // corner so it never overlaps the sidebar rail or the footer.
+  devIndicators: {
+    position: 'bottom-right',
+  },
   typescript: {
     // !! WARN !!
     // Temporarily ignore build errors to stabilize environment

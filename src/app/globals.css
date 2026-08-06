@@ -772,6 +772,37 @@ html[data-theme="light"] .talent-shell-switcher .ac-theme-switcher__option[aria-
   box-shadow: var(--shadow-soft);
 }
 
+/* P-E6-03: at mobile widths the workflow layout collapses to one column but
+   the design-system tracks keep an auto minimum, so the 9-step stepper's
+   min-content (~860px) propagated up and overflowed the page. Pin the tracks
+   and the whole chain to a zero minimum so the stepper scrolls inside the
+   viewport instead of stretching it. */
+@media (max-width: 768px) {
+  .talent-workspace-stage,
+  .talent-workspace-stage .ac-workspace-stage__header,
+  .talent-workspace-stage .ac-workflow-shell__progress,
+  .talent-workflow-shell,
+  .talent-workflow-shell .ac-workflow-shell__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .talent-workspace-stage,
+  .talent-workspace-stage .ac-workspace-stage__header,
+  .talent-workspace-stage .ac-workflow-shell__progress,
+  .talent-workspace-stage .ac-stepper,
+  .talent-workflow-shell,
+  .talent-workflow-shell .ac-workflow-shell__layout,
+  .talent-workflow-shell .ac-workflow-shell__rail,
+  .talent-workflow-shell .ac-workflow-shell__content {
+    min-width: 0;
+  }
+
+  /* Modal panels must never push the page wider than the viewport. */
+  .ac-modal__panel {
+    max-width: calc(100vw - 2rem);
+  }
+}
+
 .talent-preview-overlay {
   color-scheme: dark;
 }

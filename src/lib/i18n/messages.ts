@@ -85,6 +85,8 @@ export type AppMessages = {
     createProject: string;
     sectionEyebrow: string;
     sectionTitle: string;
+    sectionNewProject: string;
+    loadMore: string;
     emptyEyebrow: string;
     emptyFallbackEyebrow: string;
     emptyTitle: string;
@@ -121,6 +123,7 @@ export type AppMessages = {
     cardPreview: string;
     cardDelete: string;
     cardDeleteConfirm: string;
+    cardActionsMenu: string;
     editorEyebrow: string;
     editorOpenPreview: string;
     editorOpenCover: string;
@@ -816,6 +819,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       createProject: 'Crear nuevo proyecto',
       sectionEyebrow: 'Mis proyectos',
       sectionTitle: 'Base editorial individual',
+      sectionNewProject: 'Nuevo proyecto',
+      loadMore: 'Cargar más',
       emptyEyebrow: 'Estado inicial',
       emptyFallbackEyebrow: 'Modo degradado',
       emptyTitle: 'Aún no hay proyectos, pero el workspace ya está listo para abrir el primero.',
@@ -882,6 +887,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       cardPreview: 'Preview',
       cardDelete: 'Eliminar',
       cardDeleteConfirm: '¿Seguro que quieres eliminar "{title}"? Esta acción no se puede deshacer.',
+      cardActionsMenu: 'Acciones del proyecto',
       editorEyebrow: 'Editor',
       editorOpenPreview: 'Abrir preview',
       editorOpenCover: 'Diseñar portada',
@@ -1610,6 +1616,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       createProject: 'Create new project',
       sectionEyebrow: 'My projects',
       sectionTitle: 'Individual editorial base',
+      sectionNewProject: 'New project',
+      loadMore: 'Load more',
       emptyEyebrow: 'Initial state',
       emptyFallbackEyebrow: 'Degraded mode',
       emptyTitle: 'There are no projects yet, but the workspace is ready to open the first one.',
@@ -1676,6 +1684,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       cardPreview: 'Preview',
       cardDelete: 'Delete',
       cardDeleteConfirm: 'Are you sure you want to delete "{title}"? This action cannot be undone.',
+      cardActionsMenu: 'Project actions',
       editorEyebrow: 'Editor',
       editorOpenPreview: 'Open preview',
       editorOpenCover: 'Design cover',
