@@ -58,6 +58,29 @@ describe('ProjectsTableModal', () => {
     expect(within(rows[2]).getByText('Proyecto 1')).toBeInTheDocument();
   });
 
+  test('renders direct icon actions without the oversized kebab menu', () => {
+    render(
+      <ProjectsTableModal
+        copy={appMessages.es.dashboard}
+        projectCopy={appMessages.es.project}
+        locale="es"
+        projects={[makeProject(1, '2026-01-01T10:00:00Z')]}
+      />,
+    );
+
+    const row = within(screen.getByTestId('projects-table')).getAllByRole('row')[1];
+    expect(within(row).getByRole('button', { name: 'Abrir editor' })).toHaveClass(
+      'talent-projects-table__action',
+    );
+    expect(within(row).getByRole('button', { name: 'Preview' })).toHaveClass(
+      'talent-projects-table__action',
+    );
+    expect(within(row).getByRole('button', { name: 'Eliminar' })).toHaveClass(
+      'talent-projects-table__action',
+    );
+    expect(screen.queryByTestId('project-card-menu')).not.toBeInTheDocument();
+  });
+
   test('paginates in 25-row batches', () => {
     const projects = Array.from({ length: 26 }, (_, index) =>
       makeProject(index, `2026-01-${String(index + 1).padStart(2, '0')}T10:00:00Z`),

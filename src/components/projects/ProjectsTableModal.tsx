@@ -2,11 +2,11 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Eye, Pencil, Trash2, X } from 'lucide-react';
 import type { ProjectSummary } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
-import { premiumPrimaryMintButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { NavigatingLink } from '@/components/ui/NavigatingLink';
-import { ProjectCardMenu } from './ProjectCardMenu';
+import { deleteProjectAction } from '@/lib/projects/actions';
 
 const PAGE_SIZE = 25;
 
@@ -57,8 +57,15 @@ export function ProjectsTableModal({
             <p className="ac-surface-panel__eyebrow">{countCopy}</p>
             <h2 id="projects-modal-title" className="talent-projects-modal__title">{copy.projectsModalTitle}</h2>
           </div>
-          <button type="button" data-testid="projects-modal-close-button" onClick={close} className="ac-button ac-button--ghost min-h-11 px-4">
-            {copy.projectsModalClose}
+          <button
+            type="button"
+            data-testid="projects-modal-close-button"
+            onClick={close}
+            aria-label={copy.projectsModalClose}
+            title={copy.projectsModalClose}
+            className="talent-projects-modal__close"
+          >
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </header>
 
@@ -96,19 +103,50 @@ export function ProjectsTableModal({
                       </td>
                       <td>
                         <div className="talent-projects-table__actions">
-                          <NavigatingLink href={`/projects/${project.id}/editor`} pendingLabel={projectCopy.cardOpenEditor} className={`${premiumPrimaryMintButton} min-h-10 px-4`}>
-                            {projectCopy.cardOpenEditor}
+                          <NavigatingLink
+                            href={`/projects/${project.id}/editor`}
+                            pendingLabel={projectCopy.cardOpenEditor}
+                            aria-label={projectCopy.cardOpenEditor}
+                            title={projectCopy.cardOpenEditor}
+                            data-testid="projects-table-edit-action"
+                            className="talent-projects-table__action talent-projects-table__action--primary"
+                          >
+                            <Pencil className="h-4 w-4" aria-hidden="true" />
                           </NavigatingLink>
-                          <NavigatingLink href={`/projects/${project.id}/preview`} pendingLabel={projectCopy.cardPreview} className={`${premiumSecondaryLightButton} min-h-10 px-4`}>
-                            {projectCopy.cardPreview}
+                          <NavigatingLink
+                            href={`/projects/${project.id}/preview`}
+                            pendingLabel={projectCopy.cardPreview}
+                            aria-label={projectCopy.cardPreview}
+                            title={projectCopy.cardPreview}
+                            data-testid="projects-table-preview-action"
+                            className="talent-projects-table__action"
+                          >
+                            <Eye className="h-4 w-4" aria-hidden="true" />
                           </NavigatingLink>
-                          <ProjectCardMenu
-                            projectId={project.id}
-                            menuLabel={projectCopy.cardActionsMenu}
-                            deleteLabel={projectCopy.cardDelete}
-                            confirmMessage={projectCopy.cardDeleteConfirm.replace('{title}', project.title)}
-                            documentDataLabel={projectCopy.documentDataOpen}
-                          />
+                          <form
+                            action={deleteProjectAction}
+                            onSubmit={(event) => {
+                              if (!window.confirm(projectCopy.cardDeleteConfirm.replace('{title}', project.title))) {
+                                event.preventDefault();
+                              }
+                            }}
+                          >
+                            <input
+                              type="hidden"
+                              name="projectId"
+                              value={project.id}
+                              data-testid="delete-project-id-input"
+                            />
+                            <button
+                              type="submit"
+                              aria-label={projectCopy.cardDelete}
+                              title={projectCopy.cardDelete}
+                              data-testid="projects-table-delete-action"
+                              className="talent-projects-table__action talent-projects-table__action--danger"
+                            >
+                              <Trash2 className="h-4 w-4" aria-hidden="true" />
+                            </button>
+                          </form>
                         </div>
                       </td>
                     </tr>
