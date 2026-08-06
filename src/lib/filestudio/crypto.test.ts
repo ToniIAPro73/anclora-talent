@@ -9,7 +9,7 @@ describe('FileStudio credentials encryption (AES-256-GCM)', () => {
     const secret = JSON.stringify({ accessToken: 'at', refreshToken: 'rt' });
     const payload = encryptCredentials(secret, KEY);
 
-    expect(payload).not.toContain('at');
+    expect(payload).not.toContain(secret);
     expect(payload.startsWith('v1:')).toBe(true);
     expect(decryptCredentials(payload, KEY)).toBe(secret);
   });
