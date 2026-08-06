@@ -51,10 +51,11 @@ export function AppShell({
             <div className="talent-shell-brand">
               <BrandLogo size={42} />
               <div className="talent-shell-brand__name">{messages.brand}</div>
-              <div className="talent-shell-brand__copy">
-                <p>{messages.topbarTitle}</p>
-                <span>{messages.topbarSubtitle}</span>
-              </div>
+            </div>
+
+            <div className="talent-shell-brand__copy">
+              <p>{messages.topbarTitle}</p>
+              <span>{messages.topbarSubtitle}</span>
             </div>
 
             <nav className="talent-shell-nav" aria-label={messages.navLabel}>
