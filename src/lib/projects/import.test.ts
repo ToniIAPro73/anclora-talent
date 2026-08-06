@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 describe('document import parser isolation', () => {
@@ -113,6 +115,23 @@ describe('document import parser isolation', () => {
     expect(result.chapters?.[2].title).toBe('Capitulo dos');
     expect(result.warnings?.some((warning) => warning.includes('índice sintético editable'))).toBe(true);
   });
+
+  test('imports the exito_sin_compania DOCX fixture as a base document', async () => {
+    vi.doMock('server-only', () => ({}));
+
+    const { extractImportedDocumentSeed } = await import('./import');
+    const bytes = readFileSync(resolve(process.cwd(), 'fixtures/exito_sin_compania.docx'));
+    const file = new File([new Uint8Array(bytes)], 'exito_sin_compania.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    });
+
+    const result = await extractImportedDocumentSeed(file);
+
+    expect(result.parseFailed).toBe(false);
+    expect(result.title).toBeTruthy();
+    expect(result.chapters?.length ?? 0).toBeGreaterThan(0);
+    expect(result.blocks.length).toBeGreaterThan(0);
+  }, 20000);
 
   test('pdf parse failure degrades to an empty shell document instead of aborting', async () => {
     vi.doMock('server-only', () => ({}));
