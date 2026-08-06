@@ -1,0 +1,189 @@
+{
+  "generatedAt": "2026-08-06T03:19:33.211Z",
+  "results": [
+    {
+      "label": "expanded-2560x1440-dark",
+      "ok": true,
+      "bandPx": 256,
+      "bandPct": 10,
+      "state": {
+        "noHorizontalOverflow": true,
+        "shellWidth": 2048,
+        "shellLeft": 256,
+        "viewportWidth": 2560,
+        "sidebarWidth": 320,
+        "projectGridCols": 3,
+        "activeCountChip": true
+      },
+      "assertions": {
+        "noHorizontalOverflow": true,
+        "shellWithinClampCap": true,
+        "shellFillsFluidRule": true,
+        "activeCountChip": true,
+        "sidebarNotOverlapping": true,
+        "thirdColumnAt2200": true
+      }
+    },
+    {
+      "label": "collapsed-2560x1440-dark",
+      "ok": true,
+      "bandPx": 256,
+      "bandPct": 10,
+      "state": {
+        "noHorizontalOverflow": true,
+        "shellWidth": 2048,
+        "shellLeft": 256,
+        "viewportWidth": 2560,
+        "sidebarWidth": 320,
+        "projectGridCols": 3,
+        "activeCountChip": true
+      },
+      "assertions": {
+        "noHorizontalOverflow": true,
+        "shellWithinClampCap": true,
+        "shellFillsFluidRule": true,
+        "activeCountChip": true,
+        "sidebarNotOverlapping": true,
+        "thirdColumnAt2200": true
+      }
+    },
+    {
+      "label": "expanded-2560x1440-light",
+      "ok": true,
+      "bandPx": 256,
+      "bandPct": 10,
+      "state": {
+        "noHorizontalOverflow": true,
+        "shellWidth": 2048,
+        "shellLeft": 256,
+        "viewportWidth": 2560,
+        "sidebarWidth": 320,
+        "projectGridCols": 3,
+        "activeCountChip": true
+      },
+      "assertions": {
+        "noHorizontalOverflow": true,
+        "shellWithinClampCap": true,
+        "shellFillsFluidRule": true,
+        "activeCountChip": true,
+        "sidebarNotOverlapping": true,
+        "thirdColumnAt2200": true
+      }
+    },
+    {
+      "label": "collapsed-2560x1440-light",
+      "ok": true,
+      "bandPx": 256,
+      "bandPct": 10,
+      "state": {
+        "noHorizontalOverflow": true,
+        "shellWidth": 2048,
+        "shellLeft": 256,
+        "viewportWidth": 2560,
+        "sidebarWidth": 88,
+        "projectGridCols": 3,
+        "activeCountChip": true
+      },
+      "assertions": {
+        "noHorizontalOverflow": true,
+        "shellWithinClampCap": true,
+        "shellFillsFluidRule": true,
+        "activeCountChip": true,
+        "sidebarNotOverlapping": true,
+        "thirdColumnAt2200": true
+      }
+    },
+    {
+      "label": "expanded-1920x1080-dark",
+      "ok": true,
+      "bandPx": 77,
+      "bandPct": 4,
+      "state": {
+        "noHorizontalOverflow": true,
+        "shellWidth": 1766,
+        "shellLeft": 77,
+        "viewportWidth": 1920,
+        "sidebarWidth": 320,
+        "projectGridCols": 2,
+        "activeCountChip": true
+      },
+      "assertions": {
+        "noHorizontalOverflow": true,
+        "shellWithinClampCap": true,
+        "shellFillsFluidRule": true,
+        "activeCountChip": true,
+        "sidebarNotOverlapping": true,
+        "thirdColumnAt2200": true
+      }
+    },
+    {
+      "label": "collapsed-1920x1080-dark",
+      "ok": true,
+      "bandPx": 77,
+      "bandPct": 4,
+      "state": {
+        "noHorizontalOverflow": true,
+        "shellWidth": 1766,
+        "shellLeft": 77,
+        "viewportWidth": 1920,
+        "sidebarWidth": 88,
+        "projectGridCols": 2,
+        "activeCountChip": true
+      },
+      "assertions": {
+        "noHorizontalOverflow": true,
+        "shellWithinClampCap": true,
+        "shellFillsFluidRule": true,
+        "activeCountChip": true,
+        "sidebarNotOverlapping": true,
+        "thirdColumnAt2200": true
+      }
+    },
+    {
+      "label": "expanded-1920x1080-light",
+      "ok": true,
+      "bandPx": 77,
+      "bandPct": 4,
+      "state": {
+        "noHorizontalOverflow": true,
+        "shellWidth": 1766,
+        "shellLeft": 77,
+        "viewportWidth": 1920,
+        "sidebarWidth": 320,
+        "projectGridCols": 2,
+        "activeCountChip": true
+      },
+      "assertions": {
+        "noHorizontalOverflow": true,
+        "shellWithinClampCap": true,
+        "shellFillsFluidRule": true,
+        "activeCountChip": true,
+        "sidebarNotOverlapping": true,
+        "thirdColumnAt2200": true
+      }
+    },
+    {
+      "label": "collapsed-1920x1080-light",
+      "ok": true,
+      "bandPx": 77,
+      "bandPct": 4,
+      "state": {
+        "noHorizontalOverflow": true,
+        "shellWidth": 1766,
+        "shellLeft": 77,
+        "viewportWidth": 1920,
+        "sidebarWidth": 88,
+        "projectGridCols": 2,
+        "activeCountChip": true
+      },
+      "assertions": {
+        "noHorizontalOverflow": true,
+        "shellWithinClampCap": true,
+        "shellFillsFluidRule": true,
+        "activeCountChip": true,
+        "sidebarNotOverlapping": true,
+        "thirdColumnAt2200": true
+      }
+    }
+  ]
+}

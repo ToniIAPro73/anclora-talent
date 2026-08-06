@@ -9,7 +9,8 @@ export async function loadDashboardData(
   try {
     const projects = await repository.listProjectsForUser(userId);
     return {
-      projects,
+      // P-U3-01: dashboard lists newest activity first.
+      projects: [...projects].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt)),
       dataAvailable: true,
     };
   } catch (error) {

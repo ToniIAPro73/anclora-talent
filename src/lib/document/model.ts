@@ -12,8 +12,9 @@
  * - Every block carries a stable `id` so the composer can anchor
  *   incremental recomposition and cross-reference tokens can target it.
  * - Cross references are *live tokens* (`ref` inline nodes), never plain
- *   text: their visible label is materialized by the composition engine.
- */
+ *   text: their visible label is materialized by the composition engine. */
+
+import type { CompositionSettings } from '@/lib/projects/composition';
 
 export type InlineMarkType = 'bold' | 'italic' | 'link';
 
@@ -134,6 +135,10 @@ export interface DocumentMetadata {
   description?: string;
   keywords?: string[];
   language?: string;
+  /** U6: per-project composition overrides (hierarchy: project > user > system). */
+  composition?: CompositionSettings | null;
+  /** U6: explicit "no brand" marker; wins over any default brand profile. */
+  brandChoice?: 'none';
 }
 
 export interface SemanticDocument {
