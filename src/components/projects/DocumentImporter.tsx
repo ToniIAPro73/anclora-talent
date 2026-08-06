@@ -97,13 +97,29 @@ function textFromHtml(html: string) {
   return document.body.textContent ?? '';
 }
 
+function compositionFromDocxNormalStyle(
+  normalStyle: { fontFamily?: string; fontSizePt?: number } | null,
+): AnalysisResult['composition'] {
+  if (!normalStyle) return undefined;
+  const settings: CompositionSettings = {};
+  if (normalStyle.fontFamily) settings.fontFamily = normalStyle.fontFamily;
+  if (normalStyle.fontSizePt !== undefined) settings.fontSizePt = normalStyle.fontSizePt;
+  return Object.keys(settings).length > 0 ? { settings, source: 'docx-styles' } : undefined;
+}
+
 async function analyzeDocxLocally(file: File, copy: AppMessages['project']): Promise<AnalysisResult | null> {
   if (!isDocxFile(file)) return null;
 
   try {
-    const mammoth = await import('mammoth');
+    const [{ extractDocxNormalStyle }, mammoth] = await Promise.all([
+      import('@/lib/projects/docx-styles'),
+      import('mammoth'),
+    ]);
     const arrayBuffer = await file.arrayBuffer();
-    const result = await mammoth.convertToHtml({ arrayBuffer });
+    const [result, normalStyle] = await Promise.all([
+      mammoth.convertToHtml({ arrayBuffer }),
+      extractDocxNormalStyle(arrayBuffer),
+    ]);
     const html = result.value ?? '';
     const plainText = textFromHtml(html).replace(/\s+/g, ' ').trim();
     const title =
@@ -129,6 +145,7 @@ async function analyzeDocxLocally(file: File, copy: AppMessages['project']): Pro
       ocrAppliedMode: null,
       manuscriptType: 'non-fiction',
       detectedManuscriptType: 'non-fiction',
+      composition: compositionFromDocxNormalStyle(normalStyle),
     };
   } catch {
     return null;
