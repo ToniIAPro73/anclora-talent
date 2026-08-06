@@ -10,6 +10,9 @@ interface NavigatingLinkProps {
   children: React.ReactNode;
   pendingLabel?: string;
   title?: string;
+  role?: string;
+  onClick?: () => void;
+  'aria-current'?: React.AriaAttributes['aria-current'];
   'aria-label'?: string;
   'data-testid'?: string;
 }
@@ -20,6 +23,9 @@ export function NavigatingLink({
   children,
   pendingLabel,
   title,
+  role,
+  onClick,
+  'aria-current': ariaCurrent,
   'aria-label': ariaLabel,
   'data-testid': dataTestId,
 }: NavigatingLinkProps) {
@@ -37,15 +43,18 @@ export function NavigatingLink({
     }
 
     setIsNavigating(true);
+    onClick?.();
     router.push(href);
-  }, [href, pathname, router]);
+  }, [href, onClick, pathname, router]);
 
   return (
     <button
       type="button"
       onClick={handleClick}
       disabled={isNavigating}
+      role={role}
       title={title}
+      aria-current={ariaCurrent}
       aria-label={ariaLabel}
       data-testid={dataTestId}
       className={className}
