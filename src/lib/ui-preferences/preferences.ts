@@ -1,3 +1,5 @@
+import type { CompositionSettings } from '@/lib/projects/composition';
+
 export type UiTheme = 'dark' | 'light';
 export type UiLocale = 'es' | 'en';
 
@@ -11,6 +13,9 @@ export interface EditorPreferences {
     left: number;
     right: number;
   };
+  /** U6: user-level composition defaults (projects without their own
+   *  composition inherit these; resolution: project > user > system). */
+  compositionDefaults?: CompositionSettings;
 }
 
 export type UiPreferences = {

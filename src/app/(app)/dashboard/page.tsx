@@ -1,5 +1,5 @@
 import { CreateProjectForm } from '@/components/projects/CreateProjectForm';
-import { ProjectCard } from '@/components/projects/ProjectCard';
+import { PaginatedProjectGrid } from '@/components/projects/PaginatedProjectGrid';
 import { FileStudioConnectionCard } from '@/components/filestudio/FileStudioConnectionCard';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import { NavigatingLink } from '@/components/ui/NavigatingLink';
@@ -28,11 +28,11 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <section className="ac-surface-panel ac-surface-panel--strong overflow-hidden p-8 text-[var(--text-primary)]">
+      <section className="ac-surface-panel ac-surface-panel--strong overflow-hidden p-5 text-[var(--text-primary)] sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="ac-surface-panel__eyebrow">{dashboardCopy.eyebrow}</p>
-            <h2 className="mt-4 max-w-4xl text-4xl font-black tracking-tight sm:text-5xl">
+            <h2 className="mt-4 max-w-4xl text-3xl font-black tracking-tight sm:text-5xl">
               {dashboardCopy.title}
             </h2>
           </div>
@@ -52,16 +52,22 @@ export default async function DashboardPage() {
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
         <div className="space-y-4">
-          <div>
-            <p className="ac-surface-panel__eyebrow">{dashboardCopy.sectionEyebrow}</p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-[var(--text-primary)]">{dashboardCopy.sectionTitle}</h2>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="ac-surface-panel__eyebrow">{dashboardCopy.sectionEyebrow}</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-[var(--text-primary)] sm:text-3xl">{dashboardCopy.sectionTitle}</h2>
+            </div>
+            <NavigatingLink
+              href="/projects/new"
+              pendingLabel={dashboardCopy.sectionNewProject}
+              data-testid="dashboard-new-project"
+              className={`${premiumPrimaryDarkButton} min-h-11 px-5`}
+            >
+              {dashboardCopy.sectionNewProject}
+            </NavigatingLink>
           </div>
           {hasProjects ? (
-            <div className="grid gap-4 2xl:grid-cols-2">
-              {projects.map((project) => (
-                <ProjectCard key={project.id} copy={projectCopy} locale={locale} project={project} />
-              ))}
-            </div>
+            <PaginatedProjectGrid copy={projectCopy} dashboardCopy={dashboardCopy} locale={locale} projects={projects} />
           ) : (
             <div className="ac-empty-state">
               <p className="ac-surface-panel__eyebrow">
@@ -85,7 +91,9 @@ export default async function DashboardPage() {
             </div>
           )}
         </div>
-        <CreateProjectForm copy={projectCopy} />
+        <div className="self-start xl:sticky xl:top-8">
+          <CreateProjectForm copy={projectCopy} />
+        </div>
       </section>
 
       {isFileStudioEnabled() && (

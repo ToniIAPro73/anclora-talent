@@ -10,7 +10,6 @@ import type { SessionUser } from '@/lib/auth/session';
 import { LocaleToggle } from './LocaleToggle';
 import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
-import { EditorPreferencesSidebar } from '@/components/projects/EditorPreferencesSidebar';
 import { NavigatingLink } from '@/components/ui/NavigatingLink';
 
 const SIDEBAR_KEY = 'anclora-sidebar-collapsed';
@@ -108,12 +107,6 @@ export function AppShell({
               </div>
             </div>
           </nav>
-
-          {!collapsed && (
-            <div className="mx-6 mt-10 flex-1">
-              <EditorPreferencesSidebar />
-            </div>
-          )}
         </aside>
 
         <div className="talent-shell-main min-w-0 xl:p-8">

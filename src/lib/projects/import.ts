@@ -24,7 +24,24 @@ export async function extractImportedDocumentSeed(
   const mimeType = file.type || 'application/octet-stream';
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
-  const extractedSource = await extractTextFromBuffer(fileName, mimeType, buffer);
+
+  // U4: a parser failure (corrupt docx/pdf, mammoth/pdf-parse error) must
+  // never abort the import. Degrade to an empty shell document and flag the
+  // seed so callers can show a non-blocking warning.
+  let extractedSource: Awaited<ReturnType<typeof extractTextFromBuffer>>;
+  let parseFailed = false;
+  try {
+    extractedSource = await extractTextFromBuffer(fileName, mimeType, buffer);
+  } catch (error) {
+    console.error('[import] source parse failed; continuing with an empty document', {
+      fileName,
+      mimeType,
+      error,
+    });
+    extractedSource = { text: '', html: null, pageCount: undefined };
+    parseFailed = true;
+  }
+
   let normalized = normalizeText(extractedSource.text);
   let ocrAppliedMode: 'local' | 'service' | null = null;
 
@@ -43,11 +60,18 @@ export async function extractImportedDocumentSeed(
     if (ocrResult && ocrText.length > normalized.length) {
       normalized = ocrText;
       ocrAppliedMode = ocrResult.mode;
+      // OCR recovered the content the parser could not read.
+      parseFailed = false;
     }
   }
 
   if (!normalized) {
-    throw new Error('Imported document is empty');
+    if (!parseFailed) {
+      throw new Error('Imported document is empty');
+    }
+    // Empty shell document: the project is still created (titled after the
+    // file) and the user starts from a blank manuscript.
+    normalized = ' ';
   }
 
   const seed = buildImportedDocumentSeed({
@@ -59,5 +83,5 @@ export async function extractImportedDocumentSeed(
     manuscriptTypeOverride: options.manuscriptTypeOverride,
   });
 
-  return { ...seed, ocrAppliedMode };
+  return { ...seed, ocrAppliedMode, parseFailed };
 }

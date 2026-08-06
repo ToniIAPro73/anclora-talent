@@ -1,7 +1,7 @@
 import type { ProjectSummary } from '@/lib/projects/types';
 import { premiumPrimaryMintButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import type { AppMessages } from '@/lib/i18n/messages';
-import { ProjectDeleteButton } from './ProjectDeleteButton';
+import { ProjectCardMenu } from './ProjectCardMenu';
 import { NavigatingLink } from '@/components/ui/NavigatingLink';
 
 const paletteClassMap: Record<ProjectSummary['coverPalette'], string> = {
@@ -52,10 +52,12 @@ export function ProjectCard({
         >
           {copy.cardPreview}
         </NavigatingLink>
-        <ProjectDeleteButton
+        <ProjectCardMenu
           projectId={project.id}
-          label={copy.cardDelete}
+          menuLabel={copy.cardActionsMenu}
+          deleteLabel={copy.cardDelete}
           confirmMessage={copy.cardDeleteConfirm.replace('{title}', project.title)}
+          documentDataLabel={copy.documentDataOpen}
         />
         </div>
       </div>

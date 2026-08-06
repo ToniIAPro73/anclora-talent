@@ -5,6 +5,7 @@ import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { buildExportQueryString } from '@/lib/projects/export-config';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { PdfExportButton } from './PdfExportButton';
+import { PreviewDeviceSelector } from './PreviewDeviceSelector';
 
 interface ExportLinksProps {
   project: ProjectRecord;
@@ -25,10 +26,13 @@ export function ExportLinks({
   copy,
 }: ExportLinksProps) {
   const { preferences } = useEditorPreferences();
-  const query = buildExportQueryString(preferences);
+  // U6: the project's effective composition (project > user defaults) feeds
+  // the export query when present.
+  const query = buildExportQueryString(preferences, project);
 
   return (
     <div className="ac-export-suite__actions">
+      <PreviewDeviceSelector copy={copy} />
       <a
         href={buildExportHref('/api/projects/export', projectId, query)}
         download={`${projectSlug || copy.previewExportFilename}.html`}

@@ -1,0 +1,12 @@
+[
+  {
+    "state": "projects-new-1440x900-dark",
+    "accept": ".pdf,.doc,.docx,.txt,.md,text/plain,text/markdown,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  },
+  {
+    "state": "import-result",
+    "ready": true,
+    "warnings": "Revisión recomendadaNo se detectó con certeza el autor; revísalo tras importar.Se ha generado un índice sintético editable a partir de la estructura detectada del documento.",
+    "chapters": "6 capítulos detectados"
+  }
+]

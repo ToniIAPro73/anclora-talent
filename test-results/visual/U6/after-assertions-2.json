@@ -1,0 +1,152 @@
+[
+  {
+    "state": "modal-project-1440x900-dark",
+    "noHorizontalOverflow": true,
+    "structureSection": true,
+    "brandSelect": true,
+    "scopeProject": true,
+    "scopeGlobal": true,
+    "openButton": true,
+    "overwriteState": {
+      "visible": true,
+      "checked": false
+    },
+    "pass": true,
+    "failures": []
+  },
+  {
+    "state": "preview-1440x900-dark",
+    "noHorizontalOverflow": true,
+    "deviceMobile": true,
+    "deviceTablet": true,
+    "deviceLaptop": true,
+    "persisted": "tablet",
+    "pass": true,
+    "failures": []
+  },
+  {
+    "state": "modal-project-1440x900-light",
+    "noHorizontalOverflow": true,
+    "structureSection": true,
+    "brandSelect": true,
+    "scopeProject": true,
+    "scopeGlobal": true,
+    "openButton": true,
+    "overwriteState": {
+      "visible": true,
+      "checked": false
+    },
+    "pass": true,
+    "failures": []
+  },
+  {
+    "state": "preview-1440x900-light",
+    "noHorizontalOverflow": true,
+    "deviceMobile": true,
+    "deviceTablet": true,
+    "deviceLaptop": true,
+    "persisted": "tablet",
+    "pass": true,
+    "failures": []
+  },
+  {
+    "state": "modal-project-1366x768-dark",
+    "noHorizontalOverflow": true,
+    "structureSection": true,
+    "brandSelect": true,
+    "scopeProject": true,
+    "scopeGlobal": true,
+    "openButton": true,
+    "overwriteState": {
+      "visible": true,
+      "checked": false
+    },
+    "pass": true,
+    "failures": []
+  },
+  {
+    "state": "preview-1366x768-dark",
+    "noHorizontalOverflow": true,
+    "deviceMobile": true,
+    "deviceTablet": true,
+    "deviceLaptop": true,
+    "persisted": "tablet",
+    "pass": true,
+    "failures": []
+  },
+  {
+    "state": "modal-project-1366x768-light",
+    "noHorizontalOverflow": true,
+    "structureSection": true,
+    "brandSelect": true,
+    "scopeProject": true,
+    "scopeGlobal": true,
+    "openButton": true,
+    "overwriteState": {
+      "visible": true,
+      "checked": false
+    },
+    "pass": true,
+    "failures": []
+  },
+  {
+    "state": "preview-1366x768-light",
+    "noHorizontalOverflow": true,
+    "deviceMobile": true,
+    "deviceTablet": true,
+    "deviceLaptop": true,
+    "persisted": "tablet",
+    "pass": true,
+    "failures": []
+  },
+  {
+    "state": "modal-project-375x667-dark",
+    "noHorizontalOverflow": true,
+    "structureSection": true,
+    "brandSelect": true,
+    "scopeProject": true,
+    "scopeGlobal": true,
+    "openButton": true,
+    "overwriteState": {
+      "visible": true,
+      "checked": false
+    },
+    "pass": true,
+    "failures": []
+  },
+  {
+    "state": "preview-375x667-dark",
+    "noHorizontalOverflow": true,
+    "deviceMobile": true,
+    "deviceTablet": true,
+    "deviceLaptop": true,
+    "persisted": "tablet",
+    "pass": true,
+    "failures": []
+  },
+  {
+    "state": "modal-project-375x667-light",
+    "noHorizontalOverflow": true,
+    "structureSection": true,
+    "brandSelect": true,
+    "scopeProject": true,
+    "scopeGlobal": true,
+    "openButton": true,
+    "overwriteState": {
+      "visible": true,
+      "checked": false
+    },
+    "pass": true,
+    "failures": []
+  },
+  {
+    "state": "preview-375x667-light",
+    "noHorizontalOverflow": true,
+    "deviceMobile": true,
+    "deviceTablet": true,
+    "deviceLaptop": true,
+    "persisted": "tablet",
+    "pass": true,
+    "failures": []
+  }
+]

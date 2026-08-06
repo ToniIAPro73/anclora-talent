@@ -5,6 +5,13 @@ import { resolveLocaleMessages } from '@/lib/i18n/messages';
 
 vi.mock('@/lib/projects/actions', () => ({
   createProjectAction: vi.fn(),
+  saveProjectCompositionAction: vi.fn(),
+  saveUserCompositionDefaultsAction: vi.fn(),
+  setBrandForAllProjectsAction: vi.fn(),
+}));
+
+vi.mock('@/lib/brand/actions', () => ({
+  setProjectBrandProfileAction: vi.fn(),
 }));
 
 vi.mock('@/lib/structure-profile/actions', () => ({

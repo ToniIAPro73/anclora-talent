@@ -85,6 +85,8 @@ export type AppMessages = {
     createProject: string;
     sectionEyebrow: string;
     sectionTitle: string;
+    sectionNewProject: string;
+    loadMore: string;
     emptyEyebrow: string;
     emptyFallbackEyebrow: string;
     emptyTitle: string;
@@ -104,6 +106,11 @@ export type AppMessages = {
     titlePlaceholder: string;
     sourceDocumentLabel: string;
     sourceDocumentHint: string;
+    createOptionalManuscriptLabel: string;
+    createOptionalManuscriptHint: string;
+    createOptionalStructureLabel: string;
+    brandManualLabel: string;
+    brandManualHint: string;
     createProjectHint: string;
     createProjectAction: string;
     templateSelectorEyebrow: string;
@@ -121,6 +128,7 @@ export type AppMessages = {
     cardPreview: string;
     cardDelete: string;
     cardDeleteConfirm: string;
+    cardActionsMenu: string;
     editorEyebrow: string;
     editorOpenPreview: string;
     editorOpenCover: string;
@@ -184,6 +192,7 @@ export type AppMessages = {
     importManuscriptTypeNovel: string;
     importManuscriptTypeNonFiction: string;
     importWarningsLabel: string;
+    importParseWarning: string;
     importChapterPreviewLabel: string;
     importErrorGeneric: string;
     importFileTooLarge: string;
@@ -445,6 +454,50 @@ export type AppMessages = {
     onboardingSkip: string;
     onboardingDone: string;
     onboardingClose: string;
+    documentDataOpen: string;
+    documentDataModalTitle: string;
+    documentDataModalDescriptionPreCreate: string;
+    documentDataModalDescriptionProject: string;
+    documentDataCloseLabel: string;
+    documentDataSourceBadgeVerified: string;
+    documentDataSourceBadgeNotExtracted: string;
+    documentDataCompositionHeading: string;
+    documentDataFontFamilyLabel: string;
+    documentDataFontSizeLabel: string;
+    documentDataLineHeightLabel: string;
+    documentDataMarginPresetLabel: string;
+    documentDataMarginPresetCompact: string;
+    documentDataMarginPresetNormal: string;
+    documentDataMarginPresetSpacious: string;
+    documentDataMarginPresetBookStyle: string;
+    documentDataMarginPresetMinimal: string;
+    documentDataMarginPresetCustom: string;
+    documentDataMarginTopLabel: string;
+    documentDataMarginBottomLabel: string;
+    documentDataMarginLeftLabel: string;
+    documentDataMarginRightLabel: string;
+    documentDataStructureHeading: string;
+    documentDataStructureHierarchyLabel: string;
+    documentDataStructureMacroLabel: string;
+    documentDataStructureVerified: string;
+    documentDataStructureInferred: string;
+    documentDataScopeHeading: string;
+    documentDataScopeProjectLabel: string;
+    documentDataScopeGlobalLabel: string;
+    documentDataOverwriteLabel: string;
+    documentDataBrandHeading: string;
+    documentDataBrandProfileLabel: string;
+    documentDataBrandNoneOption: string;
+    documentDataBrandScopeProductLabel: string;
+    documentDataBrandScopeAllLabel: string;
+    documentDataBrandScopeHeading: string;
+    documentDataHierarchyHint: string;
+    documentDataCancelLabel: string;
+    documentDataSaveLabel: string;
+    documentDataSavingLabel: string;
+    documentDataSaveError: string;
+    documentDataConfirmLabel: string;
+    documentDataReopenButton: string;
   };
   filestudio: {
     badgeLocal: string;
@@ -815,6 +868,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       createProject: 'Crear nuevo proyecto',
       sectionEyebrow: 'Mis proyectos',
       sectionTitle: 'Base editorial individual',
+      sectionNewProject: 'Nuevo proyecto',
+      loadMore: 'Cargar más',
       emptyEyebrow: 'Estado inicial',
       emptyFallbackEyebrow: 'Modo degradado',
       emptyTitle: 'Aún no hay proyectos, pero el workspace ya está listo para abrir el primero.',
@@ -829,7 +884,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       newEyebrow: 'Proyecto nuevo',
       newTitle: 'Crea el contenedor editorial base',
       newDescription:
-        'Al crear el proyecto se generan documento, portada y contrato de edición para que el flujo completo arranque ya sobre el modelo canónico.',
+        'Al crear el proyecto se generan el documento y la portada para que empieces a trabajar desde el primer minuto sobre tu contenido.',
       createFormEyebrow: 'Nuevo proyecto',
       createFormTitle: 'Crea una base editorial con estándar premium',
       createFormDescription:
@@ -839,6 +894,12 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       sourceDocumentLabel: 'Documento base opcional',
       sourceDocumentHint:
         'Soporta `pdf`, `doc`, `docx`, `txt` y `md`. Si el archivo se puede extraer bien, el editor arrancará ya sembrado con ese contenido.',
+      createOptionalManuscriptLabel: 'Manuscrito (opcional)',
+      createOptionalManuscriptHint: 'Sube tu documento si ya lo tienes; si no, puedes empezar en blanco.',
+      createOptionalStructureLabel: 'Referencia de estructura (opcional)',
+      brandManualLabel: 'Manual de marca (opcional)',
+      brandManualHint:
+        'Adjunta el PDF del manual de identidad y extraeremos la marca para vincularla al proyecto. Si la extracción falla, el proyecto se crea igualmente.',
       createProjectHint:
         'La creación persiste sobre Neon desde el primer paso y abre el editor con base importada si has adjuntado documento.',
       createProjectAction: 'Crear proyecto y abrir editor',
@@ -881,6 +942,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       cardPreview: 'Preview',
       cardDelete: 'Eliminar',
       cardDeleteConfirm: '¿Seguro que quieres eliminar "{title}"? Esta acción no se puede deshacer.',
+      cardActionsMenu: 'Acciones del proyecto',
       editorEyebrow: 'Editor',
       editorOpenPreview: 'Abrir preview',
       editorOpenCover: 'Diseñar portada',
@@ -947,6 +1009,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       importManuscriptTypeNovel: 'Novela',
       importManuscriptTypeNonFiction: 'No ficción',
       importWarningsLabel: 'Revisión recomendada',
+      importParseWarning:
+        'No se pudo analizar el contenido del documento. El proyecto se creará vacío para que puedas empezar desde cero.',
       importChapterPreviewLabel: 'Estructura detectada',
       importErrorGeneric: 'No se pudo analizar el documento',
       importFileTooLarge: 'El archivo es demasiado grande (máx. 50 MB)',
@@ -1229,6 +1293,52 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       onboardingSkip: 'Saltar introducción',
       onboardingDone: 'Entendido',
       onboardingClose: 'Cerrar introducción',
+      documentDataOpen: 'Datos del documento',
+      documentDataModalTitle: 'Datos del documento',
+      documentDataModalDescriptionPreCreate:
+        'Revisa la composición detectada en el archivo antes de crear el proyecto.',
+      documentDataModalDescriptionProject: 'Composición, estructura y marca de este documento.',
+      documentDataCloseLabel: 'Cerrar',
+      documentDataSourceBadgeVerified: 'Verificado en fuente',
+      documentDataSourceBadgeNotExtracted: 'No extraído',
+      documentDataCompositionHeading: 'Composición',
+      documentDataFontFamilyLabel: 'Familia tipográfica',
+      documentDataFontSizeLabel: 'Tamaño (pt)',
+      documentDataLineHeightLabel: 'Interlineado',
+      documentDataMarginPresetLabel: 'Preset de márgenes',
+      documentDataMarginPresetCompact: 'Compacto',
+      documentDataMarginPresetNormal: 'Normal',
+      documentDataMarginPresetSpacious: 'Espacioso',
+      documentDataMarginPresetBookStyle: 'Estilo libro',
+      documentDataMarginPresetMinimal: 'Mínimo',
+      documentDataMarginPresetCustom: 'Personalizado',
+      documentDataMarginTopLabel: 'Superior',
+      documentDataMarginBottomLabel: 'Inferior',
+      documentDataMarginLeftLabel: 'Izquierdo',
+      documentDataMarginRightLabel: 'Derecho',
+      documentDataStructureHeading: 'Estructura detectada',
+      documentDataStructureHierarchyLabel: 'Jerarquía',
+      documentDataStructureMacroLabel: 'Patrón macro',
+      documentDataStructureVerified: 'Verificado en fuente',
+      documentDataStructureInferred: 'Inferido de un documento',
+      documentDataScopeHeading: 'Ámbito de la composición',
+      documentDataScopeProjectLabel: 'Solo este proyecto',
+      documentDataScopeGlobalLabel: 'Todos mis proyectos',
+      documentDataOverwriteLabel: 'Sobrescribir personalizados',
+      documentDataBrandHeading: 'Marca',
+      documentDataBrandProfileLabel: 'Perfil de marca',
+      documentDataBrandNoneOption: 'Sin marca',
+      documentDataBrandScopeProductLabel: 'Este producto',
+      documentDataBrandScopeAllLabel: 'Todos mis proyectos',
+      documentDataBrandScopeHeading: 'Ámbito de la marca',
+      documentDataHierarchyHint:
+        'La composición se resuelve: proyecto > global > sistema. La marca: explícita > predeterminada > ninguna. La marca aporta familias y paleta; la composición aporta tamaño, márgenes e interlineado.',
+      documentDataCancelLabel: 'Cancelar',
+      documentDataSaveLabel: 'Guardar',
+      documentDataSavingLabel: 'Guardando…',
+      documentDataSaveError: 'No se pudo guardar. Inténtalo de nuevo.',
+      documentDataConfirmLabel: 'Confirmar',
+      documentDataReopenButton: 'Revisar datos del documento',
     },
     filestudio: {
       badgeLocal: 'Procesado en tu dispositivo',
@@ -1607,6 +1717,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       createProject: 'Create new project',
       sectionEyebrow: 'My projects',
       sectionTitle: 'Individual editorial base',
+      sectionNewProject: 'New project',
+      loadMore: 'Load more',
       emptyEyebrow: 'Initial state',
       emptyFallbackEyebrow: 'Degraded mode',
       emptyTitle: 'There are no projects yet, but the workspace is ready to open the first one.',
@@ -1621,7 +1733,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       newEyebrow: 'New project',
       newTitle: 'Create the base editorial container',
       newDescription:
-        'Creating the project generates the document, cover, and editing contract so the full flow starts on the canonical model.',
+        'Creating the project generates the document and cover so you can start working on your content from the first minute.',
       createFormEyebrow: 'New project',
       createFormTitle: 'Create an editorial base with premium standards',
       createFormDescription:
@@ -1631,6 +1743,12 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       sourceDocumentLabel: 'Optional source document',
       sourceDocumentHint:
         'Supports `pdf`, `doc`, `docx`, `txt`, and `md`. If extraction succeeds, the editor starts already seeded with that content.',
+      createOptionalManuscriptLabel: 'Manuscript (optional)',
+      createOptionalManuscriptHint: 'Upload your document if you have it; otherwise, you can start blank.',
+      createOptionalStructureLabel: 'Structure reference (optional)',
+      brandManualLabel: 'Brand manual (optional)',
+      brandManualHint:
+        'Attach the identity manual PDF and we will extract the brand and link it to the project. If extraction fails, the project is still created.',
       createProjectHint:
         'Creation persists to Neon from the first step and opens the editor with imported content if you attached a document.',
       createProjectAction: 'Create project and open editor',
@@ -1673,6 +1791,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       cardPreview: 'Preview',
       cardDelete: 'Delete',
       cardDeleteConfirm: 'Are you sure you want to delete "{title}"? This action cannot be undone.',
+      cardActionsMenu: 'Project actions',
       editorEyebrow: 'Editor',
       editorOpenPreview: 'Open preview',
       editorOpenCover: 'Design cover',
@@ -1739,6 +1858,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       importManuscriptTypeNovel: 'Novel',
       importManuscriptTypeNonFiction: 'Non-fiction',
       importWarningsLabel: 'Recommended review',
+      importParseWarning:
+        'The document content could not be analyzed. The project will be created empty so you can start from scratch.',
       importChapterPreviewLabel: 'Detected structure',
       importErrorGeneric: 'Could not analyze the document',
       importFileTooLarge: 'File is too large (max. 50 MB)',
@@ -2021,6 +2142,52 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       onboardingSkip: 'Skip introduction',
       onboardingDone: 'Got it',
       onboardingClose: 'Close introduction',
+      documentDataOpen: 'Document data',
+      documentDataModalTitle: 'Document data',
+      documentDataModalDescriptionPreCreate:
+        'Review the composition detected in the file before creating the project.',
+      documentDataModalDescriptionProject: 'Composition, structure and brand of this document.',
+      documentDataCloseLabel: 'Close',
+      documentDataSourceBadgeVerified: 'Verified in source',
+      documentDataSourceBadgeNotExtracted: 'Not extracted',
+      documentDataCompositionHeading: 'Composition',
+      documentDataFontFamilyLabel: 'Font family',
+      documentDataFontSizeLabel: 'Size (pt)',
+      documentDataLineHeightLabel: 'Line height',
+      documentDataMarginPresetLabel: 'Margin preset',
+      documentDataMarginPresetCompact: 'Compact',
+      documentDataMarginPresetNormal: 'Normal',
+      documentDataMarginPresetSpacious: 'Spacious',
+      documentDataMarginPresetBookStyle: 'Book style',
+      documentDataMarginPresetMinimal: 'Minimal',
+      documentDataMarginPresetCustom: 'Custom',
+      documentDataMarginTopLabel: 'Top',
+      documentDataMarginBottomLabel: 'Bottom',
+      documentDataMarginLeftLabel: 'Left',
+      documentDataMarginRightLabel: 'Right',
+      documentDataStructureHeading: 'Detected structure',
+      documentDataStructureHierarchyLabel: 'Hierarchy',
+      documentDataStructureMacroLabel: 'Macro pattern',
+      documentDataStructureVerified: 'Verified in source',
+      documentDataStructureInferred: 'Inferred from a document',
+      documentDataScopeHeading: 'Composition scope',
+      documentDataScopeProjectLabel: 'Only this project',
+      documentDataScopeGlobalLabel: 'All my projects',
+      documentDataOverwriteLabel: 'Overwrite customized projects',
+      documentDataBrandHeading: 'Brand',
+      documentDataBrandProfileLabel: 'Brand profile',
+      documentDataBrandNoneOption: 'No brand',
+      documentDataBrandScopeProductLabel: 'This product',
+      documentDataBrandScopeAllLabel: 'All my projects',
+      documentDataBrandScopeHeading: 'Brand scope',
+      documentDataHierarchyHint:
+        'Composition resolves as: project > global > system. Brand: explicit > default > none. Brand contributes families and palette; composition contributes size, margins and line height.',
+      documentDataCancelLabel: 'Cancel',
+      documentDataSaveLabel: 'Save',
+      documentDataSavingLabel: 'Saving…',
+      documentDataSaveError: 'Could not save. Please try again.',
+      documentDataConfirmLabel: 'Confirm',
+      documentDataReopenButton: 'Review document data',
     },
     filestudio: {
       badgeLocal: 'Processed on your device',
