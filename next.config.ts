@@ -35,6 +35,10 @@ const nextConfig: NextConfig = {
     'sharp',
   ],
   experimental: {
+    // App Router route handlers such as /api/projects/import receive source
+    // documents through multipart requests; the DOCX payload plus form
+    // overhead can exceed Next's default proxy body buffer.
+    proxyClientMaxBodySize: '55mb',
     serverActions: {
       // Imported source documents are uploaded through a server action; the
       // importer accepts files up to 50MB, plus multipart form overhead.
