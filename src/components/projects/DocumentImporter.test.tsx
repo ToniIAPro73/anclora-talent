@@ -3,6 +3,24 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { DocumentImporter } from './DocumentImporter';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 
+vi.mock('server-only', () => ({}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
+
+// U6: DocumentImporter renders DocumentDataModal, which imports server
+// actions — stub them so the db/neon chain never loads in jsdom.
+vi.mock('@/lib/projects/actions', () => ({
+  saveProjectCompositionAction: vi.fn(),
+  saveUserCompositionDefaultsAction: vi.fn(),
+  setBrandForAllProjectsAction: vi.fn(),
+}));
+
+vi.mock('@/lib/brand/actions', () => ({
+  setProjectBrandProfileAction: vi.fn(),
+}));
+
 const copy = resolveLocaleMessages('es').project;
 
 function mockFetchSuccess(chapterCount = 3, title = 'El título detectado') {
@@ -156,5 +174,37 @@ describe('DocumentImporter', () => {
     await waitFor(() => {
       expect(screen.getByText('No se pudo analizar el documento')).toBeInTheDocument();
     });
+  });
+
+  test('shows a non-blocking warning when the server reports a parse failure', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          ok: true,
+          title: 'roto',
+          chapterCount: 1,
+          chapterTitles: [],
+          warnings: [],
+          sourceFileName: 'roto.pdf',
+          parseWarning: true,
+        }),
+      }),
+    );
+    render(<DocumentImporter copy={copy} />);
+
+    const fileInput = screen.getByTestId('source-document-input');
+    fireEvent.change(fileInput, {
+      target: { files: [new File(['x'], 'roto.pdf', { type: 'application/pdf' })] },
+    });
+
+    // U4: the flow must reach the ready state — never the error state.
+    await waitFor(() => {
+      expect(screen.getByText('Listo para importar')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('import-analysis-warnings')).toHaveTextContent(copy.importParseWarning);
+    expect(screen.queryByText(copy.importErrorGeneric)).not.toBeInTheDocument();
   });
 });

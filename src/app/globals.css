@@ -345,6 +345,11 @@ html[data-theme="light"] {
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 }
 
+@theme {
+  /* P-SHELL-01: named breakpoint so the 3rd projects column sorts after 2xl in the cascade */
+  --breakpoint-3xl: 137.5rem; /* 2200px */
+}
+
 * {
   box-sizing: border-box;
 }
@@ -442,7 +447,9 @@ body {
   display: grid;
   min-height: 100vh;
   gap: 20px;
-  max-width: 96rem;
+  /* P-SHELL-01: fluid cap — 96rem floor, grows with the viewport up to
+     128rem, so large monitors no longer get ~500px dead bands per side. */
+  max-width: clamp(96rem, 92vw, 128rem);
   margin-inline: auto;
   padding: 16px;
   transition: grid-template-columns 300ms ease;
@@ -770,6 +777,79 @@ html[data-theme="light"] .talent-shell-switcher .ac-theme-switcher__option[aria-
 .talent-workflow-shell .ac-workflow-shell__panel,
 .talent-workflow-shell .ac-workflow-shell__progress {
   box-shadow: var(--shadow-soft);
+}
+
+/* P-E6-03: at mobile widths the workflow layout collapses to one column but
+   the design-system tracks keep an auto minimum, so the 9-step stepper's
+   min-content (~860px) propagated up and overflowed the page. Pin the tracks
+   and the whole chain to a zero minimum so the stepper scrolls inside the
+   viewport instead of stretching it. */
+@media (max-width: 768px) {
+  .talent-workspace-stage,
+  .talent-workspace-stage .ac-workspace-stage__header,
+  .talent-workspace-stage .ac-workflow-shell__progress,
+  .talent-workflow-shell,
+  .talent-workflow-shell .ac-workflow-shell__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .talent-workspace-stage,
+  .talent-workspace-stage .ac-workspace-stage__header,
+  .talent-workspace-stage .ac-workflow-shell__progress,
+  .talent-workspace-stage .ac-stepper,
+  .talent-workflow-shell,
+  .talent-workflow-shell .ac-workflow-shell__layout,
+  .talent-workflow-shell .ac-workflow-shell__rail,
+  .talent-workflow-shell .ac-workflow-shell__content {
+    min-width: 0;
+  }
+
+  /* Modal panels must never push the page wider than the viewport. */
+  .ac-modal__panel {
+    max-width: calc(100vw - 2rem);
+  }
+}
+
+/* ── Modal overlay shell (MODAL_CONTRACT) ─────────────────────────────
+   The app's `.ac-modal` markup (overlay + __backdrop + __panel) predates
+   the design-system modal.css, which styles `.ac-modal` as the PANEL
+   (720px card). These rules reclaim `.ac-modal` as the fixed overlay,
+   neutralize the DS panel properties on it, dim the backdrop and center
+   the viewport-bounded panel. */
+.ac-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  width: auto;
+  gap: 0;
+  padding: 1rem;
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  overflow-y: auto;
+}
+
+.ac-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 10, 18, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.ac-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  /* Solid surface: the design-system `.ac-modal` background is translucent
+     and (unlayered) beats Tailwind's layered bg-[...] utilities. */
+  background: var(--page-surface);
 }
 
 .talent-preview-overlay {

@@ -114,6 +114,57 @@ describe('document import parser isolation', () => {
     expect(result.warnings?.some((warning) => warning.includes('índice sintético editable'))).toBe(true);
   });
 
+  test('pdf parse failure degrades to an empty shell document instead of aborting', async () => {
+    vi.doMock('server-only', () => ({}));
+    vi.doMock('pdf-parse', () => ({
+      PDFParse: class PDFParseMock {
+        constructor() {
+          throw new Error('corrupt pdf bytes');
+        }
+      },
+    }));
+
+    const { extractImportedDocumentSeed } = await import('./import');
+    const file = new File([new Uint8Array([0x25, 0x50, 0x44, 0x46])], 'roto.pdf', {
+      type: 'application/pdf',
+    });
+
+    const result = await extractImportedDocumentSeed(file);
+
+    expect(result.parseFailed).toBe(true);
+    expect(result.title).toBe('roto');
+    expect(result.chapters?.length).toBeGreaterThan(0);
+  });
+
+  test('docx parse failure (mammoth and word-extractor throwing) is non-blocking', async () => {
+    vi.doMock('server-only', () => ({}));
+    vi.doMock('mammoth', () => ({
+      default: {
+        convertToHtml: vi.fn(async () => {
+          throw new Error('mammoth exploded');
+        }),
+      },
+    }));
+    vi.doMock('word-extractor', () => ({
+      default: class WordExtractorMock {
+        extract = vi.fn(async () => {
+          throw new Error('word-extractor exploded');
+        });
+      },
+    }));
+
+    const { extractImportedDocumentSeed } = await import('./import');
+    const file = new File([new Uint8Array([0x50, 0x4b, 0x03, 0x04])], 'roto.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    });
+
+    const result = await extractImportedDocumentSeed(file);
+
+    expect(result.parseFailed).toBe(true);
+    expect(result.title).toBe('roto');
+    expect(result.chapters?.length).toBeGreaterThan(0);
+  });
+
   test('structural h1 day headings become independent chapters while index entries do not', async () => {
     vi.doMock('server-only', () => ({}));
 

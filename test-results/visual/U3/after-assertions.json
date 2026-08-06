@@ -1,0 +1,80 @@
+[
+  {
+    "state": "1440x900-dark",
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "noHorizontalOverflow": true,
+    "metricCards": 0,
+    "heroCtaLinks": null,
+    "descriptionPresent": false,
+    "chipPresent": true,
+    "chipText": "51 proyectos activos",
+    "projectCount": 51,
+    "createFormPresent": true
+  },
+  {
+    "state": "1440x900-light",
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "noHorizontalOverflow": true,
+    "metricCards": 0,
+    "heroCtaLinks": null,
+    "descriptionPresent": false,
+    "chipPresent": true,
+    "chipText": "51 proyectos activos",
+    "projectCount": 51,
+    "createFormPresent": true
+  },
+  {
+    "state": "1366x768-dark",
+    "scrollWidth": 1366,
+    "clientWidth": 1366,
+    "noHorizontalOverflow": true,
+    "metricCards": 0,
+    "heroCtaLinks": null,
+    "descriptionPresent": false,
+    "chipPresent": true,
+    "chipText": "51 proyectos activos",
+    "projectCount": 51,
+    "createFormPresent": true
+  },
+  {
+    "state": "1366x768-light",
+    "scrollWidth": 1366,
+    "clientWidth": 1366,
+    "noHorizontalOverflow": true,
+    "metricCards": 0,
+    "heroCtaLinks": null,
+    "descriptionPresent": false,
+    "chipPresent": true,
+    "chipText": "51 proyectos activos",
+    "projectCount": 51,
+    "createFormPresent": true
+  },
+  {
+    "state": "375x667-dark",
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "noHorizontalOverflow": true,
+    "metricCards": 0,
+    "heroCtaLinks": null,
+    "descriptionPresent": false,
+    "chipPresent": true,
+    "chipText": "51 proyectos activos",
+    "projectCount": 51,
+    "createFormPresent": true
+  },
+  {
+    "state": "375x667-light",
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "noHorizontalOverflow": true,
+    "metricCards": 0,
+    "heroCtaLinks": null,
+    "descriptionPresent": false,
+    "chipPresent": true,
+    "chipText": "52 proyectos activos",
+    "projectCount": 52,
+    "createFormPresent": true
+  }
+]

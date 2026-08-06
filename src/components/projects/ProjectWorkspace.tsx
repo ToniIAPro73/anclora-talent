@@ -16,6 +16,7 @@ import { ChapterEditorModal } from './ChapterEditorModal';
 import { AddChapterDialog } from './AddChapterDialog';
 import { ImportChapterDialog } from './ImportChapterDialog';
 import { ReimportDialog } from './ReimportDialog';
+import { DocumentDataModal } from './DocumentDataModal';
 import { Portal } from '@/components/ui/Portal';
 import { PdfExportButton } from './PdfExportButton';
 import { DocumentRulesPanel } from './DocumentRulesPanel';
@@ -164,6 +165,7 @@ export function ProjectWorkspace({
   kdpDisclosure,
   collaboration,
   locale = 'es',
+  initialOpenDocumentData = false,
 }: {
   project: ProjectRecord;
   copy: AppMessages['project'];
@@ -198,6 +200,8 @@ export function ProjectWorkspace({
   };
   /** F3: UI locale forwarded to the governed-AI section of the health panel. */
   locale?: 'es' | 'en';
+  /** U6: open the document-data modal on mount (?documentData=open). */
+  initialOpenDocumentData?: boolean;
 }) {
   const router = useRouter();
   const { preferences } = useEditorPreferences();
@@ -216,6 +220,7 @@ export function ProjectWorkspace({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isReimportDialogOpen, setIsReimportDialogOpen] = useState(false);
+  const [isDocumentDataOpen, setIsDocumentDataOpen] = useState(initialOpenDocumentData);
 
   const initialCoverSurface = useMemo(() => buildCoverSurface(project), [project]);
   const initialBackCoverSurface = useMemo(() => buildBackCoverSurface(project), [project]);
@@ -240,7 +245,7 @@ export function ProjectWorkspace({
   );
   const [lastSyncedChapterSignature, setLastSyncedChapterSignature] = useState(() => chapterSignature);
   const pageNumberIsStale = chapterSignature !== lastSyncedChapterSignature;
-  const exportQuery = useMemo(() => buildExportQueryString(preferences), [preferences]);
+  const exportQuery = useMemo(() => buildExportQueryString(preferences, project), [preferences, project]);
 
   useEffect(() => {
     writeStoredWorkflowStep(project.id, activeStep);
@@ -696,6 +701,14 @@ export function ProjectWorkspace({
           <h2 className="ac-section-heading__title mt-2 text-4xl">{project.title}</h2>
         </div>
         <div className="ac-workspace-stage__actions">
+          <button
+            type="button"
+            data-testid="document-data-open-button"
+            onClick={() => setIsDocumentDataOpen(true)}
+            className="ac-button ac-button--secondary ac-button--sm"
+          >
+            {copy.documentDataOpen}
+          </button>
           {saveState === 'saving' && (
             <span className="flex items-center gap-1.5 text-xs text-[var(--text-tertiary)]" data-testid="project-save-status-saving">
               <Loader2 className="h-3 w-3 animate-spin" />
@@ -802,7 +815,18 @@ export function ProjectWorkspace({
           onClose={() => setIsReimportDialogOpen(false)}
         />
 
-        <WorkspaceOnboarding copy={copy} />
+        <DocumentDataModal
+          isOpen={isDocumentDataOpen}
+          mode="project"
+          copy={copy}
+          project={project}
+          brandProfiles={brandProfiles}
+          onClose={() => setIsDocumentDataOpen(false)}
+        />
+
+        {/* The document-data modal (deep link or post-import) takes priority:
+            two overlays must never stack (MODAL_CONTRACT). */}
+        {!initialOpenDocumentData && <WorkspaceOnboarding copy={copy} />}
       </Portal>
     </div>
   );

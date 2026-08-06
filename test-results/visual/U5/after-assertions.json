@@ -1,0 +1,68 @@
+[
+  {
+    "state": "1440x900-dark",
+    "noHorizontalOverflow": true,
+    "manuscriptSection": true,
+    "structureSection": true,
+    "brandSection": true,
+    "brandInputName": "brandManual",
+    "blankHint": true,
+    "pass": true,
+    "failures": []
+  },
+  {
+    "state": "1440x900-light",
+    "noHorizontalOverflow": true,
+    "manuscriptSection": true,
+    "structureSection": true,
+    "brandSection": true,
+    "brandInputName": "brandManual",
+    "blankHint": true,
+    "pass": true,
+    "failures": []
+  },
+  {
+    "state": "1366x768-dark",
+    "noHorizontalOverflow": true,
+    "manuscriptSection": true,
+    "structureSection": true,
+    "brandSection": true,
+    "brandInputName": "brandManual",
+    "blankHint": true,
+    "pass": true,
+    "failures": []
+  },
+  {
+    "state": "1366x768-light",
+    "noHorizontalOverflow": true,
+    "manuscriptSection": true,
+    "structureSection": true,
+    "brandSection": true,
+    "brandInputName": "brandManual",
+    "blankHint": true,
+    "pass": true,
+    "failures": []
+  },
+  {
+    "state": "375x667-dark",
+    "noHorizontalOverflow": true,
+    "manuscriptSection": true,
+    "structureSection": true,
+    "brandSection": true,
+    "brandInputName": "brandManual",
+    "blankHint": true,
+    "pass": true,
+    "failures": []
+  },
+  {
+    "state": "375x667-light",
+    "noHorizontalOverflow": true,
+    "manuscriptSection": true,
+    "structureSection": true,
+    "brandSection": true,
+    "brandInputName": "brandManual",
+    "blankHint": true,
+    "pass": true,
+    "failures": []
+  }
+]

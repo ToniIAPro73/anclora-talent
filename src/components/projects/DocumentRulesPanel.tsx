@@ -23,8 +23,8 @@ const PRESETS: Record<'default' | 'print' | 'digital', Partial<DocumentRules>> =
 };
 
 const inputClass =
-  'rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]';
-const labelClass = 'text-sm font-medium text-[var(--text-primary)]';
+  'min-w-0 max-w-full rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]';
+const labelClass = 'min-w-0 text-sm font-medium text-[var(--text-primary)]';
 
 /**
  * "Reglas del documento" panel (C3): edits the declarative composition rules
@@ -108,7 +108,7 @@ export function DocumentRulesPanel({ project, copy }: DocumentRulesPanelProps) {
         ))}
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 grid gap-4 md:grid-cols-2">
+      <form onSubmit={handleSubmit} className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2">
         <div className="space-y-3">
           <label className="flex items-center justify-between gap-4">
             <span className={labelClass}>{copy.rulesKeepTable}</span>

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/guards';
 import { buildImportOcrRunner } from '@/lib/filestudio/ocr';
 import { extractImportedDocumentSeed } from '@/lib/projects/import';
+import { SYSTEM_COMPOSITION_DEFAULTS, type CompositionSource } from '@/lib/projects/composition';
+import { extractDocxNormalStyle } from '@/lib/projects/docx-styles';
 import type { ManuscriptType } from '@/lib/projects/types';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
@@ -48,6 +50,31 @@ export async function POST(request: NextRequest) {
       ? (manuscriptTypeField as ManuscriptType)
       : undefined;
 
+  // U6: best-effort composition extraction from the DOCX Normal style. Any
+  // failure degrades to system defaults marked 'not-extracted' and never
+  // blocks the import.
+  let composition: { settings: typeof SYSTEM_COMPOSITION_DEFAULTS; source: CompositionSource } = {
+    settings: SYSTEM_COMPOSITION_DEFAULTS,
+    source: 'not-extracted',
+  };
+  if (extension === 'docx') {
+    try {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const normalStyle = await extractDocxNormalStyle(buffer);
+      if (normalStyle) {
+        composition = {
+          settings: { ...SYSTEM_COMPOSITION_DEFAULTS, ...normalStyle },
+          source: 'docx-styles',
+        };
+      }
+    } catch (styleError) {
+      console.warn('[import-route] docx style extraction failed; using defaults', {
+        fileName: file.name,
+        styleError,
+      });
+    }
+  }
+
   try {
     // F2 OCR de ingesta: undefined when FileStudio is not configured — the
     // import then behaves exactly as before.
@@ -68,6 +95,11 @@ export async function POST(request: NextRequest) {
       sourceFileName: seed.sourceFileName,
       // Declared processing mode when OCR ran (ProcessingModeBadge in the UI).
       ocrAppliedMode: seed.ocrAppliedMode,
+      // U4: true when the source parser failed and the import degraded to an
+      // empty shell document — the UI shows a non-blocking warning.
+      parseWarning: Boolean(seed.parseFailed),
+      // U6: composition detected from the source file (DOCX Normal style).
+      composition,
     });
   } catch (error) {
     const detail = error instanceof Error ? error.message : 'Import failed';
