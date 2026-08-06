@@ -468,7 +468,7 @@ body {
 
 .talent-shell-topbar {
   display: grid;
-  grid-template-columns: minmax(18rem, 1fr) auto auto;
+  grid-template-columns: auto minmax(24rem, 1fr) auto auto;
   gap: 18px;
   align-items: center;
   min-height: 72px;
@@ -491,24 +491,33 @@ body {
 }
 
 .talent-shell-brand__copy {
+  justify-self: center;
   min-width: 0;
-  padding-left: 12px;
-  border-left: 1px solid var(--border-subtle);
+  max-width: 38rem;
+  padding-inline: 28px;
+  text-align: center;
 }
 
 .talent-shell-brand__copy p {
   margin: 0;
-  font-size: 1rem;
-  font-weight: 800;
-  line-height: 1.15;
+  font-family: var(--font-display), var(--font-sans);
+  font-size: clamp(1.05rem, 1vw, 1.22rem);
+  font-weight: 600;
+  line-height: 1.08;
+  color: color-mix(in srgb, var(--text-primary) 88%, var(--accent-text));
+  text-wrap: balance;
 }
 
 .talent-shell-brand__copy span {
   display: block;
-  margin-top: 3px;
-  color: var(--text-tertiary);
-  font-size: 0.84rem;
-  line-height: 1.25;
+  margin-top: 5px;
+  color: color-mix(in srgb, var(--accent-text) 72%, var(--text-secondary));
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-wrap: balance;
 }
 
 .talent-shell-nav,
@@ -769,7 +778,7 @@ body {
 
 @media (max-width: 900px) {
   .talent-shell-topbar {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(12rem, 1fr) auto;
   }
 
   .talent-shell-brand__copy span {
