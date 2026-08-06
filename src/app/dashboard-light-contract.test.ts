@@ -24,9 +24,8 @@ describe('light theme dashboard contract', () => {
   });
 
   test('keeps dashboard and form layout readable in light mode', () => {
-    expect(dashboardPage).toContain('xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]');
-    // Hint text + submit button stack vertically so neither collapses to
-    // a single-word column in the narrow (26rem) grid column.
+    expect(dashboardPage).toContain('talent-dashboard-create');
+    expect(createProjectForm).toContain('talent-create-form--dashboard');
     expect(createProjectForm).toContain('flex flex-col gap-4');
     expect(createProjectForm).toContain('w-full');
   });

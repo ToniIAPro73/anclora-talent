@@ -1,34 +1,22 @@
 'use client';
 
-import { Languages } from 'lucide-react';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 
 export function LocaleToggle() {
   const { locale, setLocale } = useUiPreferences();
   const messages = resolveLocaleMessages(locale).shell;
+  const nextLocale = locale === 'es' ? 'en' : 'es';
 
   return (
-    <div className="ac-language-switcher talent-shell-switcher talent-shell-switcher--locale" aria-label={messages.localeLabel}>
-      <Languages className="talent-shell-switcher__leading-icon h-4 w-4" />
-      <button
-        type="button"
-        onClick={() => setLocale('es')}
-        aria-current={locale === 'es'}
-        aria-label={`${messages.localeLabel}: ${messages.localeSpanish}`}
-        className="ac-language-switcher__option talent-shell-switcher__option"
-      >
-        {messages.localeSpanish}
-      </button>
-      <button
-        type="button"
-        onClick={() => setLocale('en')}
-        aria-current={locale === 'en'}
-        aria-label={`${messages.localeLabel}: ${messages.localeEnglish}`}
-        className="ac-language-switcher__option talent-shell-switcher__option"
-      >
-        {messages.localeEnglish}
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={() => setLocale(nextLocale)}
+      aria-label={`${messages.localeLabel}: ${locale === 'es' ? messages.localeSpanish : messages.localeEnglish}`}
+      data-testid="locale-toggle"
+      className="talent-shell-locale-pill"
+    >
+      {locale === 'es' ? messages.localeSpanish : messages.localeEnglish}
+    </button>
   );
 }
