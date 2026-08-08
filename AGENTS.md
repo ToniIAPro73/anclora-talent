@@ -22,7 +22,7 @@ No asumir infraestructura compartida entre productos. Validar siempre hosting, b
 
 Todo desarrollo en este repo sigue la metodología SDD unificada del ecosistema Anclora.
 
-**Sistema SDD vigente de este repo**: `sdd/` — specs, planes y tasks por feature en `sdd/features/`. Es la autoridad local de producto e ingeniería.
+**Sistema SDD vigente de este repo**: `sdd/` — specs, planes y tasks por feature en `sdd/features/`. Es la autoridad local de producto e ingeniería. El material de `docs/superpowers/` (abril 2026) es **histórico**: specs/planes cerrados de una metodología anterior, conservados solo como registro; no es normativo y no debe usarse como base de trabajo nueva.
 
 ### Flujo de trabajo Git
 

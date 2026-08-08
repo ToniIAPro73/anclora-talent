@@ -2,7 +2,7 @@
 
 ## Vision
 
-Anclora Studio is an editorial application for turning raw source documents into digital publishing products. The product must support import, editing, enrichment with images, cover creation, preview, and export to digital formats such as PDF and EPUB.
+Anclora Talent is an editorial application for turning raw source documents into digital publishing products. The product must support import, editing, enrichment with images, cover creation, preview, and export to digital formats such as PDF and EPUB.
 
 ## Primary user value
 
