@@ -1,16 +1,18 @@
 <!-- ANCLORA-ECOSYSTEM-CONTEXT-START -->
 ## Contexto de ecosistema Anclora
 
-Antes de modificar este repositorio, todo agente debe leer:
+`anclora-talent` es una app premium del ecosistema Anclora para creación, edición, composición, previsualización y exportación de proyectos editoriales. El producto está en pausa; la gobernanza sigue vigente.
 
-- `.anclora/global/ANCLORA_ECOSYSTEM_CONTEXT.md`
-- `.anclora/global/GLOBAL_AGENT_WORKFLOW.md`
-- `.anclora/AGENT_PROJECT_CONTEXT.md`
-- `MEMORY.md`
+### Arranque de agente (bootstrap)
 
-La arquitectura estable del ecosistema se define en:
-
-`Boveda-Anclora/contracts/core/ANCLORA_ECOSYSTEM_ARCHITECTURE_CONTRACT.md`
+1. **Este archivo (`AGENTS.md`)** — reglas locales del repo.
+2. **`.anclora/AOS_ADOPTION.md`** — declaración de adopción AOS v0.2.0 y excepciones activas.
+3. **Fuentes delegadas, solo según el dominio de la tarea** (no leer todo por defecto):
+   - Contratos, branding, design tokens normativos, repository registry, compliance: Bóveda Anclora (Operational Registry delegado) → `../boveda-anclora/contracts/`, p. ej. `../boveda-anclora/contracts/core/ANCLORA_ECOSYSTEM_ARCHITECTURE_CONTRACT.md`. Registry de contratos: `../boveda-anclora/contracts/governance/contracts-registry.json`.
+   - Gobernanza constitucional y meta-gobierno: AOS → `../anclora-knowledge/` (índices enlazados desde `.anclora/AOS_ADOPTION.md`).
+4. **Fuentes locales** — autoridad ejecutable por defecto en producto e ingeniería: `sdd/` (SDD vigente), `.agent/rules/`, `MEMORY.md`, `.anclora/AGENT_PROJECT_CONTEXT.md`.
+5. **Conflictos entre fuentes**: resolución domain-first — clasificar por dominio → autoridad canónica vía registry → excepción activa si existe → supersession/fuente vigente o escalar. El histórico nunca gana.
+6. **Decisiones**: clasificar por alcance — ED → AOS `MASTER_DECISIONS`; OD → Bóveda (mecanismo CHG); PD → locales (`sdd/`); EX → `.anclora/AOS_ADOPTION.md`.
 
 No asumir infraestructura compartida entre productos. Validar siempre hosting, backend, base de datos, auth, variables y ramas.
 <!-- ANCLORA-ECOSYSTEM-CONTEXT-END -->
@@ -20,8 +22,7 @@ No asumir infraestructura compartida entre productos. Validar siempre hosting, b
 
 Todo desarrollo en este repo sigue la metodología SDD unificada del ecosistema Anclora.
 
-**Referencia canónica**: `agency-agents/docs/guides/SDD_INTEGRATION_GUIDE.md`
-**Workflow OpenSpec**: `agency-agents/docs/guides/OPENSPEC_WORKFLOW.md`
+**Sistema SDD vigente de este repo**: `sdd/` — specs, planes y tasks por feature en `sdd/features/`. Es la autoridad local de producto e ingeniería.
 
 ### Flujo de trabajo Git
 
@@ -56,6 +57,6 @@ Toda feature o fix sigue este flujo antes de escribir código:
 
 - **No spec, no code**: toda feature empieza con spec en `sdd/features/`
 - **Tests primero**: el agente ejecuta los tests, nunca el usuario
-- **Hermes gate**: cambio que afecta copy público → Hermes Copy Curator antes del merge
+- **Hermes gate**: derogado — el mecanismo nunca se implementó en este repo; la revisión de copy público es responsabilidad del reviewer humano.
 - **Spec inmutable**: una spec cerrada no se edita; los cambios generan una spec nueva
 <!-- ANCLORA-SDD-STANDARDS-END -->

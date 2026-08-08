@@ -1,18 +1,16 @@
 <!-- ANCLORA-ECOSYSTEM-CONTEXT-START -->
-## Contexto global Anclora obligatorio
+## Contexto de proyecto para agentes
 
-Antes de modificar este repositorio, todo agente IA debe leer:
+Arranque obligatorio (bootstrap):
 
-1. `.anclora/global/ANCLORA_ECOSYSTEM_CONTEXT.md`, si existe.
-2. `.anclora/global/GLOBAL_AGENT_WORKFLOW.md`, si existe.
-3. `.anclora/global/GLOBAL_GIT_WORKFLOW.md`, si existe.
-4. `.anclora/AGENT_PROJECT_CONTEXT.md`.
-5. `AGENTS.md`.
-6. `MEMORY.md`.
+1. `AGENTS.md` (raíz) — reglas locales y modelo de gobernanza del repo.
+2. `.anclora/AOS_ADOPTION.md` — adopción AOS v0.2.0 y excepciones activas.
+3. Este archivo y `MEMORY.md` — contexto y memoria técnica locales.
+4. Fuentes delegadas solo según el dominio de la tarea: Bóveda Anclora (`../boveda-anclora/contracts/`) para contratos, branding y registry; AOS (`../anclora-knowledge/`) para gobernanza constitucional.
 
-La fuente canónica estable está en Boveda-Anclora:
+La autoridad delegada en contratos de ecosistema vive en la Bóveda Anclora:
 
-`contracts/core/ANCLORA_ECOSYSTEM_ARCHITECTURE_CONTRACT.md`
+`../boveda-anclora/contracts/core/ANCLORA_ECOSYSTEM_ARCHITECTURE_CONTRACT.md`
 
 No asumir que este repo comparte infraestructura con otros productos Anclora. Revisar frontend, backend, hosting, base de datos, auth y variables reales antes de tocar despliegues.
 <!-- ANCLORA-ECOSYSTEM-CONTEXT-END -->
