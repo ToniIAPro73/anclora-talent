@@ -2,11 +2,11 @@
 
 ## Proveniencia y precedencia
 
-Los contratos de ecosistema en esta carpeta son **copias derivadas** de la Bóveda Anclora (`../boveda-anclora/contracts/`), que es la **fuente canónica** en su dominio delegado (contratos, branding, design tokens normativos). Se conservan para consumo local/offline del repo.
+Los contratos y anexos de ecosistema en esta carpeta son **copias derivadas** de la Bóveda Anclora, que es la **fuente canónica** en su dominio delegado (contratos, branding, design tokens normativos): los contratos viven en `../boveda-anclora/contracts/` y los 4 anexos de branding en `../boveda-anclora/docs/standards/` (ubicación canónica declarada por Bóveda). Se conservan para consumo local/offline del repo.
 
 - **La fuente canónica siempre prevalece.** En caso de divergencia entre una copia local y su fuente en Bóveda, gana la fuente y la copia debe re-sincronizarse.
 - **Registry operativo de contratos**: `../boveda-anclora/contracts/governance/contracts-registry.json`.
-- **Última sincronización verificada**: 2026-08-08 (diff copia ↔ fuente vacío en los 8 contratos con fuente canónica).
+- **Última sincronización verificada**: 2026-08-08 (diff copia ↔ fuente vacío en los 12 documentos con fuente canónica: 8 contratos + 4 anexos de branding).
 - No añadir front-matter de proveniencia a cada contrato: este README es el mecanismo de proveniencia de la carpeta.
 
 ## Mapa copia → fuente canónica
@@ -21,6 +21,10 @@ Los contratos de ecosistema en esta carpeta son **copias derivadas** de la Bóve
 | `LOCALIZATION_CONTRACT.md` | `contracts/logic/LOCALIZATION_CONTRACT.md` |
 | `MODAL_CONTRACT.md` | `contracts/components/MODAL_CONTRACT.md` |
 | `UI_MOTION_CONTRACT.md` | `contracts/components/UI_MOTION_CONTRACT.md` |
+| `ANCLORA_BRANDING_COLOR_TOKENS.md` | `docs/standards/ANCLORA_BRANDING_COLOR_TOKENS.md` |
+| `ANCLORA_BRANDING_FAVICON_SPEC.md` | `docs/standards/ANCLORA_BRANDING_FAVICON_SPEC.md` |
+| `ANCLORA_BRANDING_ICON_SYSTEM.md` | `docs/standards/ANCLORA_BRANDING_ICON_SYSTEM.md` |
+| `ANCLORA_BRANDING_TYPOGRAPHY.md` | `docs/standards/ANCLORA_BRANDING_TYPOGRAPHY.md` |
 
 ## Fuentes locales (no son copias)
 
@@ -28,4 +32,4 @@ Los contratos de ecosistema en esta carpeta son **copias derivadas** de la Bóve
 
 ## Desviaciones a revisar
 
-- `ANCLORA_BRANDING_COLOR_TOKENS.md`, `ANCLORA_BRANDING_FAVICON_SPEC.md`, `ANCLORA_BRANDING_ICON_SYSTEM.md`, `ANCLORA_BRANDING_TYPOGRAPHY.md` — el contrato maestro canónico los referencia como anexos, pero **no existe contraparte canónica** en `../boveda-anclora/contracts/` (verificado 2026-08-08). Se conservan como copias locales sin fuente que re-sincronizar; no editar salvo para alinear con el contrato maestro. Registrado como excepción EX-TALENT-007 en `.anclora/AOS_ADOPTION.md`; la resolución corresponde a Bóveda (publicar los anexos o declarar fuente local).
+- Ninguna activa. La excepción EX-TALENT-007 (anexos de branding sin fuente canónica registrada) quedó resuelta el 2026-08-08: Bóveda declaró `../boveda-anclora/docs/standards/` ubicación canónica de los 4 anexos y los registró en `contracts-registry.json`; ver `.anclora/AOS_ADOPTION.md`.
