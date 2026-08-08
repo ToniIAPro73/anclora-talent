@@ -72,8 +72,9 @@ npm run dev
 
 ## Documentation and governance
 
-- Brand and governance contracts: [`docs/standards/`](./docs/standards/)
-- Anclora Vault (source of truth): `contracts/` and `docs/governance/`
+- Brand and governance contracts: [`docs/standards/`](./docs/standards/) (derived copies; see its README)
+- Bóveda Anclora (delegated authority for contracts, branding and registry): `../boveda-anclora/contracts/` — registry at `../boveda-anclora/contracts/governance/contracts-registry.json`
+- Constitutional governance: AOS (`../anclora-knowledge/`); adoption and exceptions in [`.anclora/AOS_ADOPTION.md`](./.anclora/AOS_ADOPTION.md)
 
 ---
 

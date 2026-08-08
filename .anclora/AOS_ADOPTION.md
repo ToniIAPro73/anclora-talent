@@ -39,8 +39,8 @@ Declara qué conocimiento mantiene este repositorio como fuente oficial local.
 | Identidad y estado del producto | [`../README.md`](../README.md) | AOS Chief Architect | Fuente local subordinada a AOS. |
 | Traducción del README | [`../README.en.md`](../README.en.md) | AOS Chief Architect | Traducción subordinada a `README.md`. |
 | Contexto de agente del repositorio | [`AGENT_PROJECT_CONTEXT.md`](AGENT_PROJECT_CONTEXT.md) | AOS Chief Architect | Fuente local subordinada al protocolo AOS de agentes. |
-| Reglas locales de agentes | [`../AGENTS.md`](../AGENTS.md) | AOS Chief Architect | Fuente local subordinada a AOS; contiene referencias legacy. |
-| Memoria técnica local | [`../MEMORY.md`](../MEMORY.md) | AOS Chief Architect | Fuente local histórica/subordinada; contiene referencias legacy. |
+| Reglas locales de agentes | [`../AGENTS.md`](../AGENTS.md) | AOS Chief Architect | Fuente local subordinada a AOS; bootstrap alineado con el modelo de 3 niveles. |
+| Memoria técnica local | [`../MEMORY.md`](../MEMORY.md) | AOS Chief Architect | Fuente local histórica/subordinada. |
 | Producto | [`../sdd/product.md`](../sdd/product.md) | AOS Chief Architect | Fuente local de alcance de producto. |
 | Arquitectura local | [`../sdd/architecture.md`](../sdd/architecture.md) | AOS Chief Architect | Fuente local de arquitectura de aplicación. |
 | Modelo de datos local | [`../sdd/data-model.md`](../sdd/data-model.md) | AOS Chief Architect | Fuente local de modelo de datos. |
@@ -74,16 +74,17 @@ Una decisión local debe elevarse a AOS cuando:
 
 ## Excepciones y desviaciones
 
-Declara excepciones conocidas.
+Declara excepciones conocidas. Ciclo de vida: `OPEN → ACCEPTED → RESOLVED`. Sin regla universal de caducidad: cada excepción define su trigger de revisión o condición de resolución.
 
-| ID | Descripción | Motivo | Riesgo | Owner | Fecha de revisión | Resolución |
-| --- | --- | --- | --- | --- | --- | --- |
-| EX-TALENT-001 | Referencias legacy a `Boveda-Anclora` como fuente canónica en `README.md`, `README.en.md`, `.anclora/AGENT_PROJECT_CONTEXT.md`, `AGENTS.md` y `MEMORY.md`. | AOS v0.2.0 fue creado después de esa gobernanza legacy. | Autoridad ambigua entre AOS y Bóveda. | AOS Chief Architect | 2026-08-08 | Mantener como excepción temporal; reemplazar por referencias AOS o futura Anclora Vault cuando se autorice cleanup. |
-| EX-TALENT-002 | Contratos de ecosistema copiados en `docs/standards/`. | Talent conserva copias operativas de contratos de marca, UI, modal, cookies y localización. | Duplicación de fuentes oficiales y drift documental. | AOS Chief Architect | 2026-08-08 | Tratar como copias operativas subordinadas; futura resolución mediante Anclora Vault/AOS source registry. |
-| EX-TALENT-003 | `AGENTS.md` define workflow local y referencias a guías externas legacy. | Preexiste al protocolo AOS de agentes. | Agentes pueden seguir reglas locales antes que AOS. | AOS Chief Architect | 2026-08-08 | Declarar subordinación a AOS; cleanup posterior si se autoriza. |
-| EX-TALENT-004 | `.agent/skills/anclorabot-multiagente-system/SKILL.md` describe `anclora-synergi`, no Talent. | Artefacto local heredado o mal ubicado. | Confusión de agente/proyecto y falsa capacidad Skill. | AOS Chief Architect | 2026-08-08 | Mantener sin uso; revisar en cleanup posterior. No implementar Skills. |
-| EX-TALENT-005 | `memory/test_credentials.md` contiene credenciales fake/test-only y placeholders OAuth. | Necesario para E2E y documentado como no real. | Riesgo de tratamiento incorrecto como secreto real o exposición sensible. | AOS Chief Architect | 2026-08-08 | Mantener como sensitive-adjacent; no publicar fuera de canales internos. |
-| EX-TALENT-006 | Working tree contiene `pnpm-lock.yaml` y `pnpm-workspace.yaml` untracked. | Estado Git preexistente no relacionado con adopción. | Mezclar adopción con cambios de package manager/dependencias. | AOS Chief Architect | 2026-08-08 | No incluir en adopción; resolver por tarea separada. |
+| ID | Regla afectada | Razón | Owner | Status | Creada | Trigger de revisión | Resolución |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| EX-TALENT-001 | Referencias legacy a `Boveda-Anclora` como fuente canónica genérica en `README.md`, `README.en.md`, `.anclora/AGENT_PROJECT_CONTEXT.md`, `AGENTS.md` y `MEMORY.md`. | AOS v0.2.0 fue creado después de esa gobernanza legacy. | AOS Chief Architect | RESOLVED | 2026-08-08 | — | Resuelta 2026-08-08: bootstrap reescrito con el modelo de 3 niveles; Bóveda referenciada como autoridad delegada en sus dominios con rutas corregidas; no quedan referencias legacy en los documentos de entrada. |
+| EX-TALENT-002 | Contratos de ecosistema copiados en `docs/standards/` (8 con fuente canónica en Bóveda). | Copias operativas para consumo local/offline. | AOS Chief Architect | RESOLVED | 2026-08-08 | — | Resuelta 2026-08-08: las 6 copias divergentes se re-sincronizaron con la fuente canónica (diff copia ↔ fuente vacío en las 8); proveniencia, precedencia y ruta correcta del registry declaradas en `docs/standards/README.md` (mecanismo ligero, sin front-matter masivo). |
+| EX-TALENT-003 | `AGENTS.md` define workflow local y referencias a guías externas legacy. | Preexiste al protocolo AOS de agentes. | AOS Chief Architect | RESOLVED | 2026-08-08 | — | Resuelta 2026-08-08: referencias rotas a guías externas inexistentes eliminadas; el workflow local queda declarado subordinado al bootstrap AOS/Bóveda como autoridad local por defecto. |
+| EX-TALENT-004 | `.agent/skills/anclorabot-multiagente-system/SKILL.md` describe `anclora-synergi`, no Talent. | Artefacto local heredado o mal ubicado. | AOS Chief Architect | ACCEPTED | 2026-08-08 | Cleanup de artefactos locales autorizado. | Mantener sin uso; no implementar Skills. Resolver eliminando o reubicando el artefacto cuando se autorice el cleanup. |
+| EX-TALENT-005 | `memory/test_credentials.md` contiene credenciales fake/test-only y placeholders OAuth. | Necesario para E2E y documentado como no real. | AOS Chief Architect | ACCEPTED | 2026-08-08 | El repo se hace público o rota el entorno de pruebas. | Mantener como sensitive-adjacent; no publicar fuera de canales internos. |
+| EX-TALENT-006 | Working tree contiene `pnpm-lock.yaml` y `pnpm-workspace.yaml` untracked. | Estado Git preexistente no relacionado con adopción. | AOS Chief Architect | ACCEPTED | 2026-08-08 | Tarea separada de package manager/dependencias. | No incluir en adopción ni en remediación de gobernanza; resolver por tarea separada. |
+| EX-TALENT-007 | `docs/standards/` contiene 4 anexos de branding (`ANCLORA_BRANDING_COLOR_TOKENS`, `ANCLORA_BRANDING_FAVICON_SPEC`, `ANCLORA_BRANDING_ICON_SYSTEM`, `ANCLORA_BRANDING_TYPOGRAPHY`) sin contraparte canónica en `../boveda-anclora/contracts/`, aunque el `ANCLORA_BRANDING_MASTER_CONTRACT` canónico los referencia. | La fuente canónica de estos anexos no existe en Bóveda (verificado 2026-08-08). | AOS Chief Architect | OPEN | 2026-08-08 | Bóveda publica los anexos o declara fuente local para ellos. | Condición de resolución: Bóveda incorpora los anexos a `contracts/` (y Talent re-sincroniza) o declara formalmente las copias locales como fuente. Mientras tanto, no editar las copias salvo para alinear con el contrato maestro. |
 
 ## Política de upgrade AOS
 
@@ -107,6 +108,7 @@ El upgrade debe:
 | Fecha | AOS Version | Cambio | Owner |
 | --- | --- | --- | --- |
 | 2026-08-08 | v0.2.0 | Declaración inicial de adopción retrospectiva con excepciones. | AOS Chief Architect |
+| 2026-08-08 | v0.2.0 | Revisión de remediación: bootstrap y lenguaje de autoridad alineados con el modelo de 3 niveles; EX-TALENT-001/002/003 resueltas; EX-TALENT-007 abierta (anexos de branding sin fuente canónica en Bóveda). | AOS Chief Architect |
 
 ## Documentos relacionados
 

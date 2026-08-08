@@ -9,4 +9,4 @@ Planned internal skills:
 - cover-studio-builder
 - export-pipeline-checklist
 
-These skills are not implemented yet. Until then, `sdd/` and `.agent/rules/` are the operative source of truth.
+These skills are not implemented yet. Until then, `sdd/` and `.agent/rules/` are the local authority for product and engineering decisions in this repo — subordinate to AOS constitutional governance and to Bóveda Anclora in its delegated domains (contracts, branding, registry).

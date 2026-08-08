@@ -72,8 +72,9 @@ npm run dev
 
 ## Documentación y gobernanza
 
-- Contratos de marca y gobernanza: [`docs/standards/`](./docs/standards/)
-- Bóveda Anclora (fuente de verdad): `contracts/` y `docs/governance/`
+- Contratos de marca y gobernanza: [`docs/standards/`](./docs/standards/) (copias derivadas; ver su README)
+- Bóveda Anclora (autoridad delegada en contratos, branding y registry): `../boveda-anclora/contracts/` — registry en `../boveda-anclora/contracts/governance/contracts-registry.json`
+- Gobernanza constitucional: AOS (`../anclora-knowledge/`); adopción y excepciones en [`.anclora/AOS_ADOPTION.md`](./.anclora/AOS_ADOPTION.md)
 
 ---
 
