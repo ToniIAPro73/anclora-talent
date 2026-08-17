@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 vi.mock('server-only', () => ({}));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -102,6 +102,10 @@ import {
 describe('collaboration actions — authorization server-side (R5)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // acceptInvitationAction (unlike acceptInvitation) has no `now` override —
+    // it's a public server action — so expiry fixtures need a controlled
+    // system clock instead of a real one drifting past NOW + TTL.
+    vi.useFakeTimers({ now: NOW });
     hasDatabaseMock.mockReturnValue(true);
     requireUserIdMock.mockResolvedValue('owner-1');
     requireUserMock.mockResolvedValue({ id: 'user-9', email: 'editor@example.com', fullName: 'Editor' });
@@ -109,6 +113,10 @@ describe('collaboration actions — authorization server-side (R5)', () => {
       projects: [{ userId: 'owner-1' }],
       users: [{ id: 'user-9', email: 'editor@example.com' }],
     });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   test('inviteCollaboratorAction requires a database', async () => {
