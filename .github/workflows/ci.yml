@@ -25,6 +25,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Browser only (no --with-deps): the apt install stalled 14m45s and blew
+      # the job timeout. Export render tests (export-builder, brand-export)
+      # launch headless Chromium via export-surface-image.ts; ubuntu-latest
+      # runners already ship the required system libraries.
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium
+
       - name: Lint
         run: npm run lint
 
