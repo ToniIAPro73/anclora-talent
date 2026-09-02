@@ -11,22 +11,29 @@ const defaults: CookiePreferences = { necessary: true, session: true, analytics:
 export function CookieConsent() {
   const { locale } = useUiPreferences();
   const en = locale === 'en';
-  const [open, setOpen] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return !localStorage.getItem(STORAGE_KEY);
-  });
+  const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState(false);
-  const [preferences, setPreferences] = useState<CookiePreferences>(() => {
-    if (typeof window === 'undefined') return defaults;
+  const [preferences, setPreferences] = useState<CookiePreferences>(defaults);
+
+  useEffect(() => {
+    // Reads localStorage after mount to avoid SSR/CSR hydration mismatch;
+    // the resulting setState calls are intentionally client-only, not a
+    // synchronization loop.
+    /* eslint-disable react-hooks/set-state-in-effect */
+    let stored = false;
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<CookiePreferences>;
-        return { necessary: true, session: true, analytics: Boolean(parsed.analytics), marketing: Boolean(parsed.marketing), updatedAt: parsed.updatedAt ?? '', version: 'v1' };
+        setPreferences({ necessary: true, session: true, analytics: Boolean(parsed.analytics), marketing: Boolean(parsed.marketing), updatedAt: parsed.updatedAt ?? '', version: 'v1' });
+        stored = true;
       }
-    } catch {}
-    return defaults;
-  });
+    } catch {
+      stored = false;
+    }
+    setOpen(!stored);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
 
   useEffect(() => {
     const listener = () => { setOpen(true); setSettings(true); };

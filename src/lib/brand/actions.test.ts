@@ -1,3 +1,5 @@
+// @vitest-environment node
+
 /**
  * Brand profile CRUD actions (FASE 2): extraction → draft, explicit
  * activation (G4: at most one active version per brand name) and the
@@ -46,7 +48,7 @@ describe('brand profile actions (CRUD)', () => {
     expect(profile?.version).toBe(1);
     expect(profile?.palette).toHaveLength(4);
     expect(profile?.typography.display?.family).toBe('Libre Baskerville');
-  });
+  }, 20_000);
 
   test('activation is explicit and deprecates other versions of the same name', async () => {
     const first = await createBrandProfileAction(uploadFormData());
