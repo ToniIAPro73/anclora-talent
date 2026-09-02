@@ -8,7 +8,7 @@
 1. **Este archivo (`AGENTS.md`)** — reglas locales del repo.
 2. **`.anclora/AOS_ADOPTION.md`** — declaración de adopción AOS v0.2.0 y excepciones activas.
 3. **Fuentes delegadas, solo según el dominio de la tarea** (no leer todo por defecto):
-   - Contratos, branding, design tokens normativos, repository registry, compliance: Bóveda Anclora (Operational Registry delegado) → `../boveda-anclora/contracts/`, p. ej. `../boveda-anclora/contracts/core/ANCLORA_ECOSYSTEM_ARCHITECTURE_CONTRACT.md`. Registry de contratos: `../boveda-anclora/contracts/governance/contracts-registry.json`.
+   - Contratos, branding, design tokens normativos, repository registry, compliance: Anclora Vault (Operational Registry delegado, renombrado desde Bóveda Anclora) → `../anclora-vault/00-governance/contracts/`, p. ej. `../anclora-vault/00-governance/contracts/core/ANCLORA_ECOSYSTEM_ARCHITECTURE_CONTRACT.md`. Registry de contratos: `../anclora-vault/00-governance/registry/contracts-registry.json`.
    - Gobernanza constitucional y meta-gobierno: AOS → `../anclora-governance/` (índices enlazados desde `.anclora/AOS_ADOPTION.md`).
 4. **Fuentes locales** — autoridad ejecutable por defecto en producto e ingeniería: `sdd/` (SDD vigente), `.agent/rules/`, `.anclora/AGENT_PROJECT_CONTEXT.md`. `MEMORY.md` es memoria operativa e histórica (changelog narrativo de desarrollo): no es fuente normativa ni autoridad ejecutable, no crea ED/OD/PD/EX y no prevalece sobre contratos, el SDD, `AOS_ADOPTION.md` ni ninguna fuente canónica; si lo contradice, prevalece la fuente canónica.
 5. **Conflictos entre fuentes**: resolución domain-first — clasificar por dominio → autoridad canónica vía registry → excepción activa si existe → supersession/fuente vigente o escalar. El histórico nunca gana.
