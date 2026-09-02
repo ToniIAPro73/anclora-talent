@@ -3,7 +3,8 @@
     "notebooklm": {
       "command": "npx",
       "args": [
-        "notebooklm-mcp@latest"
+        "-y",
+        "notebooklm-mcp@2.0.0"
       ]
     }
   }
