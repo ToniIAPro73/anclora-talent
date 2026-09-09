@@ -71,3 +71,5 @@ test-results/*
 # EPUB gate (F1): generated EPUBs and the pinned EPUBCheck distribution
 .epub-check/
 .epubcheck/
+
+evidence/
