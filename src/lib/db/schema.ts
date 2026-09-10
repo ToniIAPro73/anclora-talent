@@ -5,9 +5,11 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -26,6 +28,22 @@ export const sessions = pgTable('sessions', {
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const passwordResetTokens = pgTable(
+  'password_reset_tokens',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    // Store only SHA-256(token); the raw token exists only in the emailed link.
+    tokenHash: varchar('token_hash', { length: 64 }).notNull().unique(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [uniqueIndex('password_reset_tokens_active_user_unique').on(table.userId).where(sql`${table.usedAt} IS NULL`)],
+);
 
 export const oauthIdentities = pgTable(
   'oauth_identities',

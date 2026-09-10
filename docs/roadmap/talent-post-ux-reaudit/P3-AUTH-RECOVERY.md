@@ -1,14 +1,14 @@
 # P3 — Authentication Recovery, Validation and Entry Parity
 
-Repo status: BLOCKED
+Repo status: DONE
 
 Findings: UX-02, UX-03, UX-10.
 
-Execution status: `P3-M00 PASS`; `P3-M02 PASS`; `P3-M01 BLOCKED`; `P3-FINAL-GATE BLOCKED`.
+Execution status: `P3-M00 PASS`; `P3-M01 PASS`; `P3-M02 PASS`; `P3-FINAL-GATE PASS`.
 
-Evidence: `npx vitest run src/components/auth/RegisterPageContent.test.tsx src/app/api/auth/register/route.test.ts src/lib/auth/oauth/pkce.test.ts` passed 15/15. P2 CI run [34521552541](https://github.com/ToniIAPro73/anclora-talent/actions/runs/34521552541) passed for `18b72d9`. P3 cannot close because repository has no password-recovery route, recovery-token schema/storage or transactional email boundary.
+Evidence: P3 focused suite `npx vitest run src/components/auth/PasswordRecoveryPageContent.test.tsx src/components/auth/RegisterPageContent.test.tsx src/app/api/auth/password-recovery/request/route.test.ts src/app/api/auth/password-recovery/reset/route.test.ts src/lib/auth/password-recovery.test.ts src/app/api/auth/register/route.test.ts src/lib/auth/oauth/pkce.test.ts` passed 30/30. `npm run lint -- --quiet`, `npm run build` and migration generation passed. The P3 contract is documented in [`AUTH_PASSWORD_RECOVERY_CONTRACT.md`](../../standards/AUTH_PASSWORD_RECOVERY_CONTRACT.md).
 
-Blocking condition: do not create apparent recovery success or issue recoverable tokens without approved one-use/expiry/hash/invalidation contract and configured transactional delivery boundary. P4 and later phases do not start while P3 is BLOCKED.
+Deployment prerequisite: configure `RESEND_API_KEY`, `AUTH_EMAIL_FROM` and recommended `AUTH_APP_URL` before enabling production delivery. Without them, the route fails closed with `RECOVERY_UNAVAILABLE` before account lookup; this is an explicit capability state, not a false success.
 
 ### EXECUTION MODE
 

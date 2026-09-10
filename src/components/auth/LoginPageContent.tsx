@@ -187,12 +187,9 @@ export function LoginPageContent({
           </form>
 
           <div className="mt-1.5 text-center">
-            <span
-              className="talent-auth-link cursor-not-allowed text-xs opacity-60"
-              title={t.socialComingSoon}
-            >
+            <Link href="/forgot-password" className="talent-auth-link text-xs">
               {t.forgotPassword}
-            </span>
+            </Link>
           </div>
 
           <div className="talent-auth-box mt-1.5 rounded-2xl px-4 py-2 text-center">

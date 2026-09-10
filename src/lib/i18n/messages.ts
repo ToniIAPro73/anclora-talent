@@ -36,6 +36,24 @@ export type AppMessages = {
     signIn: string;
     signingIn: string;
     forgotPassword: string;
+    forgotPasswordTitle: string;
+    forgotPasswordDescription: string;
+    sendRecoveryEmail: string;
+    sendingRecoveryEmail: string;
+    recoveryRequestAccepted: string;
+    recoveryUnavailable: string;
+    recoveryRequestFailed: string;
+    backToSignIn: string;
+    resetPasswordTitle: string;
+    resetPasswordDescription: string;
+    newPassword: string;
+    confirmPassword: string;
+    resetPassword: string;
+    resettingPassword: string;
+    passwordResetSuccess: string;
+    passwordResetError: string;
+    invalidResetToken: string;
+    passwordMismatch: string;
     noAccount: string;
     signUp: string;
     createAccount: string;
@@ -798,6 +816,26 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       signIn: 'Iniciar sesión',
       signingIn: 'Iniciando sesión…',
       forgotPassword: '¿Olvidaste tu contraseña?',
+      forgotPasswordTitle: 'Recupera tu contraseña',
+      forgotPasswordDescription:
+        'Introduce tu email y, si existe una cuenta, recibirás un enlace para restablecerla.',
+      sendRecoveryEmail: 'Enviar enlace de recuperación',
+      sendingRecoveryEmail: 'Enviando enlace…',
+      recoveryRequestAccepted:
+        'Si existe una cuenta con ese email, recibirás un enlace de recuperación. Revisa también spam.',
+      recoveryUnavailable: 'La recuperación no está disponible ahora. Inténtalo más tarde.',
+      recoveryRequestFailed: 'No se pudo procesar la solicitud. Inténtalo de nuevo.',
+      backToSignIn: 'Volver a iniciar sesión',
+      resetPasswordTitle: 'Crea una nueva contraseña',
+      resetPasswordDescription: 'Elige una contraseña nueva para volver a acceder a tu cuenta.',
+      newPassword: 'Nueva contraseña',
+      confirmPassword: 'Repite la contraseña',
+      resetPassword: 'Guardar nueva contraseña',
+      resettingPassword: 'Guardando contraseña…',
+      passwordResetSuccess: 'Contraseña actualizada. Ya puedes iniciar sesión.',
+      passwordResetError: 'No se pudo actualizar la contraseña. Solicita un enlace nuevo.',
+      invalidResetToken: 'Este enlace ha caducado o ya se ha utilizado.',
+      passwordMismatch: 'Las contraseñas no coinciden.',
       noAccount: '¿No tienes cuenta?',
       signUp: 'Regístrate',
       createAccount: 'Crear cuenta',
@@ -1680,6 +1718,26 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       signIn: 'Sign in',
       signingIn: 'Signing in…',
       forgotPassword: 'Forgot your password?',
+      forgotPasswordTitle: 'Recover your password',
+      forgotPasswordDescription:
+        'Enter your email and, if an account exists, we will send a reset link.',
+      sendRecoveryEmail: 'Send recovery link',
+      sendingRecoveryEmail: 'Sending link…',
+      recoveryRequestAccepted:
+        'If an account exists for that email, you will receive a recovery link. Check spam too.',
+      recoveryUnavailable: 'Password recovery is unavailable right now. Try again later.',
+      recoveryRequestFailed: 'We could not process the request. Please try again.',
+      backToSignIn: 'Back to sign in',
+      resetPasswordTitle: 'Create a new password',
+      resetPasswordDescription: 'Choose a new password to access your account again.',
+      newPassword: 'New password',
+      confirmPassword: 'Repeat password',
+      resetPassword: 'Save new password',
+      resettingPassword: 'Saving password…',
+      passwordResetSuccess: 'Password updated. You can now sign in.',
+      passwordResetError: 'Could not update the password. Request a new link.',
+      invalidResetToken: 'This link has expired or has already been used.',
+      passwordMismatch: 'Passwords do not match.',
       noAccount: "Don't have an account?",
       signUp: 'Sign up',
       createAccount: 'Create account',

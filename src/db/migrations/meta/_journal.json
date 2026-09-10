@@ -120,6 +120,20 @@
       "when": 1785867678806,
       "tag": "0016_violet_sway",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1789070177350,
+      "tag": "0017_thankful_spitfire",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789070618254,
+      "tag": "0018_vengeful_goliath",
+      "breakpoints": true
     }
   ]
 }
