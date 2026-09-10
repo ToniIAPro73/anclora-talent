@@ -8,6 +8,7 @@ import {
   buildExportPreview,
   buildProjectDocxBuffer,
   buildProjectPdf,
+  assertExportArtifactIntegrity,
   renderProjectExportHtml,
 } from './export-builder';
 import { buildContentPageExportImageDataUrl } from './export-surface-image';
@@ -35,6 +36,17 @@ function makeProject() {
 }
 
 describe('export-builder', () => {
+  test('fails closed when a populated source is replaced by the empty placeholder', () => {
+    const project = makeProject();
+    const pages = buildExportPreview(project).map((page) =>
+      page.type === 'content' ? { ...page, content: '<p>Contenido aún no disponible</p>' } : page,
+    );
+
+    expect(() => assertExportArtifactIntegrity(project, pages, 'HTML')).toThrow(
+      'HTML export failed integrity validation',
+    );
+  });
+
   test('builds export pages from the same preview pagination pipeline', () => {
     const pages = buildExportPreview(makeProject());
 
@@ -72,7 +84,7 @@ describe('export-builder', () => {
     expect(first).toMatch(/^data:image\/(?:png|jpeg);base64,/);
   }, 30000);
 
-  test('builds a DOCX with one locked image frame per preview page and no synthetic cover text', async () => {
+  test('builds a semantic DOCX with editable manuscript text and rasterized publication surfaces', async () => {
     const project = makeProject();
     project.document.chapters = [
       {
@@ -90,7 +102,6 @@ describe('export-builder', () => {
       },
     ];
 
-    const pages = buildExportPreview(project);
     const buffer = await buildProjectDocxBuffer(project);
     expect(buffer.byteLength).toBeGreaterThan(0);
 
@@ -101,7 +112,10 @@ describe('export-builder', () => {
     const documentXml = await zip.file('word/document.xml')!.async('string');
     const imageReferences = (documentXml.match(/<a:blip\b/g) ?? []).length;
 
-    expect(imageReferences).toBe(pages.length);
+    expect(imageReferences).toBe(2);
+    expect(documentXml).toContain('Capítulo 1');
+    expect(documentXml).toContain('Contenido de prueba');
+    expect(documentXml).toContain('<w:t');
     expect(documentXml).toContain('<wp:inline');
   }, 60000);
 });

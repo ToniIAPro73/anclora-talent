@@ -25,7 +25,11 @@ The remediation is therefore sequenced by risk rather than visual novelty:
 7. give the editorial workspace progressive disclosure while preserving expert controls;
 8. run full regression, promotion and release gates.
 
-No product implementation is included in this authoring change. The current product code, tests, schema, AOS declaration and audit artifacts are the baseline authority.
+The initial authoring pass established the documentation authority. Functional execution is now active from `development`; P0 is complete and P1 is in progress. The current product code, tests, schema, AOS declaration and audit artifacts remain the baseline authority.
+
+## EXECUTION STATUS
+
+`P0-FINAL-GATE: PASS`. P1 has implemented the first integrity protections: populated chapter fallback when a lazy semantic model is empty, editable manuscript content in DOCX, selectable text rendering for standard PDF content pages, and fail-closed artifact checks. P1 remains open until the full acceptance corpus and phase Gate pass.
 
 ## 2. BASELINE
 

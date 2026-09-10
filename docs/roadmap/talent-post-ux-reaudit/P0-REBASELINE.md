@@ -1,6 +1,8 @@
 # P0 — Rebaseline / Contracts / Test Harness
 
-Repo status: PARTIAL
+Repo status: DONE
+
+Execution status: P0-FINAL-GATE PASS. Baseline, source reconciliation, contract inventory, synthetic corpus, test tiers and workflow/AOS evidence are recorded. No product behavior changed in P0.
 
 Objective: produce reproducible truth before product implementation. P0 changes documentation/test fixtures only; it does not change product behavior.
 

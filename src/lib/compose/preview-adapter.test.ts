@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ProjectRecord } from '@/lib/projects/types';
+import { inlineToPlainText } from '@/lib/document/model';
 import { createDefaultSurfaceState } from '@/lib/projects/cover-surface';
 import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 import { resolveDocumentRules } from './rules';
@@ -214,6 +215,24 @@ describe('projectToSemanticDocument / templateFromPaginationConfig', () => {
     const { chapterStartIds, document } = projectToSemanticDocument(createProject());
     expect(chapterStartIds).toHaveLength(2);
     expect(document.blocks[0].id).toBe(chapterStartIds[0]);
+  });
+
+  it('falls back to persisted chapters when a lazy semantic model is empty', () => {
+    const project = createProject();
+    project.document.documentModel = {
+      version: 1,
+      metadata: { title: project.document.title },
+      blocks: [],
+    };
+
+    const { document, chapterStartIds } = projectToSemanticDocument(project);
+
+    expect(document.blocks.length).toBeGreaterThan(0);
+    expect(chapterStartIds).toHaveLength(2);
+    const text = document.blocks
+      .map((block) => 'content' in block && Array.isArray(block.content) ? inlineToPlainText(block.content) : '')
+      .join(' ');
+    expect(text).toContain('Contenido del capítulo uno.');
   });
 
   it('maps PaginationConfig 1:1 into a ComposeTemplate', () => {

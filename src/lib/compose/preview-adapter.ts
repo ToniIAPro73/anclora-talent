@@ -87,7 +87,11 @@ export function projectToSemanticDocument(project: ProjectRecord): {
 
   const chapterById = new Map<string, ProjectChapterInfo>();
 
-  if (project.document.documentModel) {
+  // A lazily-created model may exist as an empty placeholder while the
+  // persisted chapter blocks still contain the manuscript. Prefer the model
+  // only when it actually owns content; otherwise fall back to chapters so
+  // preview and every export keep the manuscript visible.
+  if (project.document.documentModel?.blocks.length) {
     // Stored model is the source of truth; chapter anchors still come from
     // the persisted chapters so pages never mix project chapters.
     return {

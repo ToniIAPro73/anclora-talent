@@ -20,7 +20,8 @@ import {
 import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 import type { PaginationConfig } from '@/lib/preview/device-configs';
 import { type PreviewPage } from '@/lib/preview/preview-builder';
-import { composeProjectPreview } from '@/lib/compose/preview-adapter';
+import { composeProjectPreview, projectToSemanticDocument } from '@/lib/compose/preview-adapter';
+import { inlineToPlainText } from '@/lib/document/model';
 import type { ComposeTemplate } from '@/lib/compose/compose';
 import type { ProjectRecord } from './types';
 import {
@@ -30,7 +31,6 @@ import {
 } from './export-content-blocks';
 import {
   buildBackCoverExportImageDataUrl,
-  buildContentPageExportImageDataUrl,
   buildCoverExportImageDataUrl,
 } from './export-surface-image';
 
@@ -42,6 +42,58 @@ const COVER_PALETTE_COLORS: Record<string, { bg: string; text: string; accent: s
   teal: { bg: '#124a50', text: '#f2e3b3', accent: '#4fd1c5' },
   sand: { bg: '#f2e3b3', text: '#0b313f', accent: '#d4af37' },
 };
+
+export class ExportArtifactIntegrityError extends Error {
+  readonly code = 'EXPORT_ARTIFACT_INTEGRITY_FAILED';
+
+  constructor(format: string, reason: string) {
+    super(`${format} export failed integrity validation: ${reason}`);
+    this.name = 'ExportArtifactIntegrityError';
+  }
+}
+
+function normalizeArtifactText(value: string) {
+  return value.replace(/\s+/g, ' ').trim().toLocaleLowerCase();
+}
+
+function semanticDocumentText(project: ProjectRecord) {
+  const { document } = projectToSemanticDocument(project);
+  return document.blocks
+    .map((block) => {
+      if ('content' in block && Array.isArray(block.content)) return inlineToPlainText(block.content);
+      if (block.type === 'list') return block.items.map(inlineToPlainText).join(' ');
+      if (block.type === 'table') return block.rows.flat().map(inlineToPlainText).join(' ');
+      if (block.type === 'image') return block.alt ?? '';
+      if (block.type === 'code') return block.code;
+      return '';
+    })
+    .filter(Boolean)
+    .join(' ');
+}
+
+export function assertExportArtifactIntegrity(
+  project: ProjectRecord,
+  pages: PreviewPage[],
+  format: 'HTML' | 'DOCX' | 'PDF',
+) {
+  const sourceText = normalizeArtifactText(semanticDocumentText(project));
+  if (!sourceText) return;
+
+  const outputText = normalizeArtifactText(
+    pages
+      .filter((page) => page.type === 'content')
+      .map((page) => stripInlineHtml(page.content ?? ''))
+      .join(' '),
+  );
+  const sourceProbe = sourceText.split(' ').slice(0, 8).join(' ');
+
+  if (!outputText || outputText.includes('contenido aún no disponible') || !outputText.includes(sourceProbe)) {
+    throw new ExportArtifactIntegrityError(
+      format,
+      `populated source is missing from composed content (source words: ${sourceText.split(' ').length}, output words: ${outputText.split(' ').length})`,
+    );
+  }
+}
 
 function escapeHtml(text: string) {
   return text
@@ -195,6 +247,7 @@ export async function renderProjectExportHtml(
   templateOverrides?: Partial<ComposeTemplate>,
 ) {
   const pages = composeProjectPreview(project, exportConfig, undefined, templateOverrides).pages;
+  assertExportArtifactIntegrity(project, pages, 'HTML');
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
   const footerTitle = project.document.metadata?.title ?? project.document.title;
@@ -649,18 +702,11 @@ export async function buildProjectPdfWithConfig(
   const pdfMarginLeft = exportConfig.marginLeft * PDF_SCALE;
   const pdfMarginRight = exportConfig.marginRight * PDF_SCALE;
   const pages = composeProjectPreview(project, exportConfig, undefined, templateOverrides).pages;
+  assertExportArtifactIntegrity(project, pages, 'PDF');
   const theme = resolvePdfBrandTheme(templateOverrides);
   const palette = COVER_PALETTE_COLORS[project.cover.palette] ?? COVER_PALETTE_COLORS.obsidian;
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
-  const contentImageUrls = await Promise.all(
-    pages.map((page) =>
-      buildContentPageExportImageDataUrl(page, exportConfig, {
-        allowSvgFallback: false,
-      }),
-    ),
-  );
-
   return (
     <Document
       title={project.document.title || 'Proyecto'}
@@ -727,21 +773,9 @@ export async function buildProjectPdfWithConfig(
           );
         }
 
-        const contentImageUrl = contentImageUrls[pageIndex];
-        if (page.type === 'content' && !contentImageUrl) {
-          throw new Error(
-            `PDF export requires a rendered preview image for content page ${page.pageNumber}.`,
-          );
-        }
-
-        if (contentImageUrl) {
-          return (
-            <Page key={`pdf-content-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight }]}>
-              <Image src={contentImageUrl} style={pdfStyles.fullImage} />
-            </Page>
-          );
-        }
-
+        // Keep manuscript content as PDF text. Preview images are reserved
+        // for publication surfaces; rasterizing content would make the PDF
+        // impossible to select, search or assistively read.
         const blocks = parsePageContent(page.content);
         return (
           <Page key={`pdf-content-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight }]}>
@@ -925,28 +959,28 @@ export async function buildProjectDocxBuffer(
   const docxImageHeightPx = Math.round(exportConfig.pageHeight);
 
   const pages = composeProjectPreview(project, exportConfig).pages;
+  assertExportArtifactIntegrity(project, pages, 'DOCX');
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
   
-  const contentImageUrls = await Promise.all(
-    pages.map((page) => buildContentPageExportImageDataUrl(page, exportConfig)),
-  );
-
   const pageImagePayloads = await Promise.all(
-    pages.map(async (page, index) => {
+    pages.map(async (page) => {
       const imageUrl =
         page.type === 'cover'
           ? coverImageUrl
           : page.type === 'back-cover'
             ? backCoverImageUrl
-            : contentImageUrls[index] ?? null;
+            : null;
 
       return imageUrl ? loadImageBytes(imageUrl) : null;
     }),
   );
 
   const sections = pages.map((page, index) => {
-    const hasImage = pageImagePayloads[index] != null;
+    // Publication surfaces may remain rasterized, but manuscript content must
+    // remain editable/selectable in DOCX. Never replace content pages with a
+    // screenshot merely because a preview image is available.
+    const hasImage = page.type !== 'content' && pageImagePayloads[index] != null;
     let children: Paragraph[] = [];
 
     if (hasImage) {

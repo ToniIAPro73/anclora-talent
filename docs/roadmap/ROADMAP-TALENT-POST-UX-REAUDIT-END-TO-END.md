@@ -33,7 +33,7 @@ Repo status describes the starting state observed at `35d2a0d`; it is not a Gate
 
 | Phase | Objective | Repo status | Dependencies | Detail | Microphases | Tasks | Microtasks | Gates |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | --- |
-| P0 | Rebaseline, contracts, fixtures and harness | PARTIAL | none | [P0](./talent-post-ux-reaudit/P0-REBASELINE.md) | 5 + final | 15 | 45 | G0,G1,G2,G3,G4,G10,G11,G13,G14,G15,G16,G19 |
+| P0 | Rebaseline, contracts, fixtures and harness | DONE | none | [P0](./talent-post-ux-reaudit/P0-REBASELINE.md) | 5 + final | 15 | 45 | G0,G1,G2,G3,G4,G10,G11,G13,G14,G15,G16,G19 |
 | P1 | Document and export integrity; UX-12 | NEEDS_HARDENING | P0 PASS | [P1](./talent-post-ux-reaudit/P1-DOCUMENT-EXPORT-INTEGRITY.md) | 5 + final | 15 | 45 | G1,G2,G3,G4,G5,G10,G11,G12,G13,G14,G15,G17,G18,G19 |
 | P2 | Immediate accessibility and navigation; UX-05..09, UX-18 | NEEDS_HARDENING | P0 PASS; P1 integrity contract | [P2](./talent-post-ux-reaudit/P2-ACCESSIBILITY-NAVIGATION.md) | 4 + final | 12 | 36 | G0,G1,G3,G4,G5,G6,G7,G8,G9,G10,G11,G12,G13,G14,G15,G16,G19 |
 | P3 | Auth recovery/error recovery/parity; UX-02,03,10 | MISSING | P0 PASS; P2 semantic primitives | [P3](./talent-post-ux-reaudit/P3-AUTH-RECOVERY.md) | 3 + final | 11 | 33 | G1,G3,G4,G5,G7,G10,G11,G12,G13,G14,G15,G16,G19 |

@@ -2,6 +2,8 @@
 
 Repo status: NEEDS_HARDENING
 
+Execution status: IN_PROGRESS. P1-M00/P1-M01 integrity work is implemented locally: empty semantic-model fallback, semantic DOCX manuscript content and fail-closed HTML/DOCX/PDF validation. Artifact corpus and full phase Gate remain open.
+
 Objective: prove why a populated project can yield empty HTML/DOCX, make export fail closed, and establish artifact acceptance before any polish work.
 
 ### EXECUTION MODE
@@ -18,7 +20,7 @@ Objective: prove why a populated project can yield empty HTML/DOCX, make export 
 - **CURRENT_STATE:** client/server composition paths can diverge; placeholder fallback exists.
 - **TARGET_STATE:** every export receives a validated semantic document with source/output counts and ordered chapter identity.
 - **SCOPE:** types/contracts, empty-versus-failure states, validation result and compatibility rules.
-- **OUT_OF_SCOPE:** visual redesign, schema migration, semantic DOCX/PDF implementation (P4).
+- **OUT_OF_SCOPE:** visual redesign, schema migration and full semantic export styling/capability completion (P4). P1 may add the minimum text-preservation and fail-closed guard required to prevent document loss.
 - **DEPENDENCIES:** P0 PASS.
 - **PREREQUISITES:** P0 corpus and architecture map.
 - **RISKS:** changing the source projection breaks full preview or EPUB.
