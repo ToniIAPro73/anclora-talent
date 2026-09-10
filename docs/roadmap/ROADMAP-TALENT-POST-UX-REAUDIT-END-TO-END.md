@@ -17,6 +17,8 @@ Phase detail authority: the linked `P*.md` files under [`talent-post-ux-reaudit/
 - Production validation is read-only smoke; mutating E2E uses local, preview, staging or dedicated authorized fixtures.
 - This authoring change contains no product implementation and does not start P0 implementation.
 
+Small microtask PASS is local evidence only. It does not require commit, push or promotion. Accumulate related safe microtasks into a meaningful batch. Use commit/push/promotion at microphase closure, phase closure, or earlier only when integrity, security, migration or rollback risk requires a checkpoint. A batch must contain enough coherent change to justify CI and environment promotion; do not create release churn for one trivial edit.
+
 ## 0.1 Selective CAVEMAN execution mode
 
 Use `CAVEMAN` only for low-judgment, repetitive microtasks: command runs, file inventories, counts, screenshot capture, parser execution, evidence indexing and diff/status checks. Use normal technical prose for integrity decisions, security, auth recovery, migrations, rollback, Gate results, release decisions and promotion. Mixed task: normal prose.

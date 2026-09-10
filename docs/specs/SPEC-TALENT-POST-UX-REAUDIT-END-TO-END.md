@@ -430,19 +430,19 @@ Critical flows expose structured diagnostic events without sensitive content:
 
 ## 38. RELEASE STRATEGY
 
-Every completed phase follows:
+Every meaningful batch or completed phase follows. A small microtask PASS remains local evidence and does not trigger release mechanics:
 
-1. run its `P?-FINAL-GATE` and require `PASS`;
+1. accumulate related microtasks until a microphase/meaningful batch boundary; run its applicable Gate and require `PASS`;
 2. inspect `git diff` and accidental files;
 3. update roadmap status/evidence;
-4. create a phase-close commit on development;
+4. create one coherent batch or phase-close commit on development;
 5. push development and wait for development CI PASS;
 6. dispatch development→staging workflow and validate staging;
 7. dispatch staging→production workflow and run read-only production smoke;
 8. dispatch production→main workflow and verify synchronization;
 9. record `PHASE`, `DEVELOPMENT_SHA`, `DEVELOPMENT_CI`, `STAGING_SHA`, `STAGING_VALIDATION`, `PRODUCTION_SHA`, `PRODUCTION_SMOKE`, `MAIN_SHA`, `SYNC_STATUS`.
 
-No later phase starts while the previous phase is FAIL or BLOCKED. This authoring change is documentation-only and must not start P0 implementation.
+No later phase starts while the previous phase is FAIL or BLOCKED. Do not create a commit, push or promotion for every trivial microtask. This authoring change is documentation-only and must not start P0 implementation.
 
 ## 39. PHASE EXECUTION CONTRACT
 
