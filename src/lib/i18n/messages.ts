@@ -56,6 +56,9 @@ export type AppMessages = {
     legalSuffix: string;
     error: string;
     emailInUse: string;
+    invalidEmail: string;
+    invalidPassword: string;
+    invalidFullName: string;
     registerError: string;
   };
   landing: {
@@ -815,6 +818,9 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       legalSuffix: 'de Anclora Talent.',
       error: 'Email o contraseña incorrectos',
       emailInUse: 'Ya existe una cuenta con este email',
+      invalidEmail: 'Introduce un email válido.',
+      invalidPassword: 'Usa al menos 8 caracteres, una letra y un número.',
+      invalidFullName: 'Introduce tu nombre completo.',
       registerError: 'No se pudo crear la cuenta. Inténtalo de nuevo.',
     },
     landing: {
@@ -1694,6 +1700,9 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       legalSuffix: 'of Anclora Talent.',
       error: 'Incorrect email or password',
       emailInUse: 'An account with this email already exists',
+      invalidEmail: 'Enter a valid email address.',
+      invalidPassword: 'Use at least 8 characters, one letter and one number.',
+      invalidFullName: 'Enter your full name.',
       registerError: 'Could not create the account. Please try again.',
     },
     landing: {

@@ -1,8 +1,14 @@
 # P3 — Authentication Recovery, Validation and Entry Parity
 
-Repo status: MISSING
+Repo status: BLOCKED
 
 Findings: UX-02, UX-03, UX-10.
+
+Execution status: `P3-M00 PASS`; `P3-M02 PASS`; `P3-M01 BLOCKED`; `P3-FINAL-GATE BLOCKED`.
+
+Evidence: `npx vitest run src/components/auth/RegisterPageContent.test.tsx src/app/api/auth/register/route.test.ts src/lib/auth/oauth/pkce.test.ts` passed 15/15. P2 CI run [34521552541](https://github.com/ToniIAPro73/anclora-talent/actions/runs/34521552541) passed for `18b72d9`. P3 cannot close because repository has no password-recovery route, recovery-token schema/storage or transactional email boundary.
+
+Blocking condition: do not create apparent recovery success or issue recoverable tokens without approved one-use/expiry/hash/invalidation contract and configured transactional delivery boundary. P4 and later phases do not start while P3 is BLOCKED.
 
 ### EXECUTION MODE
 

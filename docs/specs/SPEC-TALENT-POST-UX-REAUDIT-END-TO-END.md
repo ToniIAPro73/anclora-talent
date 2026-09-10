@@ -25,11 +25,11 @@ The remediation is therefore sequenced by risk rather than visual novelty:
 7. give the editorial workspace progressive disclosure while preserving expert controls;
 8. run full regression, promotion and release gates.
 
-The initial authoring pass established the documentation authority. Functional execution is now active from `development`; P0 is complete and P1 is in progress. The current product code, tests, schema, AOS declaration and audit artifacts remain the baseline authority.
+The initial authoring pass established the documentation authority. Functional execution is active from `development`; P0, P1 and P2 are complete, while P3 is blocked at secure recovery. The current product code, tests, schema, AOS declaration and audit artifacts remain the baseline authority.
 
 ## EXECUTION STATUS
 
-`P0-FINAL-GATE: PASS`. `P1-FINAL-GATE: PASS`. `P2-FINAL-GATE: PASS`. P1 protects populated chapter fallback, editable DOCX manuscript content, selectable standard PDF content and fail-closed HTML/DOCX/PDF artifact checks. P2 adds native navigation, landmarks, target/name contracts, responsive shell containment and real modal focus behavior. The P1 corpus and P2 regression suites pass.
+`P0-FINAL-GATE: PASS`. `P1-FINAL-GATE: PASS`. `P2-FINAL-GATE: PASS`. `P3-M00: PASS`. `P3-M02: PASS`. `P3-M01: BLOCKED` because no secure recovery/email boundary exists in the current repository; therefore `P3-FINAL-GATE: BLOCKED`. P1 protects populated chapter fallback, editable DOCX manuscript content, selectable standard PDF content and fail-closed HTML/DOCX/PDF artifact checks. P2 adds native navigation, landmarks, target/name contracts, responsive shell containment and real modal focus behavior. P3 adds localized registration recovery and signup OAuth parity without changing auth boundaries.
 
 ## 2. BASELINE
 
@@ -138,14 +138,14 @@ The current code and September 9 evidence reconcile all 18 findings as follows. 
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | OLD-F01 | UX-01 | Preview entry provides no document until a second action | CRITICAL | HIGH | P1 | STILL_PRESENT | CONFIRMED | `PreviewCanvas.tsx` returns launcher-only panel | B-047/B-046 | YES | historical present | Render first composed page inline; retain full preview | P5 |
 | OLD-F02 | UX-02 | Password recovery is a non-interactive promise | HIGH | HIGH | P1 | STILL_PRESENT | CONFIRMED | `LoginPageContent.tsx` exposes unavailable span | B-080/B-071 | YES | historical present | Implement or truthfully expose recovery contract; never enumerate accounts | P3 |
-| OLD-F03 | UX-03 | Registration validation does not explain what to correct | HIGH | MEDIUM | P2 | STILL_PRESENT | CONFIRMED | register route maps only email-in-use distinctly | signup-error/B-083 | YES | historical present | Map server validation to localized field errors and focus | P3 |
+| OLD-F03 | UX-03 | Registration validation does not explain what to correct | HIGH | MEDIUM | P2 | STILL_PRESENT | PARTIALLY_RESOLVED | register route codes now map to localized field errors and focus; full browser/phase Gate remains pending | signup-error/B-083; P3 component and route tests | YES | historical present | Retain field recovery and close P3 with browser evidence | P3 |
 | OLD-F04 | UX-04 | 57 projects require manual scanning across two inventories | HIGH | HIGH | P1 | STILL_PRESENT | CONFIRMED | modal and `/projects` use separate views; no query/filter | B-067/B-068 | YES | historical present | Shared retrieval model with search, recency, useful filters | P5 |
 | OLD-F05 | UX-05 | Public/auth surfaces lack a main landmark | HIGH | MEDIUM | P2 | STILL_PRESENT | CONFIRMED | landing/auth wrappers lack coherent landmarks | B-028/B-080/B-085 | YES | historical present | One meaningful `main`, labeled navigation groups | P2 |
 | OLD-F06 | UX-06 | Password visibility toggle remains about 18×18px | MEDIUM | MEDIUM | P2 | STILL_PRESENT | CONFIRMED | icon defines button dimensions without target padding | B-080/B-085 | YES | historical present | 44×44px target, preserved icon/name/input space | P2 |
 | OLD-F07 | UX-07 | Chapter move/delete controls remain unnamed | MEDIUM | HIGH | P1 | STILL_PRESENT | CONFIRMED | `ChapterOrganizer.tsx` icon-only move/delete buttons | B-003 / code line 151 | YES | historical present | Localized action + chapter name, boundary disabled state | P2 |
 | OLD-F08 | UX-08 | Mobile brand text overlaps navigation button | HIGH | MEDIUM | P2 | STILL_PRESENT | CONFIRMED | `AppShell.tsx` plus shell CSS min-width conflict | B-016/B-012 | YES | historical present | Compact identity and non-overlapping responsive header | P2 |
 | OLD-F09 | UX-09 | Navigation destinations are buttons | MEDIUM | MEDIUM | P2 | STILL_PRESENT | CONFIRMED | `NavigatingLink.tsx` calls `router.push` from `<button>` | B-068/B-047 | YES | historical present | Native links with pending feedback; buttons only for state change | P2 |
-| OLD-F10 | UX-10 | Social auth entry points absent from sign-up | LOW | LOW | P3 | STILL_PRESENT | CONFIRMED | OAuth entries differ between login and register | B-071/B-083 | YES | historical present | Consistent provider entry under existing availability/linking rules | P3 |
+| OLD-F10 | UX-10 | Social auth entry points absent from sign-up | LOW | LOW | P3 | STILL_PRESENT | PARTIALLY_RESOLVED | sign-up now reuses server OAuth availability and renders Google/GitHub parity; external completion remains untested | B-071/B-083; component evidence | YES | historical present | Close with browser/provider-negative evidence | P3 |
 | OLD-F11 | UX-11 | Project modal transparency competes with table reading | LOW | LOW | P3 | STILL_PRESENT | CONFIRMED | translucent panel/backdrop in modal CSS | B-067 / code line 46 | YES | historical present | Opaque theme-aware surface and overlay token | P5 |
 | — | UX-12 | HTML/DOCX omit populated chapter content | — | CRITICAL | P1 | NEW / different coverage | CONFIRMED | `projectToSemanticDocument` can produce zero blocks; placeholder fallback; server/client composition split | B-049/B-003/B-025; downloaded artifacts | PARTIAL: fallback is confirmed; deployed runtime cause requires proof | new coverage | Canonical document, fail-closed export and artifact inspection | P1 |
 | — | UX-13 | Word/PDF downloads are image-only documents | — | HIGH | P1 | NEW / different coverage | CONFIRMED | DOCX builder embeds page images; PDF content path image-first | B-025; DOCX XML/PDF text extraction | YES | new coverage | Semantic DOCX/PDF capability distinct from image fidelity | P4 |
@@ -155,7 +155,7 @@ The current code and September 9 evidence reconcile all 18 findings as follows. 
 | — | UX-17 | English workflows retain Spanish controls/status copy | — | MEDIUM | P2 | NEW / different coverage | CONFIRMED | strings exist outside `messages.ts` in importer/templates/PDF status | B-016/B-001/B-025 | YES | new coverage | Locale-owned operational copy and rendered parity tests | P4 |
 | — | UX-18 | Project modal lacks focus containment and Escape close | — | HIGH | P1 | NEW / different coverage | CONFIRMED | bespoke `role=dialog` has no focus lifecycle | B-037 / modal keyboard | YES | new coverage | Real dialog contract: initial focus, trap, Escape, restoration | P2 |
 
-No UX-01..UX-18 is `RESOLVED`, `PARTIALLY_RESOLVED` or `SUPERSEDED` before this spec. UX-12's root-cause diagnosis remains a deliberate `PARTIAL` investigation state, not a reason to weaken the finding or accept an empty artifact.
+At authoring baseline no UX-01..UX-18 was `RESOLVED`, `PARTIALLY_RESOLVED` or `SUPERSEDED`. During functional execution, UX-03 and UX-10 are now `PARTIALLY_RESOLVED` pending their phase Gate. UX-12's root-cause diagnosis remains a deliberate `PARTIAL` investigation state, not a reason to weaken the finding or accept an empty artifact.
 
 ## 6. PRODUCT TRUTH
 
@@ -437,9 +437,8 @@ Critical flows expose structured diagnostic events without sensitive content:
 For this specification-authoring execution, the user-selected release
 override is `development`-only: create the documentation commit, push it to
 `origin/development`, wait for development CI, and do not dispatch promotion
-to staging, production or main. The full promotion chain below remains the
-normative contract for later implementation phases unless explicitly changed
-by the user.
+to staging, production or main. This development-only release policy remains
+active for later implementation phases unless explicitly changed by the user.
 
 Every meaningful batch or completed phase follows. A small microtask PASS remains local evidence and does not trigger release mechanics:
 
@@ -448,12 +447,10 @@ Every meaningful batch or completed phase follows. A small microtask PASS remain
 3. update roadmap status/evidence;
 4. create one coherent batch or phase-close commit on development;
 5. push development and wait for development CI PASS;
-6. dispatch development→staging workflow and validate staging;
-7. dispatch staging→production workflow and run read-only production smoke;
-8. dispatch production→main workflow and verify synchronization;
-9. record `PHASE`, `DEVELOPMENT_SHA`, `DEVELOPMENT_CI`, `STAGING_SHA`, `STAGING_VALIDATION`, `PRODUCTION_SHA`, `PRODUCTION_SMOKE`, `MAIN_SHA`, `SYNC_STATUS`.
+6. record `PHASE`, `DEVELOPMENT_SHA` and `DEVELOPMENT_CI`;
+7. do not dispatch staging/production/main promotion unless the user explicitly changes this release override.
 
-No later phase starts while the previous phase is FAIL or BLOCKED. Do not create a commit, push or promotion for every trivial microtask. This authoring change is documentation-only and must not start P0 implementation.
+No later phase starts while the previous phase is FAIL or BLOCKED. Do not create a commit or push for every trivial microtask. Functional execution is active after the authoring baseline.
 
 ## 39. PHASE EXECUTION CONTRACT
 
@@ -475,7 +472,7 @@ The remediation is releasable only when:
 - SPEC/ROADMAP/documentation and AOS checks are current;
 - worktrees and branch heads are synchronized without force push.
 
-The current execution satisfies P0, P1 and P2 final Gates. `IMPLEMENTATION_STARTED = YES`; P3 remains pending.
+The current execution satisfies P0, P1 and P2 final Gates, plus P3-M00 and P3-M02. `IMPLEMENTATION_STARTED = YES`; P3 is BLOCKED at P3-M01 because secure password recovery requires repository capabilities not currently present. Under the active policy, only `development` receives commits and pushes; no staging/production/main promotion is performed.
 
 ## 41. SPEC AUTHORING GATE
 
@@ -497,6 +494,6 @@ The current execution satisfies P0, P1 and P2 final Gates. `IMPLEMENTATION_START
 | `PROMOTION_CONTRACT_DEFINED` | PASS | §21 and §38; existing workflows used |
 | `ROLLBACK_DEFINED` | PASS | §35 and every phase detail |
 | `AOS_REVIEWED` | PASS | §3 and P0-M04 |
-| `NO_PRODUCT_CODE_CHANGED_UNINTENTIONALLY` | PASS | worktree contains only `docs/specs/` and `docs/roadmap/` additions |
+| `NO_PRODUCT_CODE_CHANGED_UNINTENTIONALLY` | PASS | product changes are intentional P0–P3 execution; no unrelated product files are included in the current batch |
 
-**SPEC_AUTHORING_GATE: PASS.** This Gate authorizes the documentation commit and push to `origin/development` for this execution. It does not authorize starting P0 implementation or promotion beyond `development`.
+**SPEC_AUTHORING_GATE: PASS.** This Gate authorized the specification batch. Functional execution is now active; current release policy authorizes commit/push to `origin/development` only and no promotion beyond `development`.
