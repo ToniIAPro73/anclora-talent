@@ -12,6 +12,7 @@ import {
   renderProjectExportHtml,
 } from './export-builder';
 import { buildContentPageExportImageDataUrl } from './export-surface-image';
+import { createExportAcceptanceProject } from '@/lib/test-fixtures/export-acceptance-corpus';
 
 const TINY_PNG_DATA_URL =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9WnR6i4AAAAASUVORK5CYII=';
@@ -36,6 +37,19 @@ function makeProject() {
 }
 
 describe('export-builder', () => {
+  test('acceptance corpus preserves populated content in HTML and DOCX', async () => {
+    const project = createExportAcceptanceProject();
+    const html = await renderProjectExportHtml(project);
+    expect(html).toContain('acción');
+    expect(html).toContain('Contenido del segundo capítulo.');
+
+    const docxBuffer = await buildProjectDocxBuffer(project);
+    const docxText = await mammoth.extractRawText({ buffer: docxBuffer });
+    expect(docxText.value).toContain('acción');
+    expect(docxText.value).toContain('Contenido del segundo capítulo.');
+
+  }, 120000);
+
   test('fails closed when a populated source is replaced by the empty placeholder', () => {
     const project = makeProject();
     const pages = buildExportPreview(project).map((page) =>

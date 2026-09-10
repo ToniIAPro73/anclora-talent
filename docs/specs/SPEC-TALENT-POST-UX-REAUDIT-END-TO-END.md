@@ -29,7 +29,7 @@ The initial authoring pass established the documentation authority. Functional e
 
 ## EXECUTION STATUS
 
-`P0-FINAL-GATE: PASS`. P1 has implemented the first integrity protections: populated chapter fallback when a lazy semantic model is empty, editable manuscript content in DOCX, selectable text rendering for standard PDF content pages, and fail-closed artifact checks. P1 remains open until the full acceptance corpus and phase Gate pass.
+`P0-FINAL-GATE: PASS`. P1 has implemented the first integrity protections: populated chapter fallback when a lazy semantic model is empty, editable manuscript content in DOCX, selectable text rendering for standard PDF content pages, and fail-closed artifact checks. HTML/DOCX corpus checks pass. PDF runtime extraction is currently `BLOCKED` by a local React-PDF render/extractor hang exceeding 90 seconds; P1 remains open until that evidence is resolved.
 
 ## 2. BASELINE
 
