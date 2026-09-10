@@ -430,7 +430,7 @@ Critical flows expose structured diagnostic events without sensitive content:
 
 - FAST GATE: affected unit/component tests, lint, targeted artifact contract, one desktop ES light and one mobile ES dark smoke.
 - PHASE GATE: all affected unit/integration tests, relevant Playwright journeys, ES/EN, light/dark, 1440/390, artifact corpus for export phases, axe/keyboard for accessibility phases.
-- FULL RELEASE GATE: complete applicable matrix, regression suite, build, E2E, artifact corpus, no-destructive production read-only smoke, staging and production validation.
+- FULL RELEASE GATE: complete applicable matrix, regression suite, build, E2E, artifact corpus and no-destructive environment checks. Production smoke and promotion are required only when release policy authorizes them; under the active development-only override they are `NOT_APPLICABLE` and must not be represented as completed.
 
 ## 38. RELEASE STRATEGY
 
@@ -467,12 +467,12 @@ The remediation is releasable only when:
 - no `DO_NOT_BREAK` invariant is violated;
 - unit/integration, lint, build, relevant E2E, accessibility, responsive, i18n and artifact gates pass;
 - HTML/DOCX/PDF corpus validates content, semantics and order;
-- production read-only smoke is PASS and no real-user mutation occurred;
-- development → staging → production → main promotion evidence is complete;
+- production read-only smoke is PASS and no real-user mutation occurred, or is `NOT_APPLICABLE` when the active release policy forbids promotion;
+- development → staging → production → main promotion evidence is complete, or each deferred environment is explicitly `NOT_APPLICABLE` under the active development-only override;
 - SPEC/ROADMAP/documentation and AOS checks are current;
 - worktrees and branch heads are synchronized without force push.
 
-The current execution satisfies P0, P1, P2, P3, P4, P5 and P6 final Gates. P4 was verified against an isolated authorized Neon test branch with the current Drizzle schema: semantic DOCX/PDF evidence remained green, the dedicated mobile editor E2E passed at 390px and 430px in ES/EN and light/dark, and the existing 375px responsive regression passed. P5 adds shared retrieval semantics, duplicate-title context, search/sort/status controls and immediate cover/content preview; the shared inventory/quick-switcher and preview E2E passed on the same isolated branch. P6 makes writing primary while preserving expert controls behind an explicit disclosure; its desktop hierarchy, power-user reachability and mobile containment E2E passed. `IMPLEMENTATION_STARTED = YES`; P3 delivery is fail-closed until `RESEND_API_KEY`, `AUTH_EMAIL_FROM` and `AUTH_APP_URL` are configured. Under the active policy, only `development` receives commits and pushes; no staging/production/main promotion is performed.
+The current execution satisfies P0, P1, P2, P3, P4, P5, P6 and P7 final Gates. P4 was verified against an isolated authorized Neon test branch with the current Drizzle schema: semantic DOCX/PDF evidence remained green, the dedicated mobile editor E2E passed at 390px and 430px in ES/EN and light/dark, and the existing 375px responsive regression passed. P5 adds shared retrieval semantics, duplicate-title context, search/sort/status controls and immediate cover/content preview; the shared inventory/quick-switcher and preview E2E passed on the same isolated branch. P6 makes writing primary while preserving expert controls behind an explicit disclosure; its desktop hierarchy, power-user reachability and mobile containment E2E passed. P7 passed lint, 184 Vitest files/1,153 tests, build, export corpus, focused P4/P5/P6 E2E and 375px regression. `IMPLEMENTATION_STARTED = YES`; P3 delivery is fail-closed until `RESEND_API_KEY`, `AUTH_EMAIL_FROM` and `AUTH_APP_URL` are configured. Under the active policy, only `development` receives commits and pushes; staging/production/main promotion and production smoke are `NOT_APPLICABLE`, not claimed as complete. P7 `PASS` means functional readiness on development, not production release.
 
 ## 41. SPEC AUTHORING GATE
 
@@ -496,4 +496,4 @@ The current execution satisfies P0, P1, P2, P3, P4, P5 and P6 final Gates. P4 wa
 | `AOS_REVIEWED` | PASS | §3 and P0-M04 |
 | `NO_PRODUCT_CODE_CHANGED_UNINTENTIONALLY` | PASS | product changes are intentional P0–P3 execution; no unrelated product files are included in the current batch |
 
-**SPEC_AUTHORING_GATE: PASS.** This Gate authorized the specification batch. Functional execution is now active; current release policy authorizes commit/push to `origin/development` only and no promotion beyond `development`.
+**SPEC_AUTHORING_GATE: PASS.** This Gate authorized the specification batch. Functional execution completed P0–P7; current release policy authorizes commit/push to `origin/development` only and no promotion beyond `development`.
