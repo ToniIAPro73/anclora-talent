@@ -1096,6 +1096,17 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
     min-width: 0;
   }
 
+  /* Keep horizontally scrollable controls (notably the stepper) contained
+     inside the mobile shell; they must not widen the document itself. */
+  .talent-shell-main,
+  .talent-shell-content,
+  .talent-workspace-stage,
+  .talent-workflow-shell,
+  .talent-workflow-shell .ac-workflow-shell__layout,
+  .talent-workflow-shell .ac-workflow-shell__content {
+    overflow-x: hidden;
+  }
+
   /* Modal panels must never push the page wider than the viewport. */
   .ac-modal__panel {
     max-width: calc(100vw - 2rem);
@@ -1412,4 +1423,50 @@ ul.toc-list > li {
 
 .talent-auth-link:hover {
   color: var(--accent-hover);
+}
+
+/* P4: the physical editor viewport is independent from the publication device.
+   These constraints prevent the fullscreen shell header from establishing an
+   intrinsic desktop width on narrow devices. The toolbar may scroll internally;
+   the document and primary editor surface must remain fitted to the viewport. */
+.ac-editor-shell,
+.ac-editor-shell__main,
+.ac-editor-shell__surface,
+.ac-text-editor {
+  width: 100%;
+  min-width: 0;
+}
+
+.ac-editor-shell__header {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.ac-editor-shell__titles {
+  min-width: 0;
+  flex: 1 1 10rem;
+}
+
+.ac-editor-shell__controls,
+.ac-editor-shell__actions {
+  min-width: 0;
+}
+
+.ac-text-editor__content--scroll {
+  overflow-x: hidden;
+}
+
+@media (max-width: 767px) {
+  .ac-editor-shell__header {
+    align-items: flex-start;
+  }
+
+  .ac-editor-shell__controls {
+    flex: 1 1 100%;
+    order: 3;
+  }
+
+  .ac-editor-shell__actions {
+    margin-left: auto;
+  }
 }

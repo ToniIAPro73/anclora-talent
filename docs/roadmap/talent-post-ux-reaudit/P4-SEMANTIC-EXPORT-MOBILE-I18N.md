@@ -1,10 +1,10 @@
 # P4 — Semantic Export, Mobile Authoring and Operational i18n
 
-Repo status: BLOCKED
+Repo status: DONE
 
-Execution status: P4-M00 PASS; P4-M01 PASS; P4-M02 PASS (unit/geometry evidence); P4-M03 PASS (locale parity/component evidence); P4-FINAL-GATE BLOCKED.
+Execution status: P4-M00 PASS; P4-M01 PASS; P4-M02 PASS (unit/geometry/E2E evidence); P4-M03 PASS (locale parity/component evidence); P4-FINAL-GATE PASS.
 
-Blocking evidence: `npx playwright test e2e/qa-uxui-audit-v1.spec.ts -g "responsive 375x667"` could not reach the editor because the local web server has no `DATABASE_URL`; the registration precondition returned HTTP 500 instead of the expected 201/409. No product assertion was reached. Configure an authorized test database and rerun the responsive E2E before closing P4.
+Gate evidence: an isolated authorized Neon test branch was provisioned and synchronized from the current Drizzle schema without touching production data. `npx playwright test e2e/p4-mobile-editor.spec.ts` passed at 390px light/ES and 430px dark/EN; `npx playwright test e2e/qa-uxui-audit-v1.spec.ts -g "responsive 375x667"` passed. The responsive assertions verify document scroll width, editor content containment, fitted physical surface and disabled double-page mode on narrow viewports. The desktop publication layout remains covered by the viewport adapter unit tests.
 
 Findings: UX-13, UX-14, UX-17.
 
@@ -203,4 +203,4 @@ GIVEN New project, Cover/Back cover, Preview and PDF export in EN, WHEN pending/
 
 ### CURRENT GATE RESULT
 
-`P4-FINAL-GATE: BLOCKED` — mandatory responsive E2E is unavailable until `DATABASE_URL` is configured for an authorized local/preview test environment. No phase-closing commit or push is permitted while this Gate is BLOCKED.
+`P4-FINAL-GATE: PASS` — P4-M00..M03, G17/G18, responsive editor E2E, locale evidence and the affected regression checks are green. The isolated database branch was used only for authorized test fixtures; no production mutation occurred.

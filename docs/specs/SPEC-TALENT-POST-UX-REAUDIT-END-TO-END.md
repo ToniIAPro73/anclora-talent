@@ -472,7 +472,7 @@ The remediation is releasable only when:
 - SPEC/ROADMAP/documentation and AOS checks are current;
 - worktrees and branch heads are synchronized without force push.
 
-The current execution satisfies P0, P1, P2 and P3 final Gates. P4 implementation is locally prepared, but `P4-FINAL-GATE = BLOCKED`: the required responsive E2E cannot pass without an authorized test `DATABASE_URL` (the precondition currently returns HTTP 500). `IMPLEMENTATION_STARTED = YES`; P3 delivery is fail-closed until `RESEND_API_KEY`, `AUTH_EMAIL_FROM` and `AUTH_APP_URL` are configured. Under the active policy, only `development` receives commits and pushes; no staging/production/main promotion is performed. No P4 phase-closing commit or push has been made while its mandatory Gate is BLOCKED.
+The current execution satisfies P0, P1, P2, P3 and P4 final Gates. P4 was verified against an isolated authorized Neon test branch with the current Drizzle schema: semantic DOCX/PDF evidence remained green, the dedicated mobile editor E2E passed at 390px and 430px in ES/EN and light/dark, and the existing 375px responsive regression passed. `IMPLEMENTATION_STARTED = YES`; P3 delivery is fail-closed until `RESEND_API_KEY`, `AUTH_EMAIL_FROM` and `AUTH_APP_URL` are configured. Under the active policy, only `development` receives commits and pushes; no staging/production/main promotion is performed.
 
 ## 41. SPEC AUTHORING GATE
 
