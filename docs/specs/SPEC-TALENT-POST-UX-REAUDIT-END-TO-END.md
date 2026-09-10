@@ -309,7 +309,7 @@ The complete execution matrix is in the ROADMAP. The compact authority mapping i
 | UX-08 | responsive shell | P2-M02 | G6, G8, G9, G11 |
 | UX-09 | navigation semantics | P2-M00 | G5, G7, G11 |
 | UX-10 | auth surface parity | P3-M02 | G4, G5, G7, G11 |
-| UX-11 | modal surface | P5-M04 | G6, G8, G9, G11 |
+| UX-11 | modal surface | P5-M03 | G6, G8, G9, G11 |
 | UX-12 | canonical document/export integrity | P1-M00..P1-M04 | G1, G2, G3, G5, G10, G17, G18 |
 | UX-13 | semantic export capabilities | P4-M00/P4-M01 | G5, G10, G17, G18 |
 | UX-14 | physical mobile editor | P4-M02 | G6, G7, G9, G11, G13 |
@@ -430,6 +430,13 @@ Critical flows expose structured diagnostic events without sensitive content:
 
 ## 38. RELEASE STRATEGY
 
+For this specification-authoring execution, the user-selected release
+override is `development`-only: create the documentation commit, push it to
+`origin/development`, wait for development CI, and do not dispatch promotion
+to staging, production or main. The full promotion chain below remains the
+normative contract for later implementation phases unless explicitly changed
+by the user.
+
 Every meaningful batch or completed phase follows. A small microtask PASS remains local evidence and does not trigger release mechanics:
 
 1. accumulate related microtasks until a microphase/meaningful batch boundary; run its applicable Gate and require `PASS`;
@@ -488,4 +495,4 @@ The current authoring mission satisfies the documentation Gate only. `IMPLEMENTA
 | `AOS_REVIEWED` | PASS | §3 and P0-M04 |
 | `NO_PRODUCT_CODE_CHANGED_UNINTENTIONALLY` | PASS | worktree contains only `docs/specs/` and `docs/roadmap/` additions |
 
-**SPEC_AUTHORING_GATE: PASS.** This Gate authorizes only the documentation commit/push/promotion. It does not authorize starting P0 implementation.
+**SPEC_AUTHORING_GATE: PASS.** This Gate authorizes the documentation commit and push to `origin/development` for this execution. It does not authorize starting P0 implementation or promotion beyond `development`.

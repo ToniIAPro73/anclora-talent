@@ -129,6 +129,10 @@ The longest-risk segment is canonical document proof → fail-closed export → 
 
 ## 7. Evidence and promotion record
 
+For this authoring run, the release operation stops after commit and push to
+`origin/development`; no promotion workflow is dispatched. The promotion
+record below is the required evidence format for later implementation phases.
+
 Each future phase must append or link a closure record with this schema:
 
 ```text
