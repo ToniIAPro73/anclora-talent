@@ -51,6 +51,10 @@ export function UiPreferencesProvider({
         setThemeState(nextTheme);
       },
       setLocale: (nextLocale) => {
+        // Persist before refreshing Server Components. Otherwise the header
+        // updates from client state while the rest of the app reads the old
+        // locale from the request cookies.
+        applyLocalePreference(nextLocale);
         setLocaleState(nextLocale);
         startTransition(() => {
           router.refresh();

@@ -1,9 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
 
+const routerRefresh = vi.hoisted(() => vi.fn());
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
-    refresh: vi.fn(),
+    refresh: routerRefresh,
   }),
 }));
 
@@ -52,5 +54,7 @@ describe('UiPreferencesProvider', () => {
 
     expect(document.documentElement.dataset.theme).toBe('light');
     expect(document.documentElement.lang).toBe('en');
+    expect(document.cookie).toContain('anclora-locale=en');
+    expect(routerRefresh).toHaveBeenCalled();
   });
 });
