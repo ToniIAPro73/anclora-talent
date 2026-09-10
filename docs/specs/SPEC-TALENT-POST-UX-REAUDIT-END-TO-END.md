@@ -163,7 +163,7 @@ At authoring baseline no UX-01..UX-18 was `RESOLVED`, `PARTIALLY_RESOLVED` or `S
 
 Talent promises a continuous editorial path: source or idea → project structure → writing and formatting → brand/cover → preview → export. The strongest current foundations are the TipTap editor, live cover canvas, full preview pagination, composition engine, ownership guards, theme/locale controls and existing export routes.
 
-### 6.2 Current observed truth
+### 6.2 Observed truth at authoring baseline
 
 - The landing and credential auth surfaces render and are reachable.
 - A project inventory exists at modal and `/projects` surfaces; the audited account contained 57 projects, modal pagination works and update-date ordering exists.
@@ -177,6 +177,20 @@ Talent promises a continuous editorial path: source or idea → project structur
 ### 6.3 Audit limitations that remain explicit
 
 Production read-only smoke and authorized test accounts are allowed. Real-user production mutations, real email delivery, external OAuth consent and destructive project operations are not. A missing browser execution is `BLOCKED` or `NOT_EVALUATED`, never an inferred pass.
+
+### 6.4 Post-execution product truth
+
+After P0–P7, code and evidence show UX-01, UX-03, UX-04, UX-05, UX-06,
+UX-07, UX-08, UX-09, UX-10, UX-11, UX-13, UX-14, UX-15, UX-16, UX-17 and
+UX-18 remediated by implementation and targeted tests. UX-12 is protected by
+the canonical semantic projection, fail-closed exports and artifact corpus;
+its historical deployed-runtime root cause remains `PARTIAL` because no
+production mutation or deployment replay was authorized. UX-02 is
+`PARTIALLY_RESOLVED`: secure request/reset routes and negative tests pass, but
+transactional email delivery remains disabled until the documented deployment
+variables and authorized delivery smoke exist. The source matrix retains
+authoring-baseline statuses for historical audit fidelity; this section and
+the phase detail files define post-execution status.
 
 ## 7. PRODUCT PROMISE
 
