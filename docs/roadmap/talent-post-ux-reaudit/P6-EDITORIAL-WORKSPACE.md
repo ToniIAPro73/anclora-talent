@@ -4,6 +4,11 @@ Repo status: NEEDS_HARDENING
 
 Findings: UX-15, UX-16.
 
+### EXECUTION MODE
+
+- `CAVEMAN`: P6-M00-T03, P6-M01-T03, P6-M02-T03.
+- Normal prose: hierarchy/disclosure decisions and P6-FINAL-GATE.
+
 ## P6-M00 — Progressive disclosure contract
 
 - **ID:** P6-M00

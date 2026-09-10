@@ -4,6 +4,11 @@ Repo status: NEEDS_HARDENING
 
 Findings: UX-01, UX-04, UX-11.
 
+### EXECUTION MODE
+
+- `CAVEMAN`: P5-M00-T03, P5-M01-T03, P5-M02-T03, P5-M03-T03.
+- Normal prose: retrieval/preview contract decisions and P5-FINAL-GATE.
+
 ## P5-M00 — Canonical retrieval model
 
 - **ID:** P5-M00

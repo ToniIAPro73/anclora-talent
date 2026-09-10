@@ -4,6 +4,11 @@ Repo status: NEEDS_HARDENING
 
 Objective: prove why a populated project can yield empty HTML/DOCX, make export fail closed, and establish artifact acceptance before any polish work.
 
+### EXECUTION MODE
+
+- `CAVEMAN`: P1-M01-T01, P1-M04-T01, P1-M04-T03.
+- Normal prose: all other tasks and P1-FINAL-GATE; integrity decisions never compressed.
+
 ## P1-M00 — Canonical document/export contract
 
 - **ID:** P1-M00

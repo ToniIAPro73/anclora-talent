@@ -17,6 +17,14 @@ Phase detail authority: the linked `P*.md` files under [`talent-post-ux-reaudit/
 - Production validation is read-only smoke; mutating E2E uses local, preview, staging or dedicated authorized fixtures.
 - This authoring change contains no product implementation and does not start P0 implementation.
 
+## 0.1 Selective CAVEMAN execution mode
+
+Use `CAVEMAN` only for low-judgment, repetitive microtasks: command runs, file inventories, counts, screenshot capture, parser execution, evidence indexing and diff/status checks. Use normal technical prose for integrity decisions, security, auth recovery, migrations, rollback, Gate results, release decisions and promotion. Mixed task: normal prose.
+
+When `CAVEMAN` is active, report only action, result and evidence path. Never omit failure, `BLOCKED`, security or data-integrity detail.
+
+Phase detail files mark recommended ID ranges under `EXECUTION MODE`. This is a communication/token policy, not a product or test-result state.
+
 ## 1. Master phase table
 
 Repo status describes the starting state observed at `35d2a0d`; it is not a Gate result.

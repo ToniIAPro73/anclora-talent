@@ -4,6 +4,11 @@ Repo status: PARTIAL
 
 Objective: produce reproducible truth before product implementation. P0 changes documentation/test fixtures only; it does not change product behavior.
 
+### EXECUTION MODE
+
+- `CAVEMAN`: P0-M00-T01..T03, P0-M01-T01, P0-M04-T01, P0-M04-T03.
+- Normal prose: P0-M01-T02..T03, P0-M02-T01..T03, P0-M03-T01..T03, P0-M04-T02, P0-FINAL-GATE.
+
 ## P0-M00 — Baseline freeze
 
 - **ID:** P0-M00

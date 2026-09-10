@@ -4,6 +4,11 @@ Repo status: NEEDS_HARDENING
 
 Findings: UX-13, UX-14, UX-17.
 
+### EXECUTION MODE
+
+- `CAVEMAN`: P4-M00-T03, P4-M01-T03, P4-M02-T03, P4-M03-T03.
+- Normal prose: semantic/export/i18n contract decisions and P4-FINAL-GATE.
+
 ## P4-M00 — Semantic DOCX
 
 - **ID:** P4-M00

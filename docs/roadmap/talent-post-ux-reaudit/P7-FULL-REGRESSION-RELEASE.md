@@ -4,6 +4,11 @@ Repo status: MISSING
 
 Objective: prove the full product contract and promote only a verified phase chain.
 
+### EXECUTION MODE
+
+- `CAVEMAN`: P7-M00-T01..T02, P7-M02-T01..T02.
+- Normal prose: P7-M00-T03, all P7-M01 promotion tasks, P7-M02-T03 and P7-FINAL-GATE.
+
 ## P7-M00 — Full matrix and regression
 
 - **ID:** P7-M00

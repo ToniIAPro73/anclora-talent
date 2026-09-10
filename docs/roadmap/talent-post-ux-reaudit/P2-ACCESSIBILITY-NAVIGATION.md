@@ -4,6 +4,11 @@ Repo status: NEEDS_HARDENING
 
 Findings: UX-05, UX-06, UX-07, UX-08, UX-09, UX-18.
 
+### EXECUTION MODE
+
+- `CAVEMAN`: P2-M00-T03, P2-M01-T03, P2-M02-T02..T03, P2-M03-T03.
+- Normal prose: implementation tasks and P2-FINAL-GATE.
+
 ## P2-M00 — Landmarks and native navigation
 
 - **ID:** P2-M00

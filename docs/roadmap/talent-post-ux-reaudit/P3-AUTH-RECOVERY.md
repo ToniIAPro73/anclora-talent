@@ -4,6 +4,11 @@ Repo status: MISSING
 
 Findings: UX-02, UX-03, UX-10.
 
+### EXECUTION MODE
+
+- `CAVEMAN`: P3-M00-T03, P3-M02-T03.
+- Normal prose: all recovery/security tasks and P3-FINAL-GATE.
+
 ## P3-M00 — Registration validation
 
 - **ID:** P3-M00
