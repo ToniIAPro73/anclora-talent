@@ -63,6 +63,7 @@ GIVEN the applicable full matrix, WHEN all automated and visual checks run, THEN
 - `npm run lint`: PASS; four pre-existing warnings, zero errors.
 - `npm run test:run`: PASS; 184 files, 1,153 tests.
 - `npm run build`: PASS; Next.js production build completed. Existing Turbopack NFT tracing warning remains documented.
+- Phase-close development commit: `5156de3009eed3b3efb26244196fa265c9ca7098`; development CI run `34531852009`: PASS.
 - Export corpus/semantic tests: PASS; 2 files, 11 tests.
 - P4/P5/P6 focused E2E on isolated authorized Neon branch: P4 2/2 PASS, P5 2/2 PASS, P6 1/1 PASS when run single-worker. A concurrent combined run produced one non-reproducible P6 reload miss; the isolated rerun passed.
 - Historical responsive regression at 375×667: PASS, 1/1.
