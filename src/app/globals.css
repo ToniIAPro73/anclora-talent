@@ -739,6 +739,86 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
   border-bottom: 1px solid var(--border-subtle);
 }
 
+.talent-project-retrieval-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-soft);
+}
+
+.talent-project-retrieval-controls__search {
+  position: relative;
+  display: flex;
+  min-width: min(100%, 20rem);
+  flex: 1 1 20rem;
+}
+
+.talent-project-retrieval-controls__search input,
+.talent-project-retrieval-controls__select select {
+  min-height: 42px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--page-surface);
+  color: var(--text-primary);
+}
+
+.talent-project-retrieval-controls__search input {
+  width: 100%;
+  padding: 0 42px 0 14px;
+}
+
+.talent-project-retrieval-controls__search button {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  color: var(--text-tertiary);
+}
+
+.talent-project-retrieval-controls__select {
+  display: grid;
+  gap: 4px;
+  color: var(--text-tertiary);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.talent-project-retrieval-controls__select select {
+  min-width: 9rem;
+  padding: 0 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.talent-project-retrieval-controls__count {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-tertiary);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.talent-projects-table__duplicate {
+  display: block;
+  margin-top: 3px;
+  color: var(--accent-text);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
 .talent-projects-modal__footer {
   border-top: 1px solid var(--border-subtle);
   color: var(--text-tertiary);
@@ -1110,6 +1190,17 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
   /* Modal panels must never push the page wider than the viewport. */
   .ac-modal__panel {
     max-width: calc(100vw - 2rem);
+  }
+
+  .talent-project-retrieval-controls {
+    align-items: stretch;
+    padding-inline: 16px;
+  }
+
+  .talent-project-retrieval-controls__search,
+  .talent-project-retrieval-controls__select,
+  .talent-project-retrieval-controls__select select {
+    width: 100%;
   }
 }
 

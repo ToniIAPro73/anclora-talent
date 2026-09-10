@@ -1,4 +1,4 @@
-import { ProjectCard } from '@/components/projects/ProjectCard';
+import { ProjectInventory } from '@/components/projects/ProjectInventory';
 import { premiumPrimaryMintButton } from '@/components/ui/button-styles';
 import { NavigatingLink } from '@/components/ui/NavigatingLink';
 import { requireUserId } from '@/lib/auth/guards';
@@ -31,11 +31,7 @@ export default async function ProjectsPage() {
       </div>
 
       {hasProjects ? (
-        <div className="grid gap-4 xl:grid-cols-2">
-          {projects.map((project) => (
-            <ProjectCard key={project.id} copy={projectCopy} locale={locale} project={project} />
-          ))}
-        </div>
+        <ProjectInventory copy={dashboardCopy} projectCopy={projectCopy} locale={locale} projects={projects} />
       ) : (
         <div className="ac-empty-state">
           <p className="ac-surface-panel__eyebrow">

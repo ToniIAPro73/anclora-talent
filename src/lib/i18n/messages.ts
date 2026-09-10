@@ -180,6 +180,17 @@ export type AppMessages = {
     projectsTableNext: string;
     projectsStatusDraft: string;
     projectsStatusActive: string;
+    projectsSearchLabel: string;
+    projectsSearchPlaceholder: string;
+    projectsSearchClear: string;
+    projectsSortLabel: string;
+    projectsSortRecent: string;
+    projectsSortOldest: string;
+    projectsSortTitle: string;
+    projectsStatusFilterLabel: string;
+    projectsStatusFilterAll: string;
+    projectsResultCount: string;
+    projectsDuplicateTitle: string;
     emptyEyebrow: string;
     emptyFallbackEyebrow: string;
     emptyTitle: string;
@@ -1075,6 +1086,17 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       projectsTableNext: 'Siguiente',
       projectsStatusDraft: 'Borrador',
       projectsStatusActive: 'Activo',
+      projectsSearchLabel: 'Buscar proyectos',
+      projectsSearchPlaceholder: 'Título, autor o documento',
+      projectsSearchClear: 'Limpiar búsqueda',
+      projectsSortLabel: 'Ordenar por',
+      projectsSortRecent: 'Más recientes',
+      projectsSortOldest: 'Más antiguos',
+      projectsSortTitle: 'Título',
+      projectsStatusFilterLabel: 'Filtrar por estado',
+      projectsStatusFilterAll: 'Todos los estados',
+      projectsResultCount: '{count} resultados',
+      projectsDuplicateTitle: 'Título duplicado ·',
       emptyEyebrow: 'Estado inicial',
       emptyFallbackEyebrow: 'Modo degradado',
       emptyTitle: 'Aún no hay proyectos, pero el workspace ya está listo para abrir el primero.',
@@ -2038,6 +2060,17 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       projectsTableNext: 'Next',
       projectsStatusDraft: 'Draft',
       projectsStatusActive: 'Active',
+      projectsSearchLabel: 'Search projects',
+      projectsSearchPlaceholder: 'Title, author or document',
+      projectsSearchClear: 'Clear search',
+      projectsSortLabel: 'Sort by',
+      projectsSortRecent: 'Most recent',
+      projectsSortOldest: 'Oldest',
+      projectsSortTitle: 'Title',
+      projectsStatusFilterLabel: 'Filter by status',
+      projectsStatusFilterAll: 'All statuses',
+      projectsResultCount: '{count} results',
+      projectsDuplicateTitle: 'Duplicate title ·',
       emptyEyebrow: 'Initial state',
       emptyFallbackEyebrow: 'Degraded mode',
       emptyTitle: 'There are no projects yet, but the workspace is ready to open the first one.',

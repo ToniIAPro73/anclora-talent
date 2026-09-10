@@ -72,17 +72,19 @@ function makeProject(): ProjectRecord {
 }
 
 describe('PreviewCanvas', () => {
-  test('renders a launcher button before opening the full preview modal', () => {
+  test('renders cover and first content before opening the full preview modal', () => {
     render(<PreviewCanvas copy={copy} project={makeProject()} />);
 
-    expect(screen.getByRole('button', { name: /open full preview/i })).toBeInTheDocument();
+    expect(screen.getByTestId('preview-inline-cover')).toBeInTheDocument();
+    expect(screen.getByTestId('preview-inline-content')).toHaveTextContent('Contexto');
+    expect(screen.getByTestId('open-full-preview-button')).toHaveTextContent(copy.previewModalAdvanced);
     expect(screen.queryByRole('button', { name: copy.previewModalSpreadView })).not.toBeInTheDocument();
   });
 
   test('opens the full preview modal from the launcher button', () => {
     render(<PreviewCanvas copy={copy} project={makeProject()} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /open full preview/i }));
+    fireEvent.click(screen.getByTestId('open-full-preview-button'));
 
     expect(screen.getByRole('button', { name: copy.previewModalSpreadView })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: copy.previewModalLaptop })).toBeInTheDocument();
@@ -93,7 +95,7 @@ describe('PreviewCanvas', () => {
   test('shows imported chapter content inside the opened modal when navigating past the cover', () => {
     render(<PreviewCanvas copy={copy} project={makeProject()} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /open full preview/i }));
+    fireEvent.click(screen.getByTestId('open-full-preview-button'));
     fireEvent.click(screen.getByRole('button', { name: copy.previewModalNext }));
 
     const previewStage = screen.getByTestId('preview-modal-stage');
@@ -105,10 +107,10 @@ describe('PreviewCanvas', () => {
   test('closes the full preview modal and returns to the launcher button', () => {
     render(<PreviewCanvas copy={copy} project={makeProject()} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /open full preview/i }));
+    fireEvent.click(screen.getByTestId('open-full-preview-button'));
     fireEvent.click(screen.getByRole('button', { name: copy.previewModalClose }));
 
-    expect(screen.getByRole('button', { name: /open full preview/i })).toBeInTheDocument();
+    expect(screen.getByTestId('open-full-preview-button')).toBeInTheDocument();
     expect(screen.queryByTestId('preview-modal-stage')).not.toBeInTheDocument();
   });
 });

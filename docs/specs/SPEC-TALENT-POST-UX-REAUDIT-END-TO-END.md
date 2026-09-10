@@ -472,7 +472,7 @@ The remediation is releasable only when:
 - SPEC/ROADMAP/documentation and AOS checks are current;
 - worktrees and branch heads are synchronized without force push.
 
-The current execution satisfies P0, P1, P2, P3 and P4 final Gates. P4 was verified against an isolated authorized Neon test branch with the current Drizzle schema: semantic DOCX/PDF evidence remained green, the dedicated mobile editor E2E passed at 390px and 430px in ES/EN and light/dark, and the existing 375px responsive regression passed. `IMPLEMENTATION_STARTED = YES`; P3 delivery is fail-closed until `RESEND_API_KEY`, `AUTH_EMAIL_FROM` and `AUTH_APP_URL` are configured. Under the active policy, only `development` receives commits and pushes; no staging/production/main promotion is performed.
+The current execution satisfies P0, P1, P2, P3, P4 and P5 final Gates. P4 was verified against an isolated authorized Neon test branch with the current Drizzle schema: semantic DOCX/PDF evidence remained green, the dedicated mobile editor E2E passed at 390px and 430px in ES/EN and light/dark, and the existing 375px responsive regression passed. P5 adds shared retrieval semantics, duplicate-title context, search/sort/status controls and immediate cover/content preview; the shared inventory/quick-switcher and preview E2E passed on the same isolated branch. `IMPLEMENTATION_STARTED = YES`; P3 delivery is fail-closed until `RESEND_API_KEY`, `AUTH_EMAIL_FROM` and `AUTH_APP_URL` are configured. Under the active policy, only `development` receives commits and pushes; no staging/production/main promotion is performed.
 
 ## 41. SPEC AUTHORING GATE
 

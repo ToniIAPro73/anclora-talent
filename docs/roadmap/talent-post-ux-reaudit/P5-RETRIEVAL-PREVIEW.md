@@ -1,6 +1,10 @@
 # P5 — Project Retrieval, Preview Continuity and Modal Surface
 
-Repo status: NEEDS_HARDENING
+Repo status: DONE
+
+Execution status: P5-M00 PASS; P5-M01 PASS; P5-M02 PASS; P5-M03 PASS; P5-FINAL-GATE PASS.
+
+Gate evidence: the shared retrieval contract now drives `/projects` and the dashboard quick switcher with normalized query, deterministic recency/title ordering, status filtering, pagination and duplicate-title context. The full inventory and modal E2E use the same project identities and order. Preview entry renders the cover and first composed content page before the full preview action; the existing paginated preview remains available. Focus, ownership and destructive-action boundaries remain covered by the existing modal contract and regression tests.
 
 Findings: UX-01, UX-04, UX-11.
 

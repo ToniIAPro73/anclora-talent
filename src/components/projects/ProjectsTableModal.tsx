@@ -1,12 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, Pencil, Trash2, X } from 'lucide-react';
 import type { ProjectSummary } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 import { NavigatingLink } from '@/components/ui/NavigatingLink';
 import { deleteProjectAction } from '@/lib/projects/actions';
+import { ProjectRetrievalControls } from './ProjectRetrievalControls';
+import { useProjectRetrieval } from './use-project-retrieval';
+import { countDuplicateProjectTitles, hasDuplicateProjectTitle } from '@/lib/projects/retrieval';
 
 const PAGE_SIZE = 25;
 
@@ -30,17 +33,12 @@ export function ProjectsTableModal({
   projects: ProjectSummary[];
 }) {
   const router = useRouter();
-  const [page, setPage] = useState(1);
   const dialogRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
-  const sortedProjects = useMemo(
-    () => [...projects].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt)),
-    [projects],
-  );
-  const totalPages = Math.max(1, Math.ceil(sortedProjects.length / PAGE_SIZE));
-  const visibleProjects = sortedProjects.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const countCopy = (projects.length === 1 ? copy.projectsModalCountOne : copy.projectsModalCountMany)
-    .replace('{count}', String(projects.length));
+  const retrieval = useProjectRetrieval(projects, PAGE_SIZE);
+  const duplicateCounts = useMemo(() => countDuplicateProjectTitles(projects), [projects]);
+  const countCopy = (retrieval.total === 1 ? copy.projectsModalCountOne : copy.projectsModalCountMany)
+    .replace('{count}', String(retrieval.total));
 
   const restoreFocus = useCallback(() => {
     const opener = openerRef.current;
@@ -125,7 +123,18 @@ export function ProjectsTableModal({
           </button>
         </header>
 
-        {visibleProjects.length > 0 ? (
+        <ProjectRetrievalControls
+          copy={copy}
+          query={retrieval.query}
+          sort={retrieval.sort}
+          status={retrieval.status}
+          total={retrieval.total}
+          onQueryChange={retrieval.setQuery}
+          onSortChange={retrieval.setSort}
+          onStatusChange={retrieval.setStatus}
+        />
+
+        {retrieval.visibleProjects.length > 0 ? (
           <>
             <div className="talent-projects-table-wrap">
               <table className="talent-projects-table" data-testid="projects-table">
@@ -143,9 +152,16 @@ export function ProjectsTableModal({
                   </tr>
                 </thead>
                 <tbody>
-                  {visibleProjects.map((project) => (
+                  {retrieval.visibleProjects.map((project) => (
                     <tr key={project.id}>
-                      <td className="talent-projects-table__sticky">{project.title}</td>
+                      <td className="talent-projects-table__sticky">
+                        <div>{project.title}</div>
+                        {hasDuplicateProjectTitle(project, duplicateCounts) ? (
+                          <small className="talent-projects-table__duplicate" data-testid="duplicate-project-title">
+                            {copy.projectsDuplicateTitle} {project.documentTitle || project.documentAuthor || project.slug}
+                          </small>
+                        ) : null}
+                      </td>
                       <td>{project.documentSubtitle || project.documentTitle || '-'}</td>
                       <td>{project.documentAuthor || '-'}</td>
                       <td>{formatDate(project.createdAt, locale)}</td>
@@ -213,14 +229,14 @@ export function ProjectsTableModal({
             <footer className="talent-projects-modal__footer">
               <span>
                 {copy.projectsTablePageStatus
-                  .replace('{page}', String(page))
-                  .replace('{total}', String(totalPages))}
+                  .replace('{page}', String(retrieval.page))
+                  .replace('{total}', String(retrieval.totalPages))}
               </span>
               <div className="flex gap-2">
-                <button type="button" data-testid="projects-table-previous" disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))} className="ac-button ac-button--ghost min-h-10 px-4">
+                <button type="button" data-testid="projects-table-previous" disabled={retrieval.page <= 1} onClick={() => retrieval.setPage(Math.max(1, retrieval.page - 1))} className="ac-button ac-button--ghost min-h-10 px-4">
                   {copy.projectsTablePrevious}
                 </button>
-                <button type="button" data-testid="projects-table-next" disabled={page >= totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))} className="ac-button ac-button--ghost min-h-10 px-4">
+                <button type="button" data-testid="projects-table-next" disabled={retrieval.page >= retrieval.totalPages} onClick={() => retrieval.setPage(Math.min(retrieval.totalPages, retrieval.page + 1))} className="ac-button ac-button--ghost min-h-10 px-4">
                   {copy.projectsTableNext}
                 </button>
               </div>

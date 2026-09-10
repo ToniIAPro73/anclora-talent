@@ -14,10 +14,14 @@ export function ProjectCard({
   copy,
   locale,
   project,
+  duplicateTitle = false,
+  duplicateTitleLabel,
 }: {
   copy: AppMessages['project'];
   locale: 'es' | 'en';
   project: ProjectSummary;
+  duplicateTitle?: boolean;
+  duplicateTitleLabel?: string;
 }) {
   return (
     <article className="ac-card talent-project-card overflow-hidden p-6 text-[var(--text-primary)]">
@@ -30,6 +34,11 @@ export function ProjectCard({
         </div>
       </div>
       <h2 className="ac-card__title mt-5">{project.title}</h2>
+      {duplicateTitle ? (
+        <p className="mt-2 text-xs font-semibold text-[var(--accent-text)]" data-testid="duplicate-project-title">
+          {duplicateTitleLabel} {project.documentTitle || project.documentAuthor || project.slug}
+        </p>
+      ) : null}
       <div className="ac-card__body mt-0 gap-0 p-0">
         <p className="text-sm leading-7 text-[var(--text-secondary)]">{project.documentTitle}</p>
       </div>

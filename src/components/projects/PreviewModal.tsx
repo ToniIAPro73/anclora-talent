@@ -369,24 +369,26 @@ import { createDefaultSurfaceState, normalizeSurfaceState } from '@/lib/projects
 import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface-resolver';
 import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
 
-function PageRenderer({
+export function PageRenderer({
   page,
   format,
   copy,
   config,
   project,
+  renderScale = 1,
 }: {
   page: PreviewPage;
   format: PreviewFormat;
   copy: AppMessages['project'];
   config: PaginationConfig;
   project: ProjectRecord;
+  renderScale?: number;
 }) {
   const preset = FORMAT_PRESETS[format];
   const pageStyle = {
-    width: `${preset.viewportWidth}px`,
-    height: `${preset.pagePixelHeight}px`,
-    padding: `${config.marginTop}px ${config.marginRight}px ${config.marginBottom}px ${config.marginLeft}px`,
+    width: `${preset.viewportWidth * renderScale}px`,
+    height: `${preset.pagePixelHeight * renderScale}px`,
+    padding: `${config.marginTop * renderScale}px ${config.marginRight * renderScale}px ${config.marginBottom * renderScale}px ${config.marginLeft * renderScale}px`,
   };
 
   if (page.type === 'cover' && page.coverData) {
@@ -419,7 +421,7 @@ function PageRenderer({
     };
 
     return (
-      <div style={{ width: preset.viewportWidth, height: preset.pagePixelHeight }} className="rounded-[8px] overflow-hidden shadow-[var(--shadow-strong)] border border-white/10">
+      <div style={pageStyle} className="rounded-[8px] overflow-hidden shadow-[var(--shadow-strong)] border border-white/10">
         <CoverPreview
           surface={surface}
           palette={project.cover.palette}
@@ -460,7 +462,7 @@ function PageRenderer({
     };
 
     return (
-      <div style={{ width: preset.viewportWidth, height: preset.pagePixelHeight }} className="rounded-[8px] overflow-hidden shadow-[var(--shadow-strong)] border border-white/10">
+      <div style={pageStyle} className="rounded-[8px] overflow-hidden shadow-[var(--shadow-strong)] border border-white/10">
         <BackCoverPreview
           surface={surface}
           backgroundImageUrl={project.backCover.backgroundImageUrl}
