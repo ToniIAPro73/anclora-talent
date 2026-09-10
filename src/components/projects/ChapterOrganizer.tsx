@@ -20,6 +20,10 @@ export function ChapterOrganizer({
   syncPageNumbersLabel = 'Actualizar numeración',
   syncPageNumbersTitle = 'Recalcular la numeración del preview y la exportación',
   syncPageNumbersHelper = 'Sincroniza el índice y los pies de página con la maquetación actual.',
+  chapterActionEdit = 'Editar capítulo',
+  chapterActionMoveUp = 'Mover capítulo arriba',
+  chapterActionMoveDown = 'Mover capítulo abajo',
+  chapterActionDelete = 'Eliminar capítulo',
   metricsById = {},
 }: {
   projectId: string;
@@ -35,6 +39,10 @@ export function ChapterOrganizer({
   syncPageNumbersLabel?: string;
   syncPageNumbersTitle?: string;
   syncPageNumbersHelper?: string;
+  chapterActionEdit?: string;
+  chapterActionMoveUp?: string;
+  chapterActionMoveDown?: string;
+  chapterActionDelete?: string;
   metricsById?: Record<string, ChapterPageMetrics>;
 }) {
   return (
@@ -138,8 +146,9 @@ export function ChapterOrganizer({
                 <button
                   type="button"
                   onClick={() => onEditChapter(chapter.id)}
-                  className="ac-button ac-button--ghost ac-button--sm"
-                  title="Editar capítulo"
+                  className="ac-button ac-button--ghost ac-button--sm min-h-11 min-w-11"
+                  aria-label={`${chapterActionEdit}: ${chapter.title}`}
+                  title={`${chapterActionEdit}: ${chapter.title}`}
                   data-testid={`chapter-edit-button-${index + 1}`}
                 >
                   <Edit2 className="h-3.5 w-3.5" />
@@ -151,8 +160,10 @@ export function ChapterOrganizer({
                   <button
                     type="submit"
                     data-testid={`chapter-move-up-button-${index + 1}`}
+                    aria-label={`${chapterActionMoveUp}: ${chapter.title}`}
+                    title={`${chapterActionMoveUp}: ${chapter.title}`}
                     disabled={index === 0}
-                    className="ac-button ac-button--ghost ac-button--sm disabled:opacity-30"
+                    className="ac-button ac-button--ghost ac-button--sm min-h-11 min-w-11 disabled:opacity-30"
                   >
                     <ChevronUp className="h-3.5 w-3.5" />
                   </button>
@@ -164,8 +175,10 @@ export function ChapterOrganizer({
                   <button
                     type="submit"
                     data-testid={`chapter-move-down-button-${index + 1}`}
+                    aria-label={`${chapterActionMoveDown}: ${chapter.title}`}
+                    title={`${chapterActionMoveDown}: ${chapter.title}`}
                     disabled={index === chapters.length - 1}
-                    className="ac-button ac-button--ghost ac-button--sm disabled:opacity-30"
+                    className="ac-button ac-button--ghost ac-button--sm min-h-11 min-w-11 disabled:opacity-30"
                   >
                     <ChevronDown className="h-3.5 w-3.5" />
                   </button>
@@ -176,8 +189,10 @@ export function ChapterOrganizer({
                   <button
                     type="submit"
                     data-testid={`chapter-delete-button-${index + 1}`}
+                    aria-label={`${chapterActionDelete}: ${chapter.title}`}
+                    title={`${chapterActionDelete}: ${chapter.title}`}
                     disabled={chapters.length <= 1}
-                    className="ac-button ac-button--destructive ac-button--sm disabled:opacity-30"
+                    className="ac-button ac-button--destructive ac-button--sm min-h-11 min-w-11 disabled:opacity-30"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>

@@ -921,14 +921,20 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
   .talent-shell-topbar {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 10px;
+    min-width: 0;
   }
 
   .talent-shell-brand {
+    min-width: 0;
     gap: 8px;
   }
 
   .talent-shell-brand__name {
+    min-width: 0;
+    overflow: hidden;
     font-size: 0.9rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .talent-shell-brand__copy {
@@ -941,6 +947,11 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
 
   .talent-shell-mobile-menu-button {
     display: inline-flex;
+  }
+
+  .talent-shell-topbar-actions {
+    min-width: 0;
+    gap: 4px;
   }
 
   .talent-shell-mobile-menu {

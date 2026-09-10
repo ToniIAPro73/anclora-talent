@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, Pencil, Trash2, X } from 'lucide-react';
 import type { ProjectSummary } from '@/lib/projects/types';
@@ -31,6 +31,8 @@ export function ProjectsTableModal({
 }) {
   const router = useRouter();
   const [page, setPage] = useState(1);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
   const sortedProjects = useMemo(
     () => [...projects].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt)),
     [projects],
@@ -40,12 +42,66 @@ export function ProjectsTableModal({
   const countCopy = (projects.length === 1 ? copy.projectsModalCountOne : copy.projectsModalCountMany)
     .replace('{count}', String(projects.length));
 
-  const close = () => router.replace('/dashboard', { scroll: false });
+  const restoreFocus = useCallback(() => {
+    const opener = openerRef.current;
+    if (opener && document.contains(opener)) opener.focus();
+  }, []);
+
+  const close = useCallback(() => {
+    restoreFocus();
+    router.replace('/dashboard', { scroll: false });
+  }, [restoreFocus, router]);
+
+  useEffect(() => {
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const getFocusable = () => Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    );
+    const initialTarget = dialog.querySelector<HTMLElement>('[data-testid="projects-modal-close-button"]') ?? getFocusable()[0];
+    initialTarget?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        close();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const focusable = getFocusable();
+      if (focusable.length === 0) {
+        event.preventDefault();
+        return;
+      }
+      const first = dialog.querySelector<HTMLElement>('[data-testid="projects-modal-close-button"]') ?? focusable[0];
+      const last = focusable[focusable.length - 1];
+      const current = document.activeElement ?? event.target;
+      if (event.shiftKey && (current === first || event.target === first)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (current === last || event.target === last)) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      restoreFocus();
+    };
+  }, [close, restoreFocus]);
 
   return (
-    <div className="ac-modal talent-projects-modal" role="dialog" aria-modal="true" aria-labelledby="projects-modal-title">
+    <div ref={dialogRef} className="ac-modal talent-projects-modal" role="dialog" aria-modal="true" aria-labelledby="projects-modal-title">
       <button
         type="button"
+        tabIndex={-1}
         aria-label={copy.projectsModalClose}
         data-testid="projects-modal-backdrop"
         className="ac-modal__backdrop"

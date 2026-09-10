@@ -1,6 +1,8 @@
 # P2 — Immediate Accessibility and Navigation Corrections
 
-Repo status: NEEDS_HARDENING
+Repo status: DONE
+
+Execution status: P2-FINAL-GATE PASS. Native destination links, application/auth/landing main landmarks, 44px password/chapter targets, contextual accessible names, responsive shell containment and the Projects modal focus lifecycle are implemented and regression-tested.
 
 Findings: UX-05, UX-06, UX-07, UX-08, UX-09, UX-18.
 

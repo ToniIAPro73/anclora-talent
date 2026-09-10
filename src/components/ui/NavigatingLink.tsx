@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 import { Loader2 } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 interface NavigatingLinkProps {
   href: string;
@@ -15,6 +16,8 @@ interface NavigatingLinkProps {
   'aria-current'?: React.AriaAttributes['aria-current'];
   'aria-label'?: string;
   'data-testid'?: string;
+  target?: React.HTMLAttributeAnchorTarget;
+  rel?: string;
 }
 
 export function NavigatingLink({
@@ -28,8 +31,9 @@ export function NavigatingLink({
   'aria-current': ariaCurrent,
   'aria-label': ariaLabel,
   'data-testid': dataTestId,
+  target,
+  rel,
 }: NavigatingLinkProps) {
-  const router = useRouter();
   const pathname = usePathname();
   const [isNavigating, setIsNavigating] = React.useState(false);
 
@@ -37,23 +41,35 @@ export function NavigatingLink({
     setIsNavigating(false);
   }, [pathname]);
 
-  const handleClick = React.useCallback(() => {
-    if (pathname === href) {
+  const handleClick = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
+    // Preserve native link behavior for modified clicks, middle clicks and
+    // explicit new-tab targets. These must never be converted into a router
+    // button interaction.
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      target === '_blank' ||
+      pathname === href
+    ) {
       return;
     }
 
     setIsNavigating(true);
     onClick?.();
-    router.push(href);
-  }, [href, onClick, pathname, router]);
+  }, [href, onClick, pathname, target]);
 
   return (
-    <button
-      type="button"
+    <Link
+      href={href}
       onClick={handleClick}
-      disabled={isNavigating}
       role={role}
       title={title}
+      target={target}
+      rel={rel}
       aria-current={ariaCurrent}
       aria-label={ariaLabel}
       data-testid={dataTestId}
@@ -70,6 +86,6 @@ export function NavigatingLink({
           </span>
         ) : null}
       </span>
-    </button>
+    </Link>
   );
 }

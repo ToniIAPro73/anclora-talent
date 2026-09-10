@@ -69,10 +69,10 @@ describe('ProjectsTableModal', () => {
     );
 
     const row = within(screen.getByTestId('projects-table')).getAllByRole('row')[1];
-    expect(within(row).getByRole('button', { name: 'Abrir editor' })).toHaveClass(
+    expect(within(row).getByRole('link', { name: 'Abrir editor' })).toHaveClass(
       'talent-projects-table__action',
     );
-    expect(within(row).getByRole('button', { name: 'Preview' })).toHaveClass(
+    expect(within(row).getByRole('link', { name: 'Preview' })).toHaveClass(
       'talent-projects-table__action',
     );
     expect(within(row).getByRole('button', { name: 'Eliminar' })).toHaveClass(
@@ -91,5 +91,36 @@ describe('ProjectsTableModal', () => {
     expect(within(screen.getByTestId('projects-table')).getAllByRole('row')).toHaveLength(26);
     fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
     expect(within(screen.getByTestId('projects-table')).getAllByRole('row')).toHaveLength(2);
+  });
+
+  test('traps keyboard focus, closes on Escape and restores focus to the opener', () => {
+    const opener = document.createElement('button');
+    opener.type = 'button';
+    opener.textContent = 'Abrir proyectos';
+    document.body.appendChild(opener);
+    opener.focus();
+
+    render(
+      <ProjectsTableModal
+        copy={appMessages.es.dashboard}
+        projectCopy={appMessages.es.project}
+        locale="es"
+        projects={[makeProject(1, '2026-01-01T10:00:00Z')]}
+      />,
+    );
+
+    const closeButton = screen.getByTestId('projects-modal-close-button');
+    const deleteButton = screen.getByTestId('projects-table-delete-action');
+    expect(closeButton).toHaveFocus();
+
+    fireEvent.keyDown(closeButton, { key: 'Tab', shiftKey: true });
+    expect(deleteButton).toHaveFocus();
+    fireEvent.keyDown(deleteButton, { key: 'Tab' });
+    expect(closeButton).toHaveFocus();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(replace).toHaveBeenCalledWith('/dashboard', { scroll: false });
+    expect(opener).toHaveFocus();
+    opener.remove();
   });
 });

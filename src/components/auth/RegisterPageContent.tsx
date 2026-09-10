@@ -49,7 +49,7 @@ export function RegisterPageContent() {
   };
 
   return (
-    <div className="talent-auth-page relative flex min-h-screen items-center justify-center overflow-hidden p-4 text-[var(--text-primary)]">
+    <main className="talent-auth-page relative flex min-h-screen items-center justify-center overflow-hidden p-4 text-[var(--text-primary)]">
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
         <div className="absolute left-[12%] top-[10%] h-28 w-28 rounded-full bg-[var(--accent-glow)] blur-3xl" />
         <div className="absolute bottom-[12%] right-[10%] h-36 w-36 rounded-full bg-[var(--accent-glow)] blur-3xl" />
@@ -140,13 +140,13 @@ export function RegisterPageContent() {
                   aria-describedby="password-hint"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  className="talent-auth-input h-10 w-full rounded-2xl px-3 pr-10 text-sm"
+                  className="talent-auth-input h-10 w-full rounded-2xl px-3 pr-12 text-sm"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((value) => !value)}
                   aria-label={showPassword ? t.hidePassword : t.showPassword}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+                  className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                 >
                   {showPassword ? (
                     <EyeOff size={18} aria-hidden="true" />
@@ -204,6 +204,6 @@ export function RegisterPageContent() {
           </p>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

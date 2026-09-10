@@ -561,6 +561,10 @@ export function ProjectWorkspace({
               syncPageNumbersLabel={copy.chapterSyncPageNumbers}
               syncPageNumbersTitle={copy.chapterSyncPageNumbersTitle}
               syncPageNumbersHelper={copy.chapterSyncPageNumbersHelper}
+              chapterActionEdit={copy.chapterActionEdit}
+              chapterActionMoveUp={copy.chapterActionMoveUp}
+              chapterActionMoveDown={copy.chapterActionMoveDown}
+              chapterActionDelete={copy.chapterActionDelete}
               metricsById={chapterMetricsById}
             />
           </section>

@@ -105,7 +105,7 @@ export function AppShell({
             ) : null}
           </header>
 
-          <div className="talent-shell-content">{children}</div>
+          <main id="main-content" className="talent-shell-content">{children}</main>
         </div>
       </div>
     </div>

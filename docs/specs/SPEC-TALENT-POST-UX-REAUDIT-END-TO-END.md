@@ -29,7 +29,7 @@ The initial authoring pass established the documentation authority. Functional e
 
 ## EXECUTION STATUS
 
-`P0-FINAL-GATE: PASS`. `P1-FINAL-GATE: PASS`. P1 now protects populated chapter fallback, editable DOCX manuscript content, selectable standard PDF content and fail-closed HTML/DOCX/PDF artifact checks. The populated acceptance corpus passes content inspection across all three formats.
+`P0-FINAL-GATE: PASS`. `P1-FINAL-GATE: PASS`. `P2-FINAL-GATE: PASS`. P1 protects populated chapter fallback, editable DOCX manuscript content, selectable standard PDF content and fail-closed HTML/DOCX/PDF artifact checks. P2 adds native navigation, landmarks, target/name contracts, responsive shell containment and real modal focus behavior. The P1 corpus and P2 regression suites pass.
 
 ## 2. BASELINE
 
@@ -475,7 +475,7 @@ The remediation is releasable only when:
 - SPEC/ROADMAP/documentation and AOS checks are current;
 - worktrees and branch heads are synchronized without force push.
 
-The current execution satisfies P0 and P1 final Gates. `IMPLEMENTATION_STARTED = YES`; P2 remains pending.
+The current execution satisfies P0, P1 and P2 final Gates. `IMPLEMENTATION_STARTED = YES`; P3 remains pending.
 
 ## 41. SPEC AUTHORING GATE
 

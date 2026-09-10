@@ -164,6 +164,10 @@ export type AppMessages = {
     editorSubtitleLabel: string;
     editorAuthorLabel: string;
     editorChapterLabel: string;
+    chapterActionEdit: string;
+    chapterActionMoveUp: string;
+    chapterActionMoveDown: string;
+    chapterActionDelete: string;
     saveChanges: string;
     previewEyebrow: string;
     previewTitle: string;
@@ -1005,6 +1009,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       editorSubtitleLabel: 'Subtítulo',
       editorAuthorLabel: 'Autor',
       editorChapterLabel: 'Título del capítulo',
+      chapterActionEdit: 'Editar capítulo',
+      chapterActionMoveUp: 'Mover capítulo arriba',
+      chapterActionMoveDown: 'Mover capítulo abajo',
+      chapterActionDelete: 'Eliminar capítulo',
       saveChanges: 'Guardar cambios',
       previewEyebrow: 'Preview',
       previewTitle: 'Validación de lectura y portada',
@@ -1880,6 +1888,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       editorSubtitleLabel: 'Subtitle',
       editorAuthorLabel: 'Author',
       editorChapterLabel: 'Chapter title',
+      chapterActionEdit: 'Edit chapter',
+      chapterActionMoveUp: 'Move chapter up',
+      chapterActionMoveDown: 'Move chapter down',
+      chapterActionDelete: 'Delete chapter',
       saveChanges: 'Save changes',
       previewEyebrow: 'Preview',
       previewTitle: 'Reading and cover validation',

@@ -1,24 +1,26 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NavigatingLink } from './NavigatingLink';
 
-const mockPush = vi.fn();
 const mockUsePathname = vi.fn();
 
+vi.mock('next/link', () => ({
+  default: ({ children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    <a {...props}>{children}</a>
+  ),
+}));
+
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
   usePathname: () => mockUsePathname(),
 }));
 
 describe('NavigatingLink', () => {
   beforeEach(() => {
-    mockPush.mockReset();
     mockUsePathname.mockReset();
   });
 
-  it('clears the loading state after the pathname changes', () => {
+  it('uses a native anchor and clears loading state after pathname changes', () => {
     mockUsePathname.mockReturnValue('/dashboard');
 
     const { rerender } = render(
@@ -27,12 +29,12 @@ describe('NavigatingLink', () => {
       </NavigatingLink>,
     );
 
-    const button = screen.getByRole('button', { name: 'Proyectos' });
-    fireEvent.click(button);
+    const link = screen.getByRole('link', { name: 'Proyectos' });
+    fireEvent.click(link);
 
-    expect(mockPush).toHaveBeenCalledWith('/projects');
-    expect(button).toBeDisabled();
-    expect(button).toHaveAttribute('data-navigation-state', 'loading');
+    expect(link).toHaveAttribute('href', '/projects');
+    expect(link).not.toBeDisabled();
+    expect(link).toHaveAttribute('data-navigation-state', 'loading');
 
     mockUsePathname.mockReturnValue('/projects');
 
@@ -42,10 +44,19 @@ describe('NavigatingLink', () => {
       </NavigatingLink>,
     );
 
-    expect(screen.getByRole('button', { name: 'Proyectos' })).not.toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Proyectos' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Proyectos' })).toHaveAttribute(
       'data-navigation-state',
       'idle',
     );
+  });
+
+  it('does not intercept modified clicks', () => {
+    mockUsePathname.mockReturnValue('/dashboard');
+    render(<NavigatingLink href="/projects">Proyectos</NavigatingLink>);
+    const link = screen.getByRole('link', { name: 'Proyectos' });
+
+    fireEvent.click(link, { metaKey: true });
+
+    expect(link).toHaveAttribute('data-navigation-state', 'idle');
   });
 });
