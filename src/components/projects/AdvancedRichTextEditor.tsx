@@ -65,6 +65,9 @@ import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 import { reconcileOverflowBreaks } from '@/lib/preview/editor-page-layout';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { PAGE_BREAK_HTML } from '@/lib/preview/page-breaks';
+import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
+import { resolveLocaleMessages } from '@/lib/i18n/messages';
+import { resolveEditorViewportLayout } from './editor-viewport';
 
 type ChainedCommand = ReturnType<Editor['chain']>;
 type ApplyToSelectionTarget = (command: (chain: ChainedCommand) => ChainedCommand) => boolean;
@@ -399,6 +402,8 @@ const AdvancedFontSelector = ({
   isAvailable: boolean;
   unavailableTitle: string;
 }) => {
+  const { locale } = useUiPreferences();
+  const copy = resolveLocaleMessages(locale).editor;
   const { fonts, loadFont } = useGoogleFonts();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -435,7 +440,7 @@ const AdvancedFontSelector = ({
         onClick={() => isAvailable && setIsOpen(!isOpen)}
         disabled={!isAvailable}
         data-testid="editor-toolbar-font-family-button"
-        title={isAvailable ? 'Familia tipográfica' : unavailableTitle}
+        title={isAvailable ? copy.fontFamily : unavailableTitle}
         className="flex h-9 min-w-[140px] items-center justify-between gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors disabled:pointer-events-none disabled:opacity-30"
       >
         <span className="truncate">{currentFont}</span>
@@ -448,7 +453,7 @@ const AdvancedFontSelector = ({
             <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[var(--text-tertiary)]" />
             <input
               type="text"
-              placeholder="Buscar fuente..."
+              placeholder={copy.fontSearch}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               data-testid="editor-toolbar-font-search-input"
@@ -502,6 +507,8 @@ const FontSizeSelector = ({
   isAvailable: boolean;
   unavailableTitle: string;
 }) => {
+  const { locale } = useUiPreferences();
+  const copy = resolveLocaleMessages(locale).editor;
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -538,7 +545,7 @@ const FontSizeSelector = ({
         onClick={() => isAvailable && setIsOpen(!isOpen)}
         disabled={!isAvailable}
         dataTestId="editor-toolbar-font-size-button"
-        title={isAvailable ? 'Tamaño de fuente' : unavailableTitle}
+        title={isAvailable ? copy.fontSize : unavailableTitle}
       >
         <Type className="h-4 w-4" />
       </ToolbarButton>
@@ -582,6 +589,8 @@ const ColorSelector = ({
   isAvailable: boolean;
   unavailableTitle: string;
 }) => {
+  const { locale } = useUiPreferences();
+  const copy = resolveLocaleMessages(locale).editor;
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -604,7 +613,7 @@ const ColorSelector = ({
   ];
 
   const currentColor = editor.getAttributes('textStyle').color || 'inherit';
-  const currentColorName = colors.find(c => c.value === currentColor)?.name || 'Por Defecto';
+  const currentColorName = colors.find(c => c.value === currentColor)?.name || copy.colorDefault;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -630,7 +639,7 @@ const ColorSelector = ({
             ? 'text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]'
             : 'text-[var(--text-secondary)]'
         }`}
-        title={isAvailable ? 'Color de texto' : unavailableTitle}
+        title={isAvailable ? copy.textColor : unavailableTitle}
       >
         <Palette className="h-4 w-4" />
       </button>
@@ -693,6 +702,7 @@ const MenuBar = ({
   setViewMode,
   device,
   setDevice,
+  isPhysicalMobile,
   margins,
   onMarginsChange,
   onFontSizeChange,
@@ -702,12 +712,15 @@ const MenuBar = ({
   viewMode: string;
   setViewMode: React.Dispatch<React.SetStateAction<'single' | 'double'>>;
   device: string;
+  isPhysicalMobile: boolean;
   setDevice: (device: 'mobile' | 'tablet' | 'desktop') => void;
   margins: MarginConfig;
   onMarginsChange: (margins: MarginConfig) => void;
   onFontSizeChange: (size: string) => void;
   wordsPerPage?: number;
 }) => {
+  const { locale } = useUiPreferences();
+  const copy = resolveLocaleMessages(locale).editor;
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const selection = editor.state.selection;
   const parentText = selection.$from.parent.textContent ?? '';
@@ -715,8 +728,16 @@ const MenuBar = ({
     !selection.empty || hasUsableWordAtCursor(parentText, selection.$from.parentOffset);
   const blockTargetAvailable =
     !selection.empty || hasUsableParagraphAtCursor(parentText);
-  const inlineUnavailableTitle = 'Coloca el cursor dentro de una palabra o selecciona texto';
-  const blockUnavailableTitle = 'Coloca el cursor en un párrafo con texto o selecciona texto';
+  const inlineUnavailableTitle = copy.inlineUnavailable;
+  const blockUnavailableTitle = copy.blockUnavailable;
+  const bulletLabels: Record<BulletStyle, string> = {
+    disc: copy.bulletDisc,
+    circle: copy.bulletCircle,
+    square: copy.bulletSquare,
+    diamond: copy.bulletDiamond,
+    arrow: copy.bulletArrow,
+    check: copy.bulletCheck,
+  };
   const [currentBulletStyle, setCurrentBulletStyle] = useState<BulletStyle>('disc');
   const [currentOrderedStyle, setCurrentOrderedStyle] = useState<OrderedStyle>('decimal');
 
@@ -869,21 +890,21 @@ const MenuBar = ({
   return (
     <div className="ac-text-editor__toolbar">
       <div className="ac-text-editor__toolbar-section">
-        <ToolbarButton onClick={() => setDevice('mobile')} active={device === 'mobile'} dataTestId="editor-toolbar-device-mobile-button" title="Vista Móvil">
+        <ToolbarButton onClick={() => setDevice('mobile')} active={device === 'mobile'} dataTestId="editor-toolbar-device-mobile-button" title={copy.deviceMobile}>
           <Smartphone className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={() => setDevice('tablet')} active={device === 'tablet'} dataTestId="editor-toolbar-device-tablet-button" title="Vista Tablet">
+        <ToolbarButton onClick={() => setDevice('tablet')} active={device === 'tablet'} dataTestId="editor-toolbar-device-tablet-button" title={copy.deviceTablet}>
           <Tablet className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={() => setDevice('desktop')} active={device === 'desktop'} dataTestId="editor-toolbar-device-desktop-button" title="Vista Escritorio">
+        <ToolbarButton onClick={() => setDevice('desktop')} active={device === 'desktop'} dataTestId="editor-toolbar-device-desktop-button" title={copy.deviceDesktop}>
           <Monitor className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => setViewMode(viewMode === 'single' ? 'double' : 'single')}
           active={viewMode === 'double'}
-          disabled={device === 'mobile'}
+          disabled={device === 'mobile' || isPhysicalMobile}
           dataTestId="editor-toolbar-double-page-button"
-          title="Modo Dos Hojas (no disponible en móvil)"
+          title={isPhysicalMobile ? copy.doublePageModeUnavailable : copy.doublePageMode}
         >
           <Columns className="h-4 w-4" />
         </ToolbarButton>
@@ -918,7 +939,7 @@ const MenuBar = ({
           active={editor.isActive('bold')}
           disabled={!inlineTargetAvailable}
           dataTestId="editor-toolbar-bold-button"
-          title={inlineTargetAvailable ? 'Negrita' : inlineUnavailableTitle}
+          title={inlineTargetAvailable ? copy.bold : inlineUnavailableTitle}
         >
           <Bold className="h-4 w-4" />
         </ToolbarButton>
@@ -927,7 +948,7 @@ const MenuBar = ({
           active={editor.isActive('italic')}
           disabled={!inlineTargetAvailable}
           dataTestId="editor-toolbar-italic-button"
-          title={inlineTargetAvailable ? 'Cursiva' : inlineUnavailableTitle}
+          title={inlineTargetAvailable ? copy.italic : inlineUnavailableTitle}
         >
           <Italic className="h-4 w-4" />
         </ToolbarButton>
@@ -936,7 +957,7 @@ const MenuBar = ({
           active={editor.isActive('strike')}
           disabled={!inlineTargetAvailable}
           dataTestId="editor-toolbar-strikethrough-button"
-          title={inlineTargetAvailable ? 'Tachado' : inlineUnavailableTitle}
+          title={inlineTargetAvailable ? copy.strike : inlineUnavailableTitle}
         >
           <Strikethrough className="h-4 w-4" />
         </ToolbarButton>
@@ -948,7 +969,7 @@ const MenuBar = ({
           active={editor.isActive({ textAlign: 'left' })}
           disabled={!blockTargetAvailable}
           dataTestId="editor-toolbar-align-left-button"
-          title={blockTargetAvailable ? 'Alinear izquierda' : blockUnavailableTitle}
+          title={blockTargetAvailable ? copy.alignLeft : blockUnavailableTitle}
         >
           <AlignLeft className="h-4 w-4" />
         </ToolbarButton>
@@ -957,7 +978,7 @@ const MenuBar = ({
           active={editor.isActive({ textAlign: 'center' })}
           disabled={!blockTargetAvailable}
           dataTestId="editor-toolbar-align-center-button"
-          title={blockTargetAvailable ? 'Centrar' : blockUnavailableTitle}
+          title={blockTargetAvailable ? copy.alignCenter : blockUnavailableTitle}
         >
           <AlignCenter className="h-4 w-4" />
         </ToolbarButton>
@@ -966,7 +987,7 @@ const MenuBar = ({
           active={editor.isActive({ textAlign: 'right' })}
           disabled={!blockTargetAvailable}
           dataTestId="editor-toolbar-align-right-button"
-          title={blockTargetAvailable ? 'Alinear derecha' : blockUnavailableTitle}
+          title={blockTargetAvailable ? copy.alignRight : blockUnavailableTitle}
         >
           <AlignRight className="h-4 w-4" />
         </ToolbarButton>
@@ -975,7 +996,7 @@ const MenuBar = ({
           active={editor.isActive({ textAlign: 'justify' })}
           disabled={!blockTargetAvailable}
           dataTestId="editor-toolbar-align-justify-button"
-          title={blockTargetAvailable ? 'Justificar' : blockUnavailableTitle}
+          title={blockTargetAvailable ? copy.alignJustify : blockUnavailableTitle}
         >
           <AlignJustify className="h-4 w-4" />
         </ToolbarButton>
@@ -1052,7 +1073,7 @@ const MenuBar = ({
         </ToolbarButton>
         <SplitToolbarButton
           icon={<List className="h-4 w-4" />}
-          title="Lista con viñetas"
+          title={copy.bulletList}
           active={editor.isActive('bulletList')}
           dataTestId="editor-toolbar-bullet-list-button"
           toggleDataTestId="editor-toolbar-bullet-list-options-toggle"
@@ -1070,17 +1091,17 @@ const MenuBar = ({
                     ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--text-primary)]'
                     : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--accent)]/50'
                 }`}
-                title={option.label}
+                title={bulletLabels[option.value]}
               >
                 <div className="text-lg font-semibold">{option.sample}</div>
-                <div className="mt-1 text-[10px]">{option.label}</div>
+                <div className="mt-1 text-[10px]">{bulletLabels[option.value]}</div>
               </button>
             ))}
           </div>
         </SplitToolbarButton>
         <SplitToolbarButton
           icon={<ListOrdered className="h-4 w-4" />}
-          title="Lista numerada"
+          title={copy.orderedList}
           active={editor.isActive('orderedList')}
           dataTestId="editor-toolbar-ordered-list-button"
           toggleDataTestId="editor-toolbar-ordered-list-options-toggle"
@@ -1109,7 +1130,7 @@ const MenuBar = ({
         <ToolbarButton
           onClick={() => fileInputRef.current?.click()}
           dataTestId="editor-toolbar-insert-image-button"
-          title="Insertar Imagen (click para archivo o pegar URL)"
+          title={copy.insertImage}
         >
           <ImageIcon className="h-4 w-4" />
         </ToolbarButton>
@@ -1124,24 +1145,24 @@ const MenuBar = ({
         <ToolbarButton
           onClick={() => editor.chain().focus().insertContent(PAGE_BREAK_HTML).run()}
           dataTestId="editor-toolbar-insert-page-break-button"
-          title="Insertar Salto de Página (Ctrl+Shift+Enter)"
+          title={copy.insertPageBreak}
         >
           <Minus className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton
           onClick={removeNextPageBreak}
           dataTestId="editor-toolbar-remove-page-break-button"
-          title="Eliminar el primer salto de página por debajo del cursor"
+          title={copy.removePageBreak}
         >
           <X className="h-4 w-4" />
         </ToolbarButton>
       </div>
 
       <div className="ac-text-editor__toolbar-actions">
-        <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} dataTestId="editor-toolbar-undo-button" title="Deshacer">
+        <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} dataTestId="editor-toolbar-undo-button" title={copy.undo}>
           <Undo2 className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} dataTestId="editor-toolbar-redo-button" title="Rehacer">
+        <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} dataTestId="editor-toolbar-redo-button" title={copy.redo}>
           <Redo2 className="h-4 w-4" />
         </ToolbarButton>
       </div>
@@ -1164,7 +1185,9 @@ export function AdvancedRichTextEditor({
   onPageCountChange?: (pages: number) => void;
   contentZoom?: number;
 }) {
+  const { locale } = useUiPreferences();
   const { preferences, setPreferences } = useEditorPreferences();
+  const [physicalWidth, setPhysicalWidth] = useState(0);
   const isSyncingExternalContentRef = useRef(false);
   const multipageFlowRef = useRef<HTMLDivElement>(null);
   const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop'>(
@@ -1179,9 +1202,29 @@ export function AdvancedRichTextEditor({
   );
   const [currentFontSize, setCurrentFontSize] = useState<string>(preferences.fontSize || '16px');
 
+  useEffect(() => {
+    const updatePhysicalWidth = () => setPhysicalWidth(window.innerWidth);
+    updatePhysicalWidth();
+    window.addEventListener('resize', updatePhysicalWidth);
+    return () => window.removeEventListener('resize', updatePhysicalWidth);
+  }, []);
+
+  const publicationFormat = device === 'desktop' ? 'laptop' : device;
+  const viewportLayout = useMemo(
+    () => resolveEditorViewportLayout({
+      physicalWidth,
+      publicationDevice: publicationFormat,
+      pageWidth: DEVICE_PAGINATION_CONFIGS[publicationFormat].pageWidth,
+      requestedViewMode: viewMode,
+    }),
+    [physicalWidth, publicationFormat, viewMode],
+  );
+  const layoutDevice = viewportLayout.layoutDevice;
+  const layoutViewMode = viewportLayout.viewMode;
+
   // Calculate words per page based on device, font size, and margins
   const pageConfig: PageCalculationConfig = {
-    device: device as 'mobile' | 'tablet' | 'desktop',
+    device: layoutDevice,
     fontSize: currentFontSize,
     marginTop: margins.top,
     marginBottom: margins.bottom,
@@ -1190,7 +1233,7 @@ export function AdvancedRichTextEditor({
   };
 
   const wordsPerPage = calculateWordsPerPage(pageConfig);
-  const previewFormat = device === 'desktop' ? 'laptop' : device;
+  const previewFormat = layoutDevice === 'desktop' ? 'laptop' : layoutDevice;
   const previewConfig = useMemo(() => {
     const baseConfig = DEVICE_PAGINATION_CONFIGS[previewFormat];
     return {
@@ -1211,8 +1254,8 @@ export function AdvancedRichTextEditor({
     Math.min(totalPages ?? actualRenderablePages, actualRenderablePages),
   );
   const spreadStartPage =
-    viewMode === 'double' ? Math.max(0, currentPage - (currentPage % 2)) : currentPage;
-  const showSecondPage = viewMode === 'double' && spreadStartPage + 1 < totalRenderablePages;
+    layoutViewMode === 'double' ? Math.max(0, currentPage - (currentPage % 2)) : currentPage;
+  const showSecondPage = layoutViewMode === 'double' && spreadStartPage + 1 < totalRenderablePages;
   const lastPublishedContentRef = useRef(normalizeEditorHtml(defaultContent));
 
   const handleUpdate = useCallback(
@@ -1376,7 +1419,7 @@ export function AdvancedRichTextEditor({
       TocBlockAttributes,
       TocInlineAttributes,
       Placeholder.configure({
-        placeholder: 'Empieza a escribir tu obra maestra...',
+        placeholder: resolveLocaleMessages(locale).editor.placeholder,
       }),
       CharacterCount.configure({ limit: 1000000 }),
       TextStyle,
@@ -1609,9 +1652,10 @@ export function AdvancedRichTextEditor({
     <div className="ac-text-editor h-full shadow-2xl">
       <MenuBar
         editor={editor}
-        viewMode={viewMode}
+        viewMode={layoutViewMode}
         setViewMode={setViewMode}
         device={device}
+        isPhysicalMobile={viewportLayout.physicalDevice === 'mobile'}
         setDevice={handleDeviceChange}
         margins={margins}
         onMarginsChange={handleMarginsChange}
@@ -1621,10 +1665,10 @@ export function AdvancedRichTextEditor({
 
       <div className="ac-text-editor__content ac-text-editor__content--scroll flex justify-center bg-[var(--background)] p-4 custom-scrollbar">
         <div
-          className={`transition-all duration-500 ease-in-out ${deviceClasses[device]}`}
+          className={`transition-all duration-500 ease-in-out ${deviceClasses[layoutDevice]}`}
           style={{
-            width: `${viewportWidth * zoomScale}px`,
-            minHeight: `${pageHeight * zoomScale}px`,
+            width: `${viewportWidth * zoomScale * viewportLayout.scale}px`,
+            minHeight: `${pageHeight * zoomScale * viewportLayout.scale}px`,
           }}
         >
           <div
@@ -1632,7 +1676,7 @@ export function AdvancedRichTextEditor({
             style={{
               width: `${viewportWidth}px`,
               minHeight: `${pageHeight}px`,
-              transform: `scale(${zoomScale})`,
+              transform: `scale(${zoomScale * viewportLayout.scale})`,
               transformOrigin: 'top left',
             }}
           >

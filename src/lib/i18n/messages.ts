@@ -79,6 +79,54 @@ export type AppMessages = {
     invalidFullName: string;
     registerError: string;
   };
+  editor: {
+    deviceMobile: string;
+    deviceTablet: string;
+    deviceDesktop: string;
+    doublePageMode: string;
+    doublePageModeUnavailable: string;
+    inlineUnavailable: string;
+    blockUnavailable: string;
+    fontFamily: string;
+    fontSearch: string;
+    fontSize: string;
+    textColor: string;
+    colorDefault: string;
+    bold: string;
+    italic: string;
+    strike: string;
+    alignLeft: string;
+    alignCenter: string;
+    alignRight: string;
+    alignJustify: string;
+    bulletList: string;
+    orderedList: string;
+    insertImage: string;
+    insertPageBreak: string;
+    removePageBreak: string;
+    undo: string;
+    redo: string;
+    placeholder: string;
+    bulletDisc: string;
+    bulletCircle: string;
+    bulletSquare: string;
+    bulletDiamond: string;
+    bulletArrow: string;
+    bulletCheck: string;
+    chapterPrevious: string;
+    chapterNext: string;
+    pagePrevious: string;
+    pageNext: string;
+    zoomOut: string;
+    zoomIn: string;
+    closeEditor: string;
+    saved: string;
+    close: string;
+    cancel: string;
+    saving: string;
+    save: string;
+    unsavedChanges: string;
+  };
   landing: {
     eyebrow: string;
     headline: string;
@@ -151,6 +199,12 @@ export type AppMessages = {
     titlePlaceholder: string;
     sourceDocumentLabel: string;
     sourceDocumentHint: string;
+    importSizeLimitTitle: string;
+    importSizeLimitDescription: string;
+    importDropTitle: string;
+    importDropHint: string;
+    importStructureHint: string;
+    importChooseAnother: string;
     importLocalFallbackWarning: string;
     createOptionalManuscriptLabel: string;
     createOptionalManuscriptHint: string;
@@ -212,6 +266,7 @@ export type AppMessages = {
     coverBackPreview: string;
     coverFormEyebrow: string;
     coverTitleLabel: string;
+    coverDefaultTitle: string;
     coverSubtitleLabel: string;
     coverAuthorLabel: string;
     coverPaletteLabel: string;
@@ -286,6 +341,11 @@ export type AppMessages = {
     coverStudioContentLabel: string;
     coverFieldResync: string;
     coverStudioAlignLabel: string;
+    coverStudioAlignLeft: string;
+    coverStudioAlignCenter: string;
+    coverStudioAlignRight: string;
+    coverStudioBold: string;
+    coverStudioItalic: string;
     coverStudioFontSizeLabel: string;
     coverStudioLineHeightLabel: string;
     coverStudioCharSpacingLabel: string;
@@ -861,6 +921,54 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       invalidFullName: 'Introduce tu nombre completo.',
       registerError: 'No se pudo crear la cuenta. Inténtalo de nuevo.',
     },
+    editor: {
+      deviceMobile: 'Vista móvil',
+      deviceTablet: 'Vista tablet',
+      deviceDesktop: 'Vista escritorio',
+      doublePageMode: 'Modo de dos páginas',
+      doublePageModeUnavailable: 'El modo de dos páginas no está disponible en una pantalla estrecha',
+      inlineUnavailable: 'Coloca el cursor dentro de una palabra o selecciona texto',
+      blockUnavailable: 'Coloca el cursor en un párrafo con texto o selecciona texto',
+      fontFamily: 'Familia tipográfica',
+      fontSearch: 'Buscar fuente…',
+      fontSize: 'Tamaño de fuente',
+      textColor: 'Color del texto',
+      colorDefault: 'Por defecto',
+      bold: 'Negrita',
+      italic: 'Cursiva',
+      strike: 'Tachado',
+      alignLeft: 'Alinear a la izquierda',
+      alignCenter: 'Centrar',
+      alignRight: 'Alinear a la derecha',
+      alignJustify: 'Justificar',
+      bulletList: 'Lista con viñetas',
+      orderedList: 'Lista numerada',
+      insertImage: 'Insertar imagen (haz clic para elegir un archivo o pegar una URL)',
+      insertPageBreak: 'Insertar Salto de Página (Ctrl+Shift+Enter)',
+      removePageBreak: 'Eliminar el primer salto de página por debajo del cursor',
+      undo: 'Deshacer',
+      redo: 'Rehacer',
+      placeholder: 'Empieza a escribir tu obra maestra…',
+      bulletDisc: 'Punto sólido',
+      bulletCircle: 'Círculo',
+      bulletSquare: 'Cuadrado',
+      bulletDiamond: 'Diamante',
+      bulletArrow: 'Flecha',
+      bulletCheck: 'Marca de verificación',
+      chapterPrevious: 'Capítulo anterior (Ctrl+←)',
+      chapterNext: 'Siguiente capítulo (Ctrl+→)',
+      pagePrevious: 'Página anterior (Alt+↑ o Page Up)',
+      pageNext: 'Siguiente página (Alt+↓ o Page Down)',
+      zoomOut: 'Reducir zoom',
+      zoomIn: 'Aumentar zoom',
+      closeEditor: 'Cerrar editor (Esc)',
+      saved: 'Guardado',
+      close: 'Cerrar',
+      cancel: 'Cancelar',
+      saving: 'Guardando…',
+      save: 'Guardar',
+      unsavedChanges: 'Tienes cambios sin guardar.\n\n¿Deseas guardarlos antes de cerrar?',
+    },
     landing: {
       eyebrow: 'Anclora Talent',
       headline: 'Convierte talento en una presencia editorial lista para publicar.',
@@ -991,6 +1099,13 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       sourceDocumentLabel: 'Documento base opcional',
       sourceDocumentHint:
         'Soporta `pdf`, `doc`, `docx`, `txt` y `md`. Si el archivo se puede extraer bien, el editor arrancará ya sembrado con ese contenido.',
+      importSizeLimitTitle: 'Límite de tamaño del documento',
+      importSizeLimitDescription:
+        'El tamaño máximo permitido es de 50 MB. Los archivos que excedan este límite no podrán importarse.',
+      importDropTitle: 'Arrastra tu documento aquí',
+      importDropHint: 'O haz clic para seleccionar un archivo compatible.',
+      importStructureHint: 'El proyecto se creará con esta estructura y podrás ajustar lo mínimo desde el editor.',
+      importChooseAnother: 'Haz clic para seleccionar otro archivo',
       importLocalFallbackWarning:
         'El servidor no pudo analizar el archivo en este intento, así que se hizo una lectura local de emergencia del DOCX. Puedes crear el proyecto igualmente.',
       createOptionalManuscriptLabel: 'Manuscrito (opcional)',
@@ -1080,6 +1195,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverBackPreview: 'Preview',
       coverFormEyebrow: 'Portada persistente',
       coverTitleLabel: 'Título',
+      coverDefaultTitle: 'Título del proyecto',
       coverSubtitleLabel: 'Subtítulo',
       coverAuthorLabel: 'Autor',
       coverPaletteLabel: 'Paleta',
@@ -1158,6 +1274,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverStudioContentLabel: 'Contenido',
       coverFieldResync: 'Sincronizar con metadatos',
       coverStudioAlignLabel: 'Alineación y estilo',
+      coverStudioAlignLeft: 'Alinear a la izquierda',
+      coverStudioAlignCenter: 'Centrar',
+      coverStudioAlignRight: 'Alinear a la derecha',
+      coverStudioBold: 'Negrita',
+      coverStudioItalic: 'Cursiva',
       coverStudioFontSizeLabel: 'Tamaño',
       coverStudioLineHeightLabel: 'Interlineado',
       coverStudioCharSpacingLabel: 'Espaciado letras',
@@ -1763,6 +1884,54 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       invalidFullName: 'Enter your full name.',
       registerError: 'Could not create the account. Please try again.',
     },
+    editor: {
+      deviceMobile: 'Mobile view',
+      deviceTablet: 'Tablet view',
+      deviceDesktop: 'Desktop view',
+      doublePageMode: 'Two-page mode',
+      doublePageModeUnavailable: 'Two-page mode is unavailable in a narrow viewport',
+      inlineUnavailable: 'Place the cursor inside a word or select text',
+      blockUnavailable: 'Place the cursor in a text paragraph or select text',
+      fontFamily: 'Font family',
+      fontSearch: 'Search fonts…',
+      fontSize: 'Font size',
+      textColor: 'Text color',
+      colorDefault: 'Default',
+      bold: 'Bold',
+      italic: 'Italic',
+      strike: 'Strikethrough',
+      alignLeft: 'Align left',
+      alignCenter: 'Align center',
+      alignRight: 'Align right',
+      alignJustify: 'Justify',
+      bulletList: 'Bulleted list',
+      orderedList: 'Numbered list',
+      insertImage: 'Insert image (click to choose a file or paste a URL)',
+      insertPageBreak: 'Insert page break (Ctrl+Shift+Enter)',
+      removePageBreak: 'Remove the first page break below the cursor',
+      undo: 'Undo',
+      redo: 'Redo',
+      placeholder: 'Start writing your masterpiece…',
+      bulletDisc: 'Solid dot',
+      bulletCircle: 'Circle',
+      bulletSquare: 'Square',
+      bulletDiamond: 'Diamond',
+      bulletArrow: 'Arrow',
+      bulletCheck: 'Check mark',
+      chapterPrevious: 'Previous chapter (Ctrl+←)',
+      chapterNext: 'Next chapter (Ctrl+→)',
+      pagePrevious: 'Previous page (Alt+↑ or Page Up)',
+      pageNext: 'Next page (Alt+↓ or Page Down)',
+      zoomOut: 'Zoom out',
+      zoomIn: 'Zoom in',
+      closeEditor: 'Close editor (Esc)',
+      saved: 'Saved',
+      close: 'Close',
+      cancel: 'Cancel',
+      saving: 'Saving…',
+      save: 'Save',
+      unsavedChanges: 'You have unsaved changes.\n\nSave them before closing?',
+    },
     landing: {
       eyebrow: 'Anclora Talent',
       headline: 'Turn talent into an editorial presence ready to publish.',
@@ -1893,6 +2062,13 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       sourceDocumentLabel: 'Optional source document',
       sourceDocumentHint:
         'Supports `pdf`, `doc`, `docx`, `txt`, and `md`. If extraction succeeds, the editor starts already seeded with that content.',
+      importSizeLimitTitle: 'Document size limit',
+      importSizeLimitDescription:
+        'The maximum allowed size is 50 MB. Files above this limit cannot be imported.',
+      importDropTitle: 'Drop your document here',
+      importDropHint: 'Or click to choose a compatible file.',
+      importStructureHint: 'The project will be created with this structure so you can make only the necessary edits.',
+      importChooseAnother: 'Click to choose another file',
       importLocalFallbackWarning:
         'The server could not analyze the file on this attempt, so a local emergency DOCX read was used. You can still create the project.',
       createOptionalManuscriptLabel: 'Manuscript (optional)',
@@ -1982,6 +2158,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverBackPreview: 'Preview',
       coverFormEyebrow: 'Persistent cover',
       coverTitleLabel: 'Title',
+      coverDefaultTitle: 'Project title',
       coverSubtitleLabel: 'Subtitle',
       coverAuthorLabel: 'Author',
       coverPaletteLabel: 'Palette',
@@ -2060,6 +2237,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverStudioContentLabel: 'Content',
       coverFieldResync: 'Sync with metadata',
       coverStudioAlignLabel: 'Alignment and style',
+      coverStudioAlignLeft: 'Align left',
+      coverStudioAlignCenter: 'Center',
+      coverStudioAlignRight: 'Align right',
+      coverStudioBold: 'Bold',
+      coverStudioItalic: 'Italic',
       coverStudioFontSizeLabel: 'Size',
       coverStudioLineHeightLabel: 'Line height',
       coverStudioCharSpacingLabel: 'Letter spacing',

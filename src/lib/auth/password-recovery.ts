@@ -1,9 +1,9 @@
 import 'server-only';
 
 import { createHash, randomBytes } from 'node:crypto';
-import { and, eq, gt, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import { getDb } from '@/lib/db';
-import { passwordResetTokens, sessions, users } from '@/lib/db/schema';
+import { passwordResetTokens } from '@/lib/db/schema';
 
 export const PASSWORD_RESET_TOKEN_TTL_MS = 30 * 60 * 1000;
 

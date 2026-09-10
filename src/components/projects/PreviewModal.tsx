@@ -258,7 +258,7 @@ export function PreviewModal({
                 className="ac-button ac-button--secondary flex-shrink-0"
                 title={copy.previewModalClose}
               >
-                CERRAR
+                {copy.previewModalClose}
               </button>
             </div>
           </div>
@@ -321,7 +321,7 @@ export function PreviewModal({
                 </button>
                 <label className="flex items-center gap-2 px-1 text-sm font-medium text-white">
                   <span className="sr-only">{copy.previewModalPage}</span>
-                  <span className="text-white/75">Página</span>
+                  <span className="text-white/75">{copy.previewModalPage}</span>
                   <input
                     data-testid="preview-modal-page-input"
                     aria-label={copy.previewModalPage}
@@ -425,6 +425,7 @@ function PageRenderer({
           palette={project.cover.palette}
           backgroundImageUrl={project.cover.backgroundImageUrl}
           eyebrow={copy.coverEyebrow}
+          defaultTitle={copy.coverDefaultTitle}
         />
       </div>
     );

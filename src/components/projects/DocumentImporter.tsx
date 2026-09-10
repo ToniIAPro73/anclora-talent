@@ -338,9 +338,9 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         <div className="flex gap-3">
           <Upload className="h-5 w-5 flex-shrink-0 text-[var(--accent-text)] mt-0.5" />
           <div>
-            <h3 className="text-sm font-semibold text-[var(--text-primary)]">Límite de tamaño de documento</h3>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">{copy.importSizeLimitTitle}</h3>
             <p className="mt-1 text-sm text-[var(--text-secondary)]">
-              El tamaño máximo permitido es de <strong>50 MB</strong>. Los archivos que excedan este límite no podrán ser importados.
+              {copy.importSizeLimitDescription}
             </p>
           </div>
         </div>
@@ -387,9 +387,9 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
             {importState === 'idle' && (
               <>
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold text-[var(--text-primary)]">Arrastra tu documento aquí</p>
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">{copy.importDropTitle}</p>
                   <p className="text-xs leading-6 text-[var(--text-secondary)]">
-                    O haz clic para seleccionar un archivo compatible.
+                    {copy.importDropHint}
                   </p>
                 </div>
                 <div className="flex flex-wrap justify-center gap-2">
@@ -523,7 +523,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                   </div>
                 ) : null}
                 <p className="text-xs text-center text-[var(--text-secondary)]">
-                  El proyecto se creará con esta estructura y podrás afinar lo mínimo desde el editor.
+                  {copy.importStructureHint}
                 </p>
                 <button
                   type="button"
@@ -542,7 +542,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
             {hasError && (
               <div className="space-y-1">
                 <p className="text-sm font-semibold text-red-400">{errorMessage}</p>
-                <p className="text-xs text-[var(--text-secondary)]">Haz clic para seleccionar otro archivo</p>
+                <p className="text-xs text-[var(--text-secondary)]">{copy.importChooseAnother}</p>
               </div>
             )}
           </div>

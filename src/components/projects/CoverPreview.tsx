@@ -28,10 +28,11 @@ export function CoverPreview({
   palette: CoverDesign['palette'];
   backgroundImageUrl?: string | null;
   eyebrow: string;
+  defaultTitle: string;
   visualOnly?: boolean;
 }) {
   const colors = previewText[palette];
-  const title = surface.fields.title?.value || 'Título del proyecto';
+  const title = surface.fields.title?.value || defaultTitle;
   const subtitle = surface.fields.subtitle?.visible ? surface.fields.subtitle.value : '';
   const author = surface.fields.author?.visible ? surface.fields.author.value : '';
   const opacity = surface.opacity ?? 0.4;

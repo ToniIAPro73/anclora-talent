@@ -2,8 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 vi.mock('next/image', () => ({
-  default: ({ priority: _priority, ...props }: React.ImgHTMLAttributes<HTMLImageElement> & { priority?: boolean }) => (
-    <img {...props} />
+  default: ({ priority, alt = '', ...props }: React.ImgHTMLAttributes<HTMLImageElement> & { priority?: boolean }) => (
+    <img alt={alt} {...props} data-priority={priority ? 'true' : undefined} />
   ),
 }));
 

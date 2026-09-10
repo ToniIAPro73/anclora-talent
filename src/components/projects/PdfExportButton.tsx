@@ -385,6 +385,7 @@ function PreviewCapturePage({
           palette={project.cover.palette}
           backgroundImageUrl={project.cover.backgroundImageUrl}
           eyebrow={copy.coverEyebrow}
+          defaultTitle={copy.coverDefaultTitle}
           visualOnly
         />
       </div>

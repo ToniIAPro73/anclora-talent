@@ -5,6 +5,8 @@ import { ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp, ZoomIn, Z
 import { AdvancedRichTextEditor } from '../AdvancedRichTextEditor';
 import { useChapterEditor } from './useChapterEditor';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
+import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
+import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { DocumentChapter } from '@/lib/projects/types';
 
 interface ChapterEditorFullscreenProps {
@@ -28,6 +30,8 @@ export function ChapterEditorFullscreen({
   defaultFontSize = '16px',
   defaultMargins = { top: 24, bottom: 24, left: 24, right: 24 },
 }: ChapterEditorFullscreenProps) {
+  const { locale } = useUiPreferences();
+  const copy = resolveLocaleMessages(locale).editor;
   const { preferences } = useEditorPreferences();
   const [zoom, setZoom] = useState(100);
 
@@ -49,7 +53,7 @@ export function ChapterEditorFullscreen({
   const handleClose = useCallback(async () => {
     if (editor.hasChanges) {
       const response = confirm(
-        '⚠️ Tienes cambios sin guardar.\n\n¿Deseas guardarlos antes de cerrar?'
+        `⚠️ ${copy.unsavedChanges}`
       );
 
       if (response) {
@@ -65,7 +69,7 @@ export function ChapterEditorFullscreen({
       // No changes, just close
       onClose();
     }
-  }, [editor, onSave, onClose]);
+  }, [copy, editor, onSave, onClose]);
 
   const handleSave = useCallback(async () => {
     await editor.saveChapter();
@@ -135,7 +139,7 @@ export function ChapterEditorFullscreen({
       <header className="ac-editor-shell__header">
         <div className="ac-editor-shell__titles">
           <h2 className="ac-editor-shell__title">
-            Capítulo {editor.currentIndex + 1}/{editor.totalChapters}
+            {locale === 'es' ? 'Capítulo' : 'Chapter'} {editor.currentIndex + 1}/{editor.totalChapters}
           </h2>
           <p className="ac-editor-shell__summary">{editor.currentChapter.title}</p>
         </div>
@@ -147,7 +151,7 @@ export function ChapterEditorFullscreen({
             onClick={editor.goToPrevChapter}
             disabled={!editor.canNavigatePrev || editor.isSaving}
             className="ac-button ac-button--ghost ac-button--sm disabled:opacity-50"
-            title="Capítulo anterior (Ctrl+←)"
+            title={copy.chapterPrevious}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -157,7 +161,7 @@ export function ChapterEditorFullscreen({
             onClick={editor.goToNextChapter}
             disabled={!editor.canNavigateNext || editor.isSaving}
             className="ac-button ac-button--ghost ac-button--sm disabled:opacity-50"
-            title="Siguiente capítulo (Ctrl+→)"
+            title={copy.chapterNext}
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -170,7 +174,7 @@ export function ChapterEditorFullscreen({
                 onClick={editor.goToPagePrev}
                 disabled={!editor.canNavigatePagePrev || editor.isSaving}
                 className="ac-button ac-button--ghost ac-button--sm disabled:opacity-50"
-                title="Página anterior (Alt+↑ o Page Up)"
+                title={copy.pagePrevious}
               >
                 <ArrowUp className="h-4 w-4" />
               </button>
@@ -184,7 +188,7 @@ export function ChapterEditorFullscreen({
                 onClick={editor.goToPageNext}
                 disabled={!editor.canNavigatePageNext || editor.isSaving}
                 className="ac-button ac-button--ghost ac-button--sm disabled:opacity-50"
-                title="Siguiente página (Alt+↓ o Page Down)"
+                title={copy.pageNext}
               >
                 <ArrowDown className="h-4 w-4" />
               </button>
@@ -197,7 +201,7 @@ export function ChapterEditorFullscreen({
             data-testid="chapter-editor-zoom-out-button"
             onClick={() => handleZoomChange(zoom - 10)}
             className="ac-button ac-button--ghost ac-button--sm"
-            title="Reducir zoom"
+            title={copy.zoomOut}
           >
             <ZoomOut className="h-4 w-4" />
           </button>
@@ -209,7 +213,7 @@ export function ChapterEditorFullscreen({
             data-testid="chapter-editor-zoom-in-button"
             onClick={() => handleZoomChange(zoom + 10)}
             className="ac-button ac-button--ghost ac-button--sm"
-            title="Aumentar zoom"
+            title={copy.zoomIn}
           >
             <ZoomIn className="h-4 w-4" />
           </button>
@@ -219,7 +223,7 @@ export function ChapterEditorFullscreen({
         <div className="ac-editor-shell__actions">
           {editor.lastSaved && (
             <span className="ac-editor-shell__status">
-              ✓ Guardado
+              ✓ {copy.saved}
             </span>
           )}
           <button
@@ -227,9 +231,9 @@ export function ChapterEditorFullscreen({
             onClick={handleClose}
             disabled={editor.isSaving}
             className="ac-button ac-button--secondary"
-            title="Cerrar editor (Esc)"
+            title={copy.closeEditor}
           >
-            CERRAR
+            {copy.close}
           </button>
         </div>
       </header>
@@ -260,7 +264,7 @@ export function ChapterEditorFullscreen({
           disabled={editor.isSaving}
           className="ac-button ac-button--secondary"
         >
-          Cancelar
+          {copy.cancel}
         </button>
 
         <button
@@ -272,12 +276,12 @@ export function ChapterEditorFullscreen({
           {editor.isSaving ? (
             <>
               <Loader2 className="h-3 w-3 animate-spin" />
-              <span className="text-sm">Guardando...</span>
+              <span className="text-sm">{copy.saving}</span>
             </>
           ) : (
             <>
               <Save className="h-3 w-3" />
-              <span className="text-sm">Guardar</span>
+              <span className="text-sm">{copy.save}</span>
             </>
           )}
         </button>

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 vi.mock('next/image', () => ({
   default: ({ priority, alt = '', ...props }: React.ImgHTMLAttributes<HTMLImageElement> & { priority?: boolean }) => (
-    <img {...props} alt={alt} data-priority={priority ? 'true' : undefined} />
+    <img alt={alt} {...props} data-priority={priority ? 'true' : undefined} />
   ),
 }));
 vi.mock('next/link', () => ({

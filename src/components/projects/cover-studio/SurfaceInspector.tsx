@@ -113,7 +113,7 @@ export function SurfaceInspector({
             data-testid={`inspector-${fieldKey}-align-left-button`}
             className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
             data-active={computed.textAlign === 'left' ? 'true' : 'false'}
-            title="Left"
+            title={copy.coverStudioAlignLeft}
           >
             <AlignLeft className="h-4 w-4" />
           </button>
@@ -123,7 +123,7 @@ export function SurfaceInspector({
             data-testid={`inspector-${fieldKey}-align-center-button`}
             className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
             data-active={computed.textAlign === 'center' ? 'true' : 'false'}
-            title="Center"
+            title={copy.coverStudioAlignCenter}
           >
             <AlignCenter className="h-4 w-4" />
           </button>
@@ -133,7 +133,7 @@ export function SurfaceInspector({
             data-testid={`inspector-${fieldKey}-align-right-button`}
             className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
             data-active={computed.textAlign === 'right' ? 'true' : 'false'}
-            title="Right"
+            title={copy.coverStudioAlignRight}
           >
             <AlignRight className="h-4 w-4" />
           </button>
@@ -143,7 +143,7 @@ export function SurfaceInspector({
             data-testid={`inspector-${fieldKey}-bold-button`}
             className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
             data-active={isBold ? 'true' : 'false'}
-            title="Bold"
+            title={copy.coverStudioBold}
           >
             <Bold className="h-4 w-4" />
           </button>
@@ -153,7 +153,7 @@ export function SurfaceInspector({
             data-testid={`inspector-${fieldKey}-italic-button`}
             className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
             data-active={isItalic ? 'true' : 'false'}
-            title="Italic"
+            title={copy.coverStudioItalic}
           >
             <Italic className="h-4 w-4" />
           </button>
