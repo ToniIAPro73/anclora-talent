@@ -250,6 +250,11 @@ export type AppMessages = {
     editorSubtitleLabel: string;
     editorAuthorLabel: string;
     editorChapterLabel: string;
+    contentPrimaryEyebrow: string;
+    contentPrimaryTitle: string;
+    contentPrimaryDescription: string;
+    contentPrimaryAction: string;
+    contentAdvancedSummary: string;
     chapterActionEdit: string;
     chapterActionMoveUp: string;
     chapterActionMoveDown: string;
@@ -1190,6 +1195,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       editorSubtitleLabel: 'Subtítulo',
       editorAuthorLabel: 'Autor',
       editorChapterLabel: 'Título del capítulo',
+      contentPrimaryEyebrow: 'Siguiente acción',
+      contentPrimaryTitle: 'Empieza por escribir',
+      contentPrimaryDescription: 'Abre tus capítulos para trabajar sobre el manuscrito. Las reglas, metadatos y publicación siguen disponibles cuando los necesites.',
+      contentPrimaryAction: 'Abrir capítulos',
+      contentAdvancedSummary: 'Metadatos, composición y publicación avanzada',
       chapterActionEdit: 'Editar capítulo',
       chapterActionMoveUp: 'Mover capítulo arriba',
       chapterActionMoveDown: 'Mover capítulo abajo',
@@ -2164,6 +2174,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       editorSubtitleLabel: 'Subtitle',
       editorAuthorLabel: 'Author',
       editorChapterLabel: 'Chapter title',
+      contentPrimaryEyebrow: 'Next action',
+      contentPrimaryTitle: 'Start writing',
+      contentPrimaryDescription: 'Open your chapters to work on the manuscript. Rules, metadata and publishing remain available whenever you need them.',
+      contentPrimaryAction: 'Open chapters',
+      contentAdvancedSummary: 'Metadata, composition and advanced publishing',
       chapterActionEdit: 'Edit chapter',
       chapterActionMoveUp: 'Move chapter up',
       chapterActionMoveDown: 'Move chapter down',

@@ -425,6 +425,30 @@ export function ProjectWorkspace({
       case 1: // Content
         return (
           <div className="flex flex-col gap-6">
+            <section className="talent-content-primary ac-surface-panel" data-testid="content-primary-panel">
+              <p className="ac-surface-panel__eyebrow">{copy.contentPrimaryEyebrow}</p>
+              <h3 className="mt-2 text-2xl font-black text-[var(--text-primary)]">{copy.contentPrimaryTitle}</h3>
+              <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--text-secondary)]">{copy.contentPrimaryDescription}</p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  data-testid="content-primary-action"
+                  onClick={() => setActiveStep(2)}
+                  className={`${premiumPrimaryDarkButton} px-5 py-3`}
+                >
+                  {copy.contentPrimaryAction}
+                </button>
+                <button
+                  type="button"
+                  data-testid="content-primary-document-data-action"
+                  onClick={() => setIsDocumentDataOpen(true)}
+                  className={`${premiumSecondaryLightButton} px-5 py-3`}
+                >
+                  {copy.documentDataOpen}
+                </button>
+              </div>
+            </section>
+
             {/* Metadata Card - Full Width */}
             <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-8 shadow-[var(--shadow-strong)]">
               <div className="mb-6 flex items-center justify-between">
@@ -476,56 +500,62 @@ export function ProjectWorkspace({
               </form>
             </section>
 
-            <DocumentStatsCard document={project.document} project={project} isLoading={isPending} />
+            <details className="talent-content-advanced" data-testid="content-advanced-disclosure">
+              <summary>{copy.contentAdvancedSummary}</summary>
 
-            <ProductMetadataPanel key={`meta-${project.updatedAt}`} project={project} copy={copy} />
+              <div className="talent-content-advanced__body">
+                <DocumentStatsCard document={project.document} project={project} isLoading={isPending} />
 
-            <DocumentRulesPanel key={`rules-${project.updatedAt}`} project={project} copy={copy} />
+                <ProductMetadataPanel key={`meta-${project.updatedAt}`} project={project} copy={copy} />
 
-            <BrandProfilePanel
-              key={`brand-${project.updatedAt}`}
-              project={project}
-              profiles={brandProfiles}
-              copy={copy}
-            />
+                <DocumentRulesPanel key={`rules-${project.updatedAt}`} project={project} copy={copy} />
 
-            <DocumentHealthPanel
-              project={project}
-              violations={documentViolations}
-              copy={copy}
-              checks={preflightChecks}
-              diff={composition.diff}
-              recomposedFromPage={composition.recomposedFromPage}
-              telemetry={composition.telemetry}
-              locale={locale}
-              revert={
-                revertibleSave
-                  ? {
-                      chapterTitle: revertibleSave.chapterTitle,
-                      pending: isPending,
-                      onRevert: handleRevertLastSave,
-                    }
-                  : null
-              }
-            />
+                <BrandProfilePanel
+                  key={`brand-${project.updatedAt}`}
+                  project={project}
+                  profiles={brandProfiles}
+                  copy={copy}
+                />
 
-            {coAuthor && (
-              <CoAuthorPanel
-                projectId={project.id}
-                chapters={coAuthor.chapters}
-                cloudAvailable={coAuthor.cloudAvailable}
-                copy={copy}
-                locale={locale}
-              />
-            )}
+                <DocumentHealthPanel
+                  project={project}
+                  violations={documentViolations}
+                  copy={copy}
+                  checks={preflightChecks}
+                  diff={composition.diff}
+                  recomposedFromPage={composition.recomposedFromPage}
+                  telemetry={composition.telemetry}
+                  locale={locale}
+                  revert={
+                    revertibleSave
+                      ? {
+                          chapterTitle: revertibleSave.chapterTitle,
+                          pending: isPending,
+                          onRevert: handleRevertLastSave,
+                        }
+                      : null
+                  }
+                />
 
-            {history && (
-              <HistoryPanel
-                copy={history.copy}
-                projectId={project.id}
-                snapshots={history.snapshots}
-              />
-            )}
+                {coAuthor && (
+                  <CoAuthorPanel
+                    projectId={project.id}
+                    chapters={coAuthor.chapters}
+                    cloudAvailable={coAuthor.cloudAvailable}
+                    copy={copy}
+                    locale={locale}
+                  />
+                )}
+
+                {history && (
+                  <HistoryPanel
+                    copy={history.copy}
+                    projectId={project.id}
+                    snapshots={history.snapshots}
+                  />
+                )}
+              </div>
+            </details>
           </div>
         );
       case 2: // Chapters

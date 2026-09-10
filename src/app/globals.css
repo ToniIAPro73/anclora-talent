@@ -1133,6 +1133,46 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
   letter-spacing: -0.03em;
 }
 
+/* P6: writing is the default task; specialist panels remain available
+   behind one explicit disclosure without losing their state or actions. */
+.talent-content-primary {
+  padding: 24px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-soft);
+}
+
+.talent-content-advanced {
+  border: 1px solid var(--border-subtle);
+  border-radius: 24px;
+  background: var(--surface-soft);
+}
+
+.talent-content-advanced > summary {
+  cursor: pointer;
+  padding: 18px 22px;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+}
+
+.talent-content-advanced__body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 0 16px 16px;
+}
+
+.talent-workspace-stage.space-y-8 > * + * {
+  margin-top: 1.25rem;
+}
+
+@media (min-width: 769px) {
+  .talent-workspace-stage.space-y-8 .ac-section-heading__title {
+    font-size: clamp(2rem, 3vw, 2.75rem);
+  }
+}
+
 .talent-workspace-stage .ac-workspace-stage__actions {
   align-items: center;
 }

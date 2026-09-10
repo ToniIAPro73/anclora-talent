@@ -1,6 +1,10 @@
 # P6 — Editorial Workspace and Progressive Disclosure
 
-Repo status: NEEDS_HARDENING
+Repo status: DONE
+
+Execution status: P6-M00 PASS; P6-M01 PASS; P6-M02 PASS; P6-FINAL-GATE PASS.
+
+Gate evidence: Content stage now presents a localized writing-first action panel and keeps metadata, composition rules, brand, health, co-author and history controls behind one native disclosure. The controls remain mounted and state-preserving, so power users can open the disclosure directly. The 1440px E2E measured the primary writing surface before the 400px boundary and reached chapters without interpreting optional rules; the same journey opened the rules panel and passed 390px document containment. Existing editor, preview, cover, export, theme and locale suites remained green.
 
 Findings: UX-15, UX-16.
 
