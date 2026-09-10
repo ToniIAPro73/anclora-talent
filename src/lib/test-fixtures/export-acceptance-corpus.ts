@@ -4,7 +4,7 @@ import type { ProjectRecord } from '@/lib/projects/types';
 export type ExportAcceptanceVariant = 'empty' | 'populated';
 
 const TINY_PNG_DATA_URL =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9WnR6i4AAAAASUVORK5CYII=';
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
 
 /** Synthetic, deterministic-in-content corpus. Never points at user data. */
 export function createExportAcceptanceProject(

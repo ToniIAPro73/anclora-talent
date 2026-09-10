@@ -29,7 +29,7 @@ The initial authoring pass established the documentation authority. Functional e
 
 ## EXECUTION STATUS
 
-`P0-FINAL-GATE: PASS`. P1 has implemented the first integrity protections: populated chapter fallback when a lazy semantic model is empty, editable manuscript content in DOCX, selectable text rendering for standard PDF content pages, and fail-closed artifact checks. HTML/DOCX corpus checks pass. PDF runtime extraction is currently `BLOCKED` by a local React-PDF render/extractor hang exceeding 90 seconds; P1 remains open until that evidence is resolved.
+`P0-FINAL-GATE: PASS`. `P1-FINAL-GATE: PASS`. P1 now protects populated chapter fallback, editable DOCX manuscript content, selectable standard PDF content and fail-closed HTML/DOCX/PDF artifact checks. The populated acceptance corpus passes content inspection across all three formats.
 
 ## 2. BASELINE
 
@@ -393,7 +393,7 @@ The following are global invariants:
 
 ## 33. OUT_OF_SCOPE
 
-This mission does not implement product findings, change schema, alter auth providers, send email, run destructive production E2E, migrate users, redesign the brand from scratch, remove expert capabilities, replace the existing export stack without a compatibility plan, or promote an unverified artifact. Historical audit H1–H6 are supporting context, not automatic new remediation phases; they must only be reopened if current code/tests reproduce them.
+The initial authoring pass did not implement product findings, change schema, alter auth providers, send email, run destructive production E2E, migrate users, redesign the brand from scratch, remove expert capabilities, replace the existing export stack without a compatibility plan, or promote an unverified artifact. Functional execution now proceeds phase by phase from this authority. Historical audit H1–H6 are supporting context, not automatic new remediation phases; they must only be reopened if current code/tests reproduce them.
 
 ## 34. MIGRATION IMPACT
 
@@ -475,7 +475,7 @@ The remediation is releasable only when:
 - SPEC/ROADMAP/documentation and AOS checks are current;
 - worktrees and branch heads are synchronized without force push.
 
-The current authoring mission satisfies the documentation Gate only. `IMPLEMENTATION_STARTED = NO`.
+The current execution satisfies P0 and P1 final Gates. `IMPLEMENTATION_STARTED = YES`; P2 remains pending.
 
 ## 41. SPEC AUTHORING GATE
 

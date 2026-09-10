@@ -1,8 +1,8 @@
 # P1 — Document and Export Integrity / UX-12
 
-Repo status: NEEDS_HARDENING
+Repo status: DONE
 
-Execution status: IN_PROGRESS. P1-M00/P1-M01 integrity work is implemented locally: empty semantic-model fallback, semantic DOCX manuscript content and fail-closed HTML/DOCX/PDF validation. HTML/DOCX corpus validation passes. PDF runtime text extraction is BLOCKED because the local React-PDF render/extractor process did not complete after 90 seconds; the phase Gate remains open.
+Execution status: P1-FINAL-GATE PASS. Empty semantic-model fallback, semantic DOCX manuscript content, selectable PDF text and fail-closed HTML/DOCX/PDF validation are implemented. The populated corpus passes artifact-content inspection for all three formats.
 
 Objective: prove why a populated project can yield empty HTML/DOCX, make export fail closed, and establish artifact acceptance before any polish work.
 

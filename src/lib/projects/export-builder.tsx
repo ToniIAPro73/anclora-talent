@@ -526,7 +526,8 @@ const pdfStyles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   pageInner: {
-    height: '100%',
+    // Cover layouts add their own `coverInner` height. Content pages must
+    // remain intrinsically sized so React-PDF can paginate text normally.
   },
   fullImage: {
     position: 'absolute',

@@ -13,9 +13,10 @@ import {
 } from './export-builder';
 import { buildContentPageExportImageDataUrl } from './export-surface-image';
 import { createExportAcceptanceProject } from '@/lib/test-fixtures/export-acceptance-corpus';
+import { extractTextFromBuffer } from './import-pipeline';
 
 const TINY_PNG_DATA_URL =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9WnR6i4AAAAASUVORK5CYII=';
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
 
 function makeProject() {
   const project = createProjectRecord('user-1', { title: 'Nunca más en la sombra' });
@@ -47,6 +48,16 @@ describe('export-builder', () => {
     const docxText = await mammoth.extractRawText({ buffer: docxBuffer });
     expect(docxText.value).toContain('acción');
     expect(docxText.value).toContain('Contenido del segundo capítulo.');
+
+    const { renderToBuffer } = await import('@react-pdf/renderer');
+    const pdfBuffer = await renderToBuffer(await buildProjectPdf(project));
+    const pdfText = await extractTextFromBuffer(
+      'export-acceptance-corpus.pdf',
+      'application/pdf',
+      Buffer.from(pdfBuffer),
+    );
+    expect(pdfText.text).toContain('acción');
+    expect(pdfText.text).toContain('Contenido del segundo capítulo.');
 
   }, 120000);
 
