@@ -27,7 +27,7 @@ export function LandingHero({
       {/* Editorial Canvas Background Art */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
         {/* Dark Theme: Renaissance Book Proportion Grid & Warm Copper Lighting */}
-        <div className="hidden dark:block absolute inset-0">
+        <div className="theme-dark-only absolute inset-0">
           <Image
             src="/landing/backgrounds/hero-dark-editorial.jpg"
             alt=""
@@ -39,14 +39,14 @@ export function LandingHero({
         </div>
 
         {/* Light Theme: Fine Art Cotton Paper & Deckle Edge */}
-        <div className="block dark:hidden absolute inset-0">
+        <div className="theme-light-only absolute inset-0">
           <Image
             src="/landing/backgrounds/hero-light-paper.jpg"
             alt=""
             fill
             priority
             sizes="(max-width: 1280px) 100vw, 1280px"
-            className="object-cover object-center opacity-40 mix-blend-multiply"
+            className="object-cover object-center opacity-85 mix-blend-multiply"
           />
         </div>
 
@@ -139,29 +139,52 @@ export function LandingHero({
               </div>
             </div>
 
-            {/* Real Screenshot Embed */}
+            {/* Real Screenshot Embed: Paired Dark and Light */}
             <div className="relative aspect-[16/10] w-full bg-[var(--background)]">
-              <Image
-                src="/landing/hero/editor-preview.png"
-                alt="Vista previa del editor tipográfico y maquetación en Anclora Talent"
-                fill
-                priority
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
-                className="object-cover object-top"
-              />
+              <div className="theme-dark-only relative h-full w-full">
+                <Image
+                  src="/landing/features/preview-spread-dark.png"
+                  alt="Vista previa del visor de doble pliego en Anclora Talent (tema oscuro)"
+                  fill
+                  priority
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+                  className="object-cover object-top"
+                />
+              </div>
+              <div className="theme-light-only relative h-full w-full">
+                <Image
+                  src="/landing/features/preview-spread-light.png"
+                  alt="Vista previa del visor de doble pliego en Anclora Talent (tema claro)"
+                  fill
+                  priority
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+                  className="object-cover object-top"
+                />
+              </div>
             </div>
           </div>
 
           {/* Floating Inset Badge: Cover Canvas preview */}
-          <div className="absolute -bottom-5 -left-4 sm:-bottom-6 sm:-left-6 hidden sm:flex items-center gap-3.5 rounded-xl border border-[var(--border-strong)] bg-[var(--surface-overlay)] p-3 shadow-xl backdrop-blur-md">
+          <div className="absolute -bottom-5 -left-4 sm:-bottom-6 sm:-left-6 hidden sm:flex items-center gap-3.5 rounded-xl border border-[var(--border-strong)] bg-[var(--surface)]/95 p-3 shadow-xl backdrop-blur-md">
             <div className="relative h-14 w-10 overflow-hidden rounded border border-[var(--border-subtle)] shadow-sm flex-shrink-0">
-              <Image
-                src="/landing/hero/cover-preview.png"
-                alt="Estudio visual de cubiertas"
-                fill
-                sizes="40px"
-                className="object-cover"
-              />
+              <div className="theme-dark-only relative h-full w-full">
+                <Image
+                  src="/landing/hero/cover-preview-dark.png"
+                  alt="Estudio visual de cubiertas (tema oscuro)"
+                  fill
+                  sizes="40px"
+                  className="object-cover"
+                />
+              </div>
+              <div className="theme-light-only relative h-full w-full">
+                <Image
+                  src="/landing/hero/cover-preview-light.png"
+                  alt="Estudio visual de cubiertas (tema claro)"
+                  fill
+                  sizes="40px"
+                  className="object-cover"
+                />
+              </div>
             </div>
             <div className="pr-2">
               <div className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--accent-text)]">

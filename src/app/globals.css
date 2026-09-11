@@ -342,6 +342,33 @@ html[data-theme="light"] {
   --shadow-strong: 0 28px 90px rgba(12, 24, 32, 0.12);
 }
 
+/* ── Theme-aware visibility utilities tied directly to html[data-theme] ── */
+html[data-theme="dark"] .theme-light-only {
+  display: none !important;
+}
+html[data-theme="dark"] .theme-dark-only {
+  display: block !important;
+}
+html[data-theme="light"] .theme-dark-only {
+  display: none !important;
+}
+html[data-theme="light"] .theme-light-only {
+  display: block !important;
+}
+
+html[data-theme="dark"] .theme-dark-flex {
+  display: flex !important;
+}
+html[data-theme="dark"] .theme-light-flex {
+  display: none !important;
+}
+html[data-theme="light"] .theme-dark-flex {
+  display: none !important;
+}
+html[data-theme="light"] .theme-light-flex {
+  display: flex !important;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

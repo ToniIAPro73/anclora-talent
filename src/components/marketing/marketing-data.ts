@@ -11,6 +11,8 @@ export type MarketingShowcasePanel = {
   accent?: string;
   bullets?: readonly string[];
   image?: string;
+  imageDark?: string;
+  imageLight?: string;
 };
 
 export type MarketingBenefit = {
@@ -23,6 +25,8 @@ export type MarketingBentoPillar = {
   description: string;
   tag: string;
   image: string;
+  imageDark?: string;
+  imageLight?: string;
   features: readonly string[];
 };
 

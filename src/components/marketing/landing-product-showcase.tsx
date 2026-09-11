@@ -54,16 +54,25 @@ export function LandingProductShowcase({
         }`}
       >
         {panels.map((panel, idx) => {
-          // Default fallbacks for panel images if not explicitly specified
-          const imageSrc =
-            panel.image ||
+          const darkSrc =
+            panel.imageDark ||
             (idx === 0
-              ? '/landing/hero/editor-preview.png'
+              ? '/landing/hero/editor-preview-dark.png'
               : idx === 1
-              ? '/landing/features/preview-spread.png'
+              ? '/landing/features/preview-spread-dark.png'
               : idx === 2
-              ? '/landing/hero/cover-preview.png'
-              : '/landing/features/exports-suite.png');
+              ? '/landing/hero/cover-preview-dark.png'
+              : '/landing/features/exports-suite-dark.png');
+
+          const lightSrc =
+            panel.imageLight ||
+            (idx === 0
+              ? '/landing/hero/editor-preview-light.png'
+              : idx === 1
+              ? '/landing/features/preview-spread-light.png'
+              : idx === 2
+              ? '/landing/hero/cover-preview-light.png'
+              : '/landing/features/exports-suite-light.png');
 
           return (
             <article
@@ -71,15 +80,26 @@ export function LandingProductShowcase({
               className="group flex flex-col justify-between overflow-hidden rounded-[28px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-6 transition-all duration-300 hover:border-[var(--border-strong)] hover:bg-[var(--surface-elevated)] hover:shadow-lg"
             >
               <div>
-                {/* Visual Thumbnail */}
+                {/* Visual Thumbnail with Theme Parity */}
                 <div className="relative mb-5 aspect-[16/9] w-full overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--background)] shadow-inner">
-                  <Image
-                    src={imageSrc}
-                    alt={panel.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
-                    className="object-cover object-top transition duration-300 group-hover:scale-[1.03]"
-                  />
+                  <div className="theme-dark-only relative h-full w-full">
+                    <Image
+                      src={darkSrc}
+                      alt={`${panel.title} (modo oscuro)`}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
+                      className="object-cover object-top transition duration-300 group-hover:scale-[1.03]"
+                    />
+                  </div>
+                  <div className="theme-light-only relative h-full w-full">
+                    <Image
+                      src={lightSrc}
+                      alt={`${panel.title} (modo claro)`}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
+                      className="object-cover object-top transition duration-300 group-hover:scale-[1.03]"
+                    />
+                  </div>
                   {panel.accent ? (
                     <div className="absolute left-3 top-3 rounded-full border border-[var(--border-subtle)] bg-[var(--background)]/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--accent-text)] backdrop-blur-md">
                       {panel.accent}

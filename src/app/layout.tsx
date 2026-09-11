@@ -49,7 +49,7 @@ export default async function RootLayout({
       lang={preferences.locale}
       data-locale={preferences.locale}
       data-theme={preferences.theme}
-      className={`${dmSans.variable} ${jetbrainsMono.variable}`}
+      className={`${preferences.theme === 'dark' ? 'dark' : 'light'} ${dmSans.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
       <body

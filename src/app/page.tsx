@@ -73,6 +73,8 @@ export default async function HomePage() {
               description: p.description,
               accent: p.tag,
               image: p.image,
+              imageDark: p.imageDark,
+              imageLight: p.imageLight,
               bullets: p.features,
             }))}
           />

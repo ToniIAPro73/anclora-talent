@@ -1987,11 +1987,11 @@ export function AdvancedRichTextEditor({
                 page-break-inside: avoid;
               }
               .multipage-page-frame {
-                background: #111C28;
+                background: var(--surface, #111C28);
                 min-height: ${pageHeight}px;
-                box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+                box-shadow: var(--shadow-lg, 0 20px 50px rgba(0,0,0,0.15));
                 border-radius: 2px;
-                border: 1px solid rgba(255,255,255,0.05);
+                border: 1px solid var(--border-subtle, rgba(255,255,255,0.05));
               }
               .multipage-page-inner {
                 height: 100%;
