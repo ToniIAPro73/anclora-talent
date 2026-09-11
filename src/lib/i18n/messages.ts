@@ -2,7 +2,12 @@ import type { UiLocale } from '@/lib/ui-preferences/preferences';
 import type { ProductTemplateCopyKey } from '@/lib/templates/product-templates';
 import type {
   MarketingBenefit,
+  MarketingBentoPillar,
+  MarketingFaqItem,
+  MarketingNav,
+  MarketingShowcaseItem,
   MarketingShowcasePanel,
+  MarketingUseCase,
   MarketingWorkflowStep,
 } from '@/components/marketing/marketing-data';
 
@@ -131,6 +136,9 @@ export type AppMessages = {
     eyebrow: string;
     headline: string;
     subheadline: string;
+    heroTrust: string;
+    heroSecondaryCta: string;
+    nav: MarketingNav;
     proofEyebrow: string;
     workflowEyebrow: string;
     workflowTitle: string;
@@ -140,11 +148,39 @@ export type AppMessages = {
     productEyebrow: string;
     productTitle: string;
     productDescription: string;
+    bentoEyebrow: string;
+    bentoTitle: string;
+    bentoDescription: string;
+    bentoPillars: readonly MarketingBentoPillar[];
+    showcaseEyebrow: string;
+    showcaseTitle: string;
+    showcaseDescription: string;
+    showcaseItems: readonly MarketingShowcaseItem[];
+    useCasesEyebrow: string;
+    useCasesTitle: string;
+    useCasesDescription: string;
+    useCases: readonly MarketingUseCase[];
+    pricingEyebrow: string;
+    pricingTitle: string;
+    pricingDescription: string;
+    pricingPlanName: string;
+    pricingPrice: string;
+    pricingCadence: string;
+    pricingFeaturesTitle: string;
+    pricingCta: string;
+    pricingFootnote: string;
+    pricingFeatures: readonly string[];
+    faqEyebrow: string;
+    faqTitle: string;
+    faqDescription: string;
+    faqItems: readonly MarketingFaqItem[];
     benefitsEyebrow: string;
     benefitsTitle: string;
     finalEyebrow: string;
     finalTitle: string;
     finalNote: string;
+    finalCtaButton: string;
+    finalCtaSecondary: string;
     proofItems: readonly string[];
     workflowSteps: readonly MarketingWorkflowStep[];
     showcasePanels: readonly MarketingShowcasePanel[];
@@ -989,75 +1025,286 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       eyebrow: 'Anclora Talent',
       headline: 'Convierte talento en una presencia editorial lista para publicar.',
       subheadline:
-        'Crea tu cuenta, lanza tu proyecto y trabaja sobre un flujo claro de documento, preview y portada desde una misma plataforma.',
-      proofEyebrow: 'Confianza',
-      workflowEyebrow: 'Flujo',
-      workflowTitle: 'Tres pasos para empezar sin fricción',
+        'Crea tu cuenta, compone tu manuscrito y trabaja sobre un flujo unificado de documento, previsualización en doble pliego y diseño de portadas.',
+      heroTrust: '100% tus derechos · Sin tarjeta de crédito · Exportación en PDF, EPUB y DOCX',
+      heroSecondaryCta: 'Explorar estudio',
+      nav: {
+        features: 'Características',
+        studio: 'Estudio',
+        showcase: 'Vitrina',
+        useCases: 'Audiencias',
+        pricing: 'Acceso',
+        faq: 'Preguntas',
+        signIn: 'Iniciar sesión',
+        signUp: 'Crear cuenta',
+        dashboard: 'Ir al dashboard',
+        toggleTheme: 'Cambiar tema',
+        toggleLocale: 'Cambiar idioma',
+        openMenu: 'Abrir menú',
+        closeMenu: 'Cerrar menú',
+      },
+      proofEyebrow: 'Estándares Editoriales',
+      workflowEyebrow: 'Flujo de Trabajo',
+      workflowTitle: 'Tres pasos para llevar tu libro a la imprenta',
       workflowDescription:
-        'La landing debe reducir la distancia entre la promesa y la acción. Aquí el usuario entiende el recorrido antes de registrarse.',
+        'Un proceso secuencial diseñado para que autores y editores mantengan el foco en la palabra y el acabado gráfico sin distracciones.',
       workflowAdvance: 'Avanzar',
       workflowStepLabel: 'Paso',
-      productEyebrow: 'Producto',
-      productTitle: 'Una plataforma donde documento, preview y portada dejan de competir entre sí.',
+      productEyebrow: 'Estudio Integral',
+      productTitle: 'Una plataforma donde documento, maqueta y portada conviven en perfecta armonía.',
       productDescription:
-        'El usuario no necesita interpretar capas técnicas. Necesita ver cómo encajan documento, preview y portada en una sola experiencia.',
-      benefitsEyebrow: 'Beneficios',
-      benefitsTitle: 'Lo que el usuario gana en cada visita',
-      finalEyebrow: 'Siguiente paso',
-      finalTitle: 'Abre tu cuenta y empieza con una base que ya parece producto.',
+        'Una experiencia integrada donde la tipografía, la estructura de capítulos y el diseño de cubiertas se sincronizan en tiempo real.',
+      bentoEyebrow: 'Capacidades de la Plataforma',
+      bentoTitle: 'Herramientas de precisión para la edición contemporánea',
+      bentoDescription:
+        'Desde el primer borrador hasta el archivo listo para imprenta o e-reader, cada módulo responde a las exigencias del oficio editorial.',
+      bentoPillars: [
+        {
+          title: 'Taller de Composición Tipográfica',
+          description:
+            'Control preciso de jerarquías de texto, familias tipográficas seleccionadas para lectura y ajuste de márgenes editoriales.',
+          tag: 'Tipografía & Ritmo',
+          image: '/landing/hero/editor-preview.png',
+          features: [
+            'Estructura limpia por capítulos',
+            'Ajuste de fuentes y sangrías',
+            'Foliado y márgenes automáticos',
+          ],
+        },
+        {
+          title: 'Visor de Doble Pliego Real',
+          description:
+            'Inspecciona la caída de página, el blanco de los márgenes y el ritmo visual tal como se apreciará en el libro impreso y en dispositivos digitales.',
+          tag: 'Previsualización Fiel',
+          image: '/landing/features/preview-spread.png',
+          features: [
+            'Modo pliego abierto enfrentado',
+            'Vistas adaptativas para móvil y tableta',
+            'Inspección fiel a imprenta',
+          ],
+        },
+        {
+          title: 'Estudio de Portadas y Lomo',
+          description:
+            'Lienzo milimétrico para componer portadas, contraportadas y solapas con resolución nítida y proporciones equilibradas.',
+          tag: 'Arte & Cubiertas',
+          image: '/landing/hero/cover-preview.png',
+          features: [
+            'Lienzo interactivo de alta resolución',
+            'Diseño de frontal y contraportada',
+            'Exportación directa multiformato',
+          ],
+        },
+        {
+          title: 'Suite de Exportación Canónica',
+          description:
+            'Genera archivos limpios listos para imprenta en PDF de alta resolución, libros electrónicos en EPUB estándar, Word DOCX y HTML sin artefactos.',
+          tag: 'Multiformato Directo',
+          image: '/landing/features/exports-suite.png',
+          features: [
+            'PDF para imprenta con marcas',
+            'EPUB 3 validado para tiendas digitales',
+            'DOCX y HTML limpios',
+          ],
+        },
+      ],
+      showcaseEyebrow: 'Vitrina de Producción',
+      showcaseTitle: 'Obras concebidas con rigor y distinción',
+      showcaseDescription:
+        'Ejemplos de maquetación y composición logrados íntegramente con las herramientas de Anclora Talent.',
+      showcaseItems: [
+        {
+          category: 'Narrativa & Ficción',
+          title: 'La Sombra del Farallón',
+          author: 'M. Gómez',
+          tagline: 'Novela histórica maquetada en Garamond clásico con ritmo pausado.',
+          specs: '284 páginas · Doble pliego · PDF & EPUB',
+        },
+        {
+          category: 'Ensayo & Divulgación',
+          title: 'Cartografía del Pensamiento',
+          author: 'Dr. A. Valdés',
+          tagline: 'Estructura ensayística con citas marginales y notas al pie impecables.',
+          specs: '340 páginas · Formato académico · PDF & DOCX',
+        },
+        {
+          category: 'Poesía & Arte',
+          title: 'Voces en el Silencio',
+          author: 'Elena Rosales',
+          tagline: 'Versos con blancos generosos y equilibrio visual en cada estrofa.',
+          specs: '128 páginas · Cubierta artística · EPUB & PDF',
+        },
+      ],
+      useCasesEyebrow: 'Para Quién es Anclora Talent',
+      useCasesTitle: 'Diseñado para quienes respetan el valor de la palabra impresa',
+      useCasesDescription:
+        'Sea cual sea la escala de tu proyecto editorial, cuentas con la infraestructura adecuada.',
+      useCases: [
+        {
+          title: 'Autores Independientes',
+          role: 'Publicación Autónoma',
+          description:
+            'Toma el control absoluto de tu obra sin ceder derechos ni depender de costosos servicios de maquetación externa.',
+          points: [
+            'Autonomía creativa total',
+            'Exportación directa a imprentas y tiendas',
+            'Sin comisiones sobre tus ventas',
+          ],
+        },
+        {
+          title: 'Editoriales Independientes',
+          role: 'Sellos & Talleres',
+          description:
+            'Optimiza la producción de tu catálogo con estándares rigurosos de diseño y tiempos de entrega reducidos.',
+          points: [
+            'Flujo de trabajo estructurado por capítulos',
+            'Plantillas coherentes para colecciones',
+            'Exportaciones estandarizadas',
+          ],
+        },
+        {
+          title: 'Equipos Corporativos y Docentes',
+          role: 'Publicación Técnica',
+          description:
+            'Convierte informes extensos, manuales o memorias anuales en documentos editoriales de distinción.',
+          points: [
+            'Documentos de alto impacto visual',
+            'Exportación lista para distribución interna o pública',
+            'Importación directa de manuscritos Word',
+          ],
+        },
+      ],
+      pricingEyebrow: 'Acceso Transparente',
+      pricingTitle: 'Comienza a publicar hoy mismo',
+      pricingDescription:
+        'Acceso completo a las herramientas esenciales de composición y exportación durante la fase de lanzamiento.',
+      pricingPlanName: 'Plan Creador',
+      pricingPrice: 'Gratis',
+      pricingCadence: 'durante la fase actual',
+      pricingFeaturesTitle: 'Todo lo que necesitas para tu libro:',
+      pricingCta: 'Crear cuenta gratuita',
+      pricingFootnote:
+        'Sin tarjeta de crédito. Sin permanencia. Conservas el 100% de tus derechos de autor.',
+      pricingFeatures: [
+        'Proyectos editoriales ilimitados',
+        'Exportación a PDF, EPUB, DOCX y HTML',
+        'Estudio de diseño de portada y contraportada',
+        'Previsualización interactiva en doble pliego',
+        'Importación de manuscritos DOCX y PDF',
+        'Tus contenidos son 100% tuyos sin marcas de agua',
+      ],
+      faqEyebrow: 'Preguntas Frecuentes',
+      faqTitle: 'Todo lo que necesitas saber antes de empezar',
+      faqDescription:
+        'Respuestas claras sobre propiedad, formatos, importación y el flujo de trabajo en Anclora Talent.',
+      faqItems: [
+        {
+          question: '¿Conservo los derechos de autor de mis obras?',
+          answer:
+            'Absolutamente sí. En Anclora Talent no retenemos derechos de autor, derechos comerciales ni regalías sobre tus textos o diseños. Todo lo que creas te pertenece íntegramente.',
+        },
+        {
+          question: '¿En qué formatos puedo exportar mis libros?',
+          answer:
+            'Puedes exportar en PDF de alta resolución preparado para imprenta, EPUB 3 estándar para lectores electrónicos (Kindle, Kobo, Apple Books), Microsoft Word DOCX y HTML limpio sin estilos redundantes.',
+        },
+        {
+          question: '¿Puedo importar manuscritos que ya he escrito en Word?',
+          answer:
+            'Sí. Anclora Talent permite importar archivos DOCX y PDF con reconocimiento inteligente de capítulos, manteniendo la estructura limpia y lista para componer.',
+        },
+        {
+          question: '¿Cómo funciona el diseño de portadas?',
+          answer:
+            'Dispones de un estudio gráfico integrado con lienzo milimétrico para diseñar frontal y contraportada, añadir tipografía y componer imágenes directamente sin software externo.',
+        },
+        {
+          question: '¿Tiene algún coste el registro o las exportaciones?',
+          answer:
+            'Durante la fase actual, el registro en el Plan Creador es completamente gratuito, no requiere tarjeta de crédito e incluye exportaciones completas sin marcas de agua.',
+        },
+      ],
+      benefitsEyebrow: 'Distinción Editorial',
+      benefitsTitle: 'Lo que distingue a una obra creada en Anclora Talent',
+      finalEyebrow: 'Comienza tu Libro',
+      finalTitle: 'Lleva tu manuscrito al estándar editorial que merece.',
       finalNote:
         'Empieza con una cuenta propia, crea tu primer proyecto y trabaja con una base que ya transmite claridad, consistencia y salida real.',
+      finalCtaButton: 'Crear cuenta gratis',
+      finalCtaSecondary: 'Iniciar sesión',
       proofItems: [
-        'Proyectos persistentes desde el primer día',
-        'Documento, preview y portada en un mismo flujo',
-        'Acceso autenticado y listo para producción',
+        'Exportación profesional a PDF, EPUB, DOCX y HTML sin dependencias',
+        'Maquetación tipográfica avanzada con previsualización en doble pliego',
+        'Estudio visual de portada y contraportada con canvas milimétrico',
+        'Control absoluto del autor: tus manuscritos son 100% de tu propiedad',
       ],
       workflowSteps: [
         {
-          title: 'Crea tu cuenta',
-          description: 'Entra en segundos y deja listo tu espacio de trabajo.',
+          title: '1. Escribe o importa tu manuscrito',
+          description:
+            'Comienza desde cero o importa tus archivos Word DOCX o PDF con detección inteligente de capítulos y formato limpio.',
         },
         {
-          title: 'Lanza tu proyecto',
-          description: 'Parte de un documento canónico y una estructura clara.',
+          title: '2. Compón y afina la tipografía',
+          description:
+            'Ajusta jerarquías, fuentes, márgenes e interlineado con previsualización fidedigna en doble pliego de libro.',
         },
         {
-          title: 'Edita y publica',
-          description: 'Convierte borradores en una presencia editorial coherente.',
+          title: '3. Diseña cubiertas y exporta',
+          description:
+            'Crea la portada y contraportada sobre el canvas visual y genera archivos finales listos para imprenta o distribución digital.',
         },
       ],
       showcasePanels: [
         {
-          title: 'Documento canónico',
-          description: 'Una sola fuente de verdad para el contenido editorial.',
-          accent: 'Estructura',
-          bullets: ['Títulos consistentes', 'Bloques editables', 'Base reutilizable'],
+          title: 'Taller de Edición y Composición',
+          description:
+            'Editor tipográfico centrado en el ritmo de lectura con soporte para capítulos, foliado y márgenes nobles.',
+          accent: 'Tipografía',
+          bullets: [
+            'Estructura limpia por capítulos',
+            'Ajuste milimétrico de márgenes',
+            'Control de fuentes y sangrías',
+          ],
         },
         {
-          title: 'Preview conectado',
-          description: 'La lectura visual refleja lo que realmente vas a publicar.',
-          accent: 'Claridad',
-          bullets: ['Vista inmediata', 'Edición coherente', 'Menos fricción'],
+          title: 'Visor de Pliego y Lectura',
+          description:
+            'Simula la experiencia física del libro con vista de doble página y adaptación a tabletas, móviles y e-readers.',
+          accent: 'Previsualización',
+          bullets: [
+            'Modo de doble pliego abierto',
+            'Inspección fiel a la página impresa',
+            'Transición inmediata sin recargas',
+          ],
         },
         {
-          title: 'Portada persistente',
-          description: 'Imágenes y assets preparados para un uso repetido.',
-          accent: 'Acabado',
-          bullets: ['Cover guardada', 'Assets en Blob', 'Reuso sin pérdida'],
+          title: 'Estudio Visual de Portadas',
+          description:
+            'Diseña portadas y contraportadas impactantes con canvas interactivo, cálculo de lomo y tratamiento gráfico preciso.',
+          accent: 'Cubiertas',
+          bullets: [
+            'Lienzo de alta resolución',
+            'Diseño de frontal y contraportada',
+            'Exportación directa multiformato',
+          ],
         },
       ],
       benefits: [
         {
-          title: 'Más claridad',
-          description: 'Cada proyecto sigue una estructura que se entiende rápido.',
+          title: 'Pureza tipográfica',
+          description:
+            'Tipografías seleccionadas para una legibilidad superior, con jerarquías y proporciones calibradas por defecto.',
         },
         {
-          title: 'Más velocidad',
-          description: 'Menos decisiones redundantes para pasar de idea a publicación.',
+          title: 'Agilidad de publicación',
+          description:
+            'Pasa de borrador a archivo final en horas en lugar de semanas, sin pelear con estilos huérfanos o saltos de página rotos.',
         },
         {
-          title: 'Más consistencia',
-          description: 'Documento, portada y preview trabajan sobre el mismo relato.',
+          title: 'Soberanía del contenido',
+          description:
+            'Tus datos no quedan atrapados en formatos propietarios. Exporta en cualquier momento a Word, PDF, EPUB o HTML.',
         },
       ],
     },
@@ -1968,75 +2215,286 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       eyebrow: 'Anclora Talent',
       headline: 'Turn talent into an editorial presence ready to publish.',
       subheadline:
-        'Create your account, launch your project, and work across document, preview, and cover from a single platform.',
-      proofEyebrow: 'Confidence',
-      workflowEyebrow: 'Flow',
-      workflowTitle: 'Three steps to start without friction',
+        'Create your account, compose your manuscript, and work across a unified flow of document, double-page spread preview, and cover design.',
+      heroTrust: '100% your copyright · No credit card required · PDF, EPUB & DOCX exports',
+      heroSecondaryCta: 'Explore studio',
+      nav: {
+        features: 'Features',
+        studio: 'Studio',
+        showcase: 'Showcase',
+        useCases: 'Audiences',
+        pricing: 'Access',
+        faq: 'FAQ',
+        signIn: 'Sign in',
+        signUp: 'Create account',
+        dashboard: 'Go to dashboard',
+        toggleTheme: 'Toggle theme',
+        toggleLocale: 'Change language',
+        openMenu: 'Open menu',
+        closeMenu: 'Close menu',
+      },
+      proofEyebrow: 'Editorial Standards',
+      workflowEyebrow: 'Workflow',
+      workflowTitle: 'Three steps to bring your book to print',
       workflowDescription:
-        'The landing should reduce the distance between promise and action. Here the user understands the journey before signing up.',
+        'A sequential process designed so authors and publishers maintain focus on the word and visual finish without distractions.',
       workflowAdvance: 'Continue',
       workflowStepLabel: 'Step',
-      productEyebrow: 'Product',
-      productTitle: 'A platform where document, preview, and cover stop competing with each other.',
+      productEyebrow: 'Integrated Studio',
+      productTitle: 'A platform where document, spread, and cover live in perfect harmony.',
       productDescription:
-        'The user should not need to interpret technical layers. They need to see how document, preview, and cover fit into one experience.',
-      benefitsEyebrow: 'Benefits',
-      benefitsTitle: 'What the user gains on every visit',
-      finalEyebrow: 'Next step',
-      finalTitle: 'Open your account and start from a base that already looks like product.',
+        'An integrated experience where typography, chapter structure, and cover design stay synchronized in real time.',
+      bentoEyebrow: 'Platform Capabilities',
+      bentoTitle: 'Precision tools for contemporary book publishing',
+      bentoDescription:
+        'From initial draft to print-ready files or e-readers, every module answers the demands of the editorial craft.',
+      bentoPillars: [
+        {
+          title: 'Typographic Composition Studio',
+          description:
+            'Precise control of text hierarchies, curated reading typefaces, and calibrated editorial margins.',
+          tag: 'Typography & Rhythm',
+          image: '/landing/hero/editor-preview.png',
+          features: [
+            'Clean chapter structure',
+            'Font and indent adjustments',
+            'Automatic folios and margins',
+          ],
+        },
+        {
+          title: 'Real Double-Page Spread Viewer',
+          description:
+            'Inspect page balance, margin proportions, and visual pacing exactly as it appears in print and across digital devices.',
+          tag: 'Authentic Preview',
+          image: '/landing/features/preview-spread.png',
+          features: [
+            'Facing double-spread view',
+            'Adaptive mobile and tablet views',
+            'Print-accurate inspection',
+          ],
+        },
+        {
+          title: 'Cover & Spine Studio',
+          description:
+            'Precision canvas to compose covers, back covers, and flaps with crisp resolution and balanced proportions.',
+          tag: 'Art & Covers',
+          image: '/landing/hero/cover-preview.png',
+          features: [
+            'High-resolution interactive canvas',
+            'Front and back cover design',
+            'Direct multi-format export',
+          ],
+        },
+        {
+          title: 'Canonical Export Suite',
+          description:
+            'Generate clean print-ready high-resolution PDFs, standard EPUB e-books, Word DOCX, and HTML without artifacts.',
+          tag: 'Direct Multi-format',
+          image: '/landing/features/exports-suite.png',
+          features: [
+            'Print-ready PDF with crop marks',
+            'EPUB 3 validated for digital stores',
+            'Clean DOCX and HTML',
+          ],
+        },
+      ],
+      showcaseEyebrow: 'Production Showcase',
+      showcaseTitle: 'Works conceived with rigor and distinction',
+      showcaseDescription:
+        'Examples of typography and book design achieved entirely with Anclora Talent tools.',
+      showcaseItems: [
+        {
+          category: 'Fiction & Narrative',
+          title: 'The Cliff Shadow',
+          author: 'M. Gomez',
+          tagline: 'Historical novel typeset in classic Garamond with relaxed pacing.',
+          specs: '284 pages · Double spread · PDF & EPUB',
+        },
+        {
+          category: 'Essays & Non-Fiction',
+          title: 'Cartography of Thought',
+          author: 'Dr. A. Valdes',
+          tagline: 'Essay structure with marginal callouts and crisp footnotes.',
+          specs: '340 pages · Academic layout · PDF & DOCX',
+        },
+        {
+          category: 'Poetry & Art',
+          title: 'Voices in Silence',
+          author: 'Elena Rosales',
+          tagline: 'Verses with generous white space and visual balance in every stanza.',
+          specs: '128 pages · Art cover · EPUB & PDF',
+        },
+      ],
+      useCasesEyebrow: 'Who Anclora Talent is For',
+      useCasesTitle: 'Designed for those who respect the value of the printed word',
+      useCasesDescription:
+        'Whatever the scale of your publishing project, you have the right infrastructure.',
+      useCases: [
+        {
+          title: 'Independent Authors',
+          role: 'Self-Publishing',
+          description:
+            'Take complete control of your work without forfeiting rights or relying on costly external typesetting services.',
+          points: [
+            'Total creative autonomy',
+            'Direct export to printers and stores',
+            'Zero royalties or commission fees',
+          ],
+        },
+        {
+          title: 'Independent Publishers',
+          role: 'Presses & Boutiques',
+          description:
+            'Streamline catalog production with rigorous design standards and reduced turnaround times.',
+          points: [
+            'Structured chapter workflow',
+            'Consistent series templates',
+            'Standardized exports',
+          ],
+        },
+        {
+          title: 'Corporate & Academic Teams',
+          role: 'Technical Publishing',
+          description:
+            'Transform extensive reports, handbooks, or white papers into distinguished editorial documents.',
+          points: [
+            'High visual impact documents',
+            'Export ready for internal or public distribution',
+            'Direct Word manuscript import',
+          ],
+        },
+      ],
+      pricingEyebrow: 'Transparent Access',
+      pricingTitle: 'Start publishing today',
+      pricingDescription:
+        'Full access to essential typesetting and export tools during the current release phase.',
+      pricingPlanName: 'Creator Plan',
+      pricingPrice: 'Free',
+      pricingCadence: 'during current phase',
+      pricingFeaturesTitle: 'Everything you need for your book:',
+      pricingCta: 'Create free account',
+      pricingFootnote:
+        'No credit card required. No lock-in. You retain 100% of your copyright.',
+      pricingFeatures: [
+        'Unlimited editorial projects',
+        'Export to PDF, EPUB, DOCX, and HTML',
+        'Cover and back-cover design studio',
+        'Interactive double-page spread preview',
+        'DOCX and PDF manuscript import',
+        'Your content remains 100% yours with no watermarks',
+      ],
+      faqEyebrow: 'Frequently Asked Questions',
+      faqTitle: 'Everything you need to know before starting',
+      faqDescription:
+        'Clear answers regarding ownership, formats, importing, and the Anclora Talent workflow.',
+      faqItems: [
+        {
+          question: 'Do I retain full copyright of my work?',
+          answer:
+            'Absolutely yes. Anclora Talent claims no copyrights, commercial rights, or royalties over your writing or designs. Everything you produce remains 100% yours.',
+        },
+        {
+          question: 'What formats can I export my books into?',
+          answer:
+            'You can export into high-resolution print-ready PDF, standard EPUB 3 for e-readers (Kindle, Kobo, Apple Books), Microsoft Word DOCX, and clean HTML without redundant styles.',
+        },
+        {
+          question: 'Can I import manuscripts already written in Word?',
+          answer:
+            'Yes. Anclora Talent allows importing DOCX and PDF documents with smart chapter detection, keeping your text clean and ready for typesetting.',
+        },
+        {
+          question: 'How does the cover design studio work?',
+          answer:
+            'You get an integrated design canvas with millimeter precision to compose front and back covers, position typography, and arrange artwork without needing third-party software.',
+        },
+        {
+          question: 'Is there any cost to register or export files?',
+          answer:
+            'During the current phase, registering for the Creator Plan is completely free, requires no credit card, and includes full exports with zero watermarks.',
+        },
+      ],
+      benefitsEyebrow: 'Editorial Distinction',
+      benefitsTitle: 'What sets a work created in Anclora Talent apart',
+      finalEyebrow: 'Begin Your Book',
+      finalTitle: 'Elevate your manuscript to the editorial standard it deserves.',
       finalNote:
         'Start with your own account, create your first project, and work from a base that already communicates clarity, consistency, and real output.',
+      finalCtaButton: 'Create free account',
+      finalCtaSecondary: 'Sign in',
       proofItems: [
-        'Persistent projects from day one',
-        'Document, preview, and cover in one flow',
-        'Authenticated access ready for production',
+        'Professional export to PDF, EPUB, DOCX, and HTML with zero dependencies',
+        'Advanced typographic typesetting with double-page spread preview',
+        'Visual cover and back-cover studio with precision canvas',
+        'Complete author ownership: your manuscripts remain 100% yours',
       ],
       workflowSteps: [
         {
-          title: 'Create your account',
-          description: 'Enter in seconds and prepare your workspace.',
+          title: '1. Write or import your manuscript',
+          description:
+            'Start from scratch or import your Word DOCX or PDF files with smart chapter detection and clean formatting.',
         },
         {
-          title: 'Launch your project',
-          description: 'Start from a canonical document and a clear structure.',
+          title: '2. Compose and refine typography',
+          description:
+            'Adjust hierarchies, fonts, margins, and line spacing with authentic book double-page spread preview.',
         },
         {
-          title: 'Edit and publish',
-          description: 'Turn drafts into a coherent editorial presence.',
+          title: '3. Design covers and export',
+          description:
+            'Create front and back covers on the visual canvas and generate finished files ready for print or digital distribution.',
         },
       ],
       showcasePanels: [
         {
-          title: 'Canonical document',
-          description: 'A single source of truth for editorial content.',
-          accent: 'Structure',
-          bullets: ['Consistent titles', 'Editable blocks', 'Reusable base'],
+          title: 'Editing and Typesetting Workshop',
+          description:
+            'Typographic editor focused on reading rhythm with support for chapters, folios, and generous margins.',
+          accent: 'Typography',
+          bullets: [
+            'Clean chapter structure',
+            'Millimeter margin adjustment',
+            'Font and indent controls',
+          ],
         },
         {
-          title: 'Connected preview',
-          description: 'Visual reading reflects what you will actually publish.',
-          accent: 'Clarity',
-          bullets: ['Immediate view', 'Consistent editing', 'Less friction'],
+          title: 'Spread and Reading Viewer',
+          description:
+            'Simulate the physical book experience with double-page spread view and adaptation to tablets, phones, and e-readers.',
+          accent: 'Preview',
+          bullets: [
+            'Open double-spread mode',
+            'Print-accurate inspection',
+            'Immediate transition without reload',
+          ],
         },
         {
-          title: 'Persistent cover',
-          description: 'Images and assets prepared for repeated use.',
-          accent: 'Finish',
-          bullets: ['Saved cover', 'Assets in Blob', 'Lossless reuse'],
+          title: 'Visual Cover Studio',
+          description:
+            'Design impactful front and back covers with interactive canvas, spine calculations, and precise artwork treatment.',
+          accent: 'Covers',
+          bullets: [
+            'High-resolution canvas',
+            'Front and back cover design',
+            'Direct multi-format export',
+          ],
         },
       ],
       benefits: [
         {
-          title: 'More clarity',
-          description: 'Every project follows a structure that is quickly understood.',
+          title: 'Typographic purity',
+          description:
+            'Curated typefaces for superior readability, with calibrated hierarchies and proportions by default.',
         },
         {
-          title: 'More speed',
-          description: 'Fewer redundant decisions to move from idea to publication.',
+          title: 'Publishing speed',
+          description:
+            'Move from draft to finished file in hours rather than weeks, without fighting orphaned styles or broken page breaks.',
         },
         {
-          title: 'More consistency',
-          description: 'Document, cover, and preview work from the same narrative.',
+          title: 'Content sovereignty',
+          description:
+            'Your data is never trapped in proprietary formats. Export anytime to Word, PDF, EPUB, or HTML.',
         },
       ],
     },

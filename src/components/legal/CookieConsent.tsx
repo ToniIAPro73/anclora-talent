@@ -51,28 +51,80 @@ export function CookieConsent() {
 
   return (
     <>
-      <button type="button" aria-label={en ? 'Cookie preferences' : 'Preferencias de cookies'} onClick={() => { setOpen(true); setSettings(true); }} className="fixed bottom-5 left-5 z-50 inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--accent)]/40 bg-[var(--surface-overlay)] text-[var(--accent-text)] shadow-2xl backdrop-blur">
+      {/* Floating trigger button: hidden on mobile to avoid overlap (accessible via footer) */}
+      <button
+        type="button"
+        aria-label={en ? 'Cookie preferences' : 'Preferencias de cookies'}
+        onClick={() => { setOpen(true); setSettings(true); }}
+        className="fixed bottom-5 left-5 z-40 hidden md:inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--accent)]/40 bg-[var(--surface-overlay)] text-[var(--accent-text)] shadow-2xl backdrop-blur transition hover:scale-105"
+      >
         <Cookie className="h-5 w-5" aria-hidden="true" />
       </button>
+
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 px-4 py-6 backdrop-blur-sm sm:items-center" role="dialog" aria-modal="true" aria-labelledby="talent-cookie-title">
-          <div className="w-full max-w-lg rounded-3xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-6 text-[var(--text-primary)] shadow-2xl">
-            <h2 id="talent-cookie-title" className="text-2xl font-semibold">{settings ? (en ? 'Manage cookies' : 'Gestionar cookies') : (en ? 'Cookie preferences' : 'Preferencias de cookies')}</h2>
-            <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">{en ? 'Necessary cookies support session, security and preferences. Optional analytics or marketing remain disabled unless accepted.' : 'Las cookies necesarias soportan sesión, seguridad y preferencias. Las opcionales de análisis o marketing permanecen desactivadas salvo consentimiento.'}</p>
-            {settings ? (
+        settings ? (
+          /* Full settings modal when explicitly requested */
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="talent-cookie-title">
+            <div className="w-full max-w-lg rounded-3xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] p-6 text-[var(--text-primary)] shadow-2xl">
+              <h2 id="talent-cookie-title" className="text-2xl font-semibold">{en ? 'Manage cookies' : 'Gestionar cookies'}</h2>
+              <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">{en ? 'Necessary cookies support session, security and preferences. Optional analytics or marketing remain disabled unless accepted.' : 'Las cookies necesarias soportan sesión, seguridad y preferencias. Las opcionales de análisis o marketing permanecen desactivadas salvo consentimiento.'}</p>
               <div className="mt-5 space-y-3">
                 <CookieRow title={en ? 'Necessary cookies' : 'Cookies necesarias'} description={en ? 'Session, security and app operation. They cannot be disabled.' : 'Sesión, seguridad y operación. No se pueden desactivar.'} checked disabled onChange={() => {}} />
                 <CookieRow title={en ? 'Analytics cookies' : 'Cookies de análisis'} description={en ? 'Help improve product stability and usage.' : 'Ayudan a mejorar estabilidad y uso del producto.'} checked={preferences.analytics} onChange={(analytics) => setPreferences((current) => ({ ...current, analytics }))} />
                 <CookieRow title={en ? 'Marketing cookies' : 'Cookies de marketing'} description={en ? 'Reserved for relevant communications. They do not enable scripts that are not present.' : 'Reservadas para comunicaciones relevantes. No activan scripts inexistentes.'} checked={preferences.marketing} onChange={(marketing) => setPreferences((current) => ({ ...current, marketing }))} />
               </div>
-            ) : null}
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-              {!settings ? <button type="button" onClick={() => persist({ ...defaults, analytics: true, marketing: true })} className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-black">{en ? 'Accept all' : 'Aceptar todas'}</button> : null}
-              <button type="button" onClick={() => settings ? persist(preferences) : setSettings(true)} className="rounded-full border border-[var(--border-subtle)] px-5 py-3 text-sm font-semibold">{settings ? (en ? 'Save preferences' : 'Guardar preferencias') : (en ? 'Settings' : 'Configuración')}</button>
-              <button type="button" onClick={() => persist(defaults)} className="rounded-full px-5 py-3 text-sm font-semibold text-[var(--text-secondary)]">{en ? 'Reject optional' : 'Rechazar opcionales'}</button>
+              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button type="button" onClick={() => persist(defaults)} className="rounded-full px-5 py-2.5 text-sm font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)]">{en ? 'Reject optional' : 'Rechazar opcionales'}</button>
+                <button type="button" onClick={() => persist(preferences)} className="rounded-full border border-[var(--border-subtle)] bg-[var(--surface-panel)] px-5 py-2.5 text-sm font-semibold text-[var(--text-primary)] hover:border-[var(--accent)]">{en ? 'Save preferences' : 'Guardar preferencias'}</button>
+                <button type="button" onClick={() => persist({ ...defaults, analytics: true, marketing: true })} className="rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-black hover:opacity-90">{en ? 'Accept all' : 'Aceptar todas'}</button>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          /* Non-blocking, elegant bottom banner on first arrival */
+          <div className="fixed bottom-4 inset-x-4 z-40 mx-auto max-w-4xl" role="region" aria-label={en ? 'Cookie notice' : 'Aviso de cookies'}>
+            <div className="flex flex-col gap-4 rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] p-5 text-[var(--text-primary)] shadow-[var(--shadow-strong)] backdrop-blur-md md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 hidden rounded-full bg-[var(--accent-soft)] p-2 text-[var(--accent-text)] sm:block">
+                  <Cookie className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">
+                    {en ? 'Cookie preferences' : 'Preferencias de cookies'}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)] max-w-xl">
+                    {en
+                      ? 'Necessary cookies support session and security. Optional analytics remain disabled unless you choose to accept them.'
+                      : 'Utilizamos cookies necesarias para la seguridad y preferencias de sesión. Las cookies opcionales de análisis permanecen desactivadas salvo tu consentimiento.'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => persist(defaults)}
+                  className="rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]"
+                >
+                  {en ? 'Reject optional' : 'Rechazar opcionales'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSettings(true)}
+                  className="rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-2 text-xs font-semibold text-[var(--text-primary)] transition hover:border-[var(--accent)]"
+                >
+                  {en ? 'Settings' : 'Configuración'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => persist({ ...defaults, analytics: true, marketing: true })}
+                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-bold text-black shadow-sm transition hover:opacity-90"
+                >
+                  {en ? 'Accept all' : 'Aceptar todas'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
       ) : null}
     </>
   );

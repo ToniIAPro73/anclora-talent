@@ -1,5 +1,6 @@
+import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Sparkles, BookOpen } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import type { MarketingCta } from './marketing-helpers';
 import { premiumPrimaryMintButton } from '@/components/ui/button-styles';
@@ -10,6 +11,7 @@ type LandingHeroProps = {
   subheadline: string;
   primaryCta: MarketingCta;
   secondaryCta: MarketingCta | null;
+  trustText?: string;
 };
 
 export function LandingHero({
@@ -18,33 +20,67 @@ export function LandingHero({
   subheadline,
   primaryCta,
   secondaryCta,
+  trustText = '100% tus derechos · Sin tarjeta de crédito · Exportación en PDF, EPUB y DOCX',
 }: LandingHeroProps) {
   return (
-    <section className="relative overflow-hidden rounded-[40px] border border-[var(--border-subtle)] bg-[var(--shell-main-surface)] px-6 py-8 text-[var(--text-primary)] shadow-[var(--shadow-strong)] sm:px-8 lg:px-10 lg:py-10">
-      <div className="pointer-events-none absolute -right-16 top-8 h-56 w-56 rounded-full bg-[var(--accent-glow)] blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-[var(--accent-glow-soft)] blur-3xl" />
+    <section className="relative overflow-hidden rounded-[36px] border border-[var(--border-subtle)] bg-[var(--shell-main-surface)] px-5 py-8 text-[var(--text-primary)] shadow-[var(--shadow-strong)] sm:px-8 sm:py-12 lg:px-12 lg:py-16">
+      {/* Editorial Canvas Background Art */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        {/* Dark Theme: Renaissance Book Proportion Grid & Warm Copper Lighting */}
+        <div className="hidden dark:block absolute inset-0">
+          <Image
+            src="/landing/backgrounds/hero-dark-editorial.jpg"
+            alt=""
+            fill
+            priority
+            sizes="(max-width: 1280px) 100vw, 1280px"
+            className="object-cover object-right opacity-35 mix-blend-screen"
+          />
+        </div>
 
-      <div className="relative grid gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
+        {/* Light Theme: Fine Art Cotton Paper & Deckle Edge */}
+        <div className="block dark:hidden absolute inset-0">
+          <Image
+            src="/landing/backgrounds/hero-light-paper.jpg"
+            alt=""
+            fill
+            priority
+            sizes="(max-width: 1280px) 100vw, 1280px"
+            className="object-cover object-center opacity-40 mix-blend-multiply"
+          />
+        </div>
+
+        {/* Soft Ambient Radiance */}
+        <div className="absolute -right-16 -top-16 h-72 w-72 rounded-full bg-[var(--accent-glow)] blur-3xl opacity-60" />
+        <div className="absolute -bottom-24 left-1/4 h-80 w-80 rounded-full bg-[var(--accent-glow-soft)] blur-3xl opacity-40" />
+      </div>
+
+      <div className="relative grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-12">
+        {/* Left Column: Copy & Actions */}
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.26em] text-[var(--text-secondary)]">
-            <BrandLogo size={16} priority />
-            {eyebrow}
+          {/* Eyebrow badge */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)] backdrop-blur-sm">
+            <BrandLogo size={14} priority />
+            <span>{eyebrow}</span>
           </div>
 
-          <h1 className="mt-6 max-w-4xl text-5xl font-black tracking-tight text-[var(--text-primary)] sm:text-6xl lg:text-7xl">
+          {/* Editorial H1 */}
+          <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-[var(--text-primary)] sm:text-5xl lg:text-6xl font-editorial leading-[1.1]">
             {headline}
           </h1>
 
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--text-secondary)] sm:text-xl">
+          {/* Subheadline */}
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-[var(--text-secondary)] sm:text-lg">
             {subheadline}
           </p>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+          {/* CTAs */}
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link
               href={primaryCta.href}
               className={`${premiumPrimaryMintButton} focus-visible:ring-offset-[var(--background)]`}
             >
-              {primaryCta.label}
+              <span>{primaryCta.label}</span>
               <ArrowRight className="h-4 w-4" />
             </Link>
             {secondaryCta ? (
@@ -57,58 +93,83 @@ export function LandingHero({
             ) : null}
           </div>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-4">
-              <p className="text-xs uppercase tracking-[0.24em] text-[var(--text-tertiary)]">01</p>
-              <p className="mt-2 text-sm font-semibold">Registro inmediato</p>
+          {/* Micro-trust line */}
+          <div className="mt-4 flex items-center gap-2 text-xs font-medium text-[var(--text-tertiary)]">
+            <ShieldCheck className="h-3.5 w-3.5 text-[var(--accent-text)] flex-shrink-0" />
+            <span>{trustText}</span>
+          </div>
+
+          {/* Three Value Badges */}
+          <div className="mt-8 grid grid-cols-3 gap-2.5 sm:gap-4 border-t border-[var(--border-subtle)] pt-6">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-tertiary)]">01</span>
+              <span className="mt-1 text-xs font-semibold text-[var(--text-primary)]">Sin tarjeta</span>
+              <span className="text-[11px] text-[var(--text-tertiary)]">Plan creador libre</span>
             </div>
-            <div className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-4">
-              <p className="text-xs uppercase tracking-[0.24em] text-[var(--text-tertiary)]">02</p>
-              <p className="mt-2 text-sm font-semibold">Flujo editorial claro</p>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-tertiary)]">02</span>
+              <span className="mt-1 text-xs font-semibold text-[var(--text-primary)]">Multiformato</span>
+              <span className="text-[11px] text-[var(--text-tertiary)]">PDF · EPUB · Word</span>
             </div>
-            <div className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-4">
-              <p className="text-xs uppercase tracking-[0.24em] text-[var(--text-tertiary)]">03</p>
-              <p className="mt-2 text-sm font-semibold">Resultado publicable</p>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-tertiary)]">03</span>
+              <span className="mt-1 text-xs font-semibold text-[var(--text-primary)]">100% tuyo</span>
+              <span className="text-[11px] text-[var(--text-tertiary)]">Derechos íntegros</span>
             </div>
           </div>
         </div>
 
-        <div className="relative">
-          <div className="absolute inset-x-12 top-0 h-24 rounded-full bg-[var(--accent-glow)] blur-2xl" />
-          <div className="relative rounded-[34px] border border-[var(--border-subtle)] bg-[color:var(--panel-on-canvas)] p-5 shadow-[var(--shadow-strong)] backdrop-blur">
-            <div className="rounded-[28px] bg-[var(--surface-elevated)] p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--accent-text)]">Anclora Talent</p>
-                  <p className="mt-2 text-2xl font-black tracking-tight">Sistema editorial premium</p>
-                </div>
-                <div className="rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                  Ready
-                </div>
+        {/* Right Column: Layered UI Composition */}
+        <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
+          {/* Main frame: Editor Preview */}
+          <div className="overflow-hidden rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] shadow-2xl transition-transform duration-300 hover:scale-[1.01]">
+            {/* Window Chrome Header */}
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-2.5">
+              <div className="flex items-center gap-1.5">
+                <div className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
+                <div className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
+                <div className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
               </div>
+              <div className="flex items-center gap-2 text-[11px] font-medium text-[var(--text-tertiary)]">
+                <BookOpen className="h-3 w-3 text-[var(--accent-text)]" />
+                <span>anclora-talent // editor</span>
+              </div>
+              <div className="text-[10px] uppercase font-mono tracking-wider text-[var(--accent-text)] font-semibold">
+                Doble pliego
+              </div>
+            </div>
 
-              <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-[24px] bg-[var(--surface-soft)] p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-tertiary)]">Documento</p>
-                  <p className="mt-3 text-sm font-semibold text-[var(--text-primary)]">Un origen de verdad</p>
-                </div>
-                <div className="rounded-[24px] bg-[var(--surface-soft)] p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-tertiary)]">Preview</p>
-                  <p className="mt-3 text-sm font-semibold text-[var(--text-primary)]">Lectura en contexto</p>
-                </div>
-                <div className="rounded-[24px] bg-[var(--surface-soft)] p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-tertiary)]">Portada</p>
-                  <p className="mt-3 text-sm font-semibold text-[var(--text-primary)]">Assets listos para publicar</p>
-                </div>
-              </div>
+            {/* Real Screenshot Embed */}
+            <div className="relative aspect-[16/10] w-full bg-[var(--background)]">
+              <Image
+                src="/landing/hero/editor-preview.png"
+                alt="Vista previa del editor tipográfico y maquetación en Anclora Talent"
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+                className="object-cover object-top"
+              />
+            </div>
+          </div>
 
-              <div className="mt-6 rounded-[28px] border border-[var(--border-strong)] bg-[linear-gradient(135deg,_rgba(212,175,55,0.18),_rgba(18,74,80,0.28))] p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--accent-text)]">Flujo recomendado</p>
-                <p className="mt-3 text-lg font-semibold leading-8 text-[var(--text-primary)]">
-                  Crea tu cuenta, inicia un proyecto y trabaja con una estructura visual que no te obliga a recomponer todo
-                  cada vez.
-                </p>
+          {/* Floating Inset Badge: Cover Canvas preview */}
+          <div className="absolute -bottom-5 -left-4 sm:-bottom-6 sm:-left-6 hidden sm:flex items-center gap-3.5 rounded-xl border border-[var(--border-strong)] bg-[var(--surface-overlay)] p-3 shadow-xl backdrop-blur-md">
+            <div className="relative h-14 w-10 overflow-hidden rounded border border-[var(--border-subtle)] shadow-sm flex-shrink-0">
+              <Image
+                src="/landing/hero/cover-preview.png"
+                alt="Estudio visual de cubiertas"
+                fill
+                sizes="40px"
+                className="object-cover"
+              />
+            </div>
+            <div className="pr-2">
+              <div className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--accent-text)]">
+                <Sparkles className="h-3 w-3" />
+                <span>Estudio de cubierta</span>
               </div>
+              <p className="text-xs font-semibold text-[var(--text-primary)]">Lienzo milimétrico</p>
+              <p className="text-[11px] text-[var(--text-tertiary)]">Frontal · Lomo · Reverso</p>
             </div>
           </div>
         </div>

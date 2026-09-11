@@ -59,6 +59,10 @@
 
 :root,
 html[data-theme="dark"] {
+  /* ── Typography (contractual DM Sans + Cormorant Garamond display) ── */
+  --font-sans: var(--font-dm-sans), system-ui, -apple-system, sans-serif;
+  --font-editorial: 'Cormorant Garamond', Georgia, serif;
+
   /* ── Surfaces ── */
   --background: #0b313f;
   --surface: #111C28;
@@ -363,8 +367,12 @@ body {
 body {
   background: var(--app-gradient);
   color: var(--foreground);
-  font-family: var(--font-sans);
+  font-family: var(--font-dm-sans), system-ui, -apple-system, sans-serif;
   text-rendering: optimizeLegibility;
+}
+
+.font-editorial {
+  font-family: var(--font-editorial);
 }
 
 .talent-button--dark {
