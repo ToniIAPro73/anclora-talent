@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, ShieldCheck, Sparkles, BookOpen } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import type { MarketingCta } from './marketing-helpers';
 import { premiumPrimaryMintButton } from '@/components/ui/button-styles';
@@ -11,6 +11,7 @@ type LandingHeroProps = {
   subheadline: string;
   primaryCta: MarketingCta;
   secondaryCta: MarketingCta | null;
+  exploreProductLabel?: string;
   trustText?: string;
 };
 
@@ -20,13 +21,14 @@ export function LandingHero({
   subheadline,
   primaryCta,
   secondaryCta,
-  trustText = '100% tus derechos · Sin tarjeta de crédito · Exportación en PDF, EPUB y DOCX',
+  exploreProductLabel,
+  trustText = '100% tus derechos · Sin tarjeta · Exportación en PDF, EPUB y Word',
 }: LandingHeroProps) {
   return (
     <section className="relative overflow-hidden rounded-[36px] border border-[var(--border-subtle)] bg-[var(--shell-main-surface)] px-5 py-8 text-[var(--text-primary)] shadow-[var(--shadow-strong)] sm:px-8 sm:py-12 lg:px-12 lg:py-16">
       {/* Editorial Canvas Background Art */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-        {/* Dark Theme: Renaissance Book Proportion Grid & Warm Copper Lighting */}
+        {/* Dark Theme: Renaissance Book Proportion Grid & Warm Lighting */}
         <div className="theme-dark-only absolute inset-0">
           <Image
             src="/landing/backgrounds/hero-dark-editorial.jpg"
@@ -38,7 +40,7 @@ export function LandingHero({
           />
         </div>
 
-        {/* Light Theme: Fine Art Cotton Paper & Deckle Edge */}
+        {/* Light Theme: Fine Art Cotton Paper */}
         <div className="theme-light-only absolute inset-0">
           <Image
             src="/landing/backgrounds/hero-light-paper.jpg"
@@ -91,55 +93,28 @@ export function LandingHero({
                 {secondaryCta.label}
               </Link>
             ) : null}
+            {exploreProductLabel ? (
+              <a
+                href="#producto"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+              >
+                <span>{exploreProductLabel}</span>
+                <span aria-hidden="true">↓</span>
+              </a>
+            ) : null}
           </div>
 
           {/* Micro-trust line */}
-          <div className="mt-4 flex items-center gap-2 text-xs font-medium text-[var(--text-tertiary)]">
+          <div className="mt-5 flex items-center gap-2 text-xs font-medium text-[var(--text-tertiary)]">
             <ShieldCheck className="h-3.5 w-3.5 text-[var(--accent-text)] flex-shrink-0" />
             <span>{trustText}</span>
           </div>
-
-          {/* Three Value Badges */}
-          <div className="mt-8 grid grid-cols-3 gap-2.5 sm:gap-4 border-t border-[var(--border-subtle)] pt-6">
-            <div className="flex flex-col">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-tertiary)]">01</span>
-              <span className="mt-1 text-xs font-semibold text-[var(--text-primary)]">Sin tarjeta</span>
-              <span className="text-[11px] text-[var(--text-tertiary)]">Plan creador libre</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-tertiary)]">02</span>
-              <span className="mt-1 text-xs font-semibold text-[var(--text-primary)]">Multiformato</span>
-              <span className="text-[11px] text-[var(--text-tertiary)]">PDF · EPUB · Word</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-tertiary)]">03</span>
-              <span className="mt-1 text-xs font-semibold text-[var(--text-primary)]">100% tuyo</span>
-              <span className="text-[11px] text-[var(--text-tertiary)]">Derechos íntegros</span>
-            </div>
-          </div>
         </div>
 
-        {/* Right Column: Layered UI Composition */}
+        {/* Right Column: Real Application Preview */}
         <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
-          {/* Main frame: Editor Preview */}
-          <div className="overflow-hidden rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] shadow-2xl transition-transform duration-300 hover:scale-[1.01]">
-            {/* Window Chrome Header */}
-            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-2.5">
-              <div className="flex items-center gap-1.5">
-                <div className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
-                <div className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
-                <div className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
-              </div>
-              <div className="flex items-center gap-2 text-[11px] font-medium text-[var(--text-tertiary)]">
-                <BookOpen className="h-3 w-3 text-[var(--accent-text)]" />
-                <span>anclora-talent // editor</span>
-              </div>
-              <div className="text-[10px] uppercase font-mono tracking-wider text-[var(--accent-text)] font-semibold">
-                Doble pliego
-              </div>
-            </div>
-
-            {/* Real Screenshot Embed: Paired Dark and Light */}
+          {/* Main frame: Real Product Spread Screenshot without fake chrome */}
+          <div className="overflow-hidden rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] shadow-2xl transition-transform duration-300 hover:scale-[1.005]">
             <div className="relative aspect-[16/10] w-full bg-[var(--background)]">
               <div className="theme-dark-only relative h-full w-full">
                 <Image
@@ -164,7 +139,7 @@ export function LandingHero({
             </div>
           </div>
 
-          {/* Floating Inset Badge: Cover Canvas preview */}
+          {/* Floating Inset Badge: Real Cover Studio Preview */}
           <div className="absolute -bottom-5 -left-4 sm:-bottom-6 sm:-left-6 hidden sm:flex items-center gap-3.5 rounded-xl border border-[var(--border-strong)] bg-[var(--surface)]/95 p-3 shadow-xl backdrop-blur-md">
             <div className="relative h-14 w-10 overflow-hidden rounded border border-[var(--border-subtle)] shadow-sm flex-shrink-0">
               <div className="theme-dark-only relative h-full w-full">

@@ -33,9 +33,7 @@ export function LandingHeader({
   };
 
   const navLinks = [
-    { href: '#caracteristicas', label: nav.features },
-    { href: '#estudio', label: nav.studio },
-    { href: '#vitrina', label: nav.showcase },
+    { href: '#producto', label: nav.features },
     { href: '#audiencias', label: nav.useCases },
     { href: '#acceso', label: nav.pricing },
     { href: '#faq', label: nav.faq },

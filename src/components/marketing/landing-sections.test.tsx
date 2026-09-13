@@ -45,11 +45,19 @@ describe('New Landing Components', () => {
     expect(screen.getByText('Anclora Talent')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Características' })).toHaveAttribute(
       'href',
-      '#caracteristicas'
+      '#producto'
     );
-    expect(screen.getByRole('link', { name: 'Estudio' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Audiencias' })).toHaveAttribute(
       'href',
-      '#estudio'
+      '#audiencias'
+    );
+    expect(screen.getByRole('link', { name: 'Acceso' })).toHaveAttribute(
+      'href',
+      '#acceso'
+    );
+    expect(screen.getByRole('link', { name: 'Preguntas' })).toHaveAttribute(
+      'href',
+      '#faq'
     );
   });
 
