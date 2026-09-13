@@ -13,6 +13,9 @@ type LandingHeroProps = {
   secondaryCta: MarketingCta | null;
   exploreProductLabel?: string;
   trustText?: string;
+  coverLabel?: string;
+  editorLabel?: string;
+  spreadLabel?: string;
 };
 
 export function LandingHero({
@@ -23,6 +26,9 @@ export function LandingHero({
   secondaryCta,
   exploreProductLabel,
   trustText = '100% tus derechos · Sin tarjeta · Exportación en PDF, EPUB y Word',
+  coverLabel,
+  editorLabel,
+  spreadLabel,
 }: LandingHeroProps) {
   return (
     <section className="relative overflow-hidden rounded-[36px] border border-[var(--border-subtle)] bg-[var(--shell-main-surface)] px-5 py-8 text-[var(--text-primary)] shadow-[var(--shadow-strong)] sm:px-8 sm:py-12 lg:px-12 lg:py-16">
@@ -111,41 +117,68 @@ export function LandingHero({
           </div>
         </div>
 
-        {/* Right Column: Real Application Preview */}
-        <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
-          {/* Main frame: Real Product Spread Screenshot without fake chrome */}
-          <div className="overflow-hidden rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] shadow-2xl transition-transform duration-300 hover:scale-[1.005]">
+        {/* Right Column: Editorial Multi-view Collage */}
+        <div className="relative mx-auto w-full max-w-lg lg:max-w-none pt-4 sm:pt-6">
+          {/* Layer 1 (Offset Top-Left Background): Real Chapter Editor */}
+          <div className="absolute -top-3 -left-3 sm:-top-5 sm:-left-5 w-[85%] overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] shadow-md opacity-40 transition-opacity duration-300 hover:opacity-75 hidden sm:block">
+            <div className="absolute top-2.5 left-3 z-10 hidden sm:inline-flex items-center rounded-md bg-[var(--surface)]/85 px-2 py-0.5 text-[10px] font-semibold text-[var(--text-secondary)] backdrop-blur-sm">
+              <span>{editorLabel || 'Editor de capítulos'}</span>
+            </div>
             <div className="relative aspect-[16/10] w-full bg-[var(--background)]">
               <div className="theme-dark-only relative h-full w-full">
                 <Image
-                  src="/landing/features/preview-spread-dark.png"
-                  alt="Vista previa del visor de doble pliego en Anclora Talent (tema oscuro)"
+                  src="/landing/features/editor-preview-dark.png"
+                  alt=""
                   fill
-                  priority
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+                  sizes="(max-width: 1024px) 50vw, 500px"
                   className="object-cover object-top"
                 />
               </div>
               <div className="theme-light-only relative h-full w-full">
                 <Image
-                  src="/landing/features/preview-spread-light.png"
-                  alt="Vista previa del visor de doble pliego en Anclora Talent (tema claro)"
+                  src="/landing/features/editor-preview-light.png"
+                  alt=""
                   fill
-                  priority
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+                  sizes="(max-width: 1024px) 50vw, 500px"
                   className="object-cover object-top"
                 />
               </div>
             </div>
           </div>
 
-          {/* Floating Inset Badge: Real Cover Studio Preview */}
-          <div className="absolute -bottom-5 -left-4 sm:-bottom-6 sm:-left-6 hidden sm:flex items-center gap-3.5 rounded-xl border border-[var(--border-strong)] bg-[var(--surface)]/95 p-3 shadow-xl backdrop-blur-md">
-            <div className="relative h-14 w-10 overflow-hidden rounded border border-[var(--border-subtle)] shadow-sm flex-shrink-0">
+          {/* Layer 2 (Primary Centerpiece): Real Cover Studio */}
+          <div className="relative z-20 overflow-hidden rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] shadow-2xl transition-all duration-300 hover:scale-[1.008]">
+            <div className="relative aspect-[16/10] w-full bg-[var(--background)]">
               <div className="theme-dark-only relative h-full w-full">
                 <Image
-                  src="/landing/hero/cover-preview-dark.png"
-                  alt="Estudio visual de cubiertas (tema oscuro)"
+                  src="/landing/features/cover-studio-dark.png"
+                  alt="Estudio de diseño de cubierta en Anclora Talent (tema oscuro)"
+                  fill
+                  priority
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 650px"
+                  className="object-cover object-top"
+                />
+              </div>
+              <div className="theme-light-only relative h-full w-full">
+                <Image
+                  src="/landing/features/cover-studio-light.png"
+                  alt="Estudio de diseño de cubierta en Anclora Talent (tema claro)"
+                  fill
+                  priority
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 650px"
+                  className="object-cover object-top"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Layer 3 (Floating Inset Accent): Back Cover & Editorial Spine */}
+          <div className="absolute -bottom-5 -right-2 sm:-bottom-6 sm:-right-4 z-30 flex items-center gap-3 rounded-xl border border-[var(--border-strong)] bg-[var(--surface)]/95 p-2.5 sm:p-3 shadow-xl backdrop-blur-md transition hover:scale-105">
+            <div className="relative h-13 w-10 overflow-hidden rounded border border-[var(--border-subtle)] shadow-sm flex-shrink-0">
+              <div className="theme-dark-only relative h-full w-full">
+                <Image
+                  src="/landing/features/cover-studio-back-dark.png"
+                  alt=""
                   fill
                   sizes="40px"
                   className="object-cover"
@@ -153,21 +186,21 @@ export function LandingHero({
               </div>
               <div className="theme-light-only relative h-full w-full">
                 <Image
-                  src="/landing/hero/cover-preview-light.png"
-                  alt="Estudio visual de cubiertas (tema claro)"
+                  src="/landing/features/cover-studio-back-light.png"
+                  alt=""
                   fill
                   sizes="40px"
                   className="object-cover"
                 />
               </div>
             </div>
-            <div className="pr-2">
+            <div className="pr-1.5 sm:pr-2">
               <div className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--accent-text)]">
                 <Sparkles className="h-3 w-3" />
-                <span>Estudio de cubierta</span>
+                <span>{coverLabel || 'Estudio de cubierta'}</span>
               </div>
-              <p className="text-xs font-semibold text-[var(--text-primary)]">Lienzo milimétrico</p>
-              <p className="text-[11px] text-[var(--text-tertiary)]">Frontal · Lomo · Reverso</p>
+              <p className="text-xs font-semibold text-[var(--text-primary)] leading-tight">Atlas de la Memoria</p>
+              <p className="text-[11px] text-[var(--text-tertiary)]">{spreadLabel || 'Contraportada & pliego'}</p>
             </div>
           </div>
         </div>

@@ -3,23 +3,35 @@ import { expect, test } from '@playwright/test';
 /**
  * Landing page — public surface, no auth required.
  * Verifies simplified premium layout, real product showcase, theme switch,
- * locale toggle, mobile drawer, and zero horizontal scroll.
+ * strict locale toggle without false-positive regexes, dark/light image visibility,
+ * mobile drawer, and zero horizontal scroll.
  */
 test.describe('landing page', () => {
   test.beforeEach(async ({ page }) => {
+    // Start fresh on root landing page
+    await page.goto('/');
+    // Ensure standard dark theme and ES locale initially for test determinism
+    await page.evaluate(() => {
+      document.documentElement.dataset.theme = 'dark';
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+      document.documentElement.lang = 'es';
+      document.cookie = 'anclora-theme=dark; path=/; max-age=31536000; samesite=lax';
+      document.cookie = 'anclora-locale=es; path=/; max-age=31536000; samesite=lax';
+    });
     await page.goto('/');
   });
 
-  test('renders the brand headline and editorial proposition', async ({ page }) => {
+  test('renders the concrete outcome-driven H1 headline and brand proposition', async ({ page }) => {
     const h1 = page.locator('h1');
     await expect(h1).toBeVisible();
-    await expect(h1).toHaveText(/Convierte talento/i);
-    await expect(page.getByText(/Anclora Talent/i).first()).toBeVisible();
+    await expect(h1).toHaveText('Convierte tu manuscrito en un libro listo para publicar.');
+    await expect(page.getByText('Anclora Talent').first()).toBeVisible();
   });
 
   test('has primary and secondary call-to-action links', async ({ page }) => {
-    const signUpLink = page.locator('header a[href="/sign-up"]');
-    await expect(signUpLink).toBeVisible();
+    const headerSignUp = page.locator('header a[href="/sign-up"]');
+    await expect(headerSignUp).toBeVisible();
 
     const heroSignUp = page.locator('section a[href="/sign-up"]').first();
     await expect(heroSignUp).toBeVisible();
@@ -57,7 +69,7 @@ test.describe('landing page', () => {
     await expect(coverImg).toBeAttached();
 
     // Test front/back cover switcher in moment 3
-    const backCoverBtn = productSection.getByRole('button', { name: /Contraportada|Back Cover/i });
+    const backCoverBtn = productSection.getByRole('button', { name: 'Contraportada' });
     if (await backCoverBtn.isVisible()) {
       await backCoverBtn.click();
       const backCoverImg = productSection.locator('img[src*="cover-studio-back-dark.png"]').first();
@@ -65,28 +77,70 @@ test.describe('landing page', () => {
     }
   });
 
-  test('toggles theme between dark and light', async ({ page }) => {
-    const themeBtn = page.locator('header button[aria-label*="tema" i], header button[aria-label*="theme" i]').first();
+  test('strictly verifies theme switching and dark/light image visibility parity', async ({ page }) => {
+    const themeBtn = page.getByTestId('landing-theme-toggle');
     await expect(themeBtn).toBeVisible();
 
-    const initialTheme = await page.evaluate(() => document.documentElement.dataset.theme);
-    await themeBtn.click();
-    await page.waitForTimeout(300);
+    // 1. Initial DARK: verify .theme-dark-only images are visible, .theme-light-only hidden
+    const darkImages = page.locator('.theme-dark-only img');
+    const lightImages = page.locator('.theme-light-only img');
 
-    const toggledTheme = await page.evaluate(() => document.documentElement.dataset.theme);
-    expect(toggledTheme).not.toBe(initialTheme);
+    await expect(darkImages.first()).toBeVisible();
+    await expect(lightImages.first()).toBeHidden();
+
+    // 2. Toggle to LIGHT
+    await themeBtn.click();
+    await page.waitForTimeout(400);
+
+    const themeAfterToggle = await page.evaluate(() => document.documentElement.dataset.theme);
+    expect(themeAfterToggle).toBe('light');
+
+    // Verify .theme-light-only images are now visible, .theme-dark-only hidden
+    await expect(lightImages.first()).toBeVisible();
+    await expect(darkImages.first()).toBeHidden();
+
+    // 3. Toggle back to DARK
+    await themeBtn.click();
+    await page.waitForTimeout(400);
+
+    const themeFinal = await page.evaluate(() => document.documentElement.dataset.theme);
+    expect(themeFinal).toBe('dark');
+    await expect(darkImages.first()).toBeVisible();
+    await expect(lightImages.first()).toBeHidden();
   });
 
-  test('toggles locale between ES and EN', async ({ page }) => {
-    const localeBtn = page.locator('header button[aria-label*="idioma" i], header button[aria-label*="locale" i]').first();
+  test('strictly verifies bidirectional locale switching between ES and EN without false-positive regexes', async ({ page }) => {
+    const localeBtn = page.getByTestId('landing-locale-toggle');
     await expect(localeBtn).toBeVisible();
 
-    await localeBtn.click();
-    await page.waitForTimeout(500);
+    // 1. Initial State: Spanish (ES)
+    const h1 = page.locator('h1');
+    await expect(h1).toHaveText('Convierte tu manuscrito en un libro listo para publicar.');
+    await expect(page.locator('header nav a[href="#producto"]')).toHaveText('Características');
+    await expect(page.locator('header nav a[href="#audiencias"]')).toHaveText('Audiencias');
+    await expect(page.locator('header nav a[href="#acceso"]')).toHaveText('Acceso');
+    await expect(page.locator('header nav a[href="#faq"]')).toHaveText('Preguntas');
+    expect(await page.evaluate(() => document.documentElement.lang)).toBe('es');
 
-    // In EN, the nav anchor for product should say "Features" or "Product"
-    const enText = await page.locator('header nav a[href="#producto"]').innerText();
-    expect(enText).toMatch(/features|producto/i);
+    // 2. Switch to English (EN)
+    await localeBtn.click();
+    await page.waitForTimeout(600);
+
+    // Unequivocal English assertions: zero ambiguous regexes
+    await expect(h1).toHaveText('Turn your manuscript into a publication-ready book.');
+    await expect(page.locator('header nav a[href="#producto"]')).toHaveText('Features');
+    await expect(page.locator('header nav a[href="#audiencias"]')).toHaveText('Audiences');
+    await expect(page.locator('header nav a[href="#acceso"]')).toHaveText('Access');
+    await expect(page.locator('header nav a[href="#faq"]')).toHaveText('FAQ');
+    expect(await page.evaluate(() => document.documentElement.lang)).toBe('en');
+
+    // 3. Switch back to Spanish (ES)
+    await localeBtn.click();
+    await page.waitForTimeout(600);
+
+    await expect(h1).toHaveText('Convierte tu manuscrito en un libro listo para publicar.');
+    await expect(page.locator('header nav a[href="#producto"]')).toHaveText('Características');
+    expect(await page.evaluate(() => document.documentElement.lang)).toBe('es');
   });
 
   test('responsive mobile drawer and zero horizontal scroll on mobile', async ({ page }) => {
@@ -110,4 +164,3 @@ test.describe('landing page', () => {
     await expect(mobileDrawer.locator('a[href="#producto"]')).toBeVisible();
   });
 });
-

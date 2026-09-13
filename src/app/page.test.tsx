@@ -24,7 +24,7 @@ describe('HomePage', () => {
     render(await HomePage());
 
     const heroHeading = screen.getByRole('heading', {
-      name: 'Convierte talento en una presencia editorial lista para publicar.',
+      name: 'Convierte tu manuscrito en un libro listo para publicar.',
     });
     const heroSection = heroHeading.closest('section');
 
@@ -53,7 +53,7 @@ describe('HomePage', () => {
     render(await HomePage());
 
     const heroHeading = screen.getByRole('heading', {
-      name: 'Convierte talento en una presencia editorial lista para publicar.',
+      name: 'Convierte tu manuscrito en un libro listo para publicar.',
     });
     const heroScope = within(heroHeading.closest('section')!);
 

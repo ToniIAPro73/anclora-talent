@@ -1,6 +1,7 @@
 import { chromium } from '@playwright/test';
 import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 
 const BASE = process.env.BASE_URL || 'http://localhost:3000';
 const OUT_DIR = 'test-results/visual/marketing';
@@ -267,6 +268,31 @@ async function setupChapterContent(page, projectId) {
   }
 }
 
+async function getDomContentFingerprint(page) {
+  const content = await page.evaluate(() => {
+    return {
+      url: window.location.pathname,
+      scrollX: Math.round(window.scrollX),
+      scrollY: Math.round(window.scrollY),
+      headings: Array.from(
+        document.querySelectorAll('h1, h2, h3, [data-testid*="title"], [data-testid*="chapter"]')
+      )
+        .map((el) => el.textContent?.trim())
+        .filter(Boolean),
+      hasCanvasImg: Boolean(
+        document.querySelector(
+          '.ac-editor-canvas-stage img, [data-testid*="canvas"] img, .talent-preview-stage img'
+        )
+      ),
+      inputs: Array.from(document.querySelectorAll('input:not([type="hidden"]), textarea')).map(
+        (el) => (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement ? el.value : '')
+      ),
+    };
+  });
+
+  return crypto.createHash('sha256').update(JSON.stringify(content)).digest('hex');
+}
+
 async function capturePair(page, scenarioId, route, setupFn) {
   console.log(`\n=== Capturing Pair: ${scenarioId} ===`);
   if (setupFn) {
@@ -275,15 +301,25 @@ async function capturePair(page, scenarioId, route, setupFn) {
 
   // 1. Capture DARK
   await setTheme(page, 'dark');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(600);
+  const darkFingerprint = await getDomContentFingerprint(page);
 
   const darkOut = `${OUT_DIR}/${scenarioId}-dark.png`;
   await page.screenshot({ path: darkOut });
-  console.log(`Saved DARK: ${darkOut}`);
+  console.log(`Saved DARK: ${darkOut} (Fingerprint: ${darkFingerprint.slice(0, 10)})`);
 
   // 2. Capture LIGHT (EXACT SAME STATE, only theme toggle)
   await setTheme(page, 'light');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(600);
+  const lightFingerprint = await getDomContentFingerprint(page);
+
+  // 3. Strict Parity Verification: Fail if DOM content / route / inputs changed
+  if (darkFingerprint !== lightFingerprint) {
+    throw new Error(
+      `[PARITY MISMATCH] Scenario '${scenarioId}' state diverged between Dark (${darkFingerprint}) and Light (${lightFingerprint}). Dark/Light captures must be strictly identical in state.`
+    );
+  }
+  console.log(`[Parity Check PASSED] '${scenarioId}' state is 100% identical between dark & light.`);
 
   const lightOut = `${OUT_DIR}/${scenarioId}-light.png`;
   await page.screenshot({ path: lightOut });
@@ -293,6 +329,7 @@ async function capturePair(page, scenarioId, route, setupFn) {
     scenarioId,
     route,
     viewport: `${VIEWPORT.width}x${VIEWPORT.height}`,
+    fingerprint: darkFingerprint,
     dark: darkOut,
     light: lightOut,
     status: 'PARITY_VERIFIED',

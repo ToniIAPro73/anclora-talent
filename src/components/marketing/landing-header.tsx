@@ -72,6 +72,7 @@ export function LandingHeader({
           {/* Theme Toggle */}
           <button
             type="button"
+            data-testid="landing-theme-toggle"
             onClick={toggleTheme}
             aria-label={nav.toggleTheme}
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
@@ -82,6 +83,7 @@ export function LandingHeader({
           {/* Locale Toggle */}
           <button
             type="button"
+            data-testid="landing-locale-toggle"
             onClick={toggleLocale}
             aria-label={nav.toggleLocale}
             className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"

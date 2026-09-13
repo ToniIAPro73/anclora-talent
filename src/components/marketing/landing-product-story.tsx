@@ -29,6 +29,7 @@ type LandingProductStoryProps = {
   moments: readonly ProductMoment[];
   frontLabel?: string;
   backLabel?: string;
+  viewLabel?: string;
 };
 
 export function LandingProductStory({
@@ -39,6 +40,7 @@ export function LandingProductStory({
   moments,
   frontLabel = 'Portada',
   backLabel = 'Contraportada',
+  viewLabel = 'Vista:',
 }: LandingProductStoryProps) {
   const [coverView, setCoverView] = useState<'front' | 'back'>('front');
   const titleId = `${id}-title`;
@@ -111,7 +113,7 @@ export function LandingProductStory({
                 {moment.hasBackCoverToggle ? (
                   <div className="mt-6 flex items-center gap-2">
                     <span className="text-xs font-medium text-[var(--text-tertiary)] mr-1">
-                      Vista:
+                      {viewLabel}
                     </span>
                     <button
                       type="button"

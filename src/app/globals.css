@@ -1361,6 +1361,47 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
   border-color: var(--accent);
 }
 
+/* ── Light mode overrides for talent-preview modal ── */
+html[data-theme="light"] .talent-preview-overlay {
+  color-scheme: light;
+}
+
+html[data-theme="light"] .talent-preview-shell {
+  border-color: var(--border-default);
+  background: #ffffff;
+  box-shadow: 0 30px 120px rgba(12, 24, 32, 0.15);
+}
+
+html[data-theme="light"] .talent-preview-header {
+  background: rgba(242, 247, 252, 0.9);
+  border-bottom-color: var(--border-subtle);
+}
+
+html[data-theme="light"] .talent-preview-stage {
+  background: #F0F4F8;
+}
+
+html[data-theme="light"] .talent-preview-footer {
+  border-top-color: var(--border-subtle);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+html[data-theme="light"] .talent-preview-toolbar,
+html[data-theme="light"] .talent-preview-pagination {
+  border-color: var(--border-subtle);
+  background: rgba(12, 24, 32, 0.04);
+}
+
+html[data-theme="light"] .talent-preview-page-input {
+  background: #ffffff;
+  color: #0c1820;
+  border-color: var(--border-default);
+}
+
+html[data-theme="light"] .talent-preview-footer button svg {
+  color: #0c1820 !important;
+}
+
 a {
   color: inherit;
   text-decoration: none;

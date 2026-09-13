@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { LandingHeader } from './landing-header';
-import { LandingShowcase } from './landing-showcase';
 import { LandingUseCases } from './landing-use-cases';
 import { LandingPricing } from './landing-pricing';
 import { LandingFaq } from './landing-faq';
@@ -59,29 +58,6 @@ describe('New Landing Components', () => {
       'href',
       '#faq'
     );
-  });
-
-  it('renders LandingShowcase items correctly', () => {
-    render(
-      <LandingShowcase
-        eyebrow="Vitrina"
-        title="Obras creadas"
-        description="Selección de obras"
-        items={[
-          {
-            category: 'Ficción',
-            title: 'La Sombra del Farallón',
-            author: 'M. Gómez',
-            tagline: 'Novela histórica',
-            specs: '284 páginas',
-          },
-        ]}
-      />
-    );
-
-    const titleElements = screen.getAllByText('La Sombra del Farallón');
-    expect(titleElements.length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Por M. Gómez')).toBeInTheDocument();
   });
 
   it('renders LandingUseCases audience cards', () => {
