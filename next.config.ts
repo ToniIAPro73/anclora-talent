@@ -33,6 +33,15 @@ const nextConfig: NextConfig = {
     'playwright-core',
     '@playwright/test',
     'sharp',
+    // pdf-import-structural-recovery: pdf-parse's pdfjs-dist dependency
+    // resolves its worker script (pdf.worker.mjs) via a relative path next
+    // to the bundled pdf.mjs. Bundling it into a Turbopack/webpack chunk
+    // breaks that resolution ("Cannot find module
+    // '.next/server/chunks/pdf.worker.mjs'"), which made PDF import fail
+    // and silently degrade to the empty-shell/filename-fallback path in
+    // production — the real root cause behind the reported regression.
+    'pdf-parse',
+    'pdfjs-dist',
   ],
   experimental: {
     // App Router route handlers such as /api/projects/import receive source

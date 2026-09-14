@@ -320,28 +320,28 @@ describe.skipIf(!fixtureAvailable)(`preflight sobre fixture limpio ${FIXTURE_NAM
   );
 
   it(
-    'verdaderos positivos documentados: sin autor/ISBN el fixture solo emite esos gaps reales',
+    'verdaderos positivos documentados: sin ISBN/descripción el fixture solo emite esos gaps reales',
     async () => {
       const { document, composed } = await importFixture();
       const checks = preflight({ document, composed });
       const byRule = checks.map((c) => `${c.severity}:${c.rule}`).sort();
       // Exactly the real metadata gaps of the fixture — nothing else fires.
+      // The fixture's own copyright line ("© 2026 Antonio Ballesteros
+      // Alonso") is real author evidence — the pdf-import-structural-
+      // recovery fix (copyright-line author extraction, generalized to
+      // every source format, not just PDF) now recovers it, so the author
+      // is no longer a gap here.
       expect(byRule).toEqual([
         'error:ingram.metadata.isbn',
-        'error:kdp.metadata.author',
-        'error:kobo.metadata.author',
         'info:ingram.metadata.description',
         'info:kdp.metadata.isbn',
       ]);
-      // In particular: KDP/Kobo errors come ONLY from the missing author.
+      // In particular: no KDP/Kobo errors remain once the author is recovered.
       expect(
         checks.filter(
           (c) => c.severity === 'error' && (c.channel === 'kdp' || c.channel === 'kobo'),
         ),
-      ).toEqual([
-        expect.objectContaining({ rule: 'kdp.metadata.author' }),
-        expect.objectContaining({ rule: 'kobo.metadata.author' }),
-      ]);
+      ).toEqual([]);
     },
     60_000,
   );
