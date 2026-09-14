@@ -3,8 +3,23 @@ import type { ImportedDocumentSeed, ImportFieldConfidence } from './types';
 const SUPPORTED_IMPORT_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'txt', 'md']);
 const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote|table)[^>]*>[\s\S]*?<\/\1>/gi;
 const ALL_CAPS_RE = /^(?=.{40,})[^a-z]*[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ0-9 .,·:;()\-–—]+$/;
-const MAJOR_HEADING_RE = /^(?:cap[ií]tulo|chapter|introducci[oó]n|pr[oó]logo|prologo|[íi]ndice|indice|fase\s+\d+|parte\s+\d+|secci[oó]n|ep[ií]logo|cierre|despu[eé]s\s+de|recursos(?:\s+recomendados)?|anexos?)(?:\b|:)/i;
+const MAJOR_HEADING_RE = /^(?:cap[ií]tulo|chapter|introducci[oó]n|pr[oó]logo|prologo|[íi]ndice|indice|fase\s+\d+|parte\s+\d+|secci[oó]n|ep[ií]logo|cierre|despu[eé]s\s+de|recursos(?:\s+recomendados)?|anexos?|ap[eé]ndices?)(?:\b|:)/i;
 const MINOR_HEADING_RE = /^(?:d[ií]a\s+\d+|tema\s+\d+|idea\s+clave|reto\s+de\s+acci[oó]n|preguntas?\s+de\s+reflexi[oó]n|ejercicio|caso|las\s+cinco\s+claves|cierre\s+de\s+fase)(?:\b|:)/i;
+
+/**
+ * A heading marker line that carries ONLY a section keyword + number, no
+ * inline title text (e.g. "Capítulo 1", "Chapter 2", "Parte 3"). Distinct
+ * from `MAJOR_HEADING_RE`, which also matches when the title is inline
+ * ("Capítulo 3: El suelo financiero") — that case needs no lookahead.
+ * Matched against the tracked-heading-normalized line (see
+ * `normalizeTrackedHeading`).
+ */
+const CHAPTER_MARKER_RE = /^(?:cap[ií]tulo|chapter|parte|fase|secci[oó]n)\s*\d+[.:]?\s*$/i;
+
+/** A page folio in "— N —" form (any dash style), always safe to strip. */
+const STRICT_FOLIO_RE = /^[-–—―]\s*\d{1,4}\s*[-–—―]$/;
+/** A page folio that is just a bare number; only stripped at a page boundary. */
+const BARE_FOLIO_RE = /^\d{1,4}$/;
 
 /** M5 — manuscript type, used only to preset chapter-splitting granularity. */
 export type ManuscriptType = 'essay' | 'guide' | 'novel' | 'non-fiction';
@@ -28,12 +43,17 @@ export function detectManuscriptType(text: string): ManuscriptType {
   const dialogueLines = paragraphs.filter((p) => DIALOGUE_LINE_RE.test(p)).length;
   if (dialogueLines / paragraphs.length > 0.15) return 'novel';
 
+  // Density, not a raw count: a long non-fiction book easily accumulates a
+  // handful of incidental "ejercicio"/"reflexión" mentions without being
+  // structured as a step-by-step guide throughout (confirmed against a
+  // 122-page real-world regression case: 23 hits over 121 paragraphs, a
+  // ~19% ratio, is ordinary non-fiction vocabulary, not a guide).
   const imperativeHits = (text.match(IMPERATIVE_MARKER_RE) ?? []).length;
-  if (imperativeHits >= 3) return 'guide';
+  if (imperativeHits / paragraphs.length >= 0.3) return 'guide';
 
   const citationHits = (text.match(CITATION_MARKER_RE) ?? []).length;
   const avgParagraphLength = text.length / paragraphs.length;
-  if (citationHits >= 2 && avgParagraphLength > 400) return 'essay';
+  if (citationHits / paragraphs.length >= 0.15 && avgParagraphLength > 400) return 'essay';
 
   return 'non-fiction';
 }
@@ -227,9 +247,22 @@ function cleanHeadingText(input: string) {
   return stripMarkdownInline(
     input
       .replace(/^#{1,6}\s+/, '')
-      .replace(/^\d+(?:\.\d+)*[.)]?\s+/, '')
+      .replace(/^\d+(?:\.\d+)*[.)]\s+/, '')
       .trim()
   );
+}
+
+/**
+ * `cleanHeadingText` plus editorial title-casing for an ALL-CAPS result
+ * ("PRÓLOGO" -> "Prólogo") — used wherever a heading's text becomes the
+ * final, stored/displayed title. Kept separate from `cleanHeadingText`
+ * itself: several classification call sites test `ALL_CAPS_RE` against
+ * `cleanHeadingText`'s output, and pre-converting the case there would
+ * make that check always fail.
+ */
+function finalizeHeadingText(input: string): string {
+  const cleaned = cleanHeadingText(input);
+  return isAllCapsText(cleaned) ? toEditorialTitleCase(cleaned) : cleaned;
 }
 
 function getHeadingLevel(input: string) {
@@ -238,7 +271,12 @@ function getHeadingLevel(input: string) {
     return markdownMatch[1].length;
   }
 
-  const numericMatch = input.match(/^(\d+(?:\.\d+)*)[.)]?\s+/);
+  // Requires an explicit "." or ")" after the number(s) — a bare leading
+  // digit followed by whitespace ("15 o 25 años de carrera...") is
+  // ordinary prose, not a numbered heading marker, and must not be
+  // misread as one (PDF body text legitimately starts sentences with a
+  // figure).
+  const numericMatch = input.match(/^(\d+(?:\.\d+)*)[.)]\s+/);
   if (numericMatch) {
     return (numericMatch[1].match(/\./g)?.length ?? 0) + 1;
   }
@@ -263,9 +301,109 @@ function inferHeadingLevel(input: string) {
   return null;
 }
 
+/**
+ * Detection-only normalization for letter-tracked/justified headings
+ * (typographic convention in many editorial PDFs), e.g. "C A P Í T U L O 1"
+ * -> "CAPÍTULO 1". Never applied to stored body content — only to the
+ * candidate line used for heading classification. Conservative: requires
+ * at least 4 whitespace-separated tokens with >=70% of them exactly one
+ * character long, so ordinary prose with isolated short words ("y", "a",
+ * "I") is left untouched. Consecutive single-letter tokens collapse into
+ * one word; a numeral token stays separated by a space so the collapsed
+ * result still satisfies heading regexes that require a word boundary
+ * after the keyword (e.g. "CAPÍTULO 1", not "CAPÍTULO1").
+ */
+function normalizeTrackedHeading(input: string): string {
+  const trimmed = input.trim();
+  if (!trimmed) return trimmed;
+
+  const tokens = trimmed.split(/\s+/);
+  if (tokens.length < 4) return trimmed;
+
+  const singleCharTokens = tokens.filter((token) => [...token].length === 1);
+  if (singleCharTokens.length / tokens.length < 0.7) return trimmed;
+
+  const collapsed: string[] = [];
+  let letterRun = '';
+
+  for (const token of tokens) {
+    const isSingleLetter = [...token].length === 1 && /\p{L}/u.test(token);
+    if (isSingleLetter) {
+      letterRun += token;
+      continue;
+    }
+    if (letterRun) {
+      collapsed.push(letterRun);
+      letterRun = '';
+    }
+    collapsed.push(token);
+  }
+  if (letterRun) collapsed.push(letterRun);
+
+  return collapsed.join(' ');
+}
+
+/**
+ * A chapter-marker line ("Capítulo 1") carries no title of its own; the
+ * real title lives on the next physical line(s). This does a bounded,
+ * conservative lookahead: up to `maxLines` following non-blank lines, each
+ * short (<= `maxWordsPerLine` words) and not itself ending in terminal
+ * sentence punctuation, are merged into one title. The scan stops at the
+ * first line that looks like the start of a body paragraph (too long, or
+ * ends in `.`/`!`/`?`), at a blank line, or at another detected heading —
+ * so it never swallows the chapter's actual opening prose.
+ */
+function consumeHeadingContinuationLines(
+  lines: string[],
+  startIndex: number,
+  maxLines = 2,
+  maxWordsPerLine = 8,
+): { title: string; consumed: number } {
+  const collected: string[] = [];
+  let index = startIndex;
+
+  while (index < lines.length && collected.length < maxLines) {
+    const line = lines[index].trim();
+    if (!line || isDecorativeLine(line)) break;
+    if (getHeadingLevel(line) !== null) break;
+    if (isStrongStandaloneHeadingSignal(normalizeTrackedHeading(line))) break;
+
+    const words = line.split(/\s+/).filter(Boolean);
+    if (words.length > maxWordsPerLine || /[.!?]$/.test(line)) break;
+
+    collected.push(line);
+    index += 1;
+  }
+
+  return { title: collected.join(' ').trim(), consumed: index - startIndex };
+}
+
 function isTopLevelChapterHeading(input: string) {
   const level = inferHeadingLevel(input.trim());
   return level !== null && level <= 1;
+}
+
+/**
+ * `MAJOR_HEADING_RE.test` alone is not enough for its more generic-noun
+ * alternatives ("después de ...", "recursos ...", "cierre ...", "sección
+ * ..."): each is an ordinary Spanish word/phrase that can start any
+ * sentence, not just a section marker, so a body-text line-wrap that
+ * happens to start with one (e.g. "Un profesional de\nrecursos humanos que
+ * además domina el análisis de datos...") would otherwise be misread as a
+ * heading. Trusted only when short, the way a genuine "Recursos
+ * recomendados" or "Después de la Fase 1"-style marker is; the other,
+ * more distinctly structural alternatives (capítulo, chapter,
+ * introducción, prólogo, índice, epílogo, anexos, apéndice, fase N, parte
+ * N) are specific enough to trust outright.
+ */
+const AMBIGUOUS_MAJOR_HEADING_PREFIX_RE = /^(?:despu[eé]s\s+de|recursos|cierre|secci[oó]n)\b/i;
+
+function matchesMajorHeadingKeyword(trimmed: string): boolean {
+  if (!MAJOR_HEADING_RE.test(trimmed)) return false;
+  if (AMBIGUOUS_MAJOR_HEADING_PREFIX_RE.test(trimmed)) {
+    return trimmed.split(/\s+/).length <= 6;
+  }
+  return true;
 }
 
 function isLikelyStandaloneHeading(input: string) {
@@ -279,7 +417,7 @@ function isLikelyStandaloneHeading(input: string) {
     return false;
   }
 
-  if (MAJOR_HEADING_RE.test(trimmed) || MINOR_HEADING_RE.test(trimmed)) {
+  if (matchesMajorHeadingKeyword(trimmed) || MINOR_HEADING_RE.test(trimmed)) {
     return true;
   }
 
@@ -294,7 +432,14 @@ function isStrongStandaloneHeadingSignal(input: string) {
   const trimmed = cleanHeadingText(input);
   if (!trimmed) return false;
 
-  return MAJOR_HEADING_RE.test(trimmed) || MINOR_HEADING_RE.test(trimmed) || ALL_CAPS_RE.test(trimmed);
+  // A genuine standalone heading/marker line never contains an internal
+  // sentence break — guards against a PDF body-text line wrap that happens
+  // to start with a heading keyword (e.g. a mid-paragraph reference like
+  // "...revisa el\ncapítulo dos. Identifica tu perfil..." wrapping so
+  // "capítulo dos." starts its own physical line).
+  if (/[.!?]\s+\S/.test(trimmed)) return false;
+
+  return matchesMajorHeadingKeyword(trimmed) || MINOR_HEADING_RE.test(trimmed) || ALL_CAPS_RE.test(trimmed);
 }
 
 function isLikelyAuthorName(input: string) {
@@ -314,11 +459,25 @@ function isLikelyAuthorName(input: string) {
   return /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ'’-]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ'’-]+){1,4}$/u.test(trimmed);
 }
 
-function isLikelyIndexEntry(input: string) {
+/**
+ * `allowBareKeyword` gates the keyword-prefix branch (a bare
+ * "Introducción"/"Recursos"/"Fase 1"/... line with no colon or page
+ * number). It is safe to trust unconditionally for HTML/DOCX list items —
+ * they are already inside a `<ul>`/`<li>`, so the keyword genuinely is a
+ * TOC entry — but NOT for a freestanding physical line in a PDF/plain-text
+ * body, where the same bare word is exactly how a real "Introducción" or
+ * "Recursos" chapter heading looks. Callers in that context pass
+ * `allowBareKeyword: insideToc` so the keyword only counts as an index
+ * entry while genuinely inside a detected table of contents.
+ */
+function isLikelyIndexEntry(input: string, options: { allowBareKeyword?: boolean } = {}) {
   const trimmed = input.trim();
   if (!trimmed || trimmed.length > 120) return false;
 
-  if (/^(?:introducci[oó]n|d[ií]a\s+\d+|recursos|continuidad|fase\s+\d+|cierre)(?:\b|:)/i.test(trimmed)) {
+  if (
+    options.allowBareKeyword !== false &&
+    /^(?:introducci[oó]n|d[ií]a\s+\d+|recursos|continuidad|fase\s+\d+|cierre)(?:\b|:)/i.test(trimmed)
+  ) {
     return true;
   }
 
@@ -378,6 +537,13 @@ function parseTextBlocks(input: string, mode: TextImportMode = 'default'): Parse
   let paragraphLines: string[] = [];
   let listItems: string[] = [];
   let orderedList = false;
+  // True right after a detected "Índice"-family heading and until the next
+  // blank line (a page boundary, after page-aware extraction) or a real
+  // heading is found — while true, short non-terminal-punctuated lines are
+  // kept as index list items instead of being re-classified as standalone
+  // headings, so TOC lines like "Prólogo 6" / "Epílogo 110" never spawn
+  // duplicate chapter boundaries alongside the real body headings.
+  let insideToc = false;
 
   const flushParagraph = () => {
     if (paragraphLines.length === 0) return;
@@ -400,27 +566,31 @@ function parseTextBlocks(input: string, mode: TextImportMode = 'default'): Parse
 
     const explicitHeadingLevel = getHeadingLevel(paragraph);
     if (explicitHeadingLevel !== null) {
+      const explicitHeadingText = finalizeHeadingText(paragraph);
       blocks.push({
         kind: 'heading',
-        text: cleanHeadingText(paragraph),
-        html: `<h${Math.min(explicitHeadingLevel + 1, 3)}>${escapeHtml(cleanHeadingText(paragraph))}</h${Math.min(explicitHeadingLevel + 1, 3)}>`,
+        text: explicitHeadingText,
+        html: `<h${Math.min(explicitHeadingLevel + 1, 3)}>${escapeHtml(explicitHeadingText)}</h${Math.min(explicitHeadingLevel + 1, 3)}>`,
         level: explicitHeadingLevel,
         structural: true,
       });
         return;
       }
 
+      const detectionParagraph = mode === 'pdf' ? normalizeTrackedHeading(paragraph) : paragraph;
+
       if (
         sourceLines.length === 1 &&
         (mode === 'default'
-          ? isLikelyStandaloneHeading(paragraph)
-          : isStrongStandaloneHeadingSignal(paragraph))
+          ? isLikelyStandaloneHeading(detectionParagraph)
+          : isStrongStandaloneHeadingSignal(detectionParagraph))
       ) {
-        const level = inferHeadingLevel(paragraph) ?? 2;
+        const level = inferHeadingLevel(detectionParagraph) ?? 2;
+        const standaloneHeadingText = finalizeHeadingText(detectionParagraph);
         blocks.push({
           kind: 'heading',
-          text: cleanHeadingText(paragraph),
-        html: `<h${Math.min(level + 1, 3)}>${escapeHtml(cleanHeadingText(paragraph))}</h${Math.min(level + 1, 3)}>`,
+          text: standaloneHeadingText,
+        html: `<h${Math.min(level + 1, 3)}>${escapeHtml(standaloneHeadingText)}</h${Math.min(level + 1, 3)}>`,
         level,
         structural: getHeadingLevel(paragraph) !== null,
       });
@@ -443,20 +613,43 @@ function parseTextBlocks(input: string, mode: TextImportMode = 'default'): Parse
     orderedList = false;
   };
 
-  for (const rawLine of lines) {
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const rawLine = lines[lineIndex];
     const trimmed = rawLine.trim();
 
     if (!trimmed) {
       flushParagraph();
       flushList();
+      insideToc = false;
       continue;
     }
 
     const bulletMatch = trimmed.match(/^[-•*]\s+(.+)$/);
     const orderedMatch = trimmed.match(/^\d+[.)]\s+(.+)$/);
     const markdownLevel = getHeadingLevel(trimmed);
+    const looksLikeTocContinuation =
+      insideToc &&
+      markdownLevel === null &&
+      trimmed.length <= 120 &&
+      trimmed.split(/\s+/).length <= 14 &&
+      !/[.!?]$/.test(trimmed);
+    // A line that independently reads as a genuine heading (e.g. "Capítulo
+    // 3: El suelo financiero") must never be swallowed by the colon-based
+    // index-entry heuristic below just because it also has a colon —
+    // outside TOC context, a colon-titled heading wins.
+    const isPotentialHeadingLine =
+      !insideToc &&
+      mode === 'pdf' &&
+      isStrongStandaloneHeadingSignal(normalizeTrackedHeading(trimmed));
 
-    if (bulletMatch || orderedMatch || (markdownLevel === null && isLikelyIndexEntry(trimmed))) {
+    if (
+      bulletMatch ||
+      orderedMatch ||
+      looksLikeTocContinuation ||
+      (markdownLevel === null &&
+        !isPotentialHeadingLine &&
+        isLikelyIndexEntry(trimmed, { allowBareKeyword: mode === 'pdf' ? insideToc : true }))
+    ) {
       flushParagraph();
       const nextOrdered = Boolean(orderedMatch);
       if (listItems.length > 0 && orderedList !== nextOrdered) {
@@ -470,7 +663,7 @@ function parseTextBlocks(input: string, mode: TextImportMode = 'default'): Parse
     if (markdownLevel !== null) {
       flushParagraph();
       flushList();
-      const heading = cleanHeadingText(trimmed);
+      const heading = finalizeHeadingText(trimmed);
       blocks.push({
         kind: 'heading',
         text: heading,
@@ -481,15 +674,42 @@ function parseTextBlocks(input: string, mode: TextImportMode = 'default'): Parse
       continue;
     }
 
+    const detectionLine = mode === 'pdf' ? normalizeTrackedHeading(trimmed) : trimmed;
+
+    // A bare "Capítulo N" / "Chapter N" marker (no inline title) carries its
+    // real title on the following line(s) — e.g. a letter-tracked
+    // "C A P Í T U L O 1" followed by "No estás roto: estás atrapado\nen
+    // una estructura". Only fires in pdf mode; a marker WITH inline title
+    // ("Capítulo 3: El suelo financiero") is left to the check below.
+    if (mode === 'pdf' && CHAPTER_MARKER_RE.test(detectionLine)) {
+      const continuation = consumeHeadingContinuationLines(lines, lineIndex + 1);
+      if (continuation.title) {
+        flushParagraph();
+        flushList();
+        insideToc = false;
+        const heading = finalizeHeadingText(continuation.title);
+        blocks.push({
+          kind: 'heading',
+          text: heading,
+          html: `<h2>${escapeHtml(heading)}</h2>`,
+          level: 1,
+          structural: true,
+        });
+        lineIndex += continuation.consumed;
+        continue;
+      }
+    }
+
     if (
       mode === 'default'
         ? isLikelyStandaloneHeading(trimmed)
-        : isStrongStandaloneHeadingSignal(trimmed)
+        : isStrongStandaloneHeadingSignal(detectionLine)
     ) {
       flushParagraph();
       flushList();
-      const heading = cleanHeadingText(trimmed);
-      const level = inferHeadingLevel(trimmed) ?? 2;
+      const heading = finalizeHeadingText(detectionLine);
+      insideToc = isTocChapterTitle(heading);
+      const level = inferHeadingLevel(detectionLine) ?? 2;
       blocks.push({
         kind: 'heading',
         text: heading,
@@ -787,6 +1007,87 @@ function buildGeneratedIndexChapter(outline: OutlineEntry[]) {
   };
 }
 
+function isAllCapsLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  return /\p{Lu}/u.test(trimmed) && !/\p{Ll}/u.test(trimmed);
+}
+
+// Lowercase connector words kept lowercase in editorial title case — never
+// the first word of a title, which is always capitalized regardless.
+const MINOR_TITLE_WORDS_RE =
+  /^(?:de|del|la|las|el|los|en|y|e|o|u|a|con|sin|por|para|su|tu|mi|al|un|una|the|of|in|on|at|to|for|and|or|but|with|an)$/i;
+
+function capitalizeWord(word: string): string {
+  const match = word.match(/^(\P{L}*)(\p{L})(.*)$/u);
+  if (!match) return word;
+  const [, prefix, firstLetter, rest] = match;
+  return `${prefix}${firstLetter.toLocaleUpperCase('es')}${rest}`;
+}
+
+/**
+ * Converts an ALL-CAPS cover title/subtitle ("EL PLAN DE ESCAPE DE LA
+ * MEDIANA EDAD") into standard editorial title case ("El Plan de Escape de
+ * la Mediana Edad") — a typographic cover convention, not the document's
+ * real casing. Only ever applied to text already confirmed ALL-CAPS
+ * (`isAllCapsText`); ordinary mixed-case text is never touched.
+ */
+function toEditorialTitleCase(input: string): string {
+  const lower = input.toLocaleLowerCase('es');
+  return lower
+    .split(' ')
+    .map((token, index) => {
+      const bareWord = token.replace(/[^\p{L}]/gu, '');
+      if (index > 0 && MINOR_TITLE_WORDS_RE.test(bareWord)) return token;
+      return capitalizeWord(token);
+    })
+    .join(' ');
+}
+
+function isAllCapsText(input: string): boolean {
+  return /\p{Lu}/u.test(input) && !/\p{Ll}/u.test(input);
+}
+
+/**
+ * A single front-matter block that visually merges a multi-line ALL-CAPS
+ * cover title with a following mixed-case subtitle — no blank line
+ * separates them in the source, e.g. "EL PLAN DE ESCAPE\nDE LA MEDIANA
+ * EDAD\nCómo desatascarte profesionalmente\nsin dinamitar tu vida" — is
+ * split into a title block (the leading caps lines) and a subtitle block
+ * (the following lines), so later detection sees them as two front-matter
+ * candidates instead of one garbled one. Conservative: only splits a short
+ * block (<= 6 lines) with a genuine capitalization transition; an
+ * ordinary paragraph (no caps prefix, or entirely caps/entirely mixed) is
+ * left untouched.
+ */
+function splitTitleSubtitleBlock(block: ParsedBlock): ParsedBlock[] {
+  if (block.kind !== 'paragraph' && block.kind !== 'heading') return [block];
+
+  const lines = block.text.split('\n').map((line) => line.trim()).filter(Boolean);
+  if (lines.length < 2 || lines.length > 6) return [block];
+
+  let splitAt = 0;
+  while (splitAt < lines.length && isAllCapsLine(lines[splitAt])) {
+    splitAt += 1;
+  }
+
+  if (splitAt === 0 || splitAt >= lines.length) return [block];
+
+  const titleLines = lines.slice(0, splitAt);
+  const subtitleLines = lines.slice(splitAt);
+  if (subtitleLines.some((line) => isDecorativeLine(line) || COPYRIGHT_RE.test(line) || isLikelyAuthorName(line))) {
+    return [block];
+  }
+
+  const titleText = titleLines.join(' ');
+  const subtitleText = subtitleLines.join(' ');
+
+  return [
+    { kind: 'paragraph', text: titleText, html: `<p>${escapeHtml(titleText)}</p>`, level: null, structural: false },
+    { kind: 'paragraph', text: subtitleText, html: `<p>${escapeHtml(subtitleText)}</p>`, level: null, structural: false },
+  ];
+}
+
 function findTitleCandidate(frontMatter: ParsedBlock[]) {
   const index = frontMatter.findIndex((block) => {
     const text = block.text.trim();
@@ -804,22 +1105,53 @@ function findTitleCandidate(frontMatter: ParsedBlock[]) {
 
 function detectTitleFromFrontMatter(frontMatter: ParsedBlock[], fallbackTitle: string) {
   const candidate = findTitleCandidate(frontMatter);
+  const cleaned = stripMarkdownInline(candidate?.block.text || fallbackTitle);
   return {
-    title: stripMarkdownInline(candidate?.block.text || fallbackTitle),
+    title: isAllCapsText(cleaned) ? toEditorialTitleCase(cleaned) : cleaned,
     foundCandidate: candidate !== null,
   };
 }
 
-function detectAuthorFromFrontMatter(frontMatter: ParsedBlock[], fallbackText: string) {
+/** M4/M9 — which signal produced the author, so confidence can follow the
+ *  documented policy (byline: high; copyright: medium; none: low) instead
+ *  of a position-in-text proxy. */
+export type AuthorDetectionSource = 'byline' | 'copyright' | 'none';
+
+function detectAuthorFromFrontMatter(
+  frontMatter: ParsedBlock[],
+  fallbackText: string,
+): { author: string; source: AuthorDetectionSource } {
   const titleCandidate = findTitleCandidate(frontMatter);
   const startIndex = titleCandidate ? titleCandidate.index + 1 : 0;
 
   for (const block of frontMatter.slice(startIndex)) {
-    if (COPYRIGHT_RE.test(block.text)) break;
-    if (isLikelyAuthorName(block.text)) return block.text;
+    if (COPYRIGHT_RE.test(block.text)) {
+      // The front matter itself carries no separate byline line (common
+      // for a PDF cover), but the copyright block right here often names
+      // the author directly ("© 2026 Antonio Ballesteros Alonso").
+      const fromCopyright = extractAuthorFromCopyright(block.text);
+      if (fromCopyright) return { author: fromCopyright, source: 'copyright' };
+      break;
+    }
+    // "Por María López" / "By Jane Smith": strip the explicit byline prefix
+    // first — checked before the bare-name shape below, since "Por"/"By"
+    // is itself Title-Case-word-shaped and would otherwise be kept as part
+    // of the "name".
+    const trimmedBlockText = block.text.trim();
+    const withoutBylinePrefix = trimmedBlockText.replace(/^(?:by|por)\s+/i, '');
+    if (withoutBylinePrefix !== trimmedBlockText && isLikelyAuthorName(withoutBylinePrefix)) {
+      return { author: withoutBylinePrefix, source: 'byline' };
+    }
+    if (isLikelyAuthorName(block.text)) return { author: block.text, source: 'byline' };
   }
 
-  return extractAuthorFromText(fallbackText);
+  const fromCopyrightFallback = extractAuthorFromCopyright(fallbackText);
+  if (fromCopyrightFallback) return { author: fromCopyrightFallback, source: 'copyright' };
+
+  const fromBoldText = extractAuthorFromText(fallbackText);
+  if (fromBoldText) return { author: fromBoldText, source: 'byline' };
+
+  return { author: '', source: 'none' };
 }
 
 function detectSubtitleFromFrontMatter(
@@ -849,7 +1181,12 @@ function detectSubtitleFromFrontMatter(
     length += candidate.length + 3;
   }
 
-  const subtitle = subtitleParts.join(' · ');
+  // Space-joined: a multi-line subtitle ("Cómo desatascarte
+  // profesionalmente" / "sin dinamitar tu vida") is one continuous phrase,
+  // not a list of separate taglines — a middot read as a visual list
+  // separator instead of natural prose.
+  const joinedSubtitle = subtitleParts.join(' ');
+  const subtitle = isAllCapsText(joinedSubtitle) ? toEditorialTitleCase(joinedSubtitle) : joinedSubtitle;
   return {
     subtitle,
     candidateCount: candidates.length,
@@ -957,19 +1294,32 @@ function buildChaptersFromBlocks(
     }
 
     if (isMajorChapterBlock(block, chapterBoundaryLevel)) {
+      const headingText = cleanHeadingText(block.text);
+      const triggeringIsToc = isTocChapterTitle(headingText);
+      let leadingBlocks: ParsedBlock[] = [];
+
       if (currentTitle === null && frontMatter.length > 0) {
         const prologueBlocks = extractPrologueBlocksFromFrontMatter(frontMatter, title, author);
         if (prologueBlocks.length > 0) {
-          chapters.push({
-            title: 'Prólogo',
-            blocks: prologueBlocks.map(toDocumentBlock),
-          });
+          if (triggeringIsToc) {
+            // Content between the copyright page and the table of contents
+            // (e.g. a dedication) has no heading of its own. Fold it into
+            // the upcoming Índice chapter instead of inventing a
+            // misleading "Prólogo" label — a real Prólogo heading, if the
+            // book has one, is detected later on its own merits.
+            leadingBlocks = prologueBlocks;
+          } else {
+            chapters.push({
+              title: 'Prólogo',
+              blocks: prologueBlocks.map(toDocumentBlock),
+            });
+          }
         }
       }
 
       flushCurrent();
-      currentTitle = cleanHeadingText(block.text) || `Capítulo ${chapters.length + 1}`;
-      currentBlocks = [block]; // Include the heading block in the content
+      currentTitle = headingText || `Capítulo ${chapters.length + 1}`;
+      currentBlocks = [...leadingBlocks, block]; // Include the heading block in the content
       continue;
     }
 
@@ -1010,6 +1360,38 @@ function buildChaptersFromBlocks(
 // Copyright/legal patterns: paragraphs matching these are skipped when extracting the prologue.
 const COPYRIGHT_RE =
   /©|derechos\s+reservados|all\s+rights\s+reserved|primera\s+edici[oó]n|metodolog[ií]a\s+original|desarrollad[ao]\s+por\s+el\s+autor/i;
+
+// Rejects an otherwise name-shaped copyright candidate that is really a
+// publisher/imprint (a company suffix or a URL) rather than a person.
+const COMPANY_LIKE_RE =
+  /\b(?:s\.?\s?l\.?|s\.?\s?a\.?|inc\.?|ltd\.?|llc\.?|corp\.?|editorial(?:es)?|publishing|press|media|books?|ediciones)\b|https?:\/\/|www\./i;
+
+/**
+ * Author extraction for sources with no DOCX-bold byline (the common case
+ * for a plain-text/PDF source): a copyright line ("© YEAR Name") or an
+ * explicit byline ("By Name" / "Por Name"). Rejects anything that is not
+ * shaped like a person's name (`isLikelyAuthorName`) or that looks like a
+ * publisher/imprint rather than a person (`COMPANY_LIKE_RE`) — a company,
+ * a URL, or legal boilerplate must never surface as "the author".
+ */
+function extractAuthorFromCopyright(text: string): string {
+  const isPlausiblePersonName = (candidate: string) =>
+    isLikelyAuthorName(candidate) && !COMPANY_LIKE_RE.test(candidate);
+
+  const copyrightMatch = text.match(/©\s*\d{4}\s+([^\n]+)/);
+  if (copyrightMatch) {
+    const candidate = copyrightMatch[1].trim().replace(/[.,;]+$/, '');
+    if (isPlausiblePersonName(candidate)) return candidate;
+  }
+
+  const bylineMatch = text.match(/^[ \t]*(?:by|por)\s+([^\n]+)$/im);
+  if (bylineMatch) {
+    const candidate = bylineMatch[1].trim().replace(/[.,;]+$/, '');
+    if (isPlausiblePersonName(candidate)) return candidate;
+  }
+
+  return '';
+}
 
 /**
  * From the raw text (before markdown stripping), detect the author name.
@@ -1061,8 +1443,7 @@ function computeImportConfidence(input: {
   titleFoundCandidate: boolean;
   title: string;
   fallbackTitle: string;
-  author: string;
-  sourceText: string;
+  authorSource: AuthorDetectionSource;
   chapterCount: number;
 }): ImportedDocumentSeed['confidence'] {
   const titleConfidence: ImportFieldConfidence = input.titleFoundCandidate
@@ -1071,12 +1452,11 @@ function computeImportConfidence(input: {
       ? 'low'
       : 'medium';
 
-  const authorIndex = input.author ? input.sourceText.indexOf(input.author) : -1;
-  const authorConfidence: ImportFieldConfidence = !input.author
-    ? 'low'
-    : authorIndex >= 0 && authorIndex < 600
-      ? 'high'
-      : 'medium';
+  // M9: a byline (or the DOCX-bold-line equivalent) is direct, explicit
+  // evidence -> high; a copyright-line extraction ("© YEAR Name") is
+  // strong but indirect evidence -> medium; nothing found -> low.
+  const authorConfidence: ImportFieldConfidence =
+    input.authorSource === 'byline' ? 'high' : input.authorSource === 'copyright' ? 'medium' : 'low';
 
   const chaptersConfidence: ImportFieldConfidence =
     input.chapterCount <= 1 ? 'low' : input.chapterCount >= 3 ? 'high' : 'medium';
@@ -1123,10 +1503,12 @@ export function buildImportedDocumentSeed({
     extractAuthorFromText(text),
     chapterBoundaryLevelOverride,
   );
-  const titleDetection = detectTitleFromFrontMatter(frontMatterSource.frontMatter, rawTitle);
+  const splitFrontMatter = frontMatterSource.frontMatter.flatMap(splitTitleSubtitleBlock);
+  const titleDetection = detectTitleFromFrontMatter(splitFrontMatter, rawTitle);
   const title = titleDetection.title;
-  const author = detectAuthorFromFrontMatter(frontMatterSource.frontMatter, text);
-  const subtitleDetection = detectSubtitleFromFrontMatter(frontMatterSource.frontMatter, title, author);
+  const authorDetection = detectAuthorFromFrontMatter(splitFrontMatter, text);
+  const author = authorDetection.author;
+  const subtitleDetection = detectSubtitleFromFrontMatter(splitFrontMatter, title, author);
   const subtitle = subtitleDetection.subtitle
    ? subtitleDetection.subtitle.slice(0, 260)
     : `Documento importado desde ${fileName}`;
@@ -1254,8 +1636,7 @@ export function buildImportedDocumentSeed({
     titleFoundCandidate: titleDetection.foundCandidate,
     title,
     fallbackTitle,
-    author,
-    sourceText: text,
+    authorSource: authorDetection.source,
     chapterCount: detectedChapters.length,
   });
 
@@ -1294,6 +1675,69 @@ export function isScannedPdfSource(input: {
   return normalizeText(input.text).length < SCANNED_PDF_MIN_TEXT_CHARS;
 }
 
+type PdfPageText = { num: number; text: string };
+
+function isFolioLine(line: string): boolean {
+  return STRICT_FOLIO_RE.test(line);
+}
+
+/**
+ * Page-aware running header/footer + folio stripping (F2/import PDF
+ * hardening — see pdf-import-structural-recovery spec §"Header/footer
+ * policy"). Runs on the raw per-page text pdf-parse returns, before any
+ * paragraph/heading parsing sees it, so a folio ("— 12 —") or a repeated
+ * running header never gets folded into body content or mistaken for a
+ * heading. Removal is keyed on repetition at a page boundary (>= 40% of
+ * pages, minimum 3), never on text content alone — a genuine front-matter
+ * title that happens to resemble the header but appears once is untouched.
+ * O(pages): one pass to tally boundary lines, one pass to strip.
+ */
+function stripRunningHeadersAndFolios(pages: PdfPageText[]): string[] {
+  const perPageLines = pages.map((page) => splitLines(page.text).map((line) => line.trim()));
+
+  const nonBlankIndexesOf = (lines: string[]) =>
+    lines.reduce<number[]>((acc, line, idx) => {
+      if (line) acc.push(idx);
+      return acc;
+    }, []);
+
+  const boundaryLineCounts = new Map<string, number>();
+  for (const lines of perPageLines) {
+    const nonBlankIndexes = nonBlankIndexesOf(lines);
+    if (nonBlankIndexes.length === 0) continue;
+
+    const first = lines[nonBlankIndexes[0]];
+    const last = lines[nonBlankIndexes[nonBlankIndexes.length - 1]];
+
+    for (const candidate of new Set([first, last])) {
+      if (isFolioLine(candidate) || BARE_FOLIO_RE.test(candidate)) continue;
+      boundaryLineCounts.set(candidate, (boundaryLineCounts.get(candidate) ?? 0) + 1);
+    }
+  }
+
+  const threshold = Math.max(3, Math.ceil(pages.length * 0.4));
+  const runningHeaders = new Set(
+    [...boundaryLineCounts.entries()].filter(([, count]) => count >= threshold).map(([line]) => line),
+  );
+
+  return perPageLines.map((lines) => {
+    const nonBlankIndexes = nonBlankIndexesOf(lines);
+    const firstIdx = nonBlankIndexes[0];
+    const lastIdx = nonBlankIndexes[nonBlankIndexes.length - 1];
+
+    return lines
+      .filter((line, idx) => {
+        if (!line) return true;
+        if (isFolioLine(line)) return false;
+        const isBoundary = idx === firstIdx || idx === lastIdx;
+        if (isBoundary && BARE_FOLIO_RE.test(line)) return false;
+        if (isBoundary && runningHeaders.has(line)) return false;
+        return true;
+      })
+      .join('\n');
+  });
+}
+
 export async function extractTextFromBuffer(fileName: string, mimeType: string, buffer: Buffer) {
   const extension = getExtension(fileName);
 
@@ -1313,10 +1757,22 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
     try {
       const { PDFParse } = await import('pdf-parse');
       const parser = new PDFParse({ data: buffer });
-      const parsed = await parser.getText();
+      // U-pdf: request a plain paragraph-safe page joiner so a fallback to
+      // `parsed.text` (when the page-aware `pages` array isn't available,
+      // e.g. in unit-test mocks) never carries the library's default
+      // "-- N of TOTAL --" marker into the document text (root cause of the
+      // pdf-import-structural-recovery regression — see the SDD spec).
+      const parsed = await parser.getText({ pageJoiner: '\n\n' });
       await parser.destroy();
+
+      const pages = (parsed as { pages?: PdfPageText[] }).pages;
+      const text =
+        Array.isArray(pages) && pages.length > 0
+          ? stripRunningHeadersAndFolios(pages).join('\n\n')
+          : parsed.text;
+
       return {
-        text: parsed.text,
+        text,
         html: null,
         pageCount: typeof (parsed as { total?: number; numpages?: number }).numpages === 'number'
           ? Number((parsed as { total?: number; numpages?: number }).numpages)
