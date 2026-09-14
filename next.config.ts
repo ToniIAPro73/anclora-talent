@@ -25,6 +25,37 @@ const nextConfig: NextConfig = {
     '/api/projects/export': [
       './node_modules/@sparticuz/chromium/bin/**',
     ],
+    // pdf-import-vercel-runtime: pdfjs-dist (legacy build, used by
+    // pdf-parse) polyfills DOMMatrix/ImageData/Path2D for Node via
+    // `try { require('@napi-rs/canvas') } catch { warn(...) }`. Next's
+    // file tracer (@vercel/nft) treats a try/catch-wrapped require as
+    // best-effort and does not include it automatically, so the package
+    // — present in node_modules at build time — was missing from the
+    // deployed function, DOMMatrix stayed undefined, and every PDF import
+    // threw `DOMMatrix is not defined` in production (never reproduced by
+    // `next build && next start`, which reads node_modules directly with
+    // no tracing/pruning step). Only the Linux glibc binary Vercel's
+    // Node.js runtime actually uses is included — the other ~9 platform
+    // packages in @napi-rs/canvas's optionalDependencies are irrelevant
+    // here and would only bloat the function.
+    '/api/projects/import': [
+      './node_modules/@napi-rs/canvas/**',
+      './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
+    ],
+    // Same PDF path is reachable from these routes via server actions in
+    // src/lib/projects/actions.ts (create/import, chapter import, reimport).
+    '/dashboard': [
+      './node_modules/@napi-rs/canvas/**',
+      './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
+    ],
+    '/projects/new': [
+      './node_modules/@napi-rs/canvas/**',
+      './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
+    ],
+    '/projects/[projectId]/editor': [
+      './node_modules/@napi-rs/canvas/**',
+      './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
+    ],
   },
   // These packages ship native or large runtime assets and must be required
   // from node_modules at runtime, not bundled into the function chunk.
@@ -42,6 +73,10 @@ const nextConfig: NextConfig = {
     // production — the real root cause behind the reported regression.
     'pdf-parse',
     'pdfjs-dist',
+    // pdf-import-vercel-runtime: see outputFileTracingIncludes above — must
+    // stay a real node_modules require, never bundled, so its native .node
+    // binary resolves the same way it does outside a Next.js build.
+    '@napi-rs/canvas',
   ],
   experimental: {
     // App Router route handlers such as /api/projects/import receive source
