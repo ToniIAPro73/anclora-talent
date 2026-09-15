@@ -7,6 +7,7 @@ import type { ProjectRecord } from '@/lib/projects/types';
 import { getProjectCapabilities } from '@/lib/projects/capabilities';
 import { PdfExportButton } from './PdfExportButton';
 import { PreviewDeviceSelector } from './PreviewDeviceSelector';
+import { CreateEditableCopyButton } from './CreateEditableCopyButton';
 
 interface ExportLinksProps {
   project: ProjectRecord;
@@ -92,6 +93,13 @@ export function ExportLinks({
       >
         {copy.previewExportMarkdownButton}
       </a>
+      {capabilities.canCreateEditableCopy && (
+        <CreateEditableCopyButton
+          projectId={projectId}
+          label={copy.createEditableCopyButton}
+          className="ac-button ac-button--secondary"
+        />
+      )}
     </div>
   );
 }

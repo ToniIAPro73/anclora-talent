@@ -67,6 +67,13 @@ export interface ProjectDocumentSource {
   sha256?: string;
   sourceAssetId?: string;
   sourceAccessLevel?: SourceDocumentAccessLevel;
+  /**
+   * Fase 3: set on an editable copy created from a fixed-pdf project via
+   * "Crear copia editable" — the two projects are independent from this
+   * point on; the original fixed-pdf project is never mutated.
+   */
+  derivedFromProjectId?: string;
+  derivedFromSourceAssetId?: string;
 }
 
 export interface EditorialMapEntry {
@@ -243,6 +250,8 @@ export interface CreateProjectInput {
   importedDocument?: ImportedDocumentSeed | null;
   /** F2: product template id; seeds structure + rules when no document is imported. */
   templateId?: string | null;
+  /** Fase 3: provenance when this project is an editable copy of a fixed-pdf project. */
+  derivedFrom?: { projectId: string; sourceAssetId?: string } | null;
 }
 
 export interface UpdateDocumentInput {

@@ -239,6 +239,7 @@ export type AppMessages = {
     fixedPdfEpubUnavailable: string;
     fixedPdfHtmlUnavailable: string;
     fixedPdfMarkdownUnavailable: string;
+    createEditableCopyButton: string;
     fixedPdfStorageErrorTitle: string;
     fixedPdfStorageErrorBody: string;
     importSizeLimitTitle: string;
@@ -1299,6 +1300,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       fixedPdfEpubUnavailable: 'Requiere copia editable',
       fixedPdfHtmlUnavailable: 'Requiere copia editable',
       fixedPdfMarkdownUnavailable: 'Requiere copia editable',
+      createEditableCopyButton: 'Crear copia editable',
       fixedPdfStorageErrorTitle: 'No se ha podido conservar el PDF original.',
       fixedPdfStorageErrorBody:
         'El proyecto no se ha creado para evitar modificar su diseño. Inténtalo de nuevo.',
@@ -2424,6 +2426,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       fixedPdfEpubUnavailable: 'Requires an editable copy',
       fixedPdfHtmlUnavailable: 'Requires an editable copy',
       fixedPdfMarkdownUnavailable: 'Requires an editable copy',
+      createEditableCopyButton: 'Create editable copy',
       fixedPdfStorageErrorTitle: 'The original PDF could not be preserved.',
       fixedPdfStorageErrorBody:
         'The project was not created, to avoid altering its design. Please try again.',

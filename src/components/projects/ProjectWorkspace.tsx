@@ -20,6 +20,7 @@ import { ReimportDialog } from './ReimportDialog';
 import { DocumentDataModal } from './DocumentDataModal';
 import { Portal } from '@/components/ui/Portal';
 import { PdfExportButton } from './PdfExportButton';
+import { CreateEditableCopyButton } from './CreateEditableCopyButton';
 import { DocumentRulesPanel } from './DocumentRulesPanel';
 import { DocumentHealthPanel } from './DocumentHealthPanel';
 import { BrandProfilePanel } from './BrandProfilePanel';
@@ -773,6 +774,13 @@ export function ProjectWorkspace({
                >
                   {copy.previewExportMarkdownButton}
                </button>
+               {capabilities.canCreateEditableCopy && (
+                 <CreateEditableCopyButton
+                   projectId={project.id}
+                   label={copy.createEditableCopyButton}
+                   className="ac-button ac-button--secondary"
+                 />
+               )}
             </div>
             {kdpDisclosure && <KdpDisclosurePanel disclosure={kdpDisclosure} copy={copy} />}
             {launchPack && (

@@ -27,6 +27,7 @@ vi.mock('@/lib/projects/actions', () => ({
   deleteChapterAction: vi.fn().mockResolvedValue(undefined),
   saveProjectCoverAction: vi.fn().mockResolvedValue(undefined),
   saveBackCoverAction: vi.fn().mockResolvedValue(undefined),
+  createEditableCopyAction: vi.fn().mockResolvedValue(undefined),
   saveProjectCompositionAction: vi.fn().mockResolvedValue({ ok: true }),
   saveUserCompositionDefaultsAction: vi.fn().mockResolvedValue({ ok: true }),
   setBrandForAllProjectsAction: vi.fn().mockResolvedValue({ ok: true }),
@@ -392,6 +393,12 @@ describe('ProjectWorkspace', () => {
       expect(screen.getByTestId('export-markdown-button')).toBeDisabled();
     });
 
+    test('export step offers "Crear copia editable" (Fase 3)', () => {
+      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 9 })} copy={copy} />);
+
+      expect(screen.getByTestId('create-editable-copy-button')).toBeInTheDocument();
+    });
+
     test('export step never shows the composition-violations banner (Talent does not govern fixed-pdf composition)', () => {
       render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 9 })} copy={copy} />);
 
@@ -420,6 +427,12 @@ describe('ProjectWorkspace', () => {
       expect(screen.getByTestId('export-docx-button')).not.toBeDisabled();
       expect(screen.getByTestId('export-epub-button')).not.toBeDisabled();
       expect(screen.getByTestId('export-markdown-button')).not.toBeDisabled();
+    });
+
+    test('regression: an already-editable project never offers "Crear copia editable"', () => {
+      render(<ProjectWorkspace project={makeProject({ workflowStep: 9 })} copy={copy} />);
+
+      expect(screen.queryByTestId('create-editable-copy-button')).not.toBeInTheDocument();
     });
   });
 });

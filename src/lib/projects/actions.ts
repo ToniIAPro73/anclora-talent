@@ -8,7 +8,7 @@ import { getDb, hasDatabase } from '@/lib/db';
 import { projectRepository, userPreferencesRepository } from '@/lib/db/repositories';
 import { uploadProjectBlob, uploadPrivateProjectDocument } from '@/lib/blob/client';
 import { sha256Buffer } from './hash';
-import type { DocumentMode, SourceDocumentAccessLevel } from './types';
+import { isFixedPdfProject, type DocumentMode, type SourceDocumentAccessLevel } from './types';
 import { captureAutoSaveSnapshot, captureProjectSnapshot } from '@/lib/snapshots/capture';
 import { deriveProvenanceUpdate } from '@/lib/ai/provenance';
 import { normalizeSurfaceState, type SurfaceState } from './cover-surface';
@@ -256,6 +256,52 @@ export async function createProjectAction(formData: FormData) {
     });
     throw error;
   }
+}
+
+/**
+ * Fase 3: "Crear copia editable" — a fixed-pdf project cannot be
+ * simultaneously byte-identical and editable, so this creates a brand new,
+ * fully independent project seeded from the same real-extraction pipeline
+ * the importer uses (re-run against the stored original PDF), never from
+ * `project.document.chapters` (always empty in fixed-pdf mode). The
+ * original project's document/assets are never touched.
+ */
+export async function createEditableCopyAction(formData: FormData) {
+  const userId = await requireUserId();
+  const projectId = String(formData.get('projectId') ?? '').trim();
+  if (!projectId) {
+    throw new Error('Project id is required');
+  }
+
+  const sourceProject = await projectRepository.getProjectById(userId, projectId);
+  if (!sourceProject) {
+    throw new Error('Project not found');
+  }
+  if (!isFixedPdfProject(sourceProject)) {
+    throw new Error('Project is not a fixed-pdf document');
+  }
+
+  const { fetchOriginalPdfBuffer } = await import('./original-pdf');
+  const { buffer, fileName } = await fetchOriginalPdfBuffer(sourceProject);
+  const file = new File([buffer], fileName, { type: 'application/pdf' });
+
+  const { extractImportedDocumentSeed } = await import('./import');
+  const seed = await extractImportedDocumentSeed(file);
+
+  const sourceAssetId = sourceProject.assets.find((asset) => asset.usage === 'source-document')?.id;
+  const project = await projectRepository.createProject(userId, {
+    title: `${sourceProject.title} (editable)`,
+    importedDocument: { ...seed, mode: 'editable' },
+    derivedFrom: { projectId: sourceProject.id, sourceAssetId },
+  });
+
+  console.info('[createEditableCopyAction] editable copy created', {
+    userId,
+    sourceProjectId: sourceProject.id,
+    newProjectId: project.id,
+  });
+
+  redirect(`/projects/${project.id}/editor?documentData=open`);
 }
 
 export async function saveProjectDocumentAction(formData: FormData) {

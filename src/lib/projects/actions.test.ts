@@ -66,6 +66,36 @@ describe('project factories', () => {
     expect(project.cover.title).toBe('Propuesta editorial');
   });
 
+  test('Fase 3: an editable copy carries derivedFromProjectId/derivedFromSourceAssetId in its document source', () => {
+    const importedDocument = buildImportedDocumentSeed({
+      fileName: 'El_Plan_de_Escape_EBOOK.pdf',
+      mimeType: 'application/pdf',
+      text: 'El Plan de Escape\n\nCapítulo 1\n\nContenido real extraído del PDF original.',
+    });
+
+    const project = createProjectRecord('user_123', {
+      title: 'El Plan de Escape (editable)',
+      importedDocument: { ...importedDocument, mode: 'editable' },
+      derivedFrom: { projectId: 'fixed-pdf-project-1', sourceAssetId: 'asset-1' },
+    });
+
+    expect(project.document.source?.mode).toBe('editable');
+    expect(project.document.source?.derivedFromProjectId).toBe('fixed-pdf-project-1');
+    expect(project.document.source?.derivedFromSourceAssetId).toBe('asset-1');
+  });
+
+  test('a project with no derivedFrom never sets derivedFromProjectId', () => {
+    const importedDocument = buildImportedDocumentSeed({
+      fileName: 'ebook.md',
+      mimeType: 'text/markdown',
+      text: 'Título\n\nSubtítulo\n\nContenido.',
+    });
+
+    const project = createProjectRecord('user_123', { title: 'Libro', importedDocument });
+
+    expect(project.document.source?.derivedFromProjectId).toBeUndefined();
+  });
+
   test('creates a project seeded from multiple imported chapters and default editorial metadata', () => {
     const project = createProjectRecord('user_123', {
       title: 'Libro estructurado',
