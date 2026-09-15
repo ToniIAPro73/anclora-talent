@@ -381,13 +381,29 @@ describe('ProjectWorkspace', () => {
       expect(screen.queryByTestId('preview-inline-document')).not.toBeInTheDocument();
     });
 
-    test('export step offers the original PDF and disables DOCX/EPUB', () => {
+    test('export step offers the original PDF and disables DOCX/EPUB/HTML/Markdown', () => {
       render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 9 })} copy={copy} />);
 
       expect(screen.getByTestId('export-pdf-original-button')).toBeInTheDocument();
       expect(screen.queryByTestId('pdf-export-button')).not.toBeInTheDocument();
       expect(screen.getByTestId('export-docx-button')).toBeDisabled();
       expect(screen.getByTestId('export-epub-button')).toBeDisabled();
+      expect(screen.getByTestId('export-html-button')).toBeDisabled();
+      expect(screen.getByTestId('export-markdown-button')).toBeDisabled();
+    });
+
+    test('export step never shows the composition-violations banner (Talent does not govern fixed-pdf composition)', () => {
+      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 9 })} copy={copy} />);
+
+      expect(screen.queryByTestId('export-gate-message')).not.toBeInTheDocument();
+    });
+
+    test('the original-PDF download button is never blocked by the export gate', () => {
+      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 9 })} copy={copy} />);
+
+      expect(screen.getByTestId('export-pdf-original-button')).not.toBeDisabled();
+      const actions = screen.getByTestId('export-pdf-original-button').closest('.ac-export-suite__actions');
+      expect(actions).not.toHaveAttribute('aria-disabled', 'true');
     });
 
     test('regression: an editable project is unaffected by fixed-pdf gating', () => {
@@ -395,6 +411,15 @@ describe('ProjectWorkspace', () => {
 
       expect(screen.queryByTestId('fixed-pdf-included-panel')).not.toBeInTheDocument();
       expect(screen.getByTestId('cover-studio-cover')).toBeInTheDocument();
+    });
+
+    test('regression: editable project export step keeps every reflowable format enabled', () => {
+      render(<ProjectWorkspace project={makeProject({ workflowStep: 9 })} copy={copy} />);
+
+      expect(screen.getByTestId('export-html-button')).not.toBeDisabled();
+      expect(screen.getByTestId('export-docx-button')).not.toBeDisabled();
+      expect(screen.getByTestId('export-epub-button')).not.toBeDisabled();
+      expect(screen.getByTestId('export-markdown-button')).not.toBeDisabled();
     });
   });
 });

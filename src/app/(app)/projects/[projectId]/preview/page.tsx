@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { PreviewCanvas } from '@/components/projects/PreviewCanvas';
+import { FixedPdfPreview } from '@/components/projects/FixedPdfPreview';
 import { ExportLinks } from '@/components/projects/ExportLinks';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { NavigatingLink } from '@/components/ui/NavigatingLink';
@@ -7,6 +8,7 @@ import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
+import { isFixedPdfProject } from '@/lib/projects/types';
 
 export default async function ProjectPreviewPage({
   params,
@@ -45,7 +47,11 @@ export default async function ProjectPreviewPage({
           </NavigatingLink>
         </div>
       </div>
-      <PreviewCanvas copy={projectCopy} project={project} />
+      {isFixedPdfProject(project) ? (
+        <FixedPdfPreview projectId={project.id} copy={projectCopy} />
+      ) : (
+        <PreviewCanvas copy={projectCopy} project={project} />
+      )}
     </div>
   );
 }

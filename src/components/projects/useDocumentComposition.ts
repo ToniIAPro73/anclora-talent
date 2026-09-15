@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { ProjectRecord } from '@/lib/projects/types';
+import { isFixedPdfProject, type ProjectRecord } from '@/lib/projects/types';
 import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 import {
   composeProjectPreview,
@@ -9,7 +9,7 @@ import {
   findChangedChapterStartId,
   type ComposedPreview,
 } from '@/lib/compose/preview-adapter';
-import { diffCompositions, type CompositionDiff } from '@/lib/compose/compose';
+import { diffCompositions, type ComposeResult, type CompositionDiff } from '@/lib/compose/compose';
 import { createCanvasMeasurer } from '@/lib/compose/measure';
 
 /** F0.2: lightweight client telemetry for the recomposition budget (<300 ms). */
@@ -31,6 +31,28 @@ export interface LiveComposition extends ComposedPreview {
 
 /** Only the last N measurements are retained (rolling window). */
 const TELEMETRY_WINDOW = 20;
+
+/**
+ * Fixed-PDF document mode: Talent never governs the composition of an
+ * uploaded original PDF (no chapters/template/cover pipeline applies), so
+ * the composition engine must never run for these projects — a zero-cost,
+ * zero-violation stub is returned instead of composing placeholder content.
+ */
+const EMPTY_COMPOSE_RESULT: ComposeResult = {
+  pages: [],
+  chapters: [],
+  toc: [],
+  figures: {},
+  tables: {},
+  refs: {},
+  violations: [],
+};
+const EMPTY_COMPOSITION: LiveComposition = {
+  pages: [],
+  result: EMPTY_COMPOSE_RESULT,
+  diff: null,
+  telemetry: { count: 0, lastMs: null, avgMs: null },
+};
 
 interface CompositionHistory {
   project: ProjectRecord;
@@ -65,6 +87,10 @@ interface CompositionHistory {
 export function useDocumentComposition(project: ProjectRecord): LiveComposition {
   const measurer = useMemo(() => createCanvasMeasurer(), []);
   const [history, setHistory] = useState<CompositionHistory | null>(null);
+
+  if (isFixedPdfProject(project)) {
+    return EMPTY_COMPOSITION;
+  }
 
   let computed: Omit<LiveComposition, 'telemetry'>;
   let durations = history?.durations ?? [];

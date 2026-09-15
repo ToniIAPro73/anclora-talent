@@ -1,0 +1,73 @@
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { NextRequest } from 'next/server';
+
+vi.mock('server-only', () => ({}));
+
+const requireUserIdMock = vi.fn();
+const getProjectByIdMock = vi.fn();
+const renderProjectExportHtmlMock = vi.fn();
+
+vi.mock('@/lib/auth/guards', () => ({
+  requireUserId: requireUserIdMock,
+}));
+
+vi.mock('@/lib/db/repositories', () => ({
+  projectRepository: { getProjectById: getProjectByIdMock },
+}));
+
+vi.mock('@/lib/projects/export-builder', () => ({
+  renderProjectExportHtml: renderProjectExportHtmlMock,
+}));
+
+vi.mock('@/lib/brand/resolve', () => ({
+  resolveProjectBrandTemplateOverrides: vi.fn().mockResolvedValue(undefined),
+}));
+
+function buildRequest(projectId: string) {
+  return new NextRequest(`https://example.com/api/projects/export?projectId=${projectId}`);
+}
+
+describe('GET /api/projects/export (HTML)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    requireUserIdMock.mockResolvedValue('user-1');
+    renderProjectExportHtmlMock.mockResolvedValue('<html></html>');
+  });
+
+  test('fixed-pdf project → 409, renderer never invoked', async () => {
+    getProjectByIdMock.mockResolvedValue({
+      id: 'project-2',
+      slug: 'el-plan-de-escape',
+      document: { source: { mode: 'fixed-pdf' } },
+    });
+
+    const { GET } = await import('./route');
+    const response = await GET(buildRequest('project-2'));
+
+    expect(response.status).toBe(409);
+    expect(renderProjectExportHtmlMock).not.toHaveBeenCalled();
+  });
+
+  test('regression: editable project still exports normally', async () => {
+    getProjectByIdMock.mockResolvedValue({
+      id: 'project-1',
+      slug: 'manuscrito',
+      document: { source: null },
+    });
+
+    const { GET } = await import('./route');
+    const response = await GET(buildRequest('project-1'));
+
+    expect(response.status).toBe(200);
+    expect(renderProjectExportHtmlMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('missing project → 404', async () => {
+    getProjectByIdMock.mockResolvedValue(null);
+
+    const { GET } = await import('./route');
+    const response = await GET(buildRequest('missing'));
+
+    expect(response.status).toBe(404);
+  });
+});

@@ -237,6 +237,8 @@ export type AppMessages = {
     fixedPdfCompositionNotApplicable: string;
     fixedPdfDocxUnavailable: string;
     fixedPdfEpubUnavailable: string;
+    fixedPdfHtmlUnavailable: string;
+    fixedPdfMarkdownUnavailable: string;
     fixedPdfStorageErrorTitle: string;
     fixedPdfStorageErrorBody: string;
     importSizeLimitTitle: string;
@@ -373,6 +375,7 @@ export type AppMessages = {
     previewExportPdfButton: string;
     previewExportDocxButton: string;
     previewExportEpubButton: string;
+    previewExportMarkdownButton: string;
     coverRenderImage: string;
     coverRenderImageDone: string;
     coverRenderedImageLabel: string;
@@ -1290,8 +1293,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       fixedPdfPreviewError: 'No se pudo cargar el PDF original.',
       fixedPdfExportLabel: 'Descargar PDF original',
       fixedPdfCompositionNotApplicable: 'No aplicable: este PDF conserva su composición original.',
-      fixedPdfDocxUnavailable: 'No disponible para PDF original',
-      fixedPdfEpubUnavailable: 'No disponible para PDF original',
+      fixedPdfDocxUnavailable: 'Requiere copia editable',
+      fixedPdfEpubUnavailable: 'Requiere copia editable',
+      fixedPdfHtmlUnavailable: 'Requiere copia editable',
+      fixedPdfMarkdownUnavailable: 'Requiere copia editable',
       fixedPdfStorageErrorTitle: 'No se ha podido conservar el PDF original.',
       fixedPdfStorageErrorBody:
         'El proyecto no se ha creado para evitar modificar su diseño. Inténtalo de nuevo.',
@@ -1462,6 +1467,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewExportPdfButton: 'Exportar PDF',
       previewExportDocxButton: 'Exportar Word (.docx)',
       previewExportEpubButton: 'Exportar EPUB (.epub)',
+      previewExportMarkdownButton: 'Exportar Markdown (.md)',
       coverRenderImage: 'Generar imagen',
       coverRenderImageDone: 'Imagen guardada',
       coverRenderedImageLabel: 'Imagen renderizada',
@@ -2409,8 +2415,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       fixedPdfPreviewError: 'The original PDF could not be loaded.',
       fixedPdfExportLabel: 'Download original PDF',
       fixedPdfCompositionNotApplicable: 'Not applicable: this PDF keeps its original composition.',
-      fixedPdfDocxUnavailable: 'Not available for the original PDF',
-      fixedPdfEpubUnavailable: 'Not available for the original PDF',
+      fixedPdfDocxUnavailable: 'Requires an editable copy',
+      fixedPdfEpubUnavailable: 'Requires an editable copy',
+      fixedPdfHtmlUnavailable: 'Requires an editable copy',
+      fixedPdfMarkdownUnavailable: 'Requires an editable copy',
       fixedPdfStorageErrorTitle: 'The original PDF could not be preserved.',
       fixedPdfStorageErrorBody:
         'The project was not created, to avoid altering its design. Please try again.',
@@ -2581,6 +2589,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewExportPdfButton: 'Export PDF',
       previewExportDocxButton: 'Export Word (.docx)',
       previewExportEpubButton: 'Export EPUB (.epub)',
+      previewExportMarkdownButton: 'Export Markdown (.md)',
       coverRenderImage: 'Generate image',
       coverRenderImageDone: 'Image saved',
       coverRenderedImageLabel: 'Rendered image',
