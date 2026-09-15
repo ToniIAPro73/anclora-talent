@@ -37,6 +37,7 @@
     "@types/react-color": "^3.0.13",
     "@vercel/blob": "^2.3.2",
     "bcryptjs": "^3.0.3",
+    "canvas": "^3.2.3",
     "clsx": "^2.1.1",
     "docx": "^9.6.1",
     "drizzle-orm": "^0.45.2",

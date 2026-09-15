@@ -2,6 +2,7 @@ import type { DocumentMetadata, SemanticDocument } from '@/lib/document/model';
 import type { DocumentRules } from '@/lib/compose/rules';
 import type { ProvenanceMap } from '@/lib/ai/provenance';
 import type { SurfaceState } from './cover-surface';
+import type { DesignSurface } from './design-surface';
 
 export type ProjectStatus = 'draft' | 'active';
 
@@ -121,7 +122,8 @@ export interface CoverDesign {
   accentColor?: string | null;
   renderedImageUrl?: string | null;
   showSubtitle?: boolean;
-  surfaceState?: SurfaceState | null;
+  /** Cover Studio v2: `surfaceState` may already be the new layered `DesignSurface` (version 2) or still the legacy fixed-field `SurfaceState` — always read through `getCoverDesign()`/`getBackCoverDesign()` (design-surface-repository.ts), never this field directly, so lazy migration is never bypassed. */
+  surfaceState?: SurfaceState | DesignSurface | null;
 }
 
 export interface BackCoverDesign {
@@ -132,7 +134,8 @@ export interface BackCoverDesign {
   accentColor: string | null;
   backgroundImageUrl: string | null;
   renderedImageUrl: string | null;
-  surfaceState?: SurfaceState | null;
+  /** Cover Studio v2: see the note on `CoverDesign.surfaceState` above. */
+  surfaceState?: SurfaceState | DesignSurface | null;
 }
 
 export type ProjectAssetUsage =

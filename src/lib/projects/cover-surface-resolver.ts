@@ -4,6 +4,7 @@ import {
   type SurfaceFieldState,
   type SurfaceState,
 } from './cover-surface';
+import { isDesignSurfaceV2 } from './design-surface';
 import { condenseSubtitle, syncedSurfaceValues } from './surface-metadata-sync';
 import type { ProjectRecord } from './types';
 
@@ -67,7 +68,13 @@ export function resolveCoverSurfaceFields(
   project: CoverProjectSubset,
   surfaceState?: SurfaceState | null,
 ) {
-  const persistedState = surfaceState ?? project.cover.surfaceState;
+  // Cover Studio v2: this legacy resolver only understands the fixed-field
+  // `SurfaceState` shape — a v2 `DesignSurface` (real layer array) is read
+  // through `getCoverDesign()` (design-surface-repository.ts) by the new
+  // editor instead. Until that editor fully replaces this one, a v2 payload
+  // here is treated the same as "nothing persisted yet" rather than crashing.
+  const rawPersistedState = surfaceState ?? project.cover.surfaceState;
+  const persistedState = rawPersistedState && !isDesignSurfaceV2(rawPersistedState) ? rawPersistedState : null;
   const state = normalizeSurfaceState(
     persistedState ??
       {
