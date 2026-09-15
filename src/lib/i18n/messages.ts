@@ -1007,6 +1007,16 @@ export type AppMessages = {
       syncFromMetadataLabel: string;
       syncFromMetadataConfirm: string;
     };
+    toolbar: {
+      undoLabel: string;
+      redoLabel: string;
+      snappingLabel: string;
+      safeAreaLabel: string;
+      gridLabel: string;
+      zoomOutLabel: string;
+      zoomInLabel: string;
+      zoomFitLabel: string;
+    };
   };
 };
 
@@ -2246,6 +2256,16 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         syncFromMetadataLabel: 'Actualizar desde metadatos',
         syncFromMetadataConfirm: 'Esto reemplazará el texto actual con el valor detectado en los metadatos del documento. ¿Continuar?',
       },
+      toolbar: {
+        undoLabel: 'Deshacer',
+        redoLabel: 'Rehacer',
+        snappingLabel: 'Ajuste automático',
+        safeAreaLabel: 'Área segura',
+        gridLabel: 'Cuadrícula',
+        zoomOutLabel: 'Alejar',
+        zoomInLabel: 'Acercar',
+        zoomFitLabel: 'Ajustar a la ventana',
+      },
     },
   },
   en: {
@@ -3481,6 +3501,16 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         resetToTemplateConfirm: 'This will replace the current design with the selected template. Continue?',
         syncFromMetadataLabel: 'Update from metadata',
         syncFromMetadataConfirm: 'This will replace the current text with the value detected in the document metadata. Continue?',
+      },
+      toolbar: {
+        undoLabel: 'Undo',
+        redoLabel: 'Redo',
+        snappingLabel: 'Snapping',
+        safeAreaLabel: 'Safe area',
+        gridLabel: 'Grid',
+        zoomOutLabel: 'Zoom out',
+        zoomInLabel: 'Zoom in',
+        zoomFitLabel: 'Fit to window',
       },
     },
   },

@@ -146,7 +146,8 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
             onClick={() => canvasRef.current?.undo()}
             disabled={!historyState.canUndo}
             className="ac-button ac-button--ghost ac-button--icon ac-button--sm disabled:opacity-30"
-            title="Undo"
+            title={copy.toolbar.undoLabel}
+            aria-label={copy.toolbar.undoLabel}
           >
             <Undo2 className="h-4 w-4" />
           </button>
@@ -156,7 +157,8 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
             onClick={() => canvasRef.current?.redo()}
             disabled={!historyState.canRedo}
             className="ac-button ac-button--ghost ac-button--icon ac-button--sm disabled:opacity-30"
-            title="Redo"
+            title={copy.toolbar.redoLabel}
+            aria-label={copy.toolbar.redoLabel}
           >
             <Redo2 className="h-4 w-4" />
           </button>
@@ -166,8 +168,10 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
             data-testid="advanced-editor-snap-toggle"
             onClick={() => setSnapEnabled((v) => !v)}
             data-active={snapEnabled ? 'true' : 'false'}
+            aria-pressed={snapEnabled}
             className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
-            title="Snapping"
+            title={copy.toolbar.snappingLabel}
+            aria-label={copy.toolbar.snappingLabel}
           >
             <Magnet className="h-4 w-4" />
           </button>
@@ -176,8 +180,10 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
             data-testid="advanced-editor-safe-area-toggle"
             onClick={() => setShowSafeArea((v) => !v)}
             data-active={showSafeArea ? 'true' : 'false'}
+            aria-pressed={showSafeArea}
             className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
-            title="Safe area"
+            title={copy.toolbar.safeAreaLabel}
+            aria-label={copy.toolbar.safeAreaLabel}
           >
             <ShieldCheck className="h-4 w-4" />
           </button>
@@ -186,8 +192,10 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
             data-testid="advanced-editor-grid-cycle-button"
             onClick={() => setGrid((current) => (current === 'none' ? 'fine' : current === 'fine' ? 'medium' : 'none'))}
             data-active={grid !== 'none' ? 'true' : 'false'}
+            aria-pressed={grid !== 'none'}
             className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
-            title="Grid"
+            title={copy.toolbar.gridLabel}
+            aria-label={copy.toolbar.gridLabel}
           >
             <Grid3x3 className="h-4 w-4" />
           </button>
@@ -198,6 +206,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
               onClick={handleResetToOriginal}
               className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
               title={copy.origin.resetToOriginalLabel}
+              aria-label={copy.origin.resetToOriginalLabel}
             >
               <RotateCcw className="h-4 w-4" />
             </button>
@@ -210,7 +219,8 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
             data-testid="advanced-editor-zoom-out-button"
             onClick={() => canvasRef.current?.setZoom(Math.max(0.25, zoom - 0.1))}
             className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
-            title="Zoom out"
+            title={copy.toolbar.zoomOutLabel}
+            aria-label={copy.toolbar.zoomOutLabel}
           >
             <ZoomOut className="h-4 w-4" />
           </button>
@@ -222,7 +232,8 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
             data-testid="advanced-editor-zoom-in-button"
             onClick={() => canvasRef.current?.setZoom(Math.min(2, zoom + 0.1))}
             className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
-            title="Zoom in"
+            title={copy.toolbar.zoomInLabel}
+            aria-label={copy.toolbar.zoomInLabel}
           >
             <ZoomIn className="h-4 w-4" />
           </button>
@@ -231,7 +242,8 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
             data-testid="advanced-editor-zoom-fit-button"
             onClick={() => canvasRef.current?.zoomToFit()}
             className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
-            title="Fit"
+            title={copy.toolbar.zoomFitLabel}
+            aria-label={copy.toolbar.zoomFitLabel}
           >
             <Maximize className="h-4 w-4" />
           </button>
@@ -246,7 +258,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
         </div>
       </header>
 
-      <div className="ac-editor-shell__main grid-cols-[220px_minmax(0,1fr)_260px]" style={{ display: 'grid', gridTemplateColumns: '220px minmax(0,1fr) 260px', gap: '0.75rem' }}>
+      <div className="ac-editor-shell__main ac-cover-editor-columns">
         <aside className="ac-editor-shell__surface overflow-auto" data-testid="advanced-editor-layers-column">
           <LayersPanel
             layers={surface.layers}

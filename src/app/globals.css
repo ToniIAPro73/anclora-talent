@@ -1713,3 +1713,28 @@ ul.toc-list > li {
     margin-left: auto;
   }
 }
+
+/* Cover Studio v2 — Advanced editor's Layers/Canvas/Properties grid
+   (mission §32: desktop = full experience, tablet = usable, mobile = no
+   full Advanced UI attempt — that last case is a page-level routing
+   decision to Basic mode, out of scope here). Scoped to its own modifier
+   class rather than the shared .ac-editor-shell__main rules above, so this
+   never touches the unrelated chapter editor that also uses that class. */
+.ac-cover-editor-columns {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 260px;
+  gap: 0.75rem;
+}
+
+@media (max-width: 1024px) {
+  .ac-cover-editor-columns {
+    grid-template-columns: 200px minmax(0, 1fr) 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .ac-cover-editor-columns {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: auto;
+  }
+}
