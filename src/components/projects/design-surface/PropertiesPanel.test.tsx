@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
 import { PropertiesPanel } from './PropertiesPanel';
 import { createDesignLayer } from '@/lib/projects/design-surface';
@@ -30,5 +30,25 @@ describe('PropertiesPanel', () => {
     const layer = createDesignLayer({ type: 'image', src: 'https://blob.example/a.png' }, 1);
     render(<PropertiesPanel selectedLayers={[layer]} copy={copy} onLayerChange={vi.fn()} onReplaceImage={vi.fn()} />);
     expect(screen.getByTestId('image-layer-properties')).toBeInTheDocument();
+  });
+
+  test('forwards the matching metadataValues entry to the text layer as a confirmed sync action', () => {
+    const onLayerChange = vi.fn();
+    const layer = createDesignLayer({ type: 'text', role: 'title', content: 'Mi proyecto' }, 1);
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    render(
+      <PropertiesPanel
+        selectedLayers={[layer]}
+        copy={copy}
+        onLayerChange={onLayerChange}
+        onReplaceImage={vi.fn()}
+        metadataValues={{ title: 'El Plan de Escape' }}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('text-layer-sync-from-metadata-button'));
+    expect(onLayerChange).toHaveBeenCalledWith(layer.id, { content: 'El Plan de Escape', source: 'metadata' });
+    confirmSpy.mockRestore();
   });
 });

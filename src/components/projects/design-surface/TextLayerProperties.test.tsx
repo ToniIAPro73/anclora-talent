@@ -57,4 +57,58 @@ describe('TextLayerProperties', () => {
     fireEvent.change(screen.getByTestId('text-layer-rotation-input'), { target: { value: '45' } });
     expect(onChange).toHaveBeenCalledWith({ rotation: 45 });
   });
+
+  test('no sync-from-metadata button when metadataValue is not provided', () => {
+    render(<TextLayerProperties layer={makeLayer({ role: 'title' })} copy={copy} onChange={vi.fn()} />);
+    expect(screen.queryByTestId('text-layer-sync-from-metadata-button')).not.toBeInTheDocument();
+  });
+
+  test('no sync-from-metadata button when the metadata value already matches the content', () => {
+    render(
+      <TextLayerProperties
+        layer={makeLayer({ role: 'title', content: 'El Plan de Escape' })}
+        copy={copy}
+        onChange={vi.fn()}
+        metadataValue="El Plan de Escape"
+        onSyncFromMetadata={vi.fn()}
+      />,
+    );
+    expect(screen.queryByTestId('text-layer-sync-from-metadata-button')).not.toBeInTheDocument();
+  });
+
+  test('no sync-from-metadata button on a free-role layer', () => {
+    render(
+      <TextLayerProperties
+        layer={makeLayer({ role: 'free', content: 'Nota' })}
+        copy={copy}
+        onChange={vi.fn()}
+        metadataValue="Otro valor"
+        onSyncFromMetadata={vi.fn()}
+      />,
+    );
+    expect(screen.queryByTestId('text-layer-sync-from-metadata-button')).not.toBeInTheDocument();
+  });
+
+  test('sync-from-metadata asks for confirmation and only applies it once confirmed', () => {
+    const onSyncFromMetadata = vi.fn();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    render(
+      <TextLayerProperties
+        layer={makeLayer({ role: 'title', content: 'Mi proyecto' })}
+        copy={copy}
+        onChange={vi.fn()}
+        metadataValue="El Plan de Escape"
+        onSyncFromMetadata={onSyncFromMetadata}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('text-layer-sync-from-metadata-button'));
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(onSyncFromMetadata).not.toHaveBeenCalled();
+
+    confirmSpy.mockReturnValue(true);
+    fireEvent.click(screen.getByTestId('text-layer-sync-from-metadata-button'));
+    expect(onSyncFromMetadata).toHaveBeenCalled();
+    confirmSpy.mockRestore();
+  });
 });

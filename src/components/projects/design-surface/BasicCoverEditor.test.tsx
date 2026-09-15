@@ -58,13 +58,36 @@ describe('BasicCoverEditor', () => {
     expect(title.content).toBe('El Plan de Escape');
   });
 
-  test('selecting a template instantiates real positioned layers and calls onChange', () => {
+  test('selecting a template on a non-empty design asks for confirmation before instantiating real positioned layers', () => {
     const onChange = vi.fn();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     render(<BasicCoverEditor surface={makeSurface()} onChange={onChange} copy={copy} palette="obsidian" onPaletteChange={vi.fn()} />);
     fireEvent.click(screen.getByTestId(`basic-template-${COVER_TEMPLATES[0].id}`));
+    expect(confirmSpy).toHaveBeenCalled();
     const next: DesignSurface = onChange.mock.calls[0][0];
     expect(next.layers.length).toBeGreaterThan(0);
     expect(next.layers.every((l) => l.type !== 'text' || typeof l.x === 'number')).toBe(true);
+    confirmSpy.mockRestore();
+  });
+
+  test('canceling the confirmation leaves the design untouched', () => {
+    const onChange = vi.fn();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    render(<BasicCoverEditor surface={makeSurface()} onChange={onChange} copy={copy} palette="obsidian" onPaletteChange={vi.fn()} />);
+    fireEvent.click(screen.getByTestId(`basic-template-${COVER_TEMPLATES[0].id}`));
+    expect(onChange).not.toHaveBeenCalled();
+    confirmSpy.mockRestore();
+  });
+
+  test('selecting a template on an already-empty design applies it without asking for confirmation', () => {
+    const onChange = vi.fn();
+    const confirmSpy = vi.spyOn(window, 'confirm');
+    const surface = createEmptyDesignSurface('cover');
+    render(<BasicCoverEditor surface={surface} onChange={onChange} copy={copy} palette="obsidian" onPaletteChange={vi.fn()} />);
+    fireEvent.click(screen.getByTestId(`basic-template-${COVER_TEMPLATES[0].id}`));
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(onChange).toHaveBeenCalled();
+    confirmSpy.mockRestore();
   });
 
   test('selecting a palette preset recolors the surface and reports the new palette', () => {

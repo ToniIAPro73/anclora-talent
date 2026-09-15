@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  applyOriginalPageBackground,
   createDesignLayer,
   createEmptyDesignSurface,
+  isEmptyDesignSurface,
   migrateLegacySurfaceState,
   resolveCoverText,
   type TextLayerProps,
@@ -200,5 +202,47 @@ describe('resolveCoverText — metadata precedence (mission §40)', () => {
     const resolved = resolveCoverText(project, 'subtitle');
     expect(resolved.value).toBe('');
     expect(resolved.source).toBe('none');
+  });
+});
+
+describe('isEmptyDesignSurface', () => {
+  it('is true for a freshly created surface', () => {
+    expect(isEmptyDesignSurface(createEmptyDesignSurface('cover'))).toBe(true);
+  });
+
+  it('is false once any layer exists', () => {
+    const surface = createEmptyDesignSurface('cover');
+    surface.layers = [createDesignLayer({ type: 'text', role: 'free' }, 1)];
+    expect(isEmptyDesignSurface(surface)).toBe(false);
+  });
+
+  it('is false once an origin choice has been made, even with no layers yet', () => {
+    const surface = createEmptyDesignSurface('cover');
+    surface.originMode = 'use-original';
+    expect(isEmptyDesignSurface(surface)).toBe(false);
+  });
+});
+
+describe('applyOriginalPageBackground', () => {
+  it('sets an uncropped image background and clears layers, without touching the original asset', () => {
+    const surface = createEmptyDesignSurface('cover');
+    surface.layers = [createDesignLayer({ type: 'text', role: 'free' }, 1)];
+
+    const next = applyOriginalPageBackground(surface, {
+      assetId: 'asset-1',
+      mode: 'use-original',
+      imageDataUrl: 'data:image/png;base64,AAA',
+    });
+
+    expect(next.background).toEqual({ kind: 'image', src: 'data:image/png;base64,AAA', fit: 'cover', opacity: 1, originalUncropped: true });
+    expect(next.layers).toHaveLength(0);
+    expect(next.originAssetId).toBe('asset-1');
+    expect(next.originMode).toBe('use-original');
+  });
+
+  it('preserves the mode distinction between use-original and edit-original', () => {
+    const surface = createEmptyDesignSurface('back-cover');
+    const next = applyOriginalPageBackground(surface, { assetId: 'asset-2', mode: 'edit-original', imageDataUrl: 'data:image/png;base64,BBB' });
+    expect(next.originMode).toBe('edit-original');
   });
 });

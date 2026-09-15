@@ -200,4 +200,48 @@ describe('AdvancedCoverEditor', () => {
     fireEvent.click(screen.getByTestId(`layer-delete-${surface.layers[0].id}`));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ layers: [] }));
   });
+
+  it('offers no reset-to-original button when the surface has no origin asset', () => {
+    render(<AdvancedCoverEditor surface={makeSurfaceWithTitle()} onChange={vi.fn()} copy={copy} />);
+    expect(screen.queryByTestId('advanced-editor-reset-to-original-button')).not.toBeInTheDocument();
+  });
+
+  it('reset-to-original asks for confirmation and, once confirmed, restores the original background and clears layers', async () => {
+    const surface = makeSurfaceWithTitle();
+    surface.originAssetId = 'asset-1';
+    surface.originMode = 'edit-original';
+    const onChange = vi.fn();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    render(
+      <AdvancedCoverEditor surface={surface} onChange={onChange} copy={copy} originalBackgroundSrc="data:image/png;base64,AAA" />,
+    );
+    await waitFor(() => expect(mocks.state.objects).toHaveLength(1));
+
+    fireEvent.click(screen.getByTestId('advanced-editor-reset-to-original-button'));
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        layers: [],
+        background: { kind: 'image', src: 'data:image/png;base64,AAA', fit: 'cover', opacity: 1, originalUncropped: true },
+      }),
+    );
+    confirmSpy.mockRestore();
+  });
+
+  it('reset-to-original does nothing when the user cancels the confirmation', async () => {
+    const surface = makeSurfaceWithTitle();
+    surface.originAssetId = 'asset-1';
+    const onChange = vi.fn();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    render(
+      <AdvancedCoverEditor surface={surface} onChange={onChange} copy={copy} originalBackgroundSrc="data:image/png;base64,AAA" />,
+    );
+    await waitFor(() => expect(mocks.state.objects).toHaveLength(1));
+
+    fireEvent.click(screen.getByTestId('advanced-editor-reset-to-original-button'));
+    expect(onChange).not.toHaveBeenCalled();
+    confirmSpy.mockRestore();
+  });
 });

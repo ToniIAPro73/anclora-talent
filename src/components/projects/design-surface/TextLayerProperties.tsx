@@ -17,6 +17,7 @@ import {
   AlignVerticalSpaceAround,
   Bold,
   Italic,
+  RefreshCw,
   Underline,
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
@@ -36,22 +37,54 @@ export interface TextLayerPropertiesProps {
   copy: Copy;
   brandColors?: string[];
   onChange: (patch: Partial<TextLayerProps> & Partial<Pick<DesignLayer, 'x' | 'y' | 'width' | 'height' | 'rotation' | 'opacity'>>) => void;
+  /**
+   * The value the metadata precedence chain (`resolveCoverText`, mission
+   * §40-41) would currently produce for this layer's role — the caller
+   * (which holds the `ProjectRecord`) computes it. Shown only for a
+   * role !== 'free' layer as an explicit "Actualizar desde metadatos"
+   * action, gated by confirmation: it must never silently overwrite a
+   * manual edit.
+   */
+  metadataValue?: string;
+  onSyncFromMetadata?: () => void;
 }
 
 function segmentButtonClass(active: boolean) {
   return `ac-button ac-button--ghost ac-button--icon ac-button--sm${active ? '' : ''}`;
 }
 
-export function TextLayerProperties({ layer, copy, brandColors, onChange }: TextLayerPropertiesProps) {
+export function TextLayerProperties({ layer, copy, brandColors, onChange, metadataValue, onSyncFromMetadata }: TextLayerPropertiesProps) {
   const t = copy.text;
   const isBold = layer.fontWeight === 'bold' || (typeof layer.fontWeight === 'number' && layer.fontWeight >= 700);
   const isItalic = layer.fontStyle === 'italic';
   const isUnderline = layer.textDecoration === 'underline';
+  const canSyncFromMetadata =
+    layer.role !== 'free' && onSyncFromMetadata && typeof metadataValue === 'string' && metadataValue.trim() !== layer.content.trim();
+
+  const handleSyncFromMetadata = () => {
+    if (!onSyncFromMetadata) return;
+    if (!window.confirm(copy.origin.syncFromMetadataConfirm)) return;
+    onSyncFromMetadata();
+  };
 
   return (
     <div className="space-y-5" data-testid="text-layer-properties">
       <div className="space-y-2">
-        <Label className="text-xs font-semibold">{t.contentLabel}</Label>
+        <div className="flex items-center justify-between">
+          <Label className="text-xs font-semibold">{t.contentLabel}</Label>
+          {canSyncFromMetadata && (
+            <button
+              type="button"
+              data-testid="text-layer-sync-from-metadata-button"
+              onClick={handleSyncFromMetadata}
+              className="ac-button ac-button--ghost ac-button--sm inline-flex items-center gap-1"
+              title={copy.origin.syncFromMetadataLabel}
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              {copy.origin.syncFromMetadataLabel}
+            </button>
+          )}
+        </div>
         <Textarea
           aria-label={t.contentLabel}
           data-testid="text-layer-content-input"

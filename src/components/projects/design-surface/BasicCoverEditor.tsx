@@ -21,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import type { AppMessages } from '@/lib/i18n/messages';
 import {
   createDesignLayer,
+  isEmptyDesignSurface,
   type DesignLayer,
   type DesignSurface,
   type ImageLayerProps,
@@ -242,8 +243,9 @@ export function BasicCoverEditor({ surface, onChange, copy, palette, onPaletteCh
   };
 
   const applyTemplate = (template: EditorialTemplate) => {
+    if (!isEmptyDesignSurface(surface) && !window.confirm(copy.origin.resetToTemplateConfirm)) return;
     const next = buildDesignSurfaceFromTemplate(template, { palette });
-    onChange({ ...next, guides: surface.guides, safeArea: surface.safeArea, isbnArea: surface.isbnArea, originAssetId: surface.originAssetId, originMode: surface.originMode });
+    onChange({ ...next, guides: surface.guides, safeArea: surface.safeArea, isbnArea: surface.isbnArea, originAssetId: null, originMode: 'blank' });
   };
 
   const handlePaletteSelect = (next: SurfacePalette) => {

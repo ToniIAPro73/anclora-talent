@@ -990,6 +990,23 @@ export type AppMessages = {
       untitledImage: string;
       untitledShape: string;
     };
+    origin: {
+      promptTitle: string;
+      useOriginalLabel: string;
+      useOriginalDescription: string;
+      editAsBaseLabel: string;
+      editAsBaseDescription: string;
+      createNewLabel: string;
+      createNewDescription: string;
+      chooseTemplateLabel: string;
+      createFromScratchLabel: string;
+      rasterizingLabel: string;
+      resetToOriginalLabel: string;
+      resetToOriginalConfirm: string;
+      resetToTemplateConfirm: string;
+      syncFromMetadataLabel: string;
+      syncFromMetadataConfirm: string;
+    };
   };
 };
 
@@ -2212,6 +2229,23 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         untitledImage: 'Imagen',
         untitledShape: 'Forma',
       },
+      origin: {
+        promptTitle: '¿Cómo quieres empezar?',
+        useOriginalLabel: 'Usar portada original',
+        useOriginalDescription: 'Usa la página tal como está en el documento original, sin añadir nada encima.',
+        editAsBaseLabel: 'Editar como base',
+        editAsBaseDescription: 'Parte de la página original y añade elementos encima sin modificar el archivo original.',
+        createNewLabel: 'Crear nueva',
+        createNewDescription: 'Empieza desde cero o desde una plantilla, sin usar la página original.',
+        chooseTemplateLabel: 'Elegir plantilla',
+        createFromScratchLabel: 'Empezar en blanco',
+        rasterizingLabel: 'Preparando la página original…',
+        resetToOriginalLabel: 'Restablecer a la portada original',
+        resetToOriginalConfirm: 'Esto eliminará todos los elementos añadidos y volverá a la página original. ¿Continuar?',
+        resetToTemplateConfirm: 'Esto reemplazará el diseño actual con la plantilla seleccionada. ¿Continuar?',
+        syncFromMetadataLabel: 'Actualizar desde metadatos',
+        syncFromMetadataConfirm: 'Esto reemplazará el texto actual con el valor detectado en los metadatos del documento. ¿Continuar?',
+      },
     },
   },
   en: {
@@ -3430,6 +3464,23 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         untitledText: 'Text',
         untitledImage: 'Image',
         untitledShape: 'Shape',
+      },
+      origin: {
+        promptTitle: 'How do you want to start?',
+        useOriginalLabel: 'Use original cover',
+        useOriginalDescription: 'Use the page exactly as it is in the original document, with nothing added on top.',
+        editAsBaseLabel: 'Edit as a base',
+        editAsBaseDescription: 'Start from the original page and add elements on top without modifying the original file.',
+        createNewLabel: 'Create new',
+        createNewDescription: 'Start from scratch or from a template, without using the original page.',
+        chooseTemplateLabel: 'Choose a template',
+        createFromScratchLabel: 'Start blank',
+        rasterizingLabel: 'Preparing the original page…',
+        resetToOriginalLabel: 'Reset to the original cover',
+        resetToOriginalConfirm: 'This will remove every added element and revert to the original page. Continue?',
+        resetToTemplateConfirm: 'This will replace the current design with the selected template. Continue?',
+        syncFromMetadataLabel: 'Update from metadata',
+        syncFromMetadataConfirm: 'This will replace the current text with the value detected in the document metadata. Continue?',
       },
     },
   },

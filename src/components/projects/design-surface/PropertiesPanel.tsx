@@ -20,9 +20,11 @@ export interface PropertiesPanelProps {
   brandColors?: string[];
   onLayerChange: (layerId: string, patch: Partial<DesignLayer>) => void;
   onReplaceImage: (layerId: string, file: File) => void;
+  /** role -> value the metadata precedence chain currently resolves to (mission §40-41). The caller holds the `ProjectRecord`, so it computes this. */
+  metadataValues?: Partial<Record<string, string>>;
 }
 
-export function PropertiesPanel({ selectedLayers, copy, brandColors, onLayerChange, onReplaceImage }: PropertiesPanelProps) {
+export function PropertiesPanel({ selectedLayers, copy, brandColors, onLayerChange, onReplaceImage, metadataValues }: PropertiesPanelProps) {
   if (selectedLayers.length === 0) {
     return (
       <div className="ac-editor-inspector__empty" data-testid="properties-panel-empty">
@@ -42,12 +44,20 @@ export function PropertiesPanel({ selectedLayers, copy, brandColors, onLayerChan
   const layer = selectedLayers[0];
 
   if (layer.type === 'text') {
+    const textLayer = layer as DesignLayer & TextLayerProps;
+    const metadataValue = metadataValues?.[textLayer.role];
     return (
       <TextLayerProperties
-        layer={layer as DesignLayer & TextLayerProps}
+        layer={textLayer}
         copy={copy}
         brandColors={brandColors}
         onChange={(patch) => onLayerChange(layer.id, patch)}
+        metadataValue={metadataValue}
+        onSyncFromMetadata={
+          metadataValue !== undefined
+            ? () => onLayerChange(layer.id, { content: metadataValue, source: 'metadata' } as Partial<DesignLayer>)
+            : undefined
+        }
       />
     );
   }

@@ -161,6 +161,38 @@ export function isDesignSurfaceV2(value: unknown): value is DesignSurface {
   return Boolean(value) && typeof value === 'object' && (value as { version?: unknown }).version === 2;
 }
 
+/**
+ * True for a surface nobody has touched yet — a fresh `createEmptyDesignSurface()`
+ * result, or its migrated equivalent. Drives the empty-state prompt (mission
+ * §33-39, §50): as soon as any layer or origin choice exists, the prompt
+ * never reappears uninvited.
+ */
+export function isEmptyDesignSurface(surface: DesignSurface): boolean {
+  return surface.layers.length === 0 && (surface.originMode ?? 'blank') === 'blank';
+}
+
+/**
+ * Applies an inherited original-document page (rasterized client-side) as
+ * the surface's background (mission §33-39): "Usar portada original" and
+ * "Editar como base" both call this with the same rasterized image — the
+ * only difference is `mode`, kept for provenance/UI copy, never behavior.
+ * No layers are added — no Talent overlay unless the user explicitly adds
+ * one afterward. Never touches the original PDF asset itself, only the
+ * design surface that references it.
+ */
+export function applyOriginalPageBackground(
+  surface: DesignSurface,
+  input: { assetId: string; mode: Extract<SurfaceOriginMode, 'use-original' | 'edit-original'>; imageDataUrl: string },
+): DesignSurface {
+  return {
+    ...surface,
+    background: { kind: 'image', src: input.imageDataUrl, fit: 'cover', opacity: 1, originalUncropped: true },
+    layers: [],
+    originAssetId: input.assetId,
+    originMode: input.mode,
+  };
+}
+
 /** True width/height a fresh, empty surface should use — dimension presets (mission §48) pass a different size. */
 export function defaultSurfaceDimensions(): { width: number; height: number } {
   return { width: COVER_SURFACE_CANVAS.width, height: COVER_SURFACE_CANVAS.height };

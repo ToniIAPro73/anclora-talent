@@ -20,6 +20,7 @@ import {
   Magnet,
   Maximize,
   Redo2,
+  RotateCcw,
   ShieldCheck,
   Undo2,
   ZoomIn,
@@ -27,6 +28,7 @@ import {
 } from 'lucide-react';
 import type { AppMessages } from '@/lib/i18n/messages';
 import {
+  applyOriginalPageBackground,
   createDesignLayer,
   type DesignLayer,
   type DesignSurface,
@@ -42,6 +44,10 @@ export interface AdvancedCoverEditorProps {
   onChange: (surface: DesignSurface) => void;
   copy: AppMessages['coverDesignSurface'];
   brandColors?: string[];
+  /** The pristine rasterized original-page image (mission §33-39) — set only when the surface has an `originAssetId`. Powers "Reset to original"; the page/loader supplies it, since only it knows how to re-rasterize on demand. */
+  originalBackgroundSrc?: string;
+  /** role -> value the metadata precedence chain currently resolves to (mission §40-41), forwarded to the properties panel's "Actualizar desde metadatos" action. */
+  metadataValues?: Partial<Record<string, string>>;
 }
 
 function readFileAsDataUrl(file: File): Promise<string> {
@@ -53,7 +59,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
   });
 }
 
-export function AdvancedCoverEditor({ surface, onChange, copy, brandColors }: AdvancedCoverEditorProps) {
+export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, originalBackgroundSrc, metadataValues }: AdvancedCoverEditorProps) {
   const canvasRef = useRef<DesignSurfaceCanvasHandle>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const [selectedLayerIds, setSelectedLayerIds] = useState<string[]>([]);
@@ -116,6 +122,20 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors }: Ad
     });
   }, []);
 
+  const canResetToOriginal = Boolean(surface.originAssetId && originalBackgroundSrc);
+  const handleResetToOriginal = useCallback(() => {
+    if (!surface.originAssetId || !originalBackgroundSrc) return;
+    if (!window.confirm(copy.origin.resetToOriginalConfirm)) return;
+    onChange(
+      applyOriginalPageBackground(surface, {
+        assetId: surface.originAssetId,
+        mode: surface.originMode === 'use-original' ? 'use-original' : 'edit-original',
+        imageDataUrl: originalBackgroundSrc,
+      }),
+    );
+    setSelectedLayerIds([]);
+  }, [copy.origin.resetToOriginalConfirm, onChange, originalBackgroundSrc, surface]);
+
   return (
     <div className="ac-editor-shell" data-testid="advanced-cover-editor">
       <header className="ac-editor-shell__header">
@@ -171,6 +191,17 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors }: Ad
           >
             <Grid3x3 className="h-4 w-4" />
           </button>
+          {canResetToOriginal && (
+            <button
+              type="button"
+              data-testid="advanced-editor-reset-to-original-button"
+              onClick={handleResetToOriginal}
+              className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
+              title={copy.origin.resetToOriginalLabel}
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         <div className="ac-editor-shell__actions">
@@ -280,6 +311,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors }: Ad
             brandColors={brandColors}
             onLayerChange={patchLayer}
             onReplaceImage={handleReplaceImage}
+            metadataValues={metadataValues}
           />
         </aside>
       </div>
