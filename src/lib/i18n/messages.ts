@@ -896,6 +896,72 @@ export type AppMessages = {
       unchanged: string;
     };
   };
+  /** Cover Studio v2 — layered design surface (Fase C: typography/image/background/color). */
+  coverDesignSurface: {
+    noSelection: string;
+    multiSelection: string;
+    text: {
+      contentLabel: string;
+      fontFamilyLabel: string;
+      fontSizeLabel: string;
+      boldLabel: string;
+      italicLabel: string;
+      underlineLabel: string;
+      colorLabel: string;
+      alignLeftLabel: string;
+      alignCenterLabel: string;
+      alignRightLabel: string;
+      verticalAlignTopLabel: string;
+      verticalAlignMiddleLabel: string;
+      verticalAlignBottomLabel: string;
+      letterSpacingLabel: string;
+      lineHeightLabel: string;
+      textTransformLabel: string;
+      textTransformNone: string;
+      textTransformUppercase: string;
+      textTransformLowercase: string;
+      opacityLabel: string;
+      widthLabel: string;
+      heightLabel: string;
+      xLabel: string;
+      yLabel: string;
+      rotationLabel: string;
+    };
+    image: {
+      replaceLabel: string;
+      uploadLabel: string;
+      fitLabel: string;
+      fitCover: string;
+      fitContain: string;
+      fitFill: string;
+      opacityLabel: string;
+      grayscaleLabel: string;
+      brightnessLabel: string;
+      contrastLabel: string;
+      saturationLabel: string;
+      resetFiltersLabel: string;
+    };
+    background: {
+      label: string;
+      solid: string;
+      gradient: string;
+      image: string;
+      gradientAngleLabel: string;
+      addColorStopButton: string;
+      removeColorStopButton: string;
+      opacityLabel: string;
+      fitLabel: string;
+      fitCover: string;
+      fitContain: string;
+    };
+    colorPicker: {
+      customLabel: string;
+      recentLabel: string;
+      paletteLabel: string;
+      brandColorsLabel: string;
+      hexLabel: string;
+    };
+  };
 };
 
 export const appMessages: Record<UiLocale, AppMessages> = {
@@ -2024,6 +2090,71 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         unchanged: 'No hay cambios desde la última versión guardada.',
       },
     },
+    coverDesignSurface: {
+      noSelection: 'Selecciona un elemento del lienzo para editar sus propiedades.',
+      multiSelection: 'Varios elementos seleccionados.',
+      text: {
+        contentLabel: 'Contenido',
+        fontFamilyLabel: 'Tipografía',
+        fontSizeLabel: 'Tamaño',
+        boldLabel: 'Negrita',
+        italicLabel: 'Cursiva',
+        underlineLabel: 'Subrayado',
+        colorLabel: 'Color',
+        alignLeftLabel: 'Alinear a la izquierda',
+        alignCenterLabel: 'Centrar',
+        alignRightLabel: 'Alinear a la derecha',
+        verticalAlignTopLabel: 'Arriba',
+        verticalAlignMiddleLabel: 'Centro',
+        verticalAlignBottomLabel: 'Abajo',
+        letterSpacingLabel: 'Espaciado entre letras',
+        lineHeightLabel: 'Interlineado',
+        textTransformLabel: 'Mayúsculas/minúsculas',
+        textTransformNone: 'Normal',
+        textTransformUppercase: 'MAYÚSCULAS',
+        textTransformLowercase: 'minúsculas',
+        opacityLabel: 'Opacidad',
+        widthLabel: 'Ancho',
+        heightLabel: 'Alto',
+        xLabel: 'X',
+        yLabel: 'Y',
+        rotationLabel: 'Rotación',
+      },
+      image: {
+        replaceLabel: 'Reemplazar imagen',
+        uploadLabel: 'Subir imagen',
+        fitLabel: 'Ajuste',
+        fitCover: 'Cubrir',
+        fitContain: 'Contener',
+        fitFill: 'Estirar',
+        opacityLabel: 'Opacidad',
+        grayscaleLabel: 'Blanco y negro',
+        brightnessLabel: 'Brillo',
+        contrastLabel: 'Contraste',
+        saturationLabel: 'Saturación',
+        resetFiltersLabel: 'Restablecer ajustes',
+      },
+      background: {
+        label: 'Fondo',
+        solid: 'Color sólido',
+        gradient: 'Degradado',
+        image: 'Imagen',
+        gradientAngleLabel: 'Ángulo',
+        addColorStopButton: 'Añadir color',
+        removeColorStopButton: 'Quitar color',
+        opacityLabel: 'Opacidad',
+        fitLabel: 'Ajuste',
+        fitCover: 'Cubrir',
+        fitContain: 'Contener',
+      },
+      colorPicker: {
+        customLabel: 'Personalizado',
+        recentLabel: 'Recientes',
+        paletteLabel: 'Paleta',
+        brandColorsLabel: 'Colores de marca',
+        hexLabel: 'Hex',
+      },
+    },
   },
   en: {
     shell: {
@@ -3147,6 +3278,71 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         unavailable: 'The operation could not be completed. Please try again later.',
         notFound: 'We could not find this version.',
         unchanged: 'No changes since the last saved version.',
+      },
+    },
+    coverDesignSurface: {
+      noSelection: 'Select an element on the canvas to edit its properties.',
+      multiSelection: 'Multiple elements selected.',
+      text: {
+        contentLabel: 'Content',
+        fontFamilyLabel: 'Font',
+        fontSizeLabel: 'Size',
+        boldLabel: 'Bold',
+        italicLabel: 'Italic',
+        underlineLabel: 'Underline',
+        colorLabel: 'Color',
+        alignLeftLabel: 'Align left',
+        alignCenterLabel: 'Center',
+        alignRightLabel: 'Align right',
+        verticalAlignTopLabel: 'Top',
+        verticalAlignMiddleLabel: 'Middle',
+        verticalAlignBottomLabel: 'Bottom',
+        letterSpacingLabel: 'Letter spacing',
+        lineHeightLabel: 'Line height',
+        textTransformLabel: 'Case',
+        textTransformNone: 'Normal',
+        textTransformUppercase: 'UPPERCASE',
+        textTransformLowercase: 'lowercase',
+        opacityLabel: 'Opacity',
+        widthLabel: 'Width',
+        heightLabel: 'Height',
+        xLabel: 'X',
+        yLabel: 'Y',
+        rotationLabel: 'Rotation',
+      },
+      image: {
+        replaceLabel: 'Replace image',
+        uploadLabel: 'Upload image',
+        fitLabel: 'Fit',
+        fitCover: 'Cover',
+        fitContain: 'Contain',
+        fitFill: 'Stretch',
+        opacityLabel: 'Opacity',
+        grayscaleLabel: 'Black and white',
+        brightnessLabel: 'Brightness',
+        contrastLabel: 'Contrast',
+        saturationLabel: 'Saturation',
+        resetFiltersLabel: 'Reset adjustments',
+      },
+      background: {
+        label: 'Background',
+        solid: 'Solid color',
+        gradient: 'Gradient',
+        image: 'Image',
+        gradientAngleLabel: 'Angle',
+        addColorStopButton: 'Add color',
+        removeColorStopButton: 'Remove color',
+        opacityLabel: 'Opacity',
+        fitLabel: 'Fit',
+        fitCover: 'Cover',
+        fitContain: 'Contain',
+      },
+      colorPicker: {
+        customLabel: 'Custom',
+        recentLabel: 'Recent',
+        paletteLabel: 'Palette',
+        brandColorsLabel: 'Brand colors',
+        hexLabel: 'Hex',
       },
     },
   },
