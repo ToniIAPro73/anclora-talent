@@ -202,6 +202,18 @@ describe('PublishChannelsPanel', () => {
     await waitFor(() => expect(URL.createObjectURL).toHaveBeenCalled());
   });
 
+  test('hotmart export surfaces the insufficient-content error without downloading', async () => {
+    exportHotmartActionMock.mockResolvedValue({ ok: false, error: 'insufficientContent' });
+    renderPanel();
+
+    fireEvent.click(screen.getByRole('button', { name: COPY.exportButton }));
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent(COPY.errors.insufficientContent),
+    );
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
   test('EN copy renders (locale parity surface)', () => {
     const en = resolveLocaleMessages('en').publishChannels;
     render(

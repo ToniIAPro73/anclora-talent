@@ -731,6 +731,7 @@ export type AppMessages = {
     pendingBadge: string;
     viewAsset: string;
     provenanceCompositor: string;
+    provenanceOriginal: string;
     provenanceService: string;
     provenanceLocal: string;
     kinds: {
@@ -791,6 +792,7 @@ export type AppMessages = {
       auth: string;
       validation: string;
       circuitOpen: string;
+      insufficientContent: string;
     };
   };
   collaboration: {
@@ -1848,6 +1850,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       pendingBadge: 'En proceso',
       viewAsset: 'Abrir',
       provenanceCompositor: 'Compositor',
+      provenanceOriginal: 'PDF original',
       provenanceService: 'FileStudio · nube',
       provenanceLocal: 'FileStudio · tu dispositivo',
       kinds: {
@@ -1911,6 +1914,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         auth: 'El token de Gumroad no es válido o fue revocado.',
         validation: 'Gumroad rechazó los datos del producto. Revisa la ficha.',
         circuitOpen: 'Gumroad no responde; reintentaremos en unos segundos.',
+        insufficientContent:
+          'No se dispone de suficiente contenido analizado para generar un paquete comercial útil.',
       },
     },
     collaboration: {
@@ -2970,6 +2975,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       pendingBadge: 'In progress',
       viewAsset: 'Open',
       provenanceCompositor: 'Compositor',
+      provenanceOriginal: 'Original PDF',
       provenanceService: 'FileStudio · cloud',
       provenanceLocal: 'FileStudio · your device',
       kinds: {
@@ -3033,6 +3039,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         auth: 'The Gumroad token is invalid or was revoked.',
         validation: 'Gumroad rejected the product data. Review the sheet.',
         circuitOpen: 'Gumroad is not responding; we will retry in a few seconds.',
+        insufficientContent: 'Not enough analyzed content is available to generate a useful commercial package.',
       },
     },
     collaboration: {

@@ -112,6 +112,29 @@ describe('LaunchPackPanel', () => {
     expect(refreshMock).not.toHaveBeenCalled();
   });
 
+  test('fixed-pdf pack: PDF item shows the "original PDF" provenance badge, not compositor', () => {
+    const view: LaunchPackView = {
+      version: 1,
+      createdAt: '2026-08-04T10:00:00.000Z',
+      items: [
+        {
+          assetId: 'pdf',
+          kind: 'pdf',
+          url: 'https://blob.example/el-plan-de-escape.pdf',
+          blobKey: 'p/1.pdf',
+          provenance: 'original',
+          sourceHash: 'original-sha-256',
+          createdAt: '2026-08-04T10:00:00.000Z',
+          stale: false,
+        },
+      ],
+    };
+    render(<LaunchPackPanel copy={COPY} projectId="p1" view={view} />);
+
+    expect(screen.getByTestId('launch-pack-asset-pdf')).toHaveTextContent(COPY.provenanceOriginal);
+    expect(screen.getByTestId('launch-pack-asset-pdf')).not.toHaveTextContent(COPY.provenanceCompositor);
+  });
+
   test('with a manifest the button regenerates the pack', () => {
     render(<LaunchPackPanel copy={COPY} projectId="p1" view={manifestView()} />);
     expect(screen.getByRole('button', { name: COPY.regenerateButton })).toBeInTheDocument();

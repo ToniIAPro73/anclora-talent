@@ -18,6 +18,25 @@ function project(templateId?: string | null): ProjectRecord {
   } as unknown as ProjectRecord;
 }
 
+function fixedPdfProject(): ProjectRecord {
+  return {
+    id: PROJECT,
+    userId: USER,
+    slug: 'el-plan-de-escape',
+    templateId: null,
+    document: {
+      title: 'El Plan de Escape',
+      source: {
+        fileName: 'El_Plan_de_Escape_EBOOK.pdf',
+        mimeType: 'application/pdf',
+        importedAt: '2026-01-01T00:00:00Z',
+        mode: 'fixed-pdf' as const,
+        sha256: 'original-sha-256',
+      },
+    },
+  } as unknown as ProjectRecord;
+}
+
 function createDbMock() {
   const inserted: unknown[] = [];
   return {
@@ -94,6 +113,12 @@ describe('resolveLaunchPackPlan', () => {
   test('technical-manual declares pdf+html; modular-course adds slides', () => {
     expect(resolveLaunchPackPlan('technical-manual')).toEqual(['pdf', 'html', 'markdown']);
     expect(resolveLaunchPackPlan('modular-course')).toEqual(['epub', 'pdf', 'markdown', 'slides']);
+  });
+
+  test('fixed-pdf: only the original PDF, regardless of template', () => {
+    expect(resolveLaunchPackPlan('standard-book', true)).toEqual(['pdf']);
+    expect(resolveLaunchPackPlan('modular-course', true)).toEqual(['pdf']);
+    expect(resolveLaunchPackPlan(null, true)).toEqual(['pdf']);
   });
 });
 
@@ -179,6 +204,26 @@ describe('generateLaunchPack', () => {
     const { deps } = createDeps({ loadProject: vi.fn().mockResolvedValue(null) });
     const result = await generateLaunchPack(deps, { userId: USER, projectId: PROJECT });
     expect(result).toEqual({ ok: false, error: 'notFound' });
+  });
+
+  test('fixed-pdf: pack only contains the original PDF, provenance "original", keyed by the source sha256', async () => {
+    const { deps, uploads, inserted } = createDeps({
+      loadProject: vi.fn().mockResolvedValue(fixedPdfProject()),
+    });
+    const result = await generateLaunchPack(deps, { userId: USER, projectId: PROJECT });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.generated).toEqual(['pdf']);
+    expect(uploads.map((upload) => upload.name)).toEqual(['el-plan-de-escape.pdf']);
+
+    const items = (inserted[0] as { items: Array<Record<string, unknown>> }).items;
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      kind: 'pdf',
+      provenance: 'original',
+      sourceHash: 'original-sha-256',
+    });
   });
 
   test('delegate hook items merge into the same manifest version', async () => {

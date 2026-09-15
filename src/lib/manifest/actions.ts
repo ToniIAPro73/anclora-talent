@@ -28,7 +28,9 @@ import {
   buildProjectPdfWithConfig,
   renderProjectExportHtml,
 } from '@/lib/projects/export-builder';
+import { fetchOriginalPdfBuffer } from '@/lib/projects/original-pdf';
 import { buildSlidesHtml } from '@/lib/projects/slides-builder';
+import { isFixedPdfProject } from '@/lib/projects/types';
 import { getProductTemplate } from '@/lib/templates/product-templates';
 import { hashDocumentAst } from './hash';
 import type { ManifestProvenance, ProjectAssetManifestItem } from './model';
@@ -154,6 +156,13 @@ export async function generateLaunchPackAction(input: {
           return buildEpub(project, composed, { template: brandOverrides });
         },
         buildPdf: async (project) => {
+          // Fixed-PDF document mode: the launch pack's PDF must be the exact
+          // original upload (SHA256 byte-identical), never the composer's
+          // output — pack.ts marks this item's provenance as 'original'.
+          if (isFixedPdfProject(project)) {
+            const { buffer } = await fetchOriginalPdfBuffer(project);
+            return new Uint8Array(buffer);
+          }
           const brandOverrides = await resolveProjectBrandTemplateOverrides(userId, project);
           const pdfDoc = await buildProjectPdfWithConfig(project, EXPORT_CONFIG, brandOverrides);
           return renderToBuffer(pdfDoc);

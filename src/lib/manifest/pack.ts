@@ -18,7 +18,7 @@
  * Blob or a database (same pattern as filestudio/emission.ts).
  */
 
-import type { ProjectRecord } from '@/lib/projects/types';
+import { isFixedPdfProject, type ProjectRecord } from '@/lib/projects/types';
 import { getProductTemplate } from '@/lib/templates/product-templates';
 import type { ManifestAssetKind, ProjectAssetManifest, ProjectAssetManifestItem } from './model';
 import { createManifestVersion, type ManifestStore } from './repository';
@@ -80,10 +80,19 @@ const ASSET_FILE_SPEC: Record<
 };
 
 /**
- * Resolves which compositor assets the pack produces for a project, from its
- * product template's `derivedAssets` (see module doc for the mapping).
+ * Resolves which assets the pack produces for a project, from its product
+ * template's `derivedAssets` (see module doc for the mapping).
+ *
+ * Fixed-PDF document mode: Talent has no semantic AST to reflow, so the only
+ * asset the pack can ever produce is the original PDF itself — EPUB/HTML/
+ * Markdown/slides all require an editable copy first (Fase 3).
  */
-export function resolveLaunchPackPlan(templateId?: string | null): ManifestAssetKind[] {
+export function resolveLaunchPackPlan(
+  templateId?: string | null,
+  isFixedPdf = false,
+): ManifestAssetKind[] {
+  if (isFixedPdf) return ['pdf'];
+
   const template = getProductTemplate(templateId);
   if (!template) return [...DEFAULT_PACK_KINDS];
 
@@ -131,8 +140,14 @@ export async function generateLaunchPack(
   const project = await deps.loadProject(input.userId, input.projectId);
   if (!project) return { ok: false, error: 'notFound' };
 
-  const plan = resolveLaunchPackPlan(project.templateId);
+  const fixedPdf = isFixedPdfProject(project);
+  const plan = resolveLaunchPackPlan(project.templateId, fixedPdf);
   const sourceHash = deps.sourceHashOf(project);
+  // Fixed-PDF document mode: the PDF item is the original upload, not an AST
+  // export — stale detection must key off the original file's own hash so a
+  // re-imported source (Fase 3 reimport flow) is the only thing that can
+  // mark it stale, never an AST hash that never changes for this project.
+  const originalPdfHash = project.document.source?.sha256 ?? sourceHash;
   const createdAt = (deps.now ?? (() => new Date()))().toISOString();
   const slug = project.slug || 'proyecto';
 
@@ -152,13 +167,14 @@ export async function generateLaunchPack(
       const payload = typeof bytes === 'string' ? bytes : bytes.buffer as ArrayBuffer;
       const file = new File([payload], `${slug}.${spec.extension}`, { type: spec.mimeType });
       const uploaded = await deps.upload(input.projectId, file);
+      const isOriginalPdf = fixedPdf && kind === 'pdf';
       items.push({
         assetId: kind,
         kind,
         url: uploaded?.url ?? null,
         blobKey: uploaded?.pathname ?? null,
-        provenance: 'compositor',
-        sourceHash,
+        provenance: isOriginalPdf ? 'original' : 'compositor',
+        sourceHash: isOriginalPdf ? originalPdfHash : sourceHash,
         createdAt,
       });
       generated.push(kind);
