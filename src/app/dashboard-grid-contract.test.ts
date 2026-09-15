@@ -36,8 +36,14 @@ describe('dashboard v3 contract', () => {
     expect(createProjectForm).toContain('talent-create-form__primary');
     expect(createProjectForm).toContain('talent-create-form__optional');
     expect(createProjectForm).toContain('talent-create-form__intro');
-    expect(globalsCss).toMatch(/\.talent-create-form--dashboard\s*\{[^}]*grid-template-columns: minmax\(0, 1\.25fr\) minmax\(22rem, 0\.75fr\)/);
-    expect(globalsCss).toMatch(/\.talent-create-form--dashboard \.ac-template-catalog__grid\s*\{[^}]*display: flex/);
+    // Fase 4/8: 22rem/0.75fr left the import-mode selector too cramped;
+    // widened alongside the fix for that compression/overlap bug.
+    expect(globalsCss).toMatch(/\.talent-create-form--dashboard\s*\{[^}]*grid-template-columns: minmax\(0, 1\.1fr\) minmax\(26rem, 0\.9fr\)/);
+    // Fase 8: the template catalog was a horizontally-scrolling flex
+    // filmstrip — fixed to a wrapping grid so every template is reachable
+    // without a horizontal scrollbar.
+    expect(globalsCss).toMatch(/\.talent-create-form--dashboard \.ac-template-catalog__grid\s*\{[^}]*display: grid/);
+    expect(globalsCss).not.toMatch(/\.talent-create-form--dashboard \.ac-template-catalog__grid\s*\{[^}]*overflow-x: auto/);
     expect(globalsCss).toMatch(/\.talent-create-form--dashboard \.ac-template-catalog__grid\s*\{[^}]*padding-top: 14px/);
     expect(globalsCss).not.toMatch(/\.talent-create-form--dashboard \.talent-create-form__optional\s*\{[^}]*overflow-y: auto/);
   });
