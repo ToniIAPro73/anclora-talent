@@ -315,6 +315,8 @@ export type AppMessages = {
     importOcrBadgeService: string;
     importOcrBadgeBrowser: string;
     importChaptersDetected: string;
+    importChapterDetected: string;
+    importStructureDetected: string;
     importTitleDetected: string;
     importAuthorDetected: string;
     importConfidenceHigh: string;
@@ -1380,6 +1382,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       importOcrBadgeService: 'Procesado en la nube privada de Anclora',
       importOcrBadgeBrowser: 'Procesado en tu navegador',
       importChaptersDetected: '{count} capítulos detectados',
+      importChapterDetected: '1 capítulo detectado',
+      importStructureDetected: 'Estructura detectada',
       importTitleDetected: 'Título detectado',
       importAuthorDetected: 'Autor detectado',
       importConfidenceHigh: 'Confianza alta',
@@ -2477,6 +2481,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       importOcrBadgeService: 'Processed in Anclora’s private cloud',
       importOcrBadgeBrowser: 'Processed in your browser',
       importChaptersDetected: '{count} chapters detected',
+      importChapterDetected: '1 chapter detected',
+      importStructureDetected: 'Detected structure',
       importTitleDetected: 'Detected title',
       importAuthorDetected: 'Detected author',
       importConfidenceHigh: 'High confidence',
