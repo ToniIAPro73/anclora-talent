@@ -1,5 +1,26 @@
 import type { NextConfig } from "next";
 
+// pdf-import-vercel-runtime: pdf-parse/pdfjs-dist are marked
+// `serverExternalPackages` below so they're required from real node_modules
+// instead of being bundled — but that alone does NOT guarantee every file
+// inside them survives Next's output file tracing (@vercel/nft). Tracing
+// only includes files it can statically prove are reachable; pdfjs-dist
+// resolves both its worker script and its optional canvas polyfill via
+// dynamic paths nft can't follow, so BOTH were silently pruned from the
+// deployed function despite being present in node_modules at build time —
+// confirmed against a real Vercel Preview deployment (`next build && next
+// start` never reproduces this: it reads node_modules directly, no
+// tracing/pruning step). Only the Linux glibc @napi-rs/canvas binary
+// Vercel's Node.js runtime actually uses is included — the other ~9
+// platform packages in its optionalDependencies would only bloat the
+// function.
+const PDF_PARSE_RUNTIME_TRACING_INCLUDES = [
+  './node_modules/pdf-parse/**',
+  './node_modules/pdfjs-dist/**',
+  './node_modules/@napi-rs/canvas/**',
+  './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
+];
+
 const nextConfig: NextConfig = {
   // P-E1-04/P-U3-02: keep the dev-only issues badge anchored to the content
   // corner so it never overlaps the sidebar rail or the footer.
@@ -26,36 +47,22 @@ const nextConfig: NextConfig = {
       './node_modules/@sparticuz/chromium/bin/**',
     ],
     // pdf-import-vercel-runtime: pdfjs-dist (legacy build, used by
-    // pdf-parse) polyfills DOMMatrix/ImageData/Path2D for Node via
-    // `try { require('@napi-rs/canvas') } catch { warn(...) }`. Next's
-    // file tracer (@vercel/nft) treats a try/catch-wrapped require as
-    // best-effort and does not include it automatically, so the package
-    // — present in node_modules at build time — was missing from the
-    // deployed function, DOMMatrix stayed undefined, and every PDF import
-    // threw `DOMMatrix is not defined` in production (never reproduced by
-    // `next build && next start`, which reads node_modules directly with
-    // no tracing/pruning step). Only the Linux glibc binary Vercel's
-    // Node.js runtime actually uses is included — the other ~9 platform
-    // packages in @napi-rs/canvas's optionalDependencies are irrelevant
-    // here and would only bloat the function.
-    '/api/projects/import': [
-      './node_modules/@napi-rs/canvas/**',
-      './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
-    ],
+    // pdf-parse) resolves its worker script (pdf.worker.mjs) and optional
+    // canvas polyfill (@napi-rs/canvas) via dynamic paths that Next's file
+    // tracer (@vercel/nft) cannot statically follow. Both were silently
+    // pruned from the deployed function despite being present in
+    // node_modules at build time — confirmed against a real Vercel Preview
+    // deployment (`next build && next start` never reproduces this: it
+    // reads node_modules directly, no tracing/pruning step). Only the
+    // Linux glibc @napi-rs/canvas binary Vercel's Node.js runtime actually
+    // uses is included — the other ~9 platform packages in its
+    // optionalDependencies would only bloat the function.
+    '/api/projects/import': PDF_PARSE_RUNTIME_TRACING_INCLUDES,
     // Same PDF path is reachable from these routes via server actions in
     // src/lib/projects/actions.ts (create/import, chapter import, reimport).
-    '/dashboard': [
-      './node_modules/@napi-rs/canvas/**',
-      './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
-    ],
-    '/projects/new': [
-      './node_modules/@napi-rs/canvas/**',
-      './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
-    ],
-    '/projects/[projectId]/editor': [
-      './node_modules/@napi-rs/canvas/**',
-      './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
-    ],
+    '/dashboard': PDF_PARSE_RUNTIME_TRACING_INCLUDES,
+    '/projects/new': PDF_PARSE_RUNTIME_TRACING_INCLUDES,
+    '/projects/[projectId]/editor': PDF_PARSE_RUNTIME_TRACING_INCLUDES,
   },
   // These packages ship native or large runtime assets and must be required
   // from node_modules at runtime, not bundled into the function chunk.

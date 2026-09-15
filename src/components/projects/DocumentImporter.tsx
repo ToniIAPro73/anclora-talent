@@ -65,7 +65,7 @@ function ConfidenceBadge({ level, copy, testId }: { level: FieldConfidence; copy
   return (
     <span
       data-testid={testId}
-      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${toneClass}`}
+      className={`inline-flex items-center shrink-0 whitespace-nowrap rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${toneClass}`}
     >
       {label}
     </span>
@@ -431,45 +431,50 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                     </div>
                   )}
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="ac-surface-panel ac-surface-panel--subtle gap-1 p-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+                  <div className="ac-surface-panel ac-surface-panel--subtle gap-1 p-4 min-w-0">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)] shrink-0">
                         {copy.importTitleDetected}
                       </p>
                       {analysis.confidence ? (
                         <ConfidenceBadge level={analysis.confidence.title} copy={copy} testId="import-analysis-title-confidence" />
                       ) : null}
                     </div>
-                    <p className="text-sm font-semibold text-[var(--text-primary)]" data-testid="import-analysis-title">
+                    <p className="text-sm font-semibold text-[var(--text-primary)] truncate" data-testid="import-analysis-title">
                       {analysis.title}
                     </p>
                     {analysis.subtitle ? (
-                      <p className="text-xs leading-6 text-[var(--text-secondary)]" data-testid="import-analysis-subtitle">
+                      <p className="text-xs leading-6 text-[var(--text-secondary)] truncate" data-testid="import-analysis-subtitle">
                         {analysis.subtitle}
                       </p>
                     ) : null}
                   </div>
-                  <div className="ac-surface-panel ac-surface-panel--subtle gap-1 p-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                  <div className="ac-surface-panel ac-surface-panel--subtle gap-1 p-4 min-w-0">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)] shrink-0">
                         {copy.importAuthorDetected}
                       </p>
                       {analysis.confidence ? (
                         <ConfidenceBadge level={analysis.confidence.author} copy={copy} testId="import-analysis-author-confidence" />
                       ) : null}
                     </div>
-                    <p className="text-sm font-semibold text-[var(--text-primary)]" data-testid="import-analysis-author">
+                    <p className="text-sm font-semibold text-[var(--text-primary)] truncate" data-testid="import-analysis-author">
                       {analysis.author || '—'}
                     </p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs font-semibold text-[var(--accent-text)]" data-testid="import-analysis-chapters">
-                        {copy.importChaptersDetected.replace('{count}', String(analysis.chapterCount))}
+                  </div>
+                  <div className="ac-surface-panel ac-surface-panel--subtle gap-1 p-4 min-w-0">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)] shrink-0">
+                        {copy.importStructureDetected}
                       </p>
                       {analysis.confidence ? (
-                        <ConfidenceBadge level={analysis.confidence.chapters} copy={copy} testId="import-analysis-chapters-confidence" />
+                        <ConfidenceBadge level={analysis.confidence.chapters} copy={copy} testId="import-analysis-structure-confidence" />
                       ) : null}
                     </div>
+                    <p className="text-sm font-semibold text-[var(--accent-text)]" data-testid="import-analysis-chapters">
+                      {analysis.chapterCount === 1 ? copy.importChapterDetected : copy.importChaptersDetected.replace('{count}', String(analysis.chapterCount))}
+                    </p>
                   </div>
                 </div>
                 {analysis.manuscriptType ? (
@@ -511,11 +516,11 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                   </div>
                 ) : null}
                 {analysis.warnings.length > 0 ? (
-                  <div className="ac-surface-panel gap-2 border-amber-400/40 bg-amber-400/10 p-4" data-testid="import-analysis-warnings">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-200">
+                  <div className="ac-surface-panel gap-2 border-[var(--warning)]/40 bg-[var(--warning)]/10 p-4" data-testid="import-analysis-warnings">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--warning)]">
                       {copy.importWarningsLabel}
                     </p>
-                    <ul className="space-y-1 text-xs leading-6 text-amber-50/90">
+                    <ul className="space-y-1 text-xs leading-6 text-[var(--warning)]/90">
                       {analysis.warnings.map((warning, index) => (
                         <li key={`${warning}-${index}`}>{warning}</li>
                       ))}
