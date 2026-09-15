@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-describe('createProjectAction — fixed-pdf document mode', () => {
+describe('createProjectAction — fixed-pdf document mode (fail-closed)', () => {
   beforeEach(() => {
     vi.resetModules();
   });
@@ -59,7 +59,7 @@ describe('createProjectAction — fixed-pdf document mode', () => {
     return formData;
   }
 
-  test('uploads the PDF privately and passes mode/hash/blobUrl into the seed', async () => {
+  test('uploads the PDF privately and passes mode/hash/blobUrl/accessLevel into the seed', async () => {
     const mocks = setupMocks();
     const { createProjectAction } = await import('./actions');
 
@@ -94,19 +94,37 @@ describe('createProjectAction — fixed-pdf document mode', () => {
     expect(createInput.importedDocument?.sourceBlobUrl).toBeNull();
   });
 
-  test('falls back to editable when the private upload fails', async () => {
+  test('FAIL CLOSED: private upload failure redirects to a controlled error and creates no project at all', async () => {
     const mocks = setupMocks();
-    mocks.uploadPrivateProjectDocument.mockResolvedValueOnce(null as never);
+    mocks.uploadPrivateProjectDocument.mockRejectedValueOnce(
+      new Error('Private source-document storage is not configured'),
+    );
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const { createProjectAction } = await import('./actions');
 
     await expect(createProjectAction(formWithPdf('fixed-pdf'))).rejects.toThrow(
-      'NEXT_REDIRECT:/projects/p-1/editor',
+      'NEXT_REDIRECT:/projects/new?fixedPdfError=1',
     );
 
-    const [, createInput] = mocks.createProject.mock.calls[0] as [string, { importedDocument: Record<string, unknown> }];
-    expect(createInput.importedDocument?.mode).toBe('editable');
-    expect(createInput.importedDocument?.sourceBlobUrl).toBeNull();
+    // No project of any kind — not fixed-pdf, not editable — is created.
+    expect(mocks.createProject).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+
+  test('FAIL CLOSED: an upload that resolves without throwing but with a falsy result still refuses to create a project', async () => {
+    // Defensive: uploadPrivateProjectDocument's real contract is "throw on
+    // failure", but a caller must never silently proceed to editable even
+    // if a future change makes it resolve falsy instead.
+    const mocks = setupMocks();
+    mocks.uploadPrivateProjectDocument.mockResolvedValueOnce(undefined as never);
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { createProjectAction } = await import('./actions');
+
+    await expect(createProjectAction(formWithPdf('fixed-pdf'))).rejects.toThrow(
+      'NEXT_REDIRECT:/projects/new?fixedPdfError=1',
+    );
+
+    expect(mocks.createProject).not.toHaveBeenCalled();
     consoleSpy.mockRestore();
   });
 });

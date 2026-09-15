@@ -120,39 +120,35 @@ export async function createProjectAction(formData: FormData) {
             // the workspace. The original bytes are hashed and stored
             // privately; the source-document asset gets a real blobUrl
             // instead of the editable path's null placeholder.
-            let mode: DocumentMode = 'editable';
+            //
+            // FAIL CLOSED: choosing "keep original PDF" is a contractual
+            // promise to preserve that exact file. If private storage
+            // fails for any reason, this must NOT fall back to editable
+            // and must NOT create a project of any kind — see the redirect
+            // below, which aborts before projectRepository.createProject
+            // is ever called.
+            const mode: DocumentMode = isFixedPdfRequested ? 'fixed-pdf' : 'editable';
             let sourceBlobUrl: string | null = null;
             let sourceSha256: string | undefined;
             let sourceSizeBytes: number | undefined;
             let sourceAccessLevel: SourceDocumentAccessLevel | undefined;
 
             if (isFixedPdfRequested) {
-              try {
-                const buffer = Buffer.from(await sourceDocument.arrayBuffer());
-                sourceSha256 = sha256Buffer(buffer);
-                sourceSizeBytes = buffer.byteLength;
+              const buffer = Buffer.from(await sourceDocument.arrayBuffer());
+              sourceSha256 = sha256Buffer(buffer);
+              sourceSizeBytes = buffer.byteLength;
 
+              try {
                 const uploaded = await uploadPrivateProjectDocument(randomUUID(), sourceDocument);
-                if (uploaded) {
-                  mode = 'fixed-pdf';
-                  sourceBlobUrl = uploaded.url;
-                  sourceAccessLevel = uploaded.accessLevel;
-                } else {
-                  console.error('[createProjectAction] fixed-pdf upload returned no blob, falling back to editable', {
-                    userId,
-                    sourceFileName: result.sourceFileName,
-                  });
-                }
+                sourceBlobUrl = uploaded.url;
+                sourceAccessLevel = uploaded.accessLevel;
               } catch (uploadError) {
-                // Never let a storage failure crash project creation — the
-                // editable path (still fully valid, just without the
-                // original-PDF fidelity guarantee) is always the safe
-                // fallback.
-                console.error('[createProjectAction] fixed-pdf upload failed, falling back to editable', {
+                console.error('[createProjectAction] fixed-pdf storage failed; refusing to create a project', {
                   userId,
                   sourceFileName: result.sourceFileName,
                   uploadError,
                 });
+                redirect('/projects/new?fixedPdfError=1');
               }
             }
 

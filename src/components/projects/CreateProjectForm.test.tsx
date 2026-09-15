@@ -64,4 +64,21 @@ describe('CreateProjectForm', () => {
     expect(screen.queryByTestId('structure-configure-button')).not.toBeInTheDocument();
     expect(screen.queryByTestId('structure-schema-input')).not.toBeInTheDocument();
   });
+
+  test('fixed-pdf fail-closed: shows the storage-error banner and keeps the form usable', () => {
+    const copy = resolveLocaleMessages('es').project;
+    render(<CreateProjectForm copy={copy} fixedPdfError />);
+
+    const banner = screen.getByTestId('fixed-pdf-storage-error');
+    expect(banner).toHaveTextContent(copy.fixedPdfStorageErrorTitle);
+    expect(banner).toHaveTextContent(copy.fixedPdfStorageErrorBody);
+    // The form itself is still there — the user stays in the creation flow.
+    expect(screen.getByTestId('create-project-form')).toBeInTheDocument();
+    expect(screen.getByTestId('create-project-title-input')).toBeInTheDocument();
+  });
+
+  test('no banner when fixedPdfError is not set', () => {
+    render(<CreateProjectForm copy={resolveLocaleMessages('es').project} />);
+    expect(screen.queryByTestId('fixed-pdf-storage-error')).not.toBeInTheDocument();
+  });
 });

@@ -12,10 +12,15 @@ export function CreateProjectForm({
   copy,
   structureProfiles = [],
   variant = 'default',
+  fixedPdfError = false,
 }: {
   copy: AppMessages['project'];
   structureProfiles?: StructureProfile[];
   variant?: 'default' | 'dashboard';
+  /** Fixed-PDF document mode, fail-closed: private storage failed on the
+   *  previous submit, no project was created — the user stays on this
+   *  same creation form and re-attempts the upload. */
+  fixedPdfError?: boolean;
 }) {
   return (
     <form
@@ -29,6 +34,16 @@ export function CreateProjectForm({
           <h2 className="ac-surface-panel__title">{copy.createFormTitle}</h2>
           <p>{copy.createFormDescription}</p>
         </div>
+        {fixedPdfError && (
+          <div
+            role="alert"
+            data-testid="fixed-pdf-storage-error"
+            className="mt-4 rounded-[16px] border border-red-400/40 bg-red-400/10 p-4"
+          >
+            <p className="text-sm font-semibold text-red-400">{copy.fixedPdfStorageErrorTitle}</p>
+            <p className="mt-1 text-xs leading-6 text-red-400/90">{copy.fixedPdfStorageErrorBody}</p>
+          </div>
+        )}
         <label htmlFor="project-title" className="ac-form-field mt-5">
           <span className="ac-form-field__label">{copy.titleLabel}</span>
           <input

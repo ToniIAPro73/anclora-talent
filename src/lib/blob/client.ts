@@ -16,55 +16,53 @@ export async function uploadProjectBlob(projectId: string, file: File) {
 }
 
 /**
- * Fixed-PDF document mode: the original uploaded PDF is user content, not a
- * cover/render asset, so it is stored with `access: 'private'` instead of
- * `uploadProjectBlob`'s public default — the returned URL is never sent to
- * the browser directly; only `fetchPrivateProjectDocument` (server-side)
- * resolves it back into bytes, behind the project's own auth/ownership
- * check.
+ * Fixed-PDF document mode: the original uploaded PDF is stored in a
+ * dedicated, private-access Blob store — completely separate from the
+ * public store `uploadProjectBlob` uses for cover/back-cover/chapter
+ * images (that store, and BLOB_READ_WRITE_TOKEN, are never touched here).
+ * The returned URL is never sent to the browser directly; only
+ * `fetchPrivateProjectDocument` (server-side) resolves it back into bytes,
+ * behind the project's own auth/ownership check.
  *
- * Documented infra gap: this repo's Blob store, at least as provisioned
- * today, rejects `access: 'private'` outright ("Cannot use private access
- * on a public store. The store must be configured with private access." —
- * confirmed via a real upload attempt, not assumed). Rather than fail
- * fixed-pdf mode entirely, this falls back to public storage as the
- * mission-sanctioned minimum viable secure option — the URL still never
- * reaches any client, only server code with an ownership check ever reads
- * it. This is NOT a silent downgrade: it is logged, and the resulting
- * `accessLevel` is persisted on `document.source` so every later read knows
- * which strategy to use without re-probing. See
- * sdd/features/feature-fixed-pdf-document-mode for the full writeup.
+ * FAIL CLOSED, by design: this store's token
+ * (SOURCE_DOCUMENT_READ_WRITE_TOKEN) must be configured, and the upload
+ * must succeed as private. There is no fallback to public storage and no
+ * fallback to editable mode — a caller that gets a thrown error here MUST
+ * surface a controlled failure and must NOT create a project of any kind.
+ * (Earlier revisions of this feature fell back to a public store when the
+ * default store rejected private access; that violated the contract that
+ * choosing "keep original PDF" preserves the file, and has been removed.)
+ * See sdd/features/feature-fixed-pdf-document-mode for the full writeup.
  */
 export async function uploadPrivateProjectDocument(keyPrefix: string, file: File) {
-  if (!process.env.BLOB_READ_WRITE_TOKEN || file.size === 0) {
-    return null;
+  if (file.size === 0) {
+    throw new Error('Cannot store an empty source document');
+  }
+
+  const token = process.env.SOURCE_DOCUMENT_READ_WRITE_TOKEN;
+  if (!token) {
+    throw new Error('Private source-document storage is not configured (SOURCE_DOCUMENT_READ_WRITE_TOKEN missing)');
   }
 
   const safeName = `${keyPrefix}/source/${Date.now()}-${file.name.replace(/\s+/g, '-').toLowerCase()}`;
-
-  try {
-    const result = await put(safeName, file, { access: 'private', addRandomSuffix: true });
-    return { url: result.url, accessLevel: 'private' as const };
-  } catch (error) {
-    console.error(
-      '[blob] private access unavailable on this store; falling back to public+proxy-only storage for the source PDF',
-      error,
-    );
-    const result = await put(safeName, file, { access: 'public', addRandomSuffix: true });
-    return { url: result.url, accessLevel: 'public-proxy-only' as const };
-  }
+  const result = await put(safeName, file, { access: 'private', addRandomSuffix: true, token });
+  return { url: result.url, accessLevel: 'private' as const };
 }
 
 /**
  * Server-side only: streams a source document back by its stored URL.
- * `accessLevel` must match what `uploadPrivateProjectDocument` actually
- * used (persisted on `document.source.sourceAccessLevel`) — a private blob
- * needs the SDK's authenticated `get()`; a public-proxy-only fallback blob
- * is fetched directly, since the store never issued it a private handle.
+ * `accessLevel` must match how it was actually stored (persisted on
+ * `document.source.sourceAccessLevel`): `'private'` reads through the
+ * dedicated private store's token; `'public-proxy-only'` is a legacy value
+ * from documents created before the private store existed — those remain
+ * readable via a plain fetch against the (still never client-exposed)
+ * public URL. No new document is ever written with `'public-proxy-only'`.
  */
 export async function fetchPrivateProjectDocument(url: string, accessLevel: SourceDocumentAccessLevel) {
   if (accessLevel === 'private') {
-    return get(url, { access: 'private' });
+    const token = process.env.SOURCE_DOCUMENT_READ_WRITE_TOKEN;
+    if (!token) return null;
+    return get(url, { access: 'private', token });
   }
 
   const response = await fetch(url);

@@ -82,9 +82,21 @@ export default async function ProjectEditorPage({
     ? { copy: messages.collaboration, view: collaborationView }
     : undefined;
 
+  // Source-document URLs are server-only capabilities. The workspace needs
+  // the asset metadata (name/type) but never reads the Blob URL directly;
+  // FixedPdfPreview uses the authenticated projectId route instead. Strip
+  // the URL before crossing the server/client boundary so private Blob paths
+  // cannot enter the RSC payload or client-side props.
+  const clientProject = {
+    ...project,
+    assets: project.assets.map((asset) =>
+      asset.usage === 'source-document' ? { ...asset, blobUrl: null } : asset,
+    ),
+  };
+
   return (
     <ProjectWorkspace
-      project={project}
+      project={clientProject}
       copy={projectCopy}
       brandProfiles={brandProfiles}
       launchPack={launchPack}

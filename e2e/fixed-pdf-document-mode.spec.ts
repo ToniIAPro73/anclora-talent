@@ -141,6 +141,13 @@ test.describe('fixed-pdf document mode (synthetic fixture)', () => {
     await dismissDocumentDataModal(page);
     await expect(page.locator('body')).not.toContainText(/Application error|500|Internal Server Error/i);
 
+    // The private Blob URL is a server-only capability. It must not cross
+    // into the RSC payload/client props; the viewer accesses it only through
+    // the authenticated projectId route.
+    const renderedDocument = await page.content();
+    expect(renderedDocument).not.toContain('.private.blob.vercel-storage.com');
+    expect(renderedDocument).not.toContain('gn3uhfhahfneij7r');
+
     // Chapters step (2): never forces the chapter organizer.
     await page.getByTestId('next-step-button').click();
     await expect(page.getByTestId('fixed-pdf-included-panel')).toBeVisible();
