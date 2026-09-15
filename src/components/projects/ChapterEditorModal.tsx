@@ -28,7 +28,12 @@ export function ChapterEditorModal({
 
   return (
     <div
-      className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-md"
+      // Fase 6: no overflow rule here meant a canvas taller than the
+      // viewport had nowhere defined to scroll (sometimes the browser page
+      // scrolled instead of the editor). This wrapper now only clips —
+      // AdvancedRichTextEditor's own content area is the single scroll
+      // region.
+      className="fixed inset-0 z-[200] overflow-hidden bg-black/85 backdrop-blur-md"
       onClick={onClose}
     >
       <ChapterEditorFullscreen

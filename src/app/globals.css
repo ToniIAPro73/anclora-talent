@@ -1666,6 +1666,39 @@ ul.toc-list > li {
   overflow-x: hidden;
 }
 
+/* Fase 6: chapter editor scroll fix.
+   .ac-editor-shell only declared `min-height: 100vh` (a floor, never a
+   cap), and neither .ac-editor-shell__main nor .ac-text-editor declared
+   `grid-template-rows` — on a `display: grid` container with no explicit
+   rows, each child sizes to its own content ("auto"), so the content row
+   just grew to fit the full-height page canvas instead of being bounded to
+   the remaining viewport space. .ac-text-editor__content--scroll's own
+   `overflow-y: auto` (design-system CSS) then had nothing to actually
+   scroll — the box was already exactly as tall as its content. The only
+   thing that "worked" was zooming the browser out to ~60%, which shrinks
+   every fixed-pixel dimension until it happens to fit. Fix: bound every
+   ancestor down to the content div with `min-height: 0` + a real `fr`
+   track, so .ac-text-editor__content--scroll is the one region that
+   actually scrolls. */
+.ac-editor-shell {
+  height: 100%;
+  min-height: 0;
+}
+
+.ac-editor-shell__main {
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+}
+
+.ac-text-editor {
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+}
+
+.ac-text-editor__content--scroll {
+  min-height: 0;
+}
+
 @media (max-width: 767px) {
   .ac-editor-shell__header {
     align-items: flex-start;

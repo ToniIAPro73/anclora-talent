@@ -245,7 +245,10 @@ export function ChapterEditorFullscreen({
           </div>
         )}
 
-        <div className="ac-editor-shell__surface flex-1 overflow-auto overflow-x-hidden">
+        {/* Fase 6: this must clip, not scroll — .ac-text-editor__content--scroll
+            below is the one intended scroll region. Two independent
+            `overflow-auto` ancestors produced competing scrollbars. */}
+        <div className="ac-editor-shell__surface min-h-0 overflow-hidden">
           <AdvancedRichTextEditor
             defaultContent={editor.htmlContent}
             onUpdate={editor.setHtmlContent}
