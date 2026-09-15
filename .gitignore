@@ -79,3 +79,4 @@ validation/
 
 # Manual PDF temporary artifacts (canonical manual assets live under docs/public)
 tmp/manual-pdf/
+tmp/
