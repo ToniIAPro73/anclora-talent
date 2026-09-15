@@ -81,6 +81,12 @@ function isDocxFile(file: File) {
   );
 }
 
+function isPdfFile(file: File) {
+  return file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+}
+
+type DocumentMode = 'fixed-pdf' | 'editable';
+
 function titleFromFileName(fileName: string) {
   return fileName
     .replace(/\.[^.]+$/, '')
@@ -164,10 +170,16 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
   // as a hidden `composition` form field once confirmed.
   const [confirmedComposition, setConfirmedComposition] = useState<CompositionSettings | null>(null);
   const [isDocumentDataOpen, setIsDocumentDataOpen] = useState(false);
+  // Fixed-PDF document mode: only meaningful for a PDF upload. 'fixed-pdf'
+  // is the recommended default — the original PDF's design is preserved.
+  const [documentMode, setDocumentMode] = useState<DocumentMode>('fixed-pdf');
 
   const analyzeFile = async (file: File, manuscriptTypeOverride?: ManuscriptType) => {
     setSelectedFileName(file.name);
     setSelectedFile(file);
+    if (isPdfFile(file)) {
+      setDocumentMode('fixed-pdf');
+    }
     setImportState('analyzing');
     setAnalysis(null);
     setErrorMessage('');
@@ -431,6 +443,67 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                     </div>
                   )}
                 </div>
+                {selectedFile && isPdfFile(selectedFile) ? (
+                  <div
+                    role="radiogroup"
+                    aria-label={copy.documentModeLabel}
+                    data-testid="document-mode-selector"
+                    className="grid gap-3 sm:grid-cols-2"
+                  >
+                    <p className="sm:col-span-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                      {copy.documentModeLabel}
+                    </p>
+                    {(
+                      [
+                        {
+                          value: 'fixed-pdf' as const,
+                          title: copy.documentModeFixedPdfTitle,
+                          desc: copy.documentModeFixedPdfDesc,
+                          testId: 'document-mode-fixed-pdf',
+                          badge: copy.documentModeFixedPdfRecommended,
+                        },
+                        {
+                          value: 'editable' as const,
+                          title: copy.documentModeEditableTitle,
+                          desc: copy.documentModeEditableDesc,
+                          testId: 'document-mode-editable',
+                          badge: null,
+                        },
+                      ]
+                    ).map((option) => (
+                      <label
+                        key={option.value}
+                        data-testid={option.testId}
+                        className={`ac-surface-panel ac-surface-panel--subtle flex cursor-pointer flex-col gap-2 p-4 text-left transition ${
+                          documentMode === option.value ? 'border-[var(--accent)]' : ''
+                        }`}
+                      >
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              data-testid={`${option.testId}-radio`}
+                              name="document-mode-choice"
+                              value={option.value}
+                              checked={documentMode === option.value}
+                              onChange={() => setDocumentMode(option.value)}
+                              className="h-4 w-4"
+                            />
+                            <span className="text-sm font-semibold text-[var(--text-primary)]">
+                              {option.title}
+                            </span>
+                          </span>
+                          {option.badge ? (
+                            <span className="ac-button ac-button--ghost ac-button--sm pointer-events-none shrink-0 text-[10px] uppercase tracking-[0.1em]">
+                              {option.badge}
+                            </span>
+                          ) : null}
+                        </span>
+                        <span className="text-xs leading-6 text-[var(--text-secondary)]">{option.desc}</span>
+                      </label>
+                    ))}
+                  </div>
+                ) : null}
                 <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
                   <div className="ac-surface-panel ac-surface-panel--subtle gap-1 p-4 min-w-0">
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -564,6 +637,15 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         />
       )}
 
+      {selectedFile && isPdfFile(selectedFile) && (
+        <input
+          type="hidden"
+          name="documentMode"
+          data-testid="document-mode-hidden-input"
+          value={documentMode}
+        />
+      )}
+
       <Portal>
         <DocumentDataModal
           isOpen={isDocumentDataOpen}
@@ -573,6 +655,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
           source={analysis?.composition?.source ?? 'not-extracted'}
           onConfirm={(settings) => setConfirmedComposition(settings)}
           onClose={() => setIsDocumentDataOpen(false)}
+          documentMode={selectedFile && isPdfFile(selectedFile) ? documentMode : undefined}
         />
       </Portal>
     </div>

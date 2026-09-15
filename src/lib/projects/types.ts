@@ -37,12 +37,36 @@ export interface DocumentChapter {
   imageCanvasHeight?: number;
 }
 
+/**
+ * 'editable' (default when undefined, for backward compatibility with every
+ * project created before this field existed): the document was normalized
+ * into chapters/blocks and is governed by the composition engine.
+ * 'fixed-pdf': the original PDF binary is the canonical visual source; the
+ * semantic pipeline only produces sidecar metadata and never governs
+ * rendering, cover, back cover, TOC or pagination.
+ */
+export type DocumentMode = 'editable' | 'fixed-pdf';
+
+/**
+ * 'private': the source Blob store honored `access: 'private'`.
+ * 'public-proxy-only': the store rejected private access (documented infra
+ * gap, see sdd/features/feature-fixed-pdf-document-mode); the blob is
+ * technically public, but its URL is still only ever read server-side,
+ * behind the project's own auth/ownership check.
+ */
+export type SourceDocumentAccessLevel = 'private' | 'public-proxy-only';
+
 export interface ProjectDocumentSource {
   fileName: string;
   mimeType: string;
   importedAt: string;
+  mode?: DocumentMode;
   pageCount?: number;
   outline?: EditorialMapEntry[];
+  sizeBytes?: number;
+  sha256?: string;
+  sourceAssetId?: string;
+  sourceAccessLevel?: SourceDocumentAccessLevel;
 }
 
 export interface EditorialMapEntry {
@@ -141,6 +165,15 @@ export interface ProjectRecord {
   assets: ProjectAsset[];
 }
 
+/** Canonical mode check — undefined `source.mode` behaves as 'editable'. */
+export function isFixedPdfProject(project: ProjectRecord): boolean {
+  return project.document.source?.mode === 'fixed-pdf';
+}
+
+export function isEditableProject(project: ProjectRecord): boolean {
+  return !isFixedPdfProject(project);
+}
+
 export interface ProjectSummary {
   id: string;
   slug: string;
@@ -179,6 +212,16 @@ export interface ImportedDocumentSeed {
   /** M5 — auto-detected manuscript type, independent of any override. */
   detectedManuscriptType?: ManuscriptType;
   detectedOutline?: EditorialMapEntry[];
+  /** Fixed-PDF document mode: undefined behaves as 'editable'. */
+  mode?: DocumentMode;
+  /** Fixed-PDF document mode: Blob URL of the uploaded original. */
+  sourceBlobUrl?: string | null;
+  /** Fixed-PDF document mode: SHA-256 of the uploaded original bytes. */
+  sourceSha256?: string;
+  /** Fixed-PDF document mode: byte size of the uploaded original. */
+  sourceSizeBytes?: number;
+  /** Fixed-PDF document mode: whether the Blob store honored private access. */
+  sourceAccessLevel?: SourceDocumentAccessLevel;
   chapterTitle: string;
   blocks: Array<{
     type: DocumentBlockType;

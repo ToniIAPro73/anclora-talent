@@ -30,7 +30,7 @@ function buildProject(exportGate: 'off' | 'warn' | 'block') {
   return {
     id: 'project-1',
     slug: 'libro-de-prueba',
-    document: { rules: { exportGate } },
+    document: { rules: { exportGate }, source: null },
   };
 }
 
@@ -112,5 +112,20 @@ describe('GET /api/projects/export/epub', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('x-anclora-gate')).toBeNull();
     expect(buildEpubMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('fixed-pdf project → 409, EPUB is never built', async () => {
+    getProjectByIdMock.mockResolvedValue({
+      id: 'project-2',
+      slug: 'el-plan-de-escape',
+      document: { rules: { exportGate: 'off' }, source: { mode: 'fixed-pdf' } },
+    });
+
+    const { GET } = await import('./route');
+    const response = await GET(buildRequest());
+
+    expect(response.status).toBe(409);
+    expect(buildEpubMock).not.toHaveBeenCalled();
+    expect(composeProjectPreviewMock).not.toHaveBeenCalled();
   });
 });

@@ -6,7 +6,9 @@ import { redirect } from 'next/navigation';
 import { requireUserId } from '@/lib/auth/guards';
 import { getDb, hasDatabase } from '@/lib/db';
 import { projectRepository, userPreferencesRepository } from '@/lib/db/repositories';
-import { uploadProjectBlob } from '@/lib/blob/client';
+import { uploadProjectBlob, uploadPrivateProjectDocument } from '@/lib/blob/client';
+import { sha256Buffer } from './hash';
+import type { DocumentMode, SourceDocumentAccessLevel } from './types';
 import { captureAutoSaveSnapshot, captureProjectSnapshot } from '@/lib/snapshots/capture';
 import { deriveProvenanceUpdate } from '@/lib/ai/provenance';
 import { normalizeSurfaceState, type SurfaceState } from './cover-surface';
@@ -48,6 +50,13 @@ export async function createProjectAction(formData: FormData) {
   const title = String(formData.get('title') ?? '').trim();
   const templateId = String(formData.get('templateId') ?? '').trim() || undefined;
   const sourceDocument = formData.get('sourceDocument');
+  // Fixed-PDF document mode: only meaningful for a PDF upload; any other
+  // value (or absence) behaves as the existing editable flow.
+  const documentModeRaw = String(formData.get('documentMode') ?? '').trim();
+  const isFixedPdfRequested =
+    documentModeRaw === 'fixed-pdf' &&
+    sourceDocument instanceof File &&
+    sourceDocument.type === 'application/pdf';
   // F3: confirmed structure schema from the governed wizard (G2: the field
   // only exists after explicit human confirmation in the UI).
   const structureSchemaRaw = String(formData.get('structureSchema') ?? '').trim();
@@ -105,14 +114,58 @@ export async function createProjectAction(formData: FormData) {
         ? await (async () => {
             const { extractImportedDocumentSeed } = await import('./import');
             const result = await extractImportedDocumentSeed(sourceDocument);
+
+            // Fixed-PDF document mode: the semantic seed above is kept as a
+            // sidecar (title/subtitle/author/outline) only — it never gates
+            // the workspace. The original bytes are hashed and stored
+            // privately; the source-document asset gets a real blobUrl
+            // instead of the editable path's null placeholder.
+            let mode: DocumentMode = 'editable';
+            let sourceBlobUrl: string | null = null;
+            let sourceSha256: string | undefined;
+            let sourceSizeBytes: number | undefined;
+            let sourceAccessLevel: SourceDocumentAccessLevel | undefined;
+
+            if (isFixedPdfRequested) {
+              try {
+                const buffer = Buffer.from(await sourceDocument.arrayBuffer());
+                sourceSha256 = sha256Buffer(buffer);
+                sourceSizeBytes = buffer.byteLength;
+
+                const uploaded = await uploadPrivateProjectDocument(randomUUID(), sourceDocument);
+                if (uploaded) {
+                  mode = 'fixed-pdf';
+                  sourceBlobUrl = uploaded.url;
+                  sourceAccessLevel = uploaded.accessLevel;
+                } else {
+                  console.error('[createProjectAction] fixed-pdf upload returned no blob, falling back to editable', {
+                    userId,
+                    sourceFileName: result.sourceFileName,
+                  });
+                }
+              } catch (uploadError) {
+                // Never let a storage failure crash project creation — the
+                // editable path (still fully valid, just without the
+                // original-PDF fidelity guarantee) is always the safe
+                // fallback.
+                console.error('[createProjectAction] fixed-pdf upload failed, falling back to editable', {
+                  userId,
+                  sourceFileName: result.sourceFileName,
+                  uploadError,
+                });
+              }
+            }
+
             console.info('[createProjectAction] imported document extracted', {
               userId,
               sourceFileName: result.sourceFileName,
               sourceMimeType: result.sourceMimeType,
               title: result.title,
               blocks: result.blocks.length,
+              mode,
+              sourceAccessLevel,
             });
-            return result;
+            return { ...result, mode, sourceBlobUrl, sourceSha256, sourceSizeBytes, sourceAccessLevel };
           })()
         : null);
 

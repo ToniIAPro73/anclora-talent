@@ -8,6 +8,7 @@ import { ChapterOrganizer } from './ChapterOrganizer';
 import { DocumentStatsCard } from './DocumentStatsCard';
 import { CoverStudio } from './cover-studio/CoverStudio';
 import { PreviewCanvas } from './PreviewCanvas';
+import { FixedPdfPreview } from './FixedPdfPreview';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { TemplateSelector } from './TemplateSelector';
 import { CollaborationPanel } from './CollaborationPanel';
@@ -56,7 +57,7 @@ import {
 } from '@/lib/projects/cover-surface';
 import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface-resolver';
 import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
-import type { ProjectRecord } from '@/lib/projects/types';
+import { isFixedPdfProject, type ProjectRecord } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { BrandProfile } from '@/lib/brand/brand-profile';
 import type { LaunchPackView } from '@/lib/manifest/view';
@@ -205,6 +206,10 @@ export function ProjectWorkspace({
 }) {
   const router = useRouter();
   const { preferences } = useEditorPreferences();
+  // Fixed-PDF document mode: the original PDF is the canonical visual
+  // source. Chapters/template/cover/back-cover steps are never forced —
+  // they render as "already included" instead of an editor.
+  const fixedPdf = isFixedPdfProject(project);
   const [activeStep, setActiveStep] = useState(() => {
     const persistedStep = readStoredWorkflowStep(project.id);
     return Number.isFinite(project.workflowStep)
@@ -336,17 +341,25 @@ export function ProjectWorkspace({
     });
   };
 
-  const steps: Step[] = useMemo(() => [
-    { id: 1, title: copy.stepContent, description: copy.stepContentDesc, status: activeStep === 1 ? 'active' : activeStep > 1 ? 'completed' : 'pending' },
-    { id: 2, title: copy.stepChapters, description: copy.stepChaptersDesc, status: activeStep === 2 ? 'active' : activeStep > 2 ? 'completed' : 'pending' },
-    { id: 3, title: copy.stepTemplate, description: copy.stepTemplateDesc, status: activeStep === 3 ? 'active' : activeStep > 3 ? 'completed' : 'pending' },
-    { id: 4, title: copy.stepCover, description: copy.stepCoverDesc, status: activeStep === 4 ? 'active' : activeStep > 4 ? 'completed' : 'pending' },
-    { id: 5, title: copy.stepBackCover, description: copy.stepBackCoverDesc, status: activeStep === 5 ? 'active' : activeStep > 5 ? 'completed' : 'pending' },
-    { id: 6, title: copy.stepPreview, description: copy.stepPreviewDesc, status: activeStep === 6 ? 'active' : activeStep > 6 ? 'completed' : 'pending' },
-    { id: 7, title: copy.stepCollaborate, description: copy.stepCollaborateDesc, status: activeStep === 7 ? 'active' : activeStep > 7 ? 'completed' : 'pending' },
-    { id: 8, title: copy.stepAI, description: copy.stepAIDesc, status: activeStep === 8 ? 'active' : activeStep > 8 ? 'completed' : 'pending' },
-    { id: 9, title: copy.stepExport, description: copy.stepExportDesc, status: activeStep === 9 ? 'active' : activeStep > 9 ? 'completed' : 'pending' },
-  ], [activeStep, copy]);
+  const steps: Step[] = useMemo(() => {
+    // Fixed-PDF document mode: steps 2-5 (chapters/template/cover/back
+    // cover) are already resolved by the original PDF — shown as
+    // completed rather than pending, regardless of activeStep.
+    const includedStatus = (id: number): Step['status'] =>
+      activeStep === id ? 'active' : fixedPdf ? 'completed' : activeStep > id ? 'completed' : 'pending';
+
+    return [
+      { id: 1, title: copy.stepContent, description: copy.stepContentDesc, status: activeStep === 1 ? 'active' : activeStep > 1 ? 'completed' : 'pending' },
+      { id: 2, title: copy.stepChapters, description: fixedPdf ? copy.fixedPdfIncludedStepBody : copy.stepChaptersDesc, status: includedStatus(2) },
+      { id: 3, title: copy.stepTemplate, description: fixedPdf ? copy.fixedPdfIncludedStepBody : copy.stepTemplateDesc, status: includedStatus(3) },
+      { id: 4, title: copy.stepCover, description: fixedPdf ? copy.fixedPdfIncludedStepBody : copy.stepCoverDesc, status: includedStatus(4) },
+      { id: 5, title: copy.stepBackCover, description: fixedPdf ? copy.fixedPdfIncludedStepBody : copy.stepBackCoverDesc, status: includedStatus(5) },
+      { id: 6, title: copy.stepPreview, description: copy.stepPreviewDesc, status: activeStep === 6 ? 'active' : activeStep > 6 ? 'completed' : 'pending' },
+      { id: 7, title: copy.stepCollaborate, description: copy.stepCollaborateDesc, status: activeStep === 7 ? 'active' : activeStep > 7 ? 'completed' : 'pending' },
+      { id: 8, title: copy.stepAI, description: copy.stepAIDesc, status: activeStep === 8 ? 'active' : activeStep > 8 ? 'completed' : 'pending' },
+      { id: 9, title: copy.stepExport, description: copy.stepExportDesc, status: activeStep === 9 ? 'active' : activeStep > 9 ? 'completed' : 'pending' },
+    ];
+  }, [activeStep, copy, fixedPdf]);
 
   const handleSyncPageNumbers = () => {
     setPageNumberSyncState('saving');
@@ -419,6 +432,22 @@ export function ProjectWorkspace({
       router.refresh();
     });
   };
+
+  const renderFixedPdfIncludedPanel = (stepTitle: string) => (
+    <section
+      className="ac-surface-panel ac-surface-panel--subtle p-8 text-center"
+      data-testid="fixed-pdf-included-panel"
+    >
+      <p className="ac-surface-panel__eyebrow">{stepTitle}</p>
+      <span
+        className="mt-3 inline-flex items-center gap-2 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--accent-text)]"
+      >
+        <Check className="h-3.5 w-3.5" />
+        {copy.fixedPdfIncludedBadge}
+      </span>
+      <p className="mt-4 text-sm leading-6 text-[var(--text-secondary)]">{copy.fixedPdfIncludedStepBody}</p>
+    </section>
+  );
 
   const renderStepContent = () => {
     switch (activeStep) {
@@ -559,6 +588,7 @@ export function ProjectWorkspace({
           </div>
         );
       case 2: // Chapters
+        if (fixedPdf) return renderFixedPdfIncludedPanel(copy.stepChapters);
         return (
           <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
             <div className="mb-4 flex justify-end">
@@ -600,6 +630,7 @@ export function ProjectWorkspace({
           </section>
         );
       case 3: // Template
+        if (fixedPdf) return renderFixedPdfIncludedPanel(copy.stepTemplate);
         return (
           <div className="mx-auto max-w-5xl">
             <TemplateSelector
@@ -612,19 +643,25 @@ export function ProjectWorkspace({
           </div>
         );
       case 4: // Cover
+        if (fixedPdf) return renderFixedPdfIncludedPanel(copy.stepCover);
         return (
           <div className="mx-auto max-w-6xl space-y-6">
             <CoverStudio key={project.updatedAt} surface="cover" project={project} copy={copy} />
           </div>
         );
       case 5: // Back Cover
+        if (fixedPdf) return renderFixedPdfIncludedPanel(copy.stepBackCover);
         return (
           <div className="mx-auto max-w-6xl space-y-6">
             <CoverStudio key={project.updatedAt} surface="back-cover" project={project} copy={copy} />
           </div>
         );
       case 6: // Preview
-        return <PreviewCanvas project={project} copy={copy} />;
+        return fixedPdf ? (
+          <FixedPdfPreview projectId={project.id} copy={copy} />
+        ) : (
+          <PreviewCanvas project={project} copy={copy} />
+        );
       case 7: // Collaborate
         return collaboration ? (
           <CollaborationPanel
@@ -674,19 +711,32 @@ export function ProjectWorkspace({
                >
                   {copy.previewExportButton}
                </button>
-               <PdfExportButton
-                 project={project}
-                 projectSlug={project.slug || ''}
-                 copy={copy}
-                 className="ac-button ac-button--primary"
-               />
+               {fixedPdf ? (
+                 <button
+                   data-testid="export-pdf-original-button"
+                   onClick={() => {
+                     window.open(`/api/projects/export/pdf?projectId=${project.id}`, '_blank');
+                   }}
+                   className="ac-button ac-button--primary"
+                 >
+                   {copy.fixedPdfExportLabel}
+                 </button>
+               ) : (
+                 <PdfExportButton
+                   project={project}
+                   projectSlug={project.slug || ''}
+                   copy={copy}
+                   className="ac-button ac-button--primary"
+                 />
+               )}
                <button
                  data-testid="export-docx-button"
                  onClick={() => {
                    const docxUrl = `/api/projects/export/docx?projectId=${project.id}&${exportQuery}`;
                    window.open(docxUrl, '_blank');
                  }}
-                 disabled={exportBlocked}
+                 disabled={exportBlocked || fixedPdf}
+                 title={fixedPdf ? copy.fixedPdfDocxUnavailable : undefined}
                  className="ac-button ac-button--secondary"
                >
                   {copy.previewExportDocxButton}
@@ -697,7 +747,8 @@ export function ProjectWorkspace({
                    const epubUrl = `/api/projects/export/epub?projectId=${project.id}&${exportQuery}`;
                    window.open(epubUrl, '_blank');
                  }}
-                 disabled={exportBlocked}
+                 disabled={exportBlocked || fixedPdf}
+                 title={fixedPdf ? copy.fixedPdfEpubUnavailable : undefined}
                  className="ac-button ac-button--secondary"
                >
                   {copy.previewExportEpubButton}

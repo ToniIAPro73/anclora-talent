@@ -4,8 +4,7 @@ import { useMemo } from 'react';
 import { BookOpen, FileText, BarChart3, Clock, FileJson } from 'lucide-react';
 import { getDocumentStats, formatNumber, formatReadingTime } from '@/lib/projects/document-stats';
 import { getSourceDocumentMetrics } from '@/lib/projects/source-document-metrics';
-import type { ProjectDocument } from '@/lib/projects/types';
-import type { ProjectRecord } from '@/lib/projects/types';
+import { isFixedPdfProject, type ProjectDocument, type ProjectRecord } from '@/lib/projects/types';
 
 interface DocumentStatsCardProps {
   document: ProjectDocument;
@@ -32,6 +31,30 @@ export function DocumentStatsCard({ document, project, isLoading = false }: Docu
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-12 animate-pulse rounded-lg bg-[var(--surface-soft)]" />
           ))}
+        </div>
+      </section>
+    );
+  }
+
+  // Fixed-PDF document mode: chapters/words/reading-time/"Talent layout"
+  // comparisons are all derived from an intentionally empty chapter model
+  // and would show misleading near-zero values. Show only what is real:
+  // the original PDF's page count.
+  if (project && isFixedPdfProject(project)) {
+    return (
+      <section className="ac-surface-panel talent-workspace-stage__panel h-full p-6" data-testid="document-stats-fixed-pdf">
+        <p className="ac-surface-panel__eyebrow">Estadísticas del documento</p>
+        <div className="mt-6 ac-metric-card">
+          <div className="ac-metric-card__header">
+            <BookOpen className="h-5 w-5 text-[var(--accent-text)]" />
+          </div>
+          <p className="ac-metric-card__value">{document.source?.pageCount ?? '—'}</p>
+          <p className="ac-metric-card__caption">Páginas (PDF original)</p>
+        </div>
+        <div className="mt-4 rounded-lg bg-[var(--surface-soft)] p-3">
+          <p className="text-xs text-[var(--text-secondary)]">
+            Este PDF conserva su maquetación original; Talent no recompone su contenido.
+          </p>
         </div>
       </section>
     );

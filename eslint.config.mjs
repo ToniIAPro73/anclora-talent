@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Fixed-PDF document mode: minified vendor asset copied verbatim from
+    // pdfjs-dist by the `postinstall` script — not app code, not authored.
+    "public/pdf.worker.min.mjs",
   ]),
   // Ad-hoc Node utility scripts (not app code, not shipped): allow
   // CommonJS require() and loose typing.

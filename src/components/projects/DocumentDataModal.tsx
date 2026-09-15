@@ -43,6 +43,13 @@ interface DocumentDataModalProps {
   project?: ProjectRecord;
   /** Project mode: brand profiles available to the user. */
   brandProfiles?: BrandProfile[];
+  /**
+   * Pre-create mode: the document mode currently selected in the importer.
+   * Fixed-PDF document mode: composition/margin controls never apply to the
+   * original PDF's layout, so they are replaced with an explanatory note
+   * instead of silently accepting settings that would never be used.
+   */
+  documentMode?: 'fixed-pdf' | 'editable';
 }
 
 type MarginPresetKey = MarginPreset | 'custom';
@@ -128,8 +135,10 @@ function DocumentDataModalForm({
   onConfirm,
   project,
   brandProfiles = [],
+  documentMode,
 }: DocumentDataModalProps) {
   const router = useRouter();
+  const fixedPdf = documentMode === 'fixed-pdf' || project?.document.source?.mode === 'fixed-pdf';
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState('');
 
@@ -289,6 +298,15 @@ function DocumentDataModalForm({
           {/* Composition */}
           <section className="space-y-4">
             <h4 className={labelClass}>{copy.documentDataCompositionHeading}</h4>
+            {fixedPdf ? (
+              <p
+                className="ac-surface-panel ac-surface-panel--subtle p-4 text-sm text-[var(--text-secondary)]"
+                data-testid="document-data-composition-not-applicable"
+              >
+                {copy.fixedPdfCompositionNotApplicable}
+              </p>
+            ) : (
+              <>
             <div className="grid gap-4 sm:grid-cols-3">
               <label className="flex flex-col gap-1.5">
                 <span className={labelClass}>{copy.documentDataFontFamilyLabel}</span>
@@ -366,6 +384,8 @@ function DocumentDataModalForm({
                 ))}
               </div>
             </div>
+              </>
+            )}
           </section>
 
           {mode === 'project' && (

@@ -6,6 +6,7 @@ import { resolveDocumentRules } from '@/lib/compose/rules';
 import { buildEpub } from '@/lib/epub';
 import { resolveExportPaginationConfig } from '@/lib/projects/export-config';
 import { resolveProjectBrandTemplateOverrides } from '@/lib/brand/resolve';
+import { isFixedPdfProject } from '@/lib/projects/types';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -22,6 +23,15 @@ export async function GET(request: NextRequest) {
     const project = await projectRepository.getProjectById(userId, projectId);
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    // Fixed-PDF document mode: EPUB is inherently reflowable, which
+    // contradicts the whole point of a fixed, laid-out PDF.
+    if (isFixedPdfProject(project)) {
+      return NextResponse.json(
+        { error: 'EPUB export is not available for a fixed PDF document' },
+        { status: 409 },
+      );
     }
 
     const exportConfig = resolveExportPaginationConfig(request.nextUrl.searchParams);

@@ -178,7 +178,7 @@ export function reconstructChaptersFromBlockRows(
   return Array.from(chapterMap.values()).sort((left, right) => left.order - right.order);
 }
 
-function mapRowsToProject(
+export function mapRowsToProject(
   projectRow: typeof projects.$inferSelect,
   documentRow: typeof projectDocuments.$inferSelect,
   blockRows: Array<typeof documentBlocks.$inferSelect>,
@@ -238,6 +238,29 @@ function mapRowsToProject(
               outline: Array.isArray((documentRow.sourceMetadata as Record<string, unknown>).outline)
                 ? ((documentRow.sourceMetadata as Record<string, unknown>).outline as EditorialMapEntry[])
                 : undefined,
+              mode:
+                (documentRow.sourceMetadata as Record<string, unknown>).mode === 'fixed-pdf'
+                  ? 'fixed-pdf'
+                  : undefined,
+              sizeBytes:
+                typeof (documentRow.sourceMetadata as Record<string, unknown>).sizeBytes === 'number'
+                  ? Number((documentRow.sourceMetadata as Record<string, unknown>).sizeBytes)
+                  : undefined,
+              sha256:
+                typeof (documentRow.sourceMetadata as Record<string, unknown>).sha256 === 'string'
+                  ? String((documentRow.sourceMetadata as Record<string, unknown>).sha256)
+                  : undefined,
+              sourceAssetId:
+                typeof (documentRow.sourceMetadata as Record<string, unknown>).sourceAssetId === 'string'
+                  ? String((documentRow.sourceMetadata as Record<string, unknown>).sourceAssetId)
+                  : undefined,
+              sourceAccessLevel:
+                (documentRow.sourceMetadata as Record<string, unknown>).sourceAccessLevel === 'private' ||
+                (documentRow.sourceMetadata as Record<string, unknown>).sourceAccessLevel === 'public-proxy-only'
+                  ? ((documentRow.sourceMetadata as Record<string, unknown>).sourceAccessLevel as
+                      | 'private'
+                      | 'public-proxy-only')
+                  : undefined,
             }
           : null,
     },
