@@ -41,6 +41,7 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
   const documentTitle = imported?.title || input.title;
   const documentSubtitle = imported?.subtitle || 'Documento editorial inicial listo para evolución.';
   const documentAuthor = imported?.author || '';
+  const sourceAssetId = imported ? randomUUID() : undefined;
   const chapterTitle = imported?.chapterTitle || 'Capítulo 1';
   const documentBlocks =
     imported?.blocks ?? [
@@ -114,8 +115,13 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
             fileName: imported.sourceFileName,
             mimeType: imported.sourceMimeType,
             importedAt: now,
+            mode: imported.mode ?? 'editable',
             pageCount: imported.sourcePageCount,
             outline: imported.detectedOutline,
+            sizeBytes: imported.sourceSizeBytes,
+            sha256: imported.sourceSha256,
+            sourceAssetId,
+            sourceAccessLevel: imported.sourceAccessLevel,
           }
         : null,
     },
@@ -146,10 +152,10 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
     assets: imported
       ? [
           {
-            id: randomUUID(),
+            id: sourceAssetId!,
             kind: 'document',
             usage: 'source-document',
-            blobUrl: null,
+            blobUrl: imported.sourceBlobUrl ?? null,
             fileName: imported.sourceFileName,
             mimeType: imported.sourceMimeType,
             createdAt: now,

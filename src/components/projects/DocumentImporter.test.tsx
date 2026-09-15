@@ -245,4 +245,90 @@ describe('DocumentImporter', () => {
     expect(screen.getByTestId('import-analysis-warnings')).toHaveTextContent(copy.importParseWarning);
     expect(screen.queryByText(copy.importErrorGeneric)).not.toBeInTheDocument();
   });
+
+  test('shows the fixed-pdf mode selector, recommended and checked by default, for a PDF', async () => {
+    mockFetchSuccess(14, 'El Plan de Escape de la Mediana Edad');
+    render(<DocumentImporter copy={copy} />);
+
+    const fileInput = screen.getByTestId('source-document-input');
+    fireEvent.change(fileInput, {
+      target: { files: [new File(['x'], 'El_Plan_de_Escape_EBOOK.pdf', { type: 'application/pdf' })] },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Listo para importar')).toBeInTheDocument();
+    });
+
+    const selector = screen.getByTestId('document-mode-selector');
+    expect(selector).toBeInTheDocument();
+    expect(screen.getByText(copy.documentModeFixedPdfTitle)).toBeInTheDocument();
+    expect(screen.getByText(copy.documentModeEditableTitle)).toBeInTheDocument();
+    expect(screen.getByText(copy.documentModeFixedPdfRecommended)).toBeInTheDocument();
+
+    const fixedRadio = screen.getByTestId('document-mode-fixed-pdf').querySelector('input[type="radio"]');
+    expect(fixedRadio).toBeChecked();
+
+    const hiddenInput = screen.getByTestId('document-mode-hidden-input');
+    expect(hiddenInput).toHaveAttribute('value', 'fixed-pdf');
+  });
+
+  test('switching to "convert to editable" updates the submitted hidden field', async () => {
+    mockFetchSuccess(14, 'El Plan de Escape de la Mediana Edad');
+    render(<DocumentImporter copy={copy} />);
+
+    const fileInput = screen.getByTestId('source-document-input');
+    fireEvent.change(fileInput, {
+      target: { files: [new File(['x'], 'El_Plan_de_Escape_EBOOK.pdf', { type: 'application/pdf' })] },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Listo para importar')).toBeInTheDocument();
+    });
+
+    const editableRadio = screen.getByTestId('document-mode-editable').querySelector('input[type="radio"]');
+    expect(editableRadio).not.toBeNull();
+    fireEvent.click(editableRadio!);
+
+    expect(screen.getByTestId('document-mode-hidden-input')).toHaveAttribute('value', 'editable');
+  });
+
+  test('does not show the fixed-pdf mode selector for a DOCX file', async () => {
+    mockFetchSuccess(5);
+    render(<DocumentImporter copy={copy} />);
+
+    const fileInput = screen.getByTestId('source-document-input');
+    fireEvent.change(fileInput, {
+      target: {
+        files: [
+          new File(['contenido'], 'libro.docx', {
+            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          }),
+        ],
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Listo para importar')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByTestId('document-mode-selector')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('document-mode-hidden-input')).not.toBeInTheDocument();
+  });
+
+  test('fixed-pdf mode labels composition controls as not applicable in the document data modal', async () => {
+    mockFetchSuccess(14, 'El Plan de Escape de la Mediana Edad');
+    render(<DocumentImporter copy={copy} />);
+
+    const fileInput = screen.getByTestId('source-document-input');
+    fireEvent.change(fileInput, {
+      target: { files: [new File(['x'], 'El_Plan_de_Escape_EBOOK.pdf', { type: 'application/pdf' })] },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('document-data-modal')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('document-data-composition-not-applicable')).toBeInTheDocument();
+    expect(screen.queryByTestId('document-data-font-family-input')).not.toBeInTheDocument();
+  });
 });

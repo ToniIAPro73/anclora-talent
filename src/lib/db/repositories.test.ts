@@ -3,7 +3,47 @@ import { describe, expect, test, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 
 import { createProjectRecord, updateProjectDocument } from '@/lib/projects/factories';
-import { persistDocumentUpdate, persistProjectGraph, projectRepository, reconstructChaptersFromBlockRows } from './repositories';
+import { isFixedPdfProject } from '@/lib/projects/types';
+import {
+  mapRowsToProject,
+  persistDocumentUpdate,
+  persistProjectGraph,
+  projectRepository,
+  reconstructChaptersFromBlockRows,
+} from './repositories';
+
+function baseProjectRow() {
+  return {
+    id: 'project-1',
+    userId: 'user-1',
+    workspaceId: null,
+    slug: 'ebook',
+    title: 'Ebook',
+    status: 'draft',
+    workflowStep: 1,
+    brandProfileId: null,
+    templateId: null,
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+  };
+}
+
+function baseCoverRow() {
+  return {
+    id: 'cover-1',
+    projectId: 'project-1',
+    title: 'Ebook',
+    subtitle: '',
+    palette: 'obsidian',
+    backgroundImageUrl: null,
+    thumbnailUrl: null,
+    layout: 'centered',
+    fontFamily: null,
+    accentColor: null,
+    renderedImageUrl: null,
+    showSubtitle: true,
+  };
+}
 
 function createDbMock() {
   return {
@@ -137,5 +177,94 @@ describe('repository persistence helpers', () => {
 
     const afterDelete = await projectRepository.getProjectById('memory-user', created.id);
     expect(afterDelete).toBeNull();
+  });
+
+  test('mapRowsToProject round-trips fixed-pdf source metadata and asset blobUrl', () => {
+    const documentRow = {
+      id: 'doc-1',
+      projectId: 'project-1',
+      title: 'El Plan de Escape de la Mediana Edad',
+      subtitle: 'Cómo desatascarte profesionalmente sin dinamitar tu vida',
+      author: 'Antonio Ballesteros Alonso',
+      language: 'es',
+      rules: null,
+      documentModel: null,
+      metadata: null,
+      provenance: null,
+      sourceMetadata: {
+        fileName: 'El_Plan_de_Escape_EBOOK.pdf',
+        mimeType: 'application/pdf',
+        importedAt: '2026-01-01T00:00:00.000Z',
+        mode: 'fixed-pdf',
+        pageCount: 122,
+        sizeBytes: 4_500_000,
+        sha256: 'a'.repeat(64),
+        sourceAssetId: 'asset-1',
+        sourceAccessLevel: 'public-proxy-only',
+      },
+    };
+    const assetRows = [
+      {
+        id: 'asset-1',
+        projectId: 'project-1',
+        workspaceId: null,
+        kind: 'document',
+        usage: 'source-document',
+        blobUrl: 'projects/project-1/source/1700000000000-el-plan.pdf',
+        alt: 'El_Plan_de_Escape_EBOOK.pdf',
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+    ];
+
+    const project = mapRowsToProject(
+      baseProjectRow() as never,
+      documentRow as never,
+      [] as never,
+      baseCoverRow() as never,
+      null,
+      [] as never,
+      assetRows as never,
+    );
+
+    expect(project.document.source?.mode).toBe('fixed-pdf');
+    expect(project.document.source?.sha256).toBe('a'.repeat(64));
+    expect(project.document.source?.sizeBytes).toBe(4_500_000);
+    expect(project.document.source?.sourceAssetId).toBe('asset-1');
+    expect(project.document.source?.sourceAccessLevel).toBe('public-proxy-only');
+    expect(project.assets[0].blobUrl).toBe('projects/project-1/source/1700000000000-el-plan.pdf');
+    expect(isFixedPdfProject(project)).toBe(true);
+  });
+
+  test('mapRowsToProject treats a legacy row with no mode field as editable', () => {
+    const legacyDocumentRow = {
+      id: 'doc-legacy',
+      projectId: 'project-1',
+      title: 'Proyecto legado',
+      subtitle: '',
+      author: '',
+      language: 'es',
+      rules: null,
+      documentModel: null,
+      metadata: null,
+      provenance: null,
+      sourceMetadata: {
+        fileName: 'manuscrito.docx',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        importedAt: '2025-01-01T00:00:00.000Z',
+      },
+    };
+
+    const project = mapRowsToProject(
+      baseProjectRow() as never,
+      legacyDocumentRow as never,
+      [] as never,
+      baseCoverRow() as never,
+      null,
+      [] as never,
+      [] as never,
+    );
+
+    expect(project.document.source?.mode).toBeUndefined();
+    expect(isFixedPdfProject(project)).toBe(false);
   });
 });

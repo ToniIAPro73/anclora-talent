@@ -51,6 +51,13 @@ vi.mock('./cover-studio/CoverStudio', () => ({
   ),
 }));
 
+// Fixed-PDF document mode: the viewer is a client-only pdfjs-dist canvas
+// renderer, irrelevant to workspace-gating assertions here — stub it.
+vi.mock('pdfjs-dist', () => ({
+  GlobalWorkerOptions: { workerSrc: '' },
+  getDocument: () => ({ promise: new Promise(() => undefined) }),
+}));
+
 const copy = resolveLocaleMessages('es').project;
 
 function makeProject(overrides: Partial<ProjectRecord> = {}): ProjectRecord {
@@ -322,5 +329,72 @@ describe('ProjectWorkspace', () => {
   test('hides the revert banner when there is no revertible save', () => {
     render(<ProjectWorkspace project={makeProject()} copy={copy} />);
     expect(screen.queryByTestId('document-health-revert')).not.toBeInTheDocument();
+  });
+
+  describe('fixed-pdf document mode', () => {
+    function makeFixedPdfProject(overrides: Partial<ProjectRecord> = {}) {
+      const base = makeProject(overrides);
+      return {
+        ...base,
+        document: {
+          ...base.document,
+          source: {
+            fileName: 'El_Plan_de_Escape_EBOOK.pdf',
+            mimeType: 'application/pdf',
+            importedAt: '2026-01-01T00:00:00Z',
+            mode: 'fixed-pdf' as const,
+          },
+        },
+        assets: [
+          {
+            id: 'asset-1',
+            kind: 'document' as const,
+            usage: 'source-document' as const,
+            blobUrl: 'projects/proj-1/source/1700000000000-el-plan.pdf',
+            fileName: 'El_Plan_de_Escape_EBOOK.pdf',
+            mimeType: 'application/pdf',
+            createdAt: '2026-01-01T00:00:00Z',
+          },
+        ],
+      };
+    }
+
+    test('does not force CoverStudio/BackCoverStudio — steps 2-5 show the included panel', () => {
+      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 4 })} copy={copy} />);
+
+      expect(screen.getByTestId('fixed-pdf-included-panel')).toBeInTheDocument();
+      expect(screen.queryByTestId('cover-studio-cover')).not.toBeInTheDocument();
+    });
+
+    test('marks chapters/template/cover/back-cover steps as already completed', () => {
+      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 1 })} copy={copy} />);
+
+      const stepper = screen.getByRole('navigation', { name: 'Progress' });
+      // Step 1 is active; steps 2-5 are pre-completed for fixed-pdf.
+      expect(stepper.querySelectorAll('svg.lucide-check')).toHaveLength(4);
+    });
+
+    test('exposes an original-document preview instead of the composed preview', () => {
+      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 6 })} copy={copy} />);
+
+      expect(screen.getByTestId('fixed-pdf-preview')).toBeInTheDocument();
+      expect(screen.queryByTestId('preview-inline-document')).not.toBeInTheDocument();
+    });
+
+    test('export step offers the original PDF and disables DOCX/EPUB', () => {
+      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 9 })} copy={copy} />);
+
+      expect(screen.getByTestId('export-pdf-original-button')).toBeInTheDocument();
+      expect(screen.queryByTestId('pdf-export-button')).not.toBeInTheDocument();
+      expect(screen.getByTestId('export-docx-button')).toBeDisabled();
+      expect(screen.getByTestId('export-epub-button')).toBeDisabled();
+    });
+
+    test('regression: an editable project is unaffected by fixed-pdf gating', () => {
+      render(<ProjectWorkspace project={makeProject({ workflowStep: 4 })} copy={copy} />);
+
+      expect(screen.queryByTestId('fixed-pdf-included-panel')).not.toBeInTheDocument();
+      expect(screen.getByTestId('cover-studio-cover')).toBeInTheDocument();
+    });
   });
 });

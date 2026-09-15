@@ -3,6 +3,7 @@ import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
 import { buildProjectDocxBuffer } from '@/lib/projects/export-builder';
 import { resolveExportPaginationConfig } from '@/lib/projects/export-config';
+import { isFixedPdfProject } from '@/lib/projects/types';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -19,6 +20,15 @@ export async function GET(request: NextRequest) {
     const project = await projectRepository.getProjectById(userId, projectId);
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    // Fixed-PDF document mode: DOCX export reflows the composed document,
+    // which contradicts the whole point of a fixed, laid-out PDF.
+    if (isFixedPdfProject(project)) {
+      return NextResponse.json(
+        { error: 'DOCX export is not available for a fixed PDF document' },
+        { status: 409 },
+      );
     }
 
     const exportConfig = resolveExportPaginationConfig(request.nextUrl.searchParams);

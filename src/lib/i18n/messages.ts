@@ -223,6 +223,20 @@ export type AppMessages = {
     titlePlaceholder: string;
     sourceDocumentLabel: string;
     sourceDocumentHint: string;
+    documentModeLabel: string;
+    documentModeFixedPdfTitle: string;
+    documentModeFixedPdfDesc: string;
+    documentModeFixedPdfRecommended: string;
+    documentModeEditableTitle: string;
+    documentModeEditableDesc: string;
+    fixedPdfIncludedBadge: string;
+    fixedPdfIncludedStepBody: string;
+    fixedPdfPreviewLoading: string;
+    fixedPdfPreviewError: string;
+    fixedPdfExportLabel: string;
+    fixedPdfCompositionNotApplicable: string;
+    fixedPdfDocxUnavailable: string;
+    fixedPdfEpubUnavailable: string;
     importSizeLimitTitle: string;
     importSizeLimitDescription: string;
     importDropTitle: string;
@@ -1259,6 +1273,23 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       sourceDocumentLabel: 'Documento base opcional',
       sourceDocumentHint:
         'Soporta `pdf`, `doc`, `docx`, `txt` y `md`. Si el archivo se puede extraer bien, el editor arrancará ya sembrado con ese contenido.',
+      documentModeLabel: '¿Qué quieres hacer con este PDF?',
+      documentModeFixedPdfTitle: 'Conservar PDF original',
+      documentModeFixedPdfDesc:
+        'El PDF ya está diseñado y maquetado. Talent conservará exactamente sus páginas, portada, tipografías, imágenes, índice y composición.',
+      documentModeFixedPdfRecommended: 'Recomendado',
+      documentModeEditableTitle: 'Convertir a documento editable',
+      documentModeEditableDesc:
+        'Talent extraerá el contenido y lo convertirá a un proyecto editable. La maquetación original puede cambiar.',
+      fixedPdfIncludedBadge: 'Incluido en el PDF original',
+      fixedPdfIncludedStepBody:
+        'Este paso ya está resuelto en tu PDF original y no necesita edición en Talent.',
+      fixedPdfPreviewLoading: 'Cargando el PDF original…',
+      fixedPdfPreviewError: 'No se pudo cargar el PDF original.',
+      fixedPdfExportLabel: 'Descargar PDF original',
+      fixedPdfCompositionNotApplicable: 'No aplicable: este PDF conserva su composición original.',
+      fixedPdfDocxUnavailable: 'No disponible para PDF original',
+      fixedPdfEpubUnavailable: 'No disponible para PDF original',
       importSizeLimitTitle: 'Límite de tamaño del documento',
       importSizeLimitDescription:
         'El tamaño máximo permitido es de 50 MB. Los archivos que excedan este límite no podrán importarse.',
@@ -2358,6 +2389,23 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       sourceDocumentLabel: 'Optional source document',
       sourceDocumentHint:
         'Supports `pdf`, `doc`, `docx`, `txt`, and `md`. If extraction succeeds, the editor starts already seeded with that content.',
+      documentModeLabel: 'What do you want to do with this PDF?',
+      documentModeFixedPdfTitle: 'Keep original PDF',
+      documentModeFixedPdfDesc:
+        'The PDF is already designed and laid out. Talent will preserve its pages, cover, typography, images, contents and composition exactly.',
+      documentModeFixedPdfRecommended: 'Recommended',
+      documentModeEditableTitle: 'Convert to editable document',
+      documentModeEditableDesc:
+        'Talent will extract the content and convert it into an editable project. The original layout may change.',
+      fixedPdfIncludedBadge: 'Included in original PDF',
+      fixedPdfIncludedStepBody:
+        'This step is already resolved in your original PDF and needs no editing in Talent.',
+      fixedPdfPreviewLoading: 'Loading the original PDF…',
+      fixedPdfPreviewError: 'The original PDF could not be loaded.',
+      fixedPdfExportLabel: 'Download original PDF',
+      fixedPdfCompositionNotApplicable: 'Not applicable: this PDF keeps its original composition.',
+      fixedPdfDocxUnavailable: 'Not available for the original PDF',
+      fixedPdfEpubUnavailable: 'Not available for the original PDF',
       importSizeLimitTitle: 'Document size limit',
       importSizeLimitDescription:
         'The maximum allowed size is 50 MB. Files above this limit cannot be imported.',
