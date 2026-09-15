@@ -1,0 +1,21 @@
+# Development-only artifacts; they are not required by the Next.js build or
+# runtime and can exceed Vercel's deployment source/provisioning limits.
+.git
+.next
+node_modules
+
+# Local QA output and reports (visual evidence is retained in Git but never
+# needs to be uploaded to a deployment).
+test-results
+playwright-report
+test_reports
+
+# Repository documentation, archives, fixtures, and local tooling data.
+Archive
+docs
+evidence
+validation
+memory
+tmp
+.epub-check
+.epubcheck

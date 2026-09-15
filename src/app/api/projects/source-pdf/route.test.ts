@@ -79,6 +79,41 @@ describe('GET /api/projects/source-pdf', () => {
     expect(fetchPrivateProjectDocumentMock).not.toHaveBeenCalled();
   });
 
+  test('security matrix: different authenticated user requesting someone else\'s project → 404, blob never touched', async () => {
+    // getProjectById is itself scoped by (projectId AND userId) at the query
+    // level (src/lib/db/repositories.ts) — a different user's call resolves
+    // to null exactly like "missing project", which this route must not
+    // distinguish (no ownership leak via a different status code).
+    requireUserIdMock.mockResolvedValue('user-2-not-the-owner');
+    getProjectByIdMock.mockResolvedValue(null);
+
+    const { GET } = await import('./route');
+    const response = await GET(buildRequest());
+
+    expect(response.status).toBe(404);
+    expect(getProjectByIdMock).toHaveBeenCalledWith('user-2-not-the-owner', 'project-1');
+    expect(fetchPrivateProjectDocumentMock).not.toHaveBeenCalled();
+  });
+
+  test('security matrix: owner request succeeds and the private blob URL never appears in the response', async () => {
+    requireUserIdMock.mockResolvedValue('user-1');
+    getProjectByIdMock.mockResolvedValue(buildProject());
+    fetchPrivateProjectDocumentMock.mockResolvedValue({
+      statusCode: 200,
+      stream: fakeStream('%PDF-1.4 fake bytes'),
+      headers: new Headers(),
+      blob: { contentType: 'application/pdf', size: 19 },
+    });
+
+    const { GET } = await import('./route');
+    const response = await GET(buildRequest());
+
+    expect(response.status).toBe(200);
+    const headerDump = JSON.stringify(Object.fromEntries(response.headers.entries()));
+    expect(headerDump).not.toContain('projects/project-1/source/1700000000000-el-plan.pdf');
+    expect(headerDump).not.toContain('blob.vercel-storage.com');
+  });
+
   test('project with no source-document asset → 404', async () => {
     requireUserIdMock.mockResolvedValue('user-1');
     getProjectByIdMock.mockResolvedValue(buildProject({ assets: [] }));

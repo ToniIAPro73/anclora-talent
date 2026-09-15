@@ -237,6 +237,8 @@ export type AppMessages = {
     fixedPdfCompositionNotApplicable: string;
     fixedPdfDocxUnavailable: string;
     fixedPdfEpubUnavailable: string;
+    fixedPdfStorageErrorTitle: string;
+    fixedPdfStorageErrorBody: string;
     importSizeLimitTitle: string;
     importSizeLimitDescription: string;
     importDropTitle: string;
@@ -1290,6 +1292,9 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       fixedPdfCompositionNotApplicable: 'No aplicable: este PDF conserva su composición original.',
       fixedPdfDocxUnavailable: 'No disponible para PDF original',
       fixedPdfEpubUnavailable: 'No disponible para PDF original',
+      fixedPdfStorageErrorTitle: 'No se ha podido conservar el PDF original.',
+      fixedPdfStorageErrorBody:
+        'El proyecto no se ha creado para evitar modificar su diseño. Inténtalo de nuevo.',
       importSizeLimitTitle: 'Límite de tamaño del documento',
       importSizeLimitDescription:
         'El tamaño máximo permitido es de 50 MB. Los archivos que excedan este límite no podrán importarse.',
@@ -2406,6 +2411,9 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       fixedPdfCompositionNotApplicable: 'Not applicable: this PDF keeps its original composition.',
       fixedPdfDocxUnavailable: 'Not available for the original PDF',
       fixedPdfEpubUnavailable: 'Not available for the original PDF',
+      fixedPdfStorageErrorTitle: 'The original PDF could not be preserved.',
+      fixedPdfStorageErrorBody:
+        'The project was not created, to avoid altering its design. Please try again.',
       importSizeLimitTitle: 'Document size limit',
       importSizeLimitDescription:
         'The maximum allowed size is 50 MB. Files above this limit cannot be imported.',

@@ -9,13 +9,11 @@
   known-vector unit test.
 - [x] T3: Add a private-blob upload helper for the source PDF in
   `src/lib/blob/client.ts`, leaving `uploadProjectBlob` and every existing
-  caller untouched. **Deviation, discovered via a real upload attempt, not
-  assumed:** this project's actual Blob store rejects `access: 'private'`
-  ("Cannot use private access on a public store"). `uploadPrivateProjectDocument`
-  now tries private first and falls back to public on that specific
-  failure, persisting which one actually happened as
-  `document.source.sourceAccessLevel` so reads never have to re-probe.
-  `fetchPrivateProjectDocument` takes that access level explicitly.
+  caller untouched. The original public-store deviation is superseded by
+  remediation v1: new source PDFs require the dedicated private store and
+  `SOURCE_DOCUMENT_READ_WRITE_TOKEN`; there is no public fallback.
+  `fetchPrivateProjectDocument` retains the explicit access-level branch for
+  private documents and legacy `public-proxy-only` reads.
 - [x] T4: `createProjectRecord` sets `document.source.mode` and uses a real
   `blobUrl` for the `source-document` asset when provided; unit tests for
   both `fixed-pdf` (real blobUrl, mode/sha256/sizeBytes/sourceAccessLevel
@@ -41,8 +39,8 @@
 - [x] T8: `export/docx` and `export/epub` routes: early `409` guard for
   `fixed-pdf`; route tests for both, `editable` regression-checked.
 - [x] T9: `createProjectAction` reads `documentMode`, hashes + uploads via
-  T3's helper (wrapped in try/catch — a storage failure of any kind falls
-  back to `editable` rather than crashing project creation), threads
+  T3's helper (a storage failure of any kind aborts creation and redirects to
+  the controlled error state; it never falls back to `editable`), threads
   `mode`/`sourceBlobUrl`/`sourceSha256`/`sourceSizeBytes`/`sourceAccessLevel`
   into the seed for `fixed-pdf`; `editable`/DOCX/DOC/TXT/MD path is
   byte-for-byte unchanged (regression-checked).
