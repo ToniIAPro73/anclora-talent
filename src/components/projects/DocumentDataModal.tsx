@@ -388,7 +388,10 @@ function DocumentDataModalForm({
             )}
           </section>
 
-          {mode === 'project' && (
+          {/* Composition scope only makes sense when there is composition to
+              scope — never for a fixed-pdf project, whose original layout
+              Talent never touches. */}
+          {mode === 'project' && !fixedPdf && (
             <>
               {/* Composition scope */}
               <section className="space-y-3">

@@ -11,7 +11,13 @@
  *   the text declares AI assistance and summarizes which AI operations were
  *   accepted, and states that a human reviewed and approved every change
  *   (the product only writes through human-accepted proposals).
- * - 100% human content → EXEMPT declaration: no AI operation was applied.
+ * - No AI operation applied AND the document was authored inside Talent
+ *   (never an imported fixed-pdf source) → EXEMPT declaration: 100% human.
+ * - No AI operation applied but the source is an imported fixed PDF →
+ *   UNDETERMINED: Talent never modified the file, but that is not evidence
+ *   the *original* content is human-authored — only its own operations log
+ *   is. Declaring "100% human" here would be an unverified claim about a
+ *   third-party file, so the declaration says so explicitly instead.
  *
  * Pure and localized (es/en). The F4 launch-pack plan will embed this text
  * in the export pack; this module only generates it (and the export panel
@@ -27,10 +33,16 @@ export interface KdpDisclosureInput {
   provenance: ProvenanceMap | null | undefined;
   operations: AiOperationRecord[];
   locale?: AiLocale;
+  /** Fixed-PDF document mode: the content's own provenance is unconfirmed. */
+  isFixedPdfSource?: boolean;
 }
 
+export type KdpDisclosureStatus = 'exempt-human' | 'exempt-unconfirmed' | 'required';
+
 export interface KdpDisclosure {
-  /** True when the book must declare AI-assisted content to KDP. */
+  status: KdpDisclosureStatus;
+  /** True when the book must declare AI-assisted content to KDP. Kept for
+   *  existing callers; equivalent to `status === 'required'`. */
   required: boolean;
   aiBlockCount: number;
   humanBlockCount: number;
@@ -71,26 +83,32 @@ function summarizeOperations(operations: AiOperationRecord[], locale: AiLocale):
 export function buildKdpDisclosure(input: KdpDisclosureInput): KdpDisclosure {
   const locale = input.locale ?? 'es';
   const { ai, human } = countProvenance(input.provenance);
-  const required = ai > 0;
   const acceptedSummary = summarizeOperations(input.operations, locale);
 
-  let text: string;
-  if (!required) {
-    text =
-      locale === 'en'
-        ? 'AI-generated content declaration (Amazon KDP): not required. All content in this book is human-authored; no AI operation was accepted over the manuscript.'
-        : 'Declaración de contenido generado con IA (Amazon KDP): no requerida. Todo el contenido de este libro es de autoría humana; no se aceptó ninguna operación de IA sobre el manuscrito.';
-  } else {
+  if (ai > 0) {
     const operationsClause = acceptedSummary
       ? locale === 'en'
         ? ` Accepted AI operations: ${acceptedSummary}.`
         : ` Operaciones de IA aceptadas: ${acceptedSummary}.`
       : '';
-    text =
+    const text =
       locale === 'en'
         ? `AI-generated content declaration (Amazon KDP): this book contains AI-assisted content. ${ai} block(s) of the manuscript were created or rewritten by the AI editorial assistant; every change was proposed as a reviewable diff and explicitly approved by the author.${operationsClause}`
         : `Declaración de contenido generado con IA (Amazon KDP): este libro contiene contenido creado con asistencia de IA («AI-assisted»). ${ai} bloque(s) del manuscrito fueron creados o reescritos por el asistente editorial de IA; cada cambio se propuso como un diff revisable y fue aprobado explícitamente por el autor/a.${operationsClause}`;
+    return { status: 'required', required: true, aiBlockCount: ai, humanBlockCount: human, text };
   }
 
-  return { required, aiBlockCount: ai, humanBlockCount: human, text };
+  if (input.isFixedPdfSource) {
+    const text =
+      locale === 'en'
+        ? 'AI-generated content declaration (Amazon KDP): not determined. Talent made no changes to this uploaded PDF, but that only confirms its own operations log — it is not evidence about how the original document was produced. Confirm the content\'s provenance yourself before declaring it to KDP.'
+        : 'Declaración de contenido generado con IA (Amazon KDP): no determinada. Talent no ha modificado este PDF importado, pero eso sólo confirma su propio registro de operaciones — no es evidencia de cómo se produjo el documento original. Confirma tú la procedencia del contenido antes de declararla ante KDP.';
+    return { status: 'exempt-unconfirmed', required: false, aiBlockCount: ai, humanBlockCount: human, text };
+  }
+
+  const text =
+    locale === 'en'
+      ? 'AI-generated content declaration (Amazon KDP): not required. All content in this book is human-authored; no AI operation was accepted over the manuscript.'
+      : 'Declaración de contenido generado con IA (Amazon KDP): no requerida. Todo el contenido de este libro es de autoría humana; no se aceptó ninguna operación de IA sobre el manuscrito.';
+  return { status: 'exempt-human', required: false, aiBlockCount: ai, humanBlockCount: human, text };
 }

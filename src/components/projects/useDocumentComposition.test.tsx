@@ -138,3 +138,35 @@ describe('useDocumentComposition — telemetry (F0.2)', () => {
     expect(result.current.telemetry.avgMs).toBe(5);
   });
 });
+
+describe('useDocumentComposition — fixed-pdf document mode', () => {
+  function fixedPdfProject(): ProjectRecord {
+    const project = fakeProject();
+    return {
+      ...project,
+      document: {
+        ...project.document,
+        source: {
+          fileName: 'original.pdf',
+          mimeType: 'application/pdf',
+          importedAt: new Date().toISOString(),
+          mode: 'fixed-pdf',
+        },
+      },
+    };
+  }
+
+  it('never runs the composition engine — returns a zero-violation stub, no recompose telemetry logged', () => {
+    const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+
+    const { result } = renderHook(({ project }) => useDocumentComposition(project), {
+      initialProps: { project: fixedPdfProject() },
+    });
+
+    expect(result.current.result.violations).toEqual([]);
+    expect(result.current.result.pages).toEqual([]);
+    expect(result.current.diff).toBeNull();
+    expect(result.current.telemetry).toEqual({ count: 0, lastMs: null, avgMs: null });
+    expect(debugSpy).not.toHaveBeenCalledWith(expect.stringContaining('[anclora:recompose]'));
+  });
+});

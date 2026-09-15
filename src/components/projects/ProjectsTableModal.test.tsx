@@ -10,6 +10,7 @@ vi.mock('server-only', () => ({}));
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace }),
   usePathname: () => '/dashboard',
+  useSearchParams: () => new URLSearchParams('projects=1'),
 }));
 vi.mock('@/lib/projects/actions', () => ({
   deleteProjectAction: vi.fn(),

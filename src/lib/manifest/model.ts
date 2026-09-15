@@ -23,7 +23,11 @@ export type ManifestAssetKind =
   | 'audio'
   | 'video';
 
-export type ManifestProvenance = 'compositor' | 'filestudio-local' | 'filestudio-service';
+/**
+ * 'original': byte-identical to the project's uploaded source document
+ * (fixed-pdf mode only — never reflowed/recomposed).
+ */
+export type ManifestProvenance = 'compositor' | 'original' | 'filestudio-local' | 'filestudio-service';
 
 export interface ProjectAssetManifestItem {
   /** Stable id inside the manifest (e.g. `epub`, `cover-1600`, `mobi`). */

@@ -4,6 +4,7 @@ import { projectRepository } from '@/lib/db/repositories';
 import { renderProjectExportHtml } from '@/lib/projects/export-builder';
 import { resolveExportPaginationConfig } from '@/lib/projects/export-config';
 import { resolveProjectBrandTemplateOverrides } from '@/lib/brand/resolve';
+import { isFixedPdfProject } from '@/lib/projects/types';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,6 +18,15 @@ export async function GET(request: NextRequest) {
     const project = await projectRepository.getProjectById(userId, projectId);
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    // Fixed-PDF document mode: there is no semantic document to render as
+    // reflowable HTML — the original PDF is the canonical visual source.
+    if (isFixedPdfProject(project)) {
+      return NextResponse.json(
+        { error: 'HTML export is not available for a fixed PDF document' },
+        { status: 409 },
+      );
     }
 
     const slug = project.slug || 'proyecto';

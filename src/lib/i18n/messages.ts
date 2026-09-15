@@ -237,6 +237,9 @@ export type AppMessages = {
     fixedPdfCompositionNotApplicable: string;
     fixedPdfDocxUnavailable: string;
     fixedPdfEpubUnavailable: string;
+    fixedPdfHtmlUnavailable: string;
+    fixedPdfMarkdownUnavailable: string;
+    createEditableCopyButton: string;
     fixedPdfStorageErrorTitle: string;
     fixedPdfStorageErrorBody: string;
     importSizeLimitTitle: string;
@@ -373,6 +376,7 @@ export type AppMessages = {
     previewExportPdfButton: string;
     previewExportDocxButton: string;
     previewExportEpubButton: string;
+    previewExportMarkdownButton: string;
     coverRenderImage: string;
     coverRenderImageDone: string;
     coverRenderedImageLabel: string;
@@ -728,6 +732,7 @@ export type AppMessages = {
     pendingBadge: string;
     viewAsset: string;
     provenanceCompositor: string;
+    provenanceOriginal: string;
     provenanceService: string;
     provenanceLocal: string;
     kinds: {
@@ -788,6 +793,7 @@ export type AppMessages = {
       auth: string;
       validation: string;
       circuitOpen: string;
+      insufficientContent: string;
     };
   };
   collaboration: {
@@ -1290,8 +1296,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       fixedPdfPreviewError: 'No se pudo cargar el PDF original.',
       fixedPdfExportLabel: 'Descargar PDF original',
       fixedPdfCompositionNotApplicable: 'No aplicable: este PDF conserva su composición original.',
-      fixedPdfDocxUnavailable: 'No disponible para PDF original',
-      fixedPdfEpubUnavailable: 'No disponible para PDF original',
+      fixedPdfDocxUnavailable: 'Requiere copia editable',
+      fixedPdfEpubUnavailable: 'Requiere copia editable',
+      fixedPdfHtmlUnavailable: 'Requiere copia editable',
+      fixedPdfMarkdownUnavailable: 'Requiere copia editable',
+      createEditableCopyButton: 'Crear copia editable',
       fixedPdfStorageErrorTitle: 'No se ha podido conservar el PDF original.',
       fixedPdfStorageErrorBody:
         'El proyecto no se ha creado para evitar modificar su diseño. Inténtalo de nuevo.',
@@ -1462,6 +1471,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewExportPdfButton: 'Exportar PDF',
       previewExportDocxButton: 'Exportar Word (.docx)',
       previewExportEpubButton: 'Exportar EPUB (.epub)',
+      previewExportMarkdownButton: 'Exportar Markdown (.md)',
       coverRenderImage: 'Generar imagen',
       coverRenderImageDone: 'Imagen guardada',
       coverRenderedImageLabel: 'Imagen renderizada',
@@ -1842,6 +1852,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       pendingBadge: 'En proceso',
       viewAsset: 'Abrir',
       provenanceCompositor: 'Compositor',
+      provenanceOriginal: 'PDF original',
       provenanceService: 'FileStudio · nube',
       provenanceLocal: 'FileStudio · tu dispositivo',
       kinds: {
@@ -1905,6 +1916,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         auth: 'El token de Gumroad no es válido o fue revocado.',
         validation: 'Gumroad rechazó los datos del producto. Revisa la ficha.',
         circuitOpen: 'Gumroad no responde; reintentaremos en unos segundos.',
+        insufficientContent:
+          'No se dispone de suficiente contenido analizado para generar un paquete comercial útil.',
       },
     },
     collaboration: {
@@ -2409,8 +2422,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       fixedPdfPreviewError: 'The original PDF could not be loaded.',
       fixedPdfExportLabel: 'Download original PDF',
       fixedPdfCompositionNotApplicable: 'Not applicable: this PDF keeps its original composition.',
-      fixedPdfDocxUnavailable: 'Not available for the original PDF',
-      fixedPdfEpubUnavailable: 'Not available for the original PDF',
+      fixedPdfDocxUnavailable: 'Requires an editable copy',
+      fixedPdfEpubUnavailable: 'Requires an editable copy',
+      fixedPdfHtmlUnavailable: 'Requires an editable copy',
+      fixedPdfMarkdownUnavailable: 'Requires an editable copy',
+      createEditableCopyButton: 'Create editable copy',
       fixedPdfStorageErrorTitle: 'The original PDF could not be preserved.',
       fixedPdfStorageErrorBody:
         'The project was not created, to avoid altering its design. Please try again.',
@@ -2581,6 +2597,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewExportPdfButton: 'Export PDF',
       previewExportDocxButton: 'Export Word (.docx)',
       previewExportEpubButton: 'Export EPUB (.epub)',
+      previewExportMarkdownButton: 'Export Markdown (.md)',
       coverRenderImage: 'Generate image',
       coverRenderImageDone: 'Image saved',
       coverRenderedImageLabel: 'Rendered image',
@@ -2961,6 +2978,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       pendingBadge: 'In progress',
       viewAsset: 'Open',
       provenanceCompositor: 'Compositor',
+      provenanceOriginal: 'Original PDF',
       provenanceService: 'FileStudio · cloud',
       provenanceLocal: 'FileStudio · your device',
       kinds: {
@@ -3024,6 +3042,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         auth: 'The Gumroad token is invalid or was revoked.',
         validation: 'Gumroad rejected the product data. Review the sheet.',
         circuitOpen: 'Gumroad is not responding; we will retry in a few seconds.',
+        insufficientContent: 'Not enough analyzed content is available to generate a useful commercial package.',
       },
     },
     collaboration: {

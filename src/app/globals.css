@@ -709,7 +709,9 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
 
 .talent-create-form--dashboard {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(22rem, 0.75fr);
+  /* Fase 4: 22rem left too little room for the import-mode selector and
+     analysis panel, forcing their own internal breakpoints to compress. */
+  grid-template-columns: minmax(0, 1.1fr) minmax(26rem, 0.9fr);
   gap: 24px;
   align-items: start;
   min-height: 0;
@@ -728,18 +730,19 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
   padding-left: 22px;
 }
 
+/* Fase 8: this used to be a `display:flex; overflow-x:auto` filmstrip,
+   forcing a horizontal scrollbar to see every template. A wrapping grid
+   shows them all without scrolling, at the same card size. */
 .talent-create-form--dashboard .ac-template-catalog__grid {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 14px;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
   padding-top: 14px;
   padding-bottom: 14px;
-  scroll-padding-inline: 8px;
 }
 
 .talent-create-form--dashboard .ac-template-card {
-  min-width: 205px;
+  min-width: 0;
   max-width: 228px;
 }
 
@@ -1661,6 +1664,39 @@ ul.toc-list > li {
 
 .ac-text-editor__content--scroll {
   overflow-x: hidden;
+}
+
+/* Fase 6: chapter editor scroll fix.
+   .ac-editor-shell only declared `min-height: 100vh` (a floor, never a
+   cap), and neither .ac-editor-shell__main nor .ac-text-editor declared
+   `grid-template-rows` — on a `display: grid` container with no explicit
+   rows, each child sizes to its own content ("auto"), so the content row
+   just grew to fit the full-height page canvas instead of being bounded to
+   the remaining viewport space. .ac-text-editor__content--scroll's own
+   `overflow-y: auto` (design-system CSS) then had nothing to actually
+   scroll — the box was already exactly as tall as its content. The only
+   thing that "worked" was zooming the browser out to ~60%, which shrinks
+   every fixed-pixel dimension until it happens to fit. Fix: bound every
+   ancestor down to the content div with `min-height: 0` + a real `fr`
+   track, so .ac-text-editor__content--scroll is the one region that
+   actually scrolls. */
+.ac-editor-shell {
+  height: 100%;
+  min-height: 0;
+}
+
+.ac-editor-shell__main {
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+}
+
+.ac-text-editor {
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+}
+
+.ac-text-editor__content--scroll {
+  min-height: 0;
 }
 
 @media (max-width: 767px) {

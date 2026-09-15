@@ -17,12 +17,14 @@ import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
 import { getDb, hasDatabase } from '@/lib/db';
 import { projectRepository } from '@/lib/db/repositories';
 import { getLatestManifest } from '@/lib/manifest/repository';
-import type { ProjectRecord } from '@/lib/projects/types';
+import { buildFixedPdfSemanticSidecar } from '@/lib/projects/fixed-pdf-sidecar';
+import { isFixedPdfProject, type ProjectRecord } from '@/lib/projects/types';
 import { GumroadApiError, GumroadCircuitOpenError, GumroadClient } from './channels/gumroad';
 import { buildHotmartExportPackage, type HotmartExportPackage } from './channels/hotmart';
 import { getSalesCredentialsKey, isGumroadFlagEnabled } from './config';
 import { deleteChannelToken, getChannelToken, hasChannelToken, saveChannelToken } from './credentials';
 import { buildLaunchKit, buildProductDescriptionHtml, type LaunchKit } from './launch-kit';
+import { assessLaunchKitQuality } from './launch-kit-quality';
 
 export type SalesActionError =
   | 'unavailable'
@@ -30,7 +32,8 @@ export type SalesActionError =
   | 'notConfigured'
   | 'auth'
   | 'validation'
-  | 'circuitOpen';
+  | 'circuitOpen'
+  | 'insufficientContent';
 
 export type SalesActionResult<T> = { ok: true; data: T } | { ok: false; error: SalesActionError };
 
@@ -47,16 +50,27 @@ function mapGumroadError(error: unknown): SalesActionError {
   return 'unavailable';
 }
 
-/** Loads the project + builds the launch kit (AST + manifest + disclosure). */
+/**
+ * Loads the project + builds the launch kit (AST + manifest + disclosure).
+ *
+ * Fixed-PDF document mode: there is no editable AST to derive from
+ * (`project.document.chapters` is empty), so the kit is built from a
+ * semantic sidecar re-extracted from the original PDF text instead — the
+ * same real-extraction pipeline the importer uses, never invented content.
+ */
 async function buildKitForProject(userId: string, projectId: string): Promise<LaunchKit | null> {
   const project: ProjectRecord | null = await projectRepository.getProjectById(userId, projectId);
   if (!project) return null;
 
-  const { document } = projectToSemanticDocument(project);
+  const fixedPdf = isFixedPdfProject(project);
+  const document = fixedPdf
+    ? await buildFixedPdfSemanticSidecar(project)
+    : projectToSemanticDocument(project).document;
   const manifest = await getLatestManifest(getDb(), projectId);
   const disclosure = buildKdpDisclosure({
     provenance: project.document.provenance,
     operations: await aiOperationsLog.list(userId, projectId),
+    isFixedPdfSource: fixedPdf,
   });
 
   return buildLaunchKit(document, {
@@ -188,5 +202,12 @@ export async function exportHotmartAction(input: {
 
   const kit = await buildKitForProject(userId, input.projectId);
   if (!kit) return { ok: false, error: 'notFound' };
+
+  // Fase 11 invariant: an export that cannot contain meaningful content must
+  // not return success — never a package that only carries the title.
+  if (!assessLaunchKitQuality(kit).sufficient) {
+    return { ok: false, error: 'insufficientContent' };
+  }
+
   return { ok: true, data: buildHotmartExportPackage(kit, { locale: input.locale }) };
 }

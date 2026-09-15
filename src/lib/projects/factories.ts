@@ -122,6 +122,8 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
             sha256: imported.sourceSha256,
             sourceAssetId,
             sourceAccessLevel: imported.sourceAccessLevel,
+            derivedFromProjectId: input.derivedFrom?.projectId,
+            derivedFromSourceAssetId: input.derivedFrom?.sourceAssetId,
           }
         : null,
     },

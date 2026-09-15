@@ -448,9 +448,16 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                     role="radiogroup"
                     aria-label={copy.documentModeLabel}
                     data-testid="document-mode-selector"
-                    className="grid gap-3 sm:grid-cols-2"
+                    // Fase 4: this selector renders inside containers of very
+                    // different widths (a full-width /projects/new page vs.
+                    // the narrow dashboard sidebar column) — a viewport-width
+                    // breakpoint (`sm:grid-cols-2`) doesn't know which one it
+                    // is in and forced two columns even when the container
+                    // itself had no room, compressing and overlapping the
+                    // radio card content. Single column always fits.
+                    className="grid gap-3"
                   >
-                    <p className="sm:col-span-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
                       {copy.documentModeLabel}
                     </p>
                     {(
@@ -478,8 +485,8 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                           documentMode === option.value ? 'border-[var(--accent)]' : ''
                         }`}
                       >
-                        <span className="flex items-center justify-between gap-2">
-                          <span className="flex items-center gap-2">
+                        <span className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="flex min-w-0 items-center gap-2">
                             <input
                               type="radio"
                               data-testid={`${option.testId}-radio`}
@@ -487,7 +494,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
                               value={option.value}
                               checked={documentMode === option.value}
                               onChange={() => setDocumentMode(option.value)}
-                              className="h-4 w-4"
+                              className="h-4 w-4 shrink-0"
                             />
                             <span className="text-sm font-semibold text-[var(--text-primary)]">
                               {option.title}

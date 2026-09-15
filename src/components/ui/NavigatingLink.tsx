@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 interface NavigatingLinkProps {
   href: string;
@@ -35,11 +35,19 @@ export function NavigatingLink({
   rel,
 }: NavigatingLinkProps) {
   const pathname = usePathname();
+  // A navigation that only changes the query string (e.g. "Mis proyectos":
+  // /dashboard -> /dashboard?projects=1) never changes `pathname`, so the
+  // pending state must key off the full URL, not the path alone — otherwise
+  // it never clears and the link stays stuck showing its spinner forever
+  // (Fase 9: this is what left "Mis proyectos" permanently busy after a
+  // delete-project redirect back to /dashboard).
+  const searchParams = useSearchParams();
+  const currentUrl = searchParams.size > 0 ? `${pathname}?${searchParams.toString()}` : pathname;
   const [isNavigating, setIsNavigating] = React.useState(false);
 
   React.useEffect(() => {
     setIsNavigating(false);
-  }, [pathname]);
+  }, [currentUrl]);
 
   const handleClick = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
     // Preserve native link behavior for modified clicks, middle clicks and
@@ -53,14 +61,14 @@ export function NavigatingLink({
       event.shiftKey ||
       event.altKey ||
       target === '_blank' ||
-      pathname === href
+      currentUrl === href
     ) {
       return;
     }
 
     setIsNavigating(true);
     onClick?.();
-  }, [href, onClick, pathname, target]);
+  }, [href, onClick, currentUrl, target]);
 
   return (
     <Link

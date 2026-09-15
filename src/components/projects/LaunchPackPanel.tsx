@@ -21,14 +21,16 @@ import type { AppMessages } from '@/lib/i18n/messages';
 
 type Copy = AppMessages['launchPack'];
 
-const PROVENANCE_LABEL: Record<ManifestProvenance, keyof Pick<Copy, 'provenanceCompositor' | 'provenanceService' | 'provenanceLocal'>> = {
+const PROVENANCE_LABEL: Record<ManifestProvenance, keyof Pick<Copy, 'provenanceCompositor' | 'provenanceOriginal' | 'provenanceService' | 'provenanceLocal'>> = {
   compositor: 'provenanceCompositor',
+  original: 'provenanceOriginal',
   'filestudio-service': 'provenanceService',
   'filestudio-local': 'provenanceLocal',
 };
 
 const PROVENANCE_CLASSES: Record<ManifestProvenance, string> = {
   compositor: 'bg-violet-100 text-violet-800',
+  original: 'bg-blue-100 text-blue-800',
   'filestudio-service': 'bg-sky-100 text-sky-800',
   'filestudio-local': 'bg-emerald-100 text-emerald-800',
 };

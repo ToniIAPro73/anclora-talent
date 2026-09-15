@@ -20,6 +20,7 @@ import { ReimportDialog } from './ReimportDialog';
 import { DocumentDataModal } from './DocumentDataModal';
 import { Portal } from '@/components/ui/Portal';
 import { PdfExportButton } from './PdfExportButton';
+import { CreateEditableCopyButton } from './CreateEditableCopyButton';
 import { DocumentRulesPanel } from './DocumentRulesPanel';
 import { DocumentHealthPanel } from './DocumentHealthPanel';
 import { BrandProfilePanel } from './BrandProfilePanel';
@@ -58,6 +59,7 @@ import {
 import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface-resolver';
 import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
 import { isFixedPdfProject, type ProjectRecord } from '@/lib/projects/types';
+import { getProjectCapabilities } from '@/lib/projects/capabilities';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { BrandProfile } from '@/lib/brand/brand-profile';
 import type { LaunchPackView } from '@/lib/manifest/view';
@@ -210,6 +212,9 @@ export function ProjectWorkspace({
   // source. Chapters/template/cover/back-cover steps are never forced —
   // they render as "already included" instead of an editor.
   const fixedPdf = isFixedPdfProject(project);
+  // Capability matrix (Fase 10): single source for export/compose gating,
+  // derived from the same fixed-pdf/editable mode check above.
+  const capabilities = useMemo(() => getProjectCapabilities(project), [project]);
   const [activeStep, setActiveStep] = useState(() => {
     const persistedStep = readStoredWorkflowStep(project.id);
     return Number.isFinite(project.workflowStep)
@@ -399,8 +404,11 @@ export function ProjectWorkspace({
   const preflightChecks = useMemo(() => preflight(preflightInput), [preflightInput]);
   const preflightErrorCount = countPreflightErrors(preflightChecks);
   const exportGate = resolveDocumentRules(project.document.rules).exportGate;
-  const gateIssueCount = documentViolationCount + preflightErrorCount;
-  const exportBlocked = exportGate === 'block' && gateIssueCount > 0;
+  // Fixed-PDF document mode: Talent does not govern this document's
+  // composition, so composition/preflight issues must never block or warn
+  // about exporting the original PDF (see capabilities.canCompose).
+  const gateIssueCount = capabilities.canCompose ? documentViolationCount + preflightErrorCount : 0;
+  const exportBlocked = capabilities.canCompose && exportGate === 'block' && gateIssueCount > 0;
 
   // F0.3 undo: last chapter save of the session (recorded by the chapter
   // editor). Reverting re-saves the pre-save HTML through the regular save
@@ -706,7 +714,8 @@ export function ProjectWorkspace({
                    const htmlUrl = `/api/projects/export?projectId=${project.id}&${exportQuery}`;
                    window.open(htmlUrl, '_blank');
                  }}
-                 disabled={exportBlocked}
+                 disabled={exportBlocked || !capabilities.canExportHtml}
+                 title={!capabilities.canExportHtml ? copy.fixedPdfHtmlUnavailable : undefined}
                  className="ac-button ac-button--secondary"
                >
                   {copy.previewExportButton}
@@ -735,8 +744,8 @@ export function ProjectWorkspace({
                    const docxUrl = `/api/projects/export/docx?projectId=${project.id}&${exportQuery}`;
                    window.open(docxUrl, '_blank');
                  }}
-                 disabled={exportBlocked || fixedPdf}
-                 title={fixedPdf ? copy.fixedPdfDocxUnavailable : undefined}
+                 disabled={exportBlocked || !capabilities.canExportDocx}
+                 title={!capabilities.canExportDocx ? copy.fixedPdfDocxUnavailable : undefined}
                  className="ac-button ac-button--secondary"
                >
                   {copy.previewExportDocxButton}
@@ -747,12 +756,31 @@ export function ProjectWorkspace({
                    const epubUrl = `/api/projects/export/epub?projectId=${project.id}&${exportQuery}`;
                    window.open(epubUrl, '_blank');
                  }}
-                 disabled={exportBlocked || fixedPdf}
-                 title={fixedPdf ? copy.fixedPdfEpubUnavailable : undefined}
+                 disabled={exportBlocked || !capabilities.canExportEpub}
+                 title={!capabilities.canExportEpub ? copy.fixedPdfEpubUnavailable : undefined}
                  className="ac-button ac-button--secondary"
                >
                   {copy.previewExportEpubButton}
                </button>
+               <button
+                 data-testid="export-markdown-button"
+                 onClick={() => {
+                   const markdownUrl = `/api/projects/export/markdown?projectId=${project.id}&${exportQuery}`;
+                   window.open(markdownUrl, '_blank');
+                 }}
+                 disabled={exportBlocked || !capabilities.canExportMarkdown}
+                 title={!capabilities.canExportMarkdown ? copy.fixedPdfMarkdownUnavailable : undefined}
+                 className="ac-button ac-button--secondary"
+               >
+                  {copy.previewExportMarkdownButton}
+               </button>
+               {capabilities.canCreateEditableCopy && (
+                 <CreateEditableCopyButton
+                   projectId={project.id}
+                   label={copy.createEditableCopyButton}
+                   className="ac-button ac-button--secondary"
+                 />
+               )}
             </div>
             {kdpDisclosure && <KdpDisclosurePanel disclosure={kdpDisclosure} copy={copy} />}
             {launchPack && (

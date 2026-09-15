@@ -16,6 +16,7 @@ import { isAiCloudEnabled } from '@/lib/ai/provider';
 import { aiOperationsLog } from '@/lib/ai/operations-log';
 import { buildKdpDisclosure } from '@/lib/ai/kdp-disclosure';
 import { getCollaborationViewForProject } from '@/lib/collaboration/view';
+import { isFixedPdfProject } from '@/lib/projects/types';
 
 export default async function ProjectEditorPage({
   params,
@@ -71,6 +72,7 @@ export default async function ProjectEditorPage({
     provenance: project.document.provenance,
     operations: await aiOperationsLog.list(userId, project.id),
     locale,
+    isFixedPdfSource: isFixedPdfProject(project),
   });
 
   // F4: collaboration section (step 7). The view resolves the caller's role
