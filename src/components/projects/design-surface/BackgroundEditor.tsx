@@ -199,6 +199,18 @@ export function BackgroundEditor({ background, copy, colorPickerCopy, brandColor
               data-testid="background-image-opacity-slider"
             />
           </div>
+
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
+              <input
+                type="checkbox"
+                data-testid="background-image-grayscale-checkbox"
+                checked={Boolean(background.filters?.grayscale)}
+                onChange={(event) => onChange({ ...background, filters: { grayscale: event.target.checked } })}
+              />
+              {copy.grayscaleLabel}
+            </label>
+          </div>
         </div>
       )}
     </div>

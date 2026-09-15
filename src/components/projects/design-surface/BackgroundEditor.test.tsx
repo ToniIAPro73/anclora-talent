@@ -54,6 +54,19 @@ describe('BackgroundEditor', () => {
     expect(onChange).toHaveBeenCalledWith({ ...background, fit: 'contain' });
   });
 
+  test('toggling grayscale on an image background updates filters without touching other fields', () => {
+    const onChange = vi.fn();
+    const background: BackgroundSpec = { kind: 'image', src: 'https://blob.example/bg.png', fit: 'cover', opacity: 0.8 };
+    render(
+      <BackgroundEditor background={background} copy={copy.background} colorPickerCopy={copy.colorPicker} onChange={onChange} onUploadFile={vi.fn()} />,
+    );
+
+    const checkbox = screen.getByTestId('background-image-grayscale-checkbox');
+    expect(checkbox).not.toBeChecked();
+    fireEvent.click(checkbox);
+    expect(onChange).toHaveBeenCalledWith({ ...background, filters: { grayscale: true } });
+  });
+
   test('uploading a background image file calls onUploadFile', () => {
     const onUploadFile = vi.fn();
     const background: BackgroundSpec = { kind: 'image', src: '', fit: 'cover', opacity: 1 };

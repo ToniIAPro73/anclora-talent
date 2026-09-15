@@ -109,6 +109,8 @@ export type BackgroundSpec =
       opacity: number;
       /** True when this is an inherited original-PDF page, never cropped/overlaid unless the user opts in (mission §34). */
       originalUncropped?: boolean;
+      /** Basic mode's "blanco y negro" toggle applies here — a background image is not a layer, so it needs its own (much smaller) filter set. */
+      filters?: Pick<ImageLayerFilters, 'grayscale'>;
     };
 
 export interface SafeAreaSpec {

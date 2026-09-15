@@ -233,6 +233,12 @@ export async function applyBackgroundToCanvas(
     scaleY: scale,
     opacity: background.opacity,
   });
+
+  if (background.filters?.grayscale) {
+    image.filters = [new fabric.filters.Grayscale()];
+    image.applyFilters();
+  }
+
   canvas.backgroundImage = image;
 }
 

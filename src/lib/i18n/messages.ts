@@ -903,6 +903,13 @@ export type AppMessages = {
     addVerticalGuideLabel: string;
     addHorizontalGuideLabel: string;
     removeGuideLabel: string;
+    templatesLabel: string;
+    fields: {
+      title: string;
+      subtitle: string;
+      author: string;
+      addFieldButtonLabel: string;
+    };
     text: {
       contentLabel: string;
       fontFamilyLabel: string;
@@ -956,6 +963,7 @@ export type AppMessages = {
       fitLabel: string;
       fitCover: string;
       fitContain: string;
+      grayscaleLabel: string;
     };
     colorPicker: {
       customLabel: string;
@@ -2117,6 +2125,13 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       addVerticalGuideLabel: 'Añadir guía vertical',
       addHorizontalGuideLabel: 'Añadir guía horizontal',
       removeGuideLabel: 'Quitar guía (doble clic)',
+      templatesLabel: 'Plantillas',
+      fields: {
+        title: 'Título',
+        subtitle: 'Subtítulo',
+        author: 'Autor',
+        addFieldButtonLabel: 'Añadir campo',
+      },
       text: {
         contentLabel: 'Contenido',
         fontFamilyLabel: 'Tipografía',
@@ -2170,6 +2185,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         fitLabel: 'Ajuste',
         fitCover: 'Cubrir',
         fitContain: 'Contener',
+        grayscaleLabel: 'Blanco y negro',
       },
       colorPicker: {
         customLabel: 'Personalizado',
@@ -3328,6 +3344,13 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       addVerticalGuideLabel: 'Add vertical guide',
       addHorizontalGuideLabel: 'Add horizontal guide',
       removeGuideLabel: 'Remove guide (double-click)',
+      templatesLabel: 'Templates',
+      fields: {
+        title: 'Title',
+        subtitle: 'Subtitle',
+        author: 'Author',
+        addFieldButtonLabel: 'Add field',
+      },
       text: {
         contentLabel: 'Content',
         fontFamilyLabel: 'Font',
@@ -3381,6 +3404,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         fitLabel: 'Fit',
         fitCover: 'Cover',
         fitContain: 'Contain',
+        grayscaleLabel: 'Black and white',
       },
       colorPicker: {
         customLabel: 'Custom',

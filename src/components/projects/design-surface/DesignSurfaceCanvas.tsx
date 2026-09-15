@@ -74,6 +74,8 @@ export interface DesignSurfaceCanvasProps {
   /** Snapping to canvas edges/center, guides and other layer edges (mission §15). Defaults to true; the user can turn it off temporarily. */
   snapEnabled?: boolean;
   onZoomChange?: (zoom: number) => void;
+  /** Fires after every history push/undo/redo — the only render-safe way for a toolbar to know canUndo/canRedo (reading the imperative handle's ref during render is not allowed). */
+  onHistoryChange?: (state: { canUndo: boolean; canRedo: boolean }) => void;
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -84,7 +86,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 
 export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignSurfaceCanvasProps>(
   function DesignSurfaceCanvas(
-    { surface, onLayerChange, onLayersChange, onSelectionChange, viewportSize, snapEnabled = true, onZoomChange },
+    { surface, onLayerChange, onLayersChange, onSelectionChange, viewportSize, snapEnabled = true, onZoomChange, onHistoryChange },
     ref,
   ) {
     const canvasElRef = useRef<HTMLCanvasElement>(null);
@@ -112,7 +114,8 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
       historyRef.current.push(snapshot);
       historyIndexRef.current = historyRef.current.length - 1;
       forceRender((n) => n + 1);
-    }, []);
+      onHistoryChange?.({ canUndo: historyIndexRef.current > 0, canRedo: false });
+    }, [onHistoryChange]);
 
     const reportLayerChange = useCallback(
       (object: FabricObject) => {
@@ -306,9 +309,13 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
             layers.push({ ...existingLayer, ...patch, zIndex: index } as DesignLayer);
           });
           onLayersChange(layers);
+          onHistoryChange?.({
+            canUndo: historyIndexRef.current > 0,
+            canRedo: historyIndexRef.current < historyRef.current.length - 1,
+          });
         });
       },
-      [onLayersChange, surface.layers],
+      [onHistoryChange, onLayersChange, surface.layers],
     );
 
     useImperativeHandle(
