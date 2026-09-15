@@ -21,6 +21,9 @@ import { BackCoverPreview } from './BackCoverPreview';
 import { createDefaultSurfaceState, normalizeSurfaceState } from '@/lib/projects/cover-surface';
 import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface-resolver';
 import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
+import { isDesignSurfaceV2 } from '@/lib/projects/design-surface';
+import { getBackCoverDesign, getCoverDesign } from '@/lib/projects/design-surface-repository';
+import { DesignSurfaceRenderer } from './design-surface/DesignSurfaceRenderer';
 
 function sleep(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -375,6 +378,17 @@ function PreviewCapturePage({
       );
     }
 
+    if (isDesignSurfaceV2(project.cover.surfaceState)) {
+      return (
+        <div
+          className="overflow-hidden rounded-[8px] border border-white/10 shadow-[var(--shadow-strong)]"
+          style={{ width: `${preset.viewportWidth}px`, height: `${preset.pagePixelHeight}px` }}
+        >
+          <DesignSurfaceRenderer surface={getCoverDesign(project)} className="h-full w-full" />
+        </div>
+      );
+    }
+
     return (
       <div
         className="overflow-hidden rounded-[8px] border border-white/10 shadow-[var(--shadow-strong)]"
@@ -406,6 +420,17 @@ function PreviewCapturePage({
             alt={copy.previewModalBackCoverAlt}
             className="h-full w-full object-cover"
           />
+        </div>
+      );
+    }
+
+    if (isDesignSurfaceV2(project.backCover.surfaceState)) {
+      return (
+        <div
+          className="overflow-hidden rounded-[8px] border border-white/10 shadow-[var(--shadow-strong)]"
+          style={{ width: `${preset.viewportWidth}px`, height: `${preset.pagePixelHeight}px` }}
+        >
+          <DesignSurfaceRenderer surface={getBackCoverDesign(project)} className="h-full w-full" />
         </div>
       );
     }

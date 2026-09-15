@@ -368,6 +368,9 @@ import { BackCoverPreview } from './BackCoverPreview';
 import { createDefaultSurfaceState, normalizeSurfaceState } from '@/lib/projects/cover-surface';
 import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface-resolver';
 import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
+import { isDesignSurfaceV2 } from '@/lib/projects/design-surface';
+import { getBackCoverDesign, getCoverDesign } from '@/lib/projects/design-surface-repository';
+import { DesignSurfaceRenderer } from './design-surface/DesignSurfaceRenderer';
 
 export function PageRenderer({
   page,
@@ -406,7 +409,19 @@ export function PageRenderer({
       );
     }
 
-    // 2. Otherwise, use the standard CoverPreview component for coherence with basic editor
+    // 2. Cover Studio v2: a design authored in the new layered editor renders
+    // through the same canonical model the editor and export use (mission
+    // §45-47's "one engine" requirement) instead of the legacy field-map
+    // preview, which cannot represent arbitrary layers.
+    if (isDesignSurfaceV2(project.cover.surfaceState)) {
+      return (
+        <div style={pageStyle} className="rounded-[8px] overflow-hidden shadow-[var(--shadow-strong)] border border-white/10">
+          <DesignSurfaceRenderer surface={getCoverDesign(project)} className="h-full w-full" />
+        </div>
+      );
+    }
+
+    // 3. Otherwise, use the standard CoverPreview component for coherence with basic editor
     const baseSurface = normalizeSurfaceState(
       project.cover.surfaceState ?? {
         ...createDefaultSurfaceState('cover'),
@@ -444,6 +459,14 @@ export function PageRenderer({
             alt={copy.previewModalBackCoverAlt}
             className="w-full h-full object-cover"
           />
+        </div>
+      );
+    }
+
+    if (isDesignSurfaceV2(project.backCover.surfaceState)) {
+      return (
+        <div style={pageStyle} className="rounded-[8px] overflow-hidden shadow-[var(--shadow-strong)] border border-white/10">
+          <DesignSurfaceRenderer surface={getBackCoverDesign(project)} className="h-full w-full" />
         </div>
       );
     }
