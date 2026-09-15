@@ -103,6 +103,31 @@ describe('CanvasGuideManager', () => {
     expect(moving.set).toHaveBeenCalled();
   });
 
+  it('snaps to a persisted user guide (Cover Studio v2, mission §15)', async () => {
+    const moving = makeObject({ left: 253, top: 300, width: 100, height: 40 });
+    const canvas = makeCanvas([moving]);
+    const manager = createGuideManager(canvas);
+    manager.setCustomGuides([{ axis: 'x', position: 250 }]);
+
+    await manager.showGuides(moving);
+    manager.snapToGuides(moving);
+
+    // originX 'center' -> left ends up at the guide position exactly.
+    expect(moving.left).toBe(250);
+  });
+
+  it('a user guide far from the moving object is never a snap target', async () => {
+    const moving = makeObject({ left: 300, top: 300, width: 100, height: 40 });
+    const canvas = makeCanvas([moving]);
+    const manager = createGuideManager(canvas);
+    manager.setCustomGuides([{ axis: 'x', position: 30 }]);
+
+    await manager.showGuides(moving);
+    manager.snapToGuides(moving);
+
+    expect(moving.left).toBe(300);
+  });
+
   it('shows distance labels in px when nearby objects leave a measurable gap', async () => {
     const moving = makeObject({ id: 'moving', left: 220, top: 200, width: 100, height: 50 });
     const other = makeObject({ id: 'other', left: 100, top: 200, width: 80, height: 50 });

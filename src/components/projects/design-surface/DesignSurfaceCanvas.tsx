@@ -28,6 +28,7 @@ import {
   useState,
 } from 'react';
 import { getFabric } from '@/lib/canvas-utils';
+import { createGuideManager, type CanvasGuideManager } from '@/lib/canvas-guides';
 import {
   applyBackgroundToCanvas,
   hydrateFabricLayerObject,
@@ -70,6 +71,9 @@ export interface DesignSurfaceCanvasProps {
   onSelectionChange: (layerIds: string[]) => void;
   /** Container size available to the canvas — used for zoom-to-fit and CSS scaling. */
   viewportSize?: { width: number; height: number };
+  /** Snapping to canvas edges/center, guides and other layer edges (mission §15). Defaults to true; the user can turn it off temporarily. */
+  snapEnabled?: boolean;
+  onZoomChange?: (zoom: number) => void;
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -79,7 +83,10 @@ function isEditableTarget(target: EventTarget | null): boolean {
 }
 
 export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignSurfaceCanvasProps>(
-  function DesignSurfaceCanvas({ surface, onLayerChange, onLayersChange, onSelectionChange, viewportSize }, ref) {
+  function DesignSurfaceCanvas(
+    { surface, onLayerChange, onLayersChange, onSelectionChange, viewportSize, snapEnabled = true, onZoomChange },
+    ref,
+  ) {
     const canvasElRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const fabricRef = useRef<FabricCanvas | null>(null);
@@ -87,9 +94,15 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
     const lastSyncedLayersRef = useRef<Map<string, string>>(new Map());
     const historyRef = useRef<string[]>([]);
     const historyIndexRef = useRef(-1);
+    const guideManagerRef = useRef<CanvasGuideManager | null>(null);
+    const snapEnabledRef = useRef(snapEnabled);
     const [, forceRender] = useState(0);
     const [zoom, setZoomState] = useState(1);
     const suppressHistoryRef = useRef(false);
+
+    useEffect(() => {
+      snapEnabledRef.current = snapEnabled;
+    }, [snapEnabled]);
 
     const pushHistory = useCallback(() => {
       const canvas = fabricRef.current;
@@ -126,6 +139,8 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           preserveObjectStacking: true,
         });
         fabricRef.current = canvas;
+        guideManagerRef.current = createGuideManager(canvas);
+        guideManagerRef.current.setCustomGuides(surface.guides ?? []);
 
         await applyBackgroundToCanvas(fabric, canvas, surface.background, surface);
 
@@ -151,7 +166,22 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
         canvas.on('selection:updated', emitSelection);
         canvas.on('selection:cleared', () => onSelectionChange([]));
 
+        // Snapping (mission §15): live alignment guides while dragging, with
+        // visual feedback (CanvasGuideManager already draws distance labels
+        // and canvas/object edge lines); actually moving the object to the
+        // snapped position only happens when snapping is enabled, but the
+        // guide lines themselves are informational either way.
+        canvas.on('object:moving', (event: FabricEvent) => {
+          const target = event.target;
+          if (!target) return;
+          const guideManager = guideManagerRef.current;
+          if (!guideManager) return;
+          guideManager.showGuides(target);
+          if (snapEnabledRef.current) guideManager.snapToGuides(target);
+        });
+
         canvas.on('object:modified', (event: FabricEvent) => {
+          guideManagerRef.current?.hideGuidesWithAnimation();
           if (suppressHistoryRef.current) return;
           if (event.target) reportLayerChange(event.target);
           pushHistory();
@@ -163,6 +193,8 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
 
       return () => {
         disposed = true;
+        guideManagerRef.current?.dispose();
+        guideManagerRef.current = null;
         fabricRef.current?.dispose();
         fabricRef.current = null;
         // Read fresh at cleanup time deliberately — the async hydration
@@ -247,6 +279,12 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when the background value itself changes, deliberately excluding `surface` (width/height are stable for a given editor session).
     }, [surface.background]);
+
+    // Guides changing (added/removed via the guides UI) refreshes the
+    // guide manager's snap targets — never re-hydrates the canvas.
+    useEffect(() => {
+      guideManagerRef.current?.setCustomGuides(surface.guides ?? []);
+    }, [surface.guides]);
 
     const applyHistorySnapshot = useCallback(
       (snapshot: string) => {
@@ -333,6 +371,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           canvas.setZoom(factor);
           canvas.setDimensions({ width: surface.width * factor, height: surface.height * factor });
           setZoomState(factor);
+          onZoomChange?.(factor);
         },
         zoomToFit() {
           if (!viewportSize) return;
@@ -342,9 +381,10 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           canvas.setZoom(factor);
           canvas.setDimensions({ width: surface.width * factor, height: surface.height * factor });
           setZoomState(factor);
+          onZoomChange?.(factor);
         },
       }),
-      [applyHistorySnapshot, onLayersChange, pushHistory, surface.layers, viewportSize, surface.width, surface.height],
+      [applyHistorySnapshot, onLayersChange, onZoomChange, pushHistory, surface.layers, viewportSize, surface.width, surface.height],
     );
 
     // Keyboard: arrow move / Shift+arrow larger step / Delete / Cmd-Ctrl+D

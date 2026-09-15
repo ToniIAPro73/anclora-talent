@@ -900,6 +900,9 @@ export type AppMessages = {
   coverDesignSurface: {
     noSelection: string;
     multiSelection: string;
+    addVerticalGuideLabel: string;
+    addHorizontalGuideLabel: string;
+    removeGuideLabel: string;
     text: {
       contentLabel: string;
       fontFamilyLabel: string;
@@ -960,6 +963,24 @@ export type AppMessages = {
       paletteLabel: string;
       brandColorsLabel: string;
       hexLabel: string;
+    };
+    layers: {
+      title: string;
+      emptyLabel: string;
+      renameLabel: string;
+      showLabel: string;
+      hideLabel: string;
+      lockLabel: string;
+      unlockLabel: string;
+      duplicateLabel: string;
+      deleteLabel: string;
+      moveUpLabel: string;
+      moveDownLabel: string;
+      bringToFrontLabel: string;
+      sendToBackLabel: string;
+      untitledText: string;
+      untitledImage: string;
+      untitledShape: string;
     };
   };
 };
@@ -2093,6 +2114,9 @@ export const appMessages: Record<UiLocale, AppMessages> = {
     coverDesignSurface: {
       noSelection: 'Selecciona un elemento del lienzo para editar sus propiedades.',
       multiSelection: 'Varios elementos seleccionados.',
+      addVerticalGuideLabel: 'Añadir guía vertical',
+      addHorizontalGuideLabel: 'Añadir guía horizontal',
+      removeGuideLabel: 'Quitar guía (doble clic)',
       text: {
         contentLabel: 'Contenido',
         fontFamilyLabel: 'Tipografía',
@@ -2153,6 +2177,24 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         paletteLabel: 'Paleta',
         brandColorsLabel: 'Colores de marca',
         hexLabel: 'Hex',
+      },
+      layers: {
+        title: 'Capas',
+        emptyLabel: 'Aún no hay elementos en el lienzo.',
+        renameLabel: 'Renombrar',
+        showLabel: 'Mostrar',
+        hideLabel: 'Ocultar',
+        lockLabel: 'Bloquear',
+        unlockLabel: 'Desbloquear',
+        duplicateLabel: 'Duplicar',
+        deleteLabel: 'Eliminar',
+        moveUpLabel: 'Subir una posición',
+        moveDownLabel: 'Bajar una posición',
+        bringToFrontLabel: 'Traer al frente',
+        sendToBackLabel: 'Enviar al fondo',
+        untitledText: 'Texto',
+        untitledImage: 'Imagen',
+        untitledShape: 'Forma',
       },
     },
   },
@@ -3283,6 +3325,9 @@ export const appMessages: Record<UiLocale, AppMessages> = {
     coverDesignSurface: {
       noSelection: 'Select an element on the canvas to edit its properties.',
       multiSelection: 'Multiple elements selected.',
+      addVerticalGuideLabel: 'Add vertical guide',
+      addHorizontalGuideLabel: 'Add horizontal guide',
+      removeGuideLabel: 'Remove guide (double-click)',
       text: {
         contentLabel: 'Content',
         fontFamilyLabel: 'Font',
@@ -3343,6 +3388,24 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         paletteLabel: 'Palette',
         brandColorsLabel: 'Brand colors',
         hexLabel: 'Hex',
+      },
+      layers: {
+        title: 'Layers',
+        emptyLabel: 'No elements on the canvas yet.',
+        renameLabel: 'Rename',
+        showLabel: 'Show',
+        hideLabel: 'Hide',
+        lockLabel: 'Lock',
+        unlockLabel: 'Unlock',
+        duplicateLabel: 'Duplicate',
+        deleteLabel: 'Delete',
+        moveUpLabel: 'Move up one position',
+        moveDownLabel: 'Move down one position',
+        bringToFrontLabel: 'Bring to front',
+        sendToBackLabel: 'Send to back',
+        untitledText: 'Text',
+        untitledImage: 'Image',
+        untitledShape: 'Shape',
       },
     },
   },

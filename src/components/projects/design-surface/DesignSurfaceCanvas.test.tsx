@@ -7,6 +7,19 @@ import {
 } from './DesignSurfaceCanvas';
 import { createDesignLayer, createEmptyDesignSurface, type DesignSurface } from '@/lib/projects/design-surface';
 
+// canvas-guides.ts imports the real 'fabric' package statically (for its
+// own Line/Text guide-drawing primitives, independent of this component's
+// getFabric() calls) — mocked the same minimal way canvas-guides.test.ts
+// does, so guide construction never needs a real rendering context in jsdom.
+vi.mock('fabric', () => ({
+  Line: vi.fn(function Line(this: Record<string, unknown>) {
+    this.set = vi.fn();
+  }),
+  Text: vi.fn(function Text(this: Record<string, unknown>) {
+    this.set = vi.fn();
+  }),
+}));
+
 /**
  * The interactive engine's actual hydration/rendering logic against the
  * real Fabric library is covered by design-surface-fabric.test.ts (via
@@ -257,5 +270,34 @@ describe('DesignSurfaceCanvas', () => {
     handleRef.current?.deleteSelected();
     expect(mocks.state.objects).toHaveLength(0);
     expect(onLayersChange).toHaveBeenCalledWith([]);
+  });
+
+  it('snaps a moving object to the canvas horizontal center when snapping is enabled', async () => {
+    const surface = makeSurfaceWithOneTextLayer(); // 400x600 canvas, layer width 150
+    render(
+      <DesignSurfaceCanvas surface={surface} onLayerChange={vi.fn()} onLayersChange={vi.fn()} onSelectionChange={vi.fn()} snapEnabled />,
+    );
+    await waitFor(() => expect(mocks.state.objects).toHaveLength(1));
+
+    const object = mocks.state.objects[0];
+    // Center at 201 (canvas center is 200) — within the guide manager's snap threshold.
+    object.set({ left: 126, top: 50 });
+    emit('object:moving', { target: object });
+
+    expect(object.left).toBe(125);
+  });
+
+  it('does not snap when snapping is disabled', async () => {
+    const surface = makeSurfaceWithOneTextLayer();
+    render(
+      <DesignSurfaceCanvas surface={surface} onLayerChange={vi.fn()} onLayersChange={vi.fn()} onSelectionChange={vi.fn()} snapEnabled={false} />,
+    );
+    await waitFor(() => expect(mocks.state.objects).toHaveLength(1));
+
+    const object = mocks.state.objects[0];
+    object.set({ left: 126, top: 50 });
+    emit('object:moving', { target: object });
+
+    expect(object.left).toBe(126);
   });
 });

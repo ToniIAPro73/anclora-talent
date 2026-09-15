@@ -7,6 +7,7 @@ import * as fabricModule from 'fabric';
 
 const CANVAS_GUIDE_COLOR = '#38bdf8';
 const OBJECT_GUIDE_COLOR = '#f59e0b';
+const USER_GUIDE_SNAP_COLOR = '#a855f7';
 const GUIDE_WIDTH = 2;
 const SNAP_THRESHOLD = 10;
 const DISTANCE_COLOR = '#9fe7f2';
@@ -16,7 +17,7 @@ type GuideType = 'vertical' | 'horizontal' | 'distance-horizontal' | 'distance-v
 type Axis = 'x' | 'y';
 type XAnchor = 'left' | 'center' | 'right';
 type YAnchor = 'top' | 'center' | 'bottom';
-type AlignmentSource = 'canvas' | 'object';
+type AlignmentSource = 'canvas' | 'object' | 'guide';
 
 interface Bounds {
   left: number;
@@ -176,9 +177,16 @@ export class CanvasGuideManager {
   private guides: Map<string, AlignmentGuide> = new Map();
   private activeObject: GuideObject | null = null;
   private snapTargets: Partial<Record<Axis, SnapTarget>> = {};
+  /** Cover Studio v2: persisted user guides (design-surface.ts's DesignGuide[]) — not canvas objects, so they need to be fed in explicitly to become snap targets (mission §15 lists guides alongside canvas/object edges). */
+  private customGuides: { axis: Axis; position: number }[] = [];
 
   constructor(canvas: GuideCanvas) {
     this.canvas = canvas;
+  }
+
+  /** Replaces the set of persisted guides this manager snaps to. Call whenever the surface's own `guides` array changes. */
+  setCustomGuides(guides: Array<{ axis: Axis; position: number }>): void {
+    this.customGuides = guides;
   }
 
   private get fabric() {
@@ -203,7 +211,9 @@ export class CanvasGuideManager {
         ? DISTANCE_COLOR
         : source === 'object'
           ? OBJECT_GUIDE_COLOR
-          : CANVAS_GUIDE_COLOR;
+          : source === 'guide'
+            ? USER_GUIDE_SNAP_COLOR
+            : CANVAS_GUIDE_COLOR;
 
     return new fabric.Line([x1, y1, x2, y2], {
       stroke,
@@ -297,6 +307,24 @@ export class CanvasGuideManager {
         if (distance > SNAP_THRESHOLD) continue;
         if (!bestY || distance < bestY.distance) {
           bestY = { axis: 'y', anchor, position: candidate.position, distance, source: 'canvas' };
+        }
+      }
+    }
+
+    // Persisted user guides (mission §15) — checked against the object's
+    // near edge only (a guide is a single line, not a box with left/center/
+    // right anchors of its own).
+    for (const guide of this.customGuides) {
+      const anchors = guide.axis === 'x' ? (['left', 'center', 'right'] as const) : (['top', 'center', 'bottom'] as const);
+      for (const anchor of anchors) {
+        const distance = Math.abs(getAnchorValue(bounds, guide.axis, anchor) - guide.position);
+        if (distance > SNAP_THRESHOLD) continue;
+        if (guide.axis === 'x') {
+          if (!bestX || distance < bestX.distance) {
+            bestX = { axis: 'x', anchor: anchor as XAnchor, position: guide.position, distance, source: 'guide' };
+          }
+        } else if (!bestY || distance < bestY.distance) {
+          bestY = { axis: 'y', anchor: anchor as YAnchor, position: guide.position, distance, source: 'guide' };
         }
       }
     }
