@@ -317,6 +317,84 @@ describe('pdf-import-structural-recovery: table of contents', () => {
     const lowerTitles = titles.map((t) => t.toLowerCase());
     expect(new Set(lowerTitles).size).toBe(lowerTitles.length); // no duplicates
   });
+
+  test('a headingless dedication before the TOC folds into the Índice chapter without duplicating its heading', () => {
+    const text = [
+      'Manual de Estrategia Profesional',
+      '',
+      '© 2026 Autora Demo. Todos los derechos reservados.',
+      '',
+      'A quienes se atreven a cambiar de rumbo.',
+      '',
+      'ÍNDICE',
+      'Prólogo 6',
+      '1. El suelo financiero 12',
+      '',
+      'PRÓLOGO',
+      'Contenido del prólogo con longitud suficiente para ser un párrafo real y no un título.',
+      '',
+      'C A P Í T U L O 1',
+      'El suelo financiero',
+      'Contenido del capítulo uno con longitud suficiente para leerse como cuerpo del capítulo.',
+    ].join('\n');
+
+    const result = buildImportedDocumentSeed({ fileName: 'libro.pdf', mimeType: 'application/pdf', text });
+
+    const indexChapter = result.chapters?.[0];
+    expect(indexChapter?.title).toBe('Índice');
+    // Exactly one heading block for "Índice" — the bug folded the dedication
+    // in ahead of the heading block, which made flushCurrent()'s own
+    // "prepend the title unless already there" check see the dedication as
+    // block 0 and prepend a second "Índice" heading.
+    const headingBlocks = indexChapter?.blocks.filter((b) => b.type === 'heading') ?? [];
+    expect(headingBlocks).toEqual([{ type: 'heading', content: 'Índice' }]);
+    // The dedication survives as body content of that same chapter (never
+    // discarded, never mislabeled as a "Prólogo" that doesn't exist yet).
+    expect(indexChapter?.blocks.some((b) => b.content.includes('atreven a cambiar de rumbo'))).toBe(true);
+  });
+
+  test('a TOC entry title wrapped across lines rejoins with its page number instead of scattering into broken fragments', () => {
+    const text = [
+      'Manual de Estrategia Profesional',
+      '',
+      'ÍNDICE',
+      'Prólogo 6',
+      '1. No estás roto: estás atrapado en una',
+      'estructura',
+      '12',
+      '2. El test de las esposas de oro 22',
+      '',
+      'PRÓLOGO',
+      'Contenido del prólogo con longitud suficiente para ser un párrafo real y no un título.',
+      '',
+      'C A P Í T U L O 1',
+      'No estás roto: estás atrapado en una estructura',
+      'Contenido del capítulo uno con longitud suficiente para leerse como cuerpo del capítulo.',
+      '',
+      'C A P Í T U L O 2',
+      'El test de las esposas de oro',
+      'Contenido del capítulo dos con longitud suficiente para leerse como cuerpo del capítulo.',
+    ].join('\n');
+
+    const result = buildImportedDocumentSeed({ fileName: 'libro.pdf', mimeType: 'application/pdf', text });
+
+    const indexChapter = result.chapters?.[0];
+    const indexHtml = indexChapter?.blocks.map((b) => b.content).join('');
+    // The wrapped title + its page number land in one list item, not three
+    // disconnected fragments ("estructura" / "12" as their own orphaned
+    // entries).
+    expect(indexHtml).toContain('No estás roto: estás atrapado en una estructura 12');
+    expect(indexHtml).not.toMatch(/<li>estructura<\/li>/);
+    expect(indexHtml).not.toMatch(/<li>12<\/li>/);
+
+    const titles = result.chapters?.map((c) => c.title) ?? [];
+    expect(titles).toEqual([
+      'Índice',
+      'Prólogo',
+      'No estás roto: estás atrapado en una estructura',
+      'El test de las esposas de oro',
+    ]);
+  });
 });
 
 describe('pdf-import-structural-recovery: page-aware extraction (running headers and folios)', () => {

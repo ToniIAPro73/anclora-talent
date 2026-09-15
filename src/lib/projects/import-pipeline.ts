@@ -642,6 +642,29 @@ function parseTextBlocks(input: string, mode: TextImportMode = 'default'): Parse
       mode === 'pdf' &&
       isStrongStandaloneHeadingSignal(normalizeTrackedHeading(trimmed));
 
+    // A TOC entry's title sometimes wraps onto its own line(s) before the
+    // page number ("1. No estás roto: estás atrapado en una" / "estructura"
+    // / "12"): each wrapped fragment independently satisfies
+    // `looksLikeTocContinuation`, so without this guard every fragment
+    // became its own broken list item instead of rejoining the entry it
+    // belongs to. An entry is "complete" once it ends in the page number;
+    // while the last pushed item is still incomplete, a continuation-shaped
+    // line is appended to it instead of starting a new one.
+    const lastItemIsIncomplete =
+      insideToc && listItems.length > 0 && !/\d\s*$/.test(listItems[listItems.length - 1]);
+
+    if (
+      !bulletMatch &&
+      !orderedMatch &&
+      lastItemIsIncomplete &&
+      (looksLikeTocContinuation ||
+        isLikelyIndexEntry(trimmed, { allowBareKeyword: mode === 'pdf' ? insideToc : true }))
+    ) {
+      flushParagraph();
+      listItems[listItems.length - 1] = `${listItems[listItems.length - 1]} ${trimmed}`.trim();
+      continue;
+    }
+
     if (
       bulletMatch ||
       orderedMatch ||
@@ -1319,7 +1342,14 @@ function buildChaptersFromBlocks(
 
       flushCurrent();
       currentTitle = headingText || `Capítulo ${chapters.length + 1}`;
-      currentBlocks = [...leadingBlocks, block]; // Include the heading block in the content
+      // The heading block goes first, folded-in leading content (e.g. a
+      // dedication with no heading of its own, folded into the upcoming
+      // Índice chapter above) after it — never the other way round.
+      // `flushCurrent()` only prepends a synthetic heading when
+      // `currentBlocks[0]` isn't already the chapter's own title; putting
+      // the real heading block first here keeps that check true and avoids
+      // emitting the same heading twice.
+      currentBlocks = [block, ...leadingBlocks];
       continue;
     }
 
