@@ -709,10 +709,8 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
 
 .talent-create-form--dashboard {
   display: grid;
-  /* Fase 4: 22rem left too little room for the import-mode selector and
-     analysis panel, forcing their own internal breakpoints to compress. */
-  grid-template-columns: minmax(0, 1.1fr) minmax(26rem, 0.9fr);
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
   align-items: start;
   min-height: 0;
   padding: clamp(18px, 2vw, 28px);
@@ -726,8 +724,8 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
 }
 
 .talent-create-form--dashboard .talent-create-form__optional {
-  border-left: 1px solid var(--border-subtle);
-  padding-left: 22px;
+  border-left: 0;
+  padding-left: 0;
 }
 
 /* Fase 8: this used to be a `display:flex; overflow-x:auto` filmstrip,
@@ -1015,10 +1013,8 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
   }
 
   .talent-create-form--dashboard .talent-create-form__optional {
-    border-left: 0;
-    border-top: 1px solid var(--border-subtle);
-    padding-left: 0;
-    padding-top: 16px;
+    border-top: 0;
+    padding-top: 0;
   }
 }
 

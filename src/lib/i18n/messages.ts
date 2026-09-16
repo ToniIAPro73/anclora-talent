@@ -252,6 +252,42 @@ export type AppMessages = {
     createOptionalManuscriptLabel: string;
     createOptionalManuscriptHint: string;
     createOptionalStructureLabel: string;
+    newProjectBaseDocumentTitle: string;
+    newProjectBaseDocumentDescription: string;
+    newProjectEditorialStyleTitle: string;
+    newProjectEditorialStyleDescription: string;
+    newProjectStyleNone: string;
+    newProjectStyleNoneDescription: string;
+    newProjectStyleTalent: string;
+    newProjectStyleTalentDescription: string;
+    newProjectStyleTalentUnavailable: string;
+    newProjectStyleSaved: string;
+    newProjectStyleSavedDescription: string;
+    newProjectStyleReference: string;
+    newProjectStyleReferenceDescription: string;
+    newProjectSavedStylesEmpty: string;
+    newProjectCreateFromDocument: string;
+    newProjectReferenceTitle: string;
+    newProjectReferenceDescription: string;
+    newProjectReferenceAnalyse: string;
+    newProjectReferenceAnalysing: string;
+    newProjectReferenceSelected: string;
+    newProjectReferenceChange: string;
+    newProjectReferenceRemove: string;
+    newProjectReferenceAnalyseError: string;
+    newProjectReferenceWhatWeAnalyse: string;
+    newProjectReferenceWhatWeDoNotCopy: string;
+    newProjectReferenceProfileDetected: string;
+    newProjectReferenceSave: string;
+    newProjectReferenceSaveName: string;
+    newProjectReferenceSaved: string;
+    newProjectBrandTitle: string;
+    newProjectBrandDescription: string;
+    newProjectSummaryTitle: string;
+    newProjectSummaryDocument: string;
+    newProjectSummaryStyle: string;
+    newProjectSummaryBrand: string;
+    newProjectNoBrand: string;
     brandManualLabel: string;
     brandManualHint: string;
     createProjectHint: string;
@@ -1493,11 +1529,47 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       createOptionalManuscriptLabel: 'Manuscrito (opcional)',
       createOptionalManuscriptHint: 'Sube tu documento si ya lo tienes; si no, puedes empezar en blanco.',
       createOptionalStructureLabel: 'Referencia de estructura (opcional)',
+      newProjectBaseDocumentTitle: 'Documento base',
+      newProjectBaseDocumentDescription: 'Tu contenido y estructura.',
+      newProjectEditorialStyleTitle: 'Estilo editorial',
+      newProjectEditorialStyleDescription: 'Define cómo quieres que se vea tu contenido.',
+      newProjectStyleNone: 'Sin referencia',
+      newProjectStyleNoneDescription: 'Usa la configuración y plantilla del proyecto.',
+      newProjectStyleTalent: 'Estilo de Talent',
+      newProjectStyleTalentDescription: 'Sistemas editoriales preparados por Talent.',
+      newProjectStyleTalentUnavailable: 'Los estilos de Talent estarán disponibles próximamente.',
+      newProjectStyleSaved: 'Mis estilos editoriales',
+      newProjectStyleSavedDescription: 'Reutiliza un perfil editorial guardado.',
+      newProjectStyleReference: 'Crear desde un documento de referencia',
+      newProjectStyleReferenceDescription: 'Analiza su diseño y composición, sin copiar contenido.',
+      newProjectSavedStylesEmpty: 'Todavía no tienes estilos editoriales guardados.',
+      newProjectCreateFromDocument: 'Crear desde un documento',
+      newProjectReferenceTitle: 'Documento de referencia',
+      newProjectReferenceDescription: 'Analizaremos tipografías, jerarquías, espaciado, márgenes y reglas de composición.',
+      newProjectReferenceAnalyse: 'Analizar documento',
+      newProjectReferenceAnalysing: 'Analizando documento de referencia…',
+      newProjectReferenceSelected: 'Documento seleccionado',
+      newProjectReferenceChange: 'Cambiar',
+      newProjectReferenceRemove: 'Eliminar',
+      newProjectReferenceAnalyseError: 'No hemos podido analizar este documento. Elige otro archivo o inténtalo de nuevo.',
+      newProjectReferenceWhatWeAnalyse: 'Analizaremos: tipografías · jerarquías · tamaños · espaciado · márgenes · aperturas · cabeceras y pies · paleta.',
+      newProjectReferenceWhatWeDoNotCopy: 'No copiaremos: contenido · texto · número de capítulos · estructura narrativa.',
+      newProjectReferenceProfileDetected: 'Perfil editorial detectado',
+      newProjectReferenceSave: 'Guardar en Mis estilos editoriales',
+      newProjectReferenceSaveName: 'Nombre del estilo',
+      newProjectReferenceSaved: 'Estilo guardado',
+      newProjectBrandTitle: 'Identidad de marca',
+      newProjectBrandDescription: 'Aplica colores, logotipo y reglas visuales de tu marca.',
+      newProjectSummaryTitle: 'Resumen del proyecto',
+      newProjectSummaryDocument: 'Documento',
+      newProjectSummaryStyle: 'Estilo',
+      newProjectSummaryBrand: 'Marca',
+      newProjectNoBrand: 'Sin manual de marca',
       brandManualLabel: 'Manual de marca PDF (opcional)',
       brandManualHint:
         'Adjunta sólo un PDF de identidad de marca. Los manuscritos DOC/DOCX van en Documento base; si la extracción falla, el proyecto se crea igualmente.',
       createProjectHint:
-        'La creación persiste sobre Neon desde el primer paso y abre el editor con base importada si has adjuntado documento.',
+        'Guardaremos el progreso al crear el proyecto y abriremos el editor con tu contenido.',
       createProjectAction: 'Crear proyecto y abrir editor',
       templateSelectorEyebrow: 'Plantilla de producto',
       templateSelectorTitle: 'Elige la estructura inicial',
@@ -2795,11 +2867,47 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       createOptionalManuscriptLabel: 'Manuscript (optional)',
       createOptionalManuscriptHint: 'Upload your document if you have it; otherwise, you can start blank.',
       createOptionalStructureLabel: 'Structure reference (optional)',
+      newProjectBaseDocumentTitle: 'Base document',
+      newProjectBaseDocumentDescription: 'Your content and structure.',
+      newProjectEditorialStyleTitle: 'Editorial style',
+      newProjectEditorialStyleDescription: 'Define how your content should look.',
+      newProjectStyleNone: 'No reference',
+      newProjectStyleNoneDescription: 'Use the project configuration and template.',
+      newProjectStyleTalent: 'Talent style',
+      newProjectStyleTalentDescription: 'Editorial systems prepared by Talent.',
+      newProjectStyleTalentUnavailable: 'Talent styles will be available soon.',
+      newProjectStyleSaved: 'My editorial styles',
+      newProjectStyleSavedDescription: 'Reuse a saved editorial profile.',
+      newProjectStyleReference: 'Create from a reference document',
+      newProjectStyleReferenceDescription: 'Analyze its design and composition without copying content.',
+      newProjectSavedStylesEmpty: 'You do not have saved editorial styles yet.',
+      newProjectCreateFromDocument: 'Create from a document',
+      newProjectReferenceTitle: 'Reference document',
+      newProjectReferenceDescription: 'We will analyze typography, hierarchy, spacing, margins and composition rules.',
+      newProjectReferenceAnalyse: 'Analyze document',
+      newProjectReferenceAnalysing: 'Analyzing reference document…',
+      newProjectReferenceSelected: 'Selected document',
+      newProjectReferenceChange: 'Change',
+      newProjectReferenceRemove: 'Remove',
+      newProjectReferenceAnalyseError: 'We could not analyze this document. Choose another file or try again.',
+      newProjectReferenceWhatWeAnalyse: 'We analyze: typography · hierarchy · sizes · spacing · margins · openings · headers and footers · palette.',
+      newProjectReferenceWhatWeDoNotCopy: 'We do not copy: content · text · chapter count · narrative structure.',
+      newProjectReferenceProfileDetected: 'Editorial profile detected',
+      newProjectReferenceSave: 'Save in My editorial styles',
+      newProjectReferenceSaveName: 'Style name',
+      newProjectReferenceSaved: 'Style saved',
+      newProjectBrandTitle: 'Brand identity',
+      newProjectBrandDescription: 'Apply your brand colours, logo and visual rules.',
+      newProjectSummaryTitle: 'Project summary',
+      newProjectSummaryDocument: 'Document',
+      newProjectSummaryStyle: 'Style',
+      newProjectSummaryBrand: 'Brand',
+      newProjectNoBrand: 'No brand manual',
       brandManualLabel: 'Brand manual PDF (optional)',
       brandManualHint:
         'Attach only a brand identity PDF. DOC/DOCX manuscripts belong in Source document; if extraction fails, the project is still created.',
       createProjectHint:
-        'Creation persists to Neon from the first step and opens the editor with imported content if you attached a document.',
+        'We will save your choices when creating the project and open the editor with your content.',
       createProjectAction: 'Create project and open editor',
       templateSelectorEyebrow: 'Product template',
       templateSelectorTitle: 'Choose the starting structure',

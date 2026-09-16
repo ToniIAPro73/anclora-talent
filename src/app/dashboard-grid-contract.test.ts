@@ -32,13 +32,11 @@ describe('dashboard v3 contract', () => {
     expect(dashboardPage).not.toContain('dashboard-new-project');
   });
 
-  test('create form splits primary and optional sections for desktop dashboard layout', () => {
+  test('create form uses stacked full-width sections on desktop', () => {
     expect(createProjectForm).toContain('talent-create-form__primary');
     expect(createProjectForm).toContain('talent-create-form__optional');
     expect(createProjectForm).toContain('talent-create-form__intro');
-    // Fase 4/8: 22rem/0.75fr left the import-mode selector too cramped;
-    // widened alongside the fix for that compression/overlap bug.
-    expect(globalsCss).toMatch(/\.talent-create-form--dashboard\s*\{[^}]*grid-template-columns: minmax\(0, 1\.1fr\) minmax\(26rem, 0\.9fr\)/);
+    expect(globalsCss).toMatch(/\.talent-create-form--dashboard\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
     // Fase 8: the template catalog was a horizontally-scrolling flex
     // filmstrip — fixed to a wrapping grid so every template is reachable
     // without a horizontal scrollbar.

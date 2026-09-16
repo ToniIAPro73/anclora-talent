@@ -17,6 +17,8 @@ vi.mock('@/lib/brand/actions', () => ({
 vi.mock('@/lib/structure-profile/actions', () => ({
   extractStructureProfileAction: vi.fn(),
   saveStructureProfileAction: vi.fn(),
+  extractReferenceEditorialProfileAction: vi.fn(),
+  saveReferenceEditorialProfileAction: vi.fn(),
 }));
 
 describe('CreateProjectForm', () => {
@@ -41,28 +43,23 @@ describe('CreateProjectForm', () => {
     expect(screen.getByTestId('product-template-input')).toHaveValue('standard-book');
   });
 
-  test('structure toggle renders no structureSchema field until the wizard is confirmed (G2)', () => {
+  test('presents explicit editorial style choices without the legacy toggle', () => {
     render(<CreateProjectForm copy={resolveLocaleMessages('es').project} />);
 
-    const form = screen.getByTestId('create-project-form');
-    // Toggle off: no hidden structureSchema field at all.
-    expect(form.querySelector('input[name="structureSchema"]')).toBeNull();
-
-    fireEvent.click(screen.getByTestId('structure-toggle'));
-    expect(screen.getByTestId('structure-configure-button')).toBeInTheDocument();
-    // Toggle on but unconfirmed: still nothing to submit (jamás aplicación silenciosa).
-    expect(form.querySelector('input[name="structureSchema"]')).toBeNull();
+    expect(screen.getByTestId('new-project-editorial-style-section')).toBeInTheDocument();
+    expect(screen.getByTestId('editorial-style-none')).toHaveAttribute('aria-checked', 'true');
+    expect(screen.queryByTestId('structure-toggle')).not.toBeInTheDocument();
   });
 
-  test('unchecking the structure toggle clears any confirmed schema', () => {
+  test('reference style selection reveals an inline upload, not a modal trigger', () => {
     render(<CreateProjectForm copy={resolveLocaleMessages('es').project} />);
 
-    const toggle = screen.getByTestId('structure-toggle');
-    fireEvent.click(toggle);
-    fireEvent.click(toggle);
+    fireEvent.click(screen.getByTestId('editorial-style-reference'));
 
-    expect(screen.queryByTestId('structure-configure-button')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('structure-schema-input')).not.toBeInTheDocument();
+    expect(screen.getByTestId('reference-document-inline-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('reference-document-input')).toHaveAttribute('name', 'referenceDocument');
+    expect(screen.getByTestId('reference-document-analyse')).toBeDisabled();
+    expect(screen.queryByTestId('reference-editorial-dialog')).not.toBeInTheDocument();
   });
 
   test('fixed-pdf fail-closed: shows the storage-error banner and keeps the form usable', () => {

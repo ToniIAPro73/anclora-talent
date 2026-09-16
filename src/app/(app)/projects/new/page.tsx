@@ -30,7 +30,7 @@ export default async function NewProjectPage({
           {projectCopy.newDescription}
         </p>
       </div>
-      <div className="max-w-3xl">
+      <div className="mx-auto w-full max-w-6xl">
         <CreateProjectForm copy={projectCopy} structureProfiles={structureProfiles} fixedPdfError={fixedPdfError} />
       </div>
     </div>
