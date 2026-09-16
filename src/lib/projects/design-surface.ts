@@ -17,7 +17,7 @@
  * no coordinate translation.
  */
 
-import { randomUUID } from 'node:crypto';
+import { createUuid } from '@/lib/utils/uuid';
 import {
   normalizeSurfaceState,
   type SurfaceFieldKey,
@@ -154,7 +154,7 @@ const DEFAULT_PALETTE_COLORS: Record<CoverDesign['palette'], { primary: string; 
 };
 
 function newLayerId(prefix: string) {
-  return `${prefix}-${randomUUID()}`;
+  return `${prefix}-${createUuid()}`;
 }
 
 export function isDesignSurfaceV2(value: unknown): value is DesignSurface {

@@ -13,7 +13,7 @@
  * not just font choices.
  */
 
-import { randomUUID } from 'node:crypto';
+import { createUuid } from '@/lib/utils/uuid';
 import type { EditorialTemplate } from './cover-templates';
 import { createEmptyDesignSurface, type DesignLayer, type DesignSurface, type TextLayerProps } from './design-surface';
 import { COVER_SURFACE_CANVAS } from './cover-layout';
@@ -202,7 +202,7 @@ export function buildDesignSurfaceFromTemplate(
     const isPrimary = fieldKey === 'title';
 
     const textLayer: DesignSurface['layers'][number] = {
-      id: randomUUID(),
+      id: createUuid(),
       type: 'text',
       zIndex: zIndex++,
       x: fieldGeometry.x,
