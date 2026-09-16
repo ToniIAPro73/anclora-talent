@@ -1,4 +1,5 @@
 import {
+  index,
   integer,
   jsonb,
   pgTable,
@@ -252,6 +253,34 @@ export const structureProfiles = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [unique('structure_profiles_user_name_version_unique').on(table.userId, table.name, table.version)],
+);
+
+// Pre-create manuscript import sessions: decouples large file uploads and
+// document parsing from project creation to prevent 413 Function payload limits.
+export const importSessions = pgTable(
+  'import_sessions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: varchar('user_id', { length: 191 }).notNull(),
+    sourceBlobUrl: text('source_blob_url'),
+    sourceAccessLevel: varchar('source_access_level', { length: 32 }),
+    sourceSha256: varchar('source_sha256', { length: 64 }),
+    sourceSizeBytes: integer('source_size_bytes'),
+    sourceFileName: varchar('source_file_name', { length: 255 }).notNull(),
+    sourceMimeType: varchar('source_mime_type', { length: 128 }).notNull(),
+    documentMode: varchar('document_mode', { length: 32 }).notNull().default('editable'),
+    extractedSeed: jsonb('extracted_seed').notNull(),
+    composition: jsonb('composition'),
+    status: varchar('status', { length: 24 }).notNull().default('ready'),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index('import_sessions_user_id_idx').on(table.userId),
+    index('import_sessions_status_idx').on(table.status),
+    index('import_sessions_expires_at_idx').on(table.expiresAt),
+  ],
 );
 
 // F1b — FileStudio Local Agent pairing (sdd/integrations/filestudio/authentication.md).

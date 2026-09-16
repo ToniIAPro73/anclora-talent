@@ -291,14 +291,45 @@ export function extractBrandProfileFromText(
   };
 }
 
-/** PDF extraction via the already-vendored `pdf-parse` (same lib as the import pipeline). */
+/** PDF extraction via pdf-parse with fallback to pdfjs-dist. */
 export async function extractBrandProfileFromPdf(
   buffer: Buffer,
   sourceFileName?: string,
 ): Promise<BrandExtractionResult> {
-  const { PDFParse } = await import('pdf-parse');
-  const parser = new PDFParse({ data: buffer });
-  const parsed = await parser.getText();
-  await parser.destroy();
-  return extractBrandProfileFromText(parsed.text, sourceFileName);
+  try {
+    const { PDFParse } = await import('pdf-parse');
+    const parser = new PDFParse({ data: buffer });
+    const parsed = await parser.getText();
+    await parser.destroy();
+    if (parsed && typeof parsed.text === 'string' && parsed.text.trim()) {
+      return extractBrandProfileFromText(parsed.text, sourceFileName);
+    }
+  } catch (parseErr) {
+    console.warn('[extractBrandProfileFromPdf] pdf-parse failed, falling back to pdfjs-dist', parseErr);
+  }
+
+  try {
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const doc = await pdfjs.getDocument({
+      data: new Uint8Array(buffer),
+      useSystemFonts: true,
+      stopAtErrors: false,
+    }).promise;
+
+    let fullText = '';
+    const numPages = Math.min(doc.numPages, 30);
+    for (let i = 1; i <= numPages; i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      const pageText = content.items
+        .map((item) => ('str' in item ? (item as { str: string }).str : ''))
+        .join(' ');
+      fullText += pageText + '\n';
+    }
+    await doc.destroy();
+    return extractBrandProfileFromText(fullText, sourceFileName);
+  } catch (error) {
+    console.warn('[extractBrandProfileFromPdf] pdf text extraction failed', error);
+    return extractBrandProfileFromText('', sourceFileName);
+  }
 }

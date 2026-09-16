@@ -18,12 +18,6 @@ type StyleSource =
   | { type: 'saved'; profileId?: string; profile?: ReferenceEditorialProfile }
   | { type: 'reference-document'; fileName: string; profile?: ReferenceEditorialProfile };
 
-interface EditorialStyleSectionProps {
-  copy: Copy;
-  profiles: StructureProfile[];
-  onSelectionChange?: (selection: { type: StyleSource['type']; label: string }) => void;
-}
-
 function confidenceLabel(copy: Copy, value: ReferenceEditorialProfile['confidence']['overall']) {
   if (value === 'high') return copy.referenceEditorialConfidenceHigh;
   if (value === 'medium') return copy.referenceEditorialConfidenceMedium;
@@ -34,7 +28,19 @@ function referenceProfiles(profiles: StructureProfile[]) {
   return profiles.filter((profile) => isReferenceEditorialProfile(profile.schema));
 }
 
-export function EditorialStyleSection({ copy, profiles, onSelectionChange }: EditorialStyleSectionProps) {
+export interface EditorialStyleSectionProps {
+  copy: Copy;
+  profiles: StructureProfile[];
+  onSelectionChange?: (selection: { type: StyleSource['type']; label: string }) => void;
+  onPreprocessingChange?: (isProcessing: boolean) => void;
+}
+
+export function EditorialStyleSection({
+  copy,
+  profiles,
+  onSelectionChange,
+  onPreprocessingChange,
+}: EditorialStyleSectionProps) {
   const savedProfiles = referenceProfiles(profiles);
   const [source, setSource] = useState<StyleSource>({ type: 'none' });
   const [referenceFile, setReferenceFile] = useState<File | null>(null);
@@ -76,6 +82,7 @@ export function EditorialStyleSection({ copy, profiles, onSelectionChange }: Edi
     if (!referenceFile) return;
     setError('');
     setIsAnalysing(true);
+    onPreprocessingChange?.(true);
     const attemptId = ++attemptRef.current;
     try {
       const data = new FormData();
@@ -96,6 +103,7 @@ export function EditorialStyleSection({ copy, profiles, onSelectionChange }: Edi
     } finally {
       if (attemptId === attemptRef.current) {
         setIsAnalysing(false);
+        onPreprocessingChange?.(false);
       }
     }
   };
@@ -172,7 +180,8 @@ export function EditorialStyleSection({ copy, profiles, onSelectionChange }: Edi
       {source.type === 'reference-document' && (
         <div className="mt-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-4" data-testid="reference-document-inline-panel">
           <div className="flex items-start gap-3"><FileText className="mt-0.5 h-5 w-5 text-[var(--accent)]" aria-hidden="true" /><div><h4 className="font-semibold text-[var(--text-primary)]">{copy.newProjectReferenceTitle}</h4><p className="mt-1 text-xs leading-5 text-[var(--text-tertiary)]">{copy.newProjectReferenceDescription}</p></div></div>
-          <input name="referenceDocument" type="file" accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" data-testid="reference-document-input" className="mt-4 block w-full rounded-xl border border-dashed border-[var(--border-strong)] bg-[var(--page-surface)] p-3 text-sm text-[var(--text-secondary)]" onChange={(event) => { const file = event.target.files?.[0] ?? null; setReferenceFile(file); setSource({ type: 'reference-document', fileName: file?.name ?? '' }); onSelectionChange?.({ type: 'reference-document', label: file?.name || copy.newProjectStyleReference }); setError(''); }} />
+          {/* Note: NO name attribute so the raw file is not submitted with createProjectAction */}
+          <input type="file" accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" data-testid="reference-document-input" className="mt-4 block w-full rounded-xl border border-dashed border-[var(--border-strong)] bg-[var(--page-surface)] p-3 text-sm text-[var(--text-secondary)]" onChange={(event) => { const file = event.target.files?.[0] ?? null; setReferenceFile(file); setSource({ type: 'reference-document', fileName: file?.name ?? '' }); onSelectionChange?.({ type: 'reference-document', label: file?.name || copy.newProjectStyleReference }); setError(''); }} />
           {referenceFile && <p className="mt-2 text-xs text-[var(--text-secondary)]" data-testid="reference-document-selected">{copy.newProjectReferenceSelected}: {referenceFile.name}</p>}
           <div className="mt-3 grid gap-2 text-xs leading-5 text-[var(--text-tertiary)] sm:grid-cols-2"><p>{copy.newProjectReferenceWhatWeAnalyse}</p><p>{copy.newProjectReferenceWhatWeDoNotCopy}</p></div>
           <div className="mt-4 flex flex-wrap items-center gap-2"><button type="button" data-testid="reference-document-analyse" disabled={!referenceFile || isAnalysing} onClick={analyzeReference} className="ac-button ac-button--primary ac-button--sm">{isAnalysing ? copy.newProjectReferenceAnalysing : copy.newProjectReferenceAnalyse}</button>{referenceFile && <button type="button" data-testid="reference-document-remove" onClick={() => { setReferenceFile(null); setSource({ type: 'reference-document', fileName: '' }); }} className="ac-button ac-button--ghost ac-button--sm">{copy.newProjectReferenceRemove}</button>}</div>

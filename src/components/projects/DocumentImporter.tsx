@@ -161,13 +161,16 @@ async function analyzeDocxLocally(file: File, copy: AppMessages['project']): Pro
 export function DocumentImporter({
   copy,
   onAnalysisChange,
+  onPreprocessingChange,
 }: {
   copy: AppMessages['project'];
   onAnalysisChange?: (analysis: { fileName: string; title: string } | null) => void;
+  onPreprocessingChange?: (isProcessing: boolean) => void;
 }) {
   const inputId = useId();
   const [selectedFileName, setSelectedFileName] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [importSessionId, setImportSessionId] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [importState, setImportState] = useState<ImportState>('idle');
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
@@ -183,6 +186,8 @@ export function DocumentImporter({
   const analyzeFile = async (file: File, manuscriptTypeOverride?: ManuscriptType) => {
     setSelectedFileName(file.name);
     setSelectedFile(file);
+    setImportSessionId(null);
+    onPreprocessingChange?.(true);
     if (isPdfFile(file)) {
       setDocumentMode('fixed-pdf');
     }
@@ -194,20 +199,53 @@ export function DocumentImporter({
     if (file.size > MAX_FILE_SIZE_BYTES) {
       setImportState('error');
       setErrorMessage(copy.importFileTooLarge);
+      onPreprocessingChange?.(false);
       return;
     }
 
     try {
-      const formData = new FormData();
-      formData.append('sourceDocument', file);
-      if (manuscriptTypeOverride) formData.append('manuscriptType', manuscriptTypeOverride);
-      const response = await fetch('/api/projects/import', {
-        method: 'POST',
-        body: formData,
-      });
+      let response: Response;
+      let blobUrl: string | null = null;
+      if (file.size > 4 * 1024 * 1024) {
+        try {
+          const { upload } = await import('@vercel/blob/client');
+          const blob = await upload(file.name, file, {
+            access: 'public',
+            handleUploadUrl: '/api/blob/upload',
+          });
+          blobUrl = blob.url;
+        } catch (blobErr) {
+          console.warn('[DocumentImporter] direct blob upload failed or skipped, falling back to multipart', blobErr);
+        }
+      }
+
+      if (blobUrl) {
+        response = await fetch('/api/projects/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceBlobUrl: blobUrl,
+            sourceFileName: file.name,
+            sourceMimeType: file.type,
+            sourceSizeBytes: file.size,
+            documentMode: isPdfFile(file) ? 'fixed-pdf' : 'editable',
+            manuscriptType: manuscriptTypeOverride,
+          }),
+        });
+      } else {
+        const formData = new FormData();
+        formData.append('sourceDocument', file);
+        if (manuscriptTypeOverride) formData.append('manuscriptType', manuscriptTypeOverride);
+        if (isPdfFile(file)) formData.append('documentMode', 'fixed-pdf');
+        response = await fetch('/api/projects/import', {
+          method: 'POST',
+          body: formData,
+        });
+      }
 
       const data: {
         ok?: boolean;
+        importSessionId?: string;
         error?: string;
         title?: string;
         subtitle?: string;
@@ -237,6 +275,7 @@ export function DocumentImporter({
           setIsDocumentDataOpen(true);
           setImportState('ready');
           onAnalysisChange?.({ fileName: localAnalysis.sourceFileName, title: localAnalysis.title });
+          onPreprocessingChange?.(false);
           return;
         }
 
@@ -248,9 +287,11 @@ export function DocumentImporter({
               : copy.importErrorGeneric;
         setImportState('error');
         setErrorMessage(message);
+        onPreprocessingChange?.(false);
         return;
       }
 
+      setImportSessionId(data.importSessionId ?? null);
       const nextAnalysis: AnalysisResult = {
         title: data.title ?? file.name,
         subtitle: data.subtitle ?? '',
@@ -274,6 +315,7 @@ export function DocumentImporter({
       setConfirmedComposition(null);
       setIsDocumentDataOpen(true);
       setImportState('ready');
+      onPreprocessingChange?.(false);
     } catch {
       const localAnalysis = await analyzeDocxLocally(file, copy);
       if (localAnalysis) {
@@ -282,10 +324,12 @@ export function DocumentImporter({
         setIsDocumentDataOpen(true);
         setImportState('ready');
         onAnalysisChange?.({ fileName: localAnalysis.sourceFileName, title: localAnalysis.title });
+        onPreprocessingChange?.(false);
         return;
       }
       setImportState('error');
       setErrorMessage(copy.importErrorGeneric);
+      onPreprocessingChange?.(false);
     }
   };
 
@@ -300,9 +344,11 @@ export function DocumentImporter({
       analyzeFile(file);
     } else {
       setSelectedFileName('');
+      setImportSessionId(null);
       setImportState('idle');
       setAnalysis(null);
       onAnalysisChange?.(null);
+      onPreprocessingChange?.(false);
     }
   };
 
@@ -383,11 +429,11 @@ export function DocumentImporter({
           onDrop={handleDrop}
           className={`block cursor-pointer rounded-[24px] border-2 border-dashed p-6 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${borderClass}`}
         >
+          {/* Note: NO name attribute so the raw file is not submitted with createProjectAction */}
           <input
             id={inputId}
             data-testid="source-document-input"
             type="file"
-            name="sourceDocument"
             accept={supportedImportAccept}
             onChange={handleChange}
             className="sr-only"
@@ -653,6 +699,15 @@ export function DocumentImporter({
           name="composition"
           data-testid="composition-hidden-input"
           value={serializeCompositionSettings(confirmedComposition)}
+        />
+      )}
+
+      {importSessionId && (
+        <input
+          type="hidden"
+          name="importSessionId"
+          data-testid="import-session-id-input"
+          value={importSessionId}
         />
       )}
 

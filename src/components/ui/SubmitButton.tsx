@@ -7,16 +7,17 @@ interface SubmitButtonProps {
   children: React.ReactNode;
   className?: string;
   loadingText?: string;
+  disabled?: boolean;
   'data-testid'?: string;
 }
 
-export function SubmitButton({ children, className, loadingText, 'data-testid': dataTestId }: SubmitButtonProps) {
+export function SubmitButton({ children, className, loadingText, disabled, 'data-testid': dataTestId }: SubmitButtonProps) {
   const { pending } = useFormStatus();
 
   return (
     <button
       type="submit"
-      disabled={pending}
+      disabled={pending || disabled}
       className={className}
       data-testid={dataTestId}
       data-loading-text={pending && typeof loadingText === 'string' ? loadingText : undefined}

@@ -57,7 +57,8 @@ describe('CreateProjectForm', () => {
     fireEvent.click(screen.getByTestId('editorial-style-reference'));
 
     expect(screen.getByTestId('reference-document-inline-panel')).toBeInTheDocument();
-    expect(screen.getByTestId('reference-document-input')).toHaveAttribute('name', 'referenceDocument');
+    expect(screen.getByTestId('reference-document-input')).toHaveAttribute('type', 'file');
+    expect(screen.getByTestId('reference-document-input')).not.toHaveAttribute('name');
     expect(screen.getByTestId('reference-document-analyse')).toBeDisabled();
     expect(screen.queryByTestId('reference-editorial-dialog')).not.toBeInTheDocument();
   });

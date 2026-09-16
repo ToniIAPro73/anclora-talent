@@ -79,7 +79,17 @@ async function getByIdFromMemory(userId: string, profileId: string): Promise<Bra
 
 async function createInDb(userId: string, input: CreateBrandProfileInput): Promise<BrandProfile> {
   const db = getDb();
-  const profile = createBrandProfileRecord(userId, input);
+  let version = input.version;
+  if (!version) {
+    const existing = await db
+      .select({ version: brandProfiles.version })
+      .from(brandProfiles)
+      .where(and(eq(brandProfiles.userId, userId), eq(brandProfiles.name, input.name)))
+      .orderBy(desc(brandProfiles.version))
+      .limit(1);
+    version = existing[0] ? existing[0].version + 1 : 1;
+  }
+  const profile = createBrandProfileRecord(userId, { ...input, version });
   await db.insert(brandProfiles).values({
     id: profile.id,
     userId: profile.userId,
@@ -99,7 +109,14 @@ async function createInDb(userId: string, input: CreateBrandProfileInput): Promi
 }
 
 async function createInMemory(userId: string, input: CreateBrandProfileInput): Promise<BrandProfile> {
-  const profile = createBrandProfileRecord(userId, input);
+  let version = input.version;
+  if (!version) {
+    const existing = [...getMemoryStore().values()]
+      .filter((p) => p.userId === userId && p.name === input.name)
+      .sort((a, b) => b.version - a.version);
+    version = existing[0] ? existing[0].version + 1 : 1;
+  }
+  const profile = createBrandProfileRecord(userId, { ...input, version });
   getMemoryStore().set(profile.id, profile);
   return profile;
 }

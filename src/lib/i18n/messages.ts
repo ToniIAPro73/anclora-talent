@@ -290,6 +290,11 @@ export type AppMessages = {
     newProjectNoBrand: string;
     brandManualLabel: string;
     brandManualHint: string;
+    brandManualAnalyzing: string;
+    brandManualReady: string;
+    brandManualError: string;
+    brandManualRemove: string;
+    createProjectPreprocessingBlocked: string;
     createProjectHint: string;
     createProjectAction: string;
     templateSelectorEyebrow: string;
@@ -1568,6 +1573,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       brandManualLabel: 'Manual de marca PDF (opcional)',
       brandManualHint:
         'Adjunta sólo un PDF de identidad de marca. Los manuscritos DOC/DOCX van en Documento base; si la extracción falla, el proyecto se crea igualmente.',
+      brandManualAnalyzing: 'Analizando manual de identidad…',
+      brandManualReady: 'Identidad de marca analizada y lista',
+      brandManualError: 'No se pudo analizar el manual de marca',
+      brandManualRemove: 'Quitar manual',
+      createProjectPreprocessingBlocked: 'Procesando documentos antes de crear el proyecto…',
       createProjectHint:
         'Guardaremos el progreso al crear el proyecto y abriremos el editor con tu contenido.',
       createProjectAction: 'Crear proyecto y abrir editor',
@@ -2906,6 +2916,11 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       brandManualLabel: 'Brand manual PDF (optional)',
       brandManualHint:
         'Attach only a brand identity PDF. DOC/DOCX manuscripts belong in Source document; if extraction fails, the project is still created.',
+      brandManualAnalyzing: 'Analyzing brand manual…',
+      brandManualReady: 'Brand identity analyzed and ready',
+      brandManualError: 'Could not analyze brand manual',
+      brandManualRemove: 'Remove manual',
+      createProjectPreprocessingBlocked: 'Processing documents before creating project…',
       createProjectHint:
         'We will save your choices when creating the project and open the editor with your content.',
       createProjectAction: 'Create project and open editor',

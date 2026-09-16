@@ -55,6 +55,8 @@ export async function createProjectAction(formData: FormData) {
   const title = String(formData.get('title') ?? '').trim();
   const templateId = String(formData.get('templateId') ?? '').trim() || undefined;
   const sourceDocument = formData.get('sourceDocument');
+  const importSessionId = String(formData.get('importSessionId') ?? '').trim() || undefined;
+  const brandProfileId = String(formData.get('brandProfileId') ?? '').trim() || undefined;
   // Fixed-PDF document mode: only meaningful for a PDF upload; any other
   // value (or absence) behaves as the existing editable flow.
   const documentModeRaw = String(formData.get('documentMode') ?? '').trim();
@@ -77,6 +79,8 @@ export async function createProjectAction(formData: FormData) {
     userId,
     titleLength: title.length,
     hasSourceDocument: sourceDocument instanceof File,
+    hasImportSessionId: Boolean(importSessionId),
+    hasBrandProfileId: Boolean(brandProfileId),
     sourceDocumentName: sourceDocument instanceof File ? sourceDocument.name : null,
     sourceDocumentType: sourceDocument instanceof File ? sourceDocument.type : null,
     sourceDocumentSize: sourceDocument instanceof File ? sourceDocument.size : null,
@@ -122,62 +126,85 @@ export async function createProjectAction(formData: FormData) {
         })()
       : null;
 
-    const importedDocument =
-      structureSeed ??
-      (sourceDocument instanceof File && sourceDocument.size > 0
-        ? await (async () => {
-            const { extractImportedDocumentSeed } = await import('./import');
-            const result = await extractImportedDocumentSeed(sourceDocument);
+    let importedDocument = structureSeed;
+    let sessionComposition: unknown = null;
 
-            // Fixed-PDF document mode: the semantic seed above is kept as a
-            // sidecar (title/subtitle/author/outline) only — it never gates
-            // the workspace. The original bytes are hashed and stored
-            // privately; the source-document asset gets a real blobUrl
-            // instead of the editable path's null placeholder.
-            //
-            // FAIL CLOSED: choosing "keep original PDF" is a contractual
-            // promise to preserve that exact file. If private storage
-            // fails for any reason, this must NOT fall back to editable
-            // and must NOT create a project of any kind — see the redirect
-            // below, which aborts before projectRepository.createProject
-            // is ever called.
-            const mode: DocumentMode = isFixedPdfRequested ? 'fixed-pdf' : 'editable';
-            let sourceBlobUrl: string | null = null;
-            let sourceSha256: string | undefined;
-            let sourceSizeBytes: number | undefined;
-            let sourceAccessLevel: SourceDocumentAccessLevel | undefined;
+    if (!importedDocument && importSessionId) {
+      try {
+        const { importSessionRepository } = await import('./import-session');
+        const session = await importSessionRepository.consumeImportSession(userId, importSessionId);
+        if (session && session.extractedSeed) {
+          const mode: DocumentMode =
+            documentModeRaw === 'fixed-pdf' || session.documentMode === 'fixed-pdf'
+              ? 'fixed-pdf'
+              : 'editable';
+          const constructed = {
+            ...session.extractedSeed,
+            mode,
+            sourceBlobUrl: session.sourceBlobUrl ?? null,
+            sourceSha256: session.sourceSha256 ?? undefined,
+            sourceSizeBytes: session.sourceSizeBytes ?? undefined,
+            sourceAccessLevel: (session.sourceAccessLevel as SourceDocumentAccessLevel) ?? undefined,
+          };
+          importedDocument = constructed;
+          sessionComposition = session.composition;
+          console.info('[createProjectAction] consumed import session', {
+            userId,
+            importSessionId,
+            sourceFileName: constructed.sourceFileName,
+            chapters: constructed.chapters?.length ?? 0,
+            mode,
+          });
+        }
+      } catch (sessionError) {
+        console.error('[createProjectAction] error consuming import session', {
+          userId,
+          importSessionId,
+          sessionError,
+        });
+      }
+    }
 
-            if (isFixedPdfRequested) {
-              const buffer = Buffer.from(await sourceDocument.arrayBuffer());
-              sourceSha256 = sha256Buffer(buffer);
-              sourceSizeBytes = buffer.byteLength;
+    if (!importedDocument && sourceDocument instanceof File && sourceDocument.size > 0) {
+      const { extractImportedDocumentSeed } = await import('./import');
+      const result = await extractImportedDocumentSeed(sourceDocument);
 
-              try {
-                const uploaded = await uploadPrivateProjectDocument(randomUUID(), sourceDocument);
-                sourceBlobUrl = uploaded.url;
-                sourceAccessLevel = uploaded.accessLevel;
-              } catch (uploadError) {
-                console.error('[createProjectAction] fixed-pdf storage failed; refusing to create a project', {
-                  userId,
-                  sourceFileName: result.sourceFileName,
-                  uploadError,
-                });
-                redirect('/projects/new?fixedPdfError=1');
-              }
-            }
+      const mode: DocumentMode = isFixedPdfRequested ? 'fixed-pdf' : 'editable';
+      let sourceBlobUrl: string | null = null;
+      let sourceSha256: string | undefined;
+      let sourceSizeBytes: number | undefined;
+      let sourceAccessLevel: SourceDocumentAccessLevel | undefined;
 
-            console.info('[createProjectAction] imported document extracted', {
-              userId,
-              sourceFileName: result.sourceFileName,
-              sourceMimeType: result.sourceMimeType,
-              title: result.title,
-              blocks: result.blocks.length,
-              mode,
-              sourceAccessLevel,
-            });
-            return { ...result, mode, sourceBlobUrl, sourceSha256, sourceSizeBytes, sourceAccessLevel };
-          })()
-        : null);
+      if (isFixedPdfRequested) {
+        const buffer = Buffer.from(await sourceDocument.arrayBuffer());
+        sourceSha256 = sha256Buffer(buffer);
+        sourceSizeBytes = buffer.byteLength;
+
+        try {
+          const uploaded = await uploadPrivateProjectDocument(randomUUID(), sourceDocument);
+          sourceBlobUrl = uploaded.url;
+          sourceAccessLevel = uploaded.accessLevel;
+        } catch (uploadError) {
+          console.error('[createProjectAction] fixed-pdf storage failed; refusing to create a project', {
+            userId,
+            sourceFileName: result.sourceFileName,
+            uploadError,
+          });
+          redirect('/projects/new?fixedPdfError=1');
+        }
+      }
+
+      console.info('[createProjectAction] imported document extracted', {
+        userId,
+        sourceFileName: result.sourceFileName,
+        sourceMimeType: result.sourceMimeType,
+        title: result.title,
+        blocks: result.blocks.length,
+        mode,
+        sourceAccessLevel,
+      });
+      importedDocument = { ...result, mode, sourceBlobUrl, sourceSha256, sourceSizeBytes, sourceAccessLevel };
+    }
 
     const project = await projectRepository.createProject(userId, { title, importedDocument, templateId, referenceEditorialProfile });
 
@@ -212,6 +239,28 @@ export async function createProjectAction(formData: FormData) {
           compositionError,
         });
       }
+    } else if (sessionComposition) {
+      try {
+        const composition = parseCompositionSettings(sessionComposition);
+        if (composition) {
+          const current = await projectRepository.getProjectById(userId, project.id);
+          const metadata = {
+            ...(current?.document.metadata ?? { title: project.title }),
+            composition,
+          };
+          await projectRepository.saveDocumentExtras(userId, project.id, { metadata });
+          console.info('[createProjectAction] session composition persisted', {
+            userId,
+            projectId: project.id,
+          });
+        }
+      } catch (compositionError) {
+        console.error('[createProjectAction] session composition persistence failed; project kept', {
+          userId,
+          projectId: project.id,
+          compositionError,
+        });
+      }
     }
 
     if (referenceEditorialProfile) {
@@ -224,7 +273,25 @@ export async function createProjectAction(formData: FormData) {
       await projectRepository.saveDocumentExtras(userId, project.id, { metadata });
     }
 
-    if (brandManual instanceof File && brandManual.size > 0) {
+    if (brandProfileId) {
+      try {
+        const { brandProfileRepository } = await import('@/lib/brand/repository');
+        await brandProfileRepository.setBrandProfileStatus(userId, brandProfileId, 'active');
+        await projectRepository.saveProjectBrandProfile(userId, project.id, brandProfileId);
+        console.info('[createProjectAction] brand profile linked from id', {
+          userId,
+          projectId: project.id,
+          brandProfileId,
+        });
+      } catch (brandError) {
+        console.error('[createProjectAction] brand profile linking failed; project kept', {
+          userId,
+          projectId: project.id,
+          brandProfileId,
+          brandError,
+        });
+      }
+    } else if (brandManual instanceof File && brandManual.size > 0) {
       const brandManualIsPdf =
         brandManual.type === 'application/pdf' || brandManual.name.toLowerCase().endsWith('.pdf');
       if (!brandManualIsPdf) {
@@ -266,7 +333,8 @@ export async function createProjectAction(formData: FormData) {
     // composition pre-create (no `composition` field submitted), open the
     // document-data modal right after landing in the editor.
     const manuscriptImported =
-      !structureSeed && sourceDocument instanceof File && sourceDocument.size > 0;
+      !structureSeed &&
+      ((sourceDocument instanceof File && sourceDocument.size > 0) || Boolean(importSessionId));
     const editorSuffix = manuscriptImported && !compositionRaw ? '?documentData=open' : '';
     redirect(`/projects/${project.id}/editor${editorSuffix}`);
   } catch (error) {

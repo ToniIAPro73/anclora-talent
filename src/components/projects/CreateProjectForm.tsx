@@ -28,6 +28,11 @@ export function CreateProjectForm({
   const [selectedStyleLabel, setSelectedStyleLabel] = useState(copy.newProjectStyleNone);
   const [documentSummary, setDocumentSummary] = useState(copy.createOptionalManuscriptHint);
   const [brandSummary, setBrandSummary] = useState(copy.newProjectNoBrand);
+  const [isImportingSource, setIsImportingSource] = useState(false);
+  const [isAnalyzingReference, setIsAnalyzingReference] = useState(false);
+  const [isAnalyzingBrand, setIsAnalyzingBrand] = useState(false);
+
+  const isPreprocessing = isImportingSource || isAnalyzingReference || isAnalyzingBrand;
 
   return (
     <form
@@ -76,6 +81,7 @@ export function CreateProjectForm({
               onAnalysisChange={(analysis) =>
                 setDocumentSummary(analysis?.title || analysis?.fileName || copy.createOptionalManuscriptHint)
               }
+              onPreprocessingChange={setIsImportingSource}
             />
             <p className="mt-1 text-xs leading-6 text-[var(--text-tertiary)]">{copy.createOptionalManuscriptHint}</p>
           </div>
@@ -89,6 +95,7 @@ export function CreateProjectForm({
           copy={copy}
           profiles={structureProfiles}
           onSelectionChange={({ label }) => setSelectedStyleLabel(label)}
+          onPreprocessingChange={setIsAnalyzingReference}
         />
         <section className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-5" data-testid="brand-identity-section">
           <h3 className="text-xl font-bold text-[var(--text-primary)]">{copy.newProjectBrandTitle}</h3>
@@ -96,6 +103,7 @@ export function CreateProjectForm({
           <BrandManualInput
             copy={copy}
             onFileChange={(fileName) => setBrandSummary(fileName || copy.newProjectNoBrand)}
+            onPreprocessingChange={setIsAnalyzingBrand}
           />
         </section>
         <section className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-5" data-testid="project-creation-summary">
@@ -110,8 +118,12 @@ export function CreateProjectForm({
           <p className="text-xs leading-6 text-[var(--text-tertiary)]">
             {copy.createProjectHint}
           </p>
-          <SubmitButton className={`${premiumPrimaryDarkButton} w-full`} data-testid="create-project-submit-button">
-            {copy.createProjectAction}
+          <SubmitButton
+            className={`${premiumPrimaryDarkButton} w-full`}
+            data-testid="create-project-submit-button"
+            disabled={isPreprocessing}
+          >
+            {isPreprocessing ? copy.createProjectPreprocessingBlocked : copy.createProjectAction}
           </SubmitButton>
         </div>
       </div>
