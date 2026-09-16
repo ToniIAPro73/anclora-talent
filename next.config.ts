@@ -16,6 +16,9 @@ import type { NextConfig } from "next";
 // function.
 const PDF_PARSE_RUNTIME_TRACING_INCLUDES = [
   './node_modules/pdf-parse/lib/**',
+  // Server-side reference-profile extraction imports the legacy build. Its
+  // fake-worker fallback resolves this exact sibling at runtime.
+  './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
   './node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
   './node_modules/pdfjs-dist/standard_fonts/**',
   './node_modules/@napi-rs/canvas/**',
