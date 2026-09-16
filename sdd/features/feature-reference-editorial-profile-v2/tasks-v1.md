@@ -24,10 +24,10 @@
 | Chapter opening observation | PASS | Spaced-label and repeated-large-heading detection; real PDF smoke analysis |
 | Headers, footers, folios, TOC observation | PASS | Real PDF smoke analysis: all detected |
 | Quote/list extraction | PASS | DOCX OOXML style extraction |
-| Full renderer parity for every role and PDF React renderer | PARTIAL | HTML export CSS is wired; advanced per-role PDF renderer remains incomplete |
+| Full renderer parity for every role and PDF React renderer | PARTIAL | PDF now maps H1/H2/H3, quote/list, dynamic header/footer/folio and TOC leaders; DOCX/EPUB and chapter-opening parity remain partial |
 | Real PDF fixture | PASS | 122 pages, 7,617 fragments, ~1.1s, SHA256 recorded in handoff |
 | DOCX fixture | PASS | OOXML package integration test |
-| Browser E2E and visual QA | NOT RUN | Requires authenticated browser/session and human visual review |
+| Browser E2E and visual QA | BLOCKED | Authenticated Playwright setup reached `/api/auth/register` with HTTP 500 in this environment; visual review requires a working app/session |
 
 ## Renderer matrix
 
@@ -40,7 +40,7 @@
 | UL/OL | PASS | PASS | PARTIAL | PARTIAL |
 | Header/footer | PARTIAL | PASS for dynamic target title/folio | PARTIAL | PARTIAL |
 | Page number | PASS | PASS | PARTIAL | PARTIAL |
-| TOC and leaders | PASS | PARTIAL | PARTIAL | PARTIAL |
+| TOC and leaders | PASS | PASS | PARTIAL | PARTIAL |
 
 PDF renderer smoke evidence: target project export completed with the real
 reference profile in approximately 2.3 seconds; the binary contained the
