@@ -8,7 +8,7 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { extractImportedDocumentSeed } from '../src/lib/projects/import';
+import { extractImportedDocumentSeed } from '../../src/lib/projects/import';
 
 async function verifyImport(filePath: string) {
   console.log('Verificando importacion:', filePath);
@@ -19,14 +19,15 @@ async function verifyImport(filePath: string) {
   });
 
   const seed = await extractImportedDocumentSeed(file);
+  const chapters = seed.chapters ?? [];
   
   console.log('\nResultados:');
   console.log('Titulo detectado:', seed.title);
   console.log('Autor detectado:', seed.author);
-  console.log('Numero de capitulos:', seed.chapters.length);
+  console.log('Numero de capitulos:', chapters.length);
   
   // Verificar indice
-  const indexChapter = seed.chapters.find(ch => 
+  const indexChapter = chapters.find(ch =>
     /indice|table of contents/i.test(ch.title)
   );
   
@@ -44,7 +45,7 @@ async function verifyImport(filePath: string) {
     console.log('  - Tiene numeros?:', hasNumbers ? 'SI (incorrecto)' : 'NO (correcto)');
     
     // Verificar que no se crearon capitulos falsos desde el indice
-    const falseChapters = seed.chapters.filter(ch => 
+    const falseChapters = chapters.filter(ch =>
       /^FASE \d+:/i.test(ch.title) || /^Dia \d+:/i.test(ch.title)
     );
     
@@ -59,7 +60,7 @@ async function verifyImport(filePath: string) {
   }
   
   // Verificar capitulos reales
-  const realChapters = seed.chapters.filter(ch => 
+  const realChapters = chapters.filter(ch =>
     !/indice/i.test(ch.title)
   );
   

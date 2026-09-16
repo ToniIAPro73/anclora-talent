@@ -162,6 +162,7 @@ describe('KdpDisclosurePanel', () => {
       <KdpDisclosurePanel
         copy={copy}
         disclosure={{
+          status: 'required',
           required: true,
           aiBlockCount: 2,
           humanBlockCount: 5,
@@ -179,6 +180,7 @@ describe('KdpDisclosurePanel', () => {
       <KdpDisclosurePanel
         copy={copy}
         disclosure={{
+          status: 'exempt-human',
           required: false,
           aiBlockCount: 0,
           humanBlockCount: 7,

@@ -15,8 +15,9 @@ import type { NextConfig } from "next";
 // platform packages in its optionalDependencies would only bloat the
 // function.
 const PDF_PARSE_RUNTIME_TRACING_INCLUDES = [
-  './node_modules/pdf-parse/**',
-  './node_modules/pdfjs-dist/**',
+  './node_modules/pdf-parse/lib/**',
+  './node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
+  './node_modules/pdfjs-dist/standard_fonts/**',
   './node_modules/@napi-rs/canvas/**',
   './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
 ];
@@ -27,7 +28,11 @@ const PDF_PARSE_RUNTIME_TRACING_INCLUDES = [
 // documented above for @napi-rs/canvas (Next's file tracer can't follow the
 // dynamic require that loads it), so it needs the same explicit include on
 // every route that can reach renderDesignSurfaceToPng().
-const FABRIC_NODE_RUNTIME_TRACING_INCLUDES = ['./node_modules/canvas/build/Release/**'];
+const FABRIC_NODE_RUNTIME_TRACING_INCLUDES = [
+  './node_modules/canvas/build/Release/canvas.node',
+  './node_modules/canvas/build/Release/*.dylib',
+  './node_modules/canvas/build/Release/*.so',
+];
 
 const nextConfig: NextConfig = {
   // P-E1-04/P-U3-02: keep the dev-only issues badge anchored to the content
@@ -36,9 +41,7 @@ const nextConfig: NextConfig = {
     position: 'bottom-right',
   },
   typescript: {
-    // !! WARN !!
-    // Temporarily ignore build errors to stabilize environment
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   // @sparticuz/chromium ships its Chromium binary and font bundles as brotli
   // archives under node_modules/@sparticuz/chromium/bin. Next's file tracer

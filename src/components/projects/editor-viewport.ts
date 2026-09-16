@@ -26,7 +26,7 @@ export function resolveEditorViewportLayout({
   if (!isPhysicalMobile) {
     return {
       physicalDevice: 'wide',
-      layoutDevice: publicationDevice === 'laptop' ? 'desktop' : publicationDevice,
+      layoutDevice: publicationDevice === 'laptop' || publicationDevice === 'ereader' ? 'desktop' : publicationDevice,
       viewMode: requestedViewMode,
       scale: 1,
     };

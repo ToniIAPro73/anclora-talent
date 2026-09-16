@@ -114,13 +114,13 @@ export function ChapterImageCanvas({
 
       canvas.on('selection:created', (e: FabricSelectionEvent) => {
         if (e.selected && e.selected.length > 0) {
-          setSelectedImageId(e.selected[0].id);
+          setSelectedImageId(e.selected[0].id ?? null);
         }
       });
 
       canvas.on('selection:updated', (e: FabricSelectionEvent) => {
         if (e.selected && e.selected.length > 0) {
-          setSelectedImageId(e.selected[0].id);
+          setSelectedImageId(e.selected[0].id ?? null);
         }
       });
 
@@ -223,10 +223,10 @@ export function ChapterImageCanvas({
             id,
             url: imageUrl,
             alt: file.name,
-            width: fabricImg.width * fabricImg.scaleX,
-            height: fabricImg.height * fabricImg.scaleY,
-            left: fabricImg.left,
-            top: fabricImg.top,
+            width: (fabricImg.width ?? 0) * (fabricImg.scaleX ?? 1),
+            height: (fabricImg.height ?? 0) * (fabricImg.scaleY ?? 1),
+            left: fabricImg.left ?? 0,
+            top: fabricImg.top ?? 0,
             rotation: fabricImg.angle || 0,
             opacity: fabricImg.opacity || 1,
             zIndex: canvas.getObjects().length - 1,

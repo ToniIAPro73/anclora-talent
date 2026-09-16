@@ -20,9 +20,10 @@ const previewText: Record<CoverDesign['palette'], { primary: string; secondary: 
 export function CoverPreview({
   surface,
   palette,
-  backgroundImageUrl,
-  eyebrow,
-  visualOnly = false,
+    backgroundImageUrl,
+    eyebrow,
+    defaultTitle,
+    visualOnly = false,
 }: {
   surface: SurfaceState;
   palette: CoverDesign['palette'];

@@ -193,7 +193,7 @@ function createMockEditor(selection: MockSelection) {
 
   const chain = {
     focus: () => chain,
-    command: (callback: ({ tr, state }: { tr: typeof state.tr; state: typeof state }) => boolean) => ({
+    command: (callback: ({ tr, state }: { tr: { setSelection: (nextSelection: { from: number; to: number }) => unknown; delete: (from: number, to: number) => unknown }; state: { selection: MockSelection } }) => boolean) => ({
       run: () => callback({ tr: state.tr, state }),
     }),
     toggleBold: () => ({
@@ -596,7 +596,7 @@ describe('AdvancedRichTextEditor selection behavior', () => {
     render(<AdvancedRichTextEditor defaultContent={overflowHtml} onUpdate={onUpdate} />);
 
     const options = useEditorMock.mock.calls[0]?.[0] as {
-      onUpdate?: ({ editor }: { editor: typeof editor }) => void;
+      onUpdate?: ({ editor }: { editor: ReturnType<typeof createMockEditor> }) => void;
     };
 
     options.onUpdate?.({ editor });
@@ -685,7 +685,7 @@ describe('AdvancedRichTextEditor selection behavior', () => {
     );
 
     const options = useEditorMock.mock.calls[0]?.[0] as {
-      onUpdate?: ({ editor }: { editor: typeof editor }) => void;
+      onUpdate?: ({ editor }: { editor: ReturnType<typeof createMockEditor> }) => void;
     };
 
     options.onUpdate?.({ editor });

@@ -3,8 +3,12 @@ import { PageBreak } from './page-break-extension';
 
 describe('page-break-extension', () => {
   test('parses manual and auto page breaks and renders manual by default', () => {
-    const parseRules = PageBreak.config.parseHTML?.() ?? [];
-    const rendered = PageBreak.config.renderHTML?.({ HTMLAttributes: {} });
+    const config = PageBreak.config as unknown as {
+      parseHTML?: () => unknown[];
+      renderHTML?: (props: { HTMLAttributes: Record<string, unknown> }) => unknown;
+    };
+    const parseRules = config.parseHTML?.() ?? [];
+    const rendered = config.renderHTML?.({ HTMLAttributes: {} });
 
     expect(parseRules).toEqual(
       expect.arrayContaining([

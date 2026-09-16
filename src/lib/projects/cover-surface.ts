@@ -55,9 +55,13 @@ export interface SurfaceState {
   opacity?: number;
 }
 
+export type CompleteSurfaceState = Omit<SurfaceState, 'fields'> & {
+  fields: Record<SurfaceFieldKey, SurfaceFieldState>;
+};
+
 const EMPTY_FIELD: SurfaceFieldState = { value: '', visible: false };
 
-export function createDefaultSurfaceState(surface: SurfaceKind): SurfaceState {
+export function createDefaultSurfaceState(surface: SurfaceKind): CompleteSurfaceState {
   return {
     surface,
     layout: { kind: 'stacked-center' },
@@ -74,7 +78,7 @@ export function createDefaultSurfaceState(surface: SurfaceKind): SurfaceState {
 
 export function normalizeSurfaceState(
   input: Partial<SurfaceState> & { surface: SurfaceKind },
-): SurfaceState {
+): CompleteSurfaceState {
   const base = createDefaultSurfaceState(input.surface);
   const fields = { ...base.fields, ...(input.fields ?? {}) };
 
@@ -102,7 +106,7 @@ export function normalizeSurfaceState(
 export function applySurfaceTemplate(
   state: SurfaceState,
   template: SurfaceTemplateDefinition,
-): SurfaceState {
+): CompleteSurfaceState {
   const next = normalizeSurfaceState(state);
   const fields = { ...next.fields };
 
@@ -152,7 +156,7 @@ export function applySurfaceTemplate(
 export function mergePartialSurfaceUpdate(
   previous: SurfaceState,
   partial: Partial<SurfaceState>,
-): SurfaceState {
+): CompleteSurfaceState {
   // Merge per field so partial updates ({value, visible}) never drop the
   // provenance marker (source) carried by the previous field state.
   const fields = { ...previous.fields };

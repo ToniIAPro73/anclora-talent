@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { createRequire } from 'node:module';
 import sharp from 'sharp';
 import type { Browser } from 'playwright-core';
 import type { ProjectRecord, CoverDesign } from './types';
@@ -19,12 +19,6 @@ const CANVAS_HEIGHT = 600;
 const EXPORT_PAGE_WIDTH = 576;
 const EXPORT_PAGE_HEIGHT = 864;
 const EMBEDDED_BODY_FONT_FAMILY = 'AncloraExportSans';
-const EMBEDDED_FONT_FILES = {
-  regular: resolve(process.cwd(), 'node_modules/pdfjs-dist/standard_fonts/LiberationSans-Regular.ttf'),
-  bold: resolve(process.cwd(), 'node_modules/pdfjs-dist/standard_fonts/LiberationSans-Bold.ttf'),
-  italic: resolve(process.cwd(), 'node_modules/pdfjs-dist/standard_fonts/LiberationSans-Italic.ttf'),
-  boldItalic: resolve(process.cwd(), 'node_modules/pdfjs-dist/standard_fonts/LiberationSans-BoldItalic.ttf'),
-} as const;
 
 const COVER_GRADIENTS: Record<CoverDesign['palette'], string> = {
   obsidian: 'linear-gradient(160deg, #0b133f 0%, #0b233f 50%, #07252f 100%)',
@@ -438,11 +432,12 @@ async function renderHtmlToImageDataUrl(input: {
 async function loadEmbeddedFontFaceCss() {
   if (!embeddedFontFaceCssPromise) {
     embeddedFontFaceCssPromise = (async () => {
+      const runtimeRequire = createRequire(`${process.cwd()}/package.json`);
       const [regular, bold, italic, boldItalic] = await Promise.all([
-        readFile(EMBEDDED_FONT_FILES.regular),
-        readFile(EMBEDDED_FONT_FILES.bold),
-        readFile(EMBEDDED_FONT_FILES.italic),
-        readFile(EMBEDDED_FONT_FILES.boldItalic),
+        readFile(runtimeRequire.resolve('pdfjs-dist/standard_fonts/LiberationSans-Regular.ttf')),
+        readFile(runtimeRequire.resolve('pdfjs-dist/standard_fonts/LiberationSans-Bold.ttf')),
+        readFile(runtimeRequire.resolve('pdfjs-dist/standard_fonts/LiberationSans-Italic.ttf')),
+        readFile(runtimeRequire.resolve('pdfjs-dist/standard_fonts/LiberationSans-BoldItalic.ttf')),
       ]);
 
       return `

@@ -107,7 +107,7 @@ describe('PreviewModal', () => {
     vi.restoreAllMocks();
     window.localStorage.clear();
     mockMatchMedia(true);
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       const element = this as HTMLElement;
       if (element.dataset.previewViewport === 'true') {
         return DOMRect.fromRect({ width: 1400, height: 700 });
