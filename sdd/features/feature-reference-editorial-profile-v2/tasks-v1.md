@@ -14,3 +14,17 @@
 - [ ] Full Composer heading/header/footer rule rendering beyond the shared HTML export CSS.
 - [ ] Browser E2E and visual QA across all viewports/themes; local PDF extraction QA completed, but the PDF remains an external fixture.
 - [ ] Full typecheck cleanup; baseline repository errors remain outside this feature.
+
+## Evidence matrix
+
+| Capability | Status | Evidence |
+| --- | --- | --- |
+| Body typography, size, line-height, margins | PASS | Composition application and preview adapter tests |
+| H1/H2/H3 style extraction and HTML export CSS | PASS | PDF/DOCX extraction tests and export CSS mapping |
+| Chapter opening observation | PASS | Spaced-label and repeated-large-heading detection; real PDF smoke analysis |
+| Headers, footers, folios, TOC observation | PASS | Real PDF smoke analysis: all detected |
+| Quote/list extraction | PASS | DOCX OOXML style extraction |
+| Full renderer parity for every role and PDF React renderer | PARTIAL | HTML export CSS is wired; advanced per-role PDF renderer remains incomplete |
+| Real PDF fixture | PASS | 122 pages, 7,617 fragments, ~1.1s, SHA256 recorded in handoff |
+| DOCX fixture | PASS | OOXML package integration test |
+| Browser E2E and visual QA | NOT RUN | Requires authenticated browser/session and human visual review |
