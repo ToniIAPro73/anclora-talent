@@ -754,6 +754,21 @@ function renderPdfContentBlock(
   );
 }
 
+interface PdfTocEntry { title: string; page: string; level: number }
+
+function parsePdfTocEntries(html: string | null | undefined): PdfTocEntry[] {
+  if (!html) return [];
+  return [...html.matchAll(/<p\b[^>]*data-toc-entry="true"[^>]*data-toc-level="(\d+)"[^>]*data-toc-page="([^"]+)"[^>]*>[\s\S]*?<span[^>]*class="toc-title"[^>]*>([\s\S]*?)<\/span>[\s\S]*?<\/p>/gi)].map((match) => ({
+    level: Number(match[1]),
+    page: stripInlineHtml(match[2]),
+    title: stripInlineHtml(match[3]),
+  }));
+}
+
+function renderPdfToc(entries: PdfTocEntry[], theme: PdfBrandTheme) {
+  return <View>{entries.map((entry, index) => <View key={`pdf-toc-${index}`} style={{ flexDirection: 'row', alignItems: 'flex-end', marginLeft: Math.max(0, entry.level - 1) * 12, marginBottom: 6 }}><Text style={{ fontFamily: theme.bodyFont, fontSize: theme.bodySize, lineHeight: theme.bodyLineHeight, color: theme.bodyColor }}>{entry.title}</Text><View style={{ flexGrow: 1, borderBottomWidth: 1, borderBottomStyle: 'dotted', borderBottomColor: theme.mutedColor, marginLeft: 5, marginBottom: 3 }} /><Text style={{ fontFamily: theme.bodyFont, fontSize: theme.bodySize, color: theme.bodyColor }}>{entry.page}</Text></View>)}</View>;
+}
+
 export async function buildProjectPdf(project: ProjectRecord) {
   return buildProjectPdfWithConfig(project, DEFAULT_EXPORT_CONFIG);
 }
@@ -846,11 +861,18 @@ export async function buildProjectPdfWithConfig(
         // for publication surfaces; rasterizing content would make the PDF
         // impossible to select, search or assistively read.
         const blocks = parsePageContent(page.content);
+        const tocEntries = parsePdfTocEntries(page.content);
+        const chapterNumber = page.chapterId && profile?.chapterOpening.detected
+          ? (new Set(pages.slice(0, pageIndex + 1).filter((candidate) => candidate.type === 'content' && candidate.chapterId && candidate.chapterId !== page.chapterId && candidate.chapterTitle).map((candidate) => candidate.chapterId)).size + 1)
+          : null;
         return (
-          <Page key={`pdf-content-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight }]}>
-            <View style={[pdfStyles.pageInner, { paddingTop: pdfMarginTop, paddingBottom: pdfMarginBottom, paddingLeft: pdfMarginLeft, paddingRight: pdfMarginRight }]}>
+          <Page key={`pdf-content-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight }]}> 
+            <View style={[pdfStyles.pageInner, { paddingTop: pdfMarginTop, paddingBottom: pdfMarginBottom, paddingLeft: pdfMarginLeft, paddingRight: pdfMarginRight }]}> 
               {theme.headerEnabled ? <Text style={{ position: 'absolute', top: 16, left: pdfMarginLeft, right: pdfMarginRight, fontFamily: theme.bodyFont, fontSize: 8, color: theme.mutedColor, textAlign: theme.headerAlign }}>{project.document.title}</Text> : null}
-              {blocks.map((block, index) => renderPdfContentBlock(block, index, theme))}
+              {tocEntries.length > 0 ? renderPdfToc(tocEntries, theme) : <>
+                {chapterNumber && page.chapterTitle ? <Text style={{ fontFamily: theme.bodyFont, fontSize: 9, color: theme.mutedColor, textAlign: theme.headingAlign, marginBottom: 8, textTransform: 'uppercase' }}>Capítulo {chapterNumber}</Text> : null}
+                {blocks.map((block, index) => renderPdfContentBlock(block, index, theme))}
+              </>}
               {theme.footerEnabled || theme.pageNumberEnabled ? <Text style={{ position: 'absolute', bottom: 16, left: pdfMarginLeft, right: pdfMarginRight, fontFamily: theme.bodyFont, fontSize: 8, color: theme.mutedColor, textAlign: theme.footerAlign }}>{theme.footerEnabled ? project.document.title : ''}{theme.footerEnabled && theme.pageNumberEnabled ? '  ·  ' : ''}{theme.pageNumberEnabled ? page.pageNumber : ''}</Text> : null}
             </View>
           </Page>
