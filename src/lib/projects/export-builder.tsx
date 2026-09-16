@@ -21,6 +21,7 @@ import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 import type { PaginationConfig } from '@/lib/preview/device-configs';
 import { type PreviewPage } from '@/lib/preview/preview-builder';
 import { composeProjectPreview, projectToSemanticDocument } from '@/lib/compose/preview-adapter';
+import type { ReferenceEditorialProfile, EditorialTextStyle } from '@/lib/reference-editorial-profile/model';
 import { inlineToPlainText } from '@/lib/document/model';
 import type { ComposeTemplate } from '@/lib/compose/compose';
 import type { ProjectRecord } from './types';
@@ -238,6 +239,37 @@ export function buildBrandExportCss(overrides?: Partial<ComposeTemplate>): strin
   if (overrides.accentMutedColor) {
     rules.push(`.export-content-inner blockquote { color: ${overrides.accentMutedColor}; }`);
   }
+  return rules.join('\n    ');
+}
+
+function styleCss(style: EditorialTextStyle | null | undefined): string {
+  if (!style) return '';
+  const rules: string[] = [];
+  if (style.resolvedFontFamily) rules.push(`font-family: ${cssFontFamily(style.resolvedFontFamily)}, Georgia, serif`);
+  if (style.fontSize) rules.push(`font-size: ${style.fontSize}pt`);
+  if (style.fontWeight !== 'unknown') rules.push(`font-weight: ${style.fontWeight === 'bold' ? 700 : style.fontWeight === 'semibold' ? 600 : 400}`);
+  if (style.fontStyle !== 'unknown') rules.push(`font-style: ${style.fontStyle}`);
+  if (style.color) rules.push(`color: ${style.color}`);
+  if (style.lineHeight) rules.push(`line-height: ${style.lineHeight}`);
+  if (style.textAlign !== 'unknown') rules.push(`text-align: ${style.textAlign}`);
+  if (style.paragraphSpacingAfter !== null) rules.push(`margin-bottom: ${style.paragraphSpacingAfter}pt`);
+  return rules.join('; ');
+}
+
+/** Shared export CSS for the reference profile; content remains target-owned. */
+export function buildReferenceEditorialCss(profile?: ReferenceEditorialProfile | null): string {
+  if (!profile) return '';
+  const rules: string[] = [];
+  const body = styleCss(profile.body);
+  if (body) rules.push(`.export-content-inner p, .export-content-inner li { ${body}; }`);
+  const headings = [profile.headings.h1, profile.headings.h2, profile.headings.h3];
+  headings.forEach((style, index) => { const css = styleCss(style); if (css) rules.push(`.export-content-inner h${index + 1} { ${css}; }`); });
+  const quote = styleCss(profile.quote);
+  if (quote) rules.push(`.export-content-inner blockquote { ${quote}; }`);
+  const footer = styleCss(profile.pageNumber.style ?? profile.footer.style);
+  if (footer) rules.push(`.export-page-footer { ${footer}; }`);
+  if (profile.pageNumber.alignment !== 'unknown') rules.push(`.export-page-footer { justify-content: ${profile.pageNumber.alignment === 'center' ? 'center' : profile.pageNumber.alignment === 'right' ? 'flex-end' : 'flex-start'}; }`);
+  if (profile.toc.leaderStyle === 'dots') rules.push(`.export-content-inner [data-toc-entry] { display: flex; gap: .35em; } .export-content-inner [data-toc-entry]::after { content: ''; flex: 1; border-bottom: 1px dotted currentColor; margin-bottom: .3em; }`);
   return rules.join('\n    ');
 }
 
@@ -461,6 +493,7 @@ export async function renderProjectExportHtml(
       }
     }
     ${buildBrandExportCss(templateOverrides)}
+    ${buildReferenceEditorialCss(project.document.metadata?.referenceEditorialProfile)}
   </style>
 </head>
 <body>
@@ -502,21 +535,79 @@ export interface PdfBrandTheme {
   bodyColor: string;
   mutedColor: string;
   accentColor: string;
+  heading1Size: number;
+  heading2Size: number;
+  heading3Size: number;
+  bodySize: number;
+  bodyLineHeight: number;
+  headerEnabled: boolean;
+  footerEnabled: boolean;
+  pageNumberEnabled: boolean;
+  headerAlign: 'left' | 'center' | 'right';
+  footerAlign: 'left' | 'center' | 'right';
+  headingAlign: 'left' | 'center' | 'right';
+  chapterLabelStyle: EditorialTextStyle | null;
+  chapterTitleStyle: EditorialTextStyle | null;
+  chapterSubtitleStyle: EditorialTextStyle | null;
+  headerStyle: EditorialTextStyle | null;
+  footerStyle: EditorialTextStyle | null;
 }
 
-export function resolvePdfBrandTheme(overrides?: Partial<ComposeTemplate>): PdfBrandTheme {
+function profileFont(style: EditorialTextStyle | null | undefined, fallback: string, bold: boolean) {
+  return style?.resolvedFontFamily ? toBase14Font(style.resolvedFontFamily, style.fontWeight === 'bold' || bold) : fallback;
+}
+
+function profileAlign(value: EditorialTextStyle['textAlign'] | undefined): 'left' | 'center' | 'right' {
+  return value === 'center' || value === 'right' ? value : 'left';
+}
+
+export function resolvePdfBrandTheme(overrides?: Partial<ComposeTemplate>, profile?: ReferenceEditorialProfile | null): PdfBrandTheme {
+  const h1 = profile?.headings.h1;
+  const h2 = profile?.headings.h2;
+  const h3 = profile?.headings.h3;
+  const body = profile?.body;
   return {
     headingFont: overrides?.displayFontFamily
       ? toBase14Font(overrides.displayFontFamily, true)
-      : 'Helvetica-Bold',
-    bodyFont: overrides?.bodyFontFamily ? toBase14Font(overrides.bodyFontFamily, false) : 'Helvetica',
+      : profileFont(h1, 'Helvetica-Bold', true),
+    bodyFont: overrides?.bodyFontFamily ? toBase14Font(overrides.bodyFontFamily, false) : profileFont(body, 'Helvetica', false),
     quoteFont: overrides?.displayFontFamily
       ? toBase14Font(overrides.displayFontFamily, false)
-      : 'Helvetica',
-    headingColor: overrides?.headingColor ?? '#111827',
-    bodyColor: overrides?.bodyColor ?? '#2b3442',
+      : profileFont(profile?.quote, profileFont(body, 'Helvetica', false), false),
+    headingColor: overrides?.headingColor ?? h1?.color ?? '#111827',
+    bodyColor: overrides?.bodyColor ?? body?.color ?? '#2b3442',
     mutedColor: overrides?.accentMutedColor ?? '#5f6b7a',
     accentColor: overrides?.accentColor ?? '#d4af37',
+    heading1Size: h1?.fontSize ?? 22,
+    heading2Size: h2?.fontSize ?? 18,
+    heading3Size: h3?.fontSize ?? h2?.fontSize ?? 16,
+    bodySize: body?.fontSize ?? 10.5,
+    bodyLineHeight: body?.lineHeight ?? 1.65,
+    headerEnabled: profile?.header.enabled ?? false,
+    footerEnabled: profile?.footer.enabled ?? false,
+    pageNumberEnabled: profile?.pageNumber.enabled ?? true,
+    headerAlign: profileAlign(profile?.header.style?.textAlign),
+    footerAlign: profileAlign(profile?.pageNumber.alignment ?? profile?.footer.alignment),
+    headingAlign: profileAlign(h1?.textAlign),
+    chapterLabelStyle: profile?.chapterOpening.labelStyle ?? null,
+    chapterTitleStyle: profile?.chapterOpening.titleStyle ?? h1 ?? null,
+    chapterSubtitleStyle: profile?.chapterOpening.subtitleStyle ?? null,
+    headerStyle: profile?.header.style ?? null,
+    footerStyle: profile?.pageNumber.style ?? profile?.footer.style ?? null,
+  };
+}
+
+function pdfStyle(style: EditorialTextStyle | null, fallback: Record<string, unknown> = {}) {
+  if (!style) return fallback;
+  return {
+    ...fallback,
+    ...(style.resolvedFontFamily ? { fontFamily: toBase14Font(style.resolvedFontFamily, style.fontWeight === 'bold') } : {}),
+    ...(style.fontSize ? { fontSize: style.fontSize } : {}),
+    ...(style.fontWeight === 'bold' ? { fontWeight: 700 } : style.fontWeight === 'semibold' ? { fontWeight: 600 } : {}),
+    ...(style.fontStyle === 'italic' ? { fontStyle: 'italic' } : {}),
+    ...(style.color ? { color: style.color } : {}),
+    ...(style.lineHeight ? { lineHeight: style.lineHeight } : {}),
+    ...(style.textAlign !== 'unknown' ? { textAlign: profileAlign(style.textAlign) } : {}),
   };
 }
 
@@ -636,14 +727,16 @@ function renderPdfContentBlock(
   block: ParsedContentBlock,
   index: number,
   theme: PdfBrandTheme = resolvePdfBrandTheme(),
+  chapterTitleStyle: EditorialTextStyle | null = null,
 ) {
   if (block.type === 'heading') {
     return (
       <Text
         key={`pdf-heading-${index}`}
         style={[
-          block.level <= 1 ? pdfStyles.heading1 : pdfStyles.heading2,
-          { fontFamily: theme.headingFont, color: theme.headingColor },
+          block.level <= 1 ? { ...pdfStyles.heading1, fontSize: theme.heading1Size } : block.level === 2 ? { ...pdfStyles.heading2, fontSize: theme.heading2Size } : { ...pdfStyles.heading2, fontSize: theme.heading3Size },
+          { fontFamily: theme.headingFont, color: theme.headingColor, textAlign: theme.headingAlign },
+          block.level <= 1 && chapterTitleStyle ? pdfStyle(chapterTitleStyle) : null,
         ]}
       >
         {block.text}
@@ -655,7 +748,7 @@ function renderPdfContentBlock(
       <Text
         key={`pdf-quote-${index}`}
         style={[
-          pdfStyles.quote,
+          { ...pdfStyles.quote, fontSize: theme.bodySize, lineHeight: theme.bodyLineHeight },
           {
             fontFamily: theme.quoteFont,
             borderLeftColor: theme.accentColor,
@@ -671,7 +764,7 @@ function renderPdfContentBlock(
     return (
       <Text
         key={`pdf-li-${index}`}
-        style={[pdfStyles.listItem, { fontFamily: theme.bodyFont, color: theme.bodyColor }]}
+        style={[{ ...pdfStyles.listItem, fontSize: theme.bodySize, lineHeight: theme.bodyLineHeight }, { fontFamily: theme.bodyFont, color: theme.bodyColor }]}
       >
         • {block.text}
       </Text>
@@ -680,11 +773,26 @@ function renderPdfContentBlock(
   return (
     <Text
       key={`pdf-p-${index}`}
-      style={[pdfStyles.paragraph, { fontFamily: theme.bodyFont, color: theme.bodyColor }]}
+      style={[{ ...pdfStyles.paragraph, fontSize: theme.bodySize, lineHeight: theme.bodyLineHeight }, { fontFamily: theme.bodyFont, color: theme.bodyColor }]}
     >
       {block.text}
     </Text>
   );
+}
+
+interface PdfTocEntry { title: string; page: string; level: number }
+
+function parsePdfTocEntries(html: string | null | undefined): PdfTocEntry[] {
+  if (!html) return [];
+  return [...html.matchAll(/<p\b[^>]*data-toc-entry="true"[^>]*data-toc-level="(\d+)"[^>]*data-toc-page="([^"]+)"[^>]*>[\s\S]*?<span[^>]*class="toc-title"[^>]*>([\s\S]*?)<\/span>[\s\S]*?<\/p>/gi)].map((match) => ({
+    level: Number(match[1]),
+    page: stripInlineHtml(match[2]),
+    title: stripInlineHtml(match[3]),
+  }));
+}
+
+function renderPdfToc(entries: PdfTocEntry[], theme: PdfBrandTheme) {
+  return <View>{entries.map((entry, index) => <View key={`pdf-toc-${index}`} style={{ flexDirection: 'row', alignItems: 'flex-end', marginLeft: Math.max(0, entry.level - 1) * 12, marginBottom: 6 }}><Text style={{ fontFamily: theme.bodyFont, fontSize: theme.bodySize, lineHeight: theme.bodyLineHeight, color: theme.bodyColor }}>{entry.title}</Text><View style={{ flexGrow: 1, borderBottomWidth: 1, borderBottomStyle: 'dotted', borderBottomColor: theme.mutedColor, marginLeft: 5, marginBottom: 3 }} /><Text style={{ fontFamily: theme.bodyFont, fontSize: theme.bodySize, color: theme.bodyColor }}>{entry.page}</Text></View>)}</View>;
 }
 
 export async function buildProjectPdf(project: ProjectRecord) {
@@ -704,7 +812,8 @@ export async function buildProjectPdfWithConfig(
   const pdfMarginRight = exportConfig.marginRight * PDF_SCALE;
   const pages = composeProjectPreview(project, exportConfig, undefined, templateOverrides).pages;
   assertExportArtifactIntegrity(project, pages, 'PDF');
-  const theme = resolvePdfBrandTheme(templateOverrides);
+  const profile = project.document.metadata?.referenceEditorialProfile;
+  const theme = resolvePdfBrandTheme(templateOverrides, profile);
   const palette = COVER_PALETTE_COLORS[project.cover.palette] ?? COVER_PALETTE_COLORS.obsidian;
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
@@ -778,10 +887,19 @@ export async function buildProjectPdfWithConfig(
         // for publication surfaces; rasterizing content would make the PDF
         // impossible to select, search or assistively read.
         const blocks = parsePageContent(page.content);
+        const tocEntries = parsePdfTocEntries(page.content);
+        const chapterNumber = page.chapterId && profile?.chapterOpening.detected
+          ? (new Set(pages.slice(0, pageIndex + 1).filter((candidate) => candidate.type === 'content' && candidate.chapterId && candidate.chapterId !== page.chapterId && candidate.chapterTitle).map((candidate) => candidate.chapterId)).size + 1)
+          : null;
         return (
-          <Page key={`pdf-content-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight }]}>
-            <View style={[pdfStyles.pageInner, { paddingTop: pdfMarginTop, paddingBottom: pdfMarginBottom, paddingLeft: pdfMarginLeft, paddingRight: pdfMarginRight }]}>
-              {blocks.map((block, index) => renderPdfContentBlock(block, index, theme))}
+          <Page key={`pdf-content-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight }]}> 
+            <View style={[pdfStyles.pageInner, { paddingTop: pdfMarginTop, paddingBottom: pdfMarginBottom, paddingLeft: pdfMarginLeft, paddingRight: pdfMarginRight }]}> 
+              {theme.headerEnabled ? <Text style={{ position: 'absolute', top: 16, left: pdfMarginLeft, right: pdfMarginRight, ...pdfStyle(theme.headerStyle, { fontFamily: theme.bodyFont, fontSize: 8, color: theme.mutedColor, textAlign: theme.headerAlign }) }}>{project.document.title}</Text> : null}
+              {tocEntries.length > 0 ? renderPdfToc(tocEntries, theme) : <>
+                {chapterNumber && page.chapterTitle ? <Text style={pdfStyle(theme.chapterLabelStyle, { fontFamily: theme.bodyFont, fontSize: 9, color: theme.mutedColor, textAlign: theme.headingAlign, marginBottom: 8, textTransform: 'uppercase' })}>Capítulo {chapterNumber}</Text> : null}
+                {blocks.map((block, index) => renderPdfContentBlock(block, index, theme, chapterNumber && index === 0 ? theme.chapterTitleStyle : null))}
+              </>}
+              {theme.footerEnabled || theme.pageNumberEnabled ? <Text style={{ position: 'absolute', bottom: 16, left: pdfMarginLeft, right: pdfMarginRight, ...pdfStyle(theme.footerStyle, { fontFamily: theme.bodyFont, fontSize: 8, color: theme.mutedColor, textAlign: theme.footerAlign }) }}>{theme.footerEnabled ? project.document.title : ''}{theme.footerEnabled && theme.pageNumberEnabled ? '  ·  ' : ''}{theme.pageNumberEnabled ? page.pageNumber : ''}</Text> : null}
             </View>
           </Page>
         );

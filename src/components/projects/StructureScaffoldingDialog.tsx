@@ -102,7 +102,7 @@ export function StructureScaffoldingDialog({
 
   const chooseSavedProfile = (profileId: string) => {
     const profile = profiles.find((item) => item.id === profileId);
-    if (!profile) return;
+    if (!profile || profile.schema.profileType !== 'structure') return;
     // Even a saved profile goes through the confirmation screen (G2: no
     // silent application, ever).
     showConfirmation(profile.schema, profile.sourceFileName, profile.name);

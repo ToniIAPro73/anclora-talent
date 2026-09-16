@@ -134,13 +134,16 @@ export interface InferredStructureSchema {
   metrics: StructureMetrics;
 }
 
+import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profile/model';
+export type StoredStructureSchema = InferredStructureSchema | ReferenceEditorialProfile;
+
 export interface StructureProfile {
   id: string;
   userId: string;
   name: string;
   version: number;
   status: StructureProfileStatus;
-  schema: InferredStructureSchema;
+  schema: StoredStructureSchema;
   /** Source document the schema was extracted from (G4). */
   sourceFileName: string | null;
   createdAt: string;
@@ -151,7 +154,7 @@ export interface CreateStructureProfileInput {
   name: string;
   version?: number;
   status?: StructureProfileStatus;
-  schema: InferredStructureSchema;
+  schema: StoredStructureSchema;
   sourceFileName?: string | null;
 }
 
