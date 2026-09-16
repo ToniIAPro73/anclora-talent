@@ -573,6 +573,24 @@ export type AppMessages = {
     structureConfirmAction: string;
     structureDiscardAction: string;
     structureError: string;
+    referenceEditorialToggleLabel: string;
+    referenceEditorialToggleHint: string;
+    referenceEditorialConfigureAction: string;
+    referenceEditorialTitle: string;
+    referenceEditorialDescription: string;
+    referenceEditorialStyleTab: string;
+    referenceEditorialStructureTab: string;
+    referenceEditorialUseAction: string;
+    referenceEditorialNoStyle: string;
+    referenceEditorialBody: string;
+    referenceEditorialHeadings: string;
+    referenceEditorialPage: string;
+    referenceEditorialObservedWarning: string;
+    referenceEditorialConfidenceHigh: string;
+    referenceEditorialConfidenceMedium: string;
+    referenceEditorialConfidenceLow: string;
+    referenceEditorialSaveLabel: string;
+    referenceEditorialSavedProfiles: string;
     healthRecomposedBadge: string;
     healthDiffTitle: string;
     healthDiffShift: string;
@@ -1847,6 +1865,24 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       structureConfirmAction: 'Confirmar estructura',
       structureDiscardAction: 'Descartar',
       structureError: 'No se pudo analizar el documento de referencia.',
+      referenceEditorialToggleLabel: 'Usar perfil editorial de referencia',
+      referenceEditorialToggleHint: 'El documento aporta estilo y reglas de composición. Tu manuscrito conserva su propia estructura y contenido.',
+      referenceEditorialConfigureAction: 'Analizar estilo editorial',
+      referenceEditorialTitle: 'Perfil editorial de referencia',
+      referenceEditorialDescription: 'Hemos analizado el diseño del documento, sin copiar su contenido.',
+      referenceEditorialStyleTab: 'Estilo editorial',
+      referenceEditorialStructureTab: 'Estructura observada',
+      referenceEditorialUseAction: 'Usar estilo de referencia',
+      referenceEditorialNoStyle: 'No hemos podido obtener un estilo editorial fiable.',
+      referenceEditorialBody: 'Tipografía del cuerpo',
+      referenceEditorialHeadings: 'Títulos de capítulo',
+      referenceEditorialPage: 'Página y márgenes',
+      referenceEditorialObservedWarning: 'Esta estructura es informativa y no se copiará al nuevo manuscrito.',
+      referenceEditorialConfidenceHigh: 'Confianza alta',
+      referenceEditorialConfidenceMedium: 'Confianza media',
+      referenceEditorialConfidenceLow: 'Confianza baja',
+      referenceEditorialSaveLabel: 'Guardar como perfil reutilizable',
+      referenceEditorialSavedProfiles: 'Mis estilos editoriales',
       healthRecomposedBadge: 'Recompuesto desde la pág. {page}',
       healthDiffTitle: 'Cambios desde la última edición',
       healthDiffShift: '{title}: pág. {from} → {to}',
@@ -3131,6 +3167,24 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       structureConfirmAction: 'Confirm structure',
       structureDiscardAction: 'Discard',
       structureError: 'The reference document could not be analyzed.',
+      referenceEditorialToggleLabel: 'Use reference editorial profile',
+      referenceEditorialToggleHint: 'The document provides style and composition rules. Your manuscript keeps its own structure and content.',
+      referenceEditorialConfigureAction: 'Analyze editorial style',
+      referenceEditorialTitle: 'Reference editorial profile',
+      referenceEditorialDescription: 'We analyzed the document design without copying its content.',
+      referenceEditorialStyleTab: 'Editorial style',
+      referenceEditorialStructureTab: 'Observed structure',
+      referenceEditorialUseAction: 'Use reference style',
+      referenceEditorialNoStyle: 'We could not obtain a reliable editorial style.',
+      referenceEditorialBody: 'Body typography',
+      referenceEditorialHeadings: 'Chapter headings',
+      referenceEditorialPage: 'Page and margins',
+      referenceEditorialObservedWarning: 'This structure is informational and will not be copied to the new manuscript.',
+      referenceEditorialConfidenceHigh: 'High confidence',
+      referenceEditorialConfidenceMedium: 'Medium confidence',
+      referenceEditorialConfidenceLow: 'Low confidence',
+      referenceEditorialSaveLabel: 'Save as reusable profile',
+      referenceEditorialSavedProfiles: 'My editorial styles',
       healthRecomposedBadge: 'Recomposed from page {page}',
       healthDiffTitle: 'Changes since last edit',
       healthDiffShift: '{title}: page {from} → {to}',

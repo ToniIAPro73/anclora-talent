@@ -23,6 +23,9 @@ import type { CoverDesign, UpdateBackCoverInput, UpdateCoverInput, UpdateDocumen
 import { defaultEditorPreferences, type EditorPreferences } from '@/lib/ui-preferences/preferences';
 import type { DesignLayer, DesignSurface } from './design-surface';
 import { parseDesignSurfacePayload } from './design-surface-schema';
+import { isReferenceEditorialProfile } from '@/lib/reference-editorial-profile/legacy';
+import { applyReferenceEditorialProfileToComposition } from '@/lib/reference-editorial-profile/apply';
+import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profile/model';
 
 function parsePalette(value: FormDataEntryValue | null): CoverDesign['palette'] {
   if (value === 'teal' || value === 'sand') {
@@ -62,6 +65,7 @@ export async function createProjectAction(formData: FormData) {
   // F3: confirmed structure schema from the governed wizard (G2: the field
   // only exists after explicit human confirmation in the UI).
   const structureSchemaRaw = String(formData.get('structureSchema') ?? '').trim();
+  const referenceEditorialProfileRaw = String(formData.get('referenceEditorialProfile') ?? '').trim();
   // U5: optional identity-manual PDF → best-effort BrandProfile, created
   // active and linked to the new project. Any failure here is logged but
   // NEVER blocks project creation.
@@ -88,7 +92,15 @@ export async function createProjectAction(formData: FormData) {
     // source document: the scaffold is an EMPTY book shaped by the profile
     // (G3: form, never voice); importing content at the same time would
     // defeat its purpose.
-    const structureSeed = structureSchemaRaw
+    const referenceEditorialProfile = referenceEditorialProfileRaw
+      ? (() => {
+          let parsed: unknown;
+          try { parsed = JSON.parse(referenceEditorialProfileRaw); } catch { throw new Error('Invalid referenceEditorialProfile payload'); }
+          if (!isReferenceEditorialProfile(parsed)) throw new Error('Invalid referenceEditorialProfile payload');
+          return parsed as ReferenceEditorialProfile;
+        })()
+      : null;
+    const structureSeed = structureSchemaRaw && !referenceEditorialProfile
       ? await (async () => {
           const { buildStructureScaffolding } = await import('@/lib/structure-profile/scaffolding');
           let parsed: unknown;
@@ -167,7 +179,7 @@ export async function createProjectAction(formData: FormData) {
           })()
         : null);
 
-    const project = await projectRepository.createProject(userId, { title, importedDocument, templateId });
+    const project = await projectRepository.createProject(userId, { title, importedDocument, templateId, referenceEditorialProfile });
 
     console.info('[createProjectAction] project created', {
       userId,
@@ -200,6 +212,16 @@ export async function createProjectAction(formData: FormData) {
           compositionError,
         });
       }
+    }
+
+    if (referenceEditorialProfile) {
+      const current = await projectRepository.getProjectById(userId, project.id);
+      const metadata = {
+        ...(current?.document.metadata ?? { title: project.title }),
+        composition: applyReferenceEditorialProfileToComposition(current?.document.metadata?.composition ?? {}, referenceEditorialProfile),
+        referenceEditorialProfile,
+      };
+      await projectRepository.saveDocumentExtras(userId, project.id, { metadata });
     }
 
     if (brandManual instanceof File && brandManual.size > 0) {

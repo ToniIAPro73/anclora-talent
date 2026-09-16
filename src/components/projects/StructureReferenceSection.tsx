@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import type { AppMessages } from '@/lib/i18n/messages';
-import type { InferredStructureSchema, StructureProfile } from '@/lib/structure-profile/model';
-import { StructureScaffoldingDialog } from './StructureScaffoldingDialog';
+import type { StructureProfile } from '@/lib/structure-profile/model';
+import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profile/model';
+import { ReferenceEditorialProfileDialog } from './ReferenceEditorialProfileDialog';
 
 type Copy = AppMessages['project'];
 
@@ -24,14 +25,7 @@ interface StructureReferenceSectionProps {
 export function StructureReferenceSection({ copy, profiles }: StructureReferenceSectionProps) {
   const [enabled, setEnabled] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [confirmedSchema, setConfirmedSchema] = useState<InferredStructureSchema | null>(null);
-
-  const summary = confirmedSchema
-    ? copy.structureSummaryLine
-        .replace('{parts}', String(confirmedSchema.metrics.desglose.h1Partes))
-        .replace('{chapters}', String(confirmedSchema.metrics.desglose.h2Capitulos))
-        .replace('{subsections}', String(confirmedSchema.metrics.desglose.h3Subsecciones))
-    : null;
+  const [confirmedProfile, setConfirmedProfile] = useState<ReferenceEditorialProfile | null>(null);
 
   return (
     <div className="mt-4" data-testid="structure-reference-section">
@@ -43,15 +37,15 @@ export function StructureReferenceSection({ copy, profiles }: StructureReference
           checked={enabled}
           onChange={(event) => {
             setEnabled(event.target.checked);
-            if (!event.target.checked) setConfirmedSchema(null);
+            if (!event.target.checked) setConfirmedProfile(null);
           }}
         />
         <span>
           <span className="font-semibold text-[var(--text-primary)]">
-            {copy.structureToggleLabel}
+            {copy.referenceEditorialToggleLabel}
           </span>
           <span className="mt-1 block text-xs leading-5 text-[var(--text-tertiary)]">
-            {copy.structureToggleHint}
+            {copy.referenceEditorialToggleHint}
           </span>
         </span>
       </label>
@@ -60,37 +54,37 @@ export function StructureReferenceSection({ copy, profiles }: StructureReference
         <div className="mt-3 space-y-2">
           <button
             type="button"
-            data-testid="structure-configure-button"
+            data-testid="reference-editorial-configure-button"
             className="ac-button ac-button--secondary ac-button--sm"
             onClick={() => setDialogOpen(true)}
           >
-            {copy.structureConfigureAction}
+            {copy.referenceEditorialConfigureAction}
           </button>
 
-          {confirmedSchema && summary && (
+          {confirmedProfile && (
             <>
               <p
                 className="text-xs font-semibold text-[var(--accent)]"
                 data-testid="structure-confirmed-badge"
               >
-                {copy.structureConfiguredBadge.replace('{summary}', summary)}
+                {copy.referenceEditorialTitle}: {confirmedProfile.source.filename}
               </p>
               <input
                 type="hidden"
-                name="structureSchema"
-                data-testid="structure-schema-input"
-                value={JSON.stringify(confirmedSchema)}
+                name="referenceEditorialProfile"
+                data-testid="reference-editorial-profile-input"
+                value={JSON.stringify(confirmedProfile)}
               />
             </>
           )}
         </div>
       )}
 
-      <StructureScaffoldingDialog
+      <ReferenceEditorialProfileDialog
         isOpen={dialogOpen}
         profiles={profiles}
         copy={copy}
-        onConfirm={(schema) => setConfirmedSchema(schema)}
+        onConfirm={(profile) => setConfirmedProfile(profile)}
         onClose={() => setDialogOpen(false)}
       />
     </div>

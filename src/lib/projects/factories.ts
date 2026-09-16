@@ -24,7 +24,7 @@ function buildChapterBlocks(
     type: 'heading' | 'paragraph' | 'quote';
     content: string;
   }>,
-) {
+): Array<{ id: string; type: 'heading' | 'paragraph' | 'quote'; order: number; content: string }> {
   return blocks.map((block, index) => ({
     id: randomUUID(),
     type: block.type,
@@ -126,6 +126,12 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
             derivedFromSourceAssetId: input.derivedFrom?.sourceAssetId,
           }
         : null,
+      metadata: input.referenceEditorialProfile
+        ? {
+            title: documentTitle,
+            referenceEditorialProfile: input.referenceEditorialProfile,
+          }
+        : null,
     },
     cover: {
       id: randomUUID(),
@@ -182,7 +188,7 @@ export function updateProjectDocument(project: ProjectRecord, input: UpdateDocum
       return {
         id: block.id || randomUUID(),
         content: block.content,
-        type: existing?.type || (bIdx === 0 && block.content.trimStart().startsWith('<h') ? 'heading' : 'text'),
+        type: existing?.type || (bIdx === 0 && block.content.trimStart().startsWith('<h') ? 'heading' : 'paragraph'),
         order: bIdx,
       };
     }),

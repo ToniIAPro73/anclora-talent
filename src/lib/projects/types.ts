@@ -3,6 +3,7 @@ import type { DocumentRules } from '@/lib/compose/rules';
 import type { ProvenanceMap } from '@/lib/ai/provenance';
 import type { SurfaceState } from './cover-surface';
 import type { DesignSurface } from './design-surface';
+import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profile/model';
 
 export type ProjectStatus = 'draft' | 'active';
 
@@ -255,6 +256,8 @@ export interface CreateProjectInput {
   templateId?: string | null;
   /** Fase 3: provenance when this project is an editable copy of a fixed-pdf project. */
   derivedFrom?: { projectId: string; sourceAssetId?: string } | null;
+  /** Visual rules from a reference document; never seeds manuscript chapters. */
+  referenceEditorialProfile?: ReferenceEditorialProfile | null;
 }
 
 export interface UpdateDocumentInput {

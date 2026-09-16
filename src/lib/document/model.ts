@@ -15,6 +15,7 @@
  *   text: their visible label is materialized by the composition engine. */
 
 import type { CompositionSettings } from '@/lib/projects/composition';
+import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profile/model';
 
 export type InlineMarkType = 'bold' | 'italic' | 'link';
 
@@ -137,6 +138,8 @@ export interface DocumentMetadata {
   language?: string;
   /** U6: per-project composition overrides (hierarchy: project > user > system). */
   composition?: CompositionSettings | null;
+  /** Reusable visual rules extracted from a reference document. */
+  referenceEditorialProfile?: ReferenceEditorialProfile | null;
   /** U6: explicit "no brand" marker; wins over any default brand profile. */
   brandChoice?: 'none';
 }
