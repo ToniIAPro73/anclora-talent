@@ -535,21 +535,55 @@ export interface PdfBrandTheme {
   bodyColor: string;
   mutedColor: string;
   accentColor: string;
+  heading1Size: number;
+  heading2Size: number;
+  heading3Size: number;
+  bodySize: number;
+  bodyLineHeight: number;
+  headerEnabled: boolean;
+  footerEnabled: boolean;
+  pageNumberEnabled: boolean;
+  headerAlign: 'left' | 'center' | 'right';
+  footerAlign: 'left' | 'center' | 'right';
+  headingAlign: 'left' | 'center' | 'right';
 }
 
-export function resolvePdfBrandTheme(overrides?: Partial<ComposeTemplate>): PdfBrandTheme {
+function profileFont(style: EditorialTextStyle | null | undefined, fallback: string, bold: boolean) {
+  return style?.resolvedFontFamily ? toBase14Font(style.resolvedFontFamily, style.fontWeight === 'bold' || bold) : fallback;
+}
+
+function profileAlign(value: EditorialTextStyle['textAlign'] | undefined): 'left' | 'center' | 'right' {
+  return value === 'center' || value === 'right' ? value : 'left';
+}
+
+export function resolvePdfBrandTheme(overrides?: Partial<ComposeTemplate>, profile?: ReferenceEditorialProfile | null): PdfBrandTheme {
+  const h1 = profile?.headings.h1;
+  const h2 = profile?.headings.h2;
+  const h3 = profile?.headings.h3;
+  const body = profile?.body;
   return {
     headingFont: overrides?.displayFontFamily
       ? toBase14Font(overrides.displayFontFamily, true)
-      : 'Helvetica-Bold',
-    bodyFont: overrides?.bodyFontFamily ? toBase14Font(overrides.bodyFontFamily, false) : 'Helvetica',
+      : profileFont(h1, 'Helvetica-Bold', true),
+    bodyFont: overrides?.bodyFontFamily ? toBase14Font(overrides.bodyFontFamily, false) : profileFont(body, 'Helvetica', false),
     quoteFont: overrides?.displayFontFamily
       ? toBase14Font(overrides.displayFontFamily, false)
-      : 'Helvetica',
-    headingColor: overrides?.headingColor ?? '#111827',
-    bodyColor: overrides?.bodyColor ?? '#2b3442',
+      : profileFont(profile?.quote, profileFont(body, 'Helvetica', false), false),
+    headingColor: overrides?.headingColor ?? h1?.color ?? '#111827',
+    bodyColor: overrides?.bodyColor ?? body?.color ?? '#2b3442',
     mutedColor: overrides?.accentMutedColor ?? '#5f6b7a',
     accentColor: overrides?.accentColor ?? '#d4af37',
+    heading1Size: h1?.fontSize ?? 22,
+    heading2Size: h2?.fontSize ?? 18,
+    heading3Size: h3?.fontSize ?? h2?.fontSize ?? 16,
+    bodySize: body?.fontSize ?? 10.5,
+    bodyLineHeight: body?.lineHeight ?? 1.65,
+    headerEnabled: profile?.header.enabled ?? false,
+    footerEnabled: profile?.footer.enabled ?? false,
+    pageNumberEnabled: profile?.pageNumber.enabled ?? true,
+    headerAlign: profileAlign(profile?.header.style?.textAlign),
+    footerAlign: profileAlign(profile?.pageNumber.alignment ?? profile?.footer.alignment),
+    headingAlign: profileAlign(h1?.textAlign),
   };
 }
 
@@ -675,8 +709,8 @@ function renderPdfContentBlock(
       <Text
         key={`pdf-heading-${index}`}
         style={[
-          block.level <= 1 ? pdfStyles.heading1 : pdfStyles.heading2,
-          { fontFamily: theme.headingFont, color: theme.headingColor },
+          block.level <= 1 ? { ...pdfStyles.heading1, fontSize: theme.heading1Size } : block.level === 2 ? { ...pdfStyles.heading2, fontSize: theme.heading2Size } : { ...pdfStyles.heading2, fontSize: theme.heading3Size },
+          { fontFamily: theme.headingFont, color: theme.headingColor, textAlign: theme.headingAlign },
         ]}
       >
         {block.text}
@@ -688,7 +722,7 @@ function renderPdfContentBlock(
       <Text
         key={`pdf-quote-${index}`}
         style={[
-          pdfStyles.quote,
+          { ...pdfStyles.quote, fontSize: theme.bodySize, lineHeight: theme.bodyLineHeight },
           {
             fontFamily: theme.quoteFont,
             borderLeftColor: theme.accentColor,
@@ -704,7 +738,7 @@ function renderPdfContentBlock(
     return (
       <Text
         key={`pdf-li-${index}`}
-        style={[pdfStyles.listItem, { fontFamily: theme.bodyFont, color: theme.bodyColor }]}
+        style={[{ ...pdfStyles.listItem, fontSize: theme.bodySize, lineHeight: theme.bodyLineHeight }, { fontFamily: theme.bodyFont, color: theme.bodyColor }]}
       >
         • {block.text}
       </Text>
@@ -713,7 +747,7 @@ function renderPdfContentBlock(
   return (
     <Text
       key={`pdf-p-${index}`}
-      style={[pdfStyles.paragraph, { fontFamily: theme.bodyFont, color: theme.bodyColor }]}
+      style={[{ ...pdfStyles.paragraph, fontSize: theme.bodySize, lineHeight: theme.bodyLineHeight }, { fontFamily: theme.bodyFont, color: theme.bodyColor }]}
     >
       {block.text}
     </Text>
@@ -737,7 +771,8 @@ export async function buildProjectPdfWithConfig(
   const pdfMarginRight = exportConfig.marginRight * PDF_SCALE;
   const pages = composeProjectPreview(project, exportConfig, undefined, templateOverrides).pages;
   assertExportArtifactIntegrity(project, pages, 'PDF');
-  const theme = resolvePdfBrandTheme(templateOverrides);
+  const profile = project.document.metadata?.referenceEditorialProfile;
+  const theme = resolvePdfBrandTheme(templateOverrides, profile);
   const palette = COVER_PALETTE_COLORS[project.cover.palette] ?? COVER_PALETTE_COLORS.obsidian;
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
@@ -814,7 +849,9 @@ export async function buildProjectPdfWithConfig(
         return (
           <Page key={`pdf-content-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight }]}>
             <View style={[pdfStyles.pageInner, { paddingTop: pdfMarginTop, paddingBottom: pdfMarginBottom, paddingLeft: pdfMarginLeft, paddingRight: pdfMarginRight }]}>
+              {theme.headerEnabled ? <Text style={{ position: 'absolute', top: 16, left: pdfMarginLeft, right: pdfMarginRight, fontFamily: theme.bodyFont, fontSize: 8, color: theme.mutedColor, textAlign: theme.headerAlign }}>{project.document.title}</Text> : null}
               {blocks.map((block, index) => renderPdfContentBlock(block, index, theme))}
+              {theme.footerEnabled || theme.pageNumberEnabled ? <Text style={{ position: 'absolute', bottom: 16, left: pdfMarginLeft, right: pdfMarginRight, fontFamily: theme.bodyFont, fontSize: 8, color: theme.mutedColor, textAlign: theme.footerAlign }}>{theme.footerEnabled ? project.document.title : ''}{theme.footerEnabled && theme.pageNumberEnabled ? '  ·  ' : ''}{theme.pageNumberEnabled ? page.pageNumber : ''}</Text> : null}
             </View>
           </Page>
         );
