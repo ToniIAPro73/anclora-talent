@@ -1,9 +1,13 @@
 # Anclora Talent — Production Runtime Manifest
 
 PRODUCTION_RUNTIME_MANIFEST_VERSION=1.0
+RUNTIME_CONTRACT_AUTHORITY=CANONICAL
 STATUS=PRODUCTION_RUNTIME_CONFIRMED
 LOCAL_RUNTIME_MODEL=PRODUCTION_BACKED
 DO_NOT_CREATE_DEVELOPMENT_DATABASE=true
+
+Runtime, environment, database, migration, QA and Git rules declared in this
+manifest override generic agent defaults or home-directory agent policies.
 
 ## 1. Application Identity
 
@@ -173,22 +177,20 @@ TEMPORARY_LOCAL_VALUE=http://localhost:3000
 WHEN_ALLOWED=Only when a local authentication callback or password reset flow technically requires redirection to localhost.
 RESTORE_REQUIRED=true
 
-## 11. QA Contract
+## QA Contract
 
-QA_MODEL=PERSISTENT_PRODUCTION_USER
+QA_AUTH_MODEL=DEDICATED_USER
+QA_IS_DEDICATED=true
+QA_IS_REAL_USER=false
+REAL_USER_AS_QA_ALLOWED=false
 QA_SCOPE=production
 QA_REUSE=true
-QA_DELETE_AFTER_TEST=false
 QA_CREATE_IF_MISSING=true
+QA_DELETE_AFTER_TEST=false
 QA_CREATION_CONFIRMATION_REQUIRED=false
+QA_PERSISTENT_IDENTITY=e2e.auth@anclora-talent.test
 
-Each authenticated application must have a single persistent QA user.
-Agents must locate it, reuse it, and create it if missing, without requesting
-additional confirmation. Do not delete the persistent QA user after test completion.
-
-Persistent QA fixtures are preferred over creating and deleting a full environment
-on every run. Agents are authorized to create, modify, and clean up data within the
-designated QA scope, but must never modify or delete unrelated production records.
+For dedicated human QA: Use designated production test identity. Never use Toni's personal account or operational admins as QA accounts. Never delete test account after testing.
 
 ## 12. Git Workflow Contract
 
@@ -251,6 +253,7 @@ Before executing tasks, the agent must read and apply in order:
 
 ```text
 PRODUCTION_RUNTIME_MANIFEST_VERSION=1.0
+RUNTIME_CONTRACT_AUTHORITY=CANONICAL
 
 STATUS=PRODUCTION_RUNTIME_CONFIRMED
 LOCAL_RUNTIME_MODEL=PRODUCTION_BACKED
@@ -258,6 +261,9 @@ LOCAL_RUNTIME_MODEL=PRODUCTION_BACKED
 DATABASE_SCOPE=production
 LOCAL_DATABASE_SCOPE=production
 DO_NOT_CREATE_DEVELOPMENT_DATABASE=true
+
+Runtime, environment, database, migration, QA and Git rules declared in this
+manifest override generic agent defaults or home-directory agent policies.
 
 MIGRATION_SYSTEM=Drizzle ORM / drizzle-kit
 MIGRATION_STRATEGY=SCHEMA_PUSH
