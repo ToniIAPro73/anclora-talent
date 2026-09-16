@@ -1,4 +1,4 @@
-# Anclora Talent — Production Runtime Manifest
+# Anclora Talent Reference Profile V2 — Production Runtime Manifest
 
 PRODUCTION_RUNTIME_MANIFEST_VERSION=1.0
 STATUS=PRODUCTION_RUNTIME_CONFIRMED
@@ -7,270 +7,81 @@ DO_NOT_CREATE_DEVELOPMENT_DATABASE=true
 
 ## 1. Application Identity
 
-APPLICATION_NAME=Anclora Talent
-REPOSITORY=anclora-talent
-APPLICATION_TYPE=fullstack
-FRAMEWORK=Next.js 15 (App Router) + React 19 + Turbopack + Tailwind CSS
+APPLICATION_NAME=Anclora Talent Reference Profile V2
+REPOSITORY=anclora-talent-reference-profile-v2
+APPLICATION_TYPE=fullstack_or_application
+FRAMEWORK=Next.js
 
 ## 2. Runtime Topology
 
-FRONTEND_PROVIDER=Vercel
+FRONTEND_PROVIDER=Node.js / Self-Hosted
 BACKEND_PROVIDER=Vercel Serverless Functions
-PRODUCTION_DOMAIN=talent.anclora.com
-PRODUCTION_DEPLOYMENT_PROVIDER=Vercel
+PRODUCTION_DOMAIN=anclora-talent-reference-profile-v2.anclora.com
+PRODUCTION_DEPLOYMENT_PROVIDER=Node.js / Self-Hosted
 
 ```text
-Browser
+Browser / Client
    ↓
-Vercel Frontend (Next.js App Router)
+Node.js / Self-Hosted Frontend (Next.js)
    ↓
-Vercel Serverless Functions (Route Handlers / Server Actions)
-   ├── Neon Production Database (neondb)
-   ├── Vercel Blob: anclora-talent-container (Public Assets)
-   ├── Vercel Blob: anclora-talent-source-documents (Private Source Documents)
-   └── Resend API (Transactional Email)
+Backend Services
+   ├── Database: Drizzle ORM
+   └── External Integrations
 ```
 
 ## 3. Production Database Contract
 
-DATABASE_PROVIDER=Neon Serverless PostgreSQL
-DATABASE_PROJECT=anclora-talent
-DATABASE_BRANCH=main
-DATABASE_NAME=neondb
-DATABASE_REGION=eu-central-1 (AWS c-3.eu-central-1.aws.neon.tech)
-DATABASE_ENDPOINT=ep-old-lake-aldzrl3x-pooler.c-3.eu-central-1.aws.neon.tech
-DATABASE_ENDPOINT_UNPOOLED=ep-old-lake-aldzrl3x.c-3.eu-central-1.aws.neon.tech
-DATABASE_RUNTIME_SCOPE=production
+DATABASE_PROVIDER=Drizzle ORM
+DATABASE_SCOPE=production
 LOCAL_DATABASE_SCOPE=production
 
 Local development intentionally connects to the Production database.
-
 This is the Anclora operating model.
-
 Do not create or switch to a Development, Preview, Staging, ephemeral,
 local or alternate database unless Toni explicitly requests it.
 
 ## 4. Database Migration Contract
 
-DATABASE_SCOPE=production
-LOCAL_DATABASE_SCOPE=production
+MIGRATION_SYSTEM=Drizzle ORM
+MIGRATION_STRATEGY=DRIZZLE_MIGRATE
+MIGRATION_DIRECTORY=./drizzle
+MIGRATION_RUNNER=npm run db:migrate
 
-MIGRATION_SYSTEM=Drizzle ORM / drizzle-kit
-MIGRATION_DIRECTORY=./src/db/migrations
-MIGRATION_RUNNER=npm run db:push (dotenv -e .env.local -- drizzle-kit push)
-
-SCHEMA_CHANGES_ALLOWED=true
-PRODUCTION_MIGRATIONS_ALLOWED=true
-MIGRATION_CONFIRMATION_REQUIRED=false
-
-DATA_MIGRATIONS_ALLOWED=true
-BACKFILLS_ALLOWED=true
-INDEX_CHANGES_ALLOWED=true
-CONSTRAINT_CHANGES_ALLOWED=true
-RLS_POLICY_CHANGES_ALLOWED=true
-
-BACKWARD_COMPATIBILITY_PREFERRED=true
-
-DESTRUCTIVE_CHANGES_ALLOWED_WHEN_REQUIRED_BY_IMPLEMENTATION=true
-
-RANDOM_DATABASE_RESET_ALLOWED=false
-UNRELATED_PRODUCTION_DATA_DELETION_ALLOWED=false
-
-When an implementation requires schema modifications (such as CREATE TABLE,
-ALTER TABLE, ADD/DROP COLUMN, INDEX, FOREIGN KEY, CONSTRAINT, ENUM, VIEW,
-FUNCTION, TRIGGER, POLICY, RLS, BACKFILL, or DATA TRANSFORMATION), the agent
-is authorized to create the migration, validate it, check Production, apply
-it to Production, and continue with QA/E2E without requesting additional
-confirmation.
-
-Production database migrations should remain backward-compatible with the
-currently deployed application whenever technically reasonable, because the
-database migration may be applied before the validated development commit is
-promoted to the Production application branch. Prefer expand -> migrate -> contract
-patterns when appropriate.
+All schema migrations apply strictly against the designated production database.
+Destructive drops or resets are strictly prohibited without authorization.
 
 ## 5. Storage Contract
 
-### Public Blob
-STORE_NAME=anclora-talent-container
-STORE_ID=store_uHA5hTGHfhPkujHH
-STORE_REGION=cdg1
-ACCESS=public
-PURPOSE=covers, back covers, chapter images, project assets
-ENV_CONTRACT=BLOB_READ_WRITE_TOKEN
+STORAGE_PROVIDER=None
+STORAGE_SCOPE=production
 
-### Private Blob
-STORE_NAME=anclora-talent-source-documents
-STORE_ID=store_gN3uHfHAhFNEiJ7R
-STORE_REGION=iad1
-ACCESS=private
-PURPOSE=original source documents / fixed-PDF (fail-closed document storage)
-ENV_CONTRACT=SOURCE_DOCUMENT_READ_WRITE_TOKEN
-
-DO_NOT_MERGE_PUBLIC_AND_PRIVATE_STORES=true
+Local development utilizes production storage buckets/services according to the production-backed model.
 
 ## 6. Authentication Contract
 
-AUTH_MODEL=Cookie session-based authentication (anclora_talent_session HttpOnly)
-SESSION_STORAGE=PostgreSQL sessions table (Neon Production)
-USER_STORAGE=PostgreSQL users table (Neon Production)
-OAUTH_PROVIDERS=Google OAuth, GitHub OAuth (/api/auth/oauth/*)
-PASSWORD_MODEL=bcrypt (12 rounds) via bcryptjs
+AUTH_PROVIDER=Session / JWT
+AUTH_SCOPE=production
 
-## 7. Email Contract
+## 7. External Services & Integrations
 
-EMAIL_PROVIDER=Resend
-EMAIL_ENV_CONTRACT=RESEND_API_KEY
-EMAIL_FROM_CONTRACT=Anclora Talent <antonio@anclora.com>
-EMAIL_USAGE=Transactional email delivery (account verification, password recovery, notifications)
+EXTERNAL_SERVICES=Vercel API, Production Database, Email/Notifications
 
-## 8. External Integrations
+## 8. Environment Files & Loading Order
 
-ACTIVE:
-- Resend API (Transactional emails via RESEND_API_KEY)
-- Google OAuth (Authentication seam via GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
-- GitHub OAuth (Authentication seam via GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET)
+ENV_FILES=.env.local (mode 0600), .env.production.local (fallback)
+All local secret variables point to production services. Never commit .env files containing credentials.
 
-OPTIONAL:
-- OpenAI Cloud Assistance (Feature-flagged; disabled if OPENAI_API_KEY is not provisioned)
-- FileStudio Bridge (Feature-flagged; disabled if FILESTUDIO_API_URL is not configured)
-
-DISABLED:
-- None
-
-## 9. Local Environment Contract
-
-Environment files:
-- Mac: `/Users/toni/developer/anclora/anclora-talent/.env.local`
-- VPS: `/home/toni/workspace/anclora/anclora-talent/.env.local`
-
-Permissions: 0600 (-rw-------), strictly gitignored.
+## 9. Local vs Production Model
 
 LOCAL_RUNTIME_MODEL=PRODUCTION_BACKED
-
-Production resource variables must resolve to Production resources even when
-the application itself is running locally.
-
-### Separation of Variables:
-- PRODUCTION_RESOURCE_VARIABLES:
-  - `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `PGHOST`, `POSTGRES_URL` → Production Neon PostgreSQL
-  - `BLOB_READ_WRITE_TOKEN` → Production Vercel Blob Store (Public)
-  - `SOURCE_DOCUMENT_READ_WRITE_TOKEN` → Production Vercel Blob Store (Private)
-  - `RESEND_API_KEY` → Production Resend API
-  - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` → Production OAuth apps
-- LOCAL_ONLY_RUNTIME_VARIABLES:
-  - `PORT=3000` → Local HTTP server binding port
-
-## 10. Local Runtime Exceptions
-
-VARIABLE=NEXT_PUBLIC_APP_URL
-CANONICAL_VALUE=https://talent.anclora.com
-TEMPORARY_LOCAL_VALUE=http://localhost:3000
-WHEN_ALLOWED=Only during local development and testing to ensure client browser routing, navigation, and local API calls resolve to localhost without redirecting to production.
-RESTORE_REQUIRED=false
-
-VARIABLE=AUTH_APP_URL
-CANONICAL_VALUE=https://talent.anclora.com
-TEMPORARY_LOCAL_VALUE=http://localhost:3000
-WHEN_ALLOWED=Only when a local authentication callback or password reset flow technically requires redirection to localhost.
-RESTORE_REQUIRED=true
-
-## 11. QA Contract
-
-QA_MODEL=PERSISTENT_PRODUCTION_USER
-QA_SCOPE=production
-QA_REUSE=true
-QA_DELETE_AFTER_TEST=false
-QA_CREATE_IF_MISSING=true
-QA_CREATION_CONFIRMATION_REQUIRED=false
-
-Each authenticated application must have a single persistent QA user.
-Agents must locate it, reuse it, and create it if missing, without requesting
-additional confirmation. Do not delete the persistent QA user after test completion.
-
-Persistent QA fixtures are preferred over creating and deleting a full environment
-on every run. Agents are authorized to create, modify, and clean up data within the
-designated QA scope, but must never modify or delete unrelated production records.
-
-## 12. Git Workflow Contract
-
-WORK_BRANCH=development
-CREATE_FEATURE_BRANCH=false
-AUTO_COMMIT_AFTER_VALIDATION=true
-AUTO_PUSH_DEVELOPMENT=true
-AUTO_PROMOTE=false
-STOP_AFTER_DEVELOPMENT_PUSH=true
-
-```text
-development local
-   ↓
-implementation
-   ↓
-migration if needed
-   ↓
-tests
-   ↓
-QA/E2E
-   ↓
-commit
-   ↓
-push origin/development
-   ↓
-STOP
-```
-
-Agents must NOT create feature/fix/task/agent branches unless Toni explicitly
-requests one for the current mission.
-
-Promotion to staging / production / main requires explicit Toni approval.
-When promotion is requested, preserve the validated development commit SHA
-whenever branch topology allows fast-forward promotion.
-
-## 13. Agent Startup Contract
-
-Before executing tasks, the agent must read and apply in order:
-1. Workspace agent policy (`/home/toni/AGENTS.md` and repository `AGENTS.md`)
-2. Repository-specific instructions (`CLAUDE.md`, `GEMINI.md`, etc.)
-3. `.anclora/PRODUCTION_RUNTIME.md` (this manifest as operative runtime contract)
-4. Relevant AOS standards and contracts (`anclora-governance/standards/`)
-
-## 14. Forbidden Defaults
-
-- Do not create Development DB by default.
-- Do not create Preview DB by default.
-- Do not create temporary feature branches.
-- Do not replace Production env with Development env.
-- Do not delete persistent QA user after testing.
-- Do not automatically promote after development push.
-- Do not reset Production DB merely to simplify testing.
-- Do not delete unrelated Production data.
-- Do not expose secrets.
-
-## 15. Machine-Readable Contract
-
-```text
-PRODUCTION_RUNTIME_MANIFEST_VERSION=1.0
-
-STATUS=PRODUCTION_RUNTIME_CONFIRMED
-LOCAL_RUNTIME_MODEL=PRODUCTION_BACKED
-
-DATABASE_SCOPE=production
-LOCAL_DATABASE_SCOPE=production
 DO_NOT_CREATE_DEVELOPMENT_DATABASE=true
 
-PRODUCTION_MIGRATIONS_ALLOWED=true
-MIGRATION_CONFIRMATION_REQUIRED=false
-BACKWARD_COMPATIBILITY_PREFERRED=true
+## 10. Persistent QA User Contract
 
-QA_MODEL=PERSISTENT_PRODUCTION_USER
-QA_REUSE=true
-QA_CREATE_IF_MISSING=true
-QA_DELETE_AFTER_TEST=false
+PERSISTENT_QA_USER=qa@anclora.com (or system persistent test account)
+QA identity must be preserved across sessions; never drop or reset test accounts.
 
-WORK_BRANCH=development
-CREATE_FEATURE_BRANCH=false
-AUTO_COMMIT_AFTER_VALIDATION=true
-AUTO_PUSH_DEVELOPMENT=true
-AUTO_PROMOTE=false
-STOP_AFTER_DEVELOPMENT_PUSH=true
-```
+## 11. Git Branch & Operational Policy
+
+DEFAULT_BRANCH=development
+PROMOTION_POLICY=All work commits to development branch. Never push directly to main or production.

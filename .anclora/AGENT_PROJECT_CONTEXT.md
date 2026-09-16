@@ -1,16 +1,46 @@
-<!-- ANCLORA-ECOSYSTEM-CONTEXT-START -->
-## Contexto de proyecto para agentes
+# Anclora Talent Reference Profile V2 — Agent Project Context
 
-Arranque obligatorio (bootstrap):
+AGENT_PROJECT_CONTEXT_VERSION=1.0
+STATUS=ACTIVE
 
-1. `AGENTS.md` (raíz) — reglas locales y modelo de gobernanza del repo.
-2. `.anclora/AOS_ADOPTION.md` — adopción AOS v0.2.0 y excepciones activas.
-3. Este archivo y `MEMORY.md` — contexto y memoria técnica locales.
-4. Fuentes delegadas solo según el dominio de la tarea: Bóveda Anclora (`../boveda-anclora/contracts/`) para contratos, branding y registry; AOS (`../anclora-governance/`) para gobernanza constitucional.
+## 1. Project Identity
 
-La autoridad delegada en contratos de ecosistema vive en la Bóveda Anclora:
+APPLICATION_NAME=Anclora Talent Reference Profile V2
+REPOSITORY=anclora-talent-reference-profile-v2
+PROJECT_ROLE=Core Application (Next.js)
+PRODUCT_FAMILY=Anclora Group
 
-`../boveda-anclora/contracts/core/ANCLORA_ECOSYSTEM_ARCHITECTURE_CONTRACT.md`
+## 2. Mandatory Bootstrap
 
-No asumir que este repo comparte infraestructura con otros productos Anclora. Revisar frontend, backend, hosting, base de datos, auth y variables reales antes de tocar despliegues.
-<!-- ANCLORA-ECOSYSTEM-CONTEXT-END -->
+When starting work in this repository, agents must read sources in this exact order:
+
+1. Current explicit instruction from Toni (highest operational priority).
+2. Workspace agent policy (`../../ANCLORA_WORKSPACE_AGENT_POLICY.md` — currently `WORKSPACE_POLICY_STATUS=PENDING_GLOBAL_INSTALLATION`, with `../../AGENTS.md` as interim workspace guidance).
+3. Repository agent rules (`../AGENTS.md`).
+4. `.anclora/AGENT_PROJECT_CONTEXT.md` (this file — bootstrap, index, routing, and authority map).
+5. `.anclora/PRODUCTION_RUNTIME.md` (canonical runtime contract: topology, database, migrations, QA, Git).
+6. `.anclora/AOS_ADOPTION.md` (governance declaration, canonical AOS sources, decisions, exceptions).
+7. Repository-specific agent instructions (`../CLAUDE.md`, `../GEMINI.md`, etc., when present).
+8. Task-specific canonical sources (see Section 4: Task Routing).
+
+## 3. Core Project Contracts
+
+- **PRODUCTION_RUNTIME**: [`.anclora/PRODUCTION_RUNTIME.md`](PRODUCTION_RUNTIME.md)
+  - Governs real runtime architecture, hosting, Drizzle ORM database connection, DRIZZLE_MIGRATE migration strategy, auth, and production-backed local model.
+- **AOS_ADOPTION**: [`.anclora/AOS_ADOPTION.md`](AOS_ADOPTION.md)
+  - Governs AOS alignment, governance level, standards, and referenced authoritative knowledge.
+
+## 4. Task Routing
+
+| Task Domain | Primary Authority to Read First | Secondary / Operational Sources |
+| :--- | :--- | :--- |
+| **Runtime / Hosting / Env** | [`.anclora/PRODUCTION_RUNTIME.md`](PRODUCTION_RUNTIME.md) | `.env.local` (mode 0600) |
+| **Database / Migrations** | [`.anclora/PRODUCTION_RUNTIME.md`](PRODUCTION_RUNTIME.md) | `./drizzle` |
+| **AOS Governance** | [`.anclora/AOS_ADOPTION.md`](AOS_ADOPTION.md) | [`../../anclora-governance/`](../../anclora-governance/) |
+| **Design / UI Tokens** | [`../../anclora-design-system/`](../../anclora-design-system/) | [`../../anclora-vault/00-governance/contracts/`](../../anclora-vault/00-governance/contracts/) |
+| **Git Workflow** | [`.anclora/PRODUCTION_RUNTIME.md`](PRODUCTION_RUNTIME.md) | `../AGENTS.md` |
+
+## 5. Source Authority
+
+- Operational Rules: `../AGENTS.md`
+- Governance: [`../../anclora-governance/`](../../anclora-governance/)
