@@ -49,14 +49,16 @@ This document records the verified implementation state after the Claude Code ha
 
 ## Verification performed
 
-- Full Vitest suite: 226 test files, 1,445 tests passed.
+- Full Vitest suite: 226 test files, 1,446 tests passed.
 - Cover Studio v2 targeted tests cover layer geometry, guides/zoom/spacing, text alignment, image transforms/crop hydration, shape properties, object alignment, preview precedence, and Fabric canvas interactions.
-- Focal ESLint checks pass.
+- Full ESLint passes with four pre-existing warnings and no errors.
+- `next build` passes; Next reports the existing NFT tracing warning for the dynamic Fabric/node export import.
 
 ## Remaining gaps and verification limits
 
 - Guide creation/deletion is persisted, but its state is not yet represented in the Fabric JSON history snapshot; guide-specific undo/redo needs a surface-level history extension.
 - DOM preview and Fabric/node export are contract-aligned but not pixel-identical renderers; visual parity still requires screenshot review at the requested viewports and themes.
 - Tint and blend modes remain intentionally unavailable.
-- Full repository TypeScript/build gates and authenticated live-route Playwright execution require separate environment validation; their results must be reported independently of the passing unit/component suite.
+- Global `tsc --noEmit` remains red on pre-existing errors in archive scripts, the old chapter image canvas, and legacy tests; no Cover Studio v2 source error remains in the filtered feature scope.
+- Authenticated live-route Playwright execution is blocked in this environment because `/api/auth/register` returns HTTP 500 before any cover route is reached.
 - Legacy v1 lazy migration has unit coverage, but a full authenticated edit-and-upgrade route pass remains to be run.
