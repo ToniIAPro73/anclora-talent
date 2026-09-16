@@ -15,6 +15,9 @@ const eslintConfig = defineConfig([
     // Fixed-PDF document mode: minified vendor asset copied verbatim from
     // pdfjs-dist by the `postinstall` script — not app code, not authored.
     "public/pdf.worker.min.mjs",
+    // Generated QA evidence is intentionally gitignored and is not authored
+    // application code; do not lint its one-off browser protocol helpers.
+    "docs/audits/evidence/**",
   ]),
   // Ad-hoc Node utility scripts (not app code, not shipped): allow
   // CommonJS require() and loose typing.

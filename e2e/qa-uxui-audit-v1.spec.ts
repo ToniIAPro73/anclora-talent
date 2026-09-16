@@ -269,7 +269,7 @@ test.describe('E3 — libro real (docx)', () => {
     await page.getByTestId('preview-modal-close-button').click();
   });
 
-  test('paridad preview↔export HTML: mismo recuento de tablas', async ({ page, request }) => {
+  test('paridad preview↔export HTML: mismo recuento de tablas', async ({ request }) => {
     test.setTimeout(120_000);
     const projectId = editorUrl.match(/projects\/([^/]+)\/editor/)?.[1];
     expect(projectId).toBeTruthy();
