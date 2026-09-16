@@ -26,6 +26,8 @@ export function CreateProjectForm({
   fixedPdfError?: boolean;
 }) {
   const [selectedStyleLabel, setSelectedStyleLabel] = useState(copy.newProjectStyleNone);
+  const [documentSummary, setDocumentSummary] = useState(copy.createOptionalManuscriptHint);
+  const [brandSummary, setBrandSummary] = useState(copy.newProjectNoBrand);
 
   return (
     <form
@@ -69,7 +71,12 @@ export function CreateProjectForm({
           </label>
           <div className="mt-5" data-testid="create-optional-manuscript">
             <span className="ac-form-field__label block">{copy.createOptionalManuscriptLabel}</span>
-            <DocumentImporter copy={copy} />
+            <DocumentImporter
+              copy={copy}
+              onAnalysisChange={(analysis) =>
+                setDocumentSummary(analysis?.title || analysis?.fileName || copy.createOptionalManuscriptHint)
+              }
+            />
             <p className="mt-1 text-xs leading-6 text-[var(--text-tertiary)]">{copy.createOptionalManuscriptHint}</p>
           </div>
           <div className="mt-5">
@@ -86,14 +93,17 @@ export function CreateProjectForm({
         <section className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-5" data-testid="brand-identity-section">
           <h3 className="text-xl font-bold text-[var(--text-primary)]">{copy.newProjectBrandTitle}</h3>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">{copy.newProjectBrandDescription}</p>
-          <BrandManualInput copy={copy} />
+          <BrandManualInput
+            copy={copy}
+            onFileChange={(fileName) => setBrandSummary(fileName || copy.newProjectNoBrand)}
+          />
         </section>
         <section className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-5" data-testid="project-creation-summary">
           <h3 className="text-xl font-bold text-[var(--text-primary)]">{copy.newProjectSummaryTitle}</h3>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl bg-[var(--surface-soft)] p-3"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">{copy.newProjectSummaryDocument}</p><p className="mt-1 text-sm text-[var(--text-primary)]">{copy.createOptionalManuscriptHint}</p></div>
+            <div className="rounded-xl bg-[var(--surface-soft)] p-3"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">{copy.newProjectSummaryDocument}</p><p className="mt-1 text-sm text-[var(--text-primary)]">{documentSummary}</p></div>
             <div className="rounded-xl bg-[var(--surface-soft)] p-3"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">{copy.newProjectSummaryStyle}</p><p className="mt-1 text-sm text-[var(--text-primary)]">{selectedStyleLabel}</p></div>
-            <div className="rounded-xl bg-[var(--surface-soft)] p-3"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">{copy.newProjectSummaryBrand}</p><p className="mt-1 text-sm text-[var(--text-primary)]">{copy.newProjectNoBrand}</p></div>
+            <div className="rounded-xl bg-[var(--surface-soft)] p-3"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">{copy.newProjectSummaryBrand}</p><p className="mt-1 text-sm text-[var(--text-primary)]">{brandSummary}</p></div>
           </div>
         </section>
         <div className="flex flex-col gap-4">

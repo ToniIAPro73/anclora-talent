@@ -66,6 +66,7 @@ anclora-talent-log-export-*.json
 playwright-report/
 test-results/*
 !test-results/qa/
+artifacts/
 .vercel
 .vercel-backup/
 

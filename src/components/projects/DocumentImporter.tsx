@@ -158,7 +158,13 @@ async function analyzeDocxLocally(file: File, copy: AppMessages['project']): Pro
   }
 }
 
-export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
+export function DocumentImporter({
+  copy,
+  onAnalysisChange,
+}: {
+  copy: AppMessages['project'];
+  onAnalysisChange?: (analysis: { fileName: string; title: string } | null) => void;
+}) {
   const inputId = useId();
   const [selectedFileName, setSelectedFileName] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -183,6 +189,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
     setImportState('analyzing');
     setAnalysis(null);
     setErrorMessage('');
+    onAnalysisChange?.(null);
 
     if (file.size > MAX_FILE_SIZE_BYTES) {
       setImportState('error');
@@ -229,6 +236,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
           setConfirmedComposition(null);
           setIsDocumentDataOpen(true);
           setImportState('ready');
+          onAnalysisChange?.({ fileName: localAnalysis.sourceFileName, title: localAnalysis.title });
           return;
         }
 
@@ -243,7 +251,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         return;
       }
 
-      setAnalysis({
+      const nextAnalysis: AnalysisResult = {
         title: data.title ?? file.name,
         subtitle: data.subtitle ?? '',
         author: data.author ?? '',
@@ -258,7 +266,9 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         manuscriptType: data.manuscriptType,
         detectedManuscriptType: data.detectedManuscriptType,
         composition: data.composition,
-      });
+      };
+      setAnalysis(nextAnalysis);
+      onAnalysisChange?.({ fileName: nextAnalysis.sourceFileName, title: nextAnalysis.title });
       // U6: a fresh analysis resets any previously confirmed composition and
       // auto-opens the pre-create document-data modal.
       setConfirmedComposition(null);
@@ -271,6 +281,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
         setConfirmedComposition(null);
         setIsDocumentDataOpen(true);
         setImportState('ready');
+        onAnalysisChange?.({ fileName: localAnalysis.sourceFileName, title: localAnalysis.title });
         return;
       }
       setImportState('error');
@@ -291,6 +302,7 @@ export function DocumentImporter({ copy }: { copy: AppMessages['project'] }) {
       setSelectedFileName('');
       setImportState('idle');
       setAnalysis(null);
+      onAnalysisChange?.(null);
     }
   };
 
