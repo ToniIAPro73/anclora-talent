@@ -26,6 +26,7 @@ import {
 import { extractStructureFromDocument } from './extract-structure-profile';
 import { structureProfileRepository } from './repository';
 import type { InferredStructureSchema, StructureProfileStatus } from './model';
+export { extractReferenceEditorialProfileAction, saveReferenceEditorialProfileAction } from '@/lib/reference-editorial-profile/actions';
 
 function isInferredStructureSchema(value: unknown): value is InferredStructureSchema {
   if (!value || typeof value !== 'object') return false;

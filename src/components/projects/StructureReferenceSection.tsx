@@ -54,7 +54,7 @@ export function StructureReferenceSection({ copy, profiles }: StructureReference
         <div className="mt-3 space-y-2">
           <button
             type="button"
-            data-testid="reference-editorial-configure-button"
+            data-testid="structure-configure-button"
             className="ac-button ac-button--secondary ac-button--sm"
             onClick={() => setDialogOpen(true)}
           >
