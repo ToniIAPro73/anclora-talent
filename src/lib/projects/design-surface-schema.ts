@@ -37,7 +37,7 @@ const textLayerSchema = designLayerBaseSchema.extend({
   color: z.string().min(1),
   letterSpacing: finiteNumber,
   lineHeight: finiteNumber.positive(),
-  textAlign: z.enum(['left', 'center', 'right']),
+  textAlign: z.enum(['left', 'center', 'right', 'justify']),
   verticalAlign: z.enum(['top', 'middle', 'bottom']),
   textTransform: z.enum(['none', 'uppercase', 'lowercase']),
   role: textLayerRoleSchema,

@@ -368,7 +368,7 @@ import { BackCoverPreview } from './BackCoverPreview';
 import { createDefaultSurfaceState, normalizeSurfaceState } from '@/lib/projects/cover-surface';
 import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface-resolver';
 import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
-import { isDesignSurfaceV2 } from '@/lib/projects/design-surface';
+import { isDesignSurfaceV2, isLegacySurfaceState } from '@/lib/projects/design-surface';
 import { getBackCoverDesign, getCoverDesign } from '@/lib/projects/design-surface-repository';
 import { DesignSurfaceRenderer } from './design-surface/DesignSurfaceRenderer';
 
@@ -396,7 +396,7 @@ export function PageRenderer({
 
   if (page.type === 'cover' && page.coverData) {
     // 1. If we have a rendered image (from Canvas/Advanced editor), show it
-    if (page.coverData.renderedImageUrl) {
+    if (page.coverData.renderedImageUrl && !isDesignSurfaceV2(project.cover.surfaceState)) {
       return (
         <div style={pageStyle} className="relative overflow-hidden bg-[#070c14] rounded-[8px] shadow-[var(--shadow-strong)] border border-white/10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -423,7 +423,7 @@ export function PageRenderer({
 
     // 3. Otherwise, use the standard CoverPreview component for coherence with basic editor
     const baseSurface = normalizeSurfaceState(
-      project.cover.surfaceState ?? {
+      (isLegacySurfaceState(project.cover.surfaceState) ? project.cover.surfaceState : null) ?? {
         ...createDefaultSurfaceState('cover'),
       },
     );
@@ -450,7 +450,7 @@ export function PageRenderer({
 
   if (page.type === 'back-cover' && page.backCoverData) {
     // 1. If we have a rendered image (from Advanced back cover editor), show it
-    if (page.backCoverData.renderedImageUrl) {
+    if (page.backCoverData.renderedImageUrl && !isDesignSurfaceV2(project.backCover.surfaceState)) {
       return (
         <div style={pageStyle} className="relative overflow-hidden bg-[#070c14] rounded-[8px] shadow-[var(--shadow-strong)] border border-white/10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -472,7 +472,7 @@ export function PageRenderer({
     }
 
     const baseSurface = normalizeSurfaceState(
-      project.backCover.surfaceState ?? {
+      (isLegacySurfaceState(project.backCover.surfaceState) ? project.backCover.surfaceState : null) ?? {
         ...createDefaultSurfaceState('back-cover'),
       },
     );

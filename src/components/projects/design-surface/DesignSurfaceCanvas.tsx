@@ -110,6 +110,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
       const canvas = fabricRef.current;
       if (!canvas) return;
       const snapshot = JSON.stringify(canvas.toJSON(['id']));
+      if (historyRef.current[historyIndexRef.current] === snapshot) return;
       historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1);
       historyRef.current.push(snapshot);
       historyIndexRef.current = historyRef.current.length - 1;
@@ -144,6 +145,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
         fabricRef.current = canvas;
         guideManagerRef.current = createGuideManager(canvas);
         guideManagerRef.current.setCustomGuides(surface.guides ?? []);
+        guideManagerRef.current.setZoom(1);
 
         await applyBackgroundToCanvas(fabric, canvas, surface.background, surface);
 
@@ -180,7 +182,8 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           const guideManager = guideManagerRef.current;
           if (!guideManager) return;
           guideManager.showGuides(target);
-          if (snapEnabledRef.current) guideManager.snapToGuides(target);
+          const nativeEvent = event.e ?? event;
+          if (snapEnabledRef.current && !nativeEvent.altKey) guideManager.snapToGuides(target);
         });
 
         canvas.on('object:modified', (event: FabricEvent) => {
@@ -242,7 +245,10 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           if (lastSyncedLayersRef.current.get(layer.id) === serialized) continue;
 
           const existing = objectsByIdRef.current.get(layer.id);
-          const needsRebuild = !existing || (layer.type === 'image' && existing.getSrc?.() !== layer.src);
+          // Image fit/crop/filter changes alter the Fabric source frame and
+          // scale, so rebuild the object from the canonical layer rather than
+          // applying only the common style patch.
+          const needsRebuild = !existing || layer.type === 'image';
 
           if (needsRebuild) {
             if (existing) canvas.remove(existing);
@@ -258,13 +264,27 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           lastSyncedLayersRef.current.set(layer.id, serialized);
         }
 
+        // The layer array is the single z-order source of truth. Fabric does
+        // not reorder objects when only zIndex changes, so reconcile its stack
+        // after panel reorder actions.
+        [...surface.layers]
+          .sort((a, b) => a.zIndex - b.zIndex)
+          .forEach((layer, index) => {
+            const object = objectsByIdRef.current.get(layer.id);
+            if (object) canvas.moveObjectTo?.(object, index);
+          });
+
         renderCanvas(canvas);
+        // Property-panel and layer-panel edits arrive through the canonical
+        // surface rather than Fabric events. Record them here as one history
+        // entry; pushHistory deduplicates the snapshot emitted by a drag.
+        pushHistory();
       })();
 
       return () => {
         cancelled = true;
       };
-    }, [surface.layers]);
+    }, [pushHistory, surface.layers]);
 
     // Background changes independently of the layer array.
     useEffect(() => {
@@ -355,6 +375,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
             surface.layers.length + 1,
           );
           onLayersChange([...surface.layers, duplicated]);
+          onSelectionChange([duplicated.id]);
         },
         undo() {
           if (historyIndexRef.current <= 0) return;
@@ -377,6 +398,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           if (!canvas) return;
           canvas.setZoom(factor);
           canvas.setDimensions({ width: surface.width * factor, height: surface.height * factor });
+          guideManagerRef.current?.setZoom(factor);
           setZoomState(factor);
           onZoomChange?.(factor);
         },
@@ -387,11 +409,12 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           if (!canvas) return;
           canvas.setZoom(factor);
           canvas.setDimensions({ width: surface.width * factor, height: surface.height * factor });
+          guideManagerRef.current?.setZoom(factor);
           setZoomState(factor);
           onZoomChange?.(factor);
         },
       }),
-      [applyHistorySnapshot, onLayersChange, onZoomChange, pushHistory, surface.layers, viewportSize, surface.width, surface.height],
+      [applyHistorySnapshot, onLayersChange, onSelectionChange, onZoomChange, pushHistory, surface.layers, viewportSize, surface.width, surface.height],
     );
 
     // Keyboard: arrow move / Shift+arrow larger step / Delete / Cmd-Ctrl+D
@@ -430,6 +453,15 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           if (activeObject.id) objectsByIdRef.current.delete(activeObject.id);
           canvas.discardActiveObject?.();
           renderCanvas(canvas);
+          onLayersChange(
+            canvas
+              .getObjects()
+              .map((object: FabricObject, index: number) => {
+                const layer = surface.layers.find((candidate) => candidate.id === object.id);
+                return layer ? ({ ...layer, zIndex: index } as DesignLayer) : null;
+              })
+              .filter((layer: DesignLayer | null): layer is DesignLayer => Boolean(layer)),
+          );
           pushHistory();
           return;
         }

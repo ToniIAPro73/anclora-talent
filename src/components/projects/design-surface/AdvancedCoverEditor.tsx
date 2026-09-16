@@ -17,6 +17,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Grid3x3,
+  AlignHorizontalJustifyCenter,
+  AlignHorizontalJustifyEnd,
+  AlignHorizontalJustifyStart,
+  AlignVerticalJustifyCenter,
+  AlignVerticalJustifyEnd,
+  AlignVerticalJustifyStart,
+  ImagePlus,
+  Shapes,
+  Type,
   Magnet,
   Maximize,
   Redo2,
@@ -33,6 +42,7 @@ import {
   type DesignLayer,
   type DesignSurface,
 } from '@/lib/projects/design-surface';
+import { alignLayers, type LayerAlignment } from '@/lib/projects/layer-geometry';
 import { DesignSurfaceCanvas, type DesignSurfaceCanvasHandle } from './DesignSurfaceCanvas';
 import { CanvasRulers, CANVAS_RULER_THICKNESS } from './CanvasRulers';
 import { CanvasOverlays, type GridDensity } from './CanvasOverlays';
@@ -62,6 +72,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
 export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, originalBackgroundSrc, metadataValues }: AdvancedCoverEditorProps) {
   const canvasRef = useRef<DesignSurfaceCanvasHandle>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [selectedLayerIds, setSelectedLayerIds] = useState<string[]>([]);
   const [zoom, setZoom] = useState(1);
   const [snapEnabled, setSnapEnabled] = useState(true);
@@ -122,6 +133,54 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
     });
   }, []);
 
+  const handleObjectAlignment = useCallback(
+    (alignment: LayerAlignment) => {
+      if (selectedLayerIds.length === 0) return;
+      setLayers(alignLayers(surface.layers, selectedLayerIds, alignment, { width: surface.width, height: surface.height }));
+    },
+    [selectedLayerIds, setLayers, surface.height, surface.layers, surface.width],
+  );
+
+  const duplicateLayer = useCallback(
+    (layerId: string) => {
+      const source = surface.layers.find((layer) => layer.id === layerId);
+      if (!source) return;
+      const duplicate = createDesignLayer(
+        {
+          ...source,
+          x: source.x + 16,
+          y: source.y + 16,
+          name: source.name ? `${source.name} copy` : undefined,
+        },
+        surface.layers.length + 1,
+      );
+      setLayers([...surface.layers, duplicate]);
+      setSelectedLayerIds([duplicate.id]);
+    },
+    [setLayers, surface.layers],
+  );
+
+  const appendLayer = useCallback(
+    (layer: DesignLayer) => {
+      setLayers([...surface.layers, layer]);
+      setSelectedLayerIds([layer.id]);
+    },
+    [setLayers, surface.layers],
+  );
+
+  const addTextLayer = useCallback(() => {
+    appendLayer(createDesignLayer({ type: 'text', content: 'Texto', x: surface.width / 2 - 110, y: surface.height / 2 - 30, width: 220, height: 60, name: 'Text' }, surface.layers.length + 1));
+  }, [appendLayer, surface.height, surface.layers.length, surface.width]);
+
+  const addShapeLayer = useCallback(() => {
+    appendLayer(createDesignLayer({ type: 'shape', shape: 'rect', fill: '#061629', x: 0, y: 0, width: surface.width, height: surface.height, opacity: 0.35, name: 'Overlay' }, surface.layers.length + 1));
+  }, [appendLayer, surface.height, surface.layers.length, surface.width]);
+
+  const handleAddImage = useCallback(async (file: File) => {
+    const src = await readFileAsDataUrl(file);
+    appendLayer(createDesignLayer({ type: 'image', src, fit: 'cover', x: 0, y: 0, width: surface.width, height: surface.height, name: file.name || 'Image' }, surface.layers.length + 1));
+  }, [appendLayer, surface.height, surface.layers.length, surface.width]);
+
   const canResetToOriginal = Boolean(surface.originAssetId && originalBackgroundSrc);
   const handleResetToOriginal = useCallback(() => {
     if (!surface.originAssetId || !originalBackgroundSrc) return;
@@ -140,6 +199,16 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
     <div className="ac-editor-shell" data-testid="advanced-cover-editor">
       <header className="ac-editor-shell__header">
         <div className="ac-editor-shell__controls">
+          <button type="button" data-testid="advanced-editor-add-text-button" onClick={addTextLayer} className="ac-button ac-button--ghost ac-button--icon ac-button--sm" title={copy.fields.addFieldButtonLabel} aria-label={copy.fields.addFieldButtonLabel}>
+            <Type className="h-4 w-4" />
+          </button>
+          <button type="button" data-testid="advanced-editor-add-shape-button" onClick={addShapeLayer} className="ac-button ac-button--ghost ac-button--icon ac-button--sm" title={copy.layers.untitledShape} aria-label={copy.layers.untitledShape}>
+            <Shapes className="h-4 w-4" />
+          </button>
+          <button type="button" data-testid="advanced-editor-add-image-button" onClick={() => imageInputRef.current?.click()} className="ac-button ac-button--ghost ac-button--icon ac-button--sm" title={copy.image.uploadLabel} aria-label={copy.image.uploadLabel}>
+            <ImagePlus className="h-4 w-4" />
+          </button>
+          <input ref={imageInputRef} type="file" accept="image/*" data-testid="advanced-editor-image-file-input" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void handleAddImage(file); event.target.value = ''; }} />
           <button
             type="button"
             data-testid="advanced-editor-undo-button"
@@ -199,6 +268,30 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
           >
             <Grid3x3 className="h-4 w-4" />
           </button>
+          <span className="sr-only">{copy.toolbar.objectAlignmentLabel}</span>
+          {([
+            ['left', AlignHorizontalJustifyStart, copy.toolbar.objectAlignLeftLabel],
+            ['center-horizontal', AlignHorizontalJustifyCenter, copy.toolbar.objectAlignCenterHorizontalLabel],
+            ['right', AlignHorizontalJustifyEnd, copy.toolbar.objectAlignRightLabel],
+            ['top', AlignVerticalJustifyStart, copy.toolbar.objectAlignTopLabel],
+            ['center-vertical', AlignVerticalJustifyCenter, copy.toolbar.objectAlignCenterVerticalLabel],
+            ['bottom', AlignVerticalJustifyEnd, copy.toolbar.objectAlignBottomLabel],
+          ] as const).map(([alignment, Icon, label]) => (
+            <button
+              key={alignment}
+              type="button"
+              data-testid={`advanced-editor-object-align-${alignment}-button`}
+              onClick={() => handleObjectAlignment(alignment)}
+              disabled={selectedLayerIds.length === 0}
+              className="ac-button ac-button--ghost ac-button--icon ac-button--sm disabled:opacity-30"
+              title={label}
+              aria-label={label}
+              aria-pressed="false"
+            >
+              <Icon className="h-4 w-4" />
+            </button>
+          ))}
+          <span className="sr-only">{copy.toolbar.disableSnapHelp}</span>
           {canResetToOriginal && (
             <button
               type="button"
@@ -274,10 +367,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
               const layer = surface.layers.find((l) => l.id === layerId);
               if (layer) patchLayer(layerId, { locked: !layer.locked });
             }}
-            onDuplicate={(layerId) => {
-              const layer = surface.layers.find((l) => l.id === layerId);
-              if (layer) setLayers([...surface.layers, createDesignLayer({ ...layer, x: layer.x + 16, y: layer.y + 16 }, surface.layers.length + 1)]);
-            }}
+            onDuplicate={duplicateLayer}
             onDelete={(layerId) => setLayers(surface.layers.filter((l) => l.id !== layerId))}
             onReorder={handleReorder}
           />

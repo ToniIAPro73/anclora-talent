@@ -10,6 +10,7 @@
 
 import {
   AlignCenter,
+  AlignJustify,
   AlignLeft,
   AlignRight,
   AlignEndVertical,
@@ -108,6 +109,7 @@ export function TextLayerProperties({ layer, copy, brandColors, onChange, metada
           data-active={layer.textAlign === 'left' ? 'true' : 'false'}
           title={t.alignLeftLabel}
           aria-label={t.alignLeftLabel}
+          aria-pressed={layer.textAlign === 'left'}
         >
           <AlignLeft className="h-4 w-4" />
         </button>
@@ -119,6 +121,7 @@ export function TextLayerProperties({ layer, copy, brandColors, onChange, metada
           data-active={layer.textAlign === 'center' ? 'true' : 'false'}
           title={t.alignCenterLabel}
           aria-label={t.alignCenterLabel}
+          aria-pressed={layer.textAlign === 'center'}
         >
           <AlignCenter className="h-4 w-4" />
         </button>
@@ -130,8 +133,21 @@ export function TextLayerProperties({ layer, copy, brandColors, onChange, metada
           data-active={layer.textAlign === 'right' ? 'true' : 'false'}
           title={t.alignRightLabel}
           aria-label={t.alignRightLabel}
+          aria-pressed={layer.textAlign === 'right'}
         >
           <AlignRight className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange({ textAlign: 'justify' })}
+          data-testid="text-layer-align-justify-button"
+          className={segmentButtonClass(layer.textAlign === 'justify')}
+          data-active={layer.textAlign === 'justify' ? 'true' : 'false'}
+          title={t.alignJustifyLabel}
+          aria-label={t.alignJustifyLabel}
+          aria-pressed={layer.textAlign === 'justify'}
+        >
+          <AlignJustify className="h-4 w-4" />
         </button>
         <button
           type="button"

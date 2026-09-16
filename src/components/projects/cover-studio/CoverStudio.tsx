@@ -32,6 +32,7 @@ import type { AppMessages } from '@/lib/i18n/messages';
 import { SurfaceCanvas } from './SurfaceCanvas';
 import { SurfaceInspector, SurfaceInspectorEmpty, type LayerStylePatch } from './SurfaceInspector';
 import { computeLayerStyle } from './surface-layer-style';
+import { isLegacySurfaceState } from '@/lib/projects/design-surface';
 
 type CoverStudioProps = {
   surface: SurfaceKind;
@@ -105,7 +106,7 @@ export function CoverStudio({ surface, project, copy }: CoverStudioProps) {
     project.backCover.accentColor ?? ACCENT_PRESETS[0],
   );
   const [mode, setMode] = useState<StudioMode>(() =>
-    (design.surfaceState?.layers ?? []).some((layer) => layer.type === 'text' && layer.fieldKey)
+    (isLegacySurfaceState(design.surfaceState) ? design.surfaceState.layers ?? [] : []).some((layer) => layer.type === 'text' && layer.fieldKey)
       ? 'advanced'
       : 'simple',
   );

@@ -99,6 +99,24 @@ describe('design-surface-fabric (real fabric/node)', () => {
     expect(object.filters.length).toBe(3);
   });
 
+  it('hydrates an image crop as a non-destructive source frame', async () => {
+    const fabric = await loadFabric();
+    const source = new fabric.StaticCanvas(null, { width: 80, height: 60 });
+    source.backgroundColor = '#ff0000';
+    source.renderAll();
+    const layer = createDesignLayer(
+      { type: 'image', src: source.toDataURL({ format: 'png' }), width: 80, height: 60, crop: { x: 10, y: 5, width: 40, height: 30 } },
+      1,
+    );
+    const object = await hydrateFabricLayerObject(fabric, layer);
+    expect(object.cropX).toBe(10);
+    expect(object.cropY).toBe(5);
+    expect(object.width).toBe(40);
+    expect(object.height).toBe(30);
+    expect(object.scaleX).toBe(2);
+    expect(object.scaleY).toBe(2);
+  });
+
   it('readLayerPatchFromFabricObject folds scale back into width/height', async () => {
     const fabric = await loadFabric();
     const layer = createDesignLayer({ type: 'shape', shape: 'rect', width: 100, height: 50 }, 1);

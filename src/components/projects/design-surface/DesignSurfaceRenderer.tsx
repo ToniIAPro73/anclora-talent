@@ -73,12 +73,12 @@ function TextLayerView({ layer, surface }: { layer: Extract<DesignLayer, { type:
         letterSpacing: `${fabricCharSpacingToCss(layer.letterSpacing, layer.fontSize)}px`,
         display: 'flex',
         alignItems: layer.verticalAlign === 'top' ? 'flex-start' : layer.verticalAlign === 'bottom' ? 'flex-end' : 'center',
-        justifyContent: layer.textAlign === 'left' ? 'flex-start' : layer.textAlign === 'right' ? 'flex-end' : 'center',
+        justifyContent: layer.textAlign === 'left' || layer.textAlign === 'justify' ? 'flex-start' : layer.textAlign === 'right' ? 'flex-end' : 'center',
         whiteSpace: 'pre-wrap',
       }}
       data-testid={`design-surface-renderer-text-${layer.id}`}
     >
-      {text}
+      <span style={{ display: 'block', width: '100%', textAlign: layer.textAlign }}>{text}</span>
     </div>
   );
 }
@@ -94,7 +94,7 @@ function ImageLayerView({ layer, surface }: { layer: Extract<DesignLayer, { type
         className="h-full w-full"
         style={{
           objectFit: layer.fit,
-          filter: [layer.filters?.grayscale ? 'grayscale(1)' : '', typeof layer.filters?.brightness === 'number' ? `brightness(${1 + layer.filters.brightness})` : '', typeof layer.filters?.contrast === 'number' ? `contrast(${1 + layer.filters.contrast})` : '']
+          filter: [layer.filters?.grayscale ? 'grayscale(1)' : '', typeof layer.filters?.brightness === 'number' ? `brightness(${1 + layer.filters.brightness})` : '', typeof layer.filters?.contrast === 'number' ? `contrast(${1 + layer.filters.contrast})` : '', typeof layer.filters?.saturation === 'number' ? `saturate(${1 + layer.filters.saturation})` : '']
             .filter(Boolean)
             .join(' ') || undefined,
         }}

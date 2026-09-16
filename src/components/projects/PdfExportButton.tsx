@@ -21,7 +21,7 @@ import { BackCoverPreview } from './BackCoverPreview';
 import { createDefaultSurfaceState, normalizeSurfaceState } from '@/lib/projects/cover-surface';
 import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface-resolver';
 import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
-import { isDesignSurfaceV2 } from '@/lib/projects/design-surface';
+import { isDesignSurfaceV2, isLegacySurfaceState } from '@/lib/projects/design-surface';
 import { getBackCoverDesign, getCoverDesign } from '@/lib/projects/design-surface-repository';
 import { DesignSurfaceRenderer } from './design-surface/DesignSurfaceRenderer';
 
@@ -69,7 +69,7 @@ function buildClientPaginationConfig(
 
 function buildCoverSurface(project: ProjectRecord) {
   const fallback = createDefaultSurfaceState('cover');
-  const baseState = normalizeSurfaceState(project.cover.surfaceState ?? fallback);
+  const baseState = normalizeSurfaceState((isLegacySurfaceState(project.cover.surfaceState) ? project.cover.surfaceState : null) ?? fallback);
   return {
     ...baseState,
     fields: {
@@ -81,7 +81,7 @@ function buildCoverSurface(project: ProjectRecord) {
 
 function buildBackCoverSurface(project: ProjectRecord) {
   const fallback = createDefaultSurfaceState('back-cover');
-  const baseState = normalizeSurfaceState(project.backCover.surfaceState ?? fallback);
+  const baseState = normalizeSurfaceState((isLegacySurfaceState(project.backCover.surfaceState) ? project.backCover.surfaceState : null) ?? fallback);
   return {
     ...baseState,
     fields: {
@@ -361,7 +361,7 @@ function PreviewCapturePage({
   const preset = FORMAT_PRESETS[format];
 
   if (page.type === 'cover' && page.coverData) {
-    if (page.coverData.renderedImageUrl) {
+    if (page.coverData.renderedImageUrl && !isDesignSurfaceV2(project.cover.surfaceState)) {
       return (
         <div
           className="relative overflow-hidden rounded-[8px] border border-white/10 bg-[#070c14] shadow-[var(--shadow-strong)]"
@@ -407,7 +407,7 @@ function PreviewCapturePage({
   }
 
   if (page.type === 'back-cover' && page.backCoverData) {
-    if (page.backCoverData.renderedImageUrl) {
+    if (page.backCoverData.renderedImageUrl && !isDesignSurfaceV2(project.backCover.surfaceState)) {
       return (
         <div
           className="relative overflow-hidden rounded-[8px] border border-white/10 bg-[#070c14] shadow-[var(--shadow-strong)]"

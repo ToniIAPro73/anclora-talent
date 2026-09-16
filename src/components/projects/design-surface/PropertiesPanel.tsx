@@ -13,6 +13,7 @@ import type { AppMessages } from '@/lib/i18n/messages';
 import type { DesignLayer, ImageLayerProps, TextLayerProps } from '@/lib/projects/design-surface';
 import { TextLayerProperties } from './TextLayerProperties';
 import { ImageLayerProperties } from './ImageLayerProperties';
+import { ShapeLayerProperties } from './ShapeLayerProperties';
 
 export interface PropertiesPanelProps {
   selectedLayers: DesignLayer[];
@@ -73,12 +74,5 @@ export function PropertiesPanel({ selectedLayers, copy, brandColors, onLayerChan
     );
   }
 
-  // Shape layers are minimal helper visuals (safe-area/ISBN markers) with no
-  // dedicated property panel yet — selecting one still shows a contextual,
-  // honest message instead of a blank panel.
-  return (
-    <div className="ac-editor-inspector__empty" data-testid="properties-panel-shape">
-      <p className="text-xs text-[var(--text-secondary)]">{copy.noSelection}</p>
-    </div>
-  );
+  return <ShapeLayerProperties layer={layer} copy={copy.shape} onChange={(patch) => onLayerChange(layer.id, patch)} />;
 }

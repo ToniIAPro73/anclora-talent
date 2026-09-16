@@ -14,7 +14,7 @@
  */
 
 import { useRef } from 'react';
-import { AlignCenter, AlignLeft, AlignRight, Bold, Eye, EyeOff, Italic, Trash2 } from 'lucide-react';
+import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Eye, EyeOff, Italic, Trash2 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -170,12 +170,15 @@ function FieldEditor({
                   { value: 'left', Icon: AlignLeft, label: t.alignLeftLabel },
                   { value: 'center', Icon: AlignCenter, label: t.alignCenterLabel },
                   { value: 'right', Icon: AlignRight, label: t.alignRightLabel },
+                  { value: 'justify', Icon: AlignJustify, label: t.alignJustifyLabel },
                 ] as const
               ).map(({ value, Icon, label }) => (
                 <button
                   key={value}
                   type="button"
                   title={label}
+                  aria-label={label}
+                  aria-pressed={layer.textAlign === value}
                   data-testid={`basic-field-${role}-align-${value}-button`}
                   onClick={() => onChange({ textAlign: value })}
                   data-active={layer.textAlign === value ? 'true' : 'false'}
@@ -272,7 +275,7 @@ export function BasicCoverEditor({ surface, onChange, copy, palette, onPaletteCh
     onChange({ ...surface, layers: surface.layers.map((l) => (l.id === imageLayer.id ? { ...l, src } : l)) });
   };
 
-  const patchImage = (patch: Partial<ImageLayerProps> & Partial<Pick<DesignLayer, 'opacity'>>) => {
+  const patchImage = (patch: Partial<ImageLayerProps> & Partial<Pick<DesignLayer, 'x' | 'y' | 'width' | 'height' | 'rotation' | 'opacity'>>) => {
     if (!imageLayer) return;
     onChange({ ...surface, layers: surface.layers.map((l) => (l.id === imageLayer.id ? ({ ...l, ...patch } as DesignLayer) : l)) });
   };

@@ -12,6 +12,7 @@
 import { useRef } from 'react';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { DesignLayer, ImageLayerFilters, ImageLayerProps } from '@/lib/projects/design-surface';
 
@@ -21,7 +22,7 @@ type Copy = AppMessages['coverDesignSurface']['image'];
 export interface ImageLayerPropertiesProps {
   layer: ImgLayer;
   copy: Copy;
-  onChange: (patch: Partial<ImageLayerProps> & Partial<Pick<DesignLayer, 'opacity'>>) => void;
+  onChange: (patch: Partial<ImageLayerProps> & Partial<Pick<DesignLayer, 'x' | 'y' | 'width' | 'height' | 'rotation' | 'opacity'>>) => void;
   onReplaceFile: (file: File) => void;
 }
 
@@ -56,6 +57,14 @@ export function ImageLayerProperties({ layer, copy, onChange, onReplaceFile }: I
             event.target.value = '';
           }}
         />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3" data-testid="image-layer-transform-fields">
+        <NumericField label={copy.xLabel} value={layer.x} onChange={(x) => onChange({ x })} testId="image-layer-x-input" />
+        <NumericField label={copy.yLabel} value={layer.y} onChange={(y) => onChange({ y })} testId="image-layer-y-input" />
+        <NumericField label={copy.widthLabel} value={layer.width} onChange={(width) => onChange({ width })} testId="image-layer-width-input" />
+        <NumericField label={copy.heightLabel} value={layer.height} onChange={(height) => onChange({ height })} testId="image-layer-height-input" />
+        <NumericField label={copy.rotationLabel} value={layer.rotation} onChange={(rotation) => onChange({ rotation })} testId="image-layer-rotation-input" />
       </div>
 
       <div className="space-y-2">
@@ -150,5 +159,23 @@ export function ImageLayerProperties({ layer, copy, onChange, onReplaceFile }: I
         {copy.resetFiltersLabel}
       </button>
     </div>
+  );
+}
+
+function NumericField({ label, value, onChange, testId }: { label: string; value: number; onChange: (value: number) => void; testId: string }) {
+  return (
+    <label className="space-y-1.5">
+      <span className="text-xs font-semibold text-[var(--text-primary)]">{label}</span>
+      <Input
+        type="number"
+        data-testid={testId}
+        value={Math.round(value)}
+        onChange={(event) => {
+          const parsed = Number(event.target.value);
+          if (Number.isFinite(parsed)) onChange(parsed);
+        }}
+        className="h-9 border-[var(--border-subtle)] bg-[var(--surface-soft)] text-sm"
+      />
+    </label>
   );
 }

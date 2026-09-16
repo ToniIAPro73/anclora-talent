@@ -312,6 +312,24 @@ describe('PreviewModal', () => {
     expect(screen.getByText('Título v2')).toBeInTheDocument();
   });
 
+  test('prefers the live v2 surface over a stale legacy rendered image', () => {
+    const project = makeProject();
+    const coverSurface = createEmptyDesignSurface('cover');
+    coverSurface.layers = [createDesignLayer({ type: 'text', content: 'Diseño vivo', role: 'title', source: 'manual' }, 1)];
+
+    render(
+      <PreviewModal
+        project={{ ...project, cover: { ...project.cover, renderedImageUrl: 'https://example.com/stale.png', surfaceState: coverSurface } }}
+        copy={copy}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(screen.getByTestId('design-surface-renderer')).toBeInTheDocument();
+    expect(screen.getByText('Diseño vivo')).toBeInTheDocument();
+    expect(screen.queryByAltText(copy.previewModalCoverAlt)).not.toBeInTheDocument();
+  });
+
   test('renders imported document content inside the preview page content area', async () => {
     render(<PreviewModal project={makeProject()} copy={copy} onClose={() => {}} />);
 

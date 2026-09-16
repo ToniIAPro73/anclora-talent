@@ -50,6 +50,21 @@ function buildImageFilters(fabric: FabricModule, filters: ImageLayerFilters | un
   return built;
 }
 
+function resolveImageCrop(layer: DesignLayer & { type: 'image' }, sourceWidth: number, sourceHeight: number) {
+  if (layer.crop && layer.crop.width > 0 && layer.crop.height > 0) return layer.crop;
+  if (layer.fit !== 'cover' || layer.width <= 0 || layer.height <= 0) return null;
+
+  const sourceRatio = sourceWidth / sourceHeight;
+  const frameRatio = layer.width / layer.height;
+  if (sourceRatio > frameRatio) {
+    const width = sourceHeight * frameRatio;
+    return { x: (sourceWidth - width) / 2, y: 0, width, height: sourceHeight };
+  }
+
+  const height = sourceWidth / frameRatio;
+  return { x: 0, y: (sourceHeight - height) / 2, width: sourceWidth, height };
+}
+
 /** Common transform/state props every hydrated Fabric object gets, regardless of layer type. */
 function baseObjectProps(layer: DesignLayer, opts: { interactive: boolean }) {
   return {
@@ -114,6 +129,7 @@ async function hydrateImageLayer(
   const sourceWidth: number = image.width || layer.width;
   const sourceHeight: number = image.height || layer.height;
   const fit = layer.fit ?? 'cover';
+  const crop = resolveImageCrop(layer, sourceWidth, sourceHeight);
   const scaleX = fit === 'fill' ? layer.width / sourceWidth : undefined;
   const scaleY = fit === 'fill' ? layer.height / sourceHeight : undefined;
   const uniformScale =
@@ -125,8 +141,19 @@ async function hydrateImageLayer(
 
   image.set({
     ...baseObjectProps(layer, opts),
-    scaleX: scaleX ?? uniformScale ?? 1,
-    scaleY: scaleY ?? uniformScale ?? 1,
+    ...(crop
+      ? {
+          cropX: crop.x,
+          cropY: crop.y,
+          width: crop.width,
+          height: crop.height,
+          scaleX: layer.width / crop.width,
+          scaleY: layer.height / crop.height,
+        }
+      : {
+          scaleX: scaleX ?? uniformScale ?? 1,
+          scaleY: scaleY ?? uniformScale ?? 1,
+        }),
   });
   image.id = layer.id;
 

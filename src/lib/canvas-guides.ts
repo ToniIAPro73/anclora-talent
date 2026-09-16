@@ -9,7 +9,7 @@ const CANVAS_GUIDE_COLOR = '#38bdf8';
 const OBJECT_GUIDE_COLOR = '#f59e0b';
 const USER_GUIDE_SNAP_COLOR = '#a855f7';
 const GUIDE_WIDTH = 2;
-const SNAP_THRESHOLD = 10;
+const SNAP_THRESHOLD_SCREEN_PX = 8;
 const DISTANCE_COLOR = '#9fe7f2';
 const DISTANCE_THRESHOLD = 140;
 
@@ -17,7 +17,7 @@ type GuideType = 'vertical' | 'horizontal' | 'distance-horizontal' | 'distance-v
 type Axis = 'x' | 'y';
 type XAnchor = 'left' | 'center' | 'right';
 type YAnchor = 'top' | 'center' | 'bottom';
-type AlignmentSource = 'canvas' | 'object' | 'guide';
+type AlignmentSource = 'canvas' | 'object' | 'guide' | 'spacing';
 
 interface Bounds {
   left: number;
@@ -53,6 +53,7 @@ interface GuideObject {
   originX?: string;
   originY?: string;
   excludeFromExport?: boolean;
+  visible?: boolean;
   getBoundingRect?(absolute?: boolean, calculate?: boolean): FabricRect;
   set(props: Record<string, unknown>): void;
 }
@@ -84,6 +85,17 @@ interface SnapTarget {
   position: number;
   distance: number;
   source: AlignmentSource;
+  priority: number;
+}
+
+interface EqualSpacingFeedback {
+  axis: Axis;
+  first: number;
+  movingStart: number;
+  movingEnd: number;
+  last: number;
+  gap: number;
+  crossStart: number;
 }
 
 function getBounds(object: GuideObject): Bounds {
@@ -179,6 +191,8 @@ export class CanvasGuideManager {
   private snapTargets: Partial<Record<Axis, SnapTarget>> = {};
   /** Cover Studio v2: persisted user guides (design-surface.ts's DesignGuide[]) — not canvas objects, so they need to be fed in explicitly to become snap targets (mission §15 lists guides alongside canvas/object edges). */
   private customGuides: { axis: Axis; position: number }[] = [];
+  private zoom = 1;
+  private equalSpacing: Partial<Record<Axis, EqualSpacingFeedback>> = {};
 
   constructor(canvas: GuideCanvas) {
     this.canvas = canvas;
@@ -187,6 +201,15 @@ export class CanvasGuideManager {
   /** Replaces the set of persisted guides this manager snaps to. Call whenever the surface's own `guides` array changes. */
   setCustomGuides(guides: Array<{ axis: Axis; position: number }>): void {
     this.customGuides = guides;
+  }
+
+  /** Keeps the snap feel stable: the threshold is measured in screen pixels, not document pixels. */
+  setZoom(zoom: number): void {
+    this.zoom = Math.max(0.01, zoom);
+  }
+
+  private getSnapThreshold(): number {
+    return SNAP_THRESHOLD_SCREEN_PX / this.zoom;
   }
 
   private get fabric() {
@@ -213,6 +236,8 @@ export class CanvasGuideManager {
           ? OBJECT_GUIDE_COLOR
           : source === 'guide'
             ? USER_GUIDE_SNAP_COLOR
+            : source === 'spacing'
+              ? DISTANCE_COLOR
             : CANVAS_GUIDE_COLOR;
 
     return new fabric.Line([x1, y1, x2, y2], {
@@ -272,14 +297,14 @@ export class CanvasGuideManager {
   private getCanvasAlignmentTargets(canvasWidth: number, canvasHeight: number) {
     return {
       x: [
-        { anchor: 'left' as const, position: 0 },
-        { anchor: 'center' as const, position: canvasWidth / 2 },
-        { anchor: 'right' as const, position: canvasWidth },
+        { anchor: 'left' as const, position: 0, priority: 6 },
+        { anchor: 'center' as const, position: canvasWidth / 2, priority: 1 },
+        { anchor: 'right' as const, position: canvasWidth, priority: 6 },
       ],
       y: [
-        { anchor: 'top' as const, position: 0 },
-        { anchor: 'center' as const, position: canvasHeight / 2 },
-        { anchor: 'bottom' as const, position: canvasHeight },
+        { anchor: 'top' as const, position: 0, priority: 6 },
+        { anchor: 'center' as const, position: canvasHeight / 2, priority: 1 },
+        { anchor: 'bottom' as const, position: canvasHeight, priority: 6 },
       ],
     };
   }
@@ -290,24 +315,27 @@ export class CanvasGuideManager {
     const canvasTargets = this.getCanvasAlignmentTargets(canvasWidth, canvasHeight);
     let bestX: SnapTarget | null = null;
     let bestY: SnapTarget | null = null;
+    const threshold = this.getSnapThreshold();
+    const consider = (candidate: SnapTarget) => {
+      if (candidate.distance > threshold) return;
+      const current = candidate.axis === 'x' ? bestX : bestY;
+      if (!current || candidate.priority < current.priority || (candidate.priority === current.priority && candidate.distance < current.distance)) {
+        if (candidate.axis === 'x') bestX = candidate;
+        else bestY = candidate;
+      }
+    };
 
     for (const candidate of canvasTargets.x) {
       for (const anchor of ['left', 'center', 'right'] as const) {
         const distance = Math.abs(getAnchorValue(bounds, 'x', anchor) - candidate.position);
-        if (distance > SNAP_THRESHOLD) continue;
-        if (!bestX || distance < bestX.distance) {
-          bestX = { axis: 'x', anchor, position: candidate.position, distance, source: 'canvas' };
-        }
+        consider({ axis: 'x', anchor, position: candidate.position, distance, source: 'canvas', priority: candidate.priority });
       }
     }
 
     for (const candidate of canvasTargets.y) {
       for (const anchor of ['top', 'center', 'bottom'] as const) {
         const distance = Math.abs(getAnchorValue(bounds, 'y', anchor) - candidate.position);
-        if (distance > SNAP_THRESHOLD) continue;
-        if (!bestY || distance < bestY.distance) {
-          bestY = { axis: 'y', anchor, position: candidate.position, distance, source: 'canvas' };
-        }
+        consider({ axis: 'y', anchor, position: candidate.position, distance, source: 'canvas', priority: candidate.priority });
       }
     }
 
@@ -318,51 +346,33 @@ export class CanvasGuideManager {
       const anchors = guide.axis === 'x' ? (['left', 'center', 'right'] as const) : (['top', 'center', 'bottom'] as const);
       for (const anchor of anchors) {
         const distance = Math.abs(getAnchorValue(bounds, guide.axis, anchor) - guide.position);
-        if (distance > SNAP_THRESHOLD) continue;
-        if (guide.axis === 'x') {
-          if (!bestX || distance < bestX.distance) {
-            bestX = { axis: 'x', anchor: anchor as XAnchor, position: guide.position, distance, source: 'guide' };
-          }
-        } else if (!bestY || distance < bestY.distance) {
-          bestY = { axis: 'y', anchor: anchor as YAnchor, position: guide.position, distance, source: 'guide' };
-        }
+        consider({
+          axis: guide.axis,
+          anchor: anchor as XAnchor | YAnchor,
+          position: guide.position,
+          distance,
+          source: 'guide',
+          priority: 4,
+        });
       }
     }
 
     this.canvas!.getObjects().forEach((obj) => {
-      if (obj === movingObject || obj?.type === 'line' || obj?.type === 'text' && obj?.excludeFromExport) return;
+      if (obj === movingObject || obj?.visible === false || obj?.type === 'line' || obj?.type === 'text' && obj?.excludeFromExport) return;
 
       const other = getBounds(obj);
 
       for (const anchor of ['left', 'center', 'right'] as const) {
         for (const otherAnchor of ['left', 'center', 'right'] as const) {
           const distance = Math.abs(getAnchorValue(bounds, 'x', anchor) - getAnchorValue(other, 'x', otherAnchor));
-          if (distance > SNAP_THRESHOLD) continue;
-          if (!bestX || distance < bestX.distance) {
-            bestX = {
-              axis: 'x',
-              anchor,
-              position: getAnchorValue(other, 'x', otherAnchor),
-              distance,
-              source: 'object',
-            };
-          }
+          consider({ axis: 'x', anchor, position: getAnchorValue(other, 'x', otherAnchor), distance, source: 'object', priority: 3 });
         }
       }
 
       for (const anchor of ['top', 'center', 'bottom'] as const) {
         for (const otherAnchor of ['top', 'center', 'bottom'] as const) {
           const distance = Math.abs(getAnchorValue(bounds, 'y', anchor) - getAnchorValue(other, 'y', otherAnchor));
-          if (distance > SNAP_THRESHOLD) continue;
-          if (!bestY || distance < bestY.distance) {
-            bestY = {
-              axis: 'y',
-              anchor,
-              position: getAnchorValue(other, 'y', otherAnchor),
-              distance,
-              source: 'object',
-            };
-          }
+          consider({ axis: 'y', anchor, position: getAnchorValue(other, 'y', otherAnchor), distance, source: 'object', priority: 3 });
         }
       }
     });
@@ -371,6 +381,60 @@ export class CanvasGuideManager {
       x: bestX ?? undefined,
       y: bestY ?? undefined,
     };
+    this.findEqualSpacingTarget(movingObject, bounds, threshold);
+  }
+
+  private findEqualSpacingTarget(movingObject: GuideObject, moving: Bounds, threshold: number): void {
+    const others = this.canvas!.getObjects().filter(
+      (obj) => obj !== movingObject && obj.visible !== false && obj.type !== 'line' && !(obj.type === 'text' && obj.excludeFromExport),
+    );
+    const best: Partial<Record<Axis, { target: SnapTarget; feedback: EqualSpacingFeedback }>> = {};
+
+    for (let firstIndex = 0; firstIndex < others.length; firstIndex += 1) {
+      for (let lastIndex = firstIndex + 1; lastIndex < others.length; lastIndex += 1) {
+        const first = getBounds(others[firstIndex]);
+        const last = getBounds(others[lastIndex]);
+        const horizontalOverlap = overlappingRange(moving.left, moving.right, first.left, first.right) && overlappingRange(moving.left, moving.right, last.left, last.right);
+        if (horizontalOverlap) {
+          const upper = first.bottom <= last.top ? first : last.bottom <= first.top ? last : null;
+          const lower = upper === first ? last : upper === last ? first : null;
+          if (upper && lower) {
+            const total = lower.top - upper.bottom - moving.height;
+            const gap = total / 2;
+            const targetTop = upper.bottom + gap;
+            const distance = Math.abs(moving.top - targetTop);
+            if (gap >= 0 && distance <= threshold && (!best.y || distance < best.y.target.distance)) {
+              best.y = {
+                target: { axis: 'y', anchor: 'top', position: targetTop, distance, source: 'spacing', priority: 2 },
+                feedback: { axis: 'y', first: upper.bottom, movingStart: targetTop, movingEnd: targetTop + moving.height, last: lower.top, gap, crossStart: Math.max(moving.left, upper.left, lower.left) },
+              };
+            }
+          }
+        }
+
+        const verticalOverlap = overlappingRange(moving.top, moving.bottom, first.top, first.bottom) && overlappingRange(moving.top, moving.bottom, last.top, last.bottom);
+        if (verticalOverlap) {
+          const left = first.right <= last.left ? first : last.right <= first.left ? last : null;
+          const right = left === first ? last : left === last ? first : null;
+          if (left && right) {
+            const total = right.left - left.right - moving.width;
+            const gap = total / 2;
+            const targetLeft = left.right + gap;
+            const distance = Math.abs(moving.left - targetLeft);
+            if (gap >= 0 && distance <= threshold && (!best.x || distance < best.x.target.distance)) {
+              best.x = {
+                target: { axis: 'x', anchor: 'left', position: targetLeft, distance, source: 'spacing', priority: 2 },
+                feedback: { axis: 'x', first: left.right, movingStart: targetLeft, movingEnd: targetLeft + moving.width, last: right.left, gap, crossStart: Math.max(moving.top, left.top, right.top) },
+              };
+            }
+          }
+        }
+      }
+    }
+
+    if (best.x) this.snapTargets.x = best.x.target;
+    if (best.y) this.snapTargets.y = best.y.target;
+    this.equalSpacing = { x: best.x?.feedback, y: best.y?.feedback };
   }
 
   private drawSnapGuides() {
@@ -397,7 +461,7 @@ export class CanvasGuideManager {
     let bestVertical: { gap: number; y1: number; y2: number; x: number } | null = null;
 
     this.canvas!.getObjects().forEach((obj) => {
-      if (obj === movingObject || obj?.type === 'line' || obj?.excludeFromExport) return;
+      if (obj === movingObject || obj?.visible === false || obj?.type === 'line' || obj?.excludeFromExport) return;
 
       const other = getBounds(obj);
       const verticalOverlap = overlappingRange(bounds.top, bounds.bottom, other.top, other.bottom);
@@ -476,6 +540,23 @@ export class CanvasGuideManager {
     }
   }
 
+  private drawEqualSpacingGuides() {
+    for (const feedback of Object.values(this.equalSpacing)) {
+      if (!feedback || feedback.gap <= 0) continue;
+      const isHorizontal = feedback.axis === 'x';
+      const firstLine = isHorizontal
+        ? this.createGuideLine(feedback.first, feedback.crossStart, feedback.movingStart, feedback.crossStart, 'distance-horizontal', 'spacing')
+        : this.createGuideLine(feedback.crossStart, feedback.first, feedback.crossStart, feedback.movingStart, 'distance-vertical', 'spacing');
+      const secondLine = isHorizontal
+        ? this.createGuideLine(feedback.movingEnd, feedback.crossStart, feedback.last, feedback.crossStart, 'distance-horizontal', 'spacing')
+        : this.createGuideLine(feedback.crossStart, feedback.movingEnd, feedback.crossStart, feedback.last, 'distance-vertical', 'spacing');
+      const firstLabel = this.createDistanceLabel(`${roundPx(feedback.gap)} px`, isHorizontal ? (feedback.first + feedback.movingStart) / 2 : feedback.crossStart + 20, isHorizontal ? feedback.crossStart - 12 : (feedback.first + feedback.movingStart) / 2);
+      const secondLabel = this.createDistanceLabel(`${roundPx(feedback.gap)} px`, isHorizontal ? (feedback.movingEnd + feedback.last) / 2 : feedback.crossStart + 20, isHorizontal ? feedback.crossStart - 12 : (feedback.movingEnd + feedback.last) / 2);
+      this.registerGuide(`equal-spacing-${feedback.axis}-first`, isHorizontal ? 'distance-horizontal' : 'distance-vertical', feedback.gap, firstLine, firstLabel, 'spacing');
+      this.registerGuide(`equal-spacing-${feedback.axis}-second`, isHorizontal ? 'distance-horizontal' : 'distance-vertical', feedback.gap, secondLine, secondLabel, 'spacing');
+    }
+  }
+
   async showGuides(movingObject: GuideObject) {
     if (!this.canvas) return;
 
@@ -485,6 +566,7 @@ export class CanvasGuideManager {
     const bounds = getBounds(movingObject);
     this.findBestSnapTarget(movingObject, bounds);
     this.drawSnapGuides();
+    this.drawEqualSpacingGuides();
     this.drawDistanceGuides(movingObject, bounds);
     this.canvas.renderAll();
   }
@@ -515,6 +597,7 @@ export class CanvasGuideManager {
     });
     this.guides.clear();
     this.snapTargets = {};
+    this.equalSpacing = {};
   }
 
   hideGuidesWithAnimation() {

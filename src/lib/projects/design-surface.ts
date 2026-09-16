@@ -58,7 +58,7 @@ export interface TextLayerProps {
   color: string;
   letterSpacing: number;
   lineHeight: number;
-  textAlign: 'left' | 'center' | 'right';
+  textAlign: 'left' | 'center' | 'right' | 'justify';
   verticalAlign: 'top' | 'middle' | 'bottom';
   textTransform: 'none' | 'uppercase' | 'lowercase';
   /** Ties a layer back to a synced metadata field; 'free' = user text box, never auto-synced (mission §6, §40-41). */
@@ -159,6 +159,10 @@ function newLayerId(prefix: string) {
 
 export function isDesignSurfaceV2(value: unknown): value is DesignSurface {
   return Boolean(value) && typeof value === 'object' && (value as { version?: unknown }).version === 2;
+}
+
+export function isLegacySurfaceState(value: unknown): value is SurfaceState {
+  return Boolean(value) && !isDesignSurfaceV2(value);
 }
 
 /**
@@ -311,7 +315,7 @@ interface LegacyFieldGeometry {
   left: number;
   width: number;
   originX: 'left' | 'center';
-  textAlign: 'left' | 'center' | 'right';
+  textAlign: 'left' | 'center' | 'right' | 'justify';
   fontSize: number;
   fontWeight: number;
   lineHeight: number;

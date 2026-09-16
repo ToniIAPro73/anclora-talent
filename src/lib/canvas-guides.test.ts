@@ -138,4 +138,45 @@ describe('CanvasGuideManager', () => {
 
     expect(mocks.TextMock).toHaveBeenCalledWith(expect.stringMatching(/px$/), expect.any(Object));
   });
+
+  it('ignores hidden layers while finding smart-guide references', async () => {
+    const moving = makeObject({ id: 'moving', left: 196, top: 300, width: 100, height: 40 });
+    const hidden = makeObject({ id: 'hidden', left: 200, top: 300, width: 100, height: 40 });
+    (hidden as MockCanvasObject & { visible?: boolean }).visible = false;
+    const canvas = makeCanvas([moving, hidden]);
+    const manager = createGuideManager(canvas);
+
+    await manager.showGuides(moving);
+    manager.snapToGuides(moving);
+
+    // The canvas center remains the meaningful target; the hidden object must
+    // not create a competing object guide.
+    expect(moving.set).toHaveBeenCalled();
+  });
+
+  it('keeps the screen-space snap feel stable when zoom changes', async () => {
+    const moving = makeObject({ id: 'moving', left: 211, top: 300, width: 100, height: 40 });
+    const canvas = makeCanvas([moving]);
+    const manager = createGuideManager(canvas);
+    manager.setZoom(2);
+
+    await manager.showGuides(moving);
+    manager.snapToGuides(moving);
+
+    expect(moving.left).toBe(211);
+  });
+
+  it('shows equal spacing feedback and snaps the middle layer between two layers', async () => {
+    const first = makeObject({ id: 'first', left: 200, top: 100, width: 100, height: 40 });
+    const moving = makeObject({ id: 'moving', left: 200, top: 202, width: 100, height: 40 });
+    const last = makeObject({ id: 'last', left: 200, top: 300, width: 100, height: 40 });
+    const canvas = makeCanvas([first, moving, last]);
+    const manager = createGuideManager(canvas);
+
+    await manager.showGuides(moving);
+    manager.snapToGuides(moving);
+
+    expect(moving.top).toBe(200);
+    expect(mocks.TextMock.mock.calls.filter(([text]) => text === '60 px').length).toBeGreaterThanOrEqual(2);
+  });
 });

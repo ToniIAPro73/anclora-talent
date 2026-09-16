@@ -395,6 +395,7 @@ export type AppMessages = {
     coverStudioAlignLeft: string;
     coverStudioAlignCenter: string;
     coverStudioAlignRight: string;
+    coverStudioAlignJustify: string;
     coverStudioBold: string;
     coverStudioItalic: string;
     coverStudioFontSizeLabel: string;
@@ -921,6 +922,7 @@ export type AppMessages = {
       alignLeftLabel: string;
       alignCenterLabel: string;
       alignRightLabel: string;
+      alignJustifyLabel: string;
       verticalAlignTopLabel: string;
       verticalAlignMiddleLabel: string;
       verticalAlignBottomLabel: string;
@@ -950,6 +952,22 @@ export type AppMessages = {
       contrastLabel: string;
       saturationLabel: string;
       resetFiltersLabel: string;
+      xLabel: string;
+      yLabel: string;
+      widthLabel: string;
+      heightLabel: string;
+      rotationLabel: string;
+    };
+    shape: {
+      fillLabel: string;
+      strokeLabel: string;
+      strokeWidthLabel: string;
+      opacityLabel: string;
+      xLabel: string;
+      yLabel: string;
+      widthLabel: string;
+      heightLabel: string;
+      rotationLabel: string;
     };
     background: {
       label: string;
@@ -1013,6 +1031,14 @@ export type AppMessages = {
       snappingLabel: string;
       safeAreaLabel: string;
       gridLabel: string;
+      objectAlignmentLabel: string;
+      objectAlignLeftLabel: string;
+      objectAlignCenterHorizontalLabel: string;
+      objectAlignRightLabel: string;
+      objectAlignTopLabel: string;
+      objectAlignCenterVerticalLabel: string;
+      objectAlignBottomLabel: string;
+      disableSnapHelp: string;
       zoomOutLabel: string;
       zoomInLabel: string;
       zoomFitLabel: string;
@@ -1623,6 +1649,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverStudioAlignLeft: 'Alinear a la izquierda',
       coverStudioAlignCenter: 'Centrar',
       coverStudioAlignRight: 'Alinear a la derecha',
+      coverStudioAlignJustify: 'Justificar',
       coverStudioBold: 'Negrita',
       coverStudioItalic: 'Cursiva',
       coverStudioFontSizeLabel: 'Tamaño',
@@ -2181,6 +2208,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         alignLeftLabel: 'Alinear a la izquierda',
         alignCenterLabel: 'Centrar',
         alignRightLabel: 'Alinear a la derecha',
+        alignJustifyLabel: 'Justificar',
         verticalAlignTopLabel: 'Arriba',
         verticalAlignMiddleLabel: 'Centro',
         verticalAlignBottomLabel: 'Abajo',
@@ -2210,6 +2238,22 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         contrastLabel: 'Contraste',
         saturationLabel: 'Saturación',
         resetFiltersLabel: 'Restablecer ajustes',
+        xLabel: 'X',
+        yLabel: 'Y',
+        widthLabel: 'Ancho',
+        heightLabel: 'Alto',
+        rotationLabel: 'Rotación',
+      },
+      shape: {
+        fillLabel: 'Relleno',
+        strokeLabel: 'Borde',
+        strokeWidthLabel: 'Grosor del borde',
+        opacityLabel: 'Opacidad',
+        xLabel: 'X',
+        yLabel: 'Y',
+        widthLabel: 'Ancho',
+        heightLabel: 'Alto',
+        rotationLabel: 'Rotación',
       },
       background: {
         label: 'Fondo',
@@ -2273,6 +2317,14 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         snappingLabel: 'Ajuste automático',
         safeAreaLabel: 'Área segura',
         gridLabel: 'Cuadrícula',
+        objectAlignmentLabel: 'Alineación del objeto',
+        objectAlignLeftLabel: 'Alinear objeto a la izquierda',
+        objectAlignCenterHorizontalLabel: 'Centrar objeto horizontalmente',
+        objectAlignRightLabel: 'Alinear objeto a la derecha',
+        objectAlignTopLabel: 'Alinear objeto arriba',
+        objectAlignCenterVerticalLabel: 'Centrar objeto verticalmente',
+        objectAlignBottomLabel: 'Alinear objeto abajo',
+        disableSnapHelp: 'Mantén Alt/Option durante el arrastre para desactivar el ajuste temporalmente.',
         zoomOutLabel: 'Alejar',
         zoomInLabel: 'Acercar',
         zoomFitLabel: 'Ajustar a la ventana',
@@ -2881,6 +2933,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverStudioAlignLeft: 'Align left',
       coverStudioAlignCenter: 'Center',
       coverStudioAlignRight: 'Align right',
+      coverStudioAlignJustify: 'Justify',
       coverStudioBold: 'Bold',
       coverStudioItalic: 'Italic',
       coverStudioFontSizeLabel: 'Size',
@@ -3438,6 +3491,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         alignLeftLabel: 'Align left',
         alignCenterLabel: 'Center',
         alignRightLabel: 'Align right',
+        alignJustifyLabel: 'Justify',
         verticalAlignTopLabel: 'Top',
         verticalAlignMiddleLabel: 'Middle',
         verticalAlignBottomLabel: 'Bottom',
@@ -3467,6 +3521,22 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         contrastLabel: 'Contrast',
         saturationLabel: 'Saturation',
         resetFiltersLabel: 'Reset adjustments',
+        xLabel: 'X',
+        yLabel: 'Y',
+        widthLabel: 'Width',
+        heightLabel: 'Height',
+        rotationLabel: 'Rotation',
+      },
+      shape: {
+        fillLabel: 'Fill',
+        strokeLabel: 'Stroke',
+        strokeWidthLabel: 'Stroke width',
+        opacityLabel: 'Opacity',
+        xLabel: 'X',
+        yLabel: 'Y',
+        widthLabel: 'Width',
+        heightLabel: 'Height',
+        rotationLabel: 'Rotation',
       },
       background: {
         label: 'Background',
@@ -3530,6 +3600,14 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         snappingLabel: 'Snapping',
         safeAreaLabel: 'Safe area',
         gridLabel: 'Grid',
+        objectAlignmentLabel: 'Object alignment',
+        objectAlignLeftLabel: 'Align object left',
+        objectAlignCenterHorizontalLabel: 'Center object horizontally',
+        objectAlignRightLabel: 'Align object right',
+        objectAlignTopLabel: 'Align object top',
+        objectAlignCenterVerticalLabel: 'Center object vertically',
+        objectAlignBottomLabel: 'Align object bottom',
+        disableSnapHelp: 'Hold Alt/Option while dragging to temporarily disable snapping.',
         zoomOutLabel: 'Zoom out',
         zoomInLabel: 'Zoom in',
         zoomFitLabel: 'Fit to window',

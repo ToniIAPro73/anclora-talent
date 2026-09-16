@@ -183,6 +183,25 @@ describe('AdvancedCoverEditor', () => {
     );
   });
 
+  it('keeps object alignment controls separate and aligns a selected object to the canvas', async () => {
+    const surface = makeSurfaceWithTitle();
+    const onChange = vi.fn();
+    render(<AdvancedCoverEditor surface={surface} onChange={onChange} copy={copy} />);
+    await waitFor(() => expect(mocks.state.objects).toHaveLength(1));
+
+    fireEvent.click(screen.getByTestId(`layer-select-${surface.layers[0].id}`));
+    fireEvent.click(screen.getByTestId('advanced-editor-object-align-center-horizontal-button'));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ layers: [expect.objectContaining({ x: 125 })] }));
+  });
+
+  it('can add a semi-transparent overlay shape from Advanced', () => {
+    const onChange = vi.fn();
+    render(<AdvancedCoverEditor surface={createEmptyDesignSurface('cover')} onChange={onChange} copy={copy} />);
+
+    fireEvent.click(screen.getByTestId('advanced-editor-add-shape-button'));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ layers: [expect.objectContaining({ type: 'shape', opacity: 0.35 })] }));
+  });
+
   it('the snap toggle button reflects its active state', () => {
     render(<AdvancedCoverEditor surface={makeSurfaceWithTitle()} onChange={vi.fn()} copy={copy} />);
     const toggle = screen.getByTestId('advanced-editor-snap-toggle');

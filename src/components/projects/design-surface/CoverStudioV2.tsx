@@ -69,6 +69,10 @@ export function CoverStudioV2({
 
   const isWideViewport = useMediaQuery(WIDE_VIEWPORT_QUERY);
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('mode') === 'advanced') setMode('advanced');
+  }, []);
+
   const pendingSaveRef = useRef<DesignSurface | null>(null);
   const inFlightRef = useRef(false);
   const debounceTimerRef = useRef<number | null>(null);

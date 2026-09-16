@@ -87,6 +87,23 @@ describe('CoverStudioV2', () => {
     expect(screen.getByTestId('stub-basic-editor')).toBeInTheDocument();
   });
 
+  test('opens Advanced when the live route requests mode=advanced', async () => {
+    window.history.pushState({}, '', '/projects/p-1/cover?mode=advanced');
+    render(
+      <CoverStudioV2
+        surfaceKind="cover"
+        projectId="p-1"
+        initialSurface={makeNonEmptySurface()}
+        sourceDocumentAssetId={null}
+        pageCount={null}
+        copy={copy}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('stub-advanced-editor')).toBeInTheDocument());
+    window.history.pushState({}, '', '/');
+  });
+
   test('choosing "create from scratch" dismisses the prompt and shows Basic without altering the surface', () => {
     render(
       <CoverStudioV2

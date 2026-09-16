@@ -35,6 +35,26 @@ describe('TextLayerProperties', () => {
     expect(onChange).toHaveBeenCalledWith({ textDecoration: 'underline' });
   });
 
+  test('exposes distinct text alignment controls including justify with pressed state', () => {
+    const onChange = vi.fn();
+    render(<TextLayerProperties layer={makeLayer({ textAlign: 'justify' })} copy={copy} onChange={onChange} />);
+
+    const left = screen.getByTestId('text-layer-align-left-button');
+    const center = screen.getByTestId('text-layer-align-center-button');
+    const right = screen.getByTestId('text-layer-align-right-button');
+    const justify = screen.getByTestId('text-layer-align-justify-button');
+
+    expect(left).toHaveAttribute('aria-label', copy.text.alignLeftLabel);
+    expect(center).toHaveAttribute('aria-label', copy.text.alignCenterLabel);
+    expect(right).toHaveAttribute('aria-label', copy.text.alignRightLabel);
+    expect(justify).toHaveAttribute('aria-label', copy.text.alignJustifyLabel);
+    expect(left).toHaveAttribute('aria-pressed', 'false');
+    expect(justify).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(justify);
+    expect(onChange).toHaveBeenCalledWith({ textAlign: 'justify' });
+  });
+
   test('text-transform buttons switch case handling', () => {
     const onChange = vi.fn();
     render(<TextLayerProperties layer={makeLayer({ textTransform: 'none' })} copy={copy} onChange={onChange} />);

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ChromePicker } from 'react-color';
 import {
   AlignCenter,
+  AlignJustify,
   AlignLeft,
   AlignRight,
   Bold,
@@ -136,6 +137,18 @@ export function SurfaceInspector({
             title={copy.coverStudioAlignRight}
           >
             <AlignRight className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onStyleChange({ textAlign: 'justify' })}
+            data-testid={`inspector-${fieldKey}-align-justify-button`}
+            className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
+            data-active={computed.textAlign === 'justify' ? 'true' : 'false'}
+            aria-label={copy.coverStudioAlignJustify}
+            aria-pressed={computed.textAlign === 'justify'}
+            title={copy.coverStudioAlignJustify}
+          >
+            <AlignJustify className="h-4 w-4" />
           </button>
           <button
             type="button"
