@@ -280,7 +280,8 @@ export interface UpdateCoverInput {
   fontFamily?: string | null;
   accentColor?: string | null;
   showSubtitle?: boolean;
-  surfaceState?: SurfaceState | null;
+  /** Cover Studio v2: may be a v2 `DesignSurface` (new editors) or a legacy `SurfaceState` (old editor, still writable). See `CoverDesign.surfaceState`'s note. */
+  surfaceState?: SurfaceState | DesignSurface | null;
 }
 
 export interface UpdateBackCoverInput {
@@ -289,5 +290,6 @@ export interface UpdateBackCoverInput {
   authorBio: string;
   accentColor: string | null;
   backgroundImageUrl: string | null;
-  surfaceState?: SurfaceState | null;
+  /** Cover Studio v2: may be a v2 `DesignSurface` (new editors) or a legacy `SurfaceState` (old editor, still writable). See `BackCoverDesign.surfaceState`'s note. */
+  surfaceState?: SurfaceState | DesignSurface | null;
 }

@@ -21,6 +21,8 @@ import { mergeReimportedSeed } from './reimport';
 import { parseCompositionSettings } from './composition';
 import type { CoverDesign, UpdateBackCoverInput, UpdateCoverInput, UpdateDocumentInput } from './types';
 import { defaultEditorPreferences, type EditorPreferences } from '@/lib/ui-preferences/preferences';
+import type { DesignLayer, DesignSurface } from './design-surface';
+import { parseDesignSurfacePayload } from './design-surface-schema';
 
 function parsePalette(value: FormDataEntryValue | null): CoverDesign['palette'] {
   if (value === 'teal' || value === 'sand') {
@@ -641,6 +643,130 @@ export async function saveBackCoverAction(formData: FormData) {
   revalidatePath(`/projects/${projectId}/back-cover`);
   revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
+}
+
+async function uploadDataUrlToBlob(projectId: string, dataUrl: string, namePrefix: string): Promise<string> {
+  const base64 = dataUrl.split(',')[1];
+  if (!base64) return dataUrl;
+  const mimeMatch = dataUrl.match(/^data:([^;]+);base64,/);
+  const mimeType = mimeMatch?.[1] ?? 'image/png';
+  const extension = mimeType.split('/')[1] ?? 'png';
+  const buffer = Buffer.from(base64, 'base64');
+  const file = new File([buffer], `${namePrefix}-${Date.now()}.${extension}`, { type: mimeType });
+  const blob = await uploadProjectBlob(projectId, file);
+  // No BLOB_READ_WRITE_TOKEN configured (local dev): keep the data URL rather
+  // than lose the image — the surface still renders/persists correctly,
+  // just with a larger inline payload until blob storage is available.
+  return blob?.url ?? dataUrl;
+}
+
+/**
+ * A newly uploaded image (background or layer) arrives from the client as a
+ * `data:` URL (see `readFileAsDataUrl` in the editor components) — inlining
+ * that into the persisted `DesignSurface` JSON would bloat the `cover_layers`
+ * payload on every save. Mirrors `renderCoverImageAction`'s existing
+ * data-URL -> Blob pattern, just applied to every image src in the surface
+ * instead of a single rendered screenshot.
+ */
+async function uploadDataUrlImagesInSurface(projectId: string, surface: DesignSurface): Promise<DesignSurface> {
+  const background =
+    surface.background.kind === 'image' && surface.background.src.startsWith('data:')
+      ? { ...surface.background, src: await uploadDataUrlToBlob(projectId, surface.background.src, 'cover-bg') }
+      : surface.background;
+
+  const layers = await Promise.all(
+    surface.layers.map(async (layer): Promise<DesignLayer> => {
+      if (layer.type !== 'image' || !layer.src.startsWith('data:')) return layer;
+      return { ...layer, src: await uploadDataUrlToBlob(projectId, layer.src, 'cover-layer') };
+    }),
+  );
+
+  return { ...surface, background, layers };
+}
+
+export type SaveDesignSurfaceResult = { status: 'saved' } | { status: 'error'; error: string };
+
+/**
+ * Cover Studio v2 — explicit save action for the new layered editors
+ * (continuation mission Fase 3). Reuses the existing `saveCover`
+ * persistence path (`projectRepository.saveCover` ->
+ * `saveCoverInDb`/`saveCoverInMemory` -> `replaceSurfaceStateRows`) instead
+ * of duplicating it — only the input's `surfaceState` changes; every other
+ * cover field is carried over from the project's current state unchanged.
+ */
+export async function saveCoverDesignAction(projectId: string, payload: unknown): Promise<SaveDesignSurfaceResult> {
+  const userId = await requireUserId();
+  if (!projectId) return { status: 'error', error: 'projectId is required' };
+
+  const validated = parseDesignSurfacePayload(payload);
+  if (!validated.ok || !validated.surface) {
+    return { status: 'error', error: validated.error ?? 'Invalid design payload' };
+  }
+  if (validated.surface.surface !== 'cover') {
+    return { status: 'error', error: 'Surface mismatch: expected a cover design' };
+  }
+
+  const current = await projectRepository.getProjectById(userId, projectId);
+  if (!current) {
+    return { status: 'error', error: 'Project not found' };
+  }
+
+  const surface = await uploadDataUrlImagesInSurface(projectId, validated.surface as DesignSurface);
+
+  const input: UpdateCoverInput = {
+    title: current.cover.title,
+    subtitle: current.cover.subtitle,
+    palette: current.cover.palette,
+    backgroundImageUrl: current.cover.backgroundImageUrl,
+    thumbnailUrl: current.cover.thumbnailUrl,
+    layout: current.cover.layout,
+    fontFamily: current.cover.fontFamily,
+    accentColor: current.cover.accentColor,
+    showSubtitle: current.cover.showSubtitle,
+    surfaceState: surface,
+  };
+
+  await projectRepository.saveCover(userId, projectId, input);
+  revalidatePath(`/projects/${projectId}/cover`);
+  revalidatePath(`/projects/${projectId}/editor`);
+  revalidatePath(`/projects/${projectId}/preview`);
+  return { status: 'saved' };
+}
+
+/** Back cover counterpart of `saveCoverDesignAction` — same validation/upload/persistence pattern, `UpdateBackCoverInput` fields carried over unchanged. */
+export async function saveBackCoverDesignAction(projectId: string, payload: unknown): Promise<SaveDesignSurfaceResult> {
+  const userId = await requireUserId();
+  if (!projectId) return { status: 'error', error: 'projectId is required' };
+
+  const validated = parseDesignSurfacePayload(payload);
+  if (!validated.ok || !validated.surface) {
+    return { status: 'error', error: validated.error ?? 'Invalid design payload' };
+  }
+  if (validated.surface.surface !== 'back-cover') {
+    return { status: 'error', error: 'Surface mismatch: expected a back-cover design' };
+  }
+
+  const current = await projectRepository.getProjectById(userId, projectId);
+  if (!current) {
+    return { status: 'error', error: 'Project not found' };
+  }
+
+  const surface = await uploadDataUrlImagesInSurface(projectId, validated.surface as DesignSurface);
+
+  const input: UpdateBackCoverInput = {
+    title: current.backCover.title,
+    body: current.backCover.body,
+    authorBio: current.backCover.authorBio,
+    accentColor: current.backCover.accentColor,
+    backgroundImageUrl: current.backCover.backgroundImageUrl,
+    surfaceState: surface,
+  };
+
+  await projectRepository.saveBackCover(userId, projectId, input);
+  revalidatePath(`/projects/${projectId}/back-cover`);
+  revalidatePath(`/projects/${projectId}/editor`);
+  revalidatePath(`/projects/${projectId}/preview`);
+  return { status: 'saved' };
 }
 
 export async function renderCoverImageAction(formData: FormData) {
