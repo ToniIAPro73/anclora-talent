@@ -5,7 +5,7 @@ import { requireUserId } from '@/lib/auth/guards';
 import { sha256Buffer } from '@/lib/projects/hash';
 import { structureProfileRepository } from '@/lib/structure-profile/repository';
 import { hasUsableEditorialEvidence, type ReferenceEditorialProfile } from './model';
-import { extractEditorialProfileFromPdf } from './pdf';
+import { extractEditorialProfileFromPdf, ReferenceAnalysisTimeoutError } from './pdf';
 import { extractEditorialProfileFromDocx } from './docx';
 import { isReferenceEditorialProfile } from './legacy';
 
@@ -19,22 +19,48 @@ function parseProfile(value: string): ReferenceEditorialProfile {
 }
 
 export async function extractReferenceEditorialProfileAction(formData: FormData) {
-  await requireUserId();
-  const file = formData.get('referenceDocument');
-  if (!(file instanceof File) || file.size === 0) throw new Error('Missing referenceDocument');
-  if (file.size > MAX_REFERENCE_BYTES) throw new Error('Reference document is too large');
-  const filename = file.name || 'reference.pdf';
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const hash = sha256Buffer(buffer);
-  const isDocx = file.type.includes('wordprocessingml') || filename.toLowerCase().endsWith('.docx');
-  const result = isDocx
-    ? await extractEditorialProfileFromDocx(buffer, { filename, hash })
-    : await extractEditorialProfileFromPdf(buffer, { filename, format: 'pdf', hash });
-  if (!hasUsableEditorialEvidence(result.profile)) {
-    const warnings = 'analysis' in result ? result.analysis.warnings : [];
-    return { ok: false as const, warnings: [...warnings, 'No reliable editorial style could be extracted from this document.'] };
+  try {
+    await requireUserId();
+    const file = formData.get('referenceDocument');
+    if (!(file instanceof File) || file.size === 0) {
+      return { ok: false as const, error: 'Documento de referencia no proporcionado o vacío.', warnings: ['Missing referenceDocument'] };
+    }
+    if (file.size > MAX_REFERENCE_BYTES) {
+      return { ok: false as const, error: 'El archivo de referencia excede el tamaño máximo permitido (50 MB).', warnings: ['Reference document is too large'] };
+    }
+    const filename = file.name || 'reference.pdf';
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const hash = sha256Buffer(buffer);
+    const isDocx = file.type.includes('wordprocessingml') || filename.toLowerCase().endsWith('.docx');
+    const result = isDocx
+      ? await extractEditorialProfileFromDocx(buffer, { filename, hash })
+      : await extractEditorialProfileFromPdf(buffer, { filename, format: 'pdf', hash });
+    if (!hasUsableEditorialEvidence(result.profile)) {
+      const warnings = 'analysis' in result ? result.analysis.warnings : [];
+      return {
+        ok: false as const,
+        error: 'No se pudo extraer un estilo editorial confiable de este documento.',
+        warnings: [...warnings, 'No reliable editorial style could be extracted from this document.'],
+      };
+    }
+    return {
+      ok: true as const,
+      profile: result.profile,
+      analysis: result.analysis,
+      suggestedName: filename.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim() || 'Reference editorial profile',
+    };
+  } catch (error) {
+    const isTimeout =
+      error instanceof ReferenceAnalysisTimeoutError ||
+      (error instanceof Error && error.name === 'ReferenceAnalysisTimeoutError');
+    return {
+      ok: false as const,
+      error: isTimeout
+        ? 'El análisis del documento de referencia superó el tiempo límite de espera.'
+        : 'No se pudo analizar el documento de referencia. El archivo puede estar dañado o no ser un PDF compatible.',
+      warnings: [error instanceof Error ? error.message : 'Error desconocido'],
+    };
   }
-  return { ok: true as const, profile: result.profile, analysis: result.analysis, suggestedName: filename.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim() || 'Reference editorial profile' };
 }
 
 export async function saveReferenceEditorialProfileAction(formData: FormData) {

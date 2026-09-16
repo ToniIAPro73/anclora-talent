@@ -784,15 +784,91 @@ interface PdfTocEntry { title: string; page: string; level: number }
 
 function parsePdfTocEntries(html: string | null | undefined): PdfTocEntry[] {
   if (!html) return [];
-  return [...html.matchAll(/<p\b[^>]*data-toc-entry="true"[^>]*data-toc-level="(\d+)"[^>]*data-toc-page="([^"]+)"[^>]*>[\s\S]*?<span[^>]*class="toc-title"[^>]*>([\s\S]*?)<\/span>[\s\S]*?<\/p>/gi)].map((match) => ({
-    level: Number(match[1]),
-    page: stripInlineHtml(match[2]),
-    title: stripInlineHtml(match[3]),
-  }));
+  // Match both <p> and <li> elements with data-toc-entry="true"
+  // And extract title either from <span class="toc-title">...</span> or inner text
+  const results: PdfTocEntry[] = [];
+  const tagMatches = html.matchAll(/<(?:p|li)\b[^>]*data-toc-entry="true"[^>]*>([\s\S]*?)<\/(?:p|li)>/gi);
+  for (const tagMatch of tagMatches) {
+    const fullTag = tagMatch[0];
+    const innerContent = tagMatch[1];
+    const levelMatch = fullTag.match(/data-toc-level="(\d+)"/i);
+    const pageMatch = fullTag.match(/data-toc-page="([^"]+)"/i);
+    const level = levelMatch ? Number(levelMatch[1]) : 1;
+    const page = pageMatch ? stripInlineHtml(pageMatch[1]) : '';
+
+    const titleSpanMatch = innerContent.match(/<span[^>]*class="toc-title"[^>]*>([\s\S]*?)<\/span>/i);
+    const rawTitle = titleSpanMatch ? titleSpanMatch[1] : innerContent;
+    const title = stripInlineHtml(rawTitle).trim();
+
+    if (title || page) {
+      results.push({ level, page, title });
+    }
+  }
+  return results;
 }
 
 function renderPdfToc(entries: PdfTocEntry[], theme: PdfBrandTheme) {
-  return <View>{entries.map((entry, index) => <View key={`pdf-toc-${index}`} style={{ flexDirection: 'row', alignItems: 'flex-end', marginLeft: Math.max(0, entry.level - 1) * 12, marginBottom: 6 }}><Text style={{ fontFamily: theme.bodyFont, fontSize: theme.bodySize, lineHeight: theme.bodyLineHeight, color: theme.bodyColor }}>{entry.title}</Text><View style={{ flexGrow: 1, borderBottomWidth: 1, borderBottomStyle: 'dotted', borderBottomColor: theme.mutedColor, marginLeft: 5, marginBottom: 3 }} /><Text style={{ fontFamily: theme.bodyFont, fontSize: theme.bodySize, color: theme.bodyColor }}>{entry.page}</Text></View>)}</View>;
+  return (
+    <View style={{ width: '100%' }}>
+      {entries.map((entry, index) => (
+        <View
+          key={`pdf-toc-${index}`}
+          wrap={false}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'flex-end',
+            justifyContent: 'space-between',
+            marginLeft: Math.max(0, entry.level - 1) * 12,
+            marginBottom: 6,
+          }}
+        >
+          <View style={{ flex: 1, paddingRight: 8 }}>
+            <Text
+              style={{
+                fontFamily: theme.bodyFont,
+                fontSize: theme.bodySize,
+                lineHeight: theme.bodyLineHeight,
+                color: theme.bodyColor,
+              }}
+            >
+              {entry.title}
+            </Text>
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'flex-end',
+              flexShrink: 0,
+              minWidth: 44,
+              justifyContent: 'flex-end',
+            }}
+          >
+            <View
+              style={{
+                width: 24,
+                borderBottomWidth: 1,
+                borderBottomStyle: 'dotted',
+                borderBottomColor: theme.mutedColor,
+                marginBottom: 3,
+                marginRight: 6,
+              }}
+            />
+            <Text
+              style={{
+                fontFamily: theme.bodyFont,
+                fontSize: theme.bodySize,
+                lineHeight: theme.bodyLineHeight,
+                color: theme.bodyColor,
+                textAlign: 'right',
+              }}
+            >
+              {entry.page}
+            </Text>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
 }
 
 export async function buildProjectPdf(project: ProjectRecord) {

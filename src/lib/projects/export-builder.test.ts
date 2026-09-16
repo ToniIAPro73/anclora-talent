@@ -160,3 +160,78 @@ describe('export footer (C7)', () => {
     expect(html).toContain('export-page-footer-number');
   }, 15000);
 });
+
+describe('PDF TOC wrapping and searchable Unicode text (C & D)', () => {
+  test('generates selectable and searchable PDF with Spanish Unicode characters and absence of reference strings', async () => {
+    const project = createExportAcceptanceProject();
+    const uniqueSentence = 'TARGET_UNIQUE_SENTENCE_001: Árbol pingüino niñez en acción.';
+    const uniqueChapter = 'TARGET_UNIQUE_CHAPTER_03: ¿Dónde? ¡Atención! “comillas” y —raya— con puntos…';
+
+    project.document.chapters.push({
+      id: 'ch-unicode',
+      title: 'Capítulo Unicode',
+      order: 3,
+      blocks: [
+        { id: 'h-uni', order: 1, type: 'heading', content: `<h2>${uniqueChapter}</h2>` },
+        { id: 'p-uni', order: 2, type: 'paragraph', content: `<p>${uniqueSentence}</p>` },
+      ],
+    });
+
+    const { renderToBuffer } = await import('@react-pdf/renderer');
+    const pdfBuffer = await renderToBuffer(await buildProjectPdf(project));
+    const extracted = await extractTextFromBuffer(
+      'unicode-test.pdf',
+      'application/pdf',
+      Buffer.from(pdfBuffer),
+    );
+
+    // D: Searchable and extractable Unicode text
+    expect(extracted.text).toContain('TARGET_UNIQUE_SENTENCE_001');
+    expect(extracted.text).toContain('TARGET_UNIQUE_CHAPTER_03');
+    expect(extracted.text).toContain('Árbol');
+    expect(extracted.text).toContain('pingüino');
+    expect(extracted.text).toContain('niñez');
+    expect(extracted.text).toContain('acción');
+    expect(extracted.text).toContain('¿Dónde?');
+    expect(extracted.text).toContain('¡Atención!');
+
+    // D: Absent reference strings
+    expect(extracted.text).not.toContain('El test de las esposas de oro');
+    expect(extracted.text).not.toContain('Jubilación inversa');
+    expect(extracted.text).not.toContain('Tu plan de escape en 90 días');
+  }, 60000);
+
+  test('parses and renders multi-line TOC titles in PDF with proper wrapping and right-aligned page numbers', async () => {
+    const project = createProjectRecord('user-toc', { title: 'TOC Test Project' });
+    const longTitle = 'Este es un título de capítulo extraordinariamente largo que debe envolver en múltiples líneas sin truncamiento ni elipsis ni colisión';
+    project.document.chapters = [
+      {
+        id: 'ch-toc',
+        title: 'Índice',
+        order: 1,
+        blocks: [{ id: 'h-toc', order: 1, type: 'heading', content: '<h1>Índice</h1>' }],
+      },
+      {
+        id: 'ch-1',
+        title: longTitle,
+        order: 2,
+        blocks: [
+          { id: 'h-1', order: 1, type: 'heading', content: `<h1>${longTitle}</h1>` },
+          { id: 'p-1', order: 2, type: 'paragraph', content: '<p>Contenido del capítulo.</p>' },
+        ],
+      },
+    ];
+
+    const { renderToBuffer } = await import('@react-pdf/renderer');
+    const pdfBuffer = await renderToBuffer(await buildProjectPdf(project));
+    const extracted = await extractTextFromBuffer(
+      'toc-test.pdf',
+      'application/pdf',
+      Buffer.from(pdfBuffer),
+    );
+
+    expect(extracted.text).toContain('Este es un título de capítulo extraordinariamente largo');
+    expect(extracted.text).toContain('3');
+    expect(extracted.text).not.toContain('...');
+  }, 60000);
+});

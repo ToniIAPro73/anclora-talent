@@ -962,10 +962,16 @@ async function renderContentPreviewHtml(page: PreviewPage, config: PaginationCon
           gap: 0 !important;
           margin: 0 !important;
           padding: 0 !important;
-          white-space: nowrap !important;
           list-style: none !important;
           line-height: 1.5 !important;
           font-family: "JetBrains Mono", "${EMBEDDED_BODY_FONT_FAMILY}", ui-monospace, monospace !important;
+        }
+
+        .toc-title {
+          flex: 1 1 auto !important;
+          min-width: 0 !important;
+          white-space: normal !important;
+          word-break: break-word !important;
         }
 
         [data-toc-entry="true"][data-toc-page]::before {

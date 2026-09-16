@@ -24,4 +24,37 @@ describe('editorial profile PDF extraction', () => {
     expect(JSON.stringify(result.profile)).not.toContain('Neutral body sample');
     expect(result.analysis.pagesAnalysed).toBe(3);
   });
+
+  test('deterministic malformed PDF fails fast and rejects', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const malformedBuffer = fs.readFileSync(path.resolve(process.cwd(), 'fixtures/deterministic-malformed.pdf'));
+
+    await expect(
+      extractEditorialProfileFromPdf(malformedBuffer, {
+        filename: 'deterministic-malformed.pdf',
+        format: 'pdf',
+      })
+    ).rejects.toThrow();
+  });
+
+  test('analysis timeout rejects with ReferenceAnalysisTimeoutError', async () => {
+    const { ReferenceAnalysisTimeoutError } = await import('./pdf');
+    const destroyMock = vi.fn().mockResolvedValue(undefined);
+    const mockPdfjs = {
+      getDocument: vi.fn().mockReturnValue({
+        promise: new Promise((resolve) => setTimeout(resolve, 500)),
+        destroy: destroyMock,
+      }),
+    };
+
+    await expect(
+      extractEditorialProfileFromPdf(
+        Buffer.from('%PDF-1.4 dummy'),
+        { filename: 'timeout.pdf', format: 'pdf' },
+        { timeoutMs: 10, _pdfjs: mockPdfjs }
+      )
+    ).rejects.toThrow(ReferenceAnalysisTimeoutError);
+    expect(destroyMock).toHaveBeenCalled();
+  });
 });

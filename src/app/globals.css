@@ -1482,21 +1482,19 @@ h1.toc-entry, h2.toc-entry, h3.toc-entry,
 h4.toc-entry, h5.toc-entry, h6.toc-entry {
   display: flex !important;
   align-items: baseline;
+  justify-content: space-between;
   gap: 0;
   margin: 0;
   padding: 0;
-  white-space: nowrap;
   list-style: none;
   line-height: 1.5;
-  overflow: hidden; /* Garantiza que el flex container no se desborde */
 }
 
 .toc-title {
-  flex: 0 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  flex: 1 1 auto;
   min-width: 0;
+  white-space: normal;
+  word-break: break-word;
 }
 
 [data-toc-entry="true"][data-toc-page]::before {

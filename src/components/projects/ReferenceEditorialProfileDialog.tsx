@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { X } from "lucide-react";
 import type { AppMessages } from "@/lib/i18n/messages";
 import type { StructureProfile } from "@/lib/structure-profile/model";
@@ -44,6 +44,7 @@ export function ReferenceEditorialProfileDialog({
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [busy, startTransition] = useTransition();
+  const attemptRef = useRef(0);
   if (!isOpen) return null;
   const close = () => {
     setProfile(null);
@@ -51,19 +52,28 @@ export function ReferenceEditorialProfileDialog({
     setTab("style");
     onClose();
   };
-  const analyze = (file: File) =>
+  const analyze = (file: File) => {
+    setError("");
+    const attemptId = ++attemptRef.current;
     startTransition(async () => {
       try {
         const data = new FormData();
         data.set("referenceDocument", file);
         const result = await extractReferenceEditorialProfileAction(data);
-        if (!result.ok) throw new Error(copy.referenceEditorialNoStyle);
+        if (attemptId !== attemptRef.current) return;
+        if (!result.ok) {
+          setError(result.error || copy.referenceEditorialNoStyle);
+          return;
+        }
+        setError("");
         setProfile(result.profile);
         setName(result.suggestedName);
       } catch (cause) {
+        if (attemptId !== attemptRef.current) return;
         setError(cause instanceof Error ? cause.message : copy.structureError);
       }
     });
+  };
   const choose = (id: string) => {
     const item = profiles.find((candidate) => candidate.id === id);
     if (item && isReferenceEditorialProfile(item.schema)) {

@@ -39,47 +39,94 @@ function textItem(item: TextItem, pageNumber: number, pageHeight: number): Edito
   };
 }
 
+export const REFERENCE_PDF_ANALYSIS_TIMEOUT_MS = 15_000;
+
+export class ReferenceAnalysisTimeoutError extends Error {
+  readonly code = 'REFERENCE_ANALYSIS_TIMEOUT';
+  constructor(timeoutMs: number) {
+    super(`PDF editorial profile analysis timed out after ${timeoutMs}ms`);
+    this.name = 'ReferenceAnalysisTimeoutError';
+  }
+}
+
 /** Extracts PDF layout evidence with pdf.js. Text is retained only transiently. */
 export async function extractEditorialProfileFromPdf(
   buffer: Buffer,
   source: PdfSourceInput,
+  options?: { timeoutMs?: number; _pdfjs?: unknown },
 ): Promise<PdfEditorialAnalysis> {
-  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  const document = await pdfjs.getDocument({ data: new Uint8Array(buffer), useSystemFonts: true }).promise;
-  const fragments: EditorialTextFragment[] = [];
-  let pageWidth = 0;
-  let pageHeight = 0;
-  const warnings: string[] = [];
+  const timeoutMs = options?.timeoutMs ?? REFERENCE_PDF_ANALYSIS_TIMEOUT_MS;
+  const pdfjs =
+    (options?._pdfjs as typeof import('pdfjs-dist/legacy/build/pdf.mjs')) ||
+    (await import('pdfjs-dist/legacy/build/pdf.mjs'));
+  const loadingTask = pdfjs.getDocument({
+    data: new Uint8Array(buffer),
+    useSystemFonts: true,
+    stopAtErrors: true,
+  });
 
-  for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
-    const page = await document.getPage(pageNumber);
-    const viewport = page.getViewport({ scale: 1 });
-    pageWidth = pageWidth || viewport.width;
-    pageHeight = pageHeight || viewport.height;
-    const content = await page.getTextContent();
-    for (const item of content.items) {
-      if ('str' in item && 'transform' in item) {
-        const fragment = textItem(item as TextItem, pageNumber, viewport.height);
-        if (fragment) fragments.push(fragment);
+  let timeoutId: NodeJS.Timeout | null = null;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      try {
+        loadingTask.destroy();
+      } catch {
+        // ignore
       }
+      reject(new ReferenceAnalysisTimeoutError(timeoutMs));
+    }, timeoutMs);
+  });
+
+  try {
+    const document = await Promise.race([loadingTask.promise, timeoutPromise]);
+    const fragments: EditorialTextFragment[] = [];
+    let pageWidth = 0;
+    let pageHeight = 0;
+    const warnings: string[] = [];
+
+    for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+      const pageTask = (async () => {
+        const page = await document.getPage(pageNumber);
+        const viewport = page.getViewport({ scale: 1 });
+        pageWidth = pageWidth || viewport.width;
+        pageHeight = pageHeight || viewport.height;
+        const content = await page.getTextContent();
+        for (const item of content.items) {
+          if ('str' in item && 'transform' in item) {
+            const fragment = textItem(item as TextItem, pageNumber, viewport.height);
+            if (fragment) fragments.push(fragment);
+          }
+        }
+      })();
+
+      await Promise.race([pageTask, timeoutPromise]);
+    }
+
+    if (fragments.length === 0) warnings.push('No usable text layout was found in the PDF.');
+    const page: EditorialPageEvidence = { width: pageWidth, height: pageHeight, unit: 'pt' };
+    const profile = extractEditorialProfileFromFragments(page, fragments, {
+      sourceAssetId: source.sourceAssetId,
+      filename: source.filename,
+      format: source.format,
+      hash: source.hash,
+    });
+    return {
+      profile,
+      analysis: {
+        pagesAnalysed: document.numPages,
+        pagesExcluded: 0,
+        fragmentCount: fragments.length,
+        warnings,
+      },
+    };
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    try {
+      await loadingTask.destroy();
+    } catch {
+      // ignore
     }
   }
-
-  if (fragments.length === 0) warnings.push('No usable text layout was found in the PDF.');
-  const page: EditorialPageEvidence = { width: pageWidth, height: pageHeight, unit: 'pt' };
-  const profile = extractEditorialProfileFromFragments(page, fragments, {
-    sourceAssetId: source.sourceAssetId,
-    filename: source.filename,
-    format: source.format,
-    hash: source.hash,
-  });
-  return {
-    profile,
-    analysis: {
-      pagesAnalysed: document.numPages,
-      pagesExcluded: 0,
-      fragmentCount: fragments.length,
-      warnings,
-    },
-  };
 }

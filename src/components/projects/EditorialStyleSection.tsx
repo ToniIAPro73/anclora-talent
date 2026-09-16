@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import { Check, FileText, Sparkles } from 'lucide-react';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { StructureProfile } from '@/lib/structure-profile/model';
@@ -42,7 +42,9 @@ export function EditorialStyleSection({ copy, profiles, onSelectionChange }: Edi
   const [profileName, setProfileName] = useState('');
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
-  const [busy, startTransition] = useTransition();
+  const [isAnalysing, setIsAnalysing] = useState(false);
+  const [isSaving, startSaveTransition] = useTransition();
+  const attemptRef = useRef(0);
 
   const selectSource = (next: StyleSource['type']) => {
     setError('');
@@ -70,27 +72,37 @@ export function EditorialStyleSection({ copy, profiles, onSelectionChange }: Edi
     }
   };
 
-  const analyzeReference = () => {
+  const analyzeReference = async () => {
     if (!referenceFile) return;
     setError('');
-    startTransition(async () => {
-      try {
-        const data = new FormData();
-        data.set('referenceDocument', referenceFile);
-        const result = await extractReferenceEditorialProfileAction(data);
-        if (!result.ok) throw new Error(copy.newProjectReferenceAnalyseError);
-        setSource({ type: 'reference-document', fileName: referenceFile.name, profile: result.profile });
-        onSelectionChange?.({ type: 'reference-document', label: referenceFile.name });
-        setProfileName(result.suggestedName);
-      } catch {
-        setError(copy.newProjectReferenceAnalyseError);
+    setIsAnalysing(true);
+    const attemptId = ++attemptRef.current;
+    try {
+      const data = new FormData();
+      data.set('referenceDocument', referenceFile);
+      const result = await extractReferenceEditorialProfileAction(data);
+      if (attemptId !== attemptRef.current) return;
+      if (!result.ok) {
+        setError(result.error || copy.newProjectReferenceAnalyseError);
+        return;
       }
-    });
+      setError('');
+      setSource({ type: 'reference-document', fileName: referenceFile.name, profile: result.profile });
+      onSelectionChange?.({ type: 'reference-document', label: referenceFile.name });
+      setProfileName(result.suggestedName);
+    } catch {
+      if (attemptId !== attemptRef.current) return;
+      setError(copy.newProjectReferenceAnalyseError);
+    } finally {
+      if (attemptId === attemptRef.current) {
+        setIsAnalysing(false);
+      }
+    }
   };
 
   const saveReusableProfile = () => {
     if (source.type !== 'reference-document' || !source.profile || !profileName.trim()) return;
-    startTransition(async () => {
+    startSaveTransition(async () => {
       try {
         const data = new FormData();
         data.set('name', profileName.trim());
@@ -163,10 +175,10 @@ export function EditorialStyleSection({ copy, profiles, onSelectionChange }: Edi
           <input name="referenceDocument" type="file" accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" data-testid="reference-document-input" className="mt-4 block w-full rounded-xl border border-dashed border-[var(--border-strong)] bg-[var(--page-surface)] p-3 text-sm text-[var(--text-secondary)]" onChange={(event) => { const file = event.target.files?.[0] ?? null; setReferenceFile(file); setSource({ type: 'reference-document', fileName: file?.name ?? '' }); onSelectionChange?.({ type: 'reference-document', label: file?.name || copy.newProjectStyleReference }); setError(''); }} />
           {referenceFile && <p className="mt-2 text-xs text-[var(--text-secondary)]" data-testid="reference-document-selected">{copy.newProjectReferenceSelected}: {referenceFile.name}</p>}
           <div className="mt-3 grid gap-2 text-xs leading-5 text-[var(--text-tertiary)] sm:grid-cols-2"><p>{copy.newProjectReferenceWhatWeAnalyse}</p><p>{copy.newProjectReferenceWhatWeDoNotCopy}</p></div>
-          <div className="mt-4 flex flex-wrap items-center gap-2"><button type="button" data-testid="reference-document-analyse" disabled={!referenceFile || busy} onClick={analyzeReference} className="ac-button ac-button--primary ac-button--sm">{busy ? copy.newProjectReferenceAnalysing : copy.newProjectReferenceAnalyse}</button>{referenceFile && <button type="button" data-testid="reference-document-remove" onClick={() => { setReferenceFile(null); setSource({ type: 'reference-document', fileName: '' }); }} className="ac-button ac-button--ghost ac-button--sm">{copy.newProjectReferenceRemove}</button>}</div>
+          <div className="mt-4 flex flex-wrap items-center gap-2"><button type="button" data-testid="reference-document-analyse" disabled={!referenceFile || isAnalysing} onClick={analyzeReference} className="ac-button ac-button--primary ac-button--sm">{isAnalysing ? copy.newProjectReferenceAnalysing : copy.newProjectReferenceAnalyse}</button>{referenceFile && <button type="button" data-testid="reference-document-remove" onClick={() => { setReferenceFile(null); setSource({ type: 'reference-document', fileName: '' }); }} className="ac-button ac-button--ghost ac-button--sm">{copy.newProjectReferenceRemove}</button>}</div>
           {error && <p role="alert" className="mt-3 text-sm text-[var(--danger)]" data-testid="reference-document-error">{error}</p>}
           {activeProfile && <div className="mt-4 rounded-xl border border-[var(--accent)]/40 bg-[var(--accent)]/10 p-3" data-testid="reference-profile-summary"><p className="font-semibold text-[var(--text-primary)]">{copy.newProjectReferenceProfileDetected}</p><p className="mt-1 text-xs text-[var(--text-secondary)]">{activeProfile.body.resolvedFontFamily ?? activeProfile.body.fontFamily ?? '—'} · {activeProfile.body.fontSize ?? '—'} pt · {confidenceLabel(copy, activeProfile.confidence.overall)}</p><input type="hidden" data-testid="reference-editorial-profile-input" name="referenceEditorialProfile" value={JSON.stringify(activeProfile)} /></div>}
-          {activeProfile && <div className="mt-4 border-t border-[var(--border-subtle)] pt-3"><label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]"><input type="checkbox" data-testid="reference-profile-save-checkbox" checked={saveProfile} onChange={(event) => setSaveProfile(event.target.checked)} />{copy.newProjectReferenceSave}</label>{saveProfile && <div className="mt-2 flex flex-wrap gap-2"><input data-testid="reference-profile-save-name" className="field-input min-w-[220px] flex-1" value={profileName} onChange={(event) => setProfileName(event.target.value)} placeholder={copy.newProjectReferenceSaveName} /><button type="button" data-testid="reference-profile-save-button" disabled={busy || !profileName.trim() || saved} onClick={saveReusableProfile} className="ac-button ac-button--secondary ac-button--sm">{saved ? copy.newProjectReferenceSaved : copy.newProjectReferenceSave}</button></div>}</div>}
+          {activeProfile && <div className="mt-4 border-t border-[var(--border-subtle)] pt-3"><label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]"><input type="checkbox" data-testid="reference-profile-save-checkbox" checked={saveProfile} onChange={(event) => setSaveProfile(event.target.checked)} />{copy.newProjectReferenceSave}</label>{saveProfile && <div className="mt-2 flex flex-wrap gap-2"><input data-testid="reference-profile-save-name" className="field-input min-w-[220px] flex-1" value={profileName} onChange={(event) => setProfileName(event.target.value)} placeholder={copy.newProjectReferenceSaveName} /><button type="button" data-testid="reference-profile-save-button" disabled={isSaving || !profileName.trim() || saved} onClick={saveReusableProfile} className="ac-button ac-button--secondary ac-button--sm">{saved ? copy.newProjectReferenceSaved : copy.newProjectReferenceSave}</button></div>}</div>}
         </div>
       )}
     </section>
