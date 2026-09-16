@@ -24,6 +24,7 @@ import { dirname, join } from 'node:path';
 import { createRequire } from 'node:module';
 import JSZip from 'jszip';
 import type { ProjectRecord } from '@/lib/projects/types';
+import type { ReferenceEditorialProfile, EditorialTextStyle } from '@/lib/reference-editorial-profile/model';
 import { type ComposedPreview, projectToSemanticDocument } from '@/lib/compose/preview-adapter';
 import { splitChapters, type ComposeTemplate, type TocEntry } from '@/lib/compose/compose';
 import { isTocChapter } from '@/lib/preview/preview-builder';
@@ -39,6 +40,7 @@ export interface BuildEpubOptions {
    * overrides passed to `composeProjectPreview` (R3: one canonical model).
    */
   template?: Partial<ComposeTemplate>;
+  referenceProfile?: ReferenceEditorialProfile | null;
 }
 
 interface EmbeddedImage {
@@ -270,7 +272,21 @@ function cssFontFamily(family: string): string {
   return `'${family.replace(/['\\]/g, '')}'`;
 }
 
-function buildStylesheet(fonts: EmbeddedFont[], template?: Partial<ComposeTemplate>): string {
+function styleCss(style: EditorialTextStyle | null | undefined): string {
+  if (!style) return '';
+  const rules: string[] = [];
+  if (style.resolvedFontFamily) rules.push(`font-family: ${cssFontFamily(style.resolvedFontFamily)}, Georgia, serif`);
+  if (style.fontSize) rules.push(`font-size: ${style.fontSize}pt`);
+  if (style.fontWeight === 'bold') rules.push('font-weight: 700');
+  else if (style.fontWeight === 'semibold') rules.push('font-weight: 600');
+  if (style.fontStyle === 'italic') rules.push('font-style: italic');
+  if (style.color) rules.push(`color: ${style.color}`);
+  if (style.lineHeight) rules.push(`line-height: ${style.lineHeight}`);
+  if (style.textAlign !== 'unknown') rules.push(`text-align: ${style.textAlign}`);
+  return rules.join('; ');
+}
+
+function buildStylesheet(fonts: EmbeddedFont[], template?: Partial<ComposeTemplate>, profile?: ReferenceEditorialProfile | null): string {
   const fontFaces = fonts
     .map((font) => {
       const weight = font.fileName.includes('Bold') ? 'bold' : 'normal';
@@ -301,6 +317,15 @@ function buildStylesheet(fonts: EmbeddedFont[], template?: Partial<ComposeTempla
   ]
     .filter(Boolean)
     .join('\n');
+  const editorialRules = profile ? [
+    ['body, p, li', styleCss(profile.body)],
+    ['h1', styleCss(profile.headings.h1)],
+    ['h2', styleCss(profile.headings.h2)],
+    ['h3', styleCss(profile.headings.h3)],
+    ['blockquote', styleCss(profile.quote)],
+    ['#toc h1', styleCss(profile.toc.titleStyle)],
+    ['#toc li, #toc a', styleCss(profile.toc.entryStyle)],
+  ].filter(([, css]) => css).map(([selector, css]) => `${selector} { ${css}; }`).join('\n') : '';
   return `${fontFaces}
 body { font-family: ${brandBodyFont}; line-height: 1.5; margin: 5%; }
 h1 { font-size: 1.6em; margin: 1em 0 0.6em; }
@@ -319,7 +344,7 @@ pre { font-family: monospace; white-space: pre-wrap; }
 .cover h1 { font-size: 2em; }
 .cover-subtitle { font-size: 1.2em; color: #555; }
 .cover-author { margin-top: 2em; font-weight: bold; }
-${brandRules ? `${brandRules}\n` : ''}`;
+${brandRules ? `${brandRules}\n` : ''}${editorialRules ? `${editorialRules}\n` : ''}`;
 }
 
 /**
@@ -495,7 +520,7 @@ ${metadata.author ? `<p class="cover-author">${escapeXml(metadata.author)}</p>` 
   zip.file('OEBPS/nav.xhtml', navXhtml);
   zip.file('OEBPS/toc.ncx', ncx);
   zip.file('OEBPS/cover.xhtml', coverXhtml);
-  zip.file('OEBPS/styles/epub.css', buildStylesheet(fonts, options.template));
+  zip.file('OEBPS/styles/epub.css', buildStylesheet(fonts, options.template, options.referenceProfile ?? project.document.metadata?.referenceEditorialProfile));
   for (const [path, content] of chapterFiles) {
     zip.file(path, content);
   }

@@ -546,6 +546,11 @@ export interface PdfBrandTheme {
   headerAlign: 'left' | 'center' | 'right';
   footerAlign: 'left' | 'center' | 'right';
   headingAlign: 'left' | 'center' | 'right';
+  chapterLabelStyle: EditorialTextStyle | null;
+  chapterTitleStyle: EditorialTextStyle | null;
+  chapterSubtitleStyle: EditorialTextStyle | null;
+  headerStyle: EditorialTextStyle | null;
+  footerStyle: EditorialTextStyle | null;
 }
 
 function profileFont(style: EditorialTextStyle | null | undefined, fallback: string, bold: boolean) {
@@ -584,6 +589,25 @@ export function resolvePdfBrandTheme(overrides?: Partial<ComposeTemplate>, profi
     headerAlign: profileAlign(profile?.header.style?.textAlign),
     footerAlign: profileAlign(profile?.pageNumber.alignment ?? profile?.footer.alignment),
     headingAlign: profileAlign(h1?.textAlign),
+    chapterLabelStyle: profile?.chapterOpening.labelStyle ?? null,
+    chapterTitleStyle: profile?.chapterOpening.titleStyle ?? h1 ?? null,
+    chapterSubtitleStyle: profile?.chapterOpening.subtitleStyle ?? null,
+    headerStyle: profile?.header.style ?? null,
+    footerStyle: profile?.pageNumber.style ?? profile?.footer.style ?? null,
+  };
+}
+
+function pdfStyle(style: EditorialTextStyle | null, fallback: Record<string, unknown> = {}) {
+  if (!style) return fallback;
+  return {
+    ...fallback,
+    ...(style.resolvedFontFamily ? { fontFamily: toBase14Font(style.resolvedFontFamily, style.fontWeight === 'bold') } : {}),
+    ...(style.fontSize ? { fontSize: style.fontSize } : {}),
+    ...(style.fontWeight === 'bold' ? { fontWeight: 700 } : style.fontWeight === 'semibold' ? { fontWeight: 600 } : {}),
+    ...(style.fontStyle === 'italic' ? { fontStyle: 'italic' } : {}),
+    ...(style.color ? { color: style.color } : {}),
+    ...(style.lineHeight ? { lineHeight: style.lineHeight } : {}),
+    ...(style.textAlign !== 'unknown' ? { textAlign: profileAlign(style.textAlign) } : {}),
   };
 }
 
@@ -703,6 +727,7 @@ function renderPdfContentBlock(
   block: ParsedContentBlock,
   index: number,
   theme: PdfBrandTheme = resolvePdfBrandTheme(),
+  chapterTitleStyle: EditorialTextStyle | null = null,
 ) {
   if (block.type === 'heading') {
     return (
@@ -711,6 +736,7 @@ function renderPdfContentBlock(
         style={[
           block.level <= 1 ? { ...pdfStyles.heading1, fontSize: theme.heading1Size } : block.level === 2 ? { ...pdfStyles.heading2, fontSize: theme.heading2Size } : { ...pdfStyles.heading2, fontSize: theme.heading3Size },
           { fontFamily: theme.headingFont, color: theme.headingColor, textAlign: theme.headingAlign },
+          block.level <= 1 && chapterTitleStyle ? pdfStyle(chapterTitleStyle) : null,
         ]}
       >
         {block.text}
@@ -868,12 +894,12 @@ export async function buildProjectPdfWithConfig(
         return (
           <Page key={`pdf-content-${pageIndex}`} size={[pdfPageWidth, pdfPageHeight]} style={[pdfStyles.page, { width: pdfPageWidth, height: pdfPageHeight }]}> 
             <View style={[pdfStyles.pageInner, { paddingTop: pdfMarginTop, paddingBottom: pdfMarginBottom, paddingLeft: pdfMarginLeft, paddingRight: pdfMarginRight }]}> 
-              {theme.headerEnabled ? <Text style={{ position: 'absolute', top: 16, left: pdfMarginLeft, right: pdfMarginRight, fontFamily: theme.bodyFont, fontSize: 8, color: theme.mutedColor, textAlign: theme.headerAlign }}>{project.document.title}</Text> : null}
+              {theme.headerEnabled ? <Text style={{ position: 'absolute', top: 16, left: pdfMarginLeft, right: pdfMarginRight, ...pdfStyle(theme.headerStyle, { fontFamily: theme.bodyFont, fontSize: 8, color: theme.mutedColor, textAlign: theme.headerAlign }) }}>{project.document.title}</Text> : null}
               {tocEntries.length > 0 ? renderPdfToc(tocEntries, theme) : <>
-                {chapterNumber && page.chapterTitle ? <Text style={{ fontFamily: theme.bodyFont, fontSize: 9, color: theme.mutedColor, textAlign: theme.headingAlign, marginBottom: 8, textTransform: 'uppercase' }}>Capítulo {chapterNumber}</Text> : null}
-                {blocks.map((block, index) => renderPdfContentBlock(block, index, theme))}
+                {chapterNumber && page.chapterTitle ? <Text style={pdfStyle(theme.chapterLabelStyle, { fontFamily: theme.bodyFont, fontSize: 9, color: theme.mutedColor, textAlign: theme.headingAlign, marginBottom: 8, textTransform: 'uppercase' })}>Capítulo {chapterNumber}</Text> : null}
+                {blocks.map((block, index) => renderPdfContentBlock(block, index, theme, chapterNumber && index === 0 ? theme.chapterTitleStyle : null))}
               </>}
-              {theme.footerEnabled || theme.pageNumberEnabled ? <Text style={{ position: 'absolute', bottom: 16, left: pdfMarginLeft, right: pdfMarginRight, fontFamily: theme.bodyFont, fontSize: 8, color: theme.mutedColor, textAlign: theme.footerAlign }}>{theme.footerEnabled ? project.document.title : ''}{theme.footerEnabled && theme.pageNumberEnabled ? '  ·  ' : ''}{theme.pageNumberEnabled ? page.pageNumber : ''}</Text> : null}
+              {theme.footerEnabled || theme.pageNumberEnabled ? <Text style={{ position: 'absolute', bottom: 16, left: pdfMarginLeft, right: pdfMarginRight, ...pdfStyle(theme.footerStyle, { fontFamily: theme.bodyFont, fontSize: 8, color: theme.mutedColor, textAlign: theme.footerAlign }) }}>{theme.footerEnabled ? project.document.title : ''}{theme.footerEnabled && theme.pageNumberEnabled ? '  ·  ' : ''}{theme.pageNumberEnabled ? page.pageNumber : ''}</Text> : null}
             </View>
           </Page>
         );
