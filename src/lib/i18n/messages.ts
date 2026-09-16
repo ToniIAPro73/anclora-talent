@@ -1017,6 +1017,17 @@ export type AppMessages = {
       zoomInLabel: string;
       zoomFitLabel: string;
     };
+    studio: {
+      basicModeLabel: string;
+      advancedModeLabel: string;
+      mobileAdvancedNotice: string;
+      backToBasicButton: string;
+      savingLabel: string;
+      savedLabel: string;
+      saveErrorLabel: string;
+      saveFinalButton: string;
+      finalStatusLabel: string;
+    };
   };
 };
 
@@ -2266,6 +2277,17 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         zoomInLabel: 'Acercar',
         zoomFitLabel: 'Ajustar a la ventana',
       },
+      studio: {
+        basicModeLabel: 'Editor básico',
+        advancedModeLabel: 'Editor avanzado',
+        mobileAdvancedNotice: 'El editor avanzado está optimizado para pantallas grandes. En este dispositivo, algunas acciones pueden ser más cómodas en el editor básico.',
+        backToBasicButton: 'Volver al editor básico',
+        savingLabel: 'Guardando…',
+        savedLabel: 'Guardado',
+        saveErrorLabel: 'Error al guardar',
+        saveFinalButton: 'Guardar diseño final',
+        finalStatusLabel: 'Diseño finalizado',
+      },
     },
   },
   en: {
@@ -3511,6 +3533,17 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         zoomOutLabel: 'Zoom out',
         zoomInLabel: 'Zoom in',
         zoomFitLabel: 'Fit to window',
+      },
+      studio: {
+        basicModeLabel: 'Basic editor',
+        advancedModeLabel: 'Advanced editor',
+        mobileAdvancedNotice: 'The advanced editor is optimized for larger screens. On this device, some actions may be easier in the basic editor.',
+        backToBasicButton: 'Back to basic editor',
+        savingLabel: 'Saving…',
+        savedLabel: 'Saved',
+        saveErrorLabel: 'Error saving',
+        saveFinalButton: 'Save final design',
+        finalStatusLabel: 'Design finalized',
       },
     },
   },
