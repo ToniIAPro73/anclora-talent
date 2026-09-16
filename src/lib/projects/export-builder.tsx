@@ -597,7 +597,7 @@ export function resolvePdfBrandTheme(overrides?: Partial<ComposeTemplate>, profi
   };
 }
 
-function pdfStyle(style: EditorialTextStyle | null, fallback: Record<string, unknown> = {}) {
+function pdfStyle(style: EditorialTextStyle | null, fallback: Record<string, string | number> = {}): Record<string, string | number> {
   if (!style) return fallback;
   return {
     ...fallback,
@@ -736,7 +736,7 @@ function renderPdfContentBlock(
         style={[
           block.level <= 1 ? { ...pdfStyles.heading1, fontSize: theme.heading1Size } : block.level === 2 ? { ...pdfStyles.heading2, fontSize: theme.heading2Size } : { ...pdfStyles.heading2, fontSize: theme.heading3Size },
           { fontFamily: theme.headingFont, color: theme.headingColor, textAlign: theme.headingAlign },
-          block.level <= 1 && chapterTitleStyle ? pdfStyle(chapterTitleStyle) : null,
+          ...(block.level <= 1 && chapterTitleStyle ? [pdfStyle(chapterTitleStyle)] : []),
         ]}
       >
         {block.text}
