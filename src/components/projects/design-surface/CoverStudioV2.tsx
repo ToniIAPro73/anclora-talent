@@ -213,7 +213,12 @@ export function CoverStudioV2({
       {mode === 'advanced' && !isWideViewport && !showOriginPrompt && (
         <div className="ac-surface-panel ac-surface-panel--subtle flex flex-wrap items-center justify-between gap-3 p-3 text-xs" data-testid="studio-mobile-advanced-notice">
           <span>{copy.studio.mobileAdvancedNotice}</span>
-          <button type="button" onClick={() => setMode('basic')} className="ac-button ac-button--ghost ac-button--sm">
+          <button
+            type="button"
+            data-testid="studio-mobile-back-to-basic-button"
+            onClick={() => setMode('basic')}
+            className="ac-button ac-button--ghost ac-button--sm"
+          >
             {copy.studio.backToBasicButton}
           </button>
         </div>
