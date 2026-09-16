@@ -130,13 +130,13 @@ describe('EditorialStyleSection error and retry lifecycle', () => {
   });
 
   test('stale first attempt cannot overwrite a second successful attempt', async () => {
-    let resolveFirstAttempt: (val: any) => void;
-    const firstPromise = new Promise((resolve) => {
+    let resolveFirstAttempt: (val: Awaited<ReturnType<typeof extractReferenceEditorialProfileAction>>) => void;
+    const firstPromise = new Promise<Awaited<ReturnType<typeof extractReferenceEditorialProfileAction>>>((resolve) => {
       resolveFirstAttempt = resolve;
     });
 
     // Attempt 1: hangs until manually resolved
-    vi.mocked(extractReferenceEditorialProfileAction).mockImplementationOnce(() => firstPromise as any);
+    vi.mocked(extractReferenceEditorialProfileAction).mockImplementationOnce(() => firstPromise);
     // Attempt 2: resolves immediately with success
     vi.mocked(extractReferenceEditorialProfileAction).mockResolvedValueOnce({
       ok: true,

@@ -35,6 +35,10 @@ import {
   buildCoverExportImageDataUrl,
 } from './export-surface-image';
 
+import { isTocChapter } from '@/lib/preview/preview-builder';
+import { chapterBlocksToHtml } from './chapter-html';
+import { htmlToBlocks } from '@/lib/document/from-html';
+
 const DEFAULT_EXPORT_CONFIG = DEVICE_PAGINATION_CONFIGS.laptop;
 const PDF_SCALE = 0.75;
 
@@ -58,6 +62,29 @@ function normalizeArtifactText(value: string) {
 }
 
 function semanticDocumentText(project: ProjectRecord) {
+  // When chapters exist, exclude TOC chapters whose raw block text is replaced
+  // by the dynamically generated TOC list during composition.
+  if (project.document.chapters?.length) {
+    const contentChapters = project.document.chapters.filter((ch) => !isTocChapter(ch.title));
+    if (contentChapters.length > 0) {
+      return contentChapters
+        .flatMap((ch) => {
+          const html = chapterBlocksToHtml(ch.blocks);
+          const blocks = htmlToBlocks(html);
+          return blocks.map((block) => {
+            if ('content' in block && Array.isArray(block.content)) return inlineToPlainText(block.content);
+            if (block.type === 'list') return block.items.map(inlineToPlainText).join(' ');
+            if (block.type === 'table') return block.rows.flat().map(inlineToPlainText).join(' ');
+            if (block.type === 'image') return block.alt ?? '';
+            if (block.type === 'code') return block.code;
+            return '';
+          });
+        })
+        .filter(Boolean)
+        .join(' ');
+    }
+  }
+
   const { document } = projectToSemanticDocument(project);
   return document.blocks
     .map((block) => {
