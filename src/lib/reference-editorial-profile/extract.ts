@@ -267,7 +267,6 @@ export function extractEditorialProfileFromFragments(
   const result = createEmptyProfile(source, page);
   if (fragments.length === 0) return result;
 
-  const pages = new Set(fragments.map((fragment) => fragment.pageNumber));
   const headerFragments = repeatedBoundaryFragments(fragments, page.height, 'top');
   const footerFragments = repeatedBoundaryFragments(fragments, page.height, 'bottom');
   const excluded = new Set([...headerFragments, ...footerFragments]);
@@ -314,7 +313,7 @@ export function extractEditorialProfileFromFragments(
   // Many editorial PDFs use spaced small caps ("C A P Í T U L O 10") or
   // omit the label entirely. Large repeated headings near the upper page
   // region are a conservative visual fallback, never a source-text copy.
-  const openingCandidates = interior.filter((fragment) => (fragment.fontSize >= (bodyCluster?.size ?? 0) * 1.7) && fragment.y < page.height * 0.55);
+  const openingCandidates = interior.filter((fragment) => ((fragment.fontSize ?? 0) >= (bodyCluster?.size ?? 0) * 1.7) && fragment.y < page.height * 0.55);
   const chapterFragments = chapterLabelFragments.length > 0 ? chapterLabelFragments : openingCandidates;
   result.chapterOpening = {
     detected: new Set(chapterFragments.map((fragment) => fragment.pageNumber)).size >= 2,
