@@ -26,7 +26,15 @@ import {
 import { extractStructureFromDocument } from './extract-structure-profile';
 import { structureProfileRepository } from './repository';
 import type { InferredStructureSchema, StructureProfileStatus } from './model';
-export { extractReferenceEditorialProfileAction, saveReferenceEditorialProfileAction } from '@/lib/reference-editorial-profile/actions';
+export async function extractReferenceEditorialProfileAction(formData: FormData) {
+  const { extractReferenceEditorialProfileAction: extract } = await import('@/lib/reference-editorial-profile/actions');
+  return extract(formData);
+}
+
+export async function saveReferenceEditorialProfileAction(formData: FormData) {
+  const { saveReferenceEditorialProfileAction: save } = await import('@/lib/reference-editorial-profile/actions');
+  return save(formData);
+}
 
 function isInferredStructureSchema(value: unknown): value is InferredStructureSchema {
   if (!value || typeof value !== 'object') return false;
