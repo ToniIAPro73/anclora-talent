@@ -40,7 +40,7 @@ export interface SurfaceLayer {
   fontFamily?: string;
   fontWeight?: string | number;
   fontStyle?: string;
-  textAlign?: 'left' | 'center' | 'right';
+  textAlign?: 'left' | 'center' | 'right' | 'justify';
   lineHeight?: number;
   charSpacing?: number;
   originX?: string;

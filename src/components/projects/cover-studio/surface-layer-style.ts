@@ -41,7 +41,7 @@ interface FieldGeometry {
   left: number;
   width: number;
   originX: 'left' | 'center';
-  textAlign: 'left' | 'center' | 'right';
+  textAlign: 'left' | 'center' | 'right' | 'justify';
   fontSize: number;
   fontWeight: number;
   lineHeight: number;
@@ -149,7 +149,7 @@ export interface ComputedLayerStyle {
   top: number;
   width: number;
   originX: 'left' | 'center';
-  textAlign: 'left' | 'center' | 'right';
+  textAlign: 'left' | 'center' | 'right' | 'justify';
   fontSize: number;
   fontFamily: string;
   fontWeight: string | number;

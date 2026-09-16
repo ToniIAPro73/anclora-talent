@@ -4,6 +4,7 @@ import { PreviewModal } from './PreviewModal';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { createDefaultSurfaceState } from '@/lib/projects/cover-surface';
+import { createDesignLayer, createEmptyDesignSurface } from '@/lib/projects/design-surface';
 import { EDITOR_PREFERENCES_STORAGE_KEY } from '@/lib/ui-preferences/preferences';
 
 vi.mock('server-only', () => ({}));
@@ -290,6 +291,43 @@ describe('PreviewModal', () => {
     );
 
     expect(screen.queryByText('Subtitulo antiguo')).not.toBeInTheDocument();
+  });
+
+  test('renders a Cover Studio v2 design through DesignSurfaceRenderer instead of the legacy field-map preview', () => {
+    const project = makeProject();
+    const coverSurface = createEmptyDesignSurface('cover');
+    coverSurface.layers = [
+      createDesignLayer({ type: 'text', content: 'Título v2', role: 'title', source: 'manual' }, 1),
+    ];
+
+    render(
+      <PreviewModal
+        project={{ ...project, cover: { ...project.cover, renderedImageUrl: null, surfaceState: coverSurface } }}
+        copy={copy}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(screen.getByTestId('design-surface-renderer')).toBeInTheDocument();
+    expect(screen.getByText('Título v2')).toBeInTheDocument();
+  });
+
+  test('prefers the live v2 surface over a stale legacy rendered image', () => {
+    const project = makeProject();
+    const coverSurface = createEmptyDesignSurface('cover');
+    coverSurface.layers = [createDesignLayer({ type: 'text', content: 'Diseño vivo', role: 'title', source: 'manual' }, 1)];
+
+    render(
+      <PreviewModal
+        project={{ ...project, cover: { ...project.cover, renderedImageUrl: 'https://example.com/stale.png', surfaceState: coverSurface } }}
+        copy={copy}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(screen.getByTestId('design-surface-renderer')).toBeInTheDocument();
+    expect(screen.getByText('Diseño vivo')).toBeInTheDocument();
+    expect(screen.queryByAltText(copy.previewModalCoverAlt)).not.toBeInTheDocument();
   });
 
   test('renders imported document content inside the preview page content area', async () => {

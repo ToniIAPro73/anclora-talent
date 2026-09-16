@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { CoverOptimizePanel } from '@/components/filestudio/CoverOptimizePanel';
-import { CoverStudio } from '@/components/projects/cover-studio/CoverStudio';
+import { CoverStudioV2 } from '@/components/projects/design-surface/CoverStudioV2';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { NavigatingLink } from '@/components/ui/NavigatingLink';
 import { requireUserId } from '@/lib/auth/guards';
@@ -10,6 +10,7 @@ import { isFileStudioEnabled } from '@/lib/filestudio/config';
 import { listProjectFileStudioJobs } from '@/lib/filestudio/emission';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
+import { getCoverDesign } from '@/lib/projects/design-surface-repository';
 
 export default async function ProjectCoverPage({
   params,
@@ -33,6 +34,10 @@ export default async function ProjectCoverPage({
     ? await listProjectFileStudioJobs(userId, projectId).catch(() => [])
     : null;
   const hasCover = Boolean(project.cover.renderedImageUrl ?? project.cover.backgroundImageUrl);
+  const coverDesignSurfaceCopy = resolveLocaleMessages(locale).coverDesignSurface;
+  const initialSurface = getCoverDesign(project);
+  const sourceDocumentAssetId = project.assets.find((asset) => asset.usage === 'source-document')?.id ?? null;
+  const pageCount = project.document.source?.pageCount ?? null;
 
   return (
     <div className="ac-workspace-stage talent-workspace-stage">
@@ -53,7 +58,14 @@ export default async function ProjectCoverPage({
           </NavigatingLink>
         </div>
       </div>
-      <CoverStudio surface="cover" project={project} copy={copy} />
+      <CoverStudioV2
+        surfaceKind="cover"
+        projectId={project.id}
+        initialSurface={initialSurface}
+        sourceDocumentAssetId={sourceDocumentAssetId}
+        pageCount={pageCount}
+        copy={coverDesignSurfaceCopy}
+      />
       {filestudioJobs && (
         <section aria-label={filestudioCopy.derivativesTitle} className="mt-8">
           <CoverOptimizePanel

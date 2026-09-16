@@ -4,6 +4,7 @@ vi.mock('server-only', () => ({}));
 
 import { createProjectRecord, updateProjectDocument } from '@/lib/projects/factories';
 import { isFixedPdfProject } from '@/lib/projects/types';
+import { createDesignLayer, createEmptyDesignSurface, isDesignSurfaceV2 } from '@/lib/projects/design-surface';
 import {
   mapRowsToProject,
   persistDocumentUpdate,
@@ -266,5 +267,48 @@ describe('repository persistence helpers', () => {
 
     expect(project.document.source?.mode).toBeUndefined();
     expect(isFixedPdfProject(project)).toBe(false);
+  });
+
+  test('mapRowsToProject preserves a v2 DesignSurface payload instead of collapsing it back to a legacy default (regression)', () => {
+    const documentRow = {
+      id: 'doc-1',
+      projectId: 'project-1',
+      title: 'Ebook',
+      subtitle: '',
+      author: '',
+      language: 'es',
+      rules: null,
+      documentModel: null,
+      metadata: null,
+      provenance: null,
+      sourceMetadata: null,
+    };
+
+    const surface = createEmptyDesignSurface('cover');
+    surface.layers = [createDesignLayer({ type: 'text', content: 'El Plan de Escape', role: 'title', source: 'manual' }, 1)];
+
+    const layerRows = [
+      {
+        id: 'row-1',
+        coverDesignId: 'cover-1',
+        layerOrder: 0,
+        kind: 'surface-state-cover',
+        payload: surface,
+      },
+    ];
+
+    const project = mapRowsToProject(
+      baseProjectRow() as never,
+      documentRow as never,
+      [] as never,
+      baseCoverRow() as never,
+      null,
+      layerRows as never,
+      [] as never,
+    );
+
+    expect(isDesignSurfaceV2(project.cover.surfaceState)).toBe(true);
+    expect((project.cover.surfaceState as typeof surface).layers).toHaveLength(1);
+    expect((project.cover.surfaceState as typeof surface).layers[0]).toMatchObject({ content: 'El Plan de Escape' });
   });
 });

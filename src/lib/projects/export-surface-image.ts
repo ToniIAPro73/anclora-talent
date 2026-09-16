@@ -10,6 +10,9 @@ import { type SurfaceLayer } from './cover-surface';
 import { createSurfaceSnapshotFromProject } from './surface-snapshot';
 import { COVER_TEXT_LAYOUT, BACK_COVER_TEXT_LAYOUT } from './cover-layout';
 import { fabricCharSpacingToCss, findSurfaceTextLayer } from './cover-layer-style';
+import { isDesignSurfaceV2 } from './design-surface';
+import { getBackCoverDesign, getCoverDesign } from './design-surface-repository';
+import { renderDesignSurfaceToPngDataUrl } from './design-surface-render';
 
 const CANVAS_WIDTH = 400;
 const CANVAS_HEIGHT = 600;
@@ -1127,7 +1130,21 @@ function buildSvgShell({
   `;
 }
 
+/**
+ * Cover Studio v2 (Fase G, mission §45-47): a design already authored in
+ * the new layered editor (`project.cover.surfaceState` is a v2
+ * `DesignSurface`) renders through the ONE canonical structured renderer —
+ * the same engine the editor's canvas hydrates from — instead of the
+ * legacy HTML/SVG pipeline below. A pre-v2 (legacy `SurfaceState`, or no
+ * design yet) cover keeps using the legacy pipeline untouched, so existing
+ * projects' exports never change until their cover is actually opened and
+ * saved in the new editor.
+ */
 export async function buildCoverExportImageDataUrl(project: ProjectRecord) {
+  if (isDesignSurfaceV2(project.cover.surfaceState)) {
+    return renderDesignSurfaceToPngDataUrl(getCoverDesign(project));
+  }
+
   if (project.cover.renderedImageUrl?.trim()) {
     return project.cover.renderedImageUrl;
   }
@@ -1147,7 +1164,12 @@ export async function buildCoverExportImageDataUrl(project: ProjectRecord) {
   }
 }
 
+/** See `buildCoverExportImageDataUrl`'s note above — same v2/legacy branch, for the back cover. */
 export async function buildBackCoverExportImageDataUrl(project: ProjectRecord) {
+  if (isDesignSurfaceV2(project.backCover.surfaceState)) {
+    return renderDesignSurfaceToPngDataUrl(getBackCoverDesign(project));
+  }
+
   if (project.backCover.renderedImageUrl?.trim()) {
     return project.backCover.renderedImageUrl;
   }

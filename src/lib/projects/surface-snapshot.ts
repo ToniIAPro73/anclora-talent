@@ -10,6 +10,7 @@ import { resolveBackCoverSurfaceFields } from './back-cover-surface-resolver';
 import { resolveCoverSurfaceFields } from './cover-surface-resolver';
 import { syncedSurfaceValues } from './surface-metadata-sync';
 import type { ProjectRecord } from './types';
+import { isLegacySurfaceState } from './design-surface';
 
 type SurfaceFields = SurfaceState['fields'];
 const FIELD_ORDER: Record<SurfaceKind, Array<keyof SurfaceFields>> = {
@@ -83,7 +84,7 @@ export function createSurfaceSnapshotFromProject(
       : (project.cover.subtitle || synced.subtitle);
 
     const state = normalizeSurfaceState(
-      project.cover.surfaceState ??
+      (isLegacySurfaceState(project.cover.surfaceState) ? project.cover.surfaceState : null) ??
         {
           ...createDefaultSurfaceState('cover'),
           fields: {
@@ -114,7 +115,7 @@ export function createSurfaceSnapshotFromProject(
     : (project.backCover.body || synced.body);
 
   const state = normalizeSurfaceState(
-    project.backCover.surfaceState ??
+    (isLegacySurfaceState(project.backCover.surfaceState) ? project.backCover.surfaceState : null) ??
       {
         ...createDefaultSurfaceState('back-cover'),
         fields: {

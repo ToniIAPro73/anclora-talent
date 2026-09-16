@@ -1,11 +1,12 @@
 import { notFound } from 'next/navigation';
-import { CoverStudio } from '@/components/projects/cover-studio/CoverStudio';
+import { CoverStudioV2 } from '@/components/projects/design-surface/CoverStudioV2';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { NavigatingLink } from '@/components/ui/NavigatingLink';
 import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
+import { getBackCoverDesign } from '@/lib/projects/design-surface-repository';
 
 export default async function ProjectBackCoverPage({
   params,
@@ -21,6 +22,11 @@ export default async function ProjectBackCoverPage({
   if (!project) {
     notFound();
   }
+
+  const coverDesignSurfaceCopy = resolveLocaleMessages(locale).coverDesignSurface;
+  const initialSurface = getBackCoverDesign(project);
+  const sourceDocumentAssetId = project.assets.find((asset) => asset.usage === 'source-document')?.id ?? null;
+  const pageCount = project.document.source?.pageCount ?? null;
 
   return (
     <div className="space-y-6">
@@ -42,7 +48,14 @@ export default async function ProjectBackCoverPage({
           </NavigatingLink>
         </div>
       </div>
-      <CoverStudio surface="back-cover" project={project} copy={copy} />
+      <CoverStudioV2
+        surfaceKind="back-cover"
+        projectId={project.id}
+        initialSurface={initialSurface}
+        sourceDocumentAssetId={sourceDocumentAssetId}
+        pageCount={pageCount}
+        copy={coverDesignSurfaceCopy}
+      />
     </div>
   );
 }

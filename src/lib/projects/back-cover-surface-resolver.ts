@@ -4,6 +4,7 @@ import {
   type SurfaceFieldState,
   type SurfaceState,
 } from './cover-surface';
+import { isDesignSurfaceV2 } from './design-surface';
 import { syncedSurfaceValues } from './surface-metadata-sync';
 import type { ProjectRecord } from './types';
 
@@ -63,7 +64,10 @@ export function resolveBackCoverSurfaceFields(
   project: BackCoverProjectSubset,
   surfaceState?: SurfaceState | null,
 ) {
-  const persistedState = surfaceState ?? project.backCover.surfaceState;
+  // Cover Studio v2: see the matching note in cover-surface-resolver.ts —
+  // this legacy resolver never sees a v2 DesignSurface payload.
+  const rawPersistedState = surfaceState ?? project.backCover.surfaceState;
+  const persistedState = rawPersistedState && !isDesignSurfaceV2(rawPersistedState) ? rawPersistedState : null;
   const state = normalizeSurfaceState(
     persistedState ??
       {

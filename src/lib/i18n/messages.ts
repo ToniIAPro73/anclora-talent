@@ -395,6 +395,7 @@ export type AppMessages = {
     coverStudioAlignLeft: string;
     coverStudioAlignCenter: string;
     coverStudioAlignRight: string;
+    coverStudioAlignJustify: string;
     coverStudioBold: string;
     coverStudioItalic: string;
     coverStudioFontSizeLabel: string;
@@ -894,6 +895,164 @@ export type AppMessages = {
       unavailable: string;
       notFound: string;
       unchanged: string;
+    };
+  };
+  /** Cover Studio v2 — layered design surface (Fase C: typography/image/background/color). */
+  coverDesignSurface: {
+    noSelection: string;
+    multiSelection: string;
+    addVerticalGuideLabel: string;
+    addHorizontalGuideLabel: string;
+    removeGuideLabel: string;
+    templatesLabel: string;
+    fields: {
+      title: string;
+      subtitle: string;
+      author: string;
+      addFieldButtonLabel: string;
+    };
+    text: {
+      contentLabel: string;
+      fontFamilyLabel: string;
+      fontSizeLabel: string;
+      boldLabel: string;
+      italicLabel: string;
+      underlineLabel: string;
+      colorLabel: string;
+      alignLeftLabel: string;
+      alignCenterLabel: string;
+      alignRightLabel: string;
+      alignJustifyLabel: string;
+      verticalAlignTopLabel: string;
+      verticalAlignMiddleLabel: string;
+      verticalAlignBottomLabel: string;
+      letterSpacingLabel: string;
+      lineHeightLabel: string;
+      textTransformLabel: string;
+      textTransformNone: string;
+      textTransformUppercase: string;
+      textTransformLowercase: string;
+      opacityLabel: string;
+      widthLabel: string;
+      heightLabel: string;
+      xLabel: string;
+      yLabel: string;
+      rotationLabel: string;
+    };
+    image: {
+      replaceLabel: string;
+      uploadLabel: string;
+      fitLabel: string;
+      fitCover: string;
+      fitContain: string;
+      fitFill: string;
+      opacityLabel: string;
+      grayscaleLabel: string;
+      brightnessLabel: string;
+      contrastLabel: string;
+      saturationLabel: string;
+      resetFiltersLabel: string;
+      xLabel: string;
+      yLabel: string;
+      widthLabel: string;
+      heightLabel: string;
+      rotationLabel: string;
+    };
+    shape: {
+      fillLabel: string;
+      strokeLabel: string;
+      strokeWidthLabel: string;
+      opacityLabel: string;
+      xLabel: string;
+      yLabel: string;
+      widthLabel: string;
+      heightLabel: string;
+      rotationLabel: string;
+    };
+    background: {
+      label: string;
+      solid: string;
+      gradient: string;
+      image: string;
+      gradientAngleLabel: string;
+      addColorStopButton: string;
+      removeColorStopButton: string;
+      opacityLabel: string;
+      fitLabel: string;
+      fitCover: string;
+      fitContain: string;
+      grayscaleLabel: string;
+    };
+    colorPicker: {
+      customLabel: string;
+      recentLabel: string;
+      paletteLabel: string;
+      brandColorsLabel: string;
+      hexLabel: string;
+    };
+    layers: {
+      title: string;
+      emptyLabel: string;
+      renameLabel: string;
+      showLabel: string;
+      hideLabel: string;
+      lockLabel: string;
+      unlockLabel: string;
+      duplicateLabel: string;
+      deleteLabel: string;
+      moveUpLabel: string;
+      moveDownLabel: string;
+      bringToFrontLabel: string;
+      sendToBackLabel: string;
+      untitledText: string;
+      untitledImage: string;
+      untitledShape: string;
+    };
+    origin: {
+      promptTitle: string;
+      useOriginalLabel: string;
+      useOriginalDescription: string;
+      editAsBaseLabel: string;
+      editAsBaseDescription: string;
+      createNewLabel: string;
+      createNewDescription: string;
+      chooseTemplateLabel: string;
+      createFromScratchLabel: string;
+      rasterizingLabel: string;
+      resetToOriginalLabel: string;
+      resetToOriginalConfirm: string;
+      resetToTemplateConfirm: string;
+      syncFromMetadataLabel: string;
+      syncFromMetadataConfirm: string;
+    };
+    toolbar: {
+      undoLabel: string;
+      redoLabel: string;
+      snappingLabel: string;
+      safeAreaLabel: string;
+      gridLabel: string;
+      objectAlignmentLabel: string;
+      objectAlignLeftLabel: string;
+      objectAlignCenterHorizontalLabel: string;
+      objectAlignRightLabel: string;
+      objectAlignTopLabel: string;
+      objectAlignCenterVerticalLabel: string;
+      objectAlignBottomLabel: string;
+      disableSnapHelp: string;
+      zoomOutLabel: string;
+      zoomInLabel: string;
+      zoomFitLabel: string;
+    };
+    studio: {
+      basicModeLabel: string;
+      advancedModeLabel: string;
+      mobileAdvancedNotice: string;
+      backToBasicButton: string;
+      savingLabel: string;
+      savedLabel: string;
+      saveErrorLabel: string;
+      saveFinalButton: string;
+      finalStatusLabel: string;
     };
   };
 };
@@ -1490,6 +1649,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverStudioAlignLeft: 'Alinear a la izquierda',
       coverStudioAlignCenter: 'Centrar',
       coverStudioAlignRight: 'Alinear a la derecha',
+      coverStudioAlignJustify: 'Justificar',
       coverStudioBold: 'Negrita',
       coverStudioItalic: 'Cursiva',
       coverStudioFontSizeLabel: 'Tamaño',
@@ -2022,6 +2182,163 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         unavailable: 'No se pudo completar la operación. Inténtalo más tarde.',
         notFound: 'No encontramos esta versión.',
         unchanged: 'No hay cambios desde la última versión guardada.',
+      },
+    },
+    coverDesignSurface: {
+      noSelection: 'Selecciona un elemento del lienzo para editar sus propiedades.',
+      multiSelection: 'Varios elementos seleccionados.',
+      addVerticalGuideLabel: 'Añadir guía vertical',
+      addHorizontalGuideLabel: 'Añadir guía horizontal',
+      removeGuideLabel: 'Quitar guía (doble clic)',
+      templatesLabel: 'Plantillas',
+      fields: {
+        title: 'Título',
+        subtitle: 'Subtítulo',
+        author: 'Autor',
+        addFieldButtonLabel: 'Añadir campo',
+      },
+      text: {
+        contentLabel: 'Contenido',
+        fontFamilyLabel: 'Tipografía',
+        fontSizeLabel: 'Tamaño',
+        boldLabel: 'Negrita',
+        italicLabel: 'Cursiva',
+        underlineLabel: 'Subrayado',
+        colorLabel: 'Color',
+        alignLeftLabel: 'Alinear a la izquierda',
+        alignCenterLabel: 'Centrar',
+        alignRightLabel: 'Alinear a la derecha',
+        alignJustifyLabel: 'Justificar',
+        verticalAlignTopLabel: 'Arriba',
+        verticalAlignMiddleLabel: 'Centro',
+        verticalAlignBottomLabel: 'Abajo',
+        letterSpacingLabel: 'Espaciado entre letras',
+        lineHeightLabel: 'Interlineado',
+        textTransformLabel: 'Mayúsculas/minúsculas',
+        textTransformNone: 'Normal',
+        textTransformUppercase: 'MAYÚSCULAS',
+        textTransformLowercase: 'minúsculas',
+        opacityLabel: 'Opacidad',
+        widthLabel: 'Ancho',
+        heightLabel: 'Alto',
+        xLabel: 'X',
+        yLabel: 'Y',
+        rotationLabel: 'Rotación',
+      },
+      image: {
+        replaceLabel: 'Reemplazar imagen',
+        uploadLabel: 'Subir imagen',
+        fitLabel: 'Ajuste',
+        fitCover: 'Cubrir',
+        fitContain: 'Contener',
+        fitFill: 'Estirar',
+        opacityLabel: 'Opacidad',
+        grayscaleLabel: 'Blanco y negro',
+        brightnessLabel: 'Brillo',
+        contrastLabel: 'Contraste',
+        saturationLabel: 'Saturación',
+        resetFiltersLabel: 'Restablecer ajustes',
+        xLabel: 'X',
+        yLabel: 'Y',
+        widthLabel: 'Ancho',
+        heightLabel: 'Alto',
+        rotationLabel: 'Rotación',
+      },
+      shape: {
+        fillLabel: 'Relleno',
+        strokeLabel: 'Borde',
+        strokeWidthLabel: 'Grosor del borde',
+        opacityLabel: 'Opacidad',
+        xLabel: 'X',
+        yLabel: 'Y',
+        widthLabel: 'Ancho',
+        heightLabel: 'Alto',
+        rotationLabel: 'Rotación',
+      },
+      background: {
+        label: 'Fondo',
+        solid: 'Color sólido',
+        gradient: 'Degradado',
+        image: 'Imagen',
+        gradientAngleLabel: 'Ángulo',
+        addColorStopButton: 'Añadir color',
+        removeColorStopButton: 'Quitar color',
+        opacityLabel: 'Opacidad',
+        fitLabel: 'Ajuste',
+        fitCover: 'Cubrir',
+        fitContain: 'Contener',
+        grayscaleLabel: 'Blanco y negro',
+      },
+      colorPicker: {
+        customLabel: 'Personalizado',
+        recentLabel: 'Recientes',
+        paletteLabel: 'Paleta',
+        brandColorsLabel: 'Colores de marca',
+        hexLabel: 'Hex',
+      },
+      layers: {
+        title: 'Capas',
+        emptyLabel: 'Aún no hay elementos en el lienzo.',
+        renameLabel: 'Renombrar',
+        showLabel: 'Mostrar',
+        hideLabel: 'Ocultar',
+        lockLabel: 'Bloquear',
+        unlockLabel: 'Desbloquear',
+        duplicateLabel: 'Duplicar',
+        deleteLabel: 'Eliminar',
+        moveUpLabel: 'Subir una posición',
+        moveDownLabel: 'Bajar una posición',
+        bringToFrontLabel: 'Traer al frente',
+        sendToBackLabel: 'Enviar al fondo',
+        untitledText: 'Texto',
+        untitledImage: 'Imagen',
+        untitledShape: 'Forma',
+      },
+      origin: {
+        promptTitle: '¿Cómo quieres empezar?',
+        useOriginalLabel: 'Usar portada original',
+        useOriginalDescription: 'Usa la página tal como está en el documento original, sin añadir nada encima.',
+        editAsBaseLabel: 'Editar como base',
+        editAsBaseDescription: 'Parte de la página original y añade elementos encima sin modificar el archivo original.',
+        createNewLabel: 'Crear nueva',
+        createNewDescription: 'Empieza desde cero o desde una plantilla, sin usar la página original.',
+        chooseTemplateLabel: 'Elegir plantilla',
+        createFromScratchLabel: 'Empezar en blanco',
+        rasterizingLabel: 'Preparando la página original…',
+        resetToOriginalLabel: 'Restablecer a la portada original',
+        resetToOriginalConfirm: 'Esto eliminará todos los elementos añadidos y volverá a la página original. ¿Continuar?',
+        resetToTemplateConfirm: 'Esto reemplazará el diseño actual con la plantilla seleccionada. ¿Continuar?',
+        syncFromMetadataLabel: 'Actualizar desde metadatos',
+        syncFromMetadataConfirm: 'Esto reemplazará el texto actual con el valor detectado en los metadatos del documento. ¿Continuar?',
+      },
+      toolbar: {
+        undoLabel: 'Deshacer',
+        redoLabel: 'Rehacer',
+        snappingLabel: 'Ajuste automático',
+        safeAreaLabel: 'Área segura',
+        gridLabel: 'Cuadrícula',
+        objectAlignmentLabel: 'Alineación del objeto',
+        objectAlignLeftLabel: 'Alinear objeto a la izquierda',
+        objectAlignCenterHorizontalLabel: 'Centrar objeto horizontalmente',
+        objectAlignRightLabel: 'Alinear objeto a la derecha',
+        objectAlignTopLabel: 'Alinear objeto arriba',
+        objectAlignCenterVerticalLabel: 'Centrar objeto verticalmente',
+        objectAlignBottomLabel: 'Alinear objeto abajo',
+        disableSnapHelp: 'Mantén Alt/Option durante el arrastre para desactivar el ajuste temporalmente.',
+        zoomOutLabel: 'Alejar',
+        zoomInLabel: 'Acercar',
+        zoomFitLabel: 'Ajustar a la ventana',
+      },
+      studio: {
+        basicModeLabel: 'Editor básico',
+        advancedModeLabel: 'Editor avanzado',
+        mobileAdvancedNotice: 'El editor avanzado está optimizado para pantallas grandes. En este dispositivo, algunas acciones pueden ser más cómodas en el editor básico.',
+        backToBasicButton: 'Volver al editor básico',
+        savingLabel: 'Guardando…',
+        savedLabel: 'Guardado',
+        saveErrorLabel: 'Error al guardar',
+        saveFinalButton: 'Guardar diseño final',
+        finalStatusLabel: 'Diseño finalizado',
       },
     },
   },
@@ -2616,6 +2933,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       coverStudioAlignLeft: 'Align left',
       coverStudioAlignCenter: 'Center',
       coverStudioAlignRight: 'Align right',
+      coverStudioAlignJustify: 'Justify',
       coverStudioBold: 'Bold',
       coverStudioItalic: 'Italic',
       coverStudioFontSizeLabel: 'Size',
@@ -3147,6 +3465,163 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         unavailable: 'The operation could not be completed. Please try again later.',
         notFound: 'We could not find this version.',
         unchanged: 'No changes since the last saved version.',
+      },
+    },
+    coverDesignSurface: {
+      noSelection: 'Select an element on the canvas to edit its properties.',
+      multiSelection: 'Multiple elements selected.',
+      addVerticalGuideLabel: 'Add vertical guide',
+      addHorizontalGuideLabel: 'Add horizontal guide',
+      removeGuideLabel: 'Remove guide (double-click)',
+      templatesLabel: 'Templates',
+      fields: {
+        title: 'Title',
+        subtitle: 'Subtitle',
+        author: 'Author',
+        addFieldButtonLabel: 'Add field',
+      },
+      text: {
+        contentLabel: 'Content',
+        fontFamilyLabel: 'Font',
+        fontSizeLabel: 'Size',
+        boldLabel: 'Bold',
+        italicLabel: 'Italic',
+        underlineLabel: 'Underline',
+        colorLabel: 'Color',
+        alignLeftLabel: 'Align left',
+        alignCenterLabel: 'Center',
+        alignRightLabel: 'Align right',
+        alignJustifyLabel: 'Justify',
+        verticalAlignTopLabel: 'Top',
+        verticalAlignMiddleLabel: 'Middle',
+        verticalAlignBottomLabel: 'Bottom',
+        letterSpacingLabel: 'Letter spacing',
+        lineHeightLabel: 'Line height',
+        textTransformLabel: 'Case',
+        textTransformNone: 'Normal',
+        textTransformUppercase: 'UPPERCASE',
+        textTransformLowercase: 'lowercase',
+        opacityLabel: 'Opacity',
+        widthLabel: 'Width',
+        heightLabel: 'Height',
+        xLabel: 'X',
+        yLabel: 'Y',
+        rotationLabel: 'Rotation',
+      },
+      image: {
+        replaceLabel: 'Replace image',
+        uploadLabel: 'Upload image',
+        fitLabel: 'Fit',
+        fitCover: 'Cover',
+        fitContain: 'Contain',
+        fitFill: 'Stretch',
+        opacityLabel: 'Opacity',
+        grayscaleLabel: 'Black and white',
+        brightnessLabel: 'Brightness',
+        contrastLabel: 'Contrast',
+        saturationLabel: 'Saturation',
+        resetFiltersLabel: 'Reset adjustments',
+        xLabel: 'X',
+        yLabel: 'Y',
+        widthLabel: 'Width',
+        heightLabel: 'Height',
+        rotationLabel: 'Rotation',
+      },
+      shape: {
+        fillLabel: 'Fill',
+        strokeLabel: 'Stroke',
+        strokeWidthLabel: 'Stroke width',
+        opacityLabel: 'Opacity',
+        xLabel: 'X',
+        yLabel: 'Y',
+        widthLabel: 'Width',
+        heightLabel: 'Height',
+        rotationLabel: 'Rotation',
+      },
+      background: {
+        label: 'Background',
+        solid: 'Solid color',
+        gradient: 'Gradient',
+        image: 'Image',
+        gradientAngleLabel: 'Angle',
+        addColorStopButton: 'Add color',
+        removeColorStopButton: 'Remove color',
+        opacityLabel: 'Opacity',
+        fitLabel: 'Fit',
+        fitCover: 'Cover',
+        fitContain: 'Contain',
+        grayscaleLabel: 'Black and white',
+      },
+      colorPicker: {
+        customLabel: 'Custom',
+        recentLabel: 'Recent',
+        paletteLabel: 'Palette',
+        brandColorsLabel: 'Brand colors',
+        hexLabel: 'Hex',
+      },
+      layers: {
+        title: 'Layers',
+        emptyLabel: 'No elements on the canvas yet.',
+        renameLabel: 'Rename',
+        showLabel: 'Show',
+        hideLabel: 'Hide',
+        lockLabel: 'Lock',
+        unlockLabel: 'Unlock',
+        duplicateLabel: 'Duplicate',
+        deleteLabel: 'Delete',
+        moveUpLabel: 'Move up one position',
+        moveDownLabel: 'Move down one position',
+        bringToFrontLabel: 'Bring to front',
+        sendToBackLabel: 'Send to back',
+        untitledText: 'Text',
+        untitledImage: 'Image',
+        untitledShape: 'Shape',
+      },
+      origin: {
+        promptTitle: 'How do you want to start?',
+        useOriginalLabel: 'Use original cover',
+        useOriginalDescription: 'Use the page exactly as it is in the original document, with nothing added on top.',
+        editAsBaseLabel: 'Edit as a base',
+        editAsBaseDescription: 'Start from the original page and add elements on top without modifying the original file.',
+        createNewLabel: 'Create new',
+        createNewDescription: 'Start from scratch or from a template, without using the original page.',
+        chooseTemplateLabel: 'Choose a template',
+        createFromScratchLabel: 'Start blank',
+        rasterizingLabel: 'Preparing the original page…',
+        resetToOriginalLabel: 'Reset to the original cover',
+        resetToOriginalConfirm: 'This will remove every added element and revert to the original page. Continue?',
+        resetToTemplateConfirm: 'This will replace the current design with the selected template. Continue?',
+        syncFromMetadataLabel: 'Update from metadata',
+        syncFromMetadataConfirm: 'This will replace the current text with the value detected in the document metadata. Continue?',
+      },
+      toolbar: {
+        undoLabel: 'Undo',
+        redoLabel: 'Redo',
+        snappingLabel: 'Snapping',
+        safeAreaLabel: 'Safe area',
+        gridLabel: 'Grid',
+        objectAlignmentLabel: 'Object alignment',
+        objectAlignLeftLabel: 'Align object left',
+        objectAlignCenterHorizontalLabel: 'Center object horizontally',
+        objectAlignRightLabel: 'Align object right',
+        objectAlignTopLabel: 'Align object top',
+        objectAlignCenterVerticalLabel: 'Center object vertically',
+        objectAlignBottomLabel: 'Align object bottom',
+        disableSnapHelp: 'Hold Alt/Option while dragging to temporarily disable snapping.',
+        zoomOutLabel: 'Zoom out',
+        zoomInLabel: 'Zoom in',
+        zoomFitLabel: 'Fit to window',
+      },
+      studio: {
+        basicModeLabel: 'Basic editor',
+        advancedModeLabel: 'Advanced editor',
+        mobileAdvancedNotice: 'The advanced editor is optimized for larger screens. On this device, some actions may be easier in the basic editor.',
+        backToBasicButton: 'Back to basic editor',
+        savingLabel: 'Saving…',
+        savedLabel: 'Saved',
+        saveErrorLabel: 'Error saving',
+        saveFinalButton: 'Save final design',
+        finalStatusLabel: 'Design finalized',
       },
     },
   },

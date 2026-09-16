@@ -21,6 +21,14 @@ const PDF_PARSE_RUNTIME_TRACING_INCLUDES = [
   './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
 ];
 
+// cover-studio-v2: the structured server renderer runs fabric's `/node`
+// build, whose optional peer `canvas` (node-canvas, Cairo-based) ships a
+// native `build/Release/canvas.node` binary — the exact same tracing gap
+// documented above for @napi-rs/canvas (Next's file tracer can't follow the
+// dynamic require that loads it), so it needs the same explicit include on
+// every route that can reach renderDesignSurfaceToPng().
+const FABRIC_NODE_RUNTIME_TRACING_INCLUDES = ['./node_modules/canvas/build/Release/**'];
+
 const nextConfig: NextConfig = {
   // P-E1-04/P-U3-02: keep the dev-only issues badge anchored to the content
   // corner so it never overlaps the sidebar rail or the footer.
@@ -37,15 +45,26 @@ const nextConfig: NextConfig = {
   // does not pick them up automatically, so the Vercel function starts without
   // them and falls back to the low-fidelity SVG rasterizer.
   outputFileTracingIncludes: {
+    // cover-studio-v2: every export route also embeds the cover/back-cover
+    // PNG the structured renderer (fabric/node + canvas) produces, on top
+    // of the pre-existing @sparticuz/chromium need below — both must be
+    // present in the same array, a duplicate object key would silently
+    // drop whichever include list came first.
     '/api/projects/export/docx': [
       './node_modules/@sparticuz/chromium/bin/**',
+      ...FABRIC_NODE_RUNTIME_TRACING_INCLUDES,
     ],
     '/api/projects/export/pdf': [
       './node_modules/@sparticuz/chromium/bin/**',
+      ...FABRIC_NODE_RUNTIME_TRACING_INCLUDES,
     ],
     '/api/projects/export': [
       './node_modules/@sparticuz/chromium/bin/**',
+      ...FABRIC_NODE_RUNTIME_TRACING_INCLUDES,
     ],
+    '/api/projects/export/epub': FABRIC_NODE_RUNTIME_TRACING_INCLUDES,
+    '/projects/[projectId]/cover': FABRIC_NODE_RUNTIME_TRACING_INCLUDES,
+    '/projects/[projectId]/back-cover': FABRIC_NODE_RUNTIME_TRACING_INCLUDES,
     // pdf-import-vercel-runtime: pdfjs-dist (legacy build, used by
     // pdf-parse) resolves its worker script (pdf.worker.mjs) and optional
     // canvas polyfill (@napi-rs/canvas) via dynamic paths that Next's file
@@ -84,6 +103,14 @@ const nextConfig: NextConfig = {
     // stay a real node_modules require, never bundled, so its native .node
     // binary resolves the same way it does outside a Next.js build.
     '@napi-rs/canvas',
+    // cover-studio-v2: same native-binary-resolution class of bug as
+    // @napi-rs/canvas above — `canvas` (node-canvas, Cairo-based) is
+    // fabric/node's optional peer dependency and ships a native
+    // build/Release/canvas.node binary. `fabric` itself is pure JS but is
+    // externalized alongside it so Turbopack never tries to bundle the
+    // require('canvas') call inside fabric's own /node entry point.
+    'canvas',
+    'fabric',
   ],
   experimental: {
     // App Router route handlers such as /api/projects/import receive source

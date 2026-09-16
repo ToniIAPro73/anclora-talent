@@ -5,6 +5,7 @@ import { getDb, hasDatabase } from './index';
 import { backCoverDesigns, coverDesigns, coverLayers, documentBlocks, projectAssets, projectDocuments, projects, userPreferences } from './schema';
 import type { EditorPreferences } from '@/lib/ui-preferences/preferences';
 import { normalizeSurfaceState, type SurfaceState } from '@/lib/projects/cover-surface';
+import { isDesignSurfaceV2, type DesignSurface } from '@/lib/projects/design-surface';
 import { createMockProjectStore } from '@/lib/projects/mock-data';
 import {
   createProjectRecord,
@@ -97,12 +98,29 @@ function serializeSurfaceStateRows(project: ProjectRecord) {
   return rows;
 }
 
+/**
+ * Cover Studio v2 fix: this DB row -> ProjectRecord mapper previously ran
+ * EVERY stored payload through `normalizeSurfaceState` unconditionally.
+ * `normalizeSurfaceState` only understands the legacy `{fields: {...}}`
+ * shape — a v2 `DesignSurface` payload (which has `layers`/`background`
+ * instead) has no `fields` key, so it silently fell back to
+ * `createDefaultSurfaceState()`'s empty defaults, DESTROYING the v2 design
+ * on the very next project load (this only manifested against a real DB;
+ * the in-memory dev store holds the `ProjectRecord` object directly with no
+ * serialize/parse round trip, which is why no existing test caught it). A
+ * v2 payload must pass through untouched — it was already validated on
+ * write by the server action that saved it.
+ */
 function parseSurfaceStatePayload(
   payload: unknown,
   surface: SurfaceState['surface'],
-): SurfaceState | null {
+): SurfaceState | DesignSurface | null {
   if (!payload || typeof payload !== 'object') {
     return null;
+  }
+
+  if (isDesignSurfaceV2(payload)) {
+    return payload;
   }
 
   try {

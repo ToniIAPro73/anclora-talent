@@ -79,10 +79,15 @@ describe('premium button classes contract', () => {
   });
 
   test('cover studio renders both surfaces through the same component', () => {
+    // Cover Studio v2: the live routes moved from the legacy field-map
+    // `CoverStudio` to `CoverStudioV2` (one layered-design component shared
+    // by cover and back cover, only `surfaceKind` differs) — same
+    // one-component guarantee this contract has always checked, updated to
+    // the new component.
     const coverPage = readSrc('app/(app)/projects/[projectId]/cover/page.tsx');
     const backCoverPage = readSrc('app/(app)/projects/[projectId]/back-cover/page.tsx');
-    expect(coverPage).toContain('cover-studio/CoverStudio');
-    expect(backCoverPage).toContain('cover-studio/CoverStudio');
+    expect(coverPage).toContain('design-surface/CoverStudioV2');
+    expect(backCoverPage).toContain('design-surface/CoverStudioV2');
   });
 
   test('preview page uses premium button classes for nav actions', () => {

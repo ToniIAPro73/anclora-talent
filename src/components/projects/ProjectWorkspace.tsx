@@ -28,6 +28,7 @@ import { WorkspaceOnboarding } from './WorkspaceOnboarding';
 import { ProductMetadataPanel } from './ProductMetadataPanel';
 import { useDocumentComposition } from './useDocumentComposition';
 import { resolveDocumentRules } from '@/lib/compose/rules';
+import { isLegacySurfaceState } from '@/lib/projects/design-surface';
 import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
 import { countPreflightErrors, preflight } from '@/lib/preflight/preflight';
 import {
@@ -82,7 +83,7 @@ const TEMPLATE_TONE_TO_PALETTE: Record<EditorialTemplate['previewTone'], Project
 
 function buildCoverSurface(project: ProjectRecord) {
   const fallback = createDefaultSurfaceState('cover');
-  const baseState = normalizeSurfaceState(project.cover.surfaceState ?? fallback);
+  const baseState = normalizeSurfaceState((isLegacySurfaceState(project.cover.surfaceState) ? project.cover.surfaceState : null) ?? fallback);
   return {
     ...baseState,
     fields: {
@@ -94,7 +95,7 @@ function buildCoverSurface(project: ProjectRecord) {
 
 function buildBackCoverSurface(project: ProjectRecord) {
   const fallback = createDefaultSurfaceState('back-cover');
-  const baseState = normalizeSurfaceState(project.backCover.surfaceState ?? fallback);
+  const baseState = normalizeSurfaceState((isLegacySurfaceState(project.backCover.surfaceState) ? project.backCover.surfaceState : null) ?? fallback);
   return {
     ...baseState,
     fields: {
