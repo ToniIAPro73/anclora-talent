@@ -14,8 +14,9 @@ export function BrandManualInput({
 }) {
   return (
     <div className="mt-5 space-y-2" data-testid="brand-manual-section">
-      <span className="ac-form-field__label">{copy.brandManualLabel}</span>
+      <label htmlFor="brand-manual-input" className="ac-form-field__label">{copy.brandManualLabel}</label>
       <input
+        id="brand-manual-input"
         type="file"
         name="brandManual"
         accept=".pdf,application/pdf"

@@ -25,7 +25,7 @@ export default async function NewProjectPage({
     <div className="space-y-6">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">{projectCopy.newEyebrow}</p>
-        <h2 className="mt-2 text-4xl font-black tracking-tight text-[var(--text-primary)]">{projectCopy.newTitle}</h2>
+        <h1 className="mt-2 text-4xl font-black tracking-tight text-[var(--text-primary)]">{projectCopy.newTitle}</h1>
         <p className="mt-3 max-w-3xl text-base leading-8 text-[var(--text-secondary)]">
           {projectCopy.newDescription}
         </p>

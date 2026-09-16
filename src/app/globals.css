@@ -1018,6 +1018,22 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
   }
 }
 
+/* Keep the shell header readable before the compact mobile breakpoint. */
+@media (min-width: 481px) and (max-width: 1100px) {
+  .talent-shell-topbar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .talent-shell-brand__copy span {
+    display: none;
+  }
+
+  .talent-shell-nav {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
 @media (max-width: 480px) {
   .talent-shell-grid {
     max-width: none;

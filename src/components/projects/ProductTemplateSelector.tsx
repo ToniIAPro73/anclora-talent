@@ -55,7 +55,7 @@ export function ProductTemplateSelector({ copy }: { copy: AppMessages['project']
                   <Icon className="h-5 w-5 text-[var(--accent)]" />
                   {isSelected && <Check className="h-4 w-4 text-[var(--accent)]" />}
                 </div>
-                <h5 className="ac-template-card__title mt-3">{templateCopy.name}</h5>
+                <h4 className="ac-template-card__title mt-3">{templateCopy.name}</h4>
                 <p className="ac-template-card__summary">{templateCopy.description}</p>
 
                 <div className="ac-template-card__footer">
