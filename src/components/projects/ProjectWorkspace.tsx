@@ -6,7 +6,7 @@ import { Check, Loader2, Download } from 'lucide-react';
 import { Stepper, type Step } from '@/components/ui/Stepper';
 import { ChapterOrganizer } from './ChapterOrganizer';
 import { DocumentStatsCard } from './DocumentStatsCard';
-import { CoverStudio } from './cover-studio/CoverStudio';
+import { CoverStudioV2 } from './design-surface/CoverStudioV2';
 import { PreviewCanvas } from './PreviewCanvas';
 import { FixedPdfPreview } from './FixedPdfPreview';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
@@ -74,6 +74,8 @@ import { buildExportQueryString } from '@/lib/projects/export-config';
 import type { CoAuthorChapter } from '@/lib/ai/co-author';
 import type { KdpDisclosure } from '@/lib/ai/kdp-disclosure';
 import type { CollaborationView } from '@/lib/collaboration/view';
+import { resolveLocaleMessages } from '@/lib/i18n/messages';
+import { getBackCoverDesign, getCoverDesign } from '@/lib/projects/design-surface-repository';
 
 const TEMPLATE_TONE_TO_PALETTE: Record<EditorialTemplate['previewTone'], ProjectRecord['cover']['palette']> = {
   obsidian: 'obsidian',
@@ -235,6 +237,11 @@ export function ProjectWorkspace({
 
   const initialCoverSurface = useMemo(() => buildCoverSurface(project), [project]);
   const initialBackCoverSurface = useMemo(() => buildBackCoverSurface(project), [project]);
+  const canonicalCoverSurface = useMemo(() => getCoverDesign(project), [project]);
+  const canonicalBackCoverSurface = useMemo(() => getBackCoverDesign(project), [project]);
+  const coverDesignSurfaceCopy = useMemo(() => resolveLocaleMessages(locale).coverDesignSurface, [locale]);
+  const sourceDocumentAssetId = project.assets.find((asset) => asset.usage === 'source-document')?.id ?? null;
+  const sourcePageCount = project.document.source?.pageCount ?? null;
   const [selectedCoverTemplateId, setSelectedCoverTemplateId] = useState(
     inferTemplateId(COVER_TEMPLATES, initialCoverSurface.layout.kind, COVER_TEMPLATES[0]?.id ?? ''),
   );
@@ -655,14 +662,30 @@ export function ProjectWorkspace({
         if (fixedPdf) return renderFixedPdfIncludedPanel(copy.stepCover);
         return (
           <div className="mx-auto max-w-6xl space-y-6">
-            <CoverStudio key={project.updatedAt} surface="cover" project={project} copy={copy} />
+            <CoverStudioV2
+              key={project.updatedAt}
+              surfaceKind="cover"
+              projectId={project.id}
+              initialSurface={canonicalCoverSurface}
+              sourceDocumentAssetId={sourceDocumentAssetId}
+              pageCount={sourcePageCount}
+              copy={coverDesignSurfaceCopy}
+            />
           </div>
         );
       case 5: // Back Cover
         if (fixedPdf) return renderFixedPdfIncludedPanel(copy.stepBackCover);
         return (
           <div className="mx-auto max-w-6xl space-y-6">
-            <CoverStudio key={project.updatedAt} surface="back-cover" project={project} copy={copy} />
+            <CoverStudioV2
+              key={project.updatedAt}
+              surfaceKind="back-cover"
+              projectId={project.id}
+              initialSurface={canonicalBackCoverSurface}
+              sourceDocumentAssetId={sourceDocumentAssetId}
+              pageCount={sourcePageCount}
+              copy={coverDesignSurfaceCopy}
+            />
           </div>
         );
       case 6: // Preview

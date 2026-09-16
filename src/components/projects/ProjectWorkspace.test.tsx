@@ -46,9 +46,9 @@ vi.mock('./RichTextEditor', () => ({
   ),
 }));
 
-vi.mock('./cover-studio/CoverStudio', () => ({
-  CoverStudio: ({ surface }: { surface: string }) => (
-    <div data-testid={`cover-studio-${surface}`} />
+vi.mock('./design-surface/CoverStudioV2', () => ({
+  CoverStudioV2: ({ surfaceKind }: { surfaceKind: string }) => (
+    <div data-testid="cover-studio-v2" data-surface-kind={surfaceKind} />
   ),
 }));
 
@@ -270,7 +270,7 @@ describe('ProjectWorkspace', () => {
     // 3 -> 4
     fireEvent.click(nextButton);
 
-    expect(screen.getByTestId('cover-studio-cover')).toBeInTheDocument();
+    expect(screen.getByTestId('cover-studio-v2')).toHaveAttribute('data-surface-kind', 'cover');
   });
 
   test('renders the same unified studio for the back cover in Step 5', () => {
@@ -282,7 +282,7 @@ describe('ProjectWorkspace', () => {
     fireEvent.click(nextButton);
     fireEvent.click(nextButton);
 
-    expect(screen.getByTestId('cover-studio-back-cover')).toBeInTheDocument();
+    expect(screen.getByTestId('cover-studio-v2')).toHaveAttribute('data-surface-kind', 'back-cover');
   });
 
   test('template step shows separate cover and back cover catalogs', () => {
@@ -364,7 +364,7 @@ describe('ProjectWorkspace', () => {
       render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 4 })} copy={copy} />);
 
       expect(screen.getByTestId('fixed-pdf-included-panel')).toBeInTheDocument();
-      expect(screen.queryByTestId('cover-studio-cover')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('cover-studio-v2')).not.toBeInTheDocument();
     });
 
     test('marks chapters/template/cover/back-cover steps as already completed', () => {
@@ -417,7 +417,7 @@ describe('ProjectWorkspace', () => {
       render(<ProjectWorkspace project={makeProject({ workflowStep: 4 })} copy={copy} />);
 
       expect(screen.queryByTestId('fixed-pdf-included-panel')).not.toBeInTheDocument();
-      expect(screen.getByTestId('cover-studio-cover')).toBeInTheDocument();
+      expect(screen.getByTestId('cover-studio-v2')).toHaveAttribute('data-surface-kind', 'cover');
     });
 
     test('regression: editable project export step keeps every reflowable format enabled', () => {
