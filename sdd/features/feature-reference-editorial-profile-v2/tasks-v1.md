@@ -28,3 +28,21 @@
 | Real PDF fixture | PASS | 122 pages, 7,617 fragments, ~1.1s, SHA256 recorded in handoff |
 | DOCX fixture | PASS | OOXML package integration test |
 | Browser E2E and visual QA | NOT RUN | Requires authenticated browser/session and human visual review |
+
+## Renderer matrix
+
+| Role | HTML | PDF | DOCX | EPUB |
+| --- | --- | --- | --- | --- |
+| Body | PASS | PASS | PARTIAL | PARTIAL |
+| H1/H2/H3 | PASS | PASS | PARTIAL | PARTIAL |
+| Chapter opening | PARTIAL | PARTIAL | PARTIAL | PARTIAL |
+| Quote | PASS | PASS | PARTIAL | PARTIAL |
+| UL/OL | PASS | PASS | PARTIAL | PARTIAL |
+| Header/footer | PARTIAL | PASS for dynamic target title/folio | PARTIAL | PARTIAL |
+| Page number | PASS | PASS | PARTIAL | PARTIAL |
+| TOC and leaders | PASS | PARTIAL | PARTIAL | PARTIAL |
+
+PDF renderer smoke evidence: target project export completed with the real
+reference profile in approximately 2.3 seconds; the binary contained the
+target title and did not contain the reference title. Pixel-level visual QA
+was not performed in this environment.
