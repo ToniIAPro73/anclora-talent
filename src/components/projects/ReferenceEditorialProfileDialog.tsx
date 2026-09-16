@@ -133,7 +133,7 @@ export function ReferenceEditorialProfileDialog({
               <input
                 data-testid="reference-editorial-file"
                 type="file"
-                accept="application/pdf"
+                accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 className="hidden"
                 onChange={(event) => {
                   const file = event.target.files?.[0];

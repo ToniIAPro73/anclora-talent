@@ -207,7 +207,16 @@ export function composeProjectPreview(
   measurer?: TextMeasurer,
   templateOverrides?: Partial<ComposeTemplate>,
 ): ComposedPreview {
-  const template = { ...templateFromPaginationConfig(config), ...templateOverrides };
+  const composition = project.document.metadata?.composition;
+  const referenceTemplate: Partial<ComposeTemplate> = composition
+    ? {
+        ...(composition.fontFamily ? { fontFamily: composition.fontFamily } : {}),
+        ...(composition.fontSizePt ? { baseFontSize: composition.fontSizePt } : {}),
+        ...(composition.lineHeight ? { lineHeight: composition.lineHeight } : {}),
+        ...(composition.margins ? { margins: composition.margins } : {}),
+      }
+    : {};
+  const template = { ...templateFromPaginationConfig(config), ...referenceTemplate, ...templateOverrides };
   const { document, chapterStartIds, chapterById } = projectToSemanticDocument(project);
   const result = compose(document, project.document.rules, template, measurer, {
     ...(chapterStartIds.length > 0 ? { chapterStartIds } : {}),

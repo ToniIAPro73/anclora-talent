@@ -210,6 +210,7 @@ function createEmptyProfile(source: EditorialSourceIdentity, page: EditorialPage
       analysedAt: source.analysedAt ?? new Date().toISOString(),
       parserVersion: source.parserVersion ?? PARSER_VERSION,
     },
+    metrics: { totalHeadings: 0, desglose: { h1Partes: 0, h2Capitulos: 0, h3Subsecciones: 0 }, tablas: 0, imagenes: 0 },
     page: {
       width: page.width,
       height: page.height,
@@ -309,9 +310,14 @@ export function extractEditorialProfileFromFragments(
     alignment: folio ? inferAlignment(clusterFragments([folio])[0], page.width) : footerStyle?.textAlign ?? 'unknown',
   };
 
-  const chapterFragments = interior.filter((fragment) => /^(?:chapter|cap[ií]tulo)\b/i.test(fragment.text.trim()));
+  const chapterLabelFragments = interior.filter((fragment) => /^(?:chapter|cap[ií]tulo|c\s*a\s*p\s*[íi]?\s*t\s*u\s*l\s*o)\b/i.test(fragment.text.trim()));
+  // Many editorial PDFs use spaced small caps ("C A P Í T U L O 10") or
+  // omit the label entirely. Large repeated headings near the upper page
+  // region are a conservative visual fallback, never a source-text copy.
+  const openingCandidates = interior.filter((fragment) => (fragment.fontSize >= (bodyCluster?.size ?? 0) * 1.7) && fragment.y < page.height * 0.55);
+  const chapterFragments = chapterLabelFragments.length > 0 ? chapterLabelFragments : openingCandidates;
   result.chapterOpening = {
-    detected: chapterFragments.length >= Math.max(2, Math.ceil(pages.size * 0.2)),
+    detected: new Set(chapterFragments.map((fragment) => fragment.pageNumber)).size >= 2,
     labelStyle: chapterFragments.length > 0 ? toTextStyle(clusterFragments(chapterFragments)[0], page.width) : null,
     titleStyle: h1 ?? h2,
     subtitleStyle: null,
@@ -340,6 +346,7 @@ export function extractEditorialProfileFromFragments(
     headingDepth: Math.min(4, 1 + headingClusters.length),
     backMatter: fragments.some((fragment) => /appendix|ap[eé]ndice|bibliography|bibliograf[ií]a/i.test(fragment.text)),
   };
+  result.metrics = { totalHeadings: headingClusters.reduce((sum, cluster) => sum + cluster.fragments.length, 0), desglose: { h1Partes: 0, h2Capitulos: chapterCount, h3Subsecciones: Math.max(0, headingClusters.length - 1) }, tablas: 0, imagenes: 0 };
   result.confidence = {
     overall: bodyStyle && (h1 || result.page.width) ? 'medium' : 'low',
     pageGeometry: confidenceFromCount(interior.length, fragments.length),

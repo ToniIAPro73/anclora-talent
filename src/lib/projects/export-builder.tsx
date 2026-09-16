@@ -21,6 +21,7 @@ import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 import type { PaginationConfig } from '@/lib/preview/device-configs';
 import { type PreviewPage } from '@/lib/preview/preview-builder';
 import { composeProjectPreview, projectToSemanticDocument } from '@/lib/compose/preview-adapter';
+import type { ReferenceEditorialProfile, EditorialTextStyle } from '@/lib/reference-editorial-profile/model';
 import { inlineToPlainText } from '@/lib/document/model';
 import type { ComposeTemplate } from '@/lib/compose/compose';
 import type { ProjectRecord } from './types';
@@ -238,6 +239,37 @@ export function buildBrandExportCss(overrides?: Partial<ComposeTemplate>): strin
   if (overrides.accentMutedColor) {
     rules.push(`.export-content-inner blockquote { color: ${overrides.accentMutedColor}; }`);
   }
+  return rules.join('\n    ');
+}
+
+function styleCss(style: EditorialTextStyle | null | undefined): string {
+  if (!style) return '';
+  const rules: string[] = [];
+  if (style.resolvedFontFamily) rules.push(`font-family: ${cssFontFamily(style.resolvedFontFamily)}, Georgia, serif`);
+  if (style.fontSize) rules.push(`font-size: ${style.fontSize}pt`);
+  if (style.fontWeight !== 'unknown') rules.push(`font-weight: ${style.fontWeight === 'bold' ? 700 : style.fontWeight === 'semibold' ? 600 : 400}`);
+  if (style.fontStyle !== 'unknown') rules.push(`font-style: ${style.fontStyle}`);
+  if (style.color) rules.push(`color: ${style.color}`);
+  if (style.lineHeight) rules.push(`line-height: ${style.lineHeight}`);
+  if (style.textAlign !== 'unknown') rules.push(`text-align: ${style.textAlign}`);
+  if (style.paragraphSpacingAfter !== null) rules.push(`margin-bottom: ${style.paragraphSpacingAfter}pt`);
+  return rules.join('; ');
+}
+
+/** Shared export CSS for the reference profile; content remains target-owned. */
+export function buildReferenceEditorialCss(profile?: ReferenceEditorialProfile | null): string {
+  if (!profile) return '';
+  const rules: string[] = [];
+  const body = styleCss(profile.body);
+  if (body) rules.push(`.export-content-inner p, .export-content-inner li { ${body}; }`);
+  const headings = [profile.headings.h1, profile.headings.h2, profile.headings.h3];
+  headings.forEach((style, index) => { const css = styleCss(style); if (css) rules.push(`.export-content-inner h${index + 1} { ${css}; }`); });
+  const quote = styleCss(profile.quote);
+  if (quote) rules.push(`.export-content-inner blockquote { ${quote}; }`);
+  const footer = styleCss(profile.pageNumber.style ?? profile.footer.style);
+  if (footer) rules.push(`.export-page-footer { ${footer}; }`);
+  if (profile.pageNumber.alignment !== 'unknown') rules.push(`.export-page-footer { justify-content: ${profile.pageNumber.alignment === 'center' ? 'center' : profile.pageNumber.alignment === 'right' ? 'flex-end' : 'flex-start'}; }`);
+  if (profile.toc.leaderStyle === 'dots') rules.push(`.export-content-inner [data-toc-entry] { display: flex; gap: .35em; } .export-content-inner [data-toc-entry]::after { content: ''; flex: 1; border-bottom: 1px dotted currentColor; margin-bottom: .3em; }`);
   return rules.join('\n    ');
 }
 
@@ -461,6 +493,7 @@ export async function renderProjectExportHtml(
       }
     }
     ${buildBrandExportCss(templateOverrides)}
+    ${buildReferenceEditorialCss(project.document.metadata?.referenceEditorialProfile)}
   </style>
 </head>
 <body>

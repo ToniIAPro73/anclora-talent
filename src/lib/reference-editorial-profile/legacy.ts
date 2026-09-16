@@ -13,6 +13,7 @@ export function adaptLegacyStructureProfile(profile: StructureProfile): Referenc
     version: 1,
     profileType: 'editorial',
     source: { sourceAssetId: null, format: 'unknown', filename: profile.sourceFileName ?? profile.name, hash: null, analysedAt: now, parserVersion: 'legacy-adapter' },
+    metrics: { totalHeadings: schema.metrics.totalHeadings, desglose: schema.metrics.desglose, tablas: schema.metrics.tablas, imagenes: schema.metrics.imagenes },
     page: { width: null, height: null, unit: 'unknown', orientation: 'unknown', margins: { top: null, right: null, bottom: null, left: null }, contentWidth: null, contentHeight: null, columns: null, gutter: null },
     body: { fontFamily: null, resolvedFontFamily: null, fontSize: null, fontWeight: 'unknown', fontStyle: 'unknown', color: null, lineHeight: null, textAlign: 'unknown', firstLineIndent: null, paragraphSpacingBefore: null, paragraphSpacingAfter: null },
     headings: { h1: null, h2: null, h3: null, h4: null },

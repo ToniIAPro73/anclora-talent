@@ -6,6 +6,7 @@ import { sha256Buffer } from '@/lib/projects/hash';
 import { structureProfileRepository } from '@/lib/structure-profile/repository';
 import { hasUsableEditorialEvidence, type ReferenceEditorialProfile } from './model';
 import { extractEditorialProfileFromPdf } from './pdf';
+import { extractEditorialProfileFromDocx } from './docx';
 import { isReferenceEditorialProfile } from './legacy';
 
 const MAX_REFERENCE_BYTES = 50 * 1024 * 1024;
@@ -24,12 +25,14 @@ export async function extractReferenceEditorialProfileAction(formData: FormData)
   if (file.size > MAX_REFERENCE_BYTES) throw new Error('Reference document is too large');
   const filename = file.name || 'reference.pdf';
   const buffer = Buffer.from(await file.arrayBuffer());
-  if (file.type !== 'application/pdf' && !filename.toLowerCase().endsWith('.pdf')) {
-    throw new Error('Editorial layout extraction currently requires a PDF');
-  }
-  const result = await extractEditorialProfileFromPdf(buffer, { filename, format: 'pdf', hash: sha256Buffer(buffer) });
+  const hash = sha256Buffer(buffer);
+  const isDocx = file.type.includes('wordprocessingml') || filename.toLowerCase().endsWith('.docx');
+  const result = isDocx
+    ? await extractEditorialProfileFromDocx(buffer, { filename, hash })
+    : await extractEditorialProfileFromPdf(buffer, { filename, format: 'pdf', hash });
   if (!hasUsableEditorialEvidence(result.profile)) {
-    return { ok: false as const, warnings: [...result.analysis.warnings, 'No reliable editorial style could be extracted from this document.'] };
+    const warnings = 'analysis' in result ? result.analysis.warnings : [];
+    return { ok: false as const, warnings: [...warnings, 'No reliable editorial style could be extracted from this document.'] };
   }
   return { ok: true as const, profile: result.profile, analysis: result.analysis, suggestedName: filename.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim() || 'Reference editorial profile' };
 }

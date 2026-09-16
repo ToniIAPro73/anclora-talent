@@ -16,6 +16,7 @@ function profile(overrides: Partial<ReferenceEditorialProfile> = {}): ReferenceE
       analysedAt: '2026-09-16T00:00:00.000Z',
       parserVersion: 'test',
     },
+    metrics: { totalHeadings: 0, desglose: { h1Partes: 0, h2Capitulos: 0, h3Subsecciones: 0 }, tablas: 0, imagenes: 0 },
     page: {
       width: 595,
       height: 842,

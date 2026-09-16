@@ -10,6 +10,7 @@
 - [x] Saved reusable profiles on the existing versioned store.
 - [x] Unit, fixture, regression, and build coverage.
 - [x] Final lint and build gates.
-- [ ] DOCX-specific layout extraction and full Composer heading/header/footer rule rendering.
-- [ ] Browser E2E and visual QA with the user-provided 122-page PDF (fixture absent in this worktree).
+- [x] DOCX-specific OOXML style and section extraction.
+- [ ] Full Composer heading/header/footer rule rendering beyond the shared HTML export CSS.
+- [ ] Browser E2E and visual QA across all viewports/themes; local PDF extraction QA completed, but the PDF remains an external fixture.
 - [ ] Full typecheck cleanup; baseline repository errors remain outside this feature.

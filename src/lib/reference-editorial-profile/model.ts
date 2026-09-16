@@ -113,6 +113,8 @@ export interface ReferenceEditorialProfile {
   version: 1;
   profileType: 'editorial';
   source: ReferenceProfileSource;
+  /** Anonymous evidence counts retained for diagnostics and legacy storage compatibility. */
+  metrics: { totalHeadings: number; desglose: { h1Partes: number; h2Capitulos: number; h3Subsecciones: number }; tablas: number; imagenes: number };
   page: ReferencePageProfile;
   body: EditorialTextStyle;
   headings: {
