@@ -56,6 +56,7 @@ DATABASE_SCOPE=production
 LOCAL_DATABASE_SCOPE=production
 
 MIGRATION_SYSTEM=Drizzle ORM / drizzle-kit
+MIGRATION_STRATEGY=SCHEMA_PUSH
 MIGRATION_DIRECTORY=./src/db/migrations
 MIGRATION_RUNNER=npm run db:push (dotenv -e .env.local -- drizzle-kit push)
 
@@ -128,8 +129,8 @@ EMAIL_USAGE=Transactional email delivery (account verification, password recover
 
 ACTIVE:
 - Resend API (Transactional emails via RESEND_API_KEY)
-- Google OAuth (Authentication seam via GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
-- GitHub OAuth (Authentication seam via GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET)
+- Google OAuth (Authentication seam via GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, GOOGLE_OAUTH_CALLBACK_URL)
+- GitHub OAuth (Authentication seam via GITHUB_OAUTH_CLIENT_ID, GITHUB_OAUTH_CLIENT_SECRET, GITHUB_OAUTH_CALLBACK_URL)
 
 OPTIONAL:
 - OpenAI Cloud Assistance (Feature-flagged; disabled if OPENAI_API_KEY is not provisioned)
@@ -141,10 +142,7 @@ DISABLED:
 ## 9. Local Environment Contract
 
 Environment files:
-- Mac: `/Users/toni/developer/anclora/anclora-talent/.env.local`
-- VPS: `/home/toni/workspace/anclora/anclora-talent/.env.local`
-
-Permissions: 0600 (-rw-------), strictly gitignored.
+- `.env.local` (located in repository root, mode 0600, strictly gitignored)
 
 LOCAL_RUNTIME_MODEL=PRODUCTION_BACKED
 
@@ -157,7 +155,7 @@ the application itself is running locally.
   - `BLOB_READ_WRITE_TOKEN` → Production Vercel Blob Store (Public)
   - `SOURCE_DOCUMENT_READ_WRITE_TOKEN` → Production Vercel Blob Store (Private)
   - `RESEND_API_KEY` → Production Resend API
-  - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` → Production OAuth apps
+  - `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GITHUB_OAUTH_CLIENT_ID`, `GITHUB_OAUTH_CLIENT_SECRET` → Production OAuth apps
 - LOCAL_ONLY_RUNTIME_VARIABLES:
   - `PORT=3000` → Local HTTP server binding port
 
@@ -229,10 +227,13 @@ whenever branch topology allows fast-forward promotion.
 ## 13. Agent Startup Contract
 
 Before executing tasks, the agent must read and apply in order:
-1. Workspace agent policy (`/home/toni/AGENTS.md` and repository `AGENTS.md`)
-2. Repository-specific instructions (`CLAUDE.md`, `GEMINI.md`, etc.)
-3. `.anclora/PRODUCTION_RUNTIME.md` (this manifest as operative runtime contract)
-4. Relevant AOS standards and contracts (`anclora-governance/standards/`)
+1. Current explicit instructions from Toni
+2. Workspace agent policy (`../../ANCLORA_WORKSPACE_AGENT_POLICY.md` when installed, `../../AGENTS.md` interim)
+3. Repository agent rules (`../AGENTS.md`)
+4. `.anclora/AGENT_PROJECT_CONTEXT.md` (bootstrap, task routing, and authority map)
+5. `.anclora/PRODUCTION_RUNTIME.md` (this manifest as operative runtime contract)
+6. `.anclora/AOS_ADOPTION.md` (governance, decisions, exceptions)
+7. Repository-specific instructions (`CLAUDE.md`, `GEMINI.md`, etc., when present)
 
 ## 14. Forbidden Defaults
 
@@ -258,6 +259,8 @@ DATABASE_SCOPE=production
 LOCAL_DATABASE_SCOPE=production
 DO_NOT_CREATE_DEVELOPMENT_DATABASE=true
 
+MIGRATION_SYSTEM=Drizzle ORM / drizzle-kit
+MIGRATION_STRATEGY=SCHEMA_PUSH
 PRODUCTION_MIGRATIONS_ALLOWED=true
 MIGRATION_CONFIRMATION_REQUIRED=false
 BACKWARD_COMPATIBILITY_PREFERRED=true

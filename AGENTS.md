@@ -1,20 +1,15 @@
 <!-- ANCLORA-ECOSYSTEM-CONTEXT-START -->
-## Contexto de ecosistema Anclora
+## Contexto de ecosistema Anclora (Bootstrap de agentes)
 
-`anclora-talent` es una app premium del ecosistema Anclora para creación, edición, composición, previsualización y exportación de proyectos editoriales. El producto está en pausa; la gobernanza sigue vigente.
+`anclora-talent` es una aplicación premium del ecosistema Anclora para creación, edición, composición, previsualización y exportación de proyectos editoriales.
 
-### Arranque de agente (bootstrap)
+Antes de realizar tareas sustanciales en este repositorio, el agente debe leer:
+1. [`.anclora/AGENT_PROJECT_CONTEXT.md`](.anclora/AGENT_PROJECT_CONTEXT.md) (v1.0) y seguir su enrutamiento canónico hacia:
+   - [`.anclora/PRODUCTION_RUNTIME.md`](.anclora/PRODUCTION_RUNTIME.md) para ejecución, infraestructura, base de datos, migraciones (`SCHEMA_PUSH`), QA y Git.
+   - [`.anclora/AOS_ADOPTION.md`](.anclora/AOS_ADOPTION.md) para gobernanza, decisiones, excepciones y autoridad AOS.
+   - Fuentes canónicas específicas según el dominio de la tarea (`sdd/`, etc.).
 
-1. **Este archivo (`AGENTS.md`)** — reglas locales del repo.
-2. **`.anclora/AOS_ADOPTION.md`** — declaración de adopción AOS v0.2.0 y excepciones activas.
-3. **Fuentes delegadas, solo según el dominio de la tarea** (no leer todo por defecto):
-   - Contratos, branding, design tokens normativos, repository registry, compliance: Anclora Vault (Operational Registry delegado, renombrado desde Bóveda Anclora) → `../anclora-vault/00-governance/contracts/`, p. ej. `../anclora-vault/00-governance/contracts/core/ANCLORA_ECOSYSTEM_ARCHITECTURE_CONTRACT.md`. Registry de contratos: `../anclora-vault/00-governance/registry/contracts-registry.json`.
-   - Gobernanza constitucional y meta-gobierno: AOS → `../anclora-governance/` (índices enlazados desde `.anclora/AOS_ADOPTION.md`).
-4. **Fuentes locales** — autoridad ejecutable por defecto en producto e ingeniería: `sdd/` (SDD vigente), `.agent/rules/`, `.anclora/AGENT_PROJECT_CONTEXT.md`. `MEMORY.md` es memoria operativa e histórica (changelog narrativo de desarrollo): no es fuente normativa ni autoridad ejecutable, no crea ED/OD/PD/EX y no prevalece sobre contratos, el SDD, `AOS_ADOPTION.md` ni ninguna fuente canónica; si lo contradice, prevalece la fuente canónica.
-5. **Conflictos entre fuentes**: resolución domain-first — clasificar por dominio → autoridad canónica vía registry → excepción activa si existe → supersession/fuente vigente o escalar. El histórico nunca gana.
-6. **Decisiones**: clasificar por alcance — ED → AOS `MASTER_DECISIONS`; OD → Bóveda (mecanismo CHG); PD → locales (`sdd/`); EX → `.anclora/AOS_ADOPTION.md`.
-
-No asumir infraestructura compartida entre productos. Validar siempre hosting, backend, base de datos, auth, variables y ramas.
+No asumir infraestructura compartida entre productos. Validar siempre hosting, backend, base de datos, auth, variables y ramas en `.anclora/PRODUCTION_RUNTIME.md`.
 <!-- ANCLORA-ECOSYSTEM-CONTEXT-END -->
 
 <!-- ANCLORA-SDD-STANDARDS-START -->

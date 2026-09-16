@@ -38,7 +38,7 @@ Declara qué conocimiento mantiene este repositorio como fuente oficial local.
 | --- | --- | --- | --- |
 | Identidad y estado del producto | [`../README.md`](../README.md) | AOS Chief Architect | Fuente local subordinada a AOS. |
 | Traducción del README | [`../README.en.md`](../README.en.md) | AOS Chief Architect | Traducción subordinada a `README.md`. |
-| Contexto de agente del repositorio | [`AGENT_PROJECT_CONTEXT.md`](AGENT_PROJECT_CONTEXT.md) | AOS Chief Architect | Fuente local subordinada al protocolo AOS de agentes. |
+| Contexto de agente del repositorio | [`AGENT_PROJECT_CONTEXT.md`](AGENT_PROJECT_CONTEXT.md) | AOS Chief Architect | Fuente local subordinada al protocolo AOS de agentes (v1.0). |
 | Reglas locales de agentes | [`../AGENTS.md`](../AGENTS.md) | AOS Chief Architect | Fuente local subordinada a AOS; bootstrap alineado con el modelo de 3 niveles. |
 | Memoria técnica local | [`../MEMORY.md`](../MEMORY.md) | AOS Chief Architect | Fuente local histórica/subordinada. |
 | Producto | [`../sdd/product.md`](../sdd/product.md) | AOS Chief Architect | Fuente local de alcance de producto. |
