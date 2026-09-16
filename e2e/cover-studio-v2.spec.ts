@@ -6,16 +6,9 @@ import { expect, test, type Page } from '@playwright/test';
  * (`BasicCoverEditor`, `AdvancedCoverEditor`, `CoverOriginPrompt`,
  * `DesignSurfaceCanvas`) already expose and unit-test in isolation.
  *
- * IMPORTANT — current status: these routes still mount the legacy
- * `CoverStudio` component (`src/components/projects/cover-studio/`), not the
- * new v2 editors built in this mission. Wiring the new editors into
- * `/projects/[projectId]/cover` and `/projects/[projectId]/back-cover` is a
- * documented remaining task (see the mission's FINAL REPORT, "REMAINING
- * GAPS"). Until that page-level integration lands, these specs will fail at
- * the first `data-testid` lookup — they exist so the acceptance contract is
- * defined and ready to run the moment that wiring is done, exactly like this
- * repository's established convention of writing E2E specs ahead of a piece
- * of infra the current session cannot exercise end-to-end itself.
+ * `/projects/[projectId]/cover` and `/back-cover` now mount `CoverStudioV2`
+ * (continuation mission, page integration) — these scenarios exercise the
+ * live routes end to end.
  */
 
 const TEST_USER = {
@@ -24,12 +17,33 @@ const TEST_USER = {
   password: 'E2ePassword123',
 };
 
+test.beforeAll(async ({ request }) => {
+  const response = await request.post('/api/auth/register', { data: TEST_USER });
+  expect([201, 409]).toContain(response.status());
+});
+
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'anclora-cookie-consent-v1',
+      JSON.stringify({
+        necessary: true,
+        session: true,
+        analytics: false,
+        marketing: false,
+        updatedAt: new Date().toISOString(),
+        version: 'v1',
+      }),
+    );
+  });
+});
+
 async function login(page: Page) {
   await page.goto('/sign-in');
   await page.locator('#email').fill(TEST_USER.email);
   await page.locator('#password').fill(TEST_USER.password);
   await page.locator('button[type="submit"]').click();
-  await expect(page).toHaveURL(/dashboard/);
+  await expect(page).toHaveURL(/dashboard/, { timeout: 15_000 });
 }
 
 async function createProject(page: Page, title: string) {
