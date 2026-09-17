@@ -101,6 +101,8 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
     const guideManagerRef = useRef<CanvasGuideManager | null>(null);
     const snapEnabledRef = useRef(snapEnabled);
     const [, forceRender] = useState(0);
+    const [activeObjectIds, setActiveObjectIds] = useState<string[]>([]);
+    const [canvasReady, setCanvasReady] = useState(false);
     const [zoom, setZoomState] = useState(1);
     const suppressHistoryRef = useRef(false);
 
@@ -117,7 +119,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
       historyRef.current.push(snapshot);
       historyIndexRef.current = historyRef.current.length - 1;
       forceRender((n) => n + 1);
-      onHistoryChange?.({ canUndo: historyIndexRef.current > 0, canRedo: false });
+      queueMicrotask(() => onHistoryChange?.({ canUndo: historyIndexRef.current > 0, canRedo: false }));
     }, [onHistoryChange]);
 
     const reportLayerChange = useCallback(
@@ -161,18 +163,24 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           canvas.add(object);
         }
         canvas.renderAll();
+        setCanvasReady(true);
 
         historyRef.current = [JSON.stringify(canvas.toJSON(['id']))];
         historyIndexRef.current = 0;
 
         const emitSelection = (event: FabricEvent) => {
           const selected: FabricObject[] = event.selected ?? (event.target ? [event.target] : []);
-          onSelectionChange(selected.map((object) => object.id).filter(Boolean));
+          const ids = selected.map((object) => object.id).filter(Boolean);
+          setActiveObjectIds(ids);
+          onSelectionChange(ids);
         };
 
         canvas.on('selection:created', emitSelection);
         canvas.on('selection:updated', emitSelection);
-        canvas.on('selection:cleared', () => onSelectionChange([]));
+        canvas.on('selection:cleared', () => {
+          setActiveObjectIds([]);
+          onSelectionChange([]);
+        });
 
         // Snapping (mission §15): live alignment guides while dragging, with
         // visual feedback (CanvasGuideManager already draws distance labels
@@ -215,6 +223,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
         guideManagerRef.current = null;
         fabricRef.current?.dispose();
         fabricRef.current = null;
+        setCanvasReady(false);
         // Read fresh at cleanup time deliberately — the async hydration
         // above may still be populating these maps when unmount happens
         // before it resolves; a value copied at effect-run time would miss
@@ -341,10 +350,10 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
             layers.push({ ...existingLayer, ...patch, zIndex: index } as DesignLayer);
           });
           onLayersChange(layers);
-          onHistoryChange?.({
+          queueMicrotask(() => onHistoryChange?.({
             canUndo: historyIndexRef.current > 0,
             canRedo: historyIndexRef.current < historyRef.current.length - 1,
-          });
+          }));
         });
       },
       [onHistoryChange, onLayersChange, surface.layers],
@@ -439,13 +448,16 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
 
           if (matchedObjects.length === 0) {
             canvas.discardActiveObject?.();
+            setActiveObjectIds([]);
           } else if (matchedObjects.length === 1) {
             canvas.setActiveObject?.(matchedObjects[0]);
+            setActiveObjectIds([matchedObjects[0].id].filter(Boolean));
           } else {
             const fabric = fabricModuleRef.current;
             if (fabric?.ActiveSelection) {
               const selection = new fabric.ActiveSelection(matchedObjects, { canvas });
               canvas.setActiveObject?.(selection);
+              setActiveObjectIds(matchedObjects.map((object) => object.id).filter(Boolean));
             }
           }
           renderCanvas(canvas);
@@ -538,7 +550,18 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
     }, [applyHistorySnapshot, onLayersChange, pushHistory, reportLayerChange, surface.layers]);
 
     return (
-      <div ref={containerRef} tabIndex={0} data-testid="design-surface-canvas" className="outline-none">
+      <div
+        ref={containerRef}
+        tabIndex={0}
+        data-testid="design-surface-canvas"
+        data-canvas-ready={canvasReady ? 'true' : 'false'}
+        data-active-object-ids={activeObjectIds.join(',')}
+        data-object-ids={surface.layers.map((layer) => layer.id).join(',')}
+        data-object-geometry={JSON.stringify(Object.fromEntries(surface.layers.map((layer) => [layer.id, { x: layer.x, y: layer.y, width: layer.width, height: layer.height }]))) }
+        data-object-content={JSON.stringify(Object.fromEntries(surface.layers.filter((layer) => layer.type === 'text').map((layer) => [layer.id, layer.content]))) }
+        data-surface-size={`${surface.width}x${surface.height}`}
+        className="outline-none"
+      >
         <canvas ref={canvasElRef} />
         <span data-testid="design-surface-canvas-zoom" className="sr-only">
           {Math.round(zoom * 100)}%

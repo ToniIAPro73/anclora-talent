@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { ProjectRecord } from '@/lib/projects/types';
@@ -81,6 +81,7 @@ export function DocumentHealthPanel({ project, violations, copy, checks, diff, r
   const count = violations.length;
   const signed = (value: number) => (value > 0 ? `+${value}` : String(value));
   const [preflightChannel, setPreflightChannel] = useState<PreflightChannel>('kdp');
+  const telemetryMounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
   const router = useRouter();
   const [fixRequests, setFixRequests] = useState<Record<string, FixRequest>>({});
   const [coherence, setCoherence] = useState<CoherenceRequest | null>(null);
@@ -238,7 +239,7 @@ export function DocumentHealthPanel({ project, violations, copy, checks, diff, r
         </p>
       )}
 
-      {telemetry && telemetry.count > 0 && telemetry.lastMs !== null && (
+      {telemetryMounted && telemetry && telemetry.count > 0 && telemetry.lastMs !== null && (
         <p
           data-testid="document-health-telemetry"
           className="mt-3 text-xs text-[var(--text-tertiary)]"

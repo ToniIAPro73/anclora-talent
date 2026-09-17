@@ -129,10 +129,13 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
   const handleSelect = useCallback((layerId: string, options?: { additive?: boolean }) => {
     setSelectedLayerIds((current) => {
       const next = !options?.additive ? [layerId] : current.includes(layerId) ? current.filter((id) => id !== layerId) : [...current, layerId];
-      canvasRef.current?.selectLayers(next);
       return next;
     });
   }, []);
+
+  useEffect(() => {
+    canvasRef.current?.selectLayers(selectedLayerIds);
+  }, [selectedLayerIds]);
 
   const handleObjectAlignment = useCallback(
     (alignment: LayerAlignment) => {

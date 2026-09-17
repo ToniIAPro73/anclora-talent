@@ -17,7 +17,6 @@
  * no coordinate translation.
  */
 
-import { createUuid } from '@/lib/utils/uuid';
 import {
   normalizeSurfaceState,
   type SurfaceFieldKey,
@@ -25,6 +24,7 @@ import {
   type SurfaceLayer,
   type SurfaceState,
 } from './cover-surface';
+import { createUuid } from '@/lib/utils/uuid';
 import { BACK_COVER_TEXT_LAYOUT, COVER_SURFACE_CANVAS, COVER_TEXT_LAYOUT } from './cover-layout';
 import { fabricCharSpacingToCss } from './cover-layer-style';
 import type { CoverDesign, ProjectRecord } from './types';
@@ -157,6 +157,13 @@ function newLayerId(prefix: string) {
   return `${prefix}-${createUuid()}`;
 }
 
+function migratedLayerId(surface: DesignSurfaceKind, fieldKey: SurfaceFieldKey) {
+  // Legacy surfaces can be read during both SSR and hydration. A generated
+  // UUID here would produce different layer IDs in those two passes and
+  // trigger a hydration mismatch before the user ever edits the design.
+  return `migrated-${surface}-${fieldKey}`;
+}
+
 export function isDesignSurfaceV2(value: unknown): value is DesignSurface {
   return Boolean(value) && typeof value === 'object' && (value as { version?: unknown }).version === 2;
 }
@@ -269,7 +276,7 @@ export function migrateLegacySurfaceState(
     const y = top - estimatedHeight / 2;
 
     layers.push({
-      id: legacyLayer?.id || newLayerId(fieldKey),
+      id: migratedLayerId(surface, fieldKey),
       type: 'text',
       zIndex: zIndex++,
       x,
