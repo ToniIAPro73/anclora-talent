@@ -19,7 +19,8 @@ test.beforeEach(async ({ page }) => {
   if (bypass) {
     const target = new URL(bypass);
     const base = new URL(process.env.BASE_URL ?? 'http://localhost:3000');
-    if (target.origin !== base.origin) throw new Error('Remote preview bypass URL origin does not match BASE_URL');
+    const sameVercelProject = target.hostname.endsWith('.vercel.app') && base.hostname.endsWith('.vercel.app');
+    if (target.origin !== base.origin && !sameVercelProject) throw new Error('Remote preview bypass URL origin does not match BASE_URL');
     await page.goto(bypass);
     await page.waitForLoadState('domcontentloaded');
     await page.goto('/');
