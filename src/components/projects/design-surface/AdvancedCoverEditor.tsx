@@ -128,8 +128,9 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
 
   const handleSelect = useCallback((layerId: string, options?: { additive?: boolean }) => {
     setSelectedLayerIds((current) => {
-      if (!options?.additive) return [layerId];
-      return current.includes(layerId) ? current.filter((id) => id !== layerId) : [...current, layerId];
+      const next = !options?.additive ? [layerId] : current.includes(layerId) ? current.filter((id) => id !== layerId) : [...current, layerId];
+      canvasRef.current?.selectLayers(next);
+      return next;
     });
   }, []);
 

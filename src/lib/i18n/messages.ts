@@ -963,6 +963,7 @@ export type AppMessages = {
     addVerticalGuideLabel: string;
     addHorizontalGuideLabel: string;
     removeGuideLabel: string;
+    clearGuidesLabel: string;
     templatesLabel: string;
     fields: {
       title: string;
@@ -2308,6 +2309,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       addVerticalGuideLabel: 'Añadir guía vertical',
       addHorizontalGuideLabel: 'Añadir guía horizontal',
       removeGuideLabel: 'Quitar guía (doble clic)',
+      clearGuidesLabel: 'Limpiar guías',
       templatesLabel: 'Plantillas',
       fields: {
         title: 'Título',
@@ -3650,6 +3652,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       addVerticalGuideLabel: 'Add vertical guide',
       addHorizontalGuideLabel: 'Add horizontal guide',
       removeGuideLabel: 'Remove guide (double-click)',
+      clearGuidesLabel: 'Clear guides',
       templatesLabel: 'Templates',
       fields: {
         title: 'Title',

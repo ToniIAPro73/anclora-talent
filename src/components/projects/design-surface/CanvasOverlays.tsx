@@ -23,6 +23,7 @@ export interface CanvasOverlaysCopy {
   addVerticalGuideLabel: string;
   addHorizontalGuideLabel: string;
   removeGuideLabel: string;
+  clearGuidesLabel?: string;
 }
 
 export interface CanvasOverlaysProps {
@@ -85,13 +86,22 @@ function GuideLine({
       onPointerUp={handlePointerUp}
       onDoubleClick={onRemove}
       title={removeLabel}
-      className="group absolute cursor-move bg-[#a855f7]"
+      className="group absolute cursor-move"
       style={
         isVertical
-          ? { left: guide.position * zoom, top: 0, width: 1, height: length * zoom }
-          : { top: guide.position * zoom, left: 0, height: 1, width: length * zoom }
+          ? { left: guide.position * zoom - 4, top: 0, width: 9, height: length * zoom }
+          : { top: guide.position * zoom - 4, left: 0, height: 9, width: length * zoom }
       }
     >
+      {/* Visual 1px guide line */}
+      <div
+        className="pointer-events-none absolute bg-[#a855f7] group-hover:bg-[#c084fc]"
+        style={
+          isVertical
+            ? { left: 4, top: 0, width: 1, height: '100%' }
+            : { top: 4, left: 0, height: 1, width: '100%' }
+        }
+      />
       <button
         type="button"
         data-testid={`design-guide-remove-${guide.id}`}
@@ -100,9 +110,9 @@ function GuideLine({
           onRemove();
         }}
         aria-label={removeLabel}
-        className="pointer-events-auto absolute -left-2 -top-2 hidden h-4 w-4 items-center justify-center rounded-full bg-[#a855f7] text-white group-hover:flex"
+        className="pointer-events-auto absolute -left-1 -top-1 hidden h-5 w-5 items-center justify-center rounded-full bg-[#a855f7] text-white shadow-md group-hover:flex hover:bg-red-500"
       >
-        <X className="h-2.5 w-2.5" />
+        <X className="h-3 w-3" />
       </button>
     </div>
   );
@@ -179,7 +189,20 @@ export function CanvasOverlays({ width, height, zoom, guides, onGuidesChange, sa
         ))}
       </div>
 
-      <div className="pointer-events-auto absolute -top-9 right-0 flex gap-1.5">
+      <div className="pointer-events-auto absolute -top-9 right-0 flex items-center gap-1.5">
+        {guides.length > 0 && (
+          <button
+            type="button"
+            data-testid="clear-guides-button"
+            onClick={() => onGuidesChange([])}
+            title={copy.clearGuidesLabel || 'Limpiar guías'}
+            aria-label={copy.clearGuidesLabel || 'Limpiar guías'}
+            className="ac-button ac-button--ghost ac-button--sm text-xs px-2"
+          >
+            <X className="h-3.5 w-3.5 mr-1" />
+            {copy.clearGuidesLabel || 'Limpiar guías'}
+          </button>
+        )}
         <button
           type="button"
           data-testid="add-vertical-guide-button"

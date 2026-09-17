@@ -78,6 +78,14 @@ function baseObjectProps(layer: DesignLayer, opts: { interactive: boolean }) {
     hasControls: opts.interactive && !layer.locked,
     originX: 'left' as const,
     originY: 'top' as const,
+    borderColor: '#4A9FD8',
+    cornerColor: '#5CB4E8',
+    cornerStrokeColor: '#081019',
+    cornerSize: 10,
+    transparentCorners: false,
+    cornerStyle: 'rect' as const,
+    borderScaleFactor: 2,
+    padding: 2,
   };
 }
 

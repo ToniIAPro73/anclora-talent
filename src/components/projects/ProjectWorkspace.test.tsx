@@ -157,20 +157,20 @@ describe('ProjectWorkspace', () => {
   test('restores the persisted workflow step and marks previous steps as completed', () => {
     const { container } = render(
       <ProjectWorkspace
-        project={makeProject({ workflowStep: 7 })}
+        project={makeProject({ workflowStep: 6 })}
         copy={copy}
       />,
     );
 
     expect(screen.getByText('Colaborar')).toBeInTheDocument();
-    expect(screen.getByText('de 9 pasos')).toBeInTheDocument();
-    expect(screen.getAllByText('7').length).toBeGreaterThan(0);
+    expect(screen.getByText('de 8 pasos')).toBeInTheDocument();
+    expect(screen.getAllByText('6').length).toBeGreaterThan(0);
 
     const activeStepButton = container.querySelector('[aria-current="step"]');
     expect(activeStepButton).not.toBeNull();
 
     const stepper = screen.getByRole('navigation', { name: 'Progress' });
-    expect(stepper.querySelectorAll('svg.lucide-check')).toHaveLength(6);
+    expect(stepper.querySelectorAll('svg.lucide-check')).toHaveLength(5);
   });
 
   test('prioritizes the persisted database workflow step over local storage', () => {
@@ -181,10 +181,10 @@ describe('ProjectWorkspace', () => {
       }),
     );
 
-    render(<ProjectWorkspace project={makeProject({ workflowStep: 5 })} copy={copy} />);
+    render(<ProjectWorkspace project={makeProject({ workflowStep: 4 })} copy={copy} />);
 
-    expect(screen.getByText('de 9 pasos')).toBeInTheDocument();
-    expect(screen.getAllByText('5').length).toBeGreaterThan(0);
+    expect(screen.getByText('de 8 pasos')).toBeInTheDocument();
+    expect(screen.getAllByText('4').length).toBeGreaterThan(0);
     expect(screen.getAllByText(copy.stepBackCover).length).toBeGreaterThan(0);
   });
 
@@ -251,7 +251,7 @@ describe('ProjectWorkspace', () => {
     
     // Step 1 -> 2
     fireEvent.click(nextButton);
-    expect(screen.getByText('de 9 pasos')).toBeInTheDocument();
+    expect(screen.getByText('de 8 pasos')).toBeInTheDocument();
     expect(screen.getAllByText('2').length).toBeGreaterThan(0);
     
     // Step 2 -> 3
@@ -259,7 +259,19 @@ describe('ProjectWorkspace', () => {
     expect(screen.getAllByText('3').length).toBeGreaterThan(0);
   });
 
-  test('renders the unified cover studio in Step 4', () => {
+  test('renders the unified cover studio in Step 3', () => {
+    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+
+    const nextButton = screen.getByText('Siguiente paso');
+    // 1 -> 2
+    fireEvent.click(nextButton);
+    // 2 -> 3
+    fireEvent.click(nextButton);
+
+    expect(screen.getByTestId('cover-studio-v2')).toHaveAttribute('data-surface-kind', 'cover');
+  });
+
+  test('renders the same unified studio for the back cover in Step 4', () => {
     render(<ProjectWorkspace project={makeProject()} copy={copy} />);
 
     const nextButton = screen.getByText('Siguiente paso');
@@ -270,33 +282,7 @@ describe('ProjectWorkspace', () => {
     // 3 -> 4
     fireEvent.click(nextButton);
 
-    expect(screen.getByTestId('cover-studio-v2')).toHaveAttribute('data-surface-kind', 'cover');
-  });
-
-  test('renders the same unified studio for the back cover in Step 5', () => {
-    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
-
-    const nextButton = screen.getByText('Siguiente paso');
-    fireEvent.click(nextButton);
-    fireEvent.click(nextButton);
-    fireEvent.click(nextButton);
-    fireEvent.click(nextButton);
-
     expect(screen.getByTestId('cover-studio-v2')).toHaveAttribute('data-surface-kind', 'back-cover');
-  });
-
-  test('template step shows separate cover and back cover catalogs', () => {
-    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
-
-    const nextButton = screen.getByText('Siguiente paso');
-    fireEvent.click(nextButton);
-    fireEvent.click(nextButton);
-
-    expect(screen.getByText('Plantillas de portada')).toBeInTheDocument();
-    expect(screen.getByText('Plantillas de contraportada')).toBeInTheDocument();
-    expect(screen.getByText('Ficcion literaria')).toBeInTheDocument();
-    expect(screen.getByText('Workbook / guia practica')).toBeInTheDocument();
-    expect(screen.getByText('Statement back')).toBeInTheDocument();
   });
 
   test('offers reverting the recomposition of the last chapter save (F0.3)', async () => {
@@ -360,30 +346,30 @@ describe('ProjectWorkspace', () => {
       };
     }
 
-    test('does not force CoverStudio/BackCoverStudio — steps 2-5 show the included panel', () => {
-      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 4 })} copy={copy} />);
+    test('does not force CoverStudio/BackCoverStudio — steps 2-4 show the included panel', () => {
+      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 3 })} copy={copy} />);
 
       expect(screen.getByTestId('fixed-pdf-included-panel')).toBeInTheDocument();
       expect(screen.queryByTestId('cover-studio-v2')).not.toBeInTheDocument();
     });
 
-    test('marks chapters/template/cover/back-cover steps as already completed', () => {
+    test('marks chapters/cover/back-cover steps as already completed', () => {
       render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 1 })} copy={copy} />);
 
       const stepper = screen.getByRole('navigation', { name: 'Progress' });
-      // Step 1 is active; steps 2-5 are pre-completed for fixed-pdf.
-      expect(stepper.querySelectorAll('svg.lucide-check')).toHaveLength(4);
+      // Step 1 is active; steps 2-4 are pre-completed for fixed-pdf.
+      expect(stepper.querySelectorAll('svg.lucide-check')).toHaveLength(3);
     });
 
     test('exposes an original-document preview instead of the composed preview', () => {
-      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 6 })} copy={copy} />);
+      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 5 })} copy={copy} />);
 
       expect(screen.getByTestId('fixed-pdf-preview')).toBeInTheDocument();
       expect(screen.queryByTestId('preview-inline-document')).not.toBeInTheDocument();
     });
 
     test('export step offers the original PDF and disables DOCX/EPUB/HTML/Markdown', () => {
-      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 9 })} copy={copy} />);
+      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 8 })} copy={copy} />);
 
       expect(screen.getByTestId('export-pdf-original-button')).toBeInTheDocument();
       expect(screen.queryByTestId('pdf-export-button')).not.toBeInTheDocument();
@@ -394,19 +380,19 @@ describe('ProjectWorkspace', () => {
     });
 
     test('export step offers "Crear copia editable" (Fase 3)', () => {
-      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 9 })} copy={copy} />);
+      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 8 })} copy={copy} />);
 
       expect(screen.getByTestId('create-editable-copy-button')).toBeInTheDocument();
     });
 
     test('export step never shows the composition-violations banner (Talent does not govern fixed-pdf composition)', () => {
-      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 9 })} copy={copy} />);
+      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 8 })} copy={copy} />);
 
       expect(screen.queryByTestId('export-gate-message')).not.toBeInTheDocument();
     });
 
     test('the original-PDF download button is never blocked by the export gate', () => {
-      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 9 })} copy={copy} />);
+      render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 8 })} copy={copy} />);
 
       expect(screen.getByTestId('export-pdf-original-button')).not.toBeDisabled();
       const actions = screen.getByTestId('export-pdf-original-button').closest('.ac-export-suite__actions');
@@ -414,14 +400,14 @@ describe('ProjectWorkspace', () => {
     });
 
     test('regression: an editable project is unaffected by fixed-pdf gating', () => {
-      render(<ProjectWorkspace project={makeProject({ workflowStep: 4 })} copy={copy} />);
+      render(<ProjectWorkspace project={makeProject({ workflowStep: 3 })} copy={copy} />);
 
       expect(screen.queryByTestId('fixed-pdf-included-panel')).not.toBeInTheDocument();
       expect(screen.getByTestId('cover-studio-v2')).toHaveAttribute('data-surface-kind', 'cover');
     });
 
     test('regression: editable project export step keeps every reflowable format enabled', () => {
-      render(<ProjectWorkspace project={makeProject({ workflowStep: 9 })} copy={copy} />);
+      render(<ProjectWorkspace project={makeProject({ workflowStep: 8 })} copy={copy} />);
 
       expect(screen.getByTestId('export-html-button')).not.toBeDisabled();
       expect(screen.getByTestId('export-docx-button')).not.toBeDisabled();
@@ -430,7 +416,7 @@ describe('ProjectWorkspace', () => {
     });
 
     test('regression: an already-editable project never offers "Crear copia editable"', () => {
-      render(<ProjectWorkspace project={makeProject({ workflowStep: 9 })} copy={copy} />);
+      render(<ProjectWorkspace project={makeProject({ workflowStep: 8 })} copy={copy} />);
 
       expect(screen.queryByTestId('create-editable-copy-button')).not.toBeInTheDocument();
     });

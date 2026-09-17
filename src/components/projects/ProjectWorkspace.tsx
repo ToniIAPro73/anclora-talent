@@ -10,7 +10,6 @@ import { CoverStudioV2 } from './design-surface/CoverStudioV2';
 import { PreviewCanvas } from './PreviewCanvas';
 import { FixedPdfPreview } from './FixedPdfPreview';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
-import { TemplateSelector } from './TemplateSelector';
 import { CollaborationPanel } from './CollaborationPanel';
 import { AIAssistant } from './AIAssistant';
 import { ChapterEditorModal } from './ChapterEditorModal';
@@ -28,13 +27,10 @@ import { WorkspaceOnboarding } from './WorkspaceOnboarding';
 import { ProductMetadataPanel } from './ProductMetadataPanel';
 import { useDocumentComposition } from './useDocumentComposition';
 import { resolveDocumentRules } from '@/lib/compose/rules';
-import { isLegacySurfaceState } from '@/lib/projects/design-surface';
 import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
 import { countPreflightErrors, preflight } from '@/lib/preflight/preflight';
 import {
-  saveBackCoverAction,
   saveChapterContentAction,
-  saveProjectCoverAction,
   saveProjectDocumentAction,
   saveProjectWorkflowStepAction,
   syncProjectPaginationAction,
@@ -47,18 +43,6 @@ import {
 import { computeChapterPageMetrics } from '@/lib/preview/metrics';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
-import {
-  BACK_COVER_TEMPLATES,
-  COVER_TEMPLATES,
-  type EditorialTemplate,
-} from '@/lib/projects/cover-templates';
-import {
-  applySurfaceTemplate,
-  createDefaultSurfaceState,
-  normalizeSurfaceState,
-} from '@/lib/projects/cover-surface';
-import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface-resolver';
-import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
 import { isFixedPdfProject, type ProjectRecord } from '@/lib/projects/types';
 import { getProjectCapabilities } from '@/lib/projects/capabilities';
 import type { AppMessages } from '@/lib/i18n/messages';
@@ -77,44 +61,6 @@ import type { CollaborationView } from '@/lib/collaboration/view';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { getBackCoverDesign, getCoverDesign } from '@/lib/projects/design-surface-repository';
 
-const TEMPLATE_TONE_TO_PALETTE: Record<EditorialTemplate['previewTone'], ProjectRecord['cover']['palette']> = {
-  obsidian: 'obsidian',
-  teal: 'teal',
-  sand: 'sand',
-};
-
-function buildCoverSurface(project: ProjectRecord) {
-  const fallback = createDefaultSurfaceState('cover');
-  const baseState = normalizeSurfaceState((isLegacySurfaceState(project.cover.surfaceState) ? project.cover.surfaceState : null) ?? fallback);
-  return {
-    ...baseState,
-    fields: {
-      ...baseState.fields,
-      ...resolveCoverSurfaceFields(project, baseState),
-    },
-  };
-}
-
-function buildBackCoverSurface(project: ProjectRecord) {
-  const fallback = createDefaultSurfaceState('back-cover');
-  const baseState = normalizeSurfaceState((isLegacySurfaceState(project.backCover.surfaceState) ? project.backCover.surfaceState : null) ?? fallback);
-  return {
-    ...baseState,
-    fields: {
-      ...baseState.fields,
-      ...resolveBackCoverSurfaceFields(project, baseState),
-    },
-  };
-}
-
-function inferTemplateId(
-  templates: EditorialTemplate[],
-  layoutKind: string | undefined,
-  fallbackId: string,
-) {
-  return templates.find((template) => template.layout.kind === layoutKind)?.id ?? fallbackId;
-}
-
 type SaveState = 'idle' | 'saving' | 'saved';
 type PaginationSyncFeedback = 'idle' | 'done' | 'missing-index';
 const PROJECT_WORKFLOW_STEP_STORAGE_KEY = 'anclora-project-workflow-step';
@@ -124,7 +70,7 @@ function normalizeWorkflowStep(step: number | undefined) {
     return 1;
   }
 
-  return Math.min(9, Math.max(1, Math.trunc(step ?? 1)));
+  return Math.min(8, Math.max(1, Math.trunc(step ?? 1)));
 }
 
 function readStoredWorkflowStep(projectId: string) {
@@ -235,24 +181,12 @@ export function ProjectWorkspace({
   const [isReimportDialogOpen, setIsReimportDialogOpen] = useState(false);
   const [isDocumentDataOpen, setIsDocumentDataOpen] = useState(initialOpenDocumentData);
 
-  const initialCoverSurface = useMemo(() => buildCoverSurface(project), [project]);
-  const initialBackCoverSurface = useMemo(() => buildBackCoverSurface(project), [project]);
   const canonicalCoverSurface = useMemo(() => getCoverDesign(project), [project]);
   const canonicalBackCoverSurface = useMemo(() => getBackCoverDesign(project), [project]);
   const coverDesignSurfaceCopy = useMemo(() => resolveLocaleMessages(locale).coverDesignSurface, [locale]);
   const sourceDocumentAssetId = project.assets.find((asset) => asset.usage === 'source-document')?.id ?? null;
   const sourcePageCount = project.document.source?.pageCount ?? null;
-  const [selectedCoverTemplateId, setSelectedCoverTemplateId] = useState(
-    inferTemplateId(COVER_TEMPLATES, initialCoverSurface.layout.kind, COVER_TEMPLATES[0]?.id ?? ''),
-  );
-  const [selectedBackCoverTemplateId, setSelectedBackCoverTemplateId] = useState(
-    inferTemplateId(
-      BACK_COVER_TEMPLATES,
-      initialBackCoverSurface.layout.kind,
-      BACK_COVER_TEMPLATES[0]?.id ?? '',
-    ),
-  );
-  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [saveStepState, setSaveStepState] = useState<'idle' | 'saved'>('idle');
   const [pageNumberSyncState, setPageNumberSyncState] = useState<SaveState>('idle');
   const [pageNumberSyncFeedback, setPageNumberSyncFeedback] = useState<PaginationSyncFeedback>('idle');
   const [isPending, startTransition] = useTransition();
@@ -279,6 +213,8 @@ export function ProjectWorkspace({
       formData.set('projectId', project.id);
       formData.set('workflowStep', String(activeStep));
       await saveProjectWorkflowStepAction(formData);
+      setSaveStepState('saved');
+      window.setTimeout(() => setSaveStepState('idle'), 2000);
     });
   }, [activeStep, project.id, project.workflowStep, startTransition]);
 
@@ -300,62 +236,8 @@ export function ProjectWorkspace({
     return Object.fromEntries(metrics.map((m) => [m.chapterId, m]));
   }, [project]);
 
-  const handleCoverTemplateSelect = (templateId: string) => {
-    const template = COVER_TEMPLATES.find((item) => item.id === templateId);
-    if (!template) return;
-
-    setSelectedCoverTemplateId(templateId);
-
-    const nextSurface = applySurfaceTemplate(initialCoverSurface, template);
-    const formData = new FormData();
-    formData.set('projectId', project.id);
-    formData.set('title', nextSurface.fields.title?.value ?? project.cover.title);
-    formData.set('subtitle', nextSurface.fields.subtitle?.value ?? project.cover.subtitle);
-    formData.set('palette', TEMPLATE_TONE_TO_PALETTE[template.previewTone]);
-    formData.set('currentBackgroundImageUrl', project.cover.backgroundImageUrl ?? '');
-    formData.set('currentThumbnailUrl', project.cover.thumbnailUrl ?? '');
-    formData.set('layout', project.cover.layout || 'centered');
-    formData.set('showSubtitle', String(nextSurface.fields.subtitle?.visible ?? false));
-    formData.set('accentColor', project.cover.accentColor ?? '');
-    formData.set('fontFamily', project.cover.fontFamily ?? '');
-    formData.set('surfaceState', JSON.stringify(nextSurface));
-
-    setSaveState('saving');
-    startTransition(async () => {
-      await saveProjectCoverAction(formData);
-      router.refresh();
-      setSaveState('saved');
-      setTimeout(() => setSaveState('idle'), 2000);
-    });
-  };
-
-  const handleBackCoverTemplateSelect = (templateId: string) => {
-    const template = BACK_COVER_TEMPLATES.find((item) => item.id === templateId);
-    if (!template) return;
-
-    setSelectedBackCoverTemplateId(templateId);
-
-    const nextSurface = applySurfaceTemplate(initialBackCoverSurface, template);
-    const formData = new FormData();
-    formData.set('projectId', project.id);
-    formData.set('title', nextSurface.fields.title?.value ?? project.backCover.title);
-    formData.set('body', nextSurface.fields.body?.value ?? project.backCover.body);
-    formData.set('authorBio', nextSurface.fields.authorBio?.value ?? project.backCover.authorBio);
-    formData.set('accentColor', project.backCover.accentColor ?? '');
-    formData.set('currentBackgroundImageUrl', project.backCover.backgroundImageUrl ?? '');
-    formData.set('surfaceState', JSON.stringify(nextSurface));
-
-    setSaveState('saving');
-    startTransition(async () => {
-      await saveBackCoverAction(formData);
-      router.refresh();
-      setSaveState('saved');
-      setTimeout(() => setSaveState('idle'), 2000);
-    });
-  };
-
   const steps: Step[] = useMemo(() => {
-    // Fixed-PDF document mode: steps 2-5 (chapters/template/cover/back
+    // Fixed-PDF document mode: steps 2-4 (chapters/cover/back
     // cover) are already resolved by the original PDF — shown as
     // completed rather than pending, regardless of activeStep.
     const includedStatus = (id: number): Step['status'] =>
@@ -364,13 +246,12 @@ export function ProjectWorkspace({
     return [
       { id: 1, title: copy.stepContent, description: copy.stepContentDesc, status: activeStep === 1 ? 'active' : activeStep > 1 ? 'completed' : 'pending' },
       { id: 2, title: copy.stepChapters, description: fixedPdf ? copy.fixedPdfIncludedStepBody : copy.stepChaptersDesc, status: includedStatus(2) },
-      { id: 3, title: copy.stepTemplate, description: fixedPdf ? copy.fixedPdfIncludedStepBody : copy.stepTemplateDesc, status: includedStatus(3) },
-      { id: 4, title: copy.stepCover, description: fixedPdf ? copy.fixedPdfIncludedStepBody : copy.stepCoverDesc, status: includedStatus(4) },
-      { id: 5, title: copy.stepBackCover, description: fixedPdf ? copy.fixedPdfIncludedStepBody : copy.stepBackCoverDesc, status: includedStatus(5) },
-      { id: 6, title: copy.stepPreview, description: copy.stepPreviewDesc, status: activeStep === 6 ? 'active' : activeStep > 6 ? 'completed' : 'pending' },
-      { id: 7, title: copy.stepCollaborate, description: copy.stepCollaborateDesc, status: activeStep === 7 ? 'active' : activeStep > 7 ? 'completed' : 'pending' },
-      { id: 8, title: copy.stepAI, description: copy.stepAIDesc, status: activeStep === 8 ? 'active' : activeStep > 8 ? 'completed' : 'pending' },
-      { id: 9, title: copy.stepExport, description: copy.stepExportDesc, status: activeStep === 9 ? 'active' : activeStep > 9 ? 'completed' : 'pending' },
+      { id: 3, title: copy.stepCover, description: fixedPdf ? copy.fixedPdfIncludedStepBody : copy.stepCoverDesc, status: includedStatus(3) },
+      { id: 4, title: copy.stepBackCover, description: fixedPdf ? copy.fixedPdfIncludedStepBody : copy.stepBackCoverDesc, status: includedStatus(4) },
+      { id: 5, title: copy.stepPreview, description: copy.stepPreviewDesc, status: activeStep === 5 ? 'active' : activeStep > 5 ? 'completed' : 'pending' },
+      { id: 6, title: copy.stepCollaborate, description: copy.stepCollaborateDesc, status: activeStep === 6 ? 'active' : activeStep > 6 ? 'completed' : 'pending' },
+      { id: 7, title: copy.stepAI, description: copy.stepAIDesc, status: activeStep === 7 ? 'active' : activeStep > 7 ? 'completed' : 'pending' },
+      { id: 8, title: copy.stepExport, description: copy.stepExportDesc, status: activeStep === 8 ? 'active' : activeStep > 8 ? 'completed' : 'pending' },
     ];
   }, [activeStep, copy, fixedPdf]);
 
@@ -645,20 +526,7 @@ export function ProjectWorkspace({
             />
           </section>
         );
-      case 3: // Template
-        if (fixedPdf) return renderFixedPdfIncludedPanel(copy.stepTemplate);
-        return (
-          <div className="mx-auto max-w-5xl">
-            <TemplateSelector
-              selectedCoverTemplateId={selectedCoverTemplateId}
-              selectedBackCoverTemplateId={selectedBackCoverTemplateId}
-              onSelectCover={handleCoverTemplateSelect}
-              onSelectBackCover={handleBackCoverTemplateSelect}
-              copy={copy}
-            />
-          </div>
-        );
-      case 4: // Cover
+      case 3: // Cover
         if (fixedPdf) return renderFixedPdfIncludedPanel(copy.stepCover);
         return (
           <div className="mx-auto max-w-6xl space-y-6">
@@ -673,7 +541,7 @@ export function ProjectWorkspace({
             />
           </div>
         );
-      case 5: // Back Cover
+      case 4: // Back Cover
         if (fixedPdf) return renderFixedPdfIncludedPanel(copy.stepBackCover);
         return (
           <div className="mx-auto max-w-6xl space-y-6">
@@ -688,13 +556,13 @@ export function ProjectWorkspace({
             />
           </div>
         );
-      case 6: // Preview
+      case 5: // Preview
         return fixedPdf ? (
           <FixedPdfPreview projectId={project.id} copy={copy} />
         ) : (
           <PreviewCanvas project={project} copy={copy} />
         );
-      case 7: // Collaborate
+      case 6: // Collaborate
         return collaboration ? (
           <CollaborationPanel
             copy={collaboration.copy}
@@ -703,9 +571,9 @@ export function ProjectWorkspace({
             locale={locale}
           />
         ) : null;
-      case 8: // AI
+      case 7: // AI
         return <AIAssistant />;
-      case 9: // Export
+      case 8: // Export
         return (
           <section className="ac-surface-panel ac-export-suite">
             <div className="ac-export-suite__mark">
@@ -846,13 +714,13 @@ export function ProjectWorkspace({
           >
             {copy.documentDataOpen}
           </button>
-          {saveState === 'saving' && (
+          {isPending && (
             <span className="flex items-center gap-1.5 text-xs text-[var(--text-tertiary)]" data-testid="project-save-status-saving">
               <Loader2 className="h-3 w-3 animate-spin" />
               Guardando...
             </span>
           )}
-          {saveState === 'saved' && !isPending && (
+          {saveStepState === 'saved' && !isPending && (
             <span className="flex items-center gap-1.5 text-xs text-[var(--accent-text)]" data-testid="project-save-status-saved">
               <Check className="h-3 w-3" />
               Guardado
@@ -885,7 +753,7 @@ export function ProjectWorkspace({
               <h4 className="ac-workflow-shell__panel-meta">Progreso</h4>
               <div className="ac-workflow-shell__panel-value mt-3">
                  <strong>{activeStep}</strong>
-                 <span>de 9 pasos</span>
+                 <span>de {steps.length} pasos</span>
               </div>
               <p className="ac-workflow-shell__panel-summary mt-4 text-xs leading-5">
                  {steps[activeStep - 1]?.description || 'Sigue el flujo editorial para completar tu publicación premium.'}
@@ -903,8 +771,8 @@ export function ProjectWorkspace({
               </button>
               <button
                 data-testid="next-step-button"
-                onClick={() => setActiveStep(prev => Math.min(9, prev + 1))}
-                disabled={activeStep === 9}
+                onClick={() => setActiveStep(prev => Math.min(steps.length, prev + 1))}
+                disabled={activeStep === steps.length}
                 className={`${premiumPrimaryDarkButton} w-full py-3 text-xs disabled:opacity-30 disabled:cursor-default cursor-pointer`}
               >
                  Siguiente paso

@@ -62,6 +62,7 @@ export interface DesignSurfaceCanvasHandle {
   canRedo(): boolean;
   setZoom(factor: number): void;
   zoomToFit(): void;
+  selectLayers(layerIds: string[]): void;
 }
 
 export interface DesignSurfaceCanvasProps {
@@ -92,6 +93,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
     const canvasElRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const fabricRef = useRef<FabricCanvas | null>(null);
+    const fabricModuleRef = useRef<FabricCanvas | null>(null);
     const objectsByIdRef = useRef<Map<string, FabricObject>>(new Map());
     const lastSyncedLayersRef = useRef<Map<string, string>>(new Map());
     const historyRef = useRef<string[]>([]);
@@ -135,6 +137,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
         if (!canvasElRef.current) return;
         const fabric = await getFabric();
         if (disposed) return;
+        fabricModuleRef.current = fabric;
 
         const canvas = new fabric.Canvas(canvasElRef.current, {
           width: surface.width,
@@ -412,6 +415,31 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           guideManagerRef.current?.setZoom(factor);
           setZoomState(factor);
           onZoomChange?.(factor);
+        },
+        selectLayers(layerIds: string[]) {
+          const canvas = fabricRef.current;
+          if (!canvas) return;
+          if (layerIds.length === 0) {
+            canvas.discardActiveObject?.();
+            renderCanvas(canvas);
+            return;
+          }
+          const matchedObjects = layerIds
+            .map((id) => objectsByIdRef.current.get(id))
+            .filter((obj): obj is FabricObject => Boolean(obj));
+
+          if (matchedObjects.length === 0) {
+            canvas.discardActiveObject?.();
+          } else if (matchedObjects.length === 1) {
+            canvas.setActiveObject?.(matchedObjects[0]);
+          } else {
+            const fabric = fabricModuleRef.current;
+            if (fabric?.ActiveSelection) {
+              const selection = new fabric.ActiveSelection(matchedObjects, { canvas });
+              canvas.setActiveObject?.(selection);
+            }
+          }
+          renderCanvas(canvas);
         },
       }),
       [applyHistorySnapshot, onLayersChange, onSelectionChange, onZoomChange, pushHistory, surface.layers, viewportSize, surface.width, surface.height],

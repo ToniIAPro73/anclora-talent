@@ -34,6 +34,7 @@ import { FontSelector } from '../cover-studio/FontSelector';
 import { ColorPickerField } from './ColorPickerField';
 import { ImageLayerProperties } from './ImageLayerProperties';
 import { BackgroundEditor } from './BackgroundEditor';
+import { DesignSurfaceRenderer } from './DesignSurfaceRenderer';
 
 type TextLayer = DesignLayer & TextLayerProps;
 type ImageLayer = DesignLayer & ImageLayerProps;
@@ -247,8 +248,30 @@ export function BasicCoverEditor({ surface, onChange, copy, palette, onPaletteCh
 
   const applyTemplate = (template: EditorialTemplate) => {
     if (!isEmptyDesignSurface(surface) && !window.confirm(copy.origin.resetToTemplateConfirm)) return;
+    const existingContentByRole = new Map<string, string>();
+    for (const layer of surface.layers) {
+      if (layer.type === 'text' && layer.role && layer.content) {
+        existingContentByRole.set(layer.role, layer.content);
+      }
+    }
+
     const next = buildDesignSurfaceFromTemplate(template, { palette });
-    onChange({ ...next, guides: surface.guides, safeArea: surface.safeArea, isbnArea: surface.isbnArea, originAssetId: null, originMode: 'blank' });
+    const preservedLayers = next.layers.map((layer) => {
+      if (layer.type === 'text' && layer.role && existingContentByRole.has(layer.role)) {
+        return { ...layer, content: existingContentByRole.get(layer.role)! };
+      }
+      return layer;
+    });
+
+    onChange({
+      ...next,
+      layers: preservedLayers,
+      guides: surface.guides,
+      safeArea: surface.safeArea,
+      isbnArea: surface.isbnArea,
+      originAssetId: null,
+      originMode: 'blank',
+    });
   };
 
   const handlePaletteSelect = (next: SurfacePalette) => {
@@ -282,23 +305,43 @@ export function BasicCoverEditor({ surface, onChange, copy, palette, onPaletteCh
 
   return (
     <div className="space-y-6" data-testid="basic-cover-editor">
-      <div className="space-y-2">
-        <Label className="text-xs font-semibold">{copy.templatesLabel}</Label>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="basic-template-grid">
-          {templates.map((template) => (
-            <button
-              key={template.id}
-              type="button"
-              data-testid={`basic-template-${template.id}`}
-              onClick={() => applyTemplate(template)}
-              className="ac-button ac-button--secondary flex flex-col items-start gap-1 p-2 text-left text-xs"
-              title={template.description}
-            >
-              <span className="font-semibold">{template.name}</span>
-            </button>
-          ))}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[380px_minmax(0,1fr)] items-start">
+        {/* Live Preview Column */}
+        <div className="lg:sticky lg:top-8 order-2 lg:order-1 space-y-3">
+          <div className="ac-surface-panel p-4 shadow-[var(--shadow-strong)] rounded-2xl border border-[var(--border-subtle)]">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)]">
+                Vista previa en tiempo real
+              </span>
+              <span className="text-xs text-[var(--accent-text)] font-semibold">
+                {surface.surface === 'cover' ? 'Portada' : 'Contraportada'}
+              </span>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-[var(--border-subtle)] shadow-md bg-[var(--surface-canvas)]">
+              <DesignSurfaceRenderer surface={surface} />
+            </div>
+          </div>
         </div>
-      </div>
+
+        {/* Controls Column */}
+        <div className="order-1 lg:order-2 space-y-6">
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold">{copy.templatesLabel}</Label>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="basic-template-grid">
+              {templates.map((template) => (
+                <button
+                  key={template.id}
+                  type="button"
+                  data-testid={`basic-template-${template.id}`}
+                  onClick={() => applyTemplate(template)}
+                  className="ac-button ac-button--secondary flex flex-col items-start gap-1 p-2 text-left text-xs"
+                  title={template.description}
+                >
+                  <span className="font-semibold">{template.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
 
       <div className="space-y-3">
         {FIELD_ROLES.map((role) => (
@@ -400,6 +443,8 @@ export function BasicCoverEditor({ surface, onChange, copy, palette, onPaletteCh
             copy={copy.colorPicker}
             testId="basic-palette-custom"
           />
+        </div>
+      </div>
         </div>
       </div>
     </div>

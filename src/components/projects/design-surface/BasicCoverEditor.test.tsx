@@ -100,6 +100,25 @@ describe('BasicCoverEditor', () => {
     expect(next.background).toEqual({ kind: 'solid', color: '#124a50' });
   });
 
+  test('renders live preview renderer next to controls', () => {
+    render(<BasicCoverEditor surface={makeSurface()} onChange={vi.fn()} copy={copy} palette="obsidian" onPaletteChange={vi.fn()} />);
+    expect(screen.getByTestId('design-surface-renderer')).toBeInTheDocument();
+    expect(screen.getByText('Vista previa en tiempo real')).toBeInTheDocument();
+  });
+
+  test('selecting a template preserves existing text content for matching roles', () => {
+    const onChange = vi.fn();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<BasicCoverEditor surface={makeSurface()} onChange={onChange} copy={copy} palette="obsidian" onPaletteChange={vi.fn()} />);
+    fireEvent.click(screen.getByTestId(`basic-template-${COVER_TEMPLATES[1].id}`));
+    expect(onChange).toHaveBeenCalled();
+    const next: DesignSurface = onChange.mock.calls[0][0];
+    const titleLayer = next.layers.find((l) => l.type === 'text' && l.role === 'title');
+    expect(titleLayer).toBeDefined();
+    expect((titleLayer as { content: string }).content).toBe('El Plan de Escape');
+    confirmSpy.mockRestore();
+  });
+
   test('adding an image creates an image layer above the rest', async () => {
     const onChange = vi.fn();
     render(<BasicCoverEditor surface={makeSurface()} onChange={onChange} copy={copy} palette="obsidian" onPaletteChange={vi.fn()} />);
