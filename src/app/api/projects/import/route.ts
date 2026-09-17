@@ -58,6 +58,19 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Missing sourceBlobUrl or fileName' }, { status: 400 });
       }
 
+      // Security: verify that the Blob URL belongs to the authenticated user
+      // Token generation restricts pathname to `${user.id}/source/...`
+      try {
+        const parsedUrl = new URL(sourceBlobUrl);
+        const decodedPath = decodeURIComponent(parsedUrl.pathname);
+        if (!decodedPath.includes(`/${user.id}/source/`)) {
+          console.warn('[import-route] rejected unowned blob URL', { userId: user.id, pathname: decodedPath });
+          return NextResponse.json({ error: 'Forbidden blob URL' }, { status: 403 });
+        }
+      } catch {
+        return NextResponse.json({ error: 'Invalid sourceBlobUrl' }, { status: 400 });
+      }
+
       const streamResult = await fetchPrivateProjectDocument(sourceBlobUrl, 'private');
       if (!streamResult || !streamResult.stream) {
         return NextResponse.json({ error: 'Failed to read stored source document' }, { status: 502 });

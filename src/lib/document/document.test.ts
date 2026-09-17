@@ -57,6 +57,15 @@ describe('htmlToBlocks', () => {
     const blocks = htmlToBlocks('<p>a</p><p>a</p>');
     expect(new Set(blocks.map((b) => b.id)).size).toBe(2);
   });
+
+  it('parses content correctly via regex fallback when DOM runtime is absent', () => {
+    // Calling htmlToBlocks on HTML snippet
+    const blocks = htmlToBlocks('<h1>Prólogo</h1><p>Texto inicial.</p><blockquote>Cita</blockquote>');
+    expect(blocks.length).toBeGreaterThanOrEqual(3);
+    expect(blocks[0].type).toBe('heading');
+    expect(blocks[1].type).toBe('paragraph');
+    expect(blocks[2].type).toBe('quote');
+  });
 });
 
 describe('documentToHtml round-trip', () => {

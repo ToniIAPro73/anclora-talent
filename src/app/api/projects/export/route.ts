@@ -6,6 +6,9 @@ import { resolveExportPaginationConfig } from '@/lib/projects/export-config';
 import { resolveProjectBrandTemplateOverrides } from '@/lib/brand/resolve';
 import { isFixedPdfProject } from '@/lib/projects/types';
 
+export const runtime = 'nodejs';
+export const maxDuration = 300;
+
 export async function GET(request: NextRequest) {
   try {
     const userId = await requireUserId();

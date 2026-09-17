@@ -146,6 +146,69 @@ function parseTable(element: DomElement, id: string): DocumentBlock {
   return { type: 'table', rows, hasHeader, caption, id };
 }
 
+function htmlToBlocksFallback(html: string): DocumentBlock[] {
+  const blocks: DocumentBlock[] = [];
+  const pattern = /<(h([1-6])|p|blockquote|li)\b[^>]*>([\s\S]*?)<\/\1>/gi;
+  let counter = 0;
+
+  for (const match of html.matchAll(pattern)) {
+    const fullTag = match[1]?.toLowerCase();
+    const headingLevelNum = Number(match[2] ?? 2);
+    const inner = (match[3] ?? '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!inner) continue;
+
+    counter += 1;
+    const id = `h-fallback-${counter}-${fullTag}`;
+
+    if (fullTag?.startsWith('h')) {
+      const level = (Math.min(Math.max(headingLevelNum, 1), 6)) as 1 | 2 | 3 | 4 | 5 | 6;
+      blocks.push({
+        type: 'heading',
+        level,
+        content: [{ type: 'text', text: inner }],
+        id,
+      });
+      continue;
+    }
+    if (fullTag === 'blockquote') {
+      blocks.push({
+        type: 'quote',
+        content: [{ type: 'text', text: inner }],
+        id,
+      });
+      continue;
+    }
+    blocks.push({
+      type: 'paragraph',
+      content: [{ type: 'text', text: inner }],
+      id,
+    });
+  }
+
+  if (blocks.length > 0) {
+    return ensureBlockIds(blocks);
+  }
+
+  const plain = html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (plain) {
+    return ensureBlockIds([
+      {
+        type: 'paragraph',
+        content: [{ type: 'text', text: plain }],
+        id: 'h-fallback-1-p',
+      },
+    ]);
+  }
+
+  return [];
+}
+
 /**
  * Converts a chapter HTML string into semantic blocks. Unknown or
  * unsupported markup degrades to paragraphs, never throws.
@@ -153,14 +216,14 @@ function parseTable(element: DomElement, id: string): DocumentBlock {
 export function htmlToBlocks(html: string): DocumentBlock[] {
   const runtime = getPaginationDomRuntime();
   if (!runtime) {
-    return [];
+    return htmlToBlocksFallback(html);
   }
   const parsed = new runtime.DOMParser().parseFromString(
     `<body>${html}</body>`,
     'text/html',
   );
   const body = parsed.querySelector('body');
-  if (!body) return [];
+  if (!body) return htmlToBlocksFallback(html);
 
   const blocks: DocumentBlock[] = [];
   const push = (block: DocumentBlock) => blocks.push(block);

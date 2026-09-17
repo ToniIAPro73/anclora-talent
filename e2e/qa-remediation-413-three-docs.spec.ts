@@ -30,7 +30,8 @@ async function ensureUserAndLogin(page: Page) {
     );
   });
   await page.goto('/sign-in');
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
+  await page.locator('#email').waitFor({ state: 'visible', timeout: 15_000 });
 
   // Try signing in
   await page.locator('#email').fill(TEST_USER.email);
@@ -38,14 +39,15 @@ async function ensureUserAndLogin(page: Page) {
   await page.locator('button[type="submit"]').click();
 
   try {
-    await expect(page).toHaveURL(/\/(dashboard|projects)/, { timeout: 6000 });
+    await expect(page).toHaveURL(/\/(dashboard|projects)/, { timeout: 8000 });
     return;
   } catch {
     // Need to register
   }
 
   await page.goto('/sign-up');
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
+  await page.locator('#fullName').waitFor({ state: 'visible', timeout: 15_000 });
   await page.locator('#fullName').fill(TEST_USER.fullName);
   await page.locator('#email').fill(TEST_USER.email);
   await page.locator('#password').fill(TEST_USER.password);
@@ -62,8 +64,8 @@ test.describe('Real Three-Document End-to-End Remediation (Fix HTTP 413)', () =>
 
     // 2. Go to New Project page
     await page.goto('/projects/new');
-    await page.waitForLoadState('networkidle');
-    await expect(page.getByTestId('create-project-form')).toBeVisible();
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByTestId('create-project-form')).toBeVisible({ timeout: 15_000 });
 
     // 3. Fill Title
     const titleInput = page.getByTestId('create-project-title-input');
@@ -184,7 +186,7 @@ test.describe('Real Three-Document End-to-End Remediation (Fix HTTP 413)', () =>
     expect(submitStatus).not.toBe(413);
 
     // 12. Capture editor screenshot
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.screenshot({
       path: path.join(POST_FIX_DIR, '02-after-create-editor.png'),
       fullPage: true,

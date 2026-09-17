@@ -94,4 +94,36 @@ describe('POST /api/projects/import (F2 OCR de ingesta)', () => {
     expect(buildImportOcrRunnerMock).not.toHaveBeenCalled();
     expect(extractImportedDocumentSeedMock).not.toHaveBeenCalled();
   });
+
+  test('rejects JSON import with blob URL not belonging to the authenticated user', async () => {
+    const { POST } = await import('./route');
+    const req = {
+      headers: { get: () => 'application/json' },
+      json: async () => ({
+        sourceBlobUrl: 'https://blob.vercel-storage.com/other-user-999/source/123-doc.docx',
+        fileName: 'doc.docx',
+      }),
+    } as unknown as NextRequest;
+
+    const response = await POST(req);
+    expect(response.status).toBe(403);
+    const body = await response.json();
+    expect(body.error).toBe('Forbidden blob URL');
+  });
+
+  test('rejects JSON import with malformed blob URL', async () => {
+    const { POST } = await import('./route');
+    const req = {
+      headers: { get: () => 'application/json' },
+      json: async () => ({
+        sourceBlobUrl: 'not-a-valid-url',
+        fileName: 'doc.docx',
+      }),
+    } as unknown as NextRequest;
+
+    const response = await POST(req);
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error).toBe('Invalid sourceBlobUrl');
+  });
 });
