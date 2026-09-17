@@ -139,4 +139,14 @@ describe('design-surface-fabric (real fabric/node)', () => {
     expect(object.width).toBe(200);
     expect(object.height).toBe(75);
   });
+
+  it('readLayerPatchFromFabricObject extracts text content for text layers', async () => {
+    const fabric = await loadFabric();
+    const layer = createDesignLayer({ type: 'text', content: 'Original Text', width: 100, height: 50 }, 1);
+    const object = await hydrateFabricLayerObject(fabric, layer);
+    object.set({ text: 'Updated Text Directly In Fabric' });
+
+    const patch = readLayerPatchFromFabricObject(object);
+    expect((patch as { content?: string }).content).toBe('Updated Text Directly In Fabric');
+  });
 });

@@ -86,7 +86,7 @@ function GuideLine({
       onPointerUp={handlePointerUp}
       onDoubleClick={onRemove}
       title={removeLabel}
-      className="group absolute cursor-move"
+      className="pointer-events-auto group absolute cursor-move"
       style={
         isVertical
           ? { left: guide.position * zoom - 4, top: 0, width: 9, height: length * zoom }
@@ -175,7 +175,7 @@ export function CanvasOverlays({ width, height, zoom, guides, onGuidesChange, sa
         </div>
       )}
 
-      <div className="pointer-events-auto absolute inset-0">
+      <div className="pointer-events-none absolute inset-0">
         {guides.map((guide) => (
           <GuideLine
             key={guide.id}

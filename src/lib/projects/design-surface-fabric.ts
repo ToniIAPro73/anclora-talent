@@ -20,6 +20,7 @@ import type {
   DesignLayer,
   DesignSurface,
   ImageLayerFilters,
+  TextLayerProps,
 } from './design-surface';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -292,7 +293,7 @@ export function readLayerPatchFromFabricObject(object: FabricObject): Partial<De
   const width = (object.width ?? 0) * scaleX;
   const height = (object.height ?? 0) * scaleY;
 
-  return {
+  const patch: Partial<DesignLayer> = {
     x: object.left ?? 0,
     y: object.top ?? 0,
     width,
@@ -300,6 +301,12 @@ export function readLayerPatchFromFabricObject(object: FabricObject): Partial<De
     rotation: object.angle ?? 0,
     opacity: object.opacity ?? 1,
   };
+
+  if (typeof object.text === 'string') {
+    (patch as Partial<TextLayerProps>).content = object.text;
+  }
+
+  return patch;
 }
 
 /** Fabric keeps resize as scale; normalizing it back to scale=1 + explicit width/height keeps every consumer (properties panel, server renderer) reading one authoritative source instead of having to multiply scale in every reader. */

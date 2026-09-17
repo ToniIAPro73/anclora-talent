@@ -90,4 +90,18 @@ describe('CanvasOverlays', () => {
     fireEvent.click(screen.getByTestId('design-guide-remove-g1'));
     expect(onGuidesChange).toHaveBeenCalledWith([]);
   });
+
+  test('clears all guides when clear guides button is clicked', () => {
+    const onGuidesChange = vi.fn();
+    const guides = [
+      { id: 'g1', axis: 'x' as const, position: 150 },
+      { id: 'g2', axis: 'y' as const, position: 250 },
+    ];
+    render(<CanvasOverlays width={400} height={600} zoom={1} guides={guides} onGuidesChange={onGuidesChange} showSafeArea={false} grid="none" copy={copy} />);
+
+    const clearButton = screen.getByTestId('clear-guides-button');
+    expect(clearButton).toBeInTheDocument();
+    fireEvent.click(clearButton);
+    expect(onGuidesChange).toHaveBeenCalledWith([]);
+  });
 });

@@ -225,9 +225,14 @@ export function BasicCoverEditor({ surface, onChange, copy, palette, onPaletteCh
   const patchField = (role: BasicFieldRole, patch: Partial<TextLayerProps> & Partial<Pick<DesignLayer, 'visible'>>) => {
     const layer = fieldLayer(role);
     if (!layer) return;
+    const isContentEdit = typeof patch.content === 'string';
     onChange({
       ...surface,
-      layers: surface.layers.map((l) => (l.id === layer.id ? ({ ...l, ...patch } as DesignLayer) : l)),
+      layers: surface.layers.map((l) =>
+        l.id === layer.id
+          ? ({ ...l, ...patch, ...(isContentEdit ? { source: 'manual' } : {}) } as DesignLayer)
+          : l,
+      ),
     });
   };
 
@@ -258,7 +263,11 @@ export function BasicCoverEditor({ surface, onChange, copy, palette, onPaletteCh
     const next = buildDesignSurfaceFromTemplate(template, { palette });
     const preservedLayers = next.layers.map((layer) => {
       if (layer.type === 'text' && layer.role && existingContentByRole.has(layer.role)) {
-        return { ...layer, content: existingContentByRole.get(layer.role)! };
+        return {
+          ...layer,
+          content: existingContentByRole.get(layer.role)!,
+          source: 'manual' as const,
+        };
       }
       return layer;
     });

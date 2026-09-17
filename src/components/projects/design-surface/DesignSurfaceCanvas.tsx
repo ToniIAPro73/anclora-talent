@@ -196,6 +196,15 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           pushHistory();
         });
 
+        canvas.on('text:changed', (event: FabricEvent) => {
+          if (event.target) reportLayerChange(event.target);
+        });
+
+        canvas.on('text:editing:exited', (event: FabricEvent) => {
+          if (event.target) reportLayerChange(event.target);
+          pushHistory();
+        });
+
         fabricRef.current = canvas;
         forceRender((n) => n + 1);
       })();

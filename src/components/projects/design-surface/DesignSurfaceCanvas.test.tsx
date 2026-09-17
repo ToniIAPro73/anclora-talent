@@ -300,4 +300,41 @@ describe('DesignSurfaceCanvas', () => {
 
     expect(object.left).toBe(126);
   });
+
+  it('reports layer change when text:changed fires on a text object', async () => {
+    const surface = makeSurfaceWithOneTextLayer();
+    const onLayerChange = vi.fn();
+    render(
+      <DesignSurfaceCanvas surface={surface} onLayerChange={onLayerChange} onLayersChange={vi.fn()} onSelectionChange={vi.fn()} />,
+    );
+    await waitFor(() => expect(mocks.state.objects).toHaveLength(1));
+
+    const object = mocks.state.objects[0];
+    (object as unknown as { text: string }).text = 'Título Editado Directamente';
+    emit('text:changed', { target: object });
+
+    expect(onLayerChange).toHaveBeenCalledWith(
+      surface.layers[0].id,
+      expect.objectContaining({ content: 'Título Editado Directamente' }),
+    );
+  });
+
+  it('reports layer change and pushes history when text:editing:exited fires', async () => {
+    const surface = makeSurfaceWithOneTextLayer();
+    const onLayerChange = vi.fn();
+    const onHistoryChange = vi.fn();
+    render(
+      <DesignSurfaceCanvas surface={surface} onLayerChange={onLayerChange} onLayersChange={vi.fn()} onSelectionChange={vi.fn()} onHistoryChange={onHistoryChange} />,
+    );
+    await waitFor(() => expect(mocks.state.objects).toHaveLength(1));
+
+    const object = mocks.state.objects[0];
+    (object as unknown as { text: string }).text = 'Texto Final';
+    emit('text:editing:exited', { target: object });
+
+    expect(onLayerChange).toHaveBeenCalledWith(
+      surface.layers[0].id,
+      expect.objectContaining({ content: 'Texto Final' }),
+    );
+  });
 });
