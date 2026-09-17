@@ -64,6 +64,12 @@ MIGRATION_STRATEGY=SCHEMA_PUSH
 MIGRATION_DIRECTORY=./src/db/migrations
 MIGRATION_RUNNER=npm run db:push (dotenv -e .env.local -- drizzle-kit push)
 
+DEVELOPMENT_SCHEMA_COMMAND=npm run db:push (dotenv -e .env.local -- drizzle-kit push)
+PRODUCTION_SCHEMA_COMMAND=npm run db:push (dotenv -e .env.local -- drizzle-kit push)
+MIGRATION_GENERATION_COMMAND=npm run db:generate (drizzle-kit generate)
+MIGRATION_HISTORY_AUTHORITY=src/lib/db/schema.ts + src/db/migrations/meta/_journal.json
+RUNNER_DIRECT_MIGRATION_EXECUTION=BLOCKED (scripts/migrate.ts guarded with ALLOW_MIGRATE=true to prevent collision with db:push)
+
 SCHEMA_CHANGES_ALLOWED=true
 PRODUCTION_MIGRATIONS_ALLOWED=true
 MIGRATION_CONFIRMATION_REQUIRED=false
