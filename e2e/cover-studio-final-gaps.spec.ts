@@ -8,6 +8,7 @@ const qaUser = {
 };
 
 test.describe.configure({ mode: 'serial' });
+test.setTimeout(process.env.BASE_URL?.startsWith('https://') ? 60_000 : 30_000);
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
