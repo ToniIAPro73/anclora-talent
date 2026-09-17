@@ -98,6 +98,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
     const lastSyncedLayersRef = useRef<Map<string, string>>(new Map());
     const historyRef = useRef<string[]>([]);
     const historyIndexRef = useRef(-1);
+    const surfaceRef = useRef(surface);
     const guideManagerRef = useRef<CanvasGuideManager | null>(null);
     const snapEnabledRef = useRef(snapEnabled);
     const [, forceRender] = useState(0);
@@ -106,6 +107,8 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
     const [zoom, setZoomState] = useState(1);
     const suppressHistoryRef = useRef(false);
 
+    surfaceRef.current = surface;
+
     useEffect(() => {
       snapEnabledRef.current = snapEnabled;
     }, [snapEnabled]);
@@ -113,7 +116,10 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
     const pushHistory = useCallback(() => {
       const canvas = fabricRef.current;
       if (!canvas) return;
-      const snapshot = JSON.stringify(canvas.toJSON(['id']));
+      // Keep history in the canonical model rather than Fabric's serialized
+      // object graph. Fabric does not reliably restore custom layer IDs from
+      // JSON, which can otherwise turn an undo into an empty surface.
+      const snapshot = JSON.stringify(surfaceRef.current.layers);
       if (historyRef.current[historyIndexRef.current] === snapshot) return;
       historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1);
       historyRef.current.push(snapshot);
@@ -165,7 +171,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
         canvas.renderAll();
         setCanvasReady(true);
 
-        historyRef.current = [JSON.stringify(canvas.toJSON(['id']))];
+        historyRef.current = [JSON.stringify(surfaceRef.current.layers)];
         historyIndexRef.current = 0;
 
         const emitSelection = (event: FabricEvent) => {
@@ -335,28 +341,17 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
         const canvas = fabricRef.current;
         if (!canvas) return;
         suppressHistoryRef.current = true;
-        canvas.loadFromJSON(snapshot, () => {
-          canvas.getObjects().forEach((object: FabricObject) => object.setCoords?.());
-          renderCanvas(canvas);
-          suppressHistoryRef.current = false;
-
-          const layers: DesignLayer[] = [];
-          canvas.getObjects().forEach((object: FabricObject, index: number) => {
-            if (!object.id) return;
-            objectsByIdRef.current.set(object.id, object);
-            const existingLayer = surface.layers.find((layer) => layer.id === object.id);
-            if (!existingLayer) return;
-            const patch = readLayerPatchFromFabricObject(object);
-            layers.push({ ...existingLayer, ...patch, zIndex: index } as DesignLayer);
-          });
-          onLayersChange(layers);
-          queueMicrotask(() => onHistoryChange?.({
-            canUndo: historyIndexRef.current > 0,
-            canRedo: historyIndexRef.current < historyRef.current.length - 1,
-          }));
-        });
+        const layers = JSON.parse(snapshot) as DesignLayer[];
+        onLayersChange(layers);
+        setActiveObjectIds([]);
+        onSelectionChange([]);
+        suppressHistoryRef.current = false;
+        queueMicrotask(() => onHistoryChange?.({
+          canUndo: historyIndexRef.current > 0,
+          canRedo: historyIndexRef.current < historyRef.current.length - 1,
+        }));
       },
-      [onHistoryChange, onLayersChange, surface.layers],
+      [onHistoryChange, onLayersChange, onSelectionChange],
     );
 
     useImperativeHandle(

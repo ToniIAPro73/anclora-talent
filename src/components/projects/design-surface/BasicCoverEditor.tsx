@@ -13,7 +13,7 @@
  * is fully controlled via `surface`/`onChange`.
  */
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Eye, EyeOff, Italic, Trash2 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
@@ -216,6 +216,7 @@ function FieldEditor({
 
 export function BasicCoverEditor({ surface, onChange, copy, palette, onPaletteChange, brandColors }: BasicCoverEditorProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const templates: EditorialTemplate[] = surface.surface === 'cover' ? COVER_TEMPLATES : BACK_COVER_TEMPLATES;
   const imageLayer = surface.layers.find((layer): layer is ImageLayer => layer.type === 'image');
 
@@ -281,6 +282,7 @@ export function BasicCoverEditor({ surface, onChange, copy, palette, onPaletteCh
       originAssetId: null,
       originMode: 'blank',
     });
+    setSelectedTemplateId(template.id);
   };
 
   const handlePaletteSelect = (next: SurfacePalette) => {
@@ -342,6 +344,8 @@ export function BasicCoverEditor({ surface, onChange, copy, palette, onPaletteCh
                   key={template.id}
                   type="button"
                   data-testid={`basic-template-${template.id}`}
+                  data-selected={selectedTemplateId === template.id ? 'true' : 'false'}
+                  aria-pressed={selectedTemplateId === template.id}
                   onClick={() => applyTemplate(template)}
                   className="ac-button ac-button--secondary flex flex-col items-start gap-1 p-2 text-left text-xs"
                   title={template.description}

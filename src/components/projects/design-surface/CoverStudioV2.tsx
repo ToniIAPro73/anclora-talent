@@ -171,6 +171,7 @@ export function CoverStudioV2({
               data-testid="studio-mode-basic-button"
               onClick={() => setMode('basic')}
               data-active={mode === 'basic' ? 'true' : 'false'}
+              aria-pressed={mode === 'basic'}
               className="ac-button ac-button--ghost ac-button--sm inline-flex items-center gap-1.5"
             >
               <LayoutGrid className="h-4 w-4" />
@@ -181,6 +182,7 @@ export function CoverStudioV2({
               data-testid="studio-mode-advanced-button"
               onClick={() => setMode('advanced')}
               data-active={mode === 'advanced' ? 'true' : 'false'}
+              aria-pressed={mode === 'advanced'}
               className="ac-button ac-button--ghost ac-button--sm inline-flex items-center gap-1.5"
             >
               <Sliders className="h-4 w-4" />

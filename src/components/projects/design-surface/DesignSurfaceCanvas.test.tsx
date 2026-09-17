@@ -240,8 +240,9 @@ describe('DesignSurfaceCanvas', () => {
   it('imperative undo/redo restore prior snapshots', async () => {
     const surface = makeSurfaceWithOneTextLayer();
     const handleRef = createRef<DesignSurfaceCanvasHandle>();
-    render(
-      <DesignSurfaceCanvas ref={handleRef} surface={surface} onLayerChange={vi.fn()} onLayersChange={vi.fn()} onSelectionChange={vi.fn()} />,
+    const onLayersChange = vi.fn();
+    const { rerender } = render(
+      <DesignSurfaceCanvas ref={handleRef} surface={surface} onLayerChange={vi.fn()} onLayersChange={onLayersChange} onSelectionChange={vi.fn()} />,
     );
     await waitFor(() => expect(mocks.state.objects).toHaveLength(1));
 
@@ -250,10 +251,14 @@ describe('DesignSurfaceCanvas', () => {
     const object = mocks.state.objects[0];
     object.set({ left: 99 });
     emit('object:modified', { target: object });
+    const changedSurface = { ...surface, layers: [{ ...surface.layers[0], x: 99 }] };
+    rerender(
+      <DesignSurfaceCanvas ref={handleRef} surface={changedSurface} onLayerChange={vi.fn()} onLayersChange={onLayersChange} onSelectionChange={vi.fn()} />,
+    );
 
     await waitFor(() => expect(handleRef.current?.canUndo()).toBe(true));
     handleRef.current?.undo();
-    expect(mocks.state.lastCanvas.loadFromJSON).toHaveBeenCalled();
+    expect(onLayersChange).toHaveBeenLastCalledWith(surface.layers);
   });
 
   it('imperative deleteSelected removes the active object from the canvas', async () => {
