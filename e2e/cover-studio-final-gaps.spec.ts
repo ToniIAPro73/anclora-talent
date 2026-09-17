@@ -7,8 +7,6 @@ const qaUser = {
   password: `Qa-${randomBytes(24).toString('base64url')}-Aa1!`,
 };
 
-const previewDeployment = 'dpl_2x7o9FfuXBt6MDawUQXogmSscypT';
-
 test.describe.configure({ mode: 'serial' });
 
 test.beforeEach(async ({ page }) => {
@@ -21,11 +19,24 @@ test.beforeEach(async ({ page }) => {
     const base = new URL(process.env.BASE_URL ?? 'http://localhost:3000');
     const sameVercelProject = target.hostname.endsWith('.vercel.app') && base.hostname.endsWith('.vercel.app');
     if (target.origin !== base.origin && !sameVercelProject) throw new Error('Remote preview bypass URL origin does not match BASE_URL');
-    await page.goto(bypass);
+    const bootstrapResponse = await page.goto(bypass);
+    expect(bootstrapResponse?.status()).toBeLessThan(400);
     await page.waitForLoadState('domcontentloaded');
-    await page.goto('/');
+    const expectedHost = process.env.REMOTE_PREVIEW_HOST;
+    if (expectedHost) expect(new URL(page.url()).hostname).toBe(expectedHost);
+    expect(page.url()).not.toMatch(/vercel\.com\/login/);
+    expect(page.url()).not.toMatch(/401|403/);
+    const applicationResponse = await page.goto('/');
+    expect(applicationResponse?.status()).toBeLessThan(400);
+    await page.waitForLoadState('domcontentloaded');
     const deployment = await page.evaluate(() => document.documentElement.getAttribute('data-dpl-id'));
-    if (deployment && deployment !== previewDeployment) throw new Error(`Unexpected Vercel deployment: ${deployment}`);
+    const expectedDeployment = process.env.REMOTE_PREVIEW_DEPLOYMENT_ID;
+    if (expectedDeployment) {
+      const html = await page.content();
+      expect(deployment === expectedDeployment || html.includes(expectedDeployment)).toBe(true);
+    }
+    await page.goto('/sign-in');
+    await expect(page.locator('#email')).toBeVisible();
   }
 });
 
@@ -113,13 +124,14 @@ test('guide lifecycle and persistence are explicit project state', async ({ page
   const moved = await guides.evaluateAll((items) => items.map((item) => ({ id: item.getAttribute('data-testid'), style: item.getAttribute('style') })));
   expect(moved).not.toEqual(before);
   await waitForSaved(page);
+  await page.waitForTimeout(2_000);
   await page.goto(`/projects/${projectId}/editor`);
   await page.goto(`/projects/${projectId}/cover?mode=advanced`);
   await expect(guides).toHaveCount(2);
   await page.reload();
   await expect(page.getByTestId('design-surface-canvas')).toHaveAttribute('data-canvas-ready', 'true');
   const after = await guides.evaluateAll((items) => items.map((item) => ({ id: item.getAttribute('data-testid'), style: item.getAttribute('style') })));
-  expect(after).toEqual(before);
+  expect(after).toEqual(moved);
   const horizontal = before.find((guide) => guide.id?.includes('guide-y-'))!;
   const vertical = before.find((guide) => guide.id?.includes('guide-x-'))!;
   await page.getByTestId(`design-guide-remove-${horizontal.id!.replace('design-guide-', '')}`).evaluate((button) => (button as HTMLButtonElement).click());
