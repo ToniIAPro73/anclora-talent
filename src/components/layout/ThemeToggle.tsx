@@ -21,7 +21,7 @@ export function ThemeToggle() {
     >
       <span className="talent-shell-theme-flip__cube" data-theme-state={theme}>
         <span className="talent-shell-theme-flip__face">
-          <Icon className="h-5 w-5" aria-hidden="true" />
+          <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
       </span>
     </button>

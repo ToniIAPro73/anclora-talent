@@ -17,7 +17,7 @@ export function LocaleToggle() {
       data-testid="locale-toggle"
       className="talent-shell-locale-pill"
     >
-      <Globe className="h-5 w-5" aria-hidden="true" />
+      <Globe className="h-4 w-4" aria-hidden="true" />
       <span>{locale.toUpperCase()}</span>
     </button>
   );

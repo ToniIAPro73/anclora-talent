@@ -590,8 +590,8 @@ body {
 .talent-shell-theme-flip,
 .talent-shell-mobile-menu-button {
   display: inline-flex;
-  height: 48px;
-  width: 56px;
+  height: 42px;
+  width: 42px;
   align-items: center;
   justify-content: center;
   border: 2px solid color-mix(in srgb, var(--accent) 72%, var(--border-strong));
@@ -604,10 +604,10 @@ body {
 
 .talent-shell-locale-pill {
   width: auto;
-  min-width: 116px;
-  gap: 10px;
-  padding: 0 18px;
-  font-size: 1rem;
+  min-width: 88px;
+  gap: 7px;
+  padding: 0 12px;
+  font-size: 0.82rem;
   font-weight: 900;
   letter-spacing: 0.08em;
 }
@@ -642,16 +642,16 @@ body {
 /* Keep the shared controls authoritative when a header also carries utility
    classes from the landing/header composition. */
 button.talent-shell-theme-flip {
-  width: 56px !important;
-  height: 56px !important;
+  width: 42px !important;
+  height: 42px !important;
   padding: 0 !important;
 }
 
 button.talent-shell-locale-pill {
-  min-width: 116px !important;
-  height: 48px !important;
-  gap: 10px !important;
-  padding-inline: 18px !important;
+  min-width: 88px !important;
+  height: 42px !important;
+  gap: 7px !important;
+  padding-inline: 12px !important;
 }
 
 .talent-shell-mobile-menu-button,
@@ -1825,7 +1825,7 @@ html[data-theme="light"] .talent-dashboard-shell .talent-shell-brand__name { col
 .talent-dashboard-shell .talent-shell-brand__copy p { font-size: 20px; }
 .talent-dashboard-shell .talent-shell-topbar-actions { grid-column: 3; grid-row: 1; gap: 12px; }
 .talent-dashboard-shell .talent-shell-content { padding: 0; min-height: calc(100vh - 68px); }
-.talent-dashboard-shell .talent-shell-locale-pill, .talent-dashboard-shell .talent-shell-theme-flip { height: 48px; }
+.talent-dashboard-shell .talent-shell-locale-pill, .talent-dashboard-shell .talent-shell-theme-flip { height: 42px; }
 .dashboard-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; min-height: calc(100vh - 68px); }
 .dashboard-projects { min-width: 0; padding: 32px; }
 .dashboard-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 62px; margin-bottom: 12px; }
@@ -2147,7 +2147,7 @@ html[data-theme="light"] .dashboard-activity-icon { color: var(--accent-text); }
   .talent-dashboard-shell .talent-shell-brand { gap: 6px; }
   .talent-dashboard-shell .dashboard-header-create { display: none; }
   .talent-dashboard-shell .talent-shell-topbar-actions { gap: 2px; }
-  .talent-dashboard-shell .talent-shell-locale-pill { min-width: 88px; padding-inline: 12px; }
+  .talent-dashboard-shell .talent-shell-locale-pill { min-width: 82px; padding-inline: 10px; }
   .dashboard-toolbar h1 { font-size: 24px; }
   .dashboard-toolbar { gap: 18px; }
   .dashboard-controls { width: 100%; }
