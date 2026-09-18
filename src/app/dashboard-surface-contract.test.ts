@@ -29,9 +29,10 @@ describe('theme surface contract (document limit, user menu, CTA)', () => {
   });
 
   test('sign-out button reads as a button in both themes', () => {
-    expect(userMenu).toContain('bg-[var(--action-secondary-bg)]');
-    expect(userMenu).toContain('border-[var(--action-secondary-border)]');
-    expect(userMenu).toContain('text-[var(--action-secondary-fg)]');
+    expect(userMenu).toContain('dashboard-button dashboard-button--primary user-menu-panel__logout');
+    expect(userMenu).not.toContain('bg-[var(--action-secondary-bg)]');
+    expect(userMenu).not.toContain('border-[var(--action-secondary-border)]');
+    expect(userMenu).not.toContain('text-[var(--action-secondary-fg)]');
   });
 
   test('light theme CTA uses the dimmed contracted accent gradient', () => {
