@@ -26,6 +26,11 @@ describe('app shell v3 contract', () => {
     expect(appShell).toContain('/dashboard?projects=1');
   });
 
+  test('omits secondary navigation on the compact dashboard shell', () => {
+    expect(appShell).toContain('{!compactDashboard && (');
+    expect(appShell).toContain('{mobileMenuOpen && !compactDashboard ? (');
+  });
+
   test('keeps user menu and removes editor preferences from shell', () => {
     expect(appShell).toContain('<UserMenu user={user} />');
     expect(appShell).not.toContain('EditorPreferencesSidebar');

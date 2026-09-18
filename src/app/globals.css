@@ -1805,19 +1805,16 @@ html[data-theme="light"] .talent-dashboard-shell {
 }
 .talent-dashboard-shell .talent-shell-grid { max-width: 1800px; padding: 0; }
 .talent-dashboard-shell .talent-shell-main { min-height: 100vh; border: 0; border-radius: 0; padding: 0; box-shadow: none; background: transparent; }
-.talent-dashboard-shell .talent-shell-topbar { min-height: 104px; padding: 12px 28px 0; gap: 0 24px; grid-template-columns: auto 1fr auto; background: var(--dashboard-panel); border-color: var(--dashboard-border); }
+.talent-dashboard-shell .talent-shell-topbar { min-height: 68px; padding: 12px 28px; gap: 0 24px; grid-template-columns: auto 1fr auto; background: var(--dashboard-panel); border-color: var(--dashboard-border); }
 .talent-dashboard-shell .talent-shell-brand { gap: 10px; }
 .talent-dashboard-shell .talent-shell-brand__name { font-size: 18px; font-weight: 600; color: var(--secondary); }
 html[data-theme="light"] .talent-dashboard-shell .talent-shell-brand__name { color: var(--text-primary); }
 .talent-dashboard-shell .talent-shell-brand__copy { justify-self: start; text-align: left; border-left: 1px solid var(--dashboard-border); padding-inline: 24px 0; }
 .talent-dashboard-shell .talent-shell-brand__copy p { font-size: 20px; }
 .talent-dashboard-shell .talent-shell-topbar-actions { grid-column: 3; grid-row: 1; gap: 12px; }
-.talent-dashboard-shell .talent-shell-nav { grid-column: 1 / -1; grid-row: 2; min-height: 42px; gap: 28px; }
-.talent-dashboard-shell .talent-shell-nav__link { border-radius: 0; padding: 0 4px; min-height: 42px; font-weight: 500; border: 0; border-bottom: 2px solid transparent; }
-.talent-dashboard-shell .talent-shell-nav__link[aria-current="page"] { background: transparent; border-bottom-color: var(--accent); color: var(--text-primary); }
-.talent-dashboard-shell .talent-shell-content { padding: 0; min-height: calc(100vh - 104px); }
+.talent-dashboard-shell .talent-shell-content { padding: 0; min-height: calc(100vh - 68px); }
 .talent-dashboard-shell .talent-shell-locale-pill, .talent-dashboard-shell .talent-shell-theme-flip { height: 34px; min-width: 34px; border: 0; border-left: 1px solid var(--dashboard-border); border-radius: 0; box-shadow: none; background: transparent; }
-.dashboard-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; min-height: calc(100vh - 104px); }
+.dashboard-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; min-height: calc(100vh - 68px); }
 .dashboard-projects { min-width: 0; padding: 32px; }
 .dashboard-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 62px; margin-bottom: 12px; }
 .dashboard-toolbar h1 { font-size: 28px; font-weight: 600; line-height: 1.25; letter-spacing: -.5px; margin: 0; }
@@ -1911,10 +1908,9 @@ html[data-theme="light"] .dashboard-activity-icon { color: var(--accent-text); }
   .dashboard-activity blockquote { padding-top: 20px; }
 }
 @media (max-width: 800px) {
-  .talent-dashboard-shell .talent-shell-topbar { padding: 12px 16px 0; gap: 12px; grid-template-columns: 1fr auto; }
+  .talent-dashboard-shell .talent-shell-topbar { padding: 12px 16px; gap: 12px; grid-template-columns: 1fr auto; }
   .talent-dashboard-shell .talent-shell-brand__copy { display: none; }
   .talent-dashboard-shell .talent-shell-topbar-actions { grid-column: 2; gap: 6px; }
-  .talent-dashboard-shell .talent-shell-nav { display: flex; gap: 20px; }
   .talent-dashboard-shell .talent-shell-mobile-menu-button { display: none; }
   .dashboard-projects { padding: 20px 16px; }
   .dashboard-controls { justify-content: flex-start; flex-wrap: wrap; gap: 12px; }
@@ -1927,13 +1923,11 @@ html[data-theme="light"] .dashboard-activity-icon { color: var(--accent-text); }
   .dashboard-project-list--grid .dashboard-project-actions { grid-column: auto; }
 }
 @media (max-width: 600px) {
-  .talent-dashboard-shell .talent-shell-topbar { min-height: 112px; }
+  .talent-dashboard-shell .talent-shell-topbar { min-height: 68px; }
   .talent-dashboard-shell .talent-shell-brand__name { font-size: 14px; }
   .talent-dashboard-shell .talent-shell-brand img { width: 28px; height: 28px; }
   .talent-dashboard-shell .talent-shell-brand { gap: 6px; }
   .talent-dashboard-shell .dashboard-header-create { display: none; }
-  .talent-dashboard-shell .talent-shell-nav { gap: 12px; justify-content: space-between; }
-  .talent-dashboard-shell .talent-shell-nav__link { font-size: 12px; }
   .talent-dashboard-shell .talent-shell-topbar-actions { gap: 2px; }
   .talent-dashboard-shell .talent-shell-locale-pill { padding-inline: 6px; }
   .dashboard-toolbar h1 { font-size: 24px; }

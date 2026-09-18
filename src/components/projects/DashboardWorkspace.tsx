@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, BookOpen, Clock3, LayoutGrid, List, Pencil, Plus, Search } from 'lucide-react';
@@ -11,6 +11,12 @@ import { NavigatingLink } from '@/components/ui/NavigatingLink';
 import { ProjectCardMenu } from './ProjectCardMenu';
 import { useProjectRetrieval } from './use-project-retrieval';
 
+export function getDashboardPageSize(width: number): number {
+  if (width >= 1200) return 3;
+  if (width >= 768) return 2;
+  return 1;
+}
+
 export function DashboardWorkspace({ projects, dataAvailable, locale, copy, projectCopy }: {
   projects: ProjectSummary[];
   dataAvailable: boolean;
@@ -19,10 +25,23 @@ export function DashboardWorkspace({ projects, dataAvailable, locale, copy, proj
   projectCopy: AppMessages['project'];
 }) {
   const router = useRouter();
-  const retrieval = useProjectRetrieval(projects);
+  const [pageSize, setPageSize] = useState(() => getDashboardPageSize(typeof window === 'undefined' ? 1440 : window.innerWidth));
+  const retrieval = useProjectRetrieval(projects, pageSize);
+  const { setPage } = retrieval;
   const [layout, setLayout] = useState<'list' | 'grid'>('list');
   const recent = [...projects].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
   const date = (value: string) => new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(new Date(value));
+
+  useEffect(() => {
+    const handleResize = () => setPageSize(getDashboardPageSize(window.innerWidth));
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [pageSize, setPage]);
 
   return (
     <div className="dashboard-layout">

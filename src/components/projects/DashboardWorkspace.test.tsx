@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
-import { DashboardWorkspace } from './DashboardWorkspace';
+import { DashboardWorkspace, getDashboardPageSize } from './DashboardWorkspace';
 import { appMessages } from '@/lib/i18n/messages';
 import type { ProjectSummary } from '@/lib/projects/types';
 
@@ -16,6 +16,11 @@ function mount(locale: 'en' | 'es' = 'en', items = projects, dataAvailable = tru
 }
 
 describe('Dashboard workspace', () => {
+  test('uses three, two and one project per page across desktop, tablet and mobile', () => {
+    expect(getDashboardPageSize(1440)).toBe(3);
+    expect(getDashboardPageSize(1024)).toBe(2);
+    expect(getDashboardPageSize(375)).toBe(1);
+  });
   test('orders real projects by last update and preserves editor/preview/menu actions', () => {
     mount();
     const rows = screen.getAllByRole('article');
@@ -51,9 +56,17 @@ describe('Dashboard workspace', () => {
     expect(screen.queryByText('Your next story starts here')).not.toBeInTheDocument();
   });
   test('paginates so every project remains reachable', () => {
+    window.innerWidth = 1440;
     mount('en', Array.from({ length: 26 }, (_, i) => ({ ...projects[0], id: `p${i}`, title: `Project ${String(i).padStart(2, '0')}` })));
-    expect(screen.getAllByRole('article')).toHaveLength(25);
+    expect(screen.getAllByRole('article')).toHaveLength(3);
     fireEvent.click(screen.getByRole('button', { name: appMessages.en.dashboard.projectsTableNext }));
-    expect(screen.getAllByRole('article')).toHaveLength(1);
+    expect(screen.getAllByRole('article')).toHaveLength(3);
+  });
+
+  test('does not render pagination when three projects fit on desktop', () => {
+    window.innerWidth = 1440;
+    mount('en', Array.from({ length: 3 }, (_, i) => ({ ...projects[0], id: `p${i}` })));
+    expect(screen.getAllByRole('article')).toHaveLength(3);
+    expect(screen.queryByTestId('dashboard-next')).not.toBeInTheDocument();
   });
 });

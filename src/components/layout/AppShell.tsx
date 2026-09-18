@@ -60,19 +60,21 @@ export function AppShell({
               {!compactDashboard && <span>{messages.topbarSubtitle}</span>}
             </div>
 
-            <nav className="talent-shell-nav" aria-label={messages.navLabel}>
-              {navLinks.map((link) => (
-                <NavigatingLink
-                  key={link.href}
-                  href={link.href}
-                  pendingLabel={link.label}
-                  aria-current={link.active ? 'page' : undefined}
-                  className="talent-shell-nav__link"
-                >
-                  {link.label}
-                </NavigatingLink>
-              ))}
-            </nav>
+            {!compactDashboard && (
+              <nav className="talent-shell-nav" aria-label={messages.navLabel}>
+                {navLinks.map((link) => (
+                  <NavigatingLink
+                    key={link.href}
+                    href={link.href}
+                    pendingLabel={link.label}
+                    aria-current={link.active ? 'page' : undefined}
+                    className="talent-shell-nav__link"
+                  >
+                    {link.label}
+                  </NavigatingLink>
+                ))}
+              </nav>
+            )}
 
             <div className="talent-shell-topbar-actions">
               {compactDashboard && <NavigatingLink href="/projects/new" pendingLabel={messages.navNewProject} className="dashboard-button dashboard-button--primary dashboard-header-create"><Plus size={17} aria-hidden="true" />{messages.navNewProject}</NavigatingLink>}
@@ -90,7 +92,7 @@ export function AppShell({
               <UserMenu user={user} />
             </div>
 
-            {mobileMenuOpen ? (
+            {mobileMenuOpen && !compactDashboard ? (
               <div className="talent-shell-mobile-menu" role="menu" aria-label={messages.navLabel}>
                 {navLinks.map((link) => (
                   <NavigatingLink
