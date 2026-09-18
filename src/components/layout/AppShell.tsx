@@ -27,6 +27,8 @@ export function AppShell({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const compactDashboard = pathname === '/dashboard';
+  const compactNewProject = pathname === '/projects/new';
+  const focusedWorkspace = compactDashboard || compactNewProject;
   const navLinks = [
     {
       href: '/dashboard',
@@ -46,21 +48,21 @@ export function AppShell({
   ];
 
   return (
-    <div className={`talent-app-shell-frame min-h-screen bg-[var(--app-gradient)] text-[var(--text-primary)]${compactDashboard ? ' talent-dashboard-shell' : ''}`}>
+      <div className={`talent-app-shell-frame min-h-screen bg-[var(--app-gradient)] text-[var(--text-primary)]${compactDashboard ? ' talent-dashboard-shell' : ''}${compactNewProject ? ' talent-new-project-shell' : ''}`}>
       <div className="talent-shell-grid">
         <div className="talent-shell-main min-w-0">
           <header className="talent-shell-topbar">
             <div className="talent-shell-brand">
-              {compactDashboard ? <Image src="/brand/anclora-talent.webp" alt="" width={34} height={34} priority className="object-contain" /> : <BrandLogo size={42} />}
+              {focusedWorkspace ? <Image src="/brand/anclora-talent.webp" alt="" width={34} height={34} priority className="object-contain" /> : <BrandLogo size={42} />}
               <div className="talent-shell-brand__name">{messages.brand}</div>
             </div>
 
             <div className="talent-shell-brand__copy">
-              <p>{compactDashboard ? messages.navDashboard : messages.topbarTitle}</p>
-              {!compactDashboard && <span>{messages.topbarSubtitle}</span>}
+              <p>{compactDashboard ? messages.navDashboard : compactNewProject ? messages.navNewProject : messages.topbarTitle}</p>
+              {!focusedWorkspace && <span>{messages.topbarSubtitle}</span>}
             </div>
 
-            {!compactDashboard && (
+            {!focusedWorkspace && (
               <nav className="talent-shell-nav" aria-label={messages.navLabel}>
                 {navLinks.map((link) => (
                   <NavigatingLink
@@ -78,6 +80,7 @@ export function AppShell({
 
             <div className="talent-shell-topbar-actions">
               {compactDashboard && <NavigatingLink href="/projects/new" pendingLabel={messages.navNewProject} className="dashboard-button dashboard-button--primary dashboard-header-create"><Plus size={17} aria-hidden="true" />{messages.navNewProject}</NavigatingLink>}
+              {compactNewProject && <NavigatingLink href="/dashboard" pendingLabel={messages.navDashboard} className="new-project-cancel">{messages.navCancel}</NavigatingLink>}
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen((open) => !open)}
@@ -92,7 +95,7 @@ export function AppShell({
               <UserMenu user={user} />
             </div>
 
-            {mobileMenuOpen && !compactDashboard ? (
+            {mobileMenuOpen && !focusedWorkspace ? (
               <div className="talent-shell-mobile-menu" role="menu" aria-label={messages.navLabel}>
                 {navLinks.map((link) => (
                   <NavigatingLink

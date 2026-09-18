@@ -129,9 +129,7 @@ export function EditorialStyleSection({
     <section className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-5 shadow-[var(--shadow-soft)]" data-testid="new-project-editorial-style-section">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">02</p>
-          <h3 className="mt-2 text-xl font-bold text-[var(--text-primary)]">{copy.newProjectEditorialStyleTitle}</h3>
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-[var(--text-secondary)]">{copy.newProjectEditorialStyleDescription}</p>
+          <div className="talent-new-project-step__heading"><span className="talent-new-project-step__number">3</span><div><h2>{copy.newProjectEditorialStyleTitle}</h2><p>{copy.newProjectEditorialStyleDescription}</p></div></div>
         </div>
         <Sparkles className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
       </div>

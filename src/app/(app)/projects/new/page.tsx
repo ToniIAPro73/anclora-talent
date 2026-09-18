@@ -3,6 +3,8 @@ import { requireUserId } from '@/lib/auth/guards';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { structureProfileRepository } from '@/lib/structure-profile/repository';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
+import { NavigatingLink } from '@/components/ui/NavigatingLink';
+import { ArrowLeft } from 'lucide-react';
 
 export default async function NewProjectPage({
   searchParams,
@@ -22,17 +24,12 @@ export default async function NewProjectPage({
   const fixedPdfError = resolvedSearchParams?.fixedPdfError === '1';
 
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">{projectCopy.newEyebrow}</p>
-        <h1 className="mt-2 text-4xl font-black tracking-tight text-[var(--text-primary)]">{projectCopy.newTitle}</h1>
-        <p className="mt-3 max-w-3xl text-base leading-8 text-[var(--text-secondary)]">
-          {projectCopy.newDescription}
-        </p>
-      </div>
-      <div className="mx-auto w-full max-w-6xl">
-        <CreateProjectForm copy={projectCopy} structureProfiles={structureProfiles} fixedPdfError={fixedPdfError} />
-      </div>
+    <div className="talent-new-project-page">
+      <NavigatingLink href="/dashboard" pendingLabel={projectCopy.newEyebrow} className="talent-new-project-back">
+        <ArrowLeft size={16} aria-hidden="true" />
+        {projectCopy.newBack}
+      </NavigatingLink>
+      <CreateProjectForm copy={projectCopy} structureProfiles={structureProfiles} fixedPdfError={fixedPdfError} />
     </div>
   );
 }

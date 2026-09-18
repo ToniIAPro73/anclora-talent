@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ArrowRight, Check, FileText, Palette, Sparkles, X } from 'lucide-react';
 import { createProjectAction } from '@/lib/projects/actions';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
@@ -37,13 +38,13 @@ export function CreateProjectForm({
   return (
     <form
       action={createProjectAction}
-      className={`ac-surface-panel talent-create-form ${variant === 'dashboard' ? 'talent-create-form--dashboard' : ''}`}
+      className={`ac-surface-panel talent-create-form talent-new-project-form ${variant === 'dashboard' ? 'talent-create-form--dashboard' : ''}`}
       data-testid="create-project-form"
     >
       <div className="talent-create-form__primary rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-5">
         <div className="talent-create-form__intro">
           <p className="ac-surface-panel__eyebrow">{copy.createFormEyebrow}</p>
-          <h2 className="ac-surface-panel__title">{copy.createFormTitle}</h2>
+          <h1 className="ac-surface-panel__title">{copy.createFormTitle}</h1>
           <p>{copy.createFormDescription}</p>
         </div>
         {fixedPdfError && (
@@ -56,24 +57,17 @@ export function CreateProjectForm({
             <p className="mt-1 text-xs leading-6 text-red-400/90">{copy.fixedPdfStorageErrorBody}</p>
           </div>
         )}
-        <section className="mt-5" data-testid="new-project-base-document-section">
-          <div className="mb-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">01</p>
-            <h3 className="mt-2 text-xl font-bold text-[var(--text-primary)]">{copy.newProjectBaseDocumentTitle}</h3>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">{copy.newProjectBaseDocumentDescription}</p>
-          </div>
-          <label htmlFor="project-title" className="ac-form-field">
+        <section className="talent-new-project-step" data-testid="new-project-project-section">
+          <div className="talent-new-project-step__heading"><span className="talent-new-project-step__number">1</span><div><h2>Proyecto</h2><p>Define el nombre de tu nuevo proyecto editorial.</p></div></div>
+          <label htmlFor="project-title" className="ac-form-field talent-new-project-title-field">
             <span className="ac-form-field__label">{copy.titleLabel}</span>
-            <input
-              id="project-title"
-              data-testid="create-project-title-input"
-              type="text"
-              name="title"
-              required
-              placeholder={copy.titlePlaceholder}
-              className="field-input"
-            />
+            <div className="talent-new-project-input-wrap"><input id="project-title" data-testid="create-project-title-input" type="text" name="title" required placeholder={copy.titlePlaceholder} className="field-input" /><X size={16} aria-hidden="true" /></div>
           </label>
+        </section>
+        <section className="talent-new-project-step" data-testid="new-project-base-document-section">
+          <div className="mb-3">
+            <div className="talent-new-project-step__heading"><span className="talent-new-project-step__number">2</span><div><h2>{copy.newProjectBaseDocumentTitle}</h2><p>{copy.newProjectBaseDocumentDescription}</p></div></div>
+          </div>
           <div className="mt-5" data-testid="create-optional-manuscript">
             <span className="ac-form-field__label block">{copy.createOptionalManuscriptLabel}</span>
             <DocumentImporter
@@ -85,7 +79,7 @@ export function CreateProjectForm({
             />
             <p className="mt-1 text-xs leading-6 text-[var(--text-tertiary)]">{copy.createOptionalManuscriptHint}</p>
           </div>
-          <div className="mt-5">
+          <div className="mt-5 talent-new-project-template-block">
             <ProductTemplateSelector copy={copy} />
           </div>
         </section>
@@ -97,22 +91,22 @@ export function CreateProjectForm({
           onSelectionChange={({ label }) => setSelectedStyleLabel(label)}
           onPreprocessingChange={setIsAnalyzingReference}
         />
-        <section className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-5" data-testid="brand-identity-section">
-          <h3 className="text-xl font-bold text-[var(--text-primary)]">{copy.newProjectBrandTitle}</h3>
-          <p className="mt-1 text-sm text-[var(--text-secondary)]">{copy.newProjectBrandDescription}</p>
+        <section className="talent-new-project-step rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-5" data-testid="brand-identity-section">
+          <div className="talent-new-project-step__heading"><span className="talent-new-project-step__number">4</span><div><h2>{copy.newProjectBrandTitle}</h2><p>{copy.newProjectBrandDescription}</p></div></div>
           <BrandManualInput
             copy={copy}
             onFileChange={(fileName) => setBrandSummary(fileName || copy.newProjectNoBrand)}
             onPreprocessingChange={setIsAnalyzingBrand}
           />
         </section>
-        <section className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-5" data-testid="project-creation-summary">
-          <h3 className="text-xl font-bold text-[var(--text-primary)]">{copy.newProjectSummaryTitle}</h3>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl bg-[var(--surface-soft)] p-3"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">{copy.newProjectSummaryDocument}</p><p className="mt-1 text-sm text-[var(--text-primary)]">{documentSummary}</p></div>
-            <div className="rounded-xl bg-[var(--surface-soft)] p-3"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">{copy.newProjectSummaryStyle}</p><p className="mt-1 text-sm text-[var(--text-primary)]">{selectedStyleLabel}</p></div>
-            <div className="rounded-xl bg-[var(--surface-soft)] p-3"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">{copy.newProjectSummaryBrand}</p><p className="mt-1 text-sm text-[var(--text-primary)]">{brandSummary}</p></div>
+        <section className="talent-new-project-summary" data-testid="project-creation-summary">
+          <div className="talent-new-project-summary__heading"><div><p className="ac-surface-panel__eyebrow">Resumen</p><h2>{copy.newProjectSummaryTitle}</h2><p>Revisa la configuración antes de abrir el editor.</p></div><Sparkles size={20} aria-hidden="true" /></div>
+          <div className="talent-new-project-summary__items">
+            <div><FileText size={16} aria-hidden="true" /><span><small>{copy.newProjectSummaryDocument}</small><strong>{documentSummary}</strong></span><Check size={15} aria-hidden="true" /></div>
+            <div><Sparkles size={16} aria-hidden="true" /><span><small>{copy.newProjectSummaryStyle}</small><strong>{selectedStyleLabel}</strong></span><Check size={15} aria-hidden="true" /></div>
+            <div><Palette size={16} aria-hidden="true" /><span><small>{copy.newProjectSummaryBrand}</small><strong>{brandSummary}</strong></span><Check size={15} aria-hidden="true" /></div>
           </div>
+          <div className="talent-new-project-summary__ready"><span className="talent-new-project-summary__ready-dot" /> <span>Listo para crear</span></div>
         </section>
         <div className="flex flex-col gap-4">
           <p className="text-xs leading-6 text-[var(--text-tertiary)]">
@@ -124,6 +118,7 @@ export function CreateProjectForm({
             disabled={isPreprocessing}
           >
             {isPreprocessing ? copy.createProjectPreprocessingBlocked : copy.createProjectAction}
+            {!isPreprocessing && <ArrowRight size={18} aria-hidden="true" />}
           </SubmitButton>
         </div>
       </div>

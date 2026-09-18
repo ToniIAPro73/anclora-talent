@@ -13,6 +13,7 @@ export type AppMessages = {
     navLabel: string;
     navDashboard: string;
     navNewProject: string;
+    navCancel: string;
     navProjects: string;
     topbarEyebrow: string;
     topbarTitle: string;
@@ -232,6 +233,7 @@ export type AppMessages = {
   };
   project: {
     newEyebrow: string;
+    newBack: string;
     newTitle: string;
     newDescription: string;
     createFormEyebrow: string;
@@ -1142,6 +1144,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       navLabel: 'Navegación principal',
       navDashboard: 'Dashboard',
       navNewProject: 'Nuevo proyecto',
+      navCancel: 'Cancelar',
       navProjects: 'Mis proyectos',
       topbarEyebrow: 'App shell',
       topbarTitle: 'Workspace editorial personal',
@@ -1524,6 +1527,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
     },
     project: {
       newEyebrow: 'Proyecto nuevo',
+      newBack: 'Volver al Dashboard',
       newTitle: 'Crea el contenedor editorial base',
       newDescription:
         'Al crear el proyecto se generan el documento y la portada para que empieces a trabajar desde el primer minuto sobre tu contenido.',
@@ -2504,6 +2508,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       navLabel: 'Primary navigation',
       navDashboard: 'Dashboard',
       navNewProject: 'New project',
+      navCancel: 'Cancel',
       navProjects: 'My projects',
       topbarEyebrow: 'App shell',
       topbarTitle: 'Personal editorial workspace',
@@ -2886,6 +2891,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
     },
     project: {
       newEyebrow: 'New project',
+      newBack: 'Back to Dashboard',
       newTitle: 'Create the base editorial container',
       newDescription:
         'Creating the project generates the document and cover so you can start working on your content from the first minute.',

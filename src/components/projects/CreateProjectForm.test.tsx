@@ -79,4 +79,16 @@ describe('CreateProjectForm', () => {
     render(<CreateProjectForm copy={resolveLocaleMessages('es').project} />);
     expect(screen.queryByTestId('fixed-pdf-storage-error')).not.toBeInTheDocument();
   });
+
+  test('renders the redesign landmarks and summary without changing the form contract', () => {
+    render(<CreateProjectForm copy={resolveLocaleMessages('es').project} />);
+
+    expect(screen.getByTestId('create-project-form')).toHaveClass('talent-new-project-form');
+    expect(screen.getByTestId('new-project-project-section')).toBeInTheDocument();
+    expect(screen.getByTestId('new-project-base-document-section')).toBeInTheDocument();
+    expect(screen.getByTestId('new-project-editorial-style-section')).toBeInTheDocument();
+    expect(screen.getByTestId('brand-identity-section')).toBeInTheDocument();
+    expect(screen.getByTestId('project-creation-summary')).toBeInTheDocument();
+    expect(screen.getByTestId('create-project-submit-button')).toHaveTextContent('Crear proyecto y abrir editor');
+  });
 });
