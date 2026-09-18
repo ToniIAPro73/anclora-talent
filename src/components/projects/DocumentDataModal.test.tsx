@@ -48,6 +48,17 @@ function makeProject(overrides: Partial<ProjectRecord> = {}): ProjectRecord {
 }
 
 describe('DocumentDataModal — composition scope (project mode)', () => {
+  test('pre-create mode exposes selectable application font families with system defaults', () => {
+    render(
+      <DocumentDataModal isOpen mode="pre-create" copy={copy} onClose={() => {}} />,
+    );
+
+    const fontSelect = screen.getByTestId('document-data-font-family-input');
+    expect(fontSelect).toHaveValue('Georgia');
+    expect(screen.getByRole('option', { name: 'Inter' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'EB Garamond' })).toBeInTheDocument();
+  });
+
   test('fixed-pdf project: no composition-scope section (there is no composition to scope)', () => {
     const project = makeProject({
       document: {

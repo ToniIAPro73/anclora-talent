@@ -724,6 +724,7 @@ export type AppMessages = {
     documentDataStructureHeading: string;
     documentDataStructureHierarchyLabel: string;
     documentDataStructureMacroLabel: string;
+    documentDataStructureObservedLabel: string;
     documentDataStructureVerified: string;
     documentDataStructureInferred: string;
     documentDataScopeHeading: string;
@@ -2091,6 +2092,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       documentDataStructureHeading: 'Estructura detectada',
       documentDataStructureHierarchyLabel: 'Jerarquía',
       documentDataStructureMacroLabel: 'Patrón macro',
+      documentDataStructureObservedLabel: 'Capítulos observados',
       documentDataStructureVerified: 'Verificado en fuente',
       documentDataStructureInferred: 'Inferido de un documento',
       documentDataScopeHeading: 'Ámbito de la composición',
@@ -3467,6 +3469,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       documentDataStructureHeading: 'Detected structure',
       documentDataStructureHierarchyLabel: 'Hierarchy',
       documentDataStructureMacroLabel: 'Macro pattern',
+      documentDataStructureObservedLabel: 'Observed chapters',
       documentDataStructureVerified: 'Verified in source',
       documentDataStructureInferred: 'Inferred from a document',
       documentDataScopeHeading: 'Composition scope',

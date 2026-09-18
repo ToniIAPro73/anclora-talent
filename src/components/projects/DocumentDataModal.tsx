@@ -8,6 +8,7 @@ import type { BrandProfile } from '@/lib/brand/brand-profile';
 import type { ProjectRecord } from '@/lib/projects/types';
 import {
   parseCompositionSettings,
+  resolveComposition,
   serializeCompositionSettings,
   type CompositionMargins,
   type CompositionSettings,
@@ -23,6 +24,7 @@ import { setProjectBrandProfileAction } from '@/lib/brand/actions';
 import { extractStructureFromDocument } from '@/lib/structure-profile/extract-structure-profile';
 import type { StructureConfidence } from '@/lib/structure-profile/model';
 import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
+import { useGoogleFonts } from '@/hooks/use-google-fonts';
 
 type Copy = AppMessages['project'];
 
@@ -145,7 +147,7 @@ function DocumentDataModalForm({
   // Lazy initial state (component remounts on every open).
   const base: CompositionSettings =
     mode === 'pre-create'
-      ? (initialSettings ?? {})
+      ? resolveComposition(initialSettings)
       : (parseCompositionSettings(project?.document.metadata?.composition) ?? {});
   const baseMargins: CompositionMargins = base.margins ?? { ...MARGIN_PRESETS.normal };
 
@@ -162,6 +164,11 @@ function DocumentDataModalForm({
   const [overwriteCustom, setOverwriteCustom] = useState(false);
   const [brandProfileId, setBrandProfileId] = useState(() => project?.brandProfileId ?? '');
   const [brandScope, setBrandScope] = useState<'product' | 'all'>('product');
+  const { fonts, loadFont } = useGoogleFonts();
+  const availableFontFamilies = useMemo(() => {
+    const families = fonts.map((font) => font.family);
+    return Array.from(new Set([fontFamily, ...families].filter(Boolean)));
+  }, [fontFamily, fonts]);
 
   // Project mode: detected structure, read-only, computed on demand.
   const structureSchema = useMemo(() => {
@@ -288,6 +295,7 @@ function DocumentDataModalForm({
               data-testid="document-data-close-button"
               onClick={onClose}
               aria-label={copy.documentDataCloseLabel}
+              className="dashboard-modal-close"
             >
               <X className="h-5 w-5 text-[var(--text-tertiary)]" />
             </button>
@@ -310,13 +318,20 @@ function DocumentDataModalForm({
             <div className="grid gap-4 sm:grid-cols-3">
               <label className="flex flex-col gap-1.5">
                 <span className={labelClass}>{copy.documentDataFontFamilyLabel}</span>
-                <input
-                  type="text"
+                <select
                   data-testid="document-data-font-family-input"
                   value={fontFamily}
-                  onChange={(event) => setFontFamily(event.target.value)}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setFontFamily(value);
+                    if (value) loadFont(value);
+                  }}
                   className={inputClass}
-                />
+                >
+                  {availableFontFamilies.map((family) => (
+                    <option key={family} value={family}>{family}</option>
+                  ))}
+                </select>
               </label>
               <label className="flex flex-col gap-1.5">
                 <span className={labelClass}>{copy.documentDataFontSizeLabel}</span>
@@ -454,7 +469,7 @@ function DocumentDataModalForm({
                     </div>
                     <div className="ac-surface-panel ac-surface-panel--subtle gap-2 p-4">
                       <div className="flex items-center justify-between gap-2">
-                        <p className={labelClass}>{copy.documentDataStructureMacroLabel}</p>
+                        <p className={labelClass}>{copy.documentDataStructureObservedLabel}</p>
                         <ConfidenceBadge confidence={structureSchema.macroPattern.confianza} copy={copy} />
                       </div>
                       <p className="text-sm text-[var(--text-primary)]">
@@ -535,7 +550,7 @@ function DocumentDataModalForm({
             type="button"
             data-testid="document-data-cancel-button"
             onClick={onClose}
-            className="ac-button ac-button--secondary"
+            className="dashboard-button"
           >
             {copy.documentDataCancelLabel}
           </button>
@@ -544,7 +559,7 @@ function DocumentDataModalForm({
               type="button"
               data-testid="document-data-save-button"
               onClick={handlePreCreateConfirm}
-              className="ac-button ac-button--primary"
+              className="dashboard-button dashboard-button--primary"
             >
               {copy.documentDataConfirmLabel}
             </button>
@@ -554,7 +569,7 @@ function DocumentDataModalForm({
               data-testid="document-data-save-button"
               onClick={handleProjectSave}
               disabled={isPending}
-              className="ac-button ac-button--primary"
+              className="dashboard-button dashboard-button--primary"
             >
               {isPending ? (
                 <span className="inline-flex items-center gap-2">
