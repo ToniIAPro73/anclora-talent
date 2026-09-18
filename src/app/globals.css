@@ -1348,6 +1348,18 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
   background: var(--page-surface);
 }
 
+.document-data-modal-panel {
+  overflow: visible;
+}
+
+.document-data-modal-panel > .mt-6.max-h-\[calc\(100vh-16rem\)\] {
+  max-height: calc(100vh - 13rem);
+}
+
+.font-selector--open {
+  z-index: 101;
+}
+
 .talent-preview-overlay {
   color-scheme: dark;
 }

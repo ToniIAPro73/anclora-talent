@@ -264,7 +264,7 @@ function DocumentDataModalForm({
   return (
     <div className="ac-modal" role="dialog" aria-modal="true" data-testid="document-data-modal">
       <div className="ac-modal__backdrop" onClick={onClose} />
-      <div className="ac-modal__panel max-w-3xl rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
+      <div className="document-data-modal-panel ac-modal__panel max-w-5xl rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold text-[var(--text-primary)]">

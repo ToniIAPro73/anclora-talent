@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, ChevronDown } from 'lucide-react';
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ export function FontSelector({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [openUp, setOpenUp] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState<{ left: number; width: number; top?: number; bottom?: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const selectableFonts = useMemo(() => {
@@ -59,6 +60,22 @@ export function FontSelector({
     setSearchQuery('');
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) setIsOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutsidePointer);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePointer);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isOpen]);
+
   const handleOpenDropdown = () => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
@@ -66,17 +83,25 @@ export function FontSelector({
       const spaceAbove = rect.top;
 
       // Si hay más espacio arriba (y menos de 300px abajo), abrir hacia arriba
-      if (spaceAbove > 350 && spaceBelow < 350) {
+      const shouldOpenUp = spaceAbove > 350 && spaceBelow < 350;
+      if (shouldOpenUp) {
         setOpenUp(true);
       } else {
         setOpenUp(false);
       }
+      setDropdownPosition({
+        left: rect.left,
+        width: rect.width,
+        ...(shouldOpenUp
+          ? { bottom: window.innerHeight - rect.top + 8 }
+          : { top: rect.bottom + 8 }),
+      });
     }
     setIsOpen(true);
   };
 
   return (
-    <div className="relative w-full" ref={containerRef}>
+    <div className={`relative w-full${isOpen ? ' font-selector--open' : ''}`} ref={containerRef}>
       <button
         type="button"
         onClick={() => (isOpen ? setIsOpen(false) : handleOpenDropdown())}
@@ -92,9 +117,10 @@ export function FontSelector({
       </button>
 
       {isOpen && (
-        <div className={`absolute left-0 right-0 z-50 border border-[var(--border-subtle)] rounded-lg shadow-2xl ${
-          openUp ? 'bottom-12' : 'top-12'
-        }`} style={{ backgroundColor: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(12px)' }}>
+        <div
+          className="fixed z-[100] rounded-xl border border-[var(--border-strong)] shadow-2xl"
+          style={{ ...dropdownPosition, backgroundColor: 'var(--surface-elevated)', backdropFilter: 'blur(16px)' }}
+        >
           {/* Search */}
           <div className="p-3 border-b border-[var(--border-subtle)]">
             <div className="relative">
@@ -113,6 +139,7 @@ export function FontSelector({
           {/* Categories */}
           <div className="flex gap-2 p-3 border-b border-[var(--border-subtle)] flex-wrap" style={{ backgroundColor: 'rgba(15, 23, 42, 0.7)' }}>
             <button
+              type="button"
               onClick={() => setActiveCategory('all')}
               data-testid="font-selector-category-all-button"
               className={`px-3 py-1.5 text-xs rounded font-medium transition-all ${
@@ -126,6 +153,7 @@ export function FontSelector({
             {categories.map((cat) => (
               <button
                 key={cat}
+                type="button"
                 onClick={() => setActiveCategory(cat)}
                 data-testid={`font-selector-category-${cat}-button`}
                 className={`px-3 py-1.5 text-xs rounded capitalize font-medium transition-all ${
@@ -140,7 +168,7 @@ export function FontSelector({
           </div>
 
           {/* Font List */}
-          <div className="max-h-80 overflow-y-auto p-2" style={{ backgroundColor: 'rgba(5, 12, 25, 0.8)' }}>
+          <div className="max-h-64 overflow-y-auto p-2" style={{ backgroundColor: 'color-mix(in srgb, var(--surface-canvas) 88%, transparent)' }}>
             {displayedFonts.length === 0 ? (
               <div className="text-center py-6 text-slate-300 text-sm font-medium">
                 No se encontraron fuentes
@@ -173,13 +201,6 @@ export function FontSelector({
         </div>
       )}
 
-      {/* Close on click outside */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
     </div>
   );
 }
