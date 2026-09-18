@@ -24,12 +24,23 @@ describe('Dashboard workspace', () => {
   test('orders real projects by last update and preserves editor/preview/menu actions', () => {
     mount();
     const rows = screen.getAllByRole('article');
+    expect(rows[0]).toHaveAttribute('data-selected', 'true');
     expect(within(rows[0]).getByRole('heading', { name: 'Forms' })).toBeInTheDocument();
     expect(within(rows[0]).getByRole('link', { name: appMessages.en.project.cardOpenEditor })).toHaveAttribute('href', '/projects/recent/editor');
     expect(within(rows[0]).getByRole('link', { name: appMessages.en.project.cardPreview })).toHaveAttribute('href', '/projects/recent/preview');
     fireEvent.click(within(rows[0]).getByRole('button', { name: appMessages.en.project.cardActionsMenu }));
     expect(screen.getByRole('menuitem')).toHaveAttribute('href', '/projects/recent/editor?documentData=open');
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+  });
+
+  test('changes the selected project when another project row is clicked', () => {
+    mount();
+    const rows = screen.getAllByRole('article');
+    expect(rows[0]).toHaveAttribute('data-selected', 'true');
+    expect(rows[1]).toHaveAttribute('data-selected', 'false');
+    fireEvent.click(rows[1]);
+    expect(rows[0]).toHaveAttribute('data-selected', 'false');
+    expect(rows[1]).toHaveAttribute('data-selected', 'true');
   });
   test('searches, sorts, filters and switches layout without losing results', () => {
     mount();

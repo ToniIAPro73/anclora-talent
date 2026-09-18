@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, BookOpen, Clock3, LayoutGrid, List, Pencil, Plus, Search } from 'lucide-react';
@@ -25,11 +25,12 @@ export function DashboardWorkspace({ projects, dataAvailable, locale, copy, proj
   projectCopy: AppMessages['project'];
 }) {
   const router = useRouter();
+  const recent = useMemo(() => [...projects].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt)), [projects]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(() => recent[0]?.id ?? null);
   const [pageSize, setPageSize] = useState(() => getDashboardPageSize(typeof window === 'undefined' ? 1440 : window.innerWidth));
   const retrieval = useProjectRetrieval(projects, pageSize);
   const { setPage } = retrieval;
   const [layout, setLayout] = useState<'list' | 'grid'>('list');
-  const recent = [...projects].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
   const date = (value: string) => new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(new Date(value));
 
   useEffect(() => {
@@ -42,6 +43,22 @@ export function DashboardWorkspace({ projects, dataAvailable, locale, copy, proj
   useEffect(() => {
     setPage(1);
   }, [pageSize, setPage]);
+
+  const effectiveSelectedProjectId = selectedProjectId && projects.some((project) => project.id === selectedProjectId)
+    ? selectedProjectId
+    : recent[0]?.id ?? null;
+
+  const selectProject = (event: MouseEvent<HTMLElement>, projectId: string) => {
+    if ((event.target as HTMLElement).closest('a, button, input, select, textarea')) return;
+    setSelectedProjectId(projectId);
+  };
+
+  const selectProjectWithKeyboard = (event: KeyboardEvent<HTMLElement>, projectId: string) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    setSelectedProjectId(projectId);
+  };
 
   return (
     <div className="dashboard-layout">
@@ -65,7 +82,15 @@ export function DashboardWorkspace({ projects, dataAvailable, locale, copy, proj
           : projects.length === 0 ? <div className="dashboard-state"><BookOpen size={28} aria-hidden="true" /><h2>{copy.workspaceEmptyTitle}</h2><p>{copy.workspaceEmptyDescription}</p><NavigatingLink href="/projects/new" pendingLabel={copy.sectionNewProject} className="dashboard-button dashboard-button--primary"><Plus size={16} aria-hidden="true" />{copy.sectionNewProject}</NavigatingLink></div>
           : retrieval.visibleProjects.length === 0 ? <div className="dashboard-state"><h2>{copy.workspaceNoResults}</h2><p>{copy.workspaceNoResultsDescription}</p></div>
           : <div className={`dashboard-project-list dashboard-project-list--${layout}`}>
-            {retrieval.visibleProjects.map((project) => <article key={project.id} className="dashboard-project-row" data-recent={project.id === recent[0]?.id}>
+            {retrieval.visibleProjects.map((project) => <article
+              key={project.id}
+              className="dashboard-project-row"
+              data-selected={effectiveSelectedProjectId === project.id}
+              data-testid="dashboard-project-row"
+              tabIndex={0}
+              onClick={(event) => selectProject(event, project.id)}
+              onKeyDown={(event) => selectProjectWithKeyboard(event, project.id)}
+            >
               <div className="dashboard-project-identity">
                 <div className="dashboard-cover" data-palette={project.coverPalette}>
                   {project.coverImageUrl ? <Image src={project.coverImageUrl} alt="" fill sizes="80px" unoptimized className="object-cover" /> : <><BookOpen size={18} aria-hidden="true" /><span>{project.documentTitle || project.title}</span><small>{project.documentAuthor}</small></>}
