@@ -102,8 +102,8 @@ export function FontSelector({
       // Reserve room for the search field, category filters and panel chrome,
       // then let only the font list scroll. This keeps the complete list
       // reachable even when the selector is near the bottom of the modal.
-      const availableSpace = Math.max(180, (shouldOpenUp ? spaceAbove : spaceBelow) - 16);
-      const listMaxHeight = Math.max(80, availableSpace - 132);
+      const availableSpace = Math.max(280, (shouldOpenUp ? spaceAbove : spaceBelow) - 16);
+      const listMaxHeight = Math.max(160, availableSpace - 132);
       setDropdownPosition({
         left: rect.left,
         width: rect.width,
@@ -193,32 +193,31 @@ export function FontSelector({
             ))}
           </div>
 
-          {/* Font List */}
-          <div className="overflow-y-auto p-2" style={{ maxHeight: dropdownPosition?.listMaxHeight, backgroundColor: 'color-mix(in srgb, var(--surface-canvas) 88%, transparent)' }}>
+          {/* Font List: one compact row per font (name + category inline)
+              instead of a two-line card — with 1000+ Google Fonts, a taller
+              row multiplies total scroll distance enough that the end of
+              the list becomes practically unreachable by wheel/track. */}
+          <div className="overflow-y-auto p-1.5" style={{ maxHeight: dropdownPosition?.listMaxHeight, backgroundColor: 'color-mix(in srgb, var(--surface-canvas) 88%, transparent)' }}>
             {displayedFonts.length === 0 ? (
               <div className="text-center py-6 text-slate-300 text-sm font-medium">
                 No se encontraron fuentes
               </div>
             ) : (
-              <div className="space-y-1.5">
+              <div>
                 {displayedFonts.map((font) => (
                   <button
                     key={font.family}
                     type="button"
                     onClick={() => handleSelectFont(font.family)}
                     data-testid={`font-option-${font.family.replace(/\s+/g, '-').toLowerCase()}`}
-                    className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-all ${
+                    className={`flex w-full items-baseline gap-2 rounded-md px-3 py-1.5 text-left text-sm transition-all ${
                       selectedFont === font.family
                         ? 'bg-[var(--accent)] text-black font-bold shadow-md'
                         : 'hover:bg-slate-700 text-slate-100 hover:text-white'
                     }`}
-                    style={{ fontFamily: font.family }}
                   >
-                    <div className="font-semibold" style={{ fontFamily: font.family }}>{font.family}</div>
-                    <div className="mt-0.5 text-xs text-slate-300" style={{ fontFamily: font.family }}>
-                      {font.category}
-                      {font.variants.length > 1 && ` • ${font.variants.length} estilos`}
-                    </div>
+                    <span className="truncate" style={{ fontFamily: font.family }}>{font.family}</span>
+                    <span className="ml-auto shrink-0 text-xs text-slate-400">{font.category}</span>
                   </button>
                 ))}
               </div>

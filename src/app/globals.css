@@ -460,17 +460,34 @@ body {
   background: var(--talent-button-primary-hover-bg);
 }
 
+/* Product decision: every non-destructive button (primary, secondary,
+   ghost, and the "premium" composites built on ac-button--secondary) uses
+   the same accent gradient and hover treatment as the primary action, so
+   the whole app reads as one consistent button language. Destructive stays
+   its own color intentionally — recoloring a delete action blue would hide
+   the one signal it's a dangerous action. */
 .ac-button--secondary {
-  --ac-button-bg: var(--talent-button-secondary-bg);
-  --ac-button-fg: var(--talent-button-secondary-fg);
-  --ac-button-border: var(--talent-button-secondary-border);
-  --ac-button-shadow: var(--talent-button-secondary-shadow);
+  --ac-button-bg: var(--talent-button-primary-bg);
+  --ac-button-fg: var(--talent-button-primary-fg);
+  --ac-button-border: var(--talent-button-primary-border);
+  --ac-button-shadow: var(--talent-button-primary-shadow);
 }
 
 .ac-button--secondary:hover,
 .ac-button--secondary:focus-visible {
-  background: var(--talent-button-secondary-hover-bg);
-  border-color: var(--talent-button-secondary-hover-border);
+  background: var(--talent-button-primary-hover-bg);
+}
+
+.ac-button--ghost {
+  --ac-button-bg: var(--talent-button-primary-bg);
+  --ac-button-fg: var(--talent-button-primary-fg);
+  --ac-button-border: var(--talent-button-primary-border);
+  --ac-button-shadow: var(--talent-button-primary-shadow);
+}
+
+.ac-button--ghost:hover,
+.ac-button--ghost:focus-visible {
+  background: var(--talent-button-primary-hover-bg);
 }
 
 .ac-button--destructive {
@@ -1232,7 +1249,7 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
 
 .talent-content-shell {
   display: grid;
-  gap: 20px;
+  gap: 14px;
 }
 
 /* Content step (Resumen and its tabs): drop the rail entirely so the tabbed
@@ -1241,9 +1258,36 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
   grid-template-columns: minmax(0, 1fr) !important;
 }
 
+/* Compact stepper strip: no card/shadow, just a thin separator — matches
+   the approved mockup's slim step row instead of a padded surface panel. */
+.talent-content-stepper-bar {
+  padding: 10px 4px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.talent-content-stepper-bar .ac-stepper__dot {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.talent-content-stepper-bar .ac-stepper__label {
+  margin-top: 5px;
+  font-size: 0.58rem;
+}
+
+.talent-content-tabs {
+  margin-top: 2px;
+}
+
 .talent-content-tabs .ac-tabs__list {
   max-width: 100%;
+  padding: 4px;
   overflow-x: auto;
+}
+
+.talent-content-tabs .ac-tabs__tab {
+  min-height: 32px;
+  padding: 0 14px;
 }
 
 .talent-content-shell__panel {
@@ -1634,12 +1678,13 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
   background: var(--page-surface);
 }
 
+/* Bigger, single scroll boundary: the modal grows to fill almost the whole
+   viewport so its content (composition, structure, brand) is visible
+   without an inner scrollbar in the common case; this is the fallback for
+   genuinely oversized content, not the everyday behavior. */
 .document-data-modal-panel {
-  overflow: visible;
-}
-
-.document-data-modal-panel > .mt-6.max-h-\[calc\(100vh-16rem\)\] {
-  max-height: calc(100vh - 13rem);
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
 }
 
 .font-selector--open {
@@ -2166,10 +2211,11 @@ html[data-theme="light"] .dashboard-cover { color: var(--text-primary); backgrou
 .dashboard-project-meta time { display: block; line-height: 1.5; }
 .dashboard-project-actions { display: flex; flex-direction: column; gap: 10px; border-left: 1px solid var(--dashboard-border); padding-left: 24px; min-width: 0; }
 .dashboard-project-counts { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--text-secondary); }
-.dashboard-button { display: inline-flex; justify-content: center; align-items: center; gap: 12px; min-height: 36px; padding: 7px 14px; border-radius: 4px; border: 1px solid var(--dashboard-border, var(--border-strong)); color: var(--text-primary); background: var(--accent-soft); font-size: 12px; font-weight: 500; transition: background .16s ease, border-color .16s ease, color .16s ease; }
-.dashboard-button:hover, .dashboard-button:focus-visible { border-color: var(--accent); background: var(--surface-highlight); outline: none; }
+/* Every dashboard-button (default and --primary alike) uses the same
+   accent gradient + hover as Vista previa — see the ac-button note above. */
+.dashboard-button { display: inline-flex; justify-content: center; align-items: center; gap: 12px; min-height: 36px; padding: 7px 14px; border-radius: 4px; border: 1px solid var(--accent); color: var(--text-on-accent); background: var(--talent-button-primary-bg); background-size: 200% 100%; background-position: 0 50%; font-size: 12px; font-weight: 500; transition: background-position .22s ease, border-color .16s ease, color .16s ease; }
+.dashboard-button:hover, .dashboard-button:focus-visible { background: var(--talent-button-primary-hover-surface); background-size: 100% 100%; background-position: 50% 50%; border-color: var(--accent); color: var(--text-primary); outline: none; }
 .dashboard-button--primary { background: var(--talent-button-primary-bg); border-color: var(--accent); color: var(--text-on-accent); }
-.dashboard-button--primary { background-size: 200% 100%; background-position: 0 50%; transition: background-position .22s ease, border-color .16s ease, color .16s ease; }
 .dashboard-button--primary:hover, .dashboard-button--primary:focus-visible { background: var(--talent-button-primary-hover-surface); background-size: 100% 100%; background-position: 50% 50%; border-color: var(--accent); color: var(--text-primary); }
 .dashboard-button:disabled { opacity: .45; cursor: not-allowed; }
 .dashboard-button--icon { width: 36px; min-height: 36px; padding: 0; }
@@ -2185,7 +2231,7 @@ html[data-theme="light"] .dashboard-cover { color: var(--text-primary); backgrou
 .user-menu-panel__option { display:grid; grid-template-columns:24px 1fr auto; align-items:center; gap:8px; min-height:40px; border:0; border-radius:5px; padding:7px 8px; color:var(--text-tertiary); background:transparent; text-align:left; }
 .user-menu-panel__option small { font-size:10px; color:var(--text-tertiary); }
 .user-menu-panel__logout { display:flex; width:100%; min-height:40px; align-items:center; justify-content:center; gap:8px; font-size:13px; }
-.dashboard-document-modal__panel { max-width:980px; overflow:hidden; border:1px solid var(--border-strong); border-radius:18px; padding:24px; background:var(--page-surface); }
+.dashboard-document-modal__panel { max-width:980px; max-height:calc(100vh - 3rem); overflow-y:auto; border:1px solid var(--border-strong); border-radius:18px; padding:24px; background:var(--page-surface); }
 .dashboard-document-modal__header { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border-subtle); }
 .dashboard-document-modal__header h2 { margin-top:4px; font-size:22px; font-weight:700; }
 .dashboard-document-modal__header p:last-child { margin-top:4px; color:var(--text-secondary); font-size:13px; }
@@ -2359,8 +2405,8 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
 .talent-new-project-form .ac-button--ghost { border-radius: 5px; box-shadow: none; transform: none; transition: background .16s ease, border-color .16s ease, color .16s ease; }
 .talent-new-project-form .ac-button--primary { background: var(--talent-button-primary-bg); border-color: var(--accent); color: var(--text-on-accent); }
 .talent-new-project-form .ac-button--primary:hover, .talent-new-project-form .ac-button--primary:focus-visible { background: var(--talent-button-primary-hover-surface); background-size: 100% 100%; background-position: 50% 50%; border-color: var(--accent); color: var(--text-primary); }
-.talent-new-project-form .ac-button--secondary, .talent-new-project-form .ac-button--ghost { background: var(--accent-soft); border-color: var(--dashboard-border, var(--border-strong)); color: var(--text-primary); }
-.talent-new-project-form .ac-button--secondary:hover, .talent-new-project-form .ac-button--secondary:focus-visible, .talent-new-project-form .ac-button--ghost:hover, .talent-new-project-form .ac-button--ghost:focus-visible { background: var(--surface-highlight); border-color: var(--accent); color: var(--text-primary); }
+.talent-new-project-form .ac-button--secondary, .talent-new-project-form .ac-button--ghost { background: var(--talent-button-primary-bg); border-color: var(--accent); color: var(--text-on-accent); }
+.talent-new-project-form .ac-button--secondary:hover, .talent-new-project-form .ac-button--secondary:focus-visible, .talent-new-project-form .ac-button--ghost:hover, .talent-new-project-form .ac-button--ghost:focus-visible { background: var(--talent-button-primary-hover-surface); background-size: 100% 100%; background-position: 50% 50%; border-color: var(--accent); color: var(--text-primary); }
 .talent-new-project-form .talent-action-button::before { display:none; }
 .talent-new-project-page { width: 100%; margin: 0 auto; padding: 28px 10px 64px; }
 .talent-new-project-back { display: inline-flex; align-items: center; gap: 8px; color: var(--accent-text); font-size: 13px; font-weight: 600; white-space: nowrap; }
@@ -2475,10 +2521,10 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
 .talent-new-project-form .dashboard-button,
 .talent-dashboard-shell .dashboard-button { border-radius: 5px; }
 .talent-new-project-form .ac-button:hover,
-.talent-new-project-form .dashboard-button:not(.dashboard-button--primary):hover,
-.talent-new-project-form .dashboard-button:not(.dashboard-button--primary):focus-visible,
-.talent-dashboard-shell .dashboard-button:not(.dashboard-button--primary):hover,
-.talent-dashboard-shell .dashboard-button:not(.dashboard-button--primary):focus-visible { border-color: var(--accent); background: var(--surface-highlight); color: var(--text-primary); }
+.talent-new-project-form .dashboard-button:hover,
+.talent-new-project-form .dashboard-button:focus-visible,
+.talent-dashboard-shell .dashboard-button:hover,
+.talent-dashboard-shell .dashboard-button:focus-visible { border-color: var(--accent); background: var(--talent-button-primary-hover-surface); background-size: 100% 100%; background-position: 50% 50%; color: var(--text-primary); }
 .talent-new-project-form .ac-button { background: var(--talent-button-primary-bg); background-size: 200% 100%; background-position: 0 50%; border-color: var(--accent); color: var(--text-on-accent); }
 .talent-new-project-form .ac-button:hover, .talent-new-project-form .ac-button:focus-visible { background: var(--talent-button-primary-hover-surface); background-size: 100% 100%; background-position: 50% 50%; border-color: var(--accent); color: var(--text-primary); }
 .talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] { margin-top: 10px; border-radius: 10px; padding: 10px; column-gap: 14px; }

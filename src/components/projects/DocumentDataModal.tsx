@@ -299,7 +299,7 @@ function DocumentDataModalForm({
   return (
     <div className="ac-modal" role="dialog" aria-modal="true" data-testid="document-data-modal">
       <div className="ac-modal__backdrop" onClick={onClose} />
-      <div ref={panelRef} className="document-data-modal-panel ac-modal__panel max-w-5xl rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
+      <div ref={panelRef} className="document-data-modal-panel ac-modal__panel max-w-6xl rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold text-[var(--text-primary)]">
@@ -338,7 +338,7 @@ function DocumentDataModalForm({
           </div>
         </div>
 
-        <div className="mt-6 max-h-[calc(100vh-16rem)] space-y-6 overflow-y-auto pr-1">
+        <div className="mt-6 space-y-6">
           {/* Composition */}
           <section className="space-y-4">
             <h4 className={labelClass}>{copy.documentDataCompositionHeading}</h4>

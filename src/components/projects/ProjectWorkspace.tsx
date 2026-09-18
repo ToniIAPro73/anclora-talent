@@ -659,7 +659,7 @@ export function ProjectWorkspace({
       </SlotPortal>
 
       {/* Stepper Navigation */}
-      <div className="ac-workflow-shell__progress ac-surface-panel ac-surface-panel--subtle p-6 shadow-[var(--shadow-soft)]">
+      <div className="talent-content-stepper-bar">
         <Stepper steps={steps} activeStep={activeStep} onStepClick={setActiveStep} />
       </div>
 
