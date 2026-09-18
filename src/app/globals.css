@@ -1856,17 +1856,18 @@ html[data-theme="light"] .dashboard-cover { color: var(--text-primary); backgrou
 .dashboard-project-meta time { display: block; line-height: 1.5; }
 .dashboard-project-actions { display: flex; flex-direction: column; gap: 10px; border-left: 1px solid var(--dashboard-border); padding-left: 24px; min-width: 0; }
 .dashboard-project-counts { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--text-secondary); }
-.dashboard-button { display: inline-flex; justify-content: center; align-items: center; gap: 12px; min-height: 36px; padding: 7px 14px; border-radius: 4px; border: 1px solid var(--dashboard-border, var(--border-strong)); color: var(--text-primary); background: var(--accent-soft); font-size: 12px; font-weight: 500; }
-.dashboard-button:hover { border-color: var(--accent); background: var(--surface-highlight); }
+.dashboard-button { display: inline-flex; justify-content: center; align-items: center; gap: 12px; min-height: 36px; padding: 7px 14px; border-radius: 4px; border: 1px solid var(--dashboard-border, var(--border-strong)); color: var(--text-primary); background: var(--accent-soft); font-size: 12px; font-weight: 500; transition: background .16s ease, border-color .16s ease, color .16s ease; }
+.dashboard-button:hover, .dashboard-button:focus-visible { border-color: var(--accent); background: var(--surface-highlight); outline: none; }
 .dashboard-button--primary { background: var(--talent-button-primary-bg); border-color: var(--accent); color: var(--text-on-accent); }
-.dashboard-button--primary:hover { background: var(--accent-hover); color: var(--text-on-accent); }
+.dashboard-button--primary:hover, .dashboard-button--primary:focus-visible { background: var(--talent-button-primary-hover-bg); border-color: var(--accent-hover); color: var(--text-on-accent); }
 .dashboard-button:disabled { opacity: .45; cursor: not-allowed; }
 .dashboard-button--icon { width: 36px; min-height: 36px; padding: 0; }
 .project-card-menu__item { display:flex; width:100%; min-height:36px; align-items:center; border:0; border-radius:5px; padding:8px 10px; color:var(--text-primary); background:transparent; font-size:12px; font-weight:600; text-align:left; transition:background .16s ease,color .16s ease; }
 .project-card-menu__item:hover, .project-card-menu__item:focus-visible { background:var(--surface-highlight); color:var(--text-primary); outline:none; }
 .project-card-menu__item--destructive { width:100%; padding:0; }
 .project-card-menu__item--destructive form { width:100%; }
-.project-card-menu__delete { display:flex; width:100%; min-height:36px; align-items:center; gap:8px; border:0; border-radius:5px; padding:8px 10px; color:var(--text-secondary); background:transparent; font-size:12px; font-weight:600; transition:background .16s ease,color .16s ease; }
+.project-card-menu__delete { display:flex; flex-direction:row; width:100%; min-height:36px; align-items:center; justify-content:flex-start; gap:8px; border:0; border-radius:5px; padding:8px 10px; color:var(--text-secondary); background:transparent; font-size:12px; font-weight:600; white-space:nowrap; transition:background .16s ease,color .16s ease; }
+.project-card-menu__delete > span { display:inline-flex; flex-direction:row; align-items:center; gap:8px; width:auto; white-space:nowrap; }
 .project-card-menu__delete:hover, .project-card-menu__delete:focus-visible { color:var(--danger); background:color-mix(in srgb, var(--danger) 10%, transparent); outline:none; }
 .user-menu-panel__eyebrow, .dashboard-document-modal__eyebrow { color:var(--accent); font-size:11px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; }
 .user-menu-panel__options { display:grid; gap:2px; margin:16px -4px 12px; padding:10px 4px; border-block:1px solid var(--border-subtle); }
@@ -1921,7 +1922,7 @@ html[data-theme="light"] .dashboard-activity-icon { color: var(--accent-text); }
 .talent-new-project-shell .talent-shell-content { padding: 0; }
 .new-project-dashboard, .new-project-cancel { min-width: 92px; }
 .talent-new-project-shell .new-project-dashboard, .talent-new-project-shell .new-project-cancel { background: var(--talent-button-primary-bg); border-color: var(--accent); color: var(--text-on-accent); }
-.talent-new-project-shell .new-project-dashboard:hover, .talent-new-project-shell .new-project-dashboard:focus-visible, .talent-new-project-shell .new-project-cancel:hover, .talent-new-project-shell .new-project-cancel:focus-visible { background: var(--accent-hover); border-color: var(--accent); color: var(--text-on-accent); }
+.talent-new-project-shell .new-project-dashboard:hover, .talent-new-project-shell .new-project-dashboard:focus-visible, .talent-new-project-shell .new-project-cancel:hover, .talent-new-project-shell .new-project-cancel:focus-visible { background: var(--talent-button-primary-hover-bg); border-color: var(--accent-hover); color: var(--text-on-accent); }
 .talent-new-project-form .ac-button,
 .talent-new-project-form .talent-action-button,
 .talent-new-project-form .ac-button--primary,
