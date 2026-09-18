@@ -2220,6 +2220,124 @@ html[data-theme="light"] .dashboard-activity-icon { color: var(--accent-text); }
 .dashboard-state { padding: 28px; border: 1px solid var(--dashboard-border, var(--border-strong)); border-radius: 6px; background: var(--dashboard-panel, var(--surface)); }
 .dashboard-state h2, .dashboard-state h1 { font-size: 20px; font-weight: 600; margin: 12px 0 6px; }
 
+/* Content workspace redesign: merges the app shell's topbar and the editor's
+   own header into one compact row (mirrors .talent-dashboard-shell). The
+   project-specific content (step label, project title, saved status,
+   preview/document-data actions) is portalled in from ProjectWorkspace into
+   #talent-editor-topbar-slot — see SlotPortal + ProjectWorkspace.tsx. */
+.talent-editor-shell {
+  --dashboard-canvas: color-mix(in srgb, var(--background) 40%, var(--surface-canvas));
+  --dashboard-panel: color-mix(in srgb, var(--surface) 78%, var(--background));
+  --dashboard-border: color-mix(in srgb, var(--accent) 23%, var(--surface));
+  background: var(--dashboard-canvas);
+}
+html[data-theme="light"] .talent-editor-shell {
+  --dashboard-canvas: var(--background);
+  --dashboard-panel: var(--surface);
+  --dashboard-border: var(--border-strong);
+}
+.talent-editor-shell .talent-shell-grid { max-width: 1800px; }
+.talent-editor-shell .talent-shell-main { border: 0; border-radius: 0; padding: 0; box-shadow: none; background: transparent; }
+.talent-editor-shell .talent-shell-topbar { min-height: 68px; padding: 12px 20px; gap: 0 20px; grid-template-columns: auto minmax(0, 1fr) auto; background: var(--dashboard-panel); border-color: var(--dashboard-border); }
+.talent-editor-shell .talent-shell-brand { gap: 10px; }
+.talent-editor-shell .talent-shell-brand__name { font-size: 18px; font-weight: 600; color: var(--secondary); }
+html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color: var(--text-primary); }
+.talent-editor-shell .talent-shell-topbar-actions { grid-column: 3; grid-row: 1; gap: 10px; }
+.talent-editor-shell .talent-shell-content { padding-top: 16px; }
+.talent-editor-shell .talent-shell-locale-pill, .talent-editor-shell .talent-shell-theme-flip { height: 38px; }
+
+.talent-shell-editor-slot {
+  display: flex;
+  min-width: 0;
+}
+
+.talent-editor-topbar {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 20px;
+  border-left: 1px solid var(--dashboard-border);
+  padding-left: 20px;
+}
+
+.talent-editor-topbar__titles {
+  min-width: 0;
+}
+
+.talent-editor-topbar__eyebrow {
+  margin: 0;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+.talent-editor-topbar__title {
+  margin: 2px 0 0;
+  max-width: 26rem;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 0.98rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.talent-editor-topbar__status {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.talent-editor-topbar__status:has(*) {
+  display: flex;
+}
+
+.talent-editor-topbar__actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 1024px) {
+  .talent-editor-topbar__status {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  /* Reflow to two rows: brand + global actions (dashboard/toggles/avatar) on
+     row 1, the portalled project context (step, title, preview action) on
+     its own full-width, horizontally-scrollable row 2 — avoids the overlap
+     that a single cramped row produces at tablet/phone widths. */
+  .talent-editor-shell .talent-shell-topbar {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    grid-template-areas: "brand actions" "slot slot";
+    row-gap: 8px;
+    padding: 10px 12px;
+  }
+  .talent-editor-shell .talent-shell-brand { grid-area: brand; }
+  .talent-editor-shell .talent-shell-topbar-actions {
+    grid-area: actions;
+    grid-column: auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
+  }
+  .talent-shell-editor-slot { grid-area: slot; overflow-x: auto; }
+  .talent-editor-topbar { gap: 10px; padding-left: 0; border-left: none; width: max-content; min-width: 100%; }
+  .talent-editor-topbar__title { max-width: 11rem; }
+  .talent-editor-topbar__actions .dashboard-button:not(.dashboard-button--primary) { display: none; }
+}
+
 /* New project workspace v1: focused composition aligned with the workspace mockup. */
 .talent-new-project-shell { --new-project-panel: color-mix(in srgb, var(--surface) 76%, var(--background)); background: var(--background); }
 .talent-new-project-shell .talent-shell-grid { max-width: none; width: 100%; padding: 0; }

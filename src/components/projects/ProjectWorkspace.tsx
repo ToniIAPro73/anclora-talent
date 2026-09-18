@@ -18,6 +18,7 @@ import { ImportChapterDialog } from './ImportChapterDialog';
 import { ReimportDialog } from './ReimportDialog';
 import { DocumentDataModal } from './DocumentDataModal';
 import { Portal } from '@/components/ui/Portal';
+import { SlotPortal } from '@/components/ui/SlotPortal';
 import { PdfExportButton } from './PdfExportButton';
 import { CreateEditableCopyButton } from './CreateEditableCopyButton';
 import { WorkspaceOnboarding } from './WorkspaceOnboarding';
@@ -599,61 +600,63 @@ export function ProjectWorkspace({
 
   return (
     <div className="ac-workspace-stage talent-workspace-stage space-y-8" data-testid="project-workspace">
-      {/* Header */}
-      <header className="ac-topbar talent-content-topbar" data-testid="content-workspace-topbar">
-        <div className="ac-topbar__brand">
-          <div className="ac-topbar__titles">
-            <p className="ac-topbar__eyebrow">{copy.editorEyebrow}</p>
-            <h2 className="ac-topbar__title">{project.title}</h2>
+      {/* Header: portalled into the shared app shell's compact editor topbar
+          (see AppShell.tsx's #talent-editor-topbar-slot) so the whole app
+          shows one merged, compact header row instead of two stacked ones. */}
+      <SlotPortal slotId="talent-editor-topbar-slot">
+        <div className="talent-editor-topbar" data-testid="content-workspace-topbar">
+          <div className="talent-editor-topbar__titles">
+            <p className="talent-editor-topbar__eyebrow">{steps[activeStep - 1]?.title ?? copy.editorEyebrow}</p>
+            <h2 className="talent-editor-topbar__title">{project.title}</h2>
+          </div>
+
+          <div className="talent-editor-topbar__status" data-testid="content-workspace-save-status">
+            {isPending && (
+              <span className="flex items-center gap-1.5" data-testid="project-save-status-saving">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Guardando…
+              </span>
+            )}
+            {!isPending && saveStepState === 'saved' && (
+              <span className="flex items-center gap-1.5 text-[var(--accent-text)]" data-testid="project-save-status-saved">
+                <Check className="h-3 w-3" />
+                Guardado
+              </span>
+            )}
+            {!isPending && saveStepState !== 'saved' && savedLabel && <span>{savedLabel}</span>}
+            {pageNumberSyncFeedback === 'done' && (
+              <span className="flex items-center gap-1.5 text-[var(--accent-text)]" data-testid="pagination-sync-feedback-done">
+                <Check className="h-3 w-3" />
+                {copy.chapterSyncPageNumbersDone}
+              </span>
+            )}
+            {pageNumberSyncFeedback === 'missing-index' && (
+              <span className="text-amber-500" data-testid="pagination-sync-feedback-missing-index">
+                {copy.chapterSyncPageNumbersMissingIndex}
+              </span>
+            )}
+          </div>
+
+          <div className="talent-editor-topbar__actions">
+            <button
+              type="button"
+              data-testid="content-workspace-preview-button"
+              onClick={() => setActiveStep(5)}
+              className="dashboard-button dashboard-button--primary"
+            >
+              {copy.contentPreviewAction}
+            </button>
+            <button
+              type="button"
+              data-testid="document-data-open-button"
+              onClick={() => setIsDocumentDataOpen(true)}
+              className="dashboard-button"
+            >
+              {copy.documentDataOpen}
+            </button>
           </div>
         </div>
-
-        <div className="ac-topbar__meta" data-testid="content-workspace-save-status">
-          {isPending && (
-            <span className="flex items-center gap-1.5" data-testid="project-save-status-saving">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              Guardando…
-            </span>
-          )}
-          {!isPending && saveStepState === 'saved' && (
-            <span className="flex items-center gap-1.5 text-[var(--accent-text)]" data-testid="project-save-status-saved">
-              <Check className="h-3 w-3" />
-              Guardado
-            </span>
-          )}
-          {!isPending && saveStepState !== 'saved' && savedLabel && <span>{savedLabel}</span>}
-          {pageNumberSyncFeedback === 'done' && (
-            <span className="flex items-center gap-1.5 text-[var(--accent-text)]" data-testid="pagination-sync-feedback-done">
-              <Check className="h-3 w-3" />
-              {copy.chapterSyncPageNumbersDone}
-            </span>
-          )}
-          {pageNumberSyncFeedback === 'missing-index' && (
-            <span className="text-amber-500" data-testid="pagination-sync-feedback-missing-index">
-              {copy.chapterSyncPageNumbersMissingIndex}
-            </span>
-          )}
-        </div>
-
-        <div className="ac-topbar__actions">
-          <button
-            type="button"
-            data-testid="content-workspace-preview-button"
-            onClick={() => setActiveStep(5)}
-            className="dashboard-button dashboard-button--primary"
-          >
-            {copy.contentPreviewAction}
-          </button>
-          <button
-            type="button"
-            data-testid="document-data-open-button"
-            onClick={() => setIsDocumentDataOpen(true)}
-            className="dashboard-button"
-          >
-            {copy.documentDataOpen}
-          </button>
-        </div>
-      </header>
+      </SlotPortal>
 
       {/* Stepper Navigation */}
       <div className="ac-workflow-shell__progress ac-surface-panel ac-surface-panel--subtle p-6 shadow-[var(--shadow-soft)]">

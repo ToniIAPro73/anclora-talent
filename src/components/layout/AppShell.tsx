@@ -28,7 +28,8 @@ export function AppShell({
 
   const compactDashboard = pathname === '/dashboard';
   const compactNewProject = pathname === '/projects/new';
-  const focusedWorkspace = compactDashboard || compactNewProject;
+  const compactEditor = /^\/projects\/[^/]+\/editor$/.test(pathname ?? '');
+  const focusedWorkspace = compactDashboard || compactNewProject || compactEditor;
   const navLinks = [
     {
       href: '/dashboard',
@@ -43,7 +44,7 @@ export function AppShell({
   ];
 
   return (
-      <div className={`talent-app-shell-frame min-h-screen bg-[var(--app-gradient)] text-[var(--text-primary)]${compactDashboard ? ' talent-dashboard-shell' : ''}${compactNewProject ? ' talent-new-project-shell' : ''}`}>
+      <div className={`talent-app-shell-frame min-h-screen bg-[var(--app-gradient)] text-[var(--text-primary)]${compactDashboard ? ' talent-dashboard-shell' : ''}${compactNewProject ? ' talent-new-project-shell' : ''}${compactEditor ? ' talent-editor-shell' : ''}`}>
       <div className="talent-shell-grid">
         <div className="talent-shell-main min-w-0">
           <header className="talent-shell-topbar">
@@ -52,10 +53,14 @@ export function AppShell({
               <div className="talent-shell-brand__name">{messages.brand}</div>
             </div>
 
-            <div className="talent-shell-brand__copy">
-              <p>{compactDashboard ? messages.navDashboard : compactNewProject ? messages.navNewProject : messages.topbarTitle}</p>
-              {!focusedWorkspace && <span>{messages.topbarSubtitle}</span>}
-            </div>
+            {compactEditor ? (
+              <div id="talent-editor-topbar-slot" className="talent-shell-editor-slot" />
+            ) : (
+              <div className="talent-shell-brand__copy">
+                <p>{compactDashboard ? messages.navDashboard : compactNewProject ? messages.navNewProject : messages.topbarTitle}</p>
+                {!focusedWorkspace && <span>{messages.topbarSubtitle}</span>}
+              </div>
+            )}
 
             {!focusedWorkspace && (
               <nav className="talent-shell-nav" aria-label={messages.navLabel}>
@@ -76,6 +81,7 @@ export function AppShell({
             <div className="talent-shell-topbar-actions">
               {compactDashboard && <NavigatingLink href="/projects/new" pendingLabel={messages.navNewProject} className="dashboard-button dashboard-button--primary dashboard-header-create">{messages.navNewProject}</NavigatingLink>}
               {compactNewProject && <><NavigatingLink href="/dashboard" pendingLabel={messages.navDashboard} className="dashboard-button dashboard-button--primary new-project-dashboard">{messages.navDashboard}</NavigatingLink><NavigatingLink href="/dashboard" pendingLabel={messages.navCancel} className="dashboard-button dashboard-button--primary new-project-cancel">{messages.navCancel}</NavigatingLink></>}
+              {compactEditor && <NavigatingLink href="/dashboard" pendingLabel={messages.navDashboard} className="dashboard-button">{messages.navDashboard}</NavigatingLink>}
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen((open) => !open)}

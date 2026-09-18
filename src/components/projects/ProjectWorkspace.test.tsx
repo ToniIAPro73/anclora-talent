@@ -150,6 +150,10 @@ describe('ProjectWorkspace', () => {
     window.localStorage.clear();
     clearLastChapterSave();
     vi.mocked(syncProjectPaginationAction).mockResolvedValue({ status: 'updated' });
+    // ProjectWorkspace portals its header into the app shell's compact
+    // editor topbar slot (see AppShell.tsx); stand that slot in since these
+    // tests render ProjectWorkspace without its AppShell ancestor.
+    document.body.innerHTML = '<div id="talent-editor-topbar-slot"></div>';
   });
 
   test('renders the project title in the header', () => {
@@ -177,7 +181,9 @@ describe('ProjectWorkspace', () => {
       />,
     );
 
-    expect(screen.getByText('Colaborar')).toBeInTheDocument();
+    // Appears twice: once in the stepper label, once in the portalled
+    // topbar's step eyebrow (see AppShell's #talent-editor-topbar-slot).
+    expect(screen.getAllByText('Colaborar').length).toBeGreaterThan(0);
     expect(screen.getByText('de 8 pasos')).toBeInTheDocument();
     expect(screen.getAllByText('6').length).toBeGreaterThan(0);
 
