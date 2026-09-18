@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { Menu, Plus, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
@@ -79,7 +79,7 @@ export function AppShell({
             )}
 
             <div className="talent-shell-topbar-actions">
-              {compactDashboard && <NavigatingLink href="/projects/new" pendingLabel={messages.navNewProject} className="dashboard-button dashboard-button--primary dashboard-header-create"><Plus size={17} aria-hidden="true" />{messages.navNewProject}</NavigatingLink>}
+              {compactDashboard && <NavigatingLink href="/projects/new" pendingLabel={messages.navNewProject} className="dashboard-button dashboard-button--primary dashboard-header-create">{messages.navNewProject}</NavigatingLink>}
               {compactNewProject && <><NavigatingLink href="/dashboard" pendingLabel={messages.navDashboard} className="new-project-dashboard">{messages.navDashboard}</NavigatingLink><NavigatingLink href="/dashboard" pendingLabel={messages.navCancel} className="new-project-cancel">{messages.navCancel}</NavigatingLink></>}
               <button
                 type="button"
