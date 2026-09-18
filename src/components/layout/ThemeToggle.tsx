@@ -8,6 +8,7 @@ export function ThemeToggle() {
   const { locale, setTheme, theme } = useUiPreferences();
   const messages = resolveLocaleMessages(locale).shell;
   const nextTheme = theme === 'dark' ? 'light' : 'dark';
+  const Icon = theme === 'dark' ? Sun : Moon;
 
   return (
     <button
@@ -19,11 +20,8 @@ export function ThemeToggle() {
       className="talent-shell-theme-flip"
     >
       <span className="talent-shell-theme-flip__cube" data-theme-state={theme}>
-        <span className="talent-shell-theme-flip__face talent-shell-theme-flip__face--front">
-          <Moon className="h-4 w-4" aria-hidden="true" />
-        </span>
-        <span className="talent-shell-theme-flip__face talent-shell-theme-flip__face--back">
-          <Sun className="h-4 w-4" aria-hidden="true" />
+        <span className="talent-shell-theme-flip__face">
+          <Icon className="h-5 w-5" aria-hidden="true" />
         </span>
       </span>
     </button>

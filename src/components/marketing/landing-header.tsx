@@ -75,7 +75,7 @@ export function LandingHeader({
             data-testid="landing-theme-toggle"
             onClick={toggleTheme}
             aria-label={nav.toggleTheme}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+            className="talent-shell-theme-flip inline-flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
@@ -86,7 +86,7 @@ export function LandingHeader({
             data-testid="landing-locale-toggle"
             onClick={toggleLocale}
             aria-label={nav.toggleLocale}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+            className="talent-shell-locale-pill inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
           >
             <Globe className="h-3.5 w-3.5" />
             <span>{locale.toUpperCase()}</span>
@@ -127,7 +127,7 @@ export function LandingHeader({
             type="button"
             onClick={toggleTheme}
             aria-label={nav.toggleTheme}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+            className="talent-shell-theme-flip inline-flex items-center justify-center"
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
@@ -135,9 +135,10 @@ export function LandingHeader({
             type="button"
             onClick={toggleLocale}
             aria-label={nav.toggleLocale}
-            className="inline-flex h-9 items-center gap-1 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-2.5 text-xs font-bold uppercase text-[var(--text-secondary)]"
+            className="talent-shell-locale-pill inline-flex items-center"
           >
-            {locale.toUpperCase()}
+            <Globe className="h-5 w-5" aria-hidden="true" />
+            <span>{locale.toUpperCase()}</span>
           </button>
           <button
             type="button"

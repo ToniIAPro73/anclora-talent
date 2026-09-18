@@ -590,58 +590,68 @@ body {
 .talent-shell-theme-flip,
 .talent-shell-mobile-menu-button {
   display: inline-flex;
-  height: 42px;
-  width: 42px;
+  height: 48px;
+  width: 56px;
   align-items: center;
   justify-content: center;
-  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border-strong));
+  border: 2px solid color-mix(in srgb, var(--accent) 72%, var(--border-strong));
   border-radius: 999px;
-  background: color-mix(in srgb, var(--surface-panel) 92%, transparent);
+  background: color-mix(in srgb, var(--surface-panel) 94%, var(--background));
   color: var(--text-primary);
-  box-shadow: 0 12px 24px rgba(7, 16, 25, 0.14);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent), 0 8px 18px rgba(7, 16, 25, 0.2);
+  transition: border-color 180ms ease, background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
 }
 
 .talent-shell-locale-pill {
   width: auto;
-  min-width: 48px;
-  padding: 0 13px;
-  font-size: 0.76rem;
+  min-width: 116px;
+  gap: 10px;
+  padding: 0 18px;
+  font-size: 1rem;
   font-weight: 900;
+  letter-spacing: 0.08em;
 }
 
 .talent-shell-theme-flip {
-  perspective: 120px;
-  overflow: hidden;
+  border-radius: 50%;
 }
 
 .talent-shell-theme-flip__cube {
   position: relative;
-  width: 18px;
-  height: 18px;
-  transform-style: preserve-3d;
-  transition: transform 360ms var(--ease-spring);
-}
-
-.talent-shell-theme-flip__cube[data-theme-state="light"] {
-  transform: rotateY(180deg);
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
 }
 
 .talent-shell-theme-flip__face {
-  position: absolute;
-  inset: 0;
   display: grid;
   place-items: center;
-  backface-visibility: hidden;
 }
 
-.talent-shell-theme-flip__face--back {
-  transform: rotateY(180deg);
+.talent-shell-locale-pill:hover,
+.talent-shell-locale-pill:focus-visible,
+.talent-shell-theme-flip:hover,
+.talent-shell-theme-flip:focus-visible {
+  border-color: var(--accent-hover);
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface-panel));
+  color: var(--text-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent), 0 10px 24px rgba(7, 16, 25, 0.24);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .talent-shell-theme-flip__cube {
-    transition: none;
-  }
+/* Keep the shared controls authoritative when a header also carries utility
+   classes from the landing/header composition. */
+button.talent-shell-theme-flip {
+  width: 56px !important;
+  height: 56px !important;
+  padding: 0 !important;
+}
+
+button.talent-shell-locale-pill {
+  min-width: 116px !important;
+  height: 48px !important;
+  gap: 10px !important;
+  padding-inline: 18px !important;
 }
 
 .talent-shell-mobile-menu-button,
@@ -1815,7 +1825,7 @@ html[data-theme="light"] .talent-dashboard-shell .talent-shell-brand__name { col
 .talent-dashboard-shell .talent-shell-brand__copy p { font-size: 20px; }
 .talent-dashboard-shell .talent-shell-topbar-actions { grid-column: 3; grid-row: 1; gap: 12px; }
 .talent-dashboard-shell .talent-shell-content { padding: 0; min-height: calc(100vh - 68px); }
-.talent-dashboard-shell .talent-shell-locale-pill, .talent-dashboard-shell .talent-shell-theme-flip { height: 34px; min-width: 34px; border: 0; border-left: 1px solid var(--dashboard-border); border-radius: 0; box-shadow: none; background: transparent; }
+.talent-dashboard-shell .talent-shell-locale-pill, .talent-dashboard-shell .talent-shell-theme-flip { height: 48px; }
 .dashboard-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; min-height: calc(100vh - 68px); }
 .dashboard-projects { min-width: 0; padding: 32px; }
 .dashboard-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 62px; margin-bottom: 12px; }
@@ -2074,7 +2084,7 @@ html[data-theme="light"] .dashboard-activity-icon { color: var(--accent-text); }
   .talent-new-project-shell .talent-shell-brand__copy { display: block; padding-inline: 12px 0; }
   .talent-new-project-shell .talent-shell-brand__copy p { font-size: 16px; }
   .talent-new-project-shell .talent-shell-topbar-actions > button,
-  .talent-new-project-shell .talent-shell-topbar-actions > div { display: none; }
+  .talent-new-project-shell .talent-shell-topbar-actions > div { display: inline-flex; }
   .talent-new-project-page { padding: 20px 16px 44px; }
   .talent-new-project-form { margin-top: 18px; }
   .talent-new-project-form .talent-create-form__primary { padding: 20px 16px; }
@@ -2137,7 +2147,7 @@ html[data-theme="light"] .dashboard-activity-icon { color: var(--accent-text); }
   .talent-dashboard-shell .talent-shell-brand { gap: 6px; }
   .talent-dashboard-shell .dashboard-header-create { display: none; }
   .talent-dashboard-shell .talent-shell-topbar-actions { gap: 2px; }
-  .talent-dashboard-shell .talent-shell-locale-pill { padding-inline: 6px; }
+  .talent-dashboard-shell .talent-shell-locale-pill { min-width: 88px; padding-inline: 12px; }
   .dashboard-toolbar h1 { font-size: 24px; }
   .dashboard-toolbar { gap: 18px; }
   .dashboard-controls { width: 100%; }
