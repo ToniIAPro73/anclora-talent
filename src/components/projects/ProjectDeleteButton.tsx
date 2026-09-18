@@ -2,7 +2,6 @@
 
 import { Trash2 } from 'lucide-react';
 import { deleteProjectAction } from '@/lib/projects/actions';
-import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export function ProjectDeleteButton({
   projectId,
@@ -23,10 +22,10 @@ export function ProjectDeleteButton({
       }}
     >
       <input type="hidden" name="projectId" value={projectId} data-testid="delete-project-id-input" />
-      <SubmitButton className="project-card-menu__delete">
+      <button type="submit" className="project-card-menu__delete">
         <Trash2 className="h-4 w-4" aria-hidden="true" />
-        {label}
-      </SubmitButton>
+        <span>{label}</span>
+      </button>
     </form>
   );
 }
