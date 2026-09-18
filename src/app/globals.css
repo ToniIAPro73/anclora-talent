@@ -1864,15 +1864,15 @@ html[data-theme="light"] .dashboard-cover { color: var(--text-primary); backgrou
 .dashboard-button--icon { width: 36px; min-height: 36px; padding: 0; }
 .project-card-menu__item { display:flex; width:100%; min-height:36px; align-items:center; border:0; border-radius:5px; padding:8px 10px; color:var(--text-primary); background:transparent; font-size:12px; font-weight:600; text-align:left; transition:background .16s ease,color .16s ease; }
 .project-card-menu__item:hover, .project-card-menu__item:focus-visible { background:var(--surface-highlight); color:var(--text-primary); outline:none; }
-.project-card-menu__item--destructive { padding:0; }
+.project-card-menu__item--destructive { width:100%; padding:0; }
+.project-card-menu__item--destructive form { width:100%; }
 .project-card-menu__delete { display:flex; width:100%; min-height:36px; align-items:center; gap:8px; border:0; border-radius:5px; padding:8px 10px; color:var(--text-secondary); background:transparent; font-size:12px; font-weight:600; transition:background .16s ease,color .16s ease; }
 .project-card-menu__delete:hover, .project-card-menu__delete:focus-visible { color:var(--danger); background:color-mix(in srgb, var(--danger) 10%, transparent); outline:none; }
 .user-menu-panel__eyebrow, .dashboard-document-modal__eyebrow { color:var(--accent); font-size:11px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; }
 .user-menu-panel__options { display:grid; gap:2px; margin:16px -4px 12px; padding:10px 4px; border-block:1px solid var(--border-subtle); }
 .user-menu-panel__option { display:grid; grid-template-columns:24px 1fr auto; align-items:center; gap:8px; min-height:40px; border:0; border-radius:5px; padding:7px 8px; color:var(--text-tertiary); background:transparent; text-align:left; }
 .user-menu-panel__option small { font-size:10px; color:var(--text-tertiary); }
-.user-menu-panel__logout { display:flex; width:100%; min-height:40px; align-items:center; justify-content:center; gap:8px; border:1px solid var(--border-subtle); border-radius:5px; background:var(--accent-soft); color:var(--text-primary); font-size:13px; font-weight:600; transition:background .16s ease,border-color .16s ease; }
-.user-menu-panel__logout:hover, .user-menu-panel__logout:focus-visible { border-color:var(--accent); background:var(--surface-highlight); outline:none; }
+.user-menu-panel__logout { display:flex; width:100%; min-height:40px; align-items:center; justify-content:center; gap:8px; font-size:13px; }
 .dashboard-document-modal__panel { max-width:980px; overflow:hidden; border:1px solid var(--border-strong); border-radius:18px; padding:24px; background:var(--page-surface); }
 .dashboard-document-modal__header { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border-subtle); }
 .dashboard-document-modal__header h2 { margin-top:4px; font-size:22px; font-weight:700; }
@@ -1919,12 +1919,19 @@ html[data-theme="light"] .dashboard-activity-icon { color: var(--accent-text); }
 .talent-new-project-shell .talent-shell-brand__copy p { font-size: 20px; }
 .talent-new-project-shell .talent-shell-topbar-actions { grid-column: 3; grid-row: 1; gap: 12px; }
 .talent-new-project-shell .talent-shell-content { padding: 0; }
-.new-project-cancel { display: inline-flex; min-height: 36px; align-items: center; border: 1px solid var(--dashboard-border, var(--border-strong)); border-radius: 5px; padding: 0 16px; color: var(--text-primary); font-size: 12px; font-weight: 600; }
-.new-project-cancel:hover { border-color: var(--accent); color: var(--accent-text); }
-.new-project-dashboard { display: inline-flex; min-height: 36px; align-items: center; border: 1px solid var(--dashboard-border, var(--border-strong)); border-radius: 5px; padding: 0 16px; color: var(--text-primary); font-size: 12px; font-weight: 600; }
-.new-project-dashboard:hover { border-color: var(--accent); color: var(--accent-text); background: var(--surface-highlight); }
-.new-project-dashboard,
-.new-project-cancel { background: var(--accent-soft); border-color: var(--accent-border); }
+.new-project-dashboard, .new-project-cancel { min-width: 92px; }
+.talent-new-project-shell .new-project-dashboard, .talent-new-project-shell .new-project-cancel { background: var(--talent-button-primary-bg); border-color: var(--accent); color: var(--text-on-accent); }
+.talent-new-project-shell .new-project-dashboard:hover, .talent-new-project-shell .new-project-dashboard:focus-visible, .talent-new-project-shell .new-project-cancel:hover, .talent-new-project-shell .new-project-cancel:focus-visible { background: var(--accent-hover); border-color: var(--accent); color: var(--text-on-accent); }
+.talent-new-project-form .ac-button,
+.talent-new-project-form .talent-action-button,
+.talent-new-project-form .ac-button--primary,
+.talent-new-project-form .ac-button--secondary,
+.talent-new-project-form .ac-button--ghost { border-radius: 5px; box-shadow: none; transform: none; transition: background .16s ease, border-color .16s ease, color .16s ease; }
+.talent-new-project-form .ac-button--primary { background: var(--talent-button-primary-bg); border-color: var(--accent); color: var(--text-on-accent); }
+.talent-new-project-form .ac-button--primary:hover, .talent-new-project-form .ac-button--primary:focus-visible { background: var(--accent-hover); border-color: var(--accent); color: var(--text-on-accent); }
+.talent-new-project-form .ac-button--secondary, .talent-new-project-form .ac-button--ghost { background: var(--accent-soft); border-color: var(--dashboard-border, var(--border-strong)); color: var(--text-primary); }
+.talent-new-project-form .ac-button--secondary:hover, .talent-new-project-form .ac-button--secondary:focus-visible, .talent-new-project-form .ac-button--ghost:hover, .talent-new-project-form .ac-button--ghost:focus-visible { background: var(--surface-highlight); border-color: var(--accent); color: var(--text-primary); }
+.talent-new-project-form .talent-action-button::before { display:none; }
 .talent-new-project-page { width: 100%; margin: 0 auto; padding: 28px 10px 64px; }
 .talent-new-project-back { display: inline-flex; align-items: center; gap: 8px; color: var(--accent-text); font-size: 13px; font-weight: 600; white-space: nowrap; }
 .talent-new-project-back:hover { color: var(--text-primary); }

@@ -2,7 +2,7 @@ import 'server-only';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { getDb, hasDatabase } from './index';
-import { backCoverDesigns, coverDesigns, coverLayers, documentBlocks, projectAssets, projectDocuments, projects, userPreferences } from './schema';
+import { backCoverDesigns, brandProfiles, coverDesigns, coverLayers, documentBlocks, projectAssets, projectDocuments, projects, userPreferences } from './schema';
 import type { EditorPreferences } from '@/lib/ui-preferences/preferences';
 import { normalizeSurfaceState, type SurfaceState } from '@/lib/projects/cover-surface';
 import { isDesignSurfaceV2, type DesignSurface } from '@/lib/projects/design-surface';
@@ -46,7 +46,18 @@ function getMemoryStore() {
   return globalThis.__ancloraProjectStore;
 }
 
+function normalizeImportedIdentity(title: string, subtitle: string, author: string) {
+  const raw = `${title} ${subtitle} ${author}`;
+  const read = (key: string) => raw.match(new RegExp(`${key}\\s*:\\s*["']([^"']+)["']`, 'i'))?.[1]?.trim();
+  return {
+    title: title === '---' ? read('title') || title : title,
+    subtitle: read('subtitle') || subtitle,
+    author: author || read('author') || author,
+  };
+}
+
 function toSummary(project: ProjectRecord): ProjectSummary {
+  const identity = normalizeImportedIdentity(project.document.title, project.document.subtitle, project.document.author);
   return {
     id: project.id,
     slug: project.slug,
@@ -54,13 +65,16 @@ function toSummary(project: ProjectRecord): ProjectSummary {
     status: project.status,
     createdAt: project.createdAt,
     updatedAt: project.updatedAt,
-    documentSubtitle: project.document.subtitle,
-    documentAuthor: project.document.author,
-    documentTitle: project.document.title,
+    documentSubtitle: identity.subtitle,
+    documentAuthor: identity.author,
+    documentTitle: identity.title,
     pageCount: project.document.source?.pageCount ?? null,
     chapterCount: project.document.chapters.length,
     coverPalette: project.cover.palette,
     coverImageUrl: project.cover.renderedImageUrl || project.cover.thumbnailUrl || null,
+    composition: project.document.metadata?.composition ?? null,
+    referenceEditorialProfile: project.document.metadata?.referenceEditorialProfile ?? null,
+    brandProfileName: project.brandProfileId ?? null,
   };
 }
 
@@ -524,10 +538,13 @@ async function listProjectsFromDb(userId: string) {
       coverPalette: coverDesigns.palette,
       coverRenderedImageUrl: coverDesigns.renderedImageUrl,
       coverThumbnailUrl: coverDesigns.thumbnailUrl,
+      metadata: projectDocuments.metadata,
+      brandProfileName: brandProfiles.name,
     })
     .from(projects)
     .innerJoin(projectDocuments, eq(projectDocuments.projectId, projects.id))
     .innerJoin(coverDesigns, eq(coverDesigns.projectId, projects.id))
+    .leftJoin(brandProfiles, eq(brandProfiles.id, projects.brandProfileId))
     .where(eq(projects.userId, userId))
     .orderBy(asc(projects.updatedAt));
 
@@ -555,13 +572,20 @@ async function listProjectsFromDb(userId: string) {
     status: row.status as ProjectSummary['status'],
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
-    documentSubtitle: row.documentSubtitle,
-    documentAuthor: row.documentAuthor,
-    documentTitle: row.documentTitle,
+    documentSubtitle: normalizeImportedIdentity(row.documentTitle, row.documentSubtitle, row.documentAuthor).subtitle,
+    documentAuthor: normalizeImportedIdentity(row.documentTitle, row.documentSubtitle, row.documentAuthor).author,
+    documentTitle: normalizeImportedIdentity(row.documentTitle, row.documentSubtitle, row.documentAuthor).title,
     pageCount: sourcePageCount(row.sourceMetadata),
     chapterCount: chapterCounts.get(row.documentId)?.size ?? 0,
     coverPalette: row.coverPalette as CoverDesign['palette'],
     coverImageUrl: row.coverRenderedImageUrl || row.coverThumbnailUrl || null,
+    composition: row.metadata && typeof row.metadata === 'object' && row.metadata !== null && 'composition' in row.metadata
+      ? (row.metadata as { composition?: ProjectSummary['composition'] }).composition ?? null
+      : null,
+    referenceEditorialProfile: row.metadata && typeof row.metadata === 'object' && row.metadata !== null && 'referenceEditorialProfile' in row.metadata
+      ? (row.metadata as { referenceEditorialProfile?: ProjectSummary['referenceEditorialProfile'] }).referenceEditorialProfile ?? null
+      : null,
+    brandProfileName: row.brandProfileName,
   }));
 }
 

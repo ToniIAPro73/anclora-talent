@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { BookOpen, Check, FileText, Palette, Sparkles, X } from 'lucide-react';
 import { createProjectAction } from '@/lib/projects/actions';
-import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { StructureProfile } from '@/lib/structure-profile/model';
@@ -115,7 +114,7 @@ export function CreateProjectForm({
             {copy.createProjectHint}
           </p>
           <SubmitButton
-            className={`${premiumPrimaryDarkButton} w-full`}
+            className="dashboard-button dashboard-button--primary w-full"
             data-testid="create-project-submit-button"
             disabled={isPreprocessing}
           >

@@ -85,7 +85,7 @@ export function UserMenu({ user }: { user: UserMenuUser }) {
             role="menuitem"
             onClick={handleSignOut}
             disabled={isSigningOut}
-            className="user-menu-panel__logout bg-[var(--action-secondary-bg)] border-[var(--action-secondary-border)] text-[var(--action-secondary-fg)]"
+            className="dashboard-button dashboard-button--primary user-menu-panel__logout"
           >
             <LogOut className="h-4 w-4" aria-hidden="true" />
             {isSigningOut ? messages.signingOut : messages.signOut}

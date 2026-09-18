@@ -7,6 +7,20 @@ describe('document import parser isolation', () => {
     vi.resetModules();
   });
 
+  test('uses markdown front matter for document identity and excludes it from content', async () => {
+    vi.doMock('server-only', () => ({}));
+    const { buildImportedDocumentSeed } = await import('./import-pipeline');
+    const result = buildImportedDocumentSeed({
+      fileName: 'manuscrito.md',
+      mimeType: 'text/markdown',
+      text: ['---', 'title: "Volver a elegir"', 'subtitle: "Notas para una segunda vida profesional"', 'author: "Autor de prueba"', '---', '', '# Capítulo 1', '', 'Contenido'].join('\n'),
+    });
+    expect(result.title).toBe('Volver a elegir');
+    expect(result.subtitle).toBe('Notas para una segunda vida profesional');
+    expect(result.author).toBe('Autor de prueba');
+    expect(result.chapters?.some((chapter) => chapter.title.includes('title:'))).toBe(false);
+  });
+
   test('docx import does not load the pdf parser', async () => {
     vi.doMock('server-only', () => ({}));
     vi.doMock('pdf-parse', () => {

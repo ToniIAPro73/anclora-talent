@@ -4,6 +4,7 @@ import type { ProvenanceMap } from '@/lib/ai/provenance';
 import type { SurfaceState } from './cover-surface';
 import type { DesignSurface } from './design-surface';
 import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profile/model';
+import type { CompositionSettings } from './composition';
 
 export type ProjectStatus = 'draft' | 'active';
 
@@ -199,6 +200,9 @@ export interface ProjectSummary {
   chapterCount: number;
   coverPalette: CoverDesign['palette'];
   coverImageUrl?: string | null;
+  composition?: CompositionSettings | null;
+  referenceEditorialProfile?: ReferenceEditorialProfile | null;
+  brandProfileName?: string | null;
 }
 
 /** M4 — heuristic confidence for a detected import field (no AI involved). */

@@ -16,6 +16,8 @@ export function DashboardDocumentDataModal({
   onClose: () => void;
 }) {
   const formatDate = (value: string) => new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(value));
+  const composition = project.composition;
+  const reference = project.referenceEditorialProfile;
   const metadata = [
     [copy.documentDataTitleLabel, project.documentTitle || project.title],
     [copy.documentDataSubtitleLabel, project.documentSubtitle || '—'],
@@ -39,8 +41,8 @@ export function DashboardDocumentDataModal({
         </header>
         <div className="dashboard-document-modal__body">
           <section><h3>{copy.documentDataSummaryHeading}</h3><dl className="dashboard-document-modal__metadata">{metadata.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></section>
-          <section><h3>{copy.documentDataCompositionHeading}</h3><div className="dashboard-document-modal__cards"><article><strong>{copy.documentDataFontFamilyLabel}</strong><span>{copy.documentDataUnavailableValue}</span></article><article><strong>{copy.documentDataMarginPresetLabel}</strong><span>{copy.documentDataMarginPresetNormal}</span></article><article><strong>{copy.documentDataLineHeightLabel}</strong><span>1,5</span></article></div></section>
-          <section><h3>{copy.documentDataStructureHeading}</h3><div className="dashboard-document-modal__cards"><article><strong>{copy.documentDataStructureHierarchyLabel}</strong><span>{project.chapterCount} capítulos</span></article><article><strong>{copy.documentDataStructureMacroLabel}</strong><span>{copy.documentDataUnavailableValue}</span></article><article><strong>{copy.documentDataBrandHeading}</strong><span>{copy.documentDataBrandNoneOption}</span></article></div></section>
+          <section><h3>{copy.documentDataCompositionHeading}</h3><div className="dashboard-document-modal__cards"><article><strong>{copy.documentDataFontFamilyLabel}</strong><span>{reference?.body.resolvedFontFamily ?? reference?.body.fontFamily ?? composition?.fontFamily ?? copy.documentDataUnavailableValue}</span></article><article><strong>{copy.documentDataMarginPresetLabel}</strong><span>{composition?.margins ? `${composition.margins.top} / ${composition.margins.bottom} / ${composition.margins.left} / ${composition.margins.right}` : copy.documentDataMarginPresetNormal}</span></article><article><strong>{copy.documentDataLineHeightLabel}</strong><span>{reference?.body.lineHeight ?? composition?.lineHeight ?? '1,5'}</span></article></div></section>
+          <section><h3>{copy.documentDataStructureHeading}</h3><div className="dashboard-document-modal__cards"><article><strong>{copy.documentDataStructureHierarchyLabel}</strong><span>{project.chapterCount} capítulos</span></article><article><strong>{copy.documentDataStructureMacroLabel}</strong><span>{reference?.observedStructure.chapterCount ?? copy.documentDataUnavailableValue}</span></article><article><strong>{copy.documentDataBrandHeading}</strong><span>{project.brandProfileName ?? copy.documentDataBrandNoneOption}</span></article></div></section>
         </div>
         <footer className="dashboard-document-modal__footer"><button type="button" data-testid="dashboard-document-data-cancel" className="dashboard-button" onClick={onClose}>{copy.documentDataCancelLabel}</button><button type="button" data-testid="dashboard-document-data-save" className="dashboard-button dashboard-button--primary" onClick={onClose}>{copy.documentDataSaveLabel}</button></footer>
       </section>

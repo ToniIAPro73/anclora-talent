@@ -1455,6 +1455,18 @@ function fileNameToTitle(fileName: string) {
     .trim();
 }
 
+function parseMarkdownFrontMatter(text: string): { content: string; title?: string; subtitle?: string; author?: string } {
+  if (!/^---\s*\n/.test(text)) return { content: text };
+  const match = text.match(/^---\s*\n([\s\S]*?)\n---\s*(?:\n|$)/);
+  if (!match) return { content: text };
+  const values: Record<string, string> = {};
+  for (const line of match[1].split(/\r?\n/)) {
+    const pair = line.match(/^([A-Za-z][\w-]*)\s*:\s*["']?(.*?)["']?\s*$/);
+    if (pair) values[pair[1].toLowerCase()] = pair[2].trim();
+  }
+  return { content: text.slice(match[0].length), title: values.title, subtitle: values.subtitle, author: values.author };
+}
+
 /**
  * M4 — per-field detection confidence, purely from heuristic signals already
  * produced during extraction (no AI). Documented rules:
@@ -1511,36 +1523,39 @@ export function buildImportedDocumentSeed({
    *  keep today's auto-detected chapter-splitting behavior unchanged. */
   manuscriptTypeOverride?: ManuscriptType;
 }): ImportedDocumentSeed {
-  const paragraphs = paragraphsFromText(text);
+  const frontMatter = mimeType.includes('markdown') || getExtension(fileName) === 'md' ? parseMarkdownFrontMatter(text) : { content: text };
+  const contentText = frontMatter.content;
+  const paragraphs = paragraphsFromText(contentText);
   const fallbackTitle = fileNameToTitle(fileName) || 'Documento importado';
-  const rawTitle = paragraphs[0] && paragraphs[0].length <= 120? paragraphs[0] : fallbackTitle;
+  const rawTitle = frontMatter.title || (paragraphs[0] && paragraphs[0].length <= 120 ? paragraphs[0] : fallbackTitle);
   const textImportMode = inferTextImportMode(fileName, mimeType);
 
   const normalizedHtml = html? html : null;
   const htmlBlocks = normalizedHtml? parseHtmlBlocks(normalizedHtml) : [];
-  const textBlocks = parseTextBlocks(text, textImportMode);
+  const textBlocks = parseTextBlocks(contentText, textImportMode);
 
   // Usa siempre HTML cuando viene de DOCX (ya lleva el TOC fusionado en splitHtmlListBlocks)
   const parsedBlocks = normalizedHtml && htmlBlocks.length > 0? htmlBlocks : textBlocks;
 
-  const detectedManuscriptType = detectManuscriptType(text);
+  const detectedManuscriptType = detectManuscriptType(contentText);
   const chapterBoundaryLevelOverride = manuscriptTypeOverride
     ? MANUSCRIPT_TYPE_CHAPTER_LEVEL[manuscriptTypeOverride]
     : null;
   const frontMatterSource = buildChaptersFromBlocks(
     parsedBlocks,
     fallbackTitle,
-    extractAuthorFromText(text),
+    frontMatter.author || extractAuthorFromText(contentText),
     chapterBoundaryLevelOverride,
   );
   const splitFrontMatter = frontMatterSource.frontMatter.flatMap(splitTitleSubtitleBlock);
   const titleDetection = detectTitleFromFrontMatter(splitFrontMatter, rawTitle);
   const title = titleDetection.title;
-  const authorDetection = detectAuthorFromFrontMatter(splitFrontMatter, text);
-  const author = authorDetection.author;
+  const authorDetection = detectAuthorFromFrontMatter(splitFrontMatter, contentText);
+  const author = frontMatter.author || authorDetection.author;
   const subtitleDetection = detectSubtitleFromFrontMatter(splitFrontMatter, title, author);
-  const subtitle = subtitleDetection.subtitle
-   ? subtitleDetection.subtitle.slice(0, 260)
+  const resolvedSubtitle = frontMatter.subtitle || subtitleDetection.subtitle;
+  const subtitle = resolvedSubtitle
+   ? resolvedSubtitle.slice(0, 260)
     : `Documento importado desde ${fileName}`;
 
   let detectedChapters = frontMatterSource.chapters;
