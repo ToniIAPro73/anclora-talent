@@ -19,7 +19,14 @@ export function FontSelector({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [openUp, setOpenUp] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState<{ left: number; width: number; top?: number; bottom?: number } | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{
+    left: number;
+    width: number;
+    top?: number;
+    bottom?: number;
+    maxHeight: number;
+    listMaxHeight: number;
+  } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const selectableFonts = useMemo(() => {
@@ -79,8 +86,8 @@ export function FontSelector({
   const handleOpenDropdown = () => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const spaceAbove = rect.top;
+      const spaceBelow = Math.max(0, window.innerHeight - rect.bottom);
+      const spaceAbove = Math.max(0, rect.top);
 
       // Si hay más espacio arriba (y menos de 300px abajo), abrir hacia arriba
       const shouldOpenUp = spaceAbove > spaceBelow;
@@ -89,9 +96,16 @@ export function FontSelector({
       } else {
         setOpenUp(false);
       }
+      // Reserve room for the search field, category filters and panel chrome,
+      // then let only the font list scroll. This keeps the complete list
+      // reachable even when the selector is near the bottom of the modal.
+      const availableSpace = Math.max(180, (shouldOpenUp ? spaceAbove : spaceBelow) - 16);
+      const listMaxHeight = Math.max(80, availableSpace - 132);
       setDropdownPosition({
         left: rect.left,
         width: rect.width,
+        maxHeight: availableSpace,
+        listMaxHeight,
         ...(shouldOpenUp
           ? { bottom: window.innerHeight - rect.top + 8 }
           : { top: rect.bottom + 8 }),
@@ -116,10 +130,19 @@ export function FontSelector({
         />
       </button>
 
-      {isOpen && (
+      {isOpen && dropdownPosition && (
         <div
           className="fixed z-[100] rounded-xl border border-[var(--border-strong)] shadow-2xl"
-          style={{ ...dropdownPosition, maxHeight: 'calc(100vh - 24px)', overflow: 'hidden', backgroundColor: 'var(--surface-elevated)', backdropFilter: 'blur(16px)' }}
+          style={{
+            left: dropdownPosition.left,
+            width: dropdownPosition.width,
+            top: dropdownPosition.top,
+            bottom: dropdownPosition.bottom,
+            maxHeight: dropdownPosition.maxHeight,
+            overflow: 'hidden',
+            backgroundColor: 'var(--surface-elevated)',
+            backdropFilter: 'blur(16px)',
+          }}
         >
           {/* Search */}
           <div className="p-3 border-b border-[var(--border-subtle)]">
@@ -168,7 +191,7 @@ export function FontSelector({
           </div>
 
           {/* Font List */}
-          <div className="overflow-y-auto p-2" style={{ maxHeight: 'min(20rem, calc(100vh - 18rem))', backgroundColor: 'color-mix(in srgb, var(--surface-canvas) 88%, transparent)' }}>
+          <div className="overflow-y-auto p-2" style={{ maxHeight: dropdownPosition?.listMaxHeight, backgroundColor: 'color-mix(in srgb, var(--surface-canvas) 88%, transparent)' }}>
             {displayedFonts.length === 0 ? (
               <div className="text-center py-6 text-slate-300 text-sm font-medium">
                 No se encontraron fuentes

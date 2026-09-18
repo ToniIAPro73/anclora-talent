@@ -331,4 +331,25 @@ describe('DocumentImporter', () => {
     expect(screen.getByTestId('document-data-composition-not-applicable')).toBeInTheDocument();
     expect(screen.queryByTestId('document-data-font-family-input')).not.toBeInTheDocument();
   });
+
+  test('keeps the confirmed font family when reopening the document data modal', async () => {
+    mockFetchSuccess(8);
+    render(<DocumentImporter copy={copy} />);
+
+    fireEvent.change(screen.getByTestId('source-document-input'), {
+      target: { files: [new File(['contenido'], 'libro.md', { type: 'text/markdown' })] },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('document-data-modal')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('font-selector-toggle'));
+    fireEvent.click(screen.getByTestId('font-option-roboto'));
+    fireEvent.click(screen.getByTestId('document-data-save-button'));
+
+    fireEvent.click(screen.getByTestId('document-data-reopen-button'));
+
+    expect(screen.getByTestId('font-selector-toggle')).toHaveTextContent('Roboto');
+  });
 });

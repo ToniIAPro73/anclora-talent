@@ -725,7 +725,7 @@ export function DocumentImporter({
           isOpen={isDocumentDataOpen}
           mode="pre-create"
           copy={copy}
-          initialSettings={analysis?.composition?.settings}
+          initialSettings={confirmedComposition ?? analysis?.composition?.settings}
           source={analysis?.composition?.source ?? 'not-extracted'}
           onConfirm={(settings) => setConfirmedComposition(settings)}
           onClose={() => setIsDocumentDataOpen(false)}
