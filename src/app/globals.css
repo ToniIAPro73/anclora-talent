@@ -1895,6 +1895,8 @@ html[data-theme="light"] .dashboard-activity-icon { color: var(--accent-text); }
 .new-project-cancel:hover { border-color: var(--accent); color: var(--accent-text); }
 .new-project-dashboard { display: inline-flex; min-height: 36px; align-items: center; border: 1px solid var(--dashboard-border, var(--border-strong)); border-radius: 5px; padding: 0 16px; color: var(--text-primary); font-size: 12px; font-weight: 600; }
 .new-project-dashboard:hover { border-color: var(--accent); color: var(--accent-text); background: var(--surface-highlight); }
+.new-project-dashboard,
+.new-project-cancel { background: var(--accent-soft); border-color: var(--accent-border); }
 .talent-new-project-page { width: 100%; margin: 0 auto; padding: 28px 10px 64px; }
 .talent-new-project-back { display: inline-flex; align-items: center; gap: 8px; color: var(--accent-text); font-size: 13px; font-weight: 600; white-space: nowrap; }
 .talent-new-project-back:hover { color: var(--text-primary); }
@@ -1918,6 +1920,14 @@ html[data-theme="light"] .dashboard-activity-icon { color: var(--accent-text); }
 .talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] > [role="radiogroup"],
 .talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] > [data-testid="saved-editorial-styles-picker"],
 .talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] > [data-testid="reference-document-inline-panel"] { grid-column: 2; }
+
+/* Keep each numbered section as one continuous content column. The previous
+   label/content split created a large unused gutter beside dense controls. */
+.talent-new-project-form .talent-create-form__primary > .talent-new-project-step,
+.talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] { grid-template-columns: minmax(0, 1fr); }
+.talent-new-project-form .talent-create-form__primary > .talent-new-project-step > *,
+.talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] > * { grid-column: 1 !important; }
+.talent-new-project-form .talent-new-project-step__heading { margin-bottom: 8px; }
 .talent-new-project-form .talent-create-form__intro { padding-bottom: 24px; border-bottom: 1px solid var(--dashboard-border, var(--border-subtle)); }
 .talent-new-project-form .talent-create-form__intro .ac-surface-panel__title { font-size: clamp(1.8rem, 3vw, 2.65rem); }
 .talent-new-project-form .talent-create-form__intro p:last-child { max-width: 680px; line-height: 1.7; }
@@ -2002,7 +2012,8 @@ html[data-theme="light"] .dashboard-activity-icon { color: var(--accent-text); }
 .talent-new-project-form .ac-button:hover,
 .talent-new-project-form .dashboard-button:hover,
 .talent-dashboard-shell .dashboard-button:hover { border-color: var(--accent); background: var(--surface-highlight); color: var(--text-primary); }
-.talent-new-project-form .ac-button { background: var(--accent-soft); border-color: var(--dashboard-border, var(--border-strong)); color: var(--text-primary); }
+.talent-new-project-form .ac-button { background: var(--talent-button-primary-bg); border-color: var(--accent); color: var(--text-on-accent); }
+.talent-new-project-form .ac-button:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: var(--text-on-accent); }
 .talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] { margin-top: 10px; border-radius: 10px; padding: 10px; column-gap: 14px; }
 .talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] [role="radiogroup"] { gap: 6px; margin-top: 0; }
 .talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] [role="radio"] { padding: 9px; border-radius: 10px; }
