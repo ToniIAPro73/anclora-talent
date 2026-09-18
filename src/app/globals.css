@@ -1859,7 +1859,8 @@ html[data-theme="light"] .dashboard-cover { color: var(--text-primary); backgrou
 .dashboard-button { display: inline-flex; justify-content: center; align-items: center; gap: 12px; min-height: 36px; padding: 7px 14px; border-radius: 4px; border: 1px solid var(--dashboard-border, var(--border-strong)); color: var(--text-primary); background: var(--accent-soft); font-size: 12px; font-weight: 500; transition: background .16s ease, border-color .16s ease, color .16s ease; }
 .dashboard-button:hover, .dashboard-button:focus-visible { border-color: var(--accent); background: var(--surface-highlight); outline: none; }
 .dashboard-button--primary { background: var(--talent-button-primary-bg); border-color: var(--accent); color: var(--text-on-accent); }
-.dashboard-button--primary:hover, .dashboard-button--primary:focus-visible { background: var(--talent-button-primary-hover-bg); border-color: var(--accent-hover); color: var(--text-on-accent); }
+.dashboard-button--primary { background-size: 200% 100%; background-position: 0 50%; transition: background-position .22s ease, border-color .16s ease, color .16s ease; }
+.dashboard-button--primary:hover, .dashboard-button--primary:focus-visible { background: var(--talent-button-primary-hover-bg); background-size: 200% 100%; background-position: 100% 50%; border-color: var(--accent-hover); color: var(--text-on-accent); }
 .dashboard-button:disabled { opacity: .45; cursor: not-allowed; }
 .dashboard-button--icon { width: 36px; min-height: 36px; padding: 0; }
 .project-card-menu__item { display:flex; width:100%; min-height:36px; align-items:center; border:0; border-radius:5px; padding:8px 10px; color:var(--text-primary); background:transparent; font-size:12px; font-weight:600; text-align:left; transition:background .16s ease,color .16s ease; }
@@ -1929,7 +1930,7 @@ html[data-theme="light"] .dashboard-activity-icon { color: var(--accent-text); }
 .talent-new-project-form .ac-button--secondary,
 .talent-new-project-form .ac-button--ghost { border-radius: 5px; box-shadow: none; transform: none; transition: background .16s ease, border-color .16s ease, color .16s ease; }
 .talent-new-project-form .ac-button--primary { background: var(--talent-button-primary-bg); border-color: var(--accent); color: var(--text-on-accent); }
-.talent-new-project-form .ac-button--primary:hover, .talent-new-project-form .ac-button--primary:focus-visible { background: var(--accent-hover); border-color: var(--accent); color: var(--text-on-accent); }
+.talent-new-project-form .ac-button--primary:hover, .talent-new-project-form .ac-button--primary:focus-visible { background: var(--talent-button-primary-hover-bg); background-size: 200% 100%; background-position: 100% 50%; border-color: var(--accent-hover); color: var(--text-on-accent); }
 .talent-new-project-form .ac-button--secondary, .talent-new-project-form .ac-button--ghost { background: var(--accent-soft); border-color: var(--dashboard-border, var(--border-strong)); color: var(--text-primary); }
 .talent-new-project-form .ac-button--secondary:hover, .talent-new-project-form .ac-button--secondary:focus-visible, .talent-new-project-form .ac-button--ghost:hover, .talent-new-project-form .ac-button--ghost:focus-visible { background: var(--surface-highlight); border-color: var(--accent); color: var(--text-primary); }
 .talent-new-project-form .talent-action-button::before { display:none; }
@@ -2050,8 +2051,8 @@ html[data-theme="light"] .dashboard-activity-icon { color: var(--accent-text); }
 .talent-new-project-form .dashboard-button:not(.dashboard-button--primary):focus-visible,
 .talent-dashboard-shell .dashboard-button:not(.dashboard-button--primary):hover,
 .talent-dashboard-shell .dashboard-button:not(.dashboard-button--primary):focus-visible { border-color: var(--accent); background: var(--surface-highlight); color: var(--text-primary); }
-.talent-new-project-form .ac-button { background: var(--talent-button-primary-bg); border-color: var(--accent); color: var(--text-on-accent); }
-.talent-new-project-form .ac-button:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: var(--text-on-accent); }
+.talent-new-project-form .ac-button { background: var(--talent-button-primary-bg); background-size: 200% 100%; background-position: 0 50%; border-color: var(--accent); color: var(--text-on-accent); }
+.talent-new-project-form .ac-button:hover, .talent-new-project-form .ac-button:focus-visible { background: var(--talent-button-primary-hover-bg); background-size: 200% 100%; background-position: 100% 50%; border-color: var(--accent-hover); color: var(--text-on-accent); }
 .talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] { margin-top: 10px; border-radius: 10px; padding: 10px; column-gap: 14px; }
 .talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] [role="radiogroup"] { gap: 6px; margin-top: 0; }
 .talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] [role="radio"] { padding: 9px; border-radius: 10px; }
