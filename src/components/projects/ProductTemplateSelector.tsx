@@ -16,7 +16,7 @@ const TEMPLATE_ICONS: Record<ProductTemplateId, typeof Book> = {
   bundle: Package,
 };
 
-export function ProductTemplateSelector({ copy }: { copy: AppMessages['project'] }) {
+export function ProductTemplateSelector({ copy, onSelectionChange }: { copy: AppMessages['project']; onSelectionChange?: (label: string) => void }) {
   const [selectedId, setSelectedId] = useState<ProductTemplateId>(PRODUCT_TEMPLATES[0].id);
 
   return (
@@ -44,7 +44,7 @@ export function ProductTemplateSelector({ copy }: { copy: AppMessages['project']
             <button
               key={template.id}
               type="button"
-              onClick={() => setSelectedId(template.id)}
+              onClick={() => { setSelectedId(template.id); onSelectionChange?.(templateCopy.name); }}
               className="ac-template-card group"
               data-selected={isSelected ? 'true' : 'false'}
               data-testid={`product-template-${template.id}`}

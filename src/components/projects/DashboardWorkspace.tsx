@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { useEffect, useMemo, useState, type KeyboardEvent } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, BookOpen, Clock3, LayoutGrid, List, Pencil, Plus, Search } from 'lucide-react';
@@ -48,7 +48,7 @@ export function DashboardWorkspace({ projects, dataAvailable, locale, copy, proj
     ? selectedProjectId
     : recent[0]?.id ?? null;
 
-  const selectProject = (event: MouseEvent<HTMLElement>, projectId: string) => {
+  const selectProject = (event: { target: EventTarget | null }, projectId: string) => {
     if ((event.target as HTMLElement).closest('a, button, input, select, textarea')) return;
     setSelectedProjectId(projectId);
   };
@@ -87,8 +87,12 @@ export function DashboardWorkspace({ projects, dataAvailable, locale, copy, proj
               className="dashboard-project-row"
               data-selected={effectiveSelectedProjectId === project.id}
               data-testid="dashboard-project-row"
+              aria-label={`${project.title} · ${effectiveSelectedProjectId === project.id ? copy.projectsStatusActive : copy.projectsStatusDraft}`}
               tabIndex={0}
               onClick={(event) => selectProject(event, project.id)}
+              onPointerUp={(event) => {
+                if (event.pointerType !== 'mouse') selectProject(event, project.id);
+              }}
               onKeyDown={(event) => selectProjectWithKeyboard(event, project.id)}
             >
               <div className="dashboard-project-identity">

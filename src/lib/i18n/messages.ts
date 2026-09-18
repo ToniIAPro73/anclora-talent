@@ -1532,9 +1532,9 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       newDescription:
         'Al crear el proyecto se generan el documento y la portada para que empieces a trabajar desde el primer minuto sobre tu contenido.',
       createFormEyebrow: 'Nuevo proyecto',
-      createFormTitle: 'Crea una base editorial con estándar premium',
+      createFormTitle: 'Crear proyecto',
       createFormDescription:
-        'El proyecto puede nacer vacío o a partir de un documento fuente real para arrancar con contenido útil desde el primer minuto.',
+        'Configura los elementos base de tu libro. Podrás ajustar estos datos más adelante.',
       titleLabel: 'Título del proyecto',
       titlePlaceholder: 'Ej. Manual de marca editorial 2026',
       sourceDocumentLabel: 'Documento base opcional',
@@ -2896,9 +2896,9 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       newDescription:
         'Creating the project generates the document and cover so you can start working on your content from the first minute.',
       createFormEyebrow: 'New project',
-      createFormTitle: 'Create an editorial base with premium standards',
+      createFormTitle: 'Create project',
       createFormDescription:
-        'The project can start empty or from a real source document so you begin with useful content from the first minute.',
+        'Configure the base elements of your book. You can adjust these details later.',
       titleLabel: 'Project title',
       titlePlaceholder: 'Ex. Editorial brand manual 2026',
       sourceDocumentLabel: 'Optional source document',

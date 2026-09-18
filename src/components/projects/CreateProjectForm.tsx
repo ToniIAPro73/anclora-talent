@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowRight, Check, FileText, Palette, Sparkles, X } from 'lucide-react';
+import { ArrowRight, BookOpen, Check, FileText, Palette, Sparkles, X } from 'lucide-react';
 import { createProjectAction } from '@/lib/projects/actions';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
@@ -27,6 +27,7 @@ export function CreateProjectForm({
   fixedPdfError?: boolean;
 }) {
   const [selectedStyleLabel, setSelectedStyleLabel] = useState(copy.newProjectStyleNone);
+  const [selectedTemplateLabel, setSelectedTemplateLabel] = useState(copy.productTemplates.standardBook.name);
   const [documentSummary, setDocumentSummary] = useState(copy.createOptionalManuscriptHint);
   const [brandSummary, setBrandSummary] = useState(copy.newProjectNoBrand);
   const [isImportingSource, setIsImportingSource] = useState(false);
@@ -80,18 +81,16 @@ export function CreateProjectForm({
             <p className="mt-1 text-xs leading-6 text-[var(--text-tertiary)]">{copy.createOptionalManuscriptHint}</p>
           </div>
           <div className="mt-5 talent-new-project-template-block">
-            <ProductTemplateSelector copy={copy} />
+            <ProductTemplateSelector copy={copy} onSelectionChange={setSelectedTemplateLabel} />
           </div>
         </section>
-      </div>
-      <div className="talent-create-form__optional space-y-5">
         <EditorialStyleSection
           copy={copy}
           profiles={structureProfiles}
           onSelectionChange={({ label }) => setSelectedStyleLabel(label)}
           onPreprocessingChange={setIsAnalyzingReference}
         />
-        <section className="talent-new-project-step rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-5" data-testid="brand-identity-section">
+        <section className="talent-new-project-step talent-new-project-step--brand rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-5" data-testid="brand-identity-section">
           <div className="talent-new-project-step__heading"><span className="talent-new-project-step__number">4</span><div><h2>{copy.newProjectBrandTitle}</h2><p>{copy.newProjectBrandDescription}</p></div></div>
           <BrandManualInput
             copy={copy}
@@ -99,10 +98,13 @@ export function CreateProjectForm({
             onPreprocessingChange={setIsAnalyzingBrand}
           />
         </section>
+      </div>
+      <div className="talent-create-form__optional space-y-5">
         <section className="talent-new-project-summary" data-testid="project-creation-summary">
           <div className="talent-new-project-summary__heading"><div><p className="ac-surface-panel__eyebrow">Resumen</p><h2>{copy.newProjectSummaryTitle}</h2><p>Revisa la configuración antes de abrir el editor.</p></div><Sparkles size={20} aria-hidden="true" /></div>
           <div className="talent-new-project-summary__items">
             <div><FileText size={16} aria-hidden="true" /><span><small>{copy.newProjectSummaryDocument}</small><strong>{documentSummary}</strong></span><Check size={15} aria-hidden="true" /></div>
+            <div><BookOpen size={16} aria-hidden="true" /><span><small>Plantilla</small><strong>{selectedTemplateLabel}</strong></span><Check size={15} aria-hidden="true" /></div>
             <div><Sparkles size={16} aria-hidden="true" /><span><small>{copy.newProjectSummaryStyle}</small><strong>{selectedStyleLabel}</strong></span><Check size={15} aria-hidden="true" /></div>
             <div><Palette size={16} aria-hidden="true" /><span><small>{copy.newProjectSummaryBrand}</small><strong>{brandSummary}</strong></span><Check size={15} aria-hidden="true" /></div>
           </div>
