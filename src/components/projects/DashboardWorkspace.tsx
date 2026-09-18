@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type KeyboardEvent } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Clock3, LayoutGrid, List, Pencil, Plus, Search } from 'lucide-react';
+import { BookOpen, Clock3, LayoutGrid, List, Pencil, Search } from 'lucide-react';
 import type { ProjectSummary } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { ProjectSort, ProjectStatusFilter } from '@/lib/projects/retrieval';
@@ -81,7 +81,7 @@ export function DashboardWorkspace({ projects, dataAvailable, locale, copy, proj
         </header>
         {dataAvailable && projects.length > 0 && <div className="dashboard-filter"><select data-testid="dashboard-status-filter" aria-label={copy.projectsStatusFilterLabel} value={retrieval.status} onChange={(event) => retrieval.setStatus(event.target.value as ProjectStatusFilter)}><option value="all">{copy.projectsStatusFilterAll}</option><option value="active">{copy.projectsStatusActive}</option><option value="draft">{copy.projectsStatusDraft}</option></select></div>}
         {!dataAvailable ? <div className="dashboard-state" role="alert"><h2>{copy.workspaceError}</h2><p>{copy.workspaceErrorDescription}</p><button data-testid="dashboard-retry" type="button" className="dashboard-button" onClick={() => router.refresh()}>{copy.workspaceRetry}</button></div>
-          : projects.length === 0 ? <div className="dashboard-state"><BookOpen size={28} aria-hidden="true" /><h2>{copy.workspaceEmptyTitle}</h2><p>{copy.workspaceEmptyDescription}</p><NavigatingLink href="/projects/new" pendingLabel={copy.sectionNewProject} className="dashboard-button dashboard-button--primary"><Plus size={16} aria-hidden="true" />{copy.sectionNewProject}</NavigatingLink></div>
+          : projects.length === 0 ? <div className="dashboard-state"><BookOpen size={28} aria-hidden="true" /><h2>{copy.workspaceEmptyTitle}</h2><p>{copy.workspaceEmptyDescription}</p><NavigatingLink href="/projects/new" pendingLabel={copy.sectionNewProject} className="dashboard-button dashboard-button--primary">{copy.sectionNewProject}</NavigatingLink></div>
           : retrieval.visibleProjects.length === 0 ? <div className="dashboard-state"><h2>{copy.workspaceNoResults}</h2><p>{copy.workspaceNoResultsDescription}</p></div>
           : <div className={`dashboard-project-list dashboard-project-list--${layout}`}>
             {retrieval.visibleProjects.map((project) => <article
