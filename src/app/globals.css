@@ -1225,6 +1225,292 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
   padding: 0 16px 16px;
 }
 
+/* Content workspace redesign: compact topbar + tab shell + Resumen grid. */
+.talent-content-topbar {
+  margin: 0;
+}
+
+.talent-content-shell {
+  display: grid;
+  gap: 20px;
+}
+
+/* Content step (Resumen and its tabs): drop the rail entirely so the tabbed
+   workspace uses the full row width, matching the approved mockup. */
+.talent-workflow-shell__layout--full {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.talent-content-tabs .ac-tabs__list {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.talent-content-shell__panel {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+
+.talent-content-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.talent-content-summary__column {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* The document-status column is narrow (one of three tracks), so the stat
+   strip needs tighter metrics than the design system's page-width default. */
+.talent-content-summary__column .ac-stat-strip__item {
+  min-height: 96px;
+  padding: 12px;
+}
+
+.talent-content-summary__column .ac-stat-strip__value {
+  font-size: clamp(1.15rem, 1.6vw, 1.5rem);
+}
+
+.talent-content-summary__column .ac-stat-strip__label {
+  font-size: 0.6rem;
+}
+
+.talent-content-summary__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--surface-panel) 82%, transparent);
+}
+
+.talent-content-summary__actions-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.talent-content-summary__identity {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+  align-items: flex-start;
+}
+
+.talent-content-summary__identity .dashboard-cover {
+  flex-shrink: 0;
+}
+
+.talent-content-summary__fields {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 12px;
+  padding: 0;
+}
+
+.talent-content-summary__fields dt {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.talent-content-summary__fields dd {
+  margin: 2px 0 0;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.talent-content-summary__rule-list,
+.talent-content-summary__health-list,
+.talent-content-summary__preflight-list {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.talent-content-summary__rule-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+}
+
+.talent-content-summary__rule-list li > span:first-of-type {
+  flex: 1;
+  min-width: 0;
+}
+
+.talent-content-summary__preset {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border-subtle));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--accent-soft) 60%, transparent);
+  text-align: left;
+  cursor: pointer;
+}
+
+.talent-content-summary__preset-name {
+  display: block;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.talent-content-summary__preset-desc {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+.talent-content-summary__rule-count {
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.talent-content-summary__rule-count--ok {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent-text);
+}
+
+.talent-content-summary__rule-count--warn {
+  background: color-mix(in srgb, #f59e0b 20%, transparent);
+  color: #b45309;
+}
+
+.talent-content-summary__health-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.talent-content-summary__health-dot {
+  margin-top: 5px;
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.talent-content-summary__health-list li[data-state="warn"] .talent-content-summary__health-dot {
+  background: #f59e0b;
+}
+
+.talent-content-summary__health-list p {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.talent-content-summary__health-list span {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.talent-content-summary__preflight-header {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.talent-content-summary__preflight-checks {
+  display: grid;
+  gap: 8px;
+  margin: 6px 0 10px;
+  padding-left: 20px;
+  list-style: none;
+}
+
+.talent-content-summary__preflight-checks li {
+  border-left: 2px solid var(--border-subtle);
+  padding-left: 10px;
+}
+
+.talent-content-summary__preflight-checks p {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.talent-content-summary__preflight-severity {
+  margin-right: 8px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.talent-content-summary__preflight-severity[data-severity="error"] {
+  color: #dc2626;
+}
+
+.talent-content-summary__preflight-severity[data-severity="warning"] {
+  color: #d97706;
+}
+
+.talent-content-summary__preflight-severity[data-severity="info"] {
+  color: var(--text-tertiary);
+}
+
+.talent-content-summary__preflight-rule {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent-text);
+}
+
+@media (max-width: 1180px) {
+  .talent-content-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .talent-content-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .talent-content-summary__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .talent-content-summary__actions-secondary {
+    justify-content: flex-start;
+  }
+}
+
 .talent-workspace-stage.space-y-8 > * + * {
   margin-top: 1.25rem;
 }

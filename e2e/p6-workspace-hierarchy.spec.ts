@@ -37,23 +37,23 @@ test.describe('P6 — editorial workspace hierarchy', () => {
     await page.getByTestId('create-project-submit-button').click();
     await expect(page).toHaveURL(/\/projects\/.+\/editor/, { timeout: 60_000 });
 
-    await expect(page.getByTestId('content-primary-panel')).toBeVisible();
-    await expect(page.getByTestId('content-advanced-disclosure')).not.toHaveAttribute('open', '');
-    const contentTop = await page.getByTestId('content-primary-panel').evaluate((element) => Math.round(element.getBoundingClientRect().top));
+    await expect(page.getByTestId('content-workspace')).toBeVisible();
+    await expect(page.getByTestId('content-tab-resumen')).toHaveAttribute('aria-selected', 'true');
+    const contentTop = await page.getByTestId('content-workspace').evaluate((element) => Math.round(element.getBoundingClientRect().top));
     expect(contentTop).toBeLessThan(400);
 
-    await page.getByTestId('content-primary-action').click();
+    await page.locator('.ac-stepper__trigger').nth(1).click();
     await expect(page.getByTestId('chapter-organizer')).toBeVisible();
     const chapterTop = await page.getByTestId('chapter-organizer').evaluate((element) => Math.round(element.getBoundingClientRect().top));
     expect(chapterTop).toBeLessThan(500);
 
     await page.locator('.ac-stepper__trigger').first().click();
-    await page.getByTestId('content-advanced-disclosure').locator('summary').click();
+    await page.getByTestId('content-tab-composicion').click();
     await expect(page.getByTestId('document-rules-panel')).toBeVisible();
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload();
-    await expect(page.getByTestId('content-primary-panel')).toBeVisible();
+    await expect(page.getByTestId('content-workspace')).toBeVisible();
     const mobileGeometry = await page.evaluate(() => ({
       viewport: window.innerWidth,
       documentWidth: document.documentElement.scrollWidth,

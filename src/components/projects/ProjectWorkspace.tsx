@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Check, Loader2, Download } from 'lucide-react';
 import { Stepper, type Step } from '@/components/ui/Stepper';
 import { ChapterOrganizer } from './ChapterOrganizer';
-import { DocumentStatsCard } from './DocumentStatsCard';
+import { ContentWorkspace } from './content-workspace/ContentWorkspace';
 import { CoverStudioV2 } from './design-surface/CoverStudioV2';
 import { PreviewCanvas } from './PreviewCanvas';
 import { FixedPdfPreview } from './FixedPdfPreview';
@@ -20,18 +20,13 @@ import { DocumentDataModal } from './DocumentDataModal';
 import { Portal } from '@/components/ui/Portal';
 import { PdfExportButton } from './PdfExportButton';
 import { CreateEditableCopyButton } from './CreateEditableCopyButton';
-import { DocumentRulesPanel } from './DocumentRulesPanel';
-import { DocumentHealthPanel } from './DocumentHealthPanel';
-import { BrandProfilePanel } from './BrandProfilePanel';
 import { WorkspaceOnboarding } from './WorkspaceOnboarding';
-import { ProductMetadataPanel } from './ProductMetadataPanel';
 import { useDocumentComposition } from './useDocumentComposition';
 import { resolveDocumentRules } from '@/lib/compose/rules';
 import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
 import { countPreflightErrors, preflight } from '@/lib/preflight/preflight';
 import {
   saveChapterContentAction,
-  saveProjectDocumentAction,
   saveProjectWorkflowStepAction,
   syncProjectPaginationAction,
 } from '@/lib/projects/actions';
@@ -42,17 +37,14 @@ import {
 } from './advanced-chapter-editor/last-chapter-save';
 import { computeChapterPageMetrics } from '@/lib/preview/metrics';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
-import { SubmitButton } from '@/components/ui/SubmitButton';
 import { isFixedPdfProject, type ProjectRecord } from '@/lib/projects/types';
 import { getProjectCapabilities } from '@/lib/projects/capabilities';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { BrandProfile } from '@/lib/brand/brand-profile';
 import type { LaunchPackView } from '@/lib/manifest/view';
 import type { DocumentSnapshotMeta } from '@/lib/snapshots/model';
-import { HistoryPanel } from './HistoryPanel';
 import { LaunchPackPanel } from './LaunchPackPanel';
 import { PublishChannelsPanel } from './PublishChannelsPanel';
-import { CoAuthorPanel } from './CoAuthorPanel';
 import { KdpDisclosurePanel } from './KdpDisclosurePanel';
 import { buildExportQueryString } from '@/lib/projects/export-config';
 import type { CoAuthorChapter } from '@/lib/ai/co-author';
@@ -190,6 +182,13 @@ export function ProjectWorkspace({
   const [pageNumberSyncState, setPageNumberSyncState] = useState<SaveState>('idle');
   const [pageNumberSyncFeedback, setPageNumberSyncFeedback] = useState<PaginationSyncFeedback>('idle');
   const [isPending, startTransition] = useTransition();
+  // Compact header "Guardado hace X min" label: ticks every 30s so the
+  // relative time stays fresh without a per-second re-render.
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const interval = window.setInterval(() => setNowTick(Date.now()), 30_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   const chapterSignature = useMemo(
     () => project.document.chapters.map((ch) => `${ch.id}:${ch.order}`).join(','),
@@ -350,139 +349,30 @@ export function ProjectWorkspace({
     switch (activeStep) {
       case 1: // Content
         return (
-          <div className="flex flex-col gap-6">
-            <section className="talent-content-primary ac-surface-panel" data-testid="content-primary-panel">
-              <p className="ac-surface-panel__eyebrow">{copy.contentPrimaryEyebrow}</p>
-              <h3 className="mt-2 text-2xl font-black text-[var(--text-primary)]">{copy.contentPrimaryTitle}</h3>
-              <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--text-secondary)]">{copy.contentPrimaryDescription}</p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  data-testid="content-primary-action"
-                  onClick={() => setActiveStep(2)}
-                  className={`${premiumPrimaryDarkButton} px-5 py-3`}
-                >
-                  {copy.contentPrimaryAction}
-                </button>
-                <button
-                  type="button"
-                  data-testid="content-primary-document-data-action"
-                  onClick={() => setIsDocumentDataOpen(true)}
-                  className={`${premiumSecondaryLightButton} px-5 py-3`}
-                >
-                  {copy.documentDataOpen}
-                </button>
-              </div>
-            </section>
-
-            {/* Metadata Card - Full Width */}
-            <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-8 shadow-[var(--shadow-strong)]">
-              <div className="mb-6 flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
-                  {copy.editorMetaEyebrow}
-                </p>
-                <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold text-blue-600 border border-blue-100">
-                  Máx. 50MB
-                </span>
-              </div>
-              <form key={project.updatedAt} action={saveProjectDocumentAction} className="space-y-6" data-testid="project-metadata-form">
-                <input type="hidden" name="projectId" value={project.id} data-testid="project-document-project-id-input" />
-                <input type="hidden" name="chapterId" value={activeChapter.id} data-testid="project-document-chapter-id-input" />
-                <input type="hidden" name="chapterTitle" value={activeChapter.title} data-testid="project-document-chapter-title-input" />
-                <div className="grid gap-6 md:grid-cols-2">
-                  <label className="block space-y-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorTitleLabel}</span>
-                    <input
-                      data-testid="project-document-title-input"
-                      name="title"
-                      defaultValue={project.document.title}
-                      className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
-                    />
-                  </label>
-                  <label className="block space-y-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorAuthorLabel}</span>
-                    <input
-                      data-testid="project-document-author-input"
-                      name="author"
-                      defaultValue={project.document.author}
-                      className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
-                    />
-                  </label>
-                </div>
-                <label className="block space-y-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorSubtitleLabel}</span>
-                  <textarea
-                    data-testid="project-document-subtitle-input"
-                    name="subtitle"
-                    defaultValue={project.document.subtitle}
-                    className="min-h-32 w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
-                  />
-                </label>
-                <div className="flex justify-end">
-                  <SubmitButton className={`${premiumSecondaryLightButton} px-8 py-3`} data-testid="project-document-save-button">
-                    {copy.saveChanges}
-                  </SubmitButton>
-                </div>
-              </form>
-            </section>
-
-            <details className="talent-content-advanced" data-testid="content-advanced-disclosure">
-              <summary>{copy.contentAdvancedSummary}</summary>
-
-              <div className="talent-content-advanced__body">
-                <DocumentStatsCard document={project.document} project={project} isLoading={isPending} />
-
-                <ProductMetadataPanel key={`meta-${project.updatedAt}`} project={project} copy={copy} />
-
-                <DocumentRulesPanel key={`rules-${project.updatedAt}`} project={project} copy={copy} />
-
-                <BrandProfilePanel
-                  key={`brand-${project.updatedAt}`}
-                  project={project}
-                  profiles={brandProfiles}
-                  copy={copy}
-                />
-
-                <DocumentHealthPanel
-                  project={project}
-                  violations={documentViolations}
-                  copy={copy}
-                  checks={preflightChecks}
-                  diff={composition.diff}
-                  recomposedFromPage={composition.recomposedFromPage}
-                  telemetry={composition.telemetry}
-                  locale={locale}
-                  revert={
-                    revertibleSave
-                      ? {
-                          chapterTitle: revertibleSave.chapterTitle,
-                          pending: isPending,
-                          onRevert: handleRevertLastSave,
-                        }
-                      : null
+          <ContentWorkspace
+            project={project}
+            copy={copy}
+            activeChapter={{ id: activeChapter.id, title: activeChapter.title }}
+            brandProfiles={brandProfiles}
+            documentViolations={documentViolations}
+            preflightChecks={preflightChecks}
+            diff={composition.diff}
+            recomposedFromPage={composition.recomposedFromPage}
+            telemetry={composition.telemetry}
+            revert={
+              revertibleSave
+                ? {
+                    chapterTitle: revertibleSave.chapterTitle,
+                    pending: isPending,
+                    onRevert: handleRevertLastSave,
                   }
-                />
-
-                {coAuthor && (
-                  <CoAuthorPanel
-                    projectId={project.id}
-                    chapters={coAuthor.chapters}
-                    cloudAvailable={coAuthor.cloudAvailable}
-                    copy={copy}
-                    locale={locale}
-                  />
-                )}
-
-                {history && (
-                  <HistoryPanel
-                    copy={history.copy}
-                    projectId={project.id}
-                    snapshots={history.snapshots}
-                  />
-                )}
-              </div>
-            </details>
-          </div>
+                : null
+            }
+            locale={locale}
+            history={history}
+            coAuthor={coAuthor}
+            onNavigateStep={setActiveStep}
+          />
         );
       case 2: // Chapters
         if (fixedPdf) return renderFixedPdfIncludedPanel(copy.stepChapters);
@@ -697,48 +587,73 @@ export function ProjectWorkspace({
     }
   };
 
+  const savedLabel = (() => {
+    if (isPending) return null;
+    const updatedAt = new Date(project.updatedAt).getTime();
+    if (!Number.isFinite(updatedAt)) return null;
+    const minutes = Math.max(0, Math.floor((nowTick - updatedAt) / 60000));
+    return minutes < 1
+      ? copy.contentSavedJustNow
+      : copy.contentSavedMinutesAgo.replace('{count}', String(minutes));
+  })();
+
   return (
     <div className="ac-workspace-stage talent-workspace-stage space-y-8" data-testid="project-workspace">
       {/* Header */}
-      <div className="ac-workspace-stage__header ac-workspace-stage__header--split">
-        <div className="ac-section-heading">
-          <p className="ac-section-heading__eyebrow">{copy.editorEyebrow}</p>
-          <h2 className="ac-section-heading__title mt-2 text-4xl">{project.title}</h2>
+      <header className="ac-topbar talent-content-topbar" data-testid="content-workspace-topbar">
+        <div className="ac-topbar__brand">
+          <div className="ac-topbar__titles">
+            <p className="ac-topbar__eyebrow">{copy.editorEyebrow}</p>
+            <h2 className="ac-topbar__title">{project.title}</h2>
+          </div>
         </div>
-        <div className="ac-workspace-stage__actions">
-          <button
-            type="button"
-            data-testid="document-data-open-button"
-            onClick={() => setIsDocumentDataOpen(true)}
-            className="ac-button ac-button--secondary ac-button--sm"
-          >
-            {copy.documentDataOpen}
-          </button>
+
+        <div className="ac-topbar__meta" data-testid="content-workspace-save-status">
           {isPending && (
-            <span className="flex items-center gap-1.5 text-xs text-[var(--text-tertiary)]" data-testid="project-save-status-saving">
+            <span className="flex items-center gap-1.5" data-testid="project-save-status-saving">
               <Loader2 className="h-3 w-3 animate-spin" />
-              Guardando...
+              Guardando…
             </span>
           )}
-          {saveStepState === 'saved' && !isPending && (
-            <span className="flex items-center gap-1.5 text-xs text-[var(--accent-text)]" data-testid="project-save-status-saved">
+          {!isPending && saveStepState === 'saved' && (
+            <span className="flex items-center gap-1.5 text-[var(--accent-text)]" data-testid="project-save-status-saved">
               <Check className="h-3 w-3" />
               Guardado
             </span>
           )}
+          {!isPending && saveStepState !== 'saved' && savedLabel && <span>{savedLabel}</span>}
           {pageNumberSyncFeedback === 'done' && (
-            <span className="flex items-center gap-1.5 text-xs text-[var(--accent-text)]" data-testid="pagination-sync-feedback-done">
+            <span className="flex items-center gap-1.5 text-[var(--accent-text)]" data-testid="pagination-sync-feedback-done">
               <Check className="h-3 w-3" />
               {copy.chapterSyncPageNumbersDone}
             </span>
           )}
           {pageNumberSyncFeedback === 'missing-index' && (
-            <span className="flex items-center gap-1.5 text-xs text-amber-300" data-testid="pagination-sync-feedback-missing-index">
+            <span className="text-amber-500" data-testid="pagination-sync-feedback-missing-index">
               {copy.chapterSyncPageNumbersMissingIndex}
             </span>
           )}
         </div>
-      </div>
+
+        <div className="ac-topbar__actions">
+          <button
+            type="button"
+            data-testid="content-workspace-preview-button"
+            onClick={() => setActiveStep(5)}
+            className="dashboard-button dashboard-button--primary"
+          >
+            {copy.contentPreviewAction}
+          </button>
+          <button
+            type="button"
+            data-testid="document-data-open-button"
+            onClick={() => setIsDocumentDataOpen(true)}
+            className="dashboard-button"
+          >
+            {copy.documentDataOpen}
+          </button>
+        </div>
+      </header>
 
       {/* Stepper Navigation */}
       <div className="ac-workflow-shell__progress ac-surface-panel ac-surface-panel--subtle p-6 shadow-[var(--shadow-soft)]">
@@ -747,38 +662,40 @@ export function ProjectWorkspace({
 
       {/* Step Layout */}
       <div className="ac-workflow-shell talent-workflow-shell">
-        <div className="ac-workflow-shell__layout">
-        <aside className="ac-workflow-shell__rail xl:sticky xl:top-8 xl:self-start">
-           <div className="ac-workflow-shell__panel ac-surface-panel ac-surface-panel--subtle p-5">
-              <h4 className="ac-workflow-shell__panel-meta">Progreso</h4>
-              <div className="ac-workflow-shell__panel-value mt-3">
-                 <strong>{activeStep}</strong>
-                 <span>de {steps.length} pasos</span>
-              </div>
-              <p className="ac-workflow-shell__panel-summary mt-4 text-xs leading-5">
-                 {steps[activeStep - 1]?.description || 'Sigue el flujo editorial para completar tu publicación premium.'}
-              </p>
-           </div>
+        <div className={`ac-workflow-shell__layout${activeStep === 1 ? ' talent-workflow-shell__layout--full' : ''}`}>
+        {activeStep !== 1 && (
+          <aside className="ac-workflow-shell__rail xl:sticky xl:top-8 xl:self-start">
+             <div className="ac-workflow-shell__panel ac-surface-panel ac-surface-panel--subtle p-5">
+                <h4 className="ac-workflow-shell__panel-meta">Progreso</h4>
+                <div className="ac-workflow-shell__panel-value mt-3">
+                   <strong>{activeStep}</strong>
+                   <span>de {steps.length} pasos</span>
+                </div>
+                <p className="ac-workflow-shell__panel-summary mt-4 text-xs leading-5">
+                   {steps[activeStep - 1]?.description || 'Sigue el flujo editorial para completar tu publicación premium.'}
+                </p>
+             </div>
 
-           <div className="ac-workflow-shell__actions">
-              <button
-                data-testid="previous-step-button"
-                onClick={() => setActiveStep(prev => Math.max(1, prev - 1))}
-                disabled={activeStep === 1}
-                className={`${premiumSecondaryLightButton} w-full py-3 text-xs disabled:opacity-30 disabled:cursor-default cursor-pointer`}
-              >
-                 Paso anterior
-              </button>
-              <button
-                data-testid="next-step-button"
-                onClick={() => setActiveStep(prev => Math.min(steps.length, prev + 1))}
-                disabled={activeStep === steps.length}
-                className={`${premiumPrimaryDarkButton} w-full py-3 text-xs disabled:opacity-30 disabled:cursor-default cursor-pointer`}
-              >
-                 Siguiente paso
-              </button>
-           </div>
-        </aside>
+             <div className="ac-workflow-shell__actions">
+                <button
+                  data-testid="previous-step-button"
+                  onClick={() => setActiveStep(prev => Math.max(1, prev - 1))}
+                  disabled={activeStep === 1}
+                  className={`${premiumSecondaryLightButton} w-full py-3 text-xs disabled:opacity-30 disabled:cursor-default cursor-pointer`}
+                >
+                   Paso anterior
+                </button>
+                <button
+                  data-testid="next-step-button"
+                  onClick={() => setActiveStep(prev => Math.min(steps.length, prev + 1))}
+                  disabled={activeStep === steps.length}
+                  className={`${premiumPrimaryDarkButton} w-full py-3 text-xs disabled:opacity-30 disabled:cursor-default cursor-pointer`}
+                >
+                   Siguiente paso
+                </button>
+             </div>
+          </aside>
+        )}
 
         <main className="ac-workflow-shell__content">
           {renderStepContent()}

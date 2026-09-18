@@ -753,6 +753,57 @@ export type AppMessages = {
     documentDataPagesLabel: string;
     documentDataChaptersLabel: string;
     documentDataUnavailableValue: string;
+    contentPreviewAction: string;
+    contentTabResumen: string;
+    contentTabMetadatos: string;
+    contentTabComposicion: string;
+    contentTabMarca: string;
+    contentTabPreflight: string;
+    contentTabVersiones: string;
+    contentSavedJustNow: string;
+    contentSavedMinutesAgo: string;
+    contentSummaryDocumentStateTitle: string;
+    contentSummaryDocumentStateDescription: string;
+    contentSummaryEditAction: string;
+    contentSummaryEditMetadataAction: string;
+    contentSummaryStatsChapter: string;
+    contentSummaryStatsChapters: string;
+    contentSummaryStatsWords: string;
+    contentSummaryStatsCharacters: string;
+    contentSummaryStatsReadingTime: string;
+    contentSummaryStatsPages: string;
+    contentSummaryCompositionSubtitle: string;
+    contentSummaryConfigureAction: string;
+    contentSummaryReviewRulesAction: string;
+    contentSummaryRulePagination: string;
+    contentSummaryRuleStructure: string;
+    contentSummaryRuleMedia: string;
+    contentSummaryRuleViolations: string;
+    contentSummaryActiveCount: string;
+    contentSummaryBrandSubtitle: string;
+    contentSummaryBrandEmptyTitle: string;
+    contentSummaryBrandEmptyBody: string;
+    contentSummaryHealthSubtitle: string;
+    contentSummaryHealthMetadataOkTitle: string;
+    contentSummaryHealthMetadataOkBody: string;
+    contentSummaryHealthMetadataWarnTitle: string;
+    contentSummaryHealthMetadataWarnBody: string;
+    contentSummaryHealthCompositionOkTitle: string;
+    contentSummaryHealthCompositionOkBody: string;
+    contentSummaryHealthCompositionWarnTitle: string;
+    contentSummaryHealthCompositionWarnBody: string;
+    contentSummaryHealthPreflightOkTitle: string;
+    contentSummaryHealthPreflightOkBody: string;
+    contentSummaryHealthPreflightWarnTitle: string;
+    contentSummaryHealthPreflightWarnBody: string;
+    contentSummaryPreflightSubtitle: string;
+    contentSummaryActivityTitle: string;
+    contentSummaryActivitySubtitle: string;
+    contentSummaryActivityEmpty: string;
+    contentSummaryViewHistoryAction: string;
+    contentSummaryBottomAssistant: string;
+    contentSummaryBottomCoherence: string;
+    contentSummarySaveVersionAction: string;
   };
   filestudio: {
     badgeLocal: string;
@@ -2123,6 +2174,57 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       documentDataPagesLabel: 'Páginas',
       documentDataChaptersLabel: 'Capítulos',
       documentDataUnavailableValue: 'Sin especificar',
+      contentPreviewAction: 'Vista previa',
+      contentTabResumen: 'Resumen',
+      contentTabMetadatos: 'Metadatos',
+      contentTabComposicion: 'Composición',
+      contentTabMarca: 'Marca',
+      contentTabPreflight: 'Pre-flight',
+      contentTabVersiones: 'Versiones',
+      contentSavedJustNow: 'Guardado justo ahora',
+      contentSavedMinutesAgo: 'Guardado hace {count} min',
+      contentSummaryDocumentStateTitle: 'Estado del documento',
+      contentSummaryDocumentStateDescription: 'Información general de tu publicación',
+      contentSummaryEditAction: 'Editar',
+      contentSummaryEditMetadataAction: 'Editar metadatos',
+      contentSummaryStatsChapter: 'Capítulo',
+      contentSummaryStatsChapters: 'Capítulos',
+      contentSummaryStatsWords: 'Palabras',
+      contentSummaryStatsCharacters: 'Caracteres',
+      contentSummaryStatsReadingTime: 'Tiempo de lectura',
+      contentSummaryStatsPages: 'Páginas (estimado)',
+      contentSummaryCompositionSubtitle: 'Plantilla y reglas de maquetación',
+      contentSummaryConfigureAction: 'Configurar',
+      contentSummaryReviewRulesAction: 'Revisar reglas',
+      contentSummaryRulePagination: 'Paginación',
+      contentSummaryRuleStructure: 'Integridad estructural',
+      contentSummaryRuleMedia: 'Media y numeración',
+      contentSummaryRuleViolations: 'Violaciones actuales',
+      contentSummaryActiveCount: '{count} activa',
+      contentSummaryBrandSubtitle: 'Identidad visual en esta publicación',
+      contentSummaryBrandEmptyTitle: 'Sin marca aplicada',
+      contentSummaryBrandEmptyBody: 'Aplica un perfil de marca desde la pestaña Marca.',
+      contentSummaryHealthSubtitle: 'Revisión general de la publicación',
+      contentSummaryHealthMetadataOkTitle: 'Metadatos completos',
+      contentSummaryHealthMetadataOkBody: 'Toda la información esencial está completa.',
+      contentSummaryHealthMetadataWarnTitle: 'Metadatos incompletos',
+      contentSummaryHealthMetadataWarnBody: 'Completa título, autor y subtítulo.',
+      contentSummaryHealthCompositionOkTitle: 'Composición sin avisos',
+      contentSummaryHealthCompositionOkBody: 'No se han encontrado violaciones de las reglas.',
+      contentSummaryHealthCompositionWarnTitle: 'Composición: {count} avisos',
+      contentSummaryHealthCompositionWarnBody: 'Revisa las reglas con advertencias.',
+      contentSummaryHealthPreflightOkTitle: 'Listo para preview',
+      contentSummaryHealthPreflightOkBody: 'No se han encontrado bloqueos.',
+      contentSummaryHealthPreflightWarnTitle: 'Pre-flight: {count} incidencias',
+      contentSummaryHealthPreflightWarnBody: 'Revisa las incidencias por canal.',
+      contentSummaryPreflightSubtitle: 'Validación para plataformas de publicación',
+      contentSummaryActivityTitle: 'Última actividad',
+      contentSummaryActivitySubtitle: 'Historial de cambios de este documento',
+      contentSummaryActivityEmpty: 'Aún no hay versiones guardadas.',
+      contentSummaryViewHistoryAction: 'Ver historial',
+      contentSummaryBottomAssistant: 'Asistente editorial',
+      contentSummaryBottomCoherence: 'Revisar coherencia',
+      contentSummarySaveVersionAction: 'Guardar versión',
     },
     filestudio: {
       badgeLocal: 'Procesado en tu dispositivo',
@@ -3501,6 +3603,57 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       documentDataPagesLabel: 'Pages',
       documentDataChaptersLabel: 'Chapters',
       documentDataUnavailableValue: 'Not specified',
+      contentPreviewAction: 'Preview',
+      contentTabResumen: 'Summary',
+      contentTabMetadatos: 'Metadata',
+      contentTabComposicion: 'Composition',
+      contentTabMarca: 'Brand',
+      contentTabPreflight: 'Pre-flight',
+      contentTabVersiones: 'Versions',
+      contentSavedJustNow: 'Saved just now',
+      contentSavedMinutesAgo: 'Saved {count} min ago',
+      contentSummaryDocumentStateTitle: 'Document status',
+      contentSummaryDocumentStateDescription: 'General information about your publication',
+      contentSummaryEditAction: 'Edit',
+      contentSummaryEditMetadataAction: 'Edit metadata',
+      contentSummaryStatsChapter: 'Chapter',
+      contentSummaryStatsChapters: 'Chapters',
+      contentSummaryStatsWords: 'Words',
+      contentSummaryStatsCharacters: 'Characters',
+      contentSummaryStatsReadingTime: 'Reading time',
+      contentSummaryStatsPages: 'Pages (estimated)',
+      contentSummaryCompositionSubtitle: 'Template and layout rules',
+      contentSummaryConfigureAction: 'Configure',
+      contentSummaryReviewRulesAction: 'Review rules',
+      contentSummaryRulePagination: 'Pagination',
+      contentSummaryRuleStructure: 'Structural integrity',
+      contentSummaryRuleMedia: 'Media & numbering',
+      contentSummaryRuleViolations: 'Current violations',
+      contentSummaryActiveCount: '{count} active',
+      contentSummaryBrandSubtitle: 'Visual identity for this publication',
+      contentSummaryBrandEmptyTitle: 'No brand applied',
+      contentSummaryBrandEmptyBody: 'Apply a brand profile from the Brand tab.',
+      contentSummaryHealthSubtitle: 'Overall publication review',
+      contentSummaryHealthMetadataOkTitle: 'Metadata complete',
+      contentSummaryHealthMetadataOkBody: 'All essential information is complete.',
+      contentSummaryHealthMetadataWarnTitle: 'Metadata incomplete',
+      contentSummaryHealthMetadataWarnBody: 'Complete the title, author and subtitle.',
+      contentSummaryHealthCompositionOkTitle: 'Composition clear',
+      contentSummaryHealthCompositionOkBody: 'No rule violations were found.',
+      contentSummaryHealthCompositionWarnTitle: 'Composition: {count} warnings',
+      contentSummaryHealthCompositionWarnBody: 'Review the rules with warnings.',
+      contentSummaryHealthPreflightOkTitle: 'Ready for preview',
+      contentSummaryHealthPreflightOkBody: 'No blockers were found.',
+      contentSummaryHealthPreflightWarnTitle: 'Pre-flight: {count} issues',
+      contentSummaryHealthPreflightWarnBody: 'Review the issues by channel.',
+      contentSummaryPreflightSubtitle: 'Validation for publishing platforms',
+      contentSummaryActivityTitle: 'Latest activity',
+      contentSummaryActivitySubtitle: "This document's change history",
+      contentSummaryActivityEmpty: 'No saved versions yet.',
+      contentSummaryViewHistoryAction: 'View history',
+      contentSummaryBottomAssistant: 'Editorial assistant',
+      contentSummaryBottomCoherence: 'Review coherence',
+      contentSummarySaveVersionAction: 'Save version',
     },
     filestudio: {
       badgeLocal: 'Processed on your device',

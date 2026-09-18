@@ -136,6 +136,15 @@ function makeProject(overrides: Partial<ProjectRecord> = {}): ProjectRecord {
   };
 }
 
+// Step 1 (Content) has no "Siguiente paso" rail (removed so the tabbed
+// Resumen workspace can use the full row width); advance from it via the
+// canonical stepper instead. The rail still exists on steps 2-8.
+function clickStepperStep(container: HTMLElement, step: number) {
+  const trigger = container.querySelectorAll('.ac-stepper__trigger')[step - 1] as HTMLElement | undefined;
+  if (!trigger) throw new Error(`Stepper trigger for step ${step} not found`);
+  fireEvent.click(trigger);
+}
+
 describe('ProjectWorkspace', () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -145,11 +154,17 @@ describe('ProjectWorkspace', () => {
 
   test('renders the project title in the header', () => {
     render(<ProjectWorkspace project={makeProject()} copy={copy} />);
-    expect(screen.getByText('Mi Proyecto')).toBeInTheDocument();
+    expect(screen.getByTestId('content-workspace-topbar')).toHaveTextContent('Mi Proyecto');
   });
 
-  test('shows document metadata form by default in Step 1', () => {
+  test('shows the Resumen tab by default in Step 1', () => {
     render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+    expect(screen.getByTestId('content-summary')).toBeInTheDocument();
+  });
+
+  test('shows the document metadata form under the Metadatos tab in Step 1', () => {
+    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+    fireEvent.click(screen.getByTestId('content-tab-metadatos'));
     expect(screen.getByTestId('project-metadata-form')).toBeInTheDocument();
     expect(screen.getByTestId('project-document-title-input')).toHaveValue('Mi Proyecto');
   });
@@ -189,28 +204,27 @@ describe('ProjectWorkspace', () => {
   });
 
   test('persists the workflow step when navigating', async () => {
-    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+    const { container } = render(<ProjectWorkspace project={makeProject()} copy={copy} />);
 
-    fireEvent.click(screen.getByText('Siguiente paso'));
+    clickStepperStep(container, 2);
 
     expect(saveProjectWorkflowStepAction).toHaveBeenCalledTimes(1);
   });
 
   test('renders chapter organizer when moving to Step 2', () => {
-    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
-    
+    const { container } = render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+
     // Navigate to step 2 (Capítulos)
-    const nextButton = screen.getByText('Siguiente paso');
-    fireEvent.click(nextButton);
+    clickStepperStep(container, 2);
 
     expect(screen.getByText('Capítulo 1')).toBeInTheDocument();
     expect(screen.getByText('Capítulo 2')).toBeInTheDocument();
   });
 
   test('shows the pagination sync action in Step 2 and updates its state when clicked', () => {
-    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+    const { container } = render(<ProjectWorkspace project={makeProject()} copy={copy} />);
 
-    fireEvent.click(screen.getByText('Siguiente paso'));
+    clickStepperStep(container, 2);
 
     const syncButton = screen.getByTestId('sync-page-numbers-button');
 
@@ -232,9 +246,9 @@ describe('ProjectWorkspace', () => {
   test('shows a warning when pagination sync cannot find an index chapter', () => {
     vi.mocked(syncProjectPaginationAction).mockResolvedValue({ status: 'missing-index' });
 
-    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+    const { container } = render(<ProjectWorkspace project={makeProject()} copy={copy} />);
 
-    fireEvent.click(screen.getByText('Siguiente paso'));
+    clickStepperStep(container, 2);
     fireEvent.click(screen.getByTestId('sync-page-numbers-button'));
 
     return waitFor(() => {
@@ -245,38 +259,35 @@ describe('ProjectWorkspace', () => {
   });
 
   test('navigates through steps', () => {
-    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
-    
-    const nextButton = screen.getByText('Siguiente paso');
-    
-    // Step 1 -> 2
-    fireEvent.click(nextButton);
+    const { container } = render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+
+    // Step 1 -> 2 (no rail on Step 1; use the canonical stepper)
+    clickStepperStep(container, 2);
     expect(screen.getByText('de 8 pasos')).toBeInTheDocument();
     expect(screen.getAllByText('2').length).toBeGreaterThan(0);
-    
+
     // Step 2 -> 3
-    fireEvent.click(nextButton);
+    fireEvent.click(screen.getByText('Siguiente paso'));
     expect(screen.getAllByText('3').length).toBeGreaterThan(0);
   });
 
   test('renders the unified cover studio in Step 3', () => {
-    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+    const { container } = render(<ProjectWorkspace project={makeProject()} copy={copy} />);
 
-    const nextButton = screen.getByText('Siguiente paso');
     // 1 -> 2
-    fireEvent.click(nextButton);
+    clickStepperStep(container, 2);
     // 2 -> 3
-    fireEvent.click(nextButton);
+    fireEvent.click(screen.getByText('Siguiente paso'));
 
     expect(screen.getByTestId('cover-studio-v2')).toHaveAttribute('data-surface-kind', 'cover');
   });
 
   test('renders the same unified studio for the back cover in Step 4', () => {
-    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+    const { container } = render(<ProjectWorkspace project={makeProject()} copy={copy} />);
 
-    const nextButton = screen.getByText('Siguiente paso');
     // 1 -> 2
-    fireEvent.click(nextButton);
+    clickStepperStep(container, 2);
+    const nextButton = screen.getByText('Siguiente paso');
     // 2 -> 3
     fireEvent.click(nextButton);
     // 3 -> 4
@@ -294,6 +305,7 @@ describe('ProjectWorkspace', () => {
     });
 
     render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+    fireEvent.click(screen.getByTestId('content-tab-preflight'));
 
     const banner = screen.getByTestId('document-health-revert');
     expect(banner).toHaveTextContent('Capítulo 2');
