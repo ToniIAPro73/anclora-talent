@@ -1,5 +1,5 @@
-import { CreateProjectForm } from '@/components/projects/CreateProjectForm';
-import { DashboardFocusTitle } from '@/components/projects/DashboardFocusTitle';
+import { redirect } from 'next/navigation';
+import { DashboardWorkspace } from '@/components/projects/DashboardWorkspace';
 import { FileStudioConnectionCard } from '@/components/filestudio/FileStudioConnectionCard';
 import { ProjectsTableModal } from '@/components/projects/ProjectsTableModal';
 import { requireUserId } from '@/lib/auth/guards';
@@ -23,19 +23,15 @@ export default async function DashboardPage({
   const { projects, dataAvailable } = await loadDashboardData(userId);
   const params = await searchParams;
   const shouldOpenProjects = params?.projects === '1';
-  const shouldFocusTitle = params?.focus === 'new-project';
+  if (params?.focus === 'new-project') redirect('/projects/new');
 
   const filestudioConnection = isFileStudioEnabled() && hasDatabase()
     ? await getConnection(userId).catch(() => null)
     : null;
 
   return (
-    <div className="talent-dashboard-v3">
-      <DashboardFocusTitle enabled={shouldFocusTitle} />
-
-      <section className="talent-dashboard-create" aria-label={dashboardCopy.createProject}>
-        <CreateProjectForm copy={projectCopy} variant="dashboard" />
-      </section>
+    <div className="talent-dashboard-workspace">
+      <DashboardWorkspace projects={projects} dataAvailable={dataAvailable} locale={locale} copy={dashboardCopy} projectCopy={projectCopy} />
 
       {isFileStudioEnabled() && (
         <section aria-label={filestudioCopy.settingsTitle}>
@@ -53,10 +49,6 @@ export default async function DashboardPage({
           />
         </section>
       )}
-
-      {!dataAvailable ? (
-        <p className="text-xs text-[var(--text-tertiary)]">{dashboardCopy.emptyFallbackDescription}</p>
-      ) : null}
 
       {shouldOpenProjects ? (
         <ProjectsTableModal

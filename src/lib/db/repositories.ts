@@ -60,6 +60,7 @@ function toSummary(project: ProjectRecord): ProjectSummary {
     pageCount: project.document.source?.pageCount ?? null,
     chapterCount: project.document.chapters.length,
     coverPalette: project.cover.palette,
+    coverImageUrl: project.cover.renderedImageUrl || project.cover.thumbnailUrl || null,
   };
 }
 
@@ -521,6 +522,8 @@ async function listProjectsFromDb(userId: string) {
       documentAuthor: projectDocuments.author,
       sourceMetadata: projectDocuments.sourceMetadata,
       coverPalette: coverDesigns.palette,
+      coverRenderedImageUrl: coverDesigns.renderedImageUrl,
+      coverThumbnailUrl: coverDesigns.thumbnailUrl,
     })
     .from(projects)
     .innerJoin(projectDocuments, eq(projectDocuments.projectId, projects.id))
@@ -558,6 +561,7 @@ async function listProjectsFromDb(userId: string) {
     pageCount: sourcePageCount(row.sourceMetadata),
     chapterCount: chapterCounts.get(row.documentId)?.size ?? 0,
     coverPalette: row.coverPalette as CoverDesign['palette'],
+    coverImageUrl: row.coverRenderedImageUrl || row.coverThumbnailUrl || null,
   }));
 }
 

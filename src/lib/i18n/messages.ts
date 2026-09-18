@@ -164,6 +164,24 @@ export type AppMessages = {
     finalCtaSecondary: string;
   };
   dashboard: {
+    workspaceCount: string;
+    workspaceEmptyTitle: string;
+    workspaceEmptyDescription: string;
+    workspaceNoResults: string;
+    workspaceNoResultsDescription: string;
+    workspaceError: string;
+    workspaceErrorDescription: string;
+    workspaceRetry: string;
+    workspaceLoading: string;
+    workspaceGrid: string;
+    workspaceList: string;
+    workspaceActivity: string;
+    workspaceUpdated: string;
+    workspaceViewAll: string;
+    workspaceNoActivity: string;
+    workspaceQuote: string;
+    workspaceManuscript: string;
+    workspaceLastEdited: string;
     eyebrow: string;
     title: string;
     activeProjectsOne: string;
@@ -1436,6 +1454,24 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       finalCtaSecondary: 'Iniciar sesión',
     },
     dashboard: {
+      workspaceCount: '{count} proyectos',
+      workspaceEmptyTitle: 'Tu próxima historia empieza aquí',
+      workspaceEmptyDescription: 'Crea un proyecto para dar forma a tu próxima publicación.',
+      workspaceNoResults: 'No hay proyectos coincidentes',
+      workspaceNoResultsDescription: 'Prueba otra búsqueda o cambia el filtro de estado.',
+      workspaceError: 'No se han podido cargar los proyectos',
+      workspaceErrorDescription: 'Inténtalo de nuevo en unos instantes.',
+      workspaceRetry: 'Reintentar',
+      workspaceLoading: 'Cargando proyectos',
+      workspaceGrid: 'Vista de cuadrícula',
+      workspaceList: 'Vista de lista',
+      workspaceActivity: 'Actividad reciente',
+      workspaceUpdated: 'Proyecto actualizado',
+      workspaceViewAll: 'Ver todo',
+      workspaceNoActivity: 'Las últimas ediciones aparecerán aquí.',
+      workspaceQuote: 'Las buenas ideas también necesitan un lugar.',
+      workspaceManuscript: 'Proyecto editorial',
+      workspaceLastEdited: 'Última edición',
       eyebrow: 'Dashboard',
       title: 'Tus proyectos editoriales, en un solo lugar.',
       activeProjectsOne: '{count} proyecto activo',
@@ -2780,6 +2816,24 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       finalCtaSecondary: 'Sign in',
     },
     dashboard: {
+      workspaceCount: '{count} projects',
+      workspaceEmptyTitle: 'Your next story starts here',
+      workspaceEmptyDescription: 'Create a project to shape your next publication.',
+      workspaceNoResults: 'No matching projects',
+      workspaceNoResultsDescription: 'Try another search or change the status filter.',
+      workspaceError: 'Unable to load projects',
+      workspaceErrorDescription: 'Please try again in a moment.',
+      workspaceRetry: 'Try again',
+      workspaceLoading: 'Loading projects',
+      workspaceGrid: 'Grid view',
+      workspaceList: 'List view',
+      workspaceActivity: 'Recent activity',
+      workspaceUpdated: 'Project updated',
+      workspaceViewAll: 'View all',
+      workspaceNoActivity: 'Your latest edits will appear here.',
+      workspaceQuote: 'Good ideas need a place of their own.',
+      workspaceManuscript: 'Editorial project',
+      workspaceLastEdited: 'Last edited',
       eyebrow: 'Dashboard',
       title: 'Your editorial projects, all in one place.',
       activeProjectsOne: '{count} active project',

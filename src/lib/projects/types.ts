@@ -198,6 +198,7 @@ export interface ProjectSummary {
   pageCount: number | null;
   chapterCount: number;
   coverPalette: CoverDesign['palette'];
+  coverImageUrl?: string | null;
 }
 
 /** M4 — heuristic confidence for a detected import field (no AI involved). */

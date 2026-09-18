@@ -24,7 +24,8 @@ describe('light theme dashboard contract', () => {
   });
 
   test('keeps dashboard and form layout readable in light mode', () => {
-    expect(dashboardPage).toContain('talent-dashboard-create');
+    expect(dashboardPage).toContain('DashboardWorkspace');
+    expect(globalsCss).toContain('html[data-theme="light"] .talent-dashboard-shell');
     expect(createProjectForm).toContain('talent-create-form--dashboard');
     expect(createProjectForm).toContain('flex flex-col gap-4');
     expect(createProjectForm).toContain('w-full');

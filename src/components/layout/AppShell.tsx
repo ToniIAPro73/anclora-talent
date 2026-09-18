@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
+import Image from 'next/image';
+import { Menu, Plus, X } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
@@ -25,6 +26,7 @@ export function AppShell({
   const searchParams = useSearchParams();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const compactDashboard = pathname === '/dashboard';
   const navLinks = [
     {
       href: '/dashboard',
@@ -32,7 +34,7 @@ export function AppShell({
       active: pathname === '/dashboard' && searchParams.get('projects') !== '1',
     },
     {
-      href: '/dashboard?focus=new-project',
+      href: compactDashboard ? '/projects/new' : '/dashboard?focus=new-project',
       label: messages.navNewProject,
       active: false,
     },
@@ -44,18 +46,18 @@ export function AppShell({
   ];
 
   return (
-    <div className="talent-app-shell-frame min-h-screen bg-[var(--app-gradient)] text-[var(--text-primary)]">
+    <div className={`talent-app-shell-frame min-h-screen bg-[var(--app-gradient)] text-[var(--text-primary)]${compactDashboard ? ' talent-dashboard-shell' : ''}`}>
       <div className="talent-shell-grid">
         <div className="talent-shell-main min-w-0">
           <header className="talent-shell-topbar">
             <div className="talent-shell-brand">
-              <BrandLogo size={42} />
+              {compactDashboard ? <Image src="/brand/anclora-talent.webp" alt="" width={34} height={34} priority className="object-contain" /> : <BrandLogo size={42} />}
               <div className="talent-shell-brand__name">{messages.brand}</div>
             </div>
 
             <div className="talent-shell-brand__copy">
-              <p>{messages.topbarTitle}</p>
-              <span>{messages.topbarSubtitle}</span>
+              <p>{compactDashboard ? messages.navDashboard : messages.topbarTitle}</p>
+              {!compactDashboard && <span>{messages.topbarSubtitle}</span>}
             </div>
 
             <nav className="talent-shell-nav" aria-label={messages.navLabel}>
@@ -73,6 +75,7 @@ export function AppShell({
             </nav>
 
             <div className="talent-shell-topbar-actions">
+              {compactDashboard && <NavigatingLink href="/projects/new" pendingLabel={messages.navNewProject} className="dashboard-button dashboard-button--primary dashboard-header-create"><Plus size={17} aria-hidden="true" />{messages.navNewProject}</NavigatingLink>}
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen((open) => !open)}

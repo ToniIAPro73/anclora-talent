@@ -25,9 +25,10 @@ describe('dashboard v3 contract', () => {
     expect(appShell).not.toContain('anclora-sidebar-collapsed');
   });
 
-  test('dashboard renders creation as the primary full-screen surface', () => {
-    expect(dashboardPage).toContain('talent-dashboard-create');
-    expect(dashboardPage).toContain('variant="dashboard"');
+  test('dashboard renders the project workspace and preserves the new project route', () => {
+    expect(dashboardPage).toContain('DashboardWorkspace');
+    expect(dashboardPage).toContain("redirect('/projects/new')");
+    expect(dashboardPage).not.toContain('CreateProjectForm');
     expect(dashboardPage).not.toContain('PaginatedProjectGrid');
     expect(dashboardPage).not.toContain('dashboard-new-project');
   });
@@ -52,7 +53,7 @@ describe('dashboard v3 contract', () => {
     expect(globalsCss).toContain('content: " *"');
   });
 
-  test('projects are exposed by modal-table query state, not dashboard cards', () => {
+  test('projects remain accessible through the existing modal-table query state', () => {
     expect(dashboardPage).toContain('ProjectsTableModal');
     expect(dashboardPage).toContain("params?.projects === '1'");
     expect(globalsCss).toContain('.talent-projects-table');
