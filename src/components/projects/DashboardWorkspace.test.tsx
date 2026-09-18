@@ -31,7 +31,9 @@ describe('Dashboard workspace', () => {
     expect(within(rows[0]).getByRole('link', { name: appMessages.en.project.cardOpenEditor })).toHaveClass('dashboard-button--primary');
     expect(within(rows[1]).getByRole('link', { name: appMessages.en.project.cardOpenEditor })).not.toHaveClass('dashboard-button--primary');
     fireEvent.click(within(rows[0]).getByRole('button', { name: appMessages.en.project.cardActionsMenu }));
-    expect(screen.getByRole('menuitem')).toHaveAttribute('href', '/projects/recent/editor?documentData=open');
+    expect(screen.getByTestId('project-card-document-data-button')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('project-card-document-data-button'));
+    expect(screen.getByTestId('dashboard-document-data-modal')).toHaveTextContent('Document information');
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
   });
 

@@ -26,6 +26,10 @@ export type AppMessages = {
     localeSpanish: string;
     localeEnglish: string;
     userMenuLabel: string;
+    userMenuEyebrow: string;
+    userMenuProfile: string;
+    userMenuSettings: string;
+    userMenuUnavailable: string;
     signOut: string;
     signingOut: string;
   };
@@ -739,6 +743,14 @@ export type AppMessages = {
     documentDataSaveError: string;
     documentDataConfirmLabel: string;
     documentDataReopenButton: string;
+    documentDataSummaryHeading: string;
+    documentDataTitleLabel: string;
+    documentDataSubtitleLabel: string;
+    documentDataAuthorLabel: string;
+    documentDataCreatedLabel: string;
+    documentDataPagesLabel: string;
+    documentDataChaptersLabel: string;
+    documentDataUnavailableValue: string;
   };
   filestudio: {
     badgeLocal: string;
@@ -1157,6 +1169,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       localeSpanish: 'ES',
       localeEnglish: 'EN',
       userMenuLabel: 'Cuenta',
+      userMenuEyebrow: 'NEXUS USER',
+      userMenuProfile: 'Perfil',
+      userMenuSettings: 'Configuración',
+      userMenuUnavailable: 'Próximamente',
       signOut: 'Cerrar sesión',
       signingOut: 'Cerrando sesión…',
     },
@@ -2095,6 +2111,14 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       documentDataSaveError: 'No se pudo guardar. Inténtalo de nuevo.',
       documentDataConfirmLabel: 'Confirmar',
       documentDataReopenButton: 'Revisar datos del documento',
+      documentDataSummaryHeading: 'Información del documento',
+      documentDataTitleLabel: 'Título',
+      documentDataSubtitleLabel: 'Subtítulo',
+      documentDataAuthorLabel: 'Autor',
+      documentDataCreatedLabel: 'Fecha de creación',
+      documentDataPagesLabel: 'Páginas',
+      documentDataChaptersLabel: 'Capítulos',
+      documentDataUnavailableValue: 'Sin especificar',
     },
     filestudio: {
       badgeLocal: 'Procesado en tu dispositivo',
@@ -2521,6 +2545,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       localeSpanish: 'ES',
       localeEnglish: 'EN',
       userMenuLabel: 'Account',
+      userMenuEyebrow: 'NEXUS USER',
+      userMenuProfile: 'Profile',
+      userMenuSettings: 'Settings',
+      userMenuUnavailable: 'Coming soon',
       signOut: 'Sign out',
       signingOut: 'Signing out…',
     },
@@ -3459,6 +3487,14 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       documentDataSaveError: 'Could not save. Please try again.',
       documentDataConfirmLabel: 'Confirm',
       documentDataReopenButton: 'Review document data',
+      documentDataSummaryHeading: 'Document information',
+      documentDataTitleLabel: 'Title',
+      documentDataSubtitleLabel: 'Subtitle',
+      documentDataAuthorLabel: 'Author',
+      documentDataCreatedLabel: 'Created',
+      documentDataPagesLabel: 'Pages',
+      documentDataChaptersLabel: 'Chapters',
+      documentDataUnavailableValue: 'Not specified',
     },
     filestudio: {
       badgeLocal: 'Processed on your device',

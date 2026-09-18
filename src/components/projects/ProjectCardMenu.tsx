@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import { MoreVertical } from 'lucide-react';
 import { ProjectDeleteButton } from './ProjectDeleteButton';
 
@@ -16,12 +15,14 @@ export function ProjectCardMenu({
   deleteLabel,
   confirmMessage,
   documentDataLabel,
+  onDocumentData,
 }: {
   projectId: string;
   menuLabel: string;
   deleteLabel: string;
   confirmMessage: string;
   documentDataLabel: string;
+  onDocumentData?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -48,7 +49,7 @@ export function ProjectCardMenu({
         aria-expanded={open}
         aria-label={menuLabel}
         data-testid="project-card-menu"
-        className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-strong)] bg-[var(--surface-soft)] text-[var(--text-secondary)] transition hover:border-[var(--accent-border)] hover:text-[var(--text-primary)]"
+        className="dashboard-button dashboard-button--icon"
       >
         <MoreVertical className="h-4 w-4" aria-hidden="true" />
       </button>
@@ -57,22 +58,20 @@ export function ProjectCardMenu({
         <div
           role="menu"
           aria-label={menuLabel}
-          className="absolute right-0 top-full z-50 mt-2 w-56 rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] p-3 shadow-[var(--shadow-lg)] backdrop-blur-xl"
+          className="project-card-menu absolute right-0 top-full z-50 mt-2 w-56 rounded-xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] p-2 shadow-[var(--shadow-lg)] backdrop-blur-xl"
         >
-          <Link
+          <button
+            type="button"
             role="menuitem"
-            data-testid="project-card-document-data-link"
-            href={`/projects/${projectId}/editor?documentData=open`}
-            onClick={() => setOpen(false)}
-            className="mb-2 flex w-full items-center rounded-xl px-3 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-highlight)]"
+            data-testid="project-card-document-data-button"
+            onClick={() => { setOpen(false); onDocumentData?.(); }}
+            className="project-card-menu__item"
           >
             {documentDataLabel}
-          </Link>
-          <ProjectDeleteButton
-            projectId={projectId}
-            label={deleteLabel}
-            confirmMessage={confirmMessage}
-          />
+          </button>
+          <div role="menuitem" className="project-card-menu__item project-card-menu__item--destructive">
+            <ProjectDeleteButton projectId={projectId} label={deleteLabel} confirmMessage={confirmMessage} />
+          </div>
         </div>
       )}
     </div>

@@ -40,11 +40,6 @@ export function AppShell({
       label: messages.navNewProject,
       active: false,
     },
-    {
-      href: '/dashboard?projects=1',
-      label: messages.navProjects,
-      active: searchParams.get('projects') === '1',
-    },
   ];
 
   return (

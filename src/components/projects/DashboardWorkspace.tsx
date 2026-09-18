@@ -9,6 +9,7 @@ import type { AppMessages } from '@/lib/i18n/messages';
 import type { ProjectSort, ProjectStatusFilter } from '@/lib/projects/retrieval';
 import { NavigatingLink } from '@/components/ui/NavigatingLink';
 import { ProjectCardMenu } from './ProjectCardMenu';
+import { DashboardDocumentDataModal } from './DashboardDocumentDataModal';
 import { useProjectRetrieval } from './use-project-retrieval';
 
 export function getDashboardPageSize(width: number): number {
@@ -31,6 +32,7 @@ export function DashboardWorkspace({ projects, dataAvailable, locale, copy, proj
   const retrieval = useProjectRetrieval(projects, pageSize);
   const { setPage } = retrieval;
   const [layout, setLayout] = useState<'list' | 'grid'>('list');
+  const [documentDataProjectId, setDocumentDataProjectId] = useState<string | null>(null);
   const date = (value: string) => new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(new Date(value));
 
   useEffect(() => {
@@ -100,7 +102,7 @@ export function DashboardWorkspace({ projects, dataAvailable, locale, copy, proj
                   {project.coverImageUrl ? <Image src={project.coverImageUrl} alt="" fill sizes="80px" unoptimized className="object-cover" /> : <><BookOpen size={18} aria-hidden="true" /><span>{project.documentTitle || project.title}</span><small>{project.documentAuthor}</small></>}
                 </div>
                 <div className="dashboard-project-copy"><h2>{project.title}</h2><p className="dashboard-project-kind"><BookOpen size={15} aria-hidden="true" />{copy.workspaceManuscript}</p><p className="dashboard-project-description">{project.documentSubtitle || project.documentTitle}</p>{project.documentAuthor && <small>{project.documentAuthor}</small>}</div>
-                <ProjectCardMenu projectId={project.id} menuLabel={projectCopy.cardActionsMenu} deleteLabel={projectCopy.cardDelete} confirmMessage={projectCopy.cardDeleteConfirm.replace('{title}', project.title)} documentDataLabel={projectCopy.documentDataOpen} />
+                <ProjectCardMenu projectId={project.id} menuLabel={projectCopy.cardActionsMenu} deleteLabel={projectCopy.cardDelete} confirmMessage={projectCopy.cardDeleteConfirm.replace('{title}', project.title)} documentDataLabel={projectCopy.documentDataOpen} onDocumentData={() => setDocumentDataProjectId(project.id)} />
               </div>
               <div className="dashboard-project-meta"><span className="dashboard-status" data-status={project.status}><span aria-hidden="true" />{project.status === 'active' ? copy.projectsStatusActive : copy.projectsStatusDraft}</span><p>{copy.workspaceLastEdited}</p><time dateTime={project.updatedAt}>{date(project.updatedAt)}</time></div>
               <div className="dashboard-project-actions"><div className="dashboard-project-counts"><span>{project.chapterCount} {copy.projectsTableChapters.toLocaleLowerCase(locale)}</span>{project.pageCount !== null && <span>{project.pageCount} {copy.projectsTablePages.toLocaleLowerCase(locale)}</span>}</div><NavigatingLink href={`/projects/${project.id}/editor`} pendingLabel={projectCopy.cardOpenEditor} className={`dashboard-button${effectiveSelectedProjectId === project.id ? ' dashboard-button--primary' : ''}`}>{projectCopy.cardOpenEditor}</NavigatingLink><NavigatingLink href={`/projects/${project.id}/preview`} pendingLabel={projectCopy.cardPreview} className="dashboard-preview-link">{projectCopy.cardPreview}</NavigatingLink></div>
@@ -108,10 +110,11 @@ export function DashboardWorkspace({ projects, dataAvailable, locale, copy, proj
           </div>}
         {dataAvailable && retrieval.totalPages > 1 && <footer className="dashboard-pagination"><span>{copy.projectsTablePageStatus.replace('{page}', String(retrieval.page)).replace('{total}', String(retrieval.totalPages))}</span><button data-testid="dashboard-previous" className="dashboard-button" type="button" disabled={retrieval.page <= 1} onClick={() => retrieval.setPage(retrieval.page - 1)}>{copy.projectsTablePrevious}</button><button data-testid="dashboard-next" className="dashboard-button" type="button" disabled={retrieval.page >= retrieval.totalPages} onClick={() => retrieval.setPage(retrieval.page + 1)}>{copy.projectsTableNext}</button></footer>}
       </section>
-      <aside className="dashboard-activity" aria-labelledby="dashboard-activity-title"><header><h2 id="dashboard-activity-title">{copy.workspaceActivity}</h2><NavigatingLink href="/dashboard?projects=1" pendingLabel={copy.workspaceViewAll}>{copy.workspaceViewAll}</NavigatingLink></header>
-        {dataAvailable && recent.length > 0 ? <ol>{recent.slice(0, 3).map((project) => <li key={project.id}><span className="dashboard-activity-icon"><Pencil size={18} aria-hidden="true" /></span><div><h3>{copy.workspaceUpdated}</h3><NavigatingLink href={`/projects/${project.id}/editor`} pendingLabel={projectCopy.cardOpenEditor}>{project.title}</NavigatingLink><time dateTime={project.updatedAt}><Clock3 size={12} aria-hidden="true" />{date(project.updatedAt)}</time></div></li>)}</ol> : <p className="dashboard-activity-empty">{dataAvailable ? copy.workspaceNoActivity : copy.workspaceErrorDescription}</p>}
+      <aside className="dashboard-activity" aria-labelledby="dashboard-activity-title"><header><h2 id="dashboard-activity-title">{copy.workspaceActivity}</h2></header>
+        {dataAvailable && effectiveSelectedProjectId ? (() => { const project = projects.find((item) => item.id === effectiveSelectedProjectId) ?? recent[0]; return project ? <ol><li key={project.id}><span className="dashboard-activity-icon"><Pencil size={18} aria-hidden="true" /></span><div><h3>{copy.workspaceUpdated}</h3><NavigatingLink href={`/projects/${project.id}/editor`} pendingLabel={projectCopy.cardOpenEditor}>{project.title}</NavigatingLink><time dateTime={project.updatedAt}><Clock3 size={12} aria-hidden="true" />{date(project.updatedAt)}</time></div></li></ol> : null; })() : <p className="dashboard-activity-empty">{dataAvailable ? copy.workspaceNoActivity : copy.workspaceErrorDescription}</p>}
         <blockquote>“{copy.workspaceQuote}”<span aria-hidden="true" /><cite>Anclora Talent</cite></blockquote>
       </aside>
+      {documentDataProjectId ? (() => { const project = projects.find((item) => item.id === documentDataProjectId); return project ? <DashboardDocumentDataModal project={project} locale={locale} copy={projectCopy} onClose={() => setDocumentDataProjectId(null)} /> : null; })() : null}
     </div>
   );
 }

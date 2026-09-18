@@ -21,14 +21,12 @@ describe('app shell v3 contract', () => {
     expect(appShell).toContain('talent-shell-brand');
     expect(appShell).toContain('messages.navDashboard');
     expect(appShell).toContain('messages.navNewProject');
-    expect(appShell).toContain('messages.navProjects');
     expect(appShell).toContain('/dashboard?focus=new-project');
-    expect(appShell).toContain('/dashboard?projects=1');
   });
 
   test('omits secondary navigation on the compact dashboard shell', () => {
-    expect(appShell).toContain('{!compactDashboard && (');
-    expect(appShell).toContain('{mobileMenuOpen && !compactDashboard ? (');
+    expect(appShell).toContain('{!focusedWorkspace && (');
+    expect(appShell).toContain('{mobileMenuOpen && !focusedWorkspace ? (');
   });
 
   test('keeps user menu and removes editor preferences from shell', () => {

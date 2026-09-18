@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, LogOut } from 'lucide-react';
+import { ChevronDown, LogOut, Settings, UserCircle } from 'lucide-react';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 
@@ -71,16 +71,21 @@ export function UserMenu({ user }: { user: UserMenuUser }) {
         <div
           role="menu"
           aria-label={messages.userMenuLabel}
-          className="absolute right-0 top-full z-50 mt-2 w-64 rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] p-3 shadow-[var(--shadow-lg)] backdrop-blur-xl"
+          className="user-menu-panel absolute right-0 top-full z-50 mt-2 w-72 rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-lg)] backdrop-blur-xl"
         >
-          <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{user.fullName}</p>
-          <p className="truncate text-xs text-[var(--text-tertiary)]">{user.email}</p>
+          <p className="user-menu-panel__eyebrow">{messages.userMenuEyebrow}</p>
+          <p className="mt-1 truncate text-base font-semibold text-[var(--text-primary)]">{user.fullName}</p>
+          <p className="truncate text-sm text-[var(--text-tertiary)]">{user.email}</p>
+          <div className="user-menu-panel__options" aria-label={messages.userMenuLabel}>
+            <button type="button" role="menuitem" disabled className="user-menu-panel__option"><UserCircle size={20} aria-hidden="true" /><span>{messages.userMenuProfile}</span><small>{messages.userMenuUnavailable}</small></button>
+            <button type="button" role="menuitem" disabled className="user-menu-panel__option"><Settings size={20} aria-hidden="true" /><span>{messages.userMenuSettings}</span><small>{messages.userMenuUnavailable}</small></button>
+          </div>
           <button
             type="button"
             role="menuitem"
             onClick={handleSignOut}
             disabled={isSigningOut}
-            className="mt-3 flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-[var(--action-secondary-border)] bg-[var(--action-secondary-bg)] text-sm font-semibold text-[var(--action-secondary-fg)] hover:border-[var(--border-strong)] disabled:opacity-60"
+            className="user-menu-panel__logout bg-[var(--action-secondary-bg)] border-[var(--action-secondary-border)] text-[var(--action-secondary-fg)]"
           >
             <LogOut className="h-4 w-4" aria-hidden="true" />
             {isSigningOut ? messages.signingOut : messages.signOut}

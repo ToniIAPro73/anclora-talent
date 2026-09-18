@@ -53,13 +53,9 @@ describe('dashboard v3 contract', () => {
     expect(globalsCss).toContain('content: " *"');
   });
 
-  test('projects remain accessible through the existing modal-table query state', () => {
-    expect(dashboardPage).toContain('ProjectsTableModal');
-    expect(dashboardPage).toContain("params?.projects === '1'");
-    expect(globalsCss).toContain('.talent-projects-table');
-    expect(globalsCss).toContain('position: sticky');
-    expect(globalsCss).toMatch(/\.talent-projects-modal__panel\s*\{[^}]*max-width: min\(1480px, calc\(100vw - 2rem\)\)/);
-    expect(globalsCss).toMatch(/\.talent-projects-modal__panel\s*\{[^}]*border-radius: 24px/);
-    expect(globalsCss).toContain('.talent-projects-table__action');
+  test('dashboard keeps contextual document data in place of the old modal table', () => {
+    expect(dashboardPage).not.toContain('ProjectsTableModal');
+    expect(dashboardPage).not.toContain("params?.projects === '1'");
+    expect(globalsCss).toContain('.dashboard-document-modal');
   });
 });

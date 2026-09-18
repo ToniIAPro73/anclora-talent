@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import { DashboardWorkspace } from '@/components/projects/DashboardWorkspace';
 import { FileStudioConnectionCard } from '@/components/filestudio/FileStudioConnectionCard';
-import { ProjectsTableModal } from '@/components/projects/ProjectsTableModal';
 import { requireUserId } from '@/lib/auth/guards';
 import { hasDatabase } from '@/lib/db';
 import { isFileStudioEnabled } from '@/lib/filestudio/config';
@@ -22,7 +21,6 @@ export default async function DashboardPage({
   const filestudioCopy = resolveLocaleMessages(locale).filestudio;
   const { projects, dataAvailable } = await loadDashboardData(userId);
   const params = await searchParams;
-  const shouldOpenProjects = params?.projects === '1';
   if (params?.focus === 'new-project') redirect('/projects/new');
 
   const filestudioConnection = isFileStudioEnabled() && hasDatabase()
@@ -50,14 +48,6 @@ export default async function DashboardPage({
         </section>
       )}
 
-      {shouldOpenProjects ? (
-        <ProjectsTableModal
-          copy={dashboardCopy}
-          projectCopy={projectCopy}
-          locale={locale}
-          projects={projects}
-        />
-      ) : null}
     </div>
   );
 }
