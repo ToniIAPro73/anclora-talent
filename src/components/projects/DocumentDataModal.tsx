@@ -25,6 +25,7 @@ import { extractStructureFromDocument } from '@/lib/structure-profile/extract-st
 import type { StructureConfidence } from '@/lib/structure-profile/model';
 import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
+import { FontSelector } from './cover-studio/FontSelector';
 
 type Copy = AppMessages['project'];
 
@@ -318,15 +319,20 @@ function DocumentDataModalForm({
             <div className="grid gap-4 sm:grid-cols-3">
               <label className="flex flex-col gap-1.5">
                 <span className={labelClass}>{copy.documentDataFontFamilyLabel}</span>
+                <FontSelector
+                  selectedFont={fontFamily}
+                  onFontSelect={(value) => {
+                    setFontFamily(value);
+                    loadFont(value);
+                  }}
+                />
                 <select
                   data-testid="document-data-font-family-input"
+                  aria-label={copy.documentDataFontFamilyLabel}
+                  tabIndex={-1}
                   value={fontFamily}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    setFontFamily(value);
-                    if (value) loadFont(value);
-                  }}
-                  className={inputClass}
+                  onChange={(event) => setFontFamily(event.target.value)}
+                  className="sr-only"
                 >
                   {availableFontFamilies.map((family) => (
                     <option key={family} value={family}>{family}</option>

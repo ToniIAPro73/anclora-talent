@@ -21,15 +21,23 @@ export function FontSelector({
   const [openUp, setOpenUp] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const selectableFonts = useMemo(() => {
+    if (!selectedFont || fonts.some((font) => font.family === selectedFont)) return fonts;
+    return [
+      { family: selectedFont, variants: ['400'], category: 'system', kind: 'system' },
+      ...fonts,
+    ];
+  }, [fonts, selectedFont]);
+
   // Get unique categories
   const categories = useMemo(() => {
-    const cats = new Set(fonts.map((f) => f.category));
+    const cats = new Set(selectableFonts.map((f) => f.category));
     return Array.from(cats).sort();
-  }, [fonts]);
+  }, [selectableFonts]);
 
   // Filter fonts based on search and category
   const displayedFonts = useMemo(() => {
-    let result = fonts;
+    let result = selectableFonts;
 
     if (activeCategory !== 'all') {
       result = result.filter((f) => f.category === activeCategory);
@@ -42,7 +50,7 @@ export function FontSelector({
     }
 
     return result.slice(0, 50); // Limit to 50 for performance
-  }, [fonts, searchQuery, activeCategory]);
+  }, [selectableFonts, searchQuery, activeCategory]);
 
   const handleSelectFont = (fontFamily: string) => {
     loadFont(fontFamily);
@@ -70,11 +78,12 @@ export function FontSelector({
   return (
     <div className="relative w-full" ref={containerRef}>
       <button
+        type="button"
         onClick={() => (isOpen ? setIsOpen(false) : handleOpenDropdown())}
         data-testid="font-selector-toggle"
         className="w-full h-10 px-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-primary)] text-sm flex items-center justify-between hover:bg-[var(--surface-highlight)] transition-colors"
       >
-        <span className="truncate">{selectedFont}</span>
+        <span className="truncate" style={{ fontFamily: selectedFont }}>{selectedFont}</span>
         <ChevronDown
           className={`h-4 w-4 transition-transform ${
             isOpen ? (openUp ? '-rotate-180' : 'rotate-180') : ''
@@ -141,6 +150,7 @@ export function FontSelector({
                 {displayedFonts.map((font) => (
                   <button
                     key={font.family}
+                    type="button"
                     onClick={() => handleSelectFont(font.family)}
                     data-testid={`font-option-${font.family.replace(/\s+/g, '-').toLowerCase()}`}
                     className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-all ${
@@ -150,8 +160,8 @@ export function FontSelector({
                     }`}
                     style={{ fontFamily: font.family }}
                   >
-                    <div className="font-semibold">{font.family}</div>
-                    <div className="text-xs text-slate-300 mt-0.5">
+                    <div className="font-semibold" style={{ fontFamily: font.family }}>{font.family}</div>
+                    <div className="mt-0.5 text-xs text-slate-300" style={{ fontFamily: font.family }}>
                       {font.category}
                       {font.variants.length > 1 && ` • ${font.variants.length} estilos`}
                     </div>
