@@ -80,7 +80,7 @@ export function AppShell({
 
             <div className="talent-shell-topbar-actions">
               {compactDashboard && <NavigatingLink href="/projects/new" pendingLabel={messages.navNewProject} className="dashboard-button dashboard-button--primary dashboard-header-create"><Plus size={17} aria-hidden="true" />{messages.navNewProject}</NavigatingLink>}
-              {compactNewProject && <NavigatingLink href="/dashboard" pendingLabel={messages.navDashboard} className="new-project-cancel">{messages.navCancel}</NavigatingLink>}
+              {compactNewProject && <><NavigatingLink href="/dashboard" pendingLabel={messages.navDashboard} className="new-project-dashboard">{messages.navDashboard}</NavigatingLink><NavigatingLink href="/dashboard" pendingLabel={messages.navCancel} className="new-project-cancel">{messages.navCancel}</NavigatingLink></>}
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen((open) => !open)}

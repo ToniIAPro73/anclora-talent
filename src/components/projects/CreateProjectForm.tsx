@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowRight, BookOpen, Check, FileText, Palette, Sparkles, X } from 'lucide-react';
+import { BookOpen, Check, FileText, Palette, Sparkles, X } from 'lucide-react';
 import { createProjectAction } from '@/lib/projects/actions';
 import { premiumPrimaryDarkButton } from '@/components/ui/button-styles';
 import { SubmitButton } from '@/components/ui/SubmitButton';
@@ -120,7 +120,6 @@ export function CreateProjectForm({
             disabled={isPreprocessing}
           >
             {isPreprocessing ? copy.createProjectPreprocessingBlocked : copy.createProjectAction}
-            {!isPreprocessing && <ArrowRight size={18} aria-hidden="true" />}
           </SubmitButton>
         </div>
       </div>

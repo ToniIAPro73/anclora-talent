@@ -3,8 +3,6 @@ import { requireUserId } from '@/lib/auth/guards';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { structureProfileRepository } from '@/lib/structure-profile/repository';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
-import { NavigatingLink } from '@/components/ui/NavigatingLink';
-import { ArrowLeft } from 'lucide-react';
 
 export default async function NewProjectPage({
   searchParams,
@@ -25,10 +23,6 @@ export default async function NewProjectPage({
 
   return (
     <div className="talent-new-project-page">
-      <NavigatingLink href="/dashboard" pendingLabel={projectCopy.newEyebrow} className="talent-new-project-back">
-        <ArrowLeft size={16} aria-hidden="true" />
-        {projectCopy.newBack}
-      </NavigatingLink>
       <CreateProjectForm copy={projectCopy} structureProfiles={structureProfiles} fixedPdfError={fixedPdfError} />
     </div>
   );

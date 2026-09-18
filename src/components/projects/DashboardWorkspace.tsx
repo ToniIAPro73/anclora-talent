@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type KeyboardEvent } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, BookOpen, Clock3, LayoutGrid, List, Pencil, Plus, Search } from 'lucide-react';
+import { BookOpen, Clock3, LayoutGrid, List, Pencil, Plus, Search } from 'lucide-react';
 import type { ProjectSummary } from '@/lib/projects/types';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { ProjectSort, ProjectStatusFilter } from '@/lib/projects/retrieval';
@@ -103,7 +103,7 @@ export function DashboardWorkspace({ projects, dataAvailable, locale, copy, proj
                 <ProjectCardMenu projectId={project.id} menuLabel={projectCopy.cardActionsMenu} deleteLabel={projectCopy.cardDelete} confirmMessage={projectCopy.cardDeleteConfirm.replace('{title}', project.title)} documentDataLabel={projectCopy.documentDataOpen} />
               </div>
               <div className="dashboard-project-meta"><span className="dashboard-status" data-status={project.status}><span aria-hidden="true" />{project.status === 'active' ? copy.projectsStatusActive : copy.projectsStatusDraft}</span><p>{copy.workspaceLastEdited}</p><time dateTime={project.updatedAt}>{date(project.updatedAt)}</time></div>
-              <div className="dashboard-project-actions"><div className="dashboard-project-counts"><span>{project.chapterCount} {copy.projectsTableChapters.toLocaleLowerCase(locale)}</span>{project.pageCount !== null && <span>{project.pageCount} {copy.projectsTablePages.toLocaleLowerCase(locale)}</span>}</div><NavigatingLink href={`/projects/${project.id}/editor`} pendingLabel={projectCopy.cardOpenEditor} className={`dashboard-button${effectiveSelectedProjectId === project.id ? ' dashboard-button--primary' : ''}`}>{projectCopy.cardOpenEditor}<ArrowRight size={17} aria-hidden="true" /></NavigatingLink><NavigatingLink href={`/projects/${project.id}/preview`} pendingLabel={projectCopy.cardPreview} className="dashboard-preview-link">{projectCopy.cardPreview}</NavigatingLink></div>
+              <div className="dashboard-project-actions"><div className="dashboard-project-counts"><span>{project.chapterCount} {copy.projectsTableChapters.toLocaleLowerCase(locale)}</span>{project.pageCount !== null && <span>{project.pageCount} {copy.projectsTablePages.toLocaleLowerCase(locale)}</span>}</div><NavigatingLink href={`/projects/${project.id}/editor`} pendingLabel={projectCopy.cardOpenEditor} className={`dashboard-button${effectiveSelectedProjectId === project.id ? ' dashboard-button--primary' : ''}`}>{projectCopy.cardOpenEditor}</NavigatingLink><NavigatingLink href={`/projects/${project.id}/preview`} pendingLabel={projectCopy.cardPreview} className="dashboard-preview-link">{projectCopy.cardPreview}</NavigatingLink></div>
             </article>)}
           </div>}
         {dataAvailable && retrieval.totalPages > 1 && <footer className="dashboard-pagination"><span>{copy.projectsTablePageStatus.replace('{page}', String(retrieval.page)).replace('{total}', String(retrieval.totalPages))}</span><button data-testid="dashboard-previous" className="dashboard-button" type="button" disabled={retrieval.page <= 1} onClick={() => retrieval.setPage(retrieval.page - 1)}>{copy.projectsTablePrevious}</button><button data-testid="dashboard-next" className="dashboard-button" type="button" disabled={retrieval.page >= retrieval.totalPages} onClick={() => retrieval.setPage(retrieval.page + 1)}>{copy.projectsTableNext}</button></footer>}
