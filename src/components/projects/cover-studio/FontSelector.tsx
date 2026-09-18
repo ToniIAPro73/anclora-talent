@@ -57,7 +57,10 @@ export function FontSelector({
       );
     }
 
-    return result.slice(0, 50); // Limit to 50 for performance
+    // Keep the complete filtered collection available to the list. The list
+    // itself is scrollable, so users can reach every family returned by the
+    // configured font source instead of silently stopping at the first 50.
+    return result;
   }, [selectableFonts, searchQuery, activeCategory]);
 
   const handleSelectFont = (fontFamily: string) => {
