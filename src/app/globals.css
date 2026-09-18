@@ -1944,6 +1944,64 @@ html[data-theme="light"] .dashboard-activity-icon { color: var(--accent-text); }
 .talent-new-project-form .talent-create-form__optional > .flex .talent-action-button,
 .talent-new-project-form .talent-create-form__optional > .flex .ac-button { min-height: 50px; }
 
+/* The new-project mockup is intentionally dense: its complete decision surface
+   should remain visible at normal browser zoom without sacrificing hierarchy. */
+.talent-new-project-page { padding-top: 14px; padding-bottom: 28px; }
+.talent-new-project-form { margin-top: 12px; gap: 10px; font-size: .86rem; }
+.talent-new-project-form .talent-create-form__primary { padding: 14px; border-radius: 12px; }
+.talent-new-project-form .talent-create-form__intro { gap: 5px; padding-bottom: 10px; }
+.talent-new-project-form .talent-create-form__intro .ac-surface-panel__eyebrow { font-size: .65rem; letter-spacing: .2em; }
+.talent-new-project-form .talent-create-form__intro .ac-surface-panel__title { font-size: clamp(1.6rem, 2.2vw, 2rem); }
+.talent-new-project-form .talent-create-form__intro p:last-child { font-size: .82rem; line-height: 1.45; }
+.talent-new-project-form .talent-create-form__primary > .talent-new-project-step { margin-top: 10px; border-radius: 10px; padding: 10px; column-gap: 14px; }
+.talent-new-project-form .talent-create-form__primary > .talent-new-project-step__heading { gap: 9px; }
+.talent-new-project-form .talent-new-project-step__heading { gap: 9px; }
+.talent-new-project-form .talent-new-project-step__heading h2 { font-size: 1rem; }
+.talent-new-project-form .talent-new-project-step__heading p { margin-top: 2px; font-size: .72rem; line-height: 1.35; }
+.talent-new-project-form .talent-new-project-step__number { width: 25px; height: 25px; flex-basis: 25px; font-size: .72rem; }
+.talent-new-project-form .talent-new-project-title-field .ac-form-field__label,
+.talent-new-project-form .ac-form-field__label { font-size: .63rem; letter-spacing: .16em; }
+.talent-new-project-form .field-input { min-height: 38px; padding-block: 7px; font-size: .82rem; }
+.talent-new-project-form [data-testid="create-optional-manuscript"] { margin-top: 4px; }
+.talent-new-project-form [data-testid="create-optional-manuscript"] > div:first-child { display: none; margin-bottom: 5px; border-radius: 10px; padding: 8px; }
+.talent-new-project-form [data-testid="create-optional-manuscript"] > div:first-child h3 { font-size: .72rem; }
+.talent-new-project-form [data-testid="create-optional-manuscript"] > div:first-child p { margin-top: 2px; font-size: .68rem; line-height: 1.3; }
+.talent-new-project-form [data-testid="source-document-dropzone"] { border-radius: 12px; padding: 12px; }
+.talent-new-project-form [data-testid="source-document-dropzone"] > div { gap: 7px; }
+.talent-new-project-form [data-testid="source-document-dropzone"] > div { flex-direction: row; text-align: left; }
+.talent-new-project-form [data-testid="source-document-dropzone"] .h-14 { width: 38px; height: 38px; }
+.talent-new-project-form [data-testid="source-document-dropzone"] p { line-height: 1.35; }
+.talent-new-project-form [data-testid="create-optional-manuscript"] > p { font-size: .62rem; line-height: 1.3; }
+.talent-new-project-form .talent-new-project-template-block { margin-top: 8px; }
+.talent-new-project-form .talent-new-project-template-block .ac-template-catalog__grid { gap: 8px; margin-top: 8px; }
+.talent-new-project-form .talent-new-project-template-block .ac-template-catalog__grid { align-items: start; grid-auto-rows: min-content; }
+.talent-new-project-form .talent-new-project-template-block .ac-template-card { min-height: 108px; }
+.talent-new-project-form .talent-new-project-template-block .ac-template-card__body { padding: 10px; height: auto; min-height: 0; gap: 4px; grid-template-rows: auto auto auto; }
+.talent-new-project-form .talent-new-project-template-block .ac-template-card__title { margin-top: 6px; font-size: .8rem; }
+.talent-new-project-form .talent-new-project-template-block .ac-template-card__summary { margin-top: 4px; font-size: .66rem; line-height: 1.3; }
+.talent-new-project-form .talent-new-project-template-block .ac-template-card__footer { margin-top: 6px; }
+.talent-new-project-form > .talent-create-form__optional { gap: 10px; }
+.talent-new-project-form .talent-new-project-summary { border-radius: 12px; padding: 14px; }
+.talent-new-project-form .talent-new-project-summary__heading { padding-bottom: 10px; }
+.talent-new-project-form .talent-new-project-summary__heading h2 { font-size: 1rem; }
+.talent-new-project-form .talent-new-project-summary__heading p:last-child { margin-top: 3px; font-size: .68rem; }
+.talent-new-project-form .talent-new-project-summary__items { gap: 0; margin-top: 6px; }
+.talent-new-project-form .talent-new-project-summary__items > div { padding: 8px 0; }
+.talent-new-project-form .talent-new-project-summary__items small { font-size: .58rem; }
+.talent-new-project-form .talent-new-project-summary__items strong { font-size: .72rem; }
+.talent-new-project-form .talent-new-project-summary__ready { margin: 10px 0; font-size: .7rem; }
+.talent-new-project-form .talent-create-form__optional > .flex { gap: 8px; }
+.talent-new-project-form .talent-create-form__optional > .flex .ac-button { min-height: 40px; font-size: .72rem; }
+.talent-new-project-form .talent-create-form__optional > .flex p { font-size: .66rem; line-height: 1.35; }
+.talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] { margin-top: 10px; border-radius: 10px; padding: 10px; column-gap: 14px; }
+.talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] [role="radiogroup"] { gap: 6px; margin-top: 0; }
+.talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] [role="radio"] { padding: 9px; border-radius: 10px; }
+.talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] [role="radio"] span:first-child { font-size: .72rem; }
+.talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] [role="radio"] span.mt-2 { margin-top: 3px; font-size: .62rem; line-height: 1.3; }
+.talent-new-project-form .talent-create-form__primary > .talent-new-project-step--brand { margin-top: 10px; }
+.talent-new-project-form .talent-new-project-step--brand [data-testid="brand-manual-section"] { gap: 5px; }
+.talent-new-project-form .talent-new-project-step--brand [data-testid="brand-manual-section"] p { font-size: .62rem; line-height: 1.3; }
+
 @media (max-width: 1000px) {
   .talent-new-project-form { grid-template-columns: minmax(0, 1fr); }
   .talent-new-project-form .talent-create-form__optional { position: static; }
@@ -1960,6 +2018,7 @@ html[data-theme="light"] .dashboard-activity-icon { color: var(--accent-text); }
   .talent-new-project-form .talent-create-form__primary { padding: 20px 16px; }
   .talent-new-project-title-field { margin-left: 0; }
   .talent-new-project-template-block .ac-template-catalog__grid { grid-template-columns: minmax(0, 1fr); }
+  .talent-new-project-form [data-testid="source-document-dropzone"] > div { flex-direction: column; text-align: center; }
 }
 .dashboard-state p { color: var(--text-secondary); font-size: 14px; margin: 0 0 18px; }
 .dashboard-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; padding-top: 20px; font-size: 12px; }
