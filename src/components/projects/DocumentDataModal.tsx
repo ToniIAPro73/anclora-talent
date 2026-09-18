@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, X } from 'lucide-react';
 import type { AppMessages } from '@/lib/i18n/messages';
@@ -144,6 +144,41 @@ function DocumentDataModalForm({
   const fixedPdf = documentMode === 'fixed-pdf' || project?.document.source?.mode === 'fixed-pdf';
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState('');
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const focusableSelector = 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
+    const focusFirst = () => panel.querySelector<HTMLElement>(focusableSelector)?.focus();
+    focusFirst();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (panel.querySelector('.font-selector--open')) return;
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const focusable = Array.from(panel.querySelectorAll<HTMLElement>(focusableSelector));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [onClose]);
 
   // Lazy initial state (component remounts on every open).
   const base: CompositionSettings =
@@ -264,7 +299,7 @@ function DocumentDataModalForm({
   return (
     <div className="ac-modal" role="dialog" aria-modal="true" data-testid="document-data-modal">
       <div className="ac-modal__backdrop" onClick={onClose} />
-      <div className="document-data-modal-panel ac-modal__panel max-w-5xl rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
+      <div ref={panelRef} className="document-data-modal-panel ac-modal__panel max-w-5xl rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold text-[var(--text-primary)]">

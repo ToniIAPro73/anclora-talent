@@ -83,7 +83,7 @@ export function FontSelector({
       const spaceAbove = rect.top;
 
       // Si hay más espacio arriba (y menos de 300px abajo), abrir hacia arriba
-      const shouldOpenUp = spaceAbove > 350 && spaceBelow < 350;
+      const shouldOpenUp = spaceAbove > spaceBelow;
       if (shouldOpenUp) {
         setOpenUp(true);
       } else {
@@ -119,18 +119,18 @@ export function FontSelector({
       {isOpen && (
         <div
           className="fixed z-[100] rounded-xl border border-[var(--border-strong)] shadow-2xl"
-          style={{ ...dropdownPosition, backgroundColor: 'var(--surface-elevated)', backdropFilter: 'blur(16px)' }}
+          style={{ ...dropdownPosition, maxHeight: 'calc(100vh - 24px)', overflow: 'hidden', backgroundColor: 'var(--surface-elevated)', backdropFilter: 'blur(16px)' }}
         >
           {/* Search */}
           <div className="p-3 border-b border-[var(--border-subtle)]">
             <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-[var(--text-tertiary)]" />
+              <Search className="absolute right-2 top-2.5 h-4 w-4 text-[var(--text-tertiary)]" />
               <Input
                 placeholder="Busca fuentes..."
                 data-testid="font-selector-search-input"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-8 text-sm bg-[var(--surface-soft)] border-[var(--border-subtle)]"
+                className="h-8 pr-8 pl-3 text-sm bg-[var(--surface-soft)] border-[var(--border-subtle)]"
                 autoFocus
               />
             </div>
@@ -168,7 +168,7 @@ export function FontSelector({
           </div>
 
           {/* Font List */}
-          <div className="max-h-64 overflow-y-auto p-2" style={{ backgroundColor: 'color-mix(in srgb, var(--surface-canvas) 88%, transparent)' }}>
+          <div className="overflow-y-auto p-2" style={{ maxHeight: 'min(20rem, calc(100vh - 18rem))', backgroundColor: 'color-mix(in srgb, var(--surface-canvas) 88%, transparent)' }}>
             {displayedFonts.length === 0 ? (
               <div className="text-center py-6 text-slate-300 text-sm font-medium">
                 No se encontraron fuentes
