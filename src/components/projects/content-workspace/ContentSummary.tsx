@@ -151,13 +151,13 @@ export function ContentSummary({
           </div>
 
           <div className="talent-content-summary__identity">
-            <div className="dashboard-cover" data-palette={project.cover.palette} data-testid="content-summary-cover">
+            <div className="dashboard-cover talent-content-summary__cover" data-palette={project.cover.palette} data-testid="content-summary-cover">
               {project.cover.thumbnailUrl || project.cover.renderedImageUrl ? (
                 <Image
                   src={(project.cover.thumbnailUrl || project.cover.renderedImageUrl) as string}
                   alt=""
                   fill
-                  sizes="76px"
+                  sizes="148px"
                   unoptimized
                   className="object-cover"
                 />
@@ -195,7 +195,7 @@ export function ContentSummary({
           </div>
         </section>
 
-        <section className="ac-stat-strip" style={{ ['--ac-stat-columns' as string]: fixedPdf ? 1 : 3 }} data-testid="content-summary-stats">
+        <section className="ac-stat-strip" style={{ ['--ac-stat-columns' as string]: fixedPdf ? 1 : 5 }} data-testid="content-summary-stats">
           {fixedPdf ? (
             <div className="ac-stat-strip__item">
               <BookOpen className="h-4 w-4 text-[var(--accent-text)]" />

@@ -1310,18 +1310,21 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
 }
 
 /* The document-status column is narrow (one of three tracks), so the stat
-   strip needs tighter metrics than the design system's page-width default. */
+   strip needs tighter metrics than the design system's page-width default —
+   five columns in one row, matching the approved mockup, instead of
+   wrapping to a second row with an empty trailing cell. */
 .talent-content-summary__column .ac-stat-strip__item {
-  min-height: 96px;
-  padding: 12px;
+  min-height: 88px;
+  padding: 8px 6px;
 }
 
 .talent-content-summary__column .ac-stat-strip__value {
-  font-size: clamp(1.15rem, 1.6vw, 1.5rem);
+  font-size: clamp(1rem, 1.3vw, 1.3rem);
 }
 
 .talent-content-summary__column .ac-stat-strip__label {
-  font-size: 0.6rem;
+  font-size: 0.56rem;
+  line-height: 1.2;
 }
 
 .talent-content-summary__actions {
@@ -1352,6 +1355,26 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
 
 .talent-content-summary__identity .dashboard-cover {
   flex-shrink: 0;
+}
+
+/* Give the cover comparable visual presence to the approved mockup instead
+   of the small dashboard-card-list thumbnail size. Combined selector (not
+   !important) to outrank the later, plainer .dashboard-cover rule. */
+.dashboard-cover.talent-content-summary__cover {
+  flex-basis: 148px;
+  width: 148px;
+  height: 226px;
+  padding: 20px 14px;
+}
+
+.dashboard-cover.talent-content-summary__cover span {
+  font-size: 15px;
+  line-height: 1.35;
+  -webkit-line-clamp: 5;
+}
+
+.dashboard-cover.talent-content-summary__cover small {
+  font-size: 11px;
 }
 
 .talent-content-summary__fields {
