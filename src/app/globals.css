@@ -1266,13 +1266,20 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
 }
 
 .talent-content-stepper-bar .ac-stepper__dot {
-  width: 1.6rem;
-  height: 1.6rem;
+  width: 1.75rem;
+  height: 1.75rem;
 }
 
+/* The design-system default renders labels as an uppercase, heavily
+   tracked micro-label (0.62rem, 800 weight, 0.16em tracking) — too small
+   and too "fine print" next to the approved mockup's plain sentence-case
+   labels at normal tracking. */
 .talent-content-stepper-bar .ac-stepper__label {
-  margin-top: 5px;
-  font-size: 0.58rem;
+  margin-top: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 .talent-content-tabs {
