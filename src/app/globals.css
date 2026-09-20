@@ -1342,15 +1342,22 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
 .talent-content-summary__column .ac-stat-strip__item {
   min-height: 88px;
   padding: 8px 6px;
+  min-width: 0;
 }
 
 .talent-content-summary__column .ac-stat-strip__value {
-  font-size: clamp(1rem, 1.3vw, 1.3rem);
+  overflow: hidden;
+  font-size: clamp(0.92rem, 1.3vw, 1.3rem);
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .talent-content-summary__column .ac-stat-strip__label {
-  font-size: 0.56rem;
+  overflow: hidden;
+  font-size: 0.62rem;
   line-height: 1.2;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .talent-content-summary__actions {

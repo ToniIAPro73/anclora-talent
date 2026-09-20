@@ -24,7 +24,7 @@ import type { ComposeViolation } from '@/lib/compose/compose';
 import type { DocumentRules } from '@/lib/compose/rules';
 import { PREFLIGHT_CHANNELS, type PreflightCheck } from '@/lib/preflight/preflight';
 import type { DocumentSnapshotMeta } from '@/lib/snapshots/model';
-import { formatNumber, formatReadingTime, getDocumentStats } from '@/lib/projects/document-stats';
+import { formatNumber, getDocumentStats } from '@/lib/projects/document-stats';
 
 type Copy = AppMessages['project'];
 type HistoryCopy = AppMessages['history'];
@@ -79,6 +79,18 @@ export function ContentSummary({
 
   const stats = useMemo(() => getDocumentStats(project.document, 'laptop'), [project.document]);
   const selectedProfile = brandProfiles.find((profile) => profile.id === project.brandProfileId) ?? null;
+
+  // A compact "4 min" / "1h 12m" form for the narrow stat strip — the
+  // shared formatReadingTime() spells out "4 minutos"/"1 hora", which wraps
+  // onto two lines in a 1/5-width cell.
+  const readingTimeCompact = useMemo(() => {
+    const minutes = stats.estimatedReadTime;
+    if (minutes < 1) return '<1 min';
+    if (minutes < 60) return `${Math.round(minutes)} min`;
+    const hours = Math.floor(minutes / 60);
+    const remaining = Math.round(minutes % 60);
+    return remaining === 0 ? `${hours} h` : `${hours}h ${remaining}m`;
+  }, [stats.estimatedReadTime]);
 
   const violationCount = violations.length;
   const metadataComplete = Boolean(
@@ -223,7 +235,7 @@ export function ContentSummary({
               </div>
               <div className="ac-stat-strip__item">
                 <Clock className="h-4 w-4 text-[var(--accent-text)]" />
-                <p className="ac-stat-strip__value">{formatReadingTime(stats.estimatedReadTime)}</p>
+                <p className="ac-stat-strip__value">{readingTimeCompact}</p>
                 <p className="ac-stat-strip__label">{copy.contentSummaryStatsReadingTime}</p>
               </div>
               <div className="ac-stat-strip__item">
