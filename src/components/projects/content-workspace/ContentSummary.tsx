@@ -109,7 +109,7 @@ export function ContentSummary({
     Boolean,
   ).length;
 
-  // Matches the print/digital/default presets DocumentRulesPanel applies
+  // Matches the print/digital/default presets CompositionWorkspace applies
   // (chapterStartsOnOddPage + pageBreakBeforeChapter); shown as a label only,
   // rules stay freely editable rather than locked to a preset.
   const activePreset = rules.chapterStartsOnOddPage && rules.pageBreakBeforeChapter

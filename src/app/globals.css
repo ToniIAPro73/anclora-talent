@@ -2887,3 +2887,269 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
   .dashboard-toolbar { flex-direction: column; align-items: stretch; }
   .dashboard-controls { flex: auto; }
 }
+
+/* Composición tab: presets + section nav (left) / active section form
+   (center) / health + pre-flight summary (right). */
+.talent-composition-workspace {
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) minmax(0, 2fr) minmax(260px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.talent-composition-workspace__nav,
+.talent-composition-workspace__main,
+.talent-composition-workspace__sidebar {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.talent-composition-workspace__presets {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.talent-composition-workspace__preset-card {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--surface-soft);
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.talent-composition-workspace__preset-card:hover {
+  border-color: var(--accent);
+}
+
+.talent-composition-workspace__preset-card[data-active='true'] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-soft));
+}
+
+.talent-composition-workspace__preset-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.talent-composition-workspace__preset-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.talent-composition-workspace__preset-desc {
+  font-size: 0.74rem;
+  line-height: 1.35;
+  color: var(--text-tertiary);
+}
+
+.talent-composition-workspace__section-nav {
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: var(--page-surface);
+}
+
+.talent-composition-workspace__section-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: var(--text-secondary);
+  text-align: left;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.talent-composition-workspace__section-item:hover {
+  background: var(--surface-soft);
+}
+
+.talent-composition-workspace__section-item[data-active='true'] {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.talent-composition-workspace__section-label {
+  display: block;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.talent-composition-workspace__section-desc {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.75;
+}
+
+.talent-composition-workspace__applied-typography {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: var(--surface-soft);
+}
+
+.talent-composition-workspace__applied-typography-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.talent-composition-workspace__applied-typography-preview > span:first-child {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.talent-composition-workspace__confidence-badge {
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  padding: 2px 8px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+}
+
+.talent-composition-workspace__confidence-badge[data-confidence='verificado_en_fuente'] {
+  border-color: color-mix(in srgb, var(--success) 40%, transparent);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+  color: var(--success);
+}
+
+.talent-composition-workspace__health-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.talent-composition-workspace__health-stats > div {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--surface-soft);
+  text-align: center;
+}
+
+.talent-composition-workspace__health-stats > div p {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.talent-composition-workspace__health-stats > div span {
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+}
+
+.talent-composition-workspace__health-stats > div[data-state='ok'] {
+  color: var(--success);
+}
+
+.talent-composition-workspace__health-stats > div[data-state='warn'] {
+  color: var(--danger);
+}
+
+.talent-composition-workspace__health-banner {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.talent-composition-workspace__health-banner[data-state='ok'] {
+  border: 1px solid color-mix(in srgb, var(--success) 35%, transparent);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+  color: var(--success);
+}
+
+.talent-composition-workspace__health-banner[data-state='warn'] {
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--danger);
+}
+
+.talent-composition-workspace__preflight-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.talent-composition-workspace__preflight-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.talent-composition-workspace__preflight-count {
+  flex: 1;
+  text-align: right;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+.talent-composition-workspace__tip {
+  display: flex;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: var(--surface-soft);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.talent-composition-workspace__tip > div {
+  flex: 1;
+}
+
+.talent-composition-workspace__tip button {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+
+.talent-composition-workspace__tip button:hover {
+  color: var(--text-primary);
+}
+
+@media (max-width: 1200px) {
+  .talent-composition-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

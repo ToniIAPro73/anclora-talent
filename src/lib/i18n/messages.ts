@@ -524,6 +524,36 @@ export type AppMessages = {
     rulesExportGateBlock: string;
     rulesSave: string;
     rulesSaved: string;
+    compositionSectionPaginationLabel: string;
+    compositionSectionPaginationDesc: string;
+    compositionSectionTypographyLabel: string;
+    compositionSectionTypographyDesc: string;
+    compositionSectionStructureLabel: string;
+    compositionSectionStructureDesc: string;
+    compositionSectionNumberingLabel: string;
+    compositionSectionNumberingDesc: string;
+    compositionSectionExportLabel: string;
+    compositionSectionExportDesc: string;
+    compositionPresetsHeading: string;
+    compositionPresetsSubtitle: string;
+    compositionResetAction: string;
+    compositionMarginsHeading: string;
+    compositionAppliedTypographyHeading: string;
+    compositionAppliedTypographySubtitle: string;
+    compositionEditTypographyAction: string;
+    compositionSave: string;
+    compositionSaved: string;
+    compositionHealthSubtitle: string;
+    compositionHealthCleanMessage: string;
+    compositionHealthIssuesMessage: string;
+    compositionPreflightSubtitle: string;
+    compositionReviewInPreviewAction: string;
+    compositionTipTitle: string;
+    compositionTipBody: string;
+    compositionTipDismiss: string;
+    compositionStructureEmptyMessage: string;
+    compositionStatViolationsLabel: string;
+    compositionStatRecompositionsLabel: string;
     healthPanelEyebrow: string;
     healthPanelTitle: string;
     healthNoViolations: string;
@@ -1939,6 +1969,36 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       rulesExportGateBlock: 'Bloquear exportación',
       rulesSave: 'Guardar reglas',
       rulesSaved: 'Reglas guardadas',
+      compositionSectionPaginationLabel: 'Paginación',
+      compositionSectionPaginationDesc: 'Tamaño, márgenes y reglas de página',
+      compositionSectionTypographyLabel: 'Tipografía',
+      compositionSectionTypographyDesc: 'Fuentes, tamaños y espaciado',
+      compositionSectionStructureLabel: 'Estructura',
+      compositionSectionStructureDesc: 'Capítulos, encabezados y jerarquías',
+      compositionSectionNumberingLabel: 'Numeración',
+      compositionSectionNumberingDesc: 'Figuras y tablas',
+      compositionSectionExportLabel: 'Exportación',
+      compositionSectionExportDesc: 'Formatos y ajustes de salida',
+      compositionPresetsHeading: 'Preset de composición',
+      compositionPresetsSubtitle: 'Elige una configuración base y ajústala a tu proyecto.',
+      compositionResetAction: 'Restablecer',
+      compositionMarginsHeading: 'Márgenes',
+      compositionAppliedTypographyHeading: 'Ajustes de tipografía aplicados',
+      compositionAppliedTypographySubtitle: 'Vista rápida de los ajustes principales para esta maquetación.',
+      compositionEditTypographyAction: 'Editar tipografía',
+      compositionSave: 'Guardar composición',
+      compositionSaved: 'Composición guardada',
+      compositionHealthSubtitle: 'Resultados de la última composición del documento.',
+      compositionHealthCleanMessage: 'El documento compone limpio. No se han encontrado problemas de maquetación. Listo para vista previa y exportación.',
+      compositionHealthIssuesMessage: 'El documento tiene {count} violaciones de reglas. Revísalas antes de exportar.',
+      compositionPreflightSubtitle: 'Verificación específica de requisitos de cada plataforma.',
+      compositionReviewInPreviewAction: 'Revisar en preview',
+      compositionTipTitle: 'Consejo',
+      compositionTipBody: 'Usa la vista previa para comprobar saltos de capítulo, viudas/huérfanas y el aspecto real de la paginación.',
+      compositionTipDismiss: 'Cerrar consejo',
+      compositionStructureEmptyMessage: 'Aún no se ha detectado estructura para este documento.',
+      compositionStatViolationsLabel: 'violaciones',
+      compositionStatRecompositionsLabel: 'recomposiciones',
       healthPanelEyebrow: 'Composición',
       healthPanelTitle: 'Salud del documento',
       healthNoViolations: 'Cero violaciones. El documento compone limpio.',
@@ -3384,6 +3444,36 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       rulesExportGateBlock: 'Block export',
       rulesSave: 'Save rules',
       rulesSaved: 'Rules saved',
+      compositionSectionPaginationLabel: 'Pagination',
+      compositionSectionPaginationDesc: 'Size, margins and page rules',
+      compositionSectionTypographyLabel: 'Typography',
+      compositionSectionTypographyDesc: 'Fonts, sizes and spacing',
+      compositionSectionStructureLabel: 'Structure',
+      compositionSectionStructureDesc: 'Chapters, headings and hierarchy',
+      compositionSectionNumberingLabel: 'Numbering',
+      compositionSectionNumberingDesc: 'Figures and tables',
+      compositionSectionExportLabel: 'Export',
+      compositionSectionExportDesc: 'Output formats and settings',
+      compositionPresetsHeading: 'Composition preset',
+      compositionPresetsSubtitle: 'Choose a base configuration and adjust it to your project.',
+      compositionResetAction: 'Reset',
+      compositionMarginsHeading: 'Margins',
+      compositionAppliedTypographyHeading: 'Applied typography settings',
+      compositionAppliedTypographySubtitle: 'Quick view of the main settings for this layout.',
+      compositionEditTypographyAction: 'Edit typography',
+      compositionSave: 'Save composition',
+      compositionSaved: 'Composition saved',
+      compositionHealthSubtitle: "Results from the document's latest composition.",
+      compositionHealthCleanMessage: 'The document composes clean. No layout issues were found. Ready for preview and export.',
+      compositionHealthIssuesMessage: 'The document has {count} rule violations. Review them before exporting.',
+      compositionPreflightSubtitle: "Platform-specific checks for each channel's requirements.",
+      compositionReviewInPreviewAction: 'Review in preview',
+      compositionTipTitle: 'Tip',
+      compositionTipBody: 'Use the preview to check chapter breaks, widows/orphans and the real look of the pagination.',
+      compositionTipDismiss: 'Dismiss tip',
+      compositionStructureEmptyMessage: 'No structure has been detected for this document yet.',
+      compositionStatViolationsLabel: 'violations',
+      compositionStatRecompositionsLabel: 'recompositions',
       healthPanelEyebrow: 'Composition',
       healthPanelTitle: 'Document health',
       healthNoViolations: 'Zero violations. The document composes cleanly.',

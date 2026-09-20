@@ -30,6 +30,7 @@ vi.mock('@/lib/projects/actions', () => ({
   createEditableCopyAction: vi.fn().mockResolvedValue(undefined),
   saveProjectCompositionAction: vi.fn().mockResolvedValue({ ok: true }),
   saveUserCompositionDefaultsAction: vi.fn().mockResolvedValue({ ok: true }),
+  saveProjectRulesAction: vi.fn().mockResolvedValue({ ok: true }),
   setBrandForAllProjectsAction: vi.fn().mockResolvedValue({ ok: true }),
 }));
 

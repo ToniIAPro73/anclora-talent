@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ContentSummary } from './ContentSummary';
 import { ContentTabs, contentTabLabels, type ContentTabId } from './ContentTabs';
 import { MetadataWorkspace } from './metadata/MetadataWorkspace';
-import { DocumentRulesPanel } from '../DocumentRulesPanel';
+import { CompositionWorkspace } from './composition/CompositionWorkspace';
 import { BrandProfilePanel } from '../BrandProfilePanel';
 import { DocumentHealthPanel } from '../DocumentHealthPanel';
 import { HistoryPanel } from '../HistoryPanel';
@@ -107,7 +107,15 @@ export function ContentWorkspace({
         )}
 
         {activeTab === 'composicion' && (
-          <DocumentRulesPanel key={`rules-${project.updatedAt}`} project={project} copy={copy} />
+          <CompositionWorkspace
+            key={`composition-${project.updatedAt}`}
+            project={project}
+            copy={copy}
+            documentViolations={documentViolations}
+            preflightChecks={preflightChecks}
+            telemetry={telemetry}
+            onNavigateStep={onNavigateStep}
+          />
         )}
 
         {activeTab === 'marca' && (
