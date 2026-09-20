@@ -1270,6 +1270,25 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
   height: 1.75rem;
 }
 
+/* The connector's `width: calc(100% - 2rem)` is meant to span the ~1/8-wide
+   flex item, but .ac-stepper__trigger (position:relative, sized to its own
+   28px dot) is the nearest positioned ancestor — so "100%" resolved to 28px
+   and the connector was rendering at 0 width, invisible. Drop the trigger
+   as a positioning context so the connector bubbles up to .ac-stepper__item
+   (already position:relative, the full flex-item width) instead. */
+.talent-content-stepper-bar .ac-stepper__trigger {
+  position: static;
+}
+
+/* Now that .ac-stepper__item (dot row + label row) is the connector's
+   positioning ancestor instead of the dot-sized trigger, "top: 50%" from
+   the base stylesheet centers on the whole item's height instead of the
+   dot's — pin it to the dot's own vertical center (half of the 1.75rem
+   dot) instead. */
+.talent-content-stepper-bar .ac-stepper__connector {
+  top: 0.875rem;
+}
+
 /* The design-system default renders labels as an uppercase, heavily
    tracked micro-label (0.62rem, 800 weight, 0.16em tracking) — too small
    and too "fine print" next to the approved mockup's plain sentence-case
