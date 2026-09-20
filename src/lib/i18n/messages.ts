@@ -1187,6 +1187,21 @@ export type AppMessages = {
     unchaptered: string;
     restoreButton: string;
     restoring: string;
+    currentBadge: string;
+    summaryHeading: string;
+    chaptersLabel: string;
+    metadataLabel: string;
+    metadataUnchanged: string;
+    noChanges: string;
+    initialVersionNote: string;
+    comparisonHeading: string;
+    actionsHeading: string;
+    actionsSubtitle: string;
+    restoreDesc: string;
+    saveDesc: string;
+    compareWithOtherAction: string;
+    compareWithOtherDesc: string;
+    currentVersionNote: string;
     errors: {
       unavailable: string;
       notFound: string;
@@ -2771,6 +2786,21 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       unchaptered: 'Sin capítulo',
       restoreButton: 'Restaurar',
       restoring: 'Restaurando…',
+      currentBadge: 'Actual',
+      summaryHeading: 'Resumen de cambios',
+      chaptersLabel: 'Capítulos',
+      metadataLabel: 'Metadatos',
+      metadataUnchanged: 'Sin cambios',
+      noChanges: 'Sin cambios',
+      initialVersionNote: 'Esta es la versión inicial: no hay una versión anterior con la que comparar.',
+      comparisonHeading: 'Comparativa de cambios principales',
+      actionsHeading: 'Acciones de versión',
+      actionsSubtitle: 'Gestiona esta versión de tu publicación',
+      restoreDesc: 'Vuelve a esta versión como la principal',
+      saveDesc: 'Genera una nueva versión con los cambios actuales',
+      compareWithOtherAction: 'Comparar con otra versión',
+      compareWithOtherDesc: 'Elige dos versiones para ver las diferencias',
+      currentVersionNote: 'Esta ya es la versión actual.',
       errors: {
         unavailable: 'No se pudo completar la operación. Inténtalo más tarde.',
         notFound: 'No encontramos esta versión.',
@@ -4351,6 +4381,21 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       unchaptered: 'No chapter',
       restoreButton: 'Restore',
       restoring: 'Restoring…',
+      currentBadge: 'Current',
+      summaryHeading: 'Summary of changes',
+      chaptersLabel: 'Chapters',
+      metadataLabel: 'Metadata',
+      metadataUnchanged: 'No changes',
+      noChanges: 'No changes',
+      initialVersionNote: 'This is the initial version: there is no earlier version to compare against.',
+      comparisonHeading: 'Comparison of main changes',
+      actionsHeading: 'Version actions',
+      actionsSubtitle: 'Manage this version of your publication',
+      restoreDesc: 'Bring this version back as the main one',
+      saveDesc: 'Create a new version with the current changes',
+      compareWithOtherAction: 'Compare with another version',
+      compareWithOtherDesc: 'Pick two versions to see the differences',
+      currentVersionNote: 'This is already the current version.',
       errors: {
         unavailable: 'The operation could not be completed. Please try again later.',
         notFound: 'We could not find this version.',

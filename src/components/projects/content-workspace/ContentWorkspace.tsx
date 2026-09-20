@@ -9,7 +9,7 @@ import { CompositionWorkspace } from './composition/CompositionWorkspace';
 import { BrandWorkspace } from './brand/BrandWorkspace';
 import { PreflightWorkspace } from './preflight/PreflightWorkspace';
 import { DocumentHealthPanel } from '../DocumentHealthPanel';
-import { HistoryPanel } from '../HistoryPanel';
+import { VersionsWorkspace } from './versions/VersionsWorkspace';
 import { CoAuthorPanel } from '../CoAuthorPanel';
 import { saveDocumentSnapshotAction } from '@/lib/snapshots/actions';
 import { resolveDocumentRules } from '@/lib/compose/rules';
@@ -165,7 +165,7 @@ export function ContentWorkspace({
         )}
 
         {activeTab === 'versiones' && history && (
-          <HistoryPanel copy={history.copy} projectId={project.id} snapshots={history.snapshots} />
+          <VersionsWorkspace copy={history.copy} projectId={project.id} snapshots={history.snapshots} />
         )}
       </div>
     </div>
