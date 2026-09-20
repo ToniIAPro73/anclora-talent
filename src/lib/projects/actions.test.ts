@@ -33,6 +33,27 @@ describe('project factories', () => {
     expect(updated.document.chapters[0].blocks[0].content).toContain('editado');
   });
 
+  test('a metadata-only save (no blocks submitted) leaves the chapter content untouched', () => {
+    // Regression: the Metadatos tab's title/subtitle/author form never
+    // submits blockId/blockContent fields, so `blocks` arrives as `[]`.
+    // That must preserve the chapter's existing content, not wipe it.
+    const project = createProjectRecord('user_123', { title: 'Manual de pruebas' });
+    const chapter = project.document.chapters[0];
+    expect(chapter.blocks.length).toBeGreaterThan(0);
+
+    const updated = updateProjectDocument(project, {
+      title: project.document.title,
+      subtitle: project.document.subtitle,
+      author: 'Nuevo autor',
+      chapterTitle: chapter.title,
+      chapterId: chapter.id,
+      blocks: [],
+    });
+
+    expect(updated.document.author).toBe('Nuevo autor');
+    expect(updated.document.chapters[0].blocks).toEqual(chapter.blocks);
+  });
+
   test('updates cover metadata and background references', () => {
     const project = createProjectRecord('user_123', { title: 'Manual de pruebas' });
     const updated = updateProjectCover(project, {

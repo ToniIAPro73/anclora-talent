@@ -183,15 +183,23 @@ export function updateProjectDocument(project: ProjectRecord, input: UpdateDocum
   const updatedChapter = {
     ...chapter,
     title: input.chapterTitle,
-    blocks: input.blocks.map((block, bIdx) => {
-      const existing = chapter.blocks.find((b) => b.id === block.id);
-      return {
-        id: block.id || randomUUID(),
-        content: block.content,
-        type: existing?.type || (bIdx === 0 && block.content.trimStart().startsWith('<h') ? 'heading' : 'paragraph'),
-        order: bIdx,
-      };
-    }),
+    // A metadata-only save (title/subtitle/author) submits no block fields
+    // at all, so `input.blocks` arrives empty — that must mean "leave the
+    // chapter's content alone", not "replace it with nothing". Only a
+    // caller that actually supplies blocks (the chapter editor) gets to
+    // replace them.
+    blocks:
+      input.blocks.length > 0
+        ? input.blocks.map((block, bIdx) => {
+            const existing = chapter.blocks.find((b) => b.id === block.id);
+            return {
+              id: block.id || randomUUID(),
+              content: block.content,
+              type: existing?.type || (bIdx === 0 && block.content.trimStart().startsWith('<h') ? 'heading' : 'paragraph'),
+              order: bIdx,
+            };
+          })
+        : chapter.blocks,
   };
 
   const updatedChapters = project.document.chapters.map((ch, i) =>
