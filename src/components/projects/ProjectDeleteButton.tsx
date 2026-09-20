@@ -22,7 +22,7 @@ export function ProjectDeleteButton({
       }}
     >
       <input type="hidden" name="projectId" value={projectId} data-testid="delete-project-id-input" />
-      <button type="submit" className="project-card-menu__delete">
+      <button type="submit" className="project-card-menu__delete" data-testid="delete-project-button">
         <Trash2 className="h-4 w-4" aria-hidden="true" />
         <span>{label}</span>
       </button>
