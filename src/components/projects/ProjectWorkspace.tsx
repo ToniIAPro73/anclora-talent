@@ -599,7 +599,7 @@ export function ProjectWorkspace({
   })();
 
   return (
-    <div className="ac-workspace-stage talent-workspace-stage space-y-8" data-testid="project-workspace">
+    <div className="ac-workspace-stage talent-workspace-stage" data-testid="project-workspace">
       {/* Header: portalled into the shared app shell's compact editor topbar
           (see AppShell.tsx's #talent-editor-topbar-slot) so the whole app
           shows one merged, compact header row instead of two stacked ones. */}

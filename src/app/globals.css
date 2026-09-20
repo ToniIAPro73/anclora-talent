@@ -1555,14 +1555,12 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
   }
 }
 
-.talent-workspace-stage.space-y-8 > * + * {
-  margin-top: 1.25rem;
-}
-
-@media (min-width: 769px) {
-  .talent-workspace-stage.space-y-8 .ac-section-heading__title {
-    font-size: clamp(2rem, 3vw, 2.75rem);
-  }
+/* Single source of vertical rhythm between the stepper bar and the step's
+   content — replaces the old grid gap + Tailwind space-y-8 combo, which
+   silently compounded (grid gap + a reversed space-y margin) into a ~76px
+   gap instead of the intended ~12px. */
+.talent-workspace-stage {
+  gap: 12px;
 }
 
 .talent-workspace-stage .ac-workspace-stage__actions {
