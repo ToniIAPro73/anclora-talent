@@ -7,6 +7,7 @@ import { ContentTabs, contentTabLabels, type ContentTabId } from './ContentTabs'
 import { MetadataWorkspace } from './metadata/MetadataWorkspace';
 import { CompositionWorkspace } from './composition/CompositionWorkspace';
 import { BrandWorkspace } from './brand/BrandWorkspace';
+import { PreflightWorkspace } from './preflight/PreflightWorkspace';
 import { DocumentHealthPanel } from '../DocumentHealthPanel';
 import { HistoryPanel } from '../HistoryPanel';
 import { CoAuthorPanel } from '../CoAuthorPanel';
@@ -130,11 +131,21 @@ export function ContentWorkspace({
 
         {activeTab === 'preflight' && (
           <div className="flex flex-col gap-6">
+            <PreflightWorkspace
+              key={`preflight-${project.updatedAt}`}
+              project={project}
+              copy={copy}
+              documentViolations={documentViolations}
+              preflightChecks={preflightChecks}
+              locale={locale}
+              onOpenMetadata={() => setActiveTab('metadatos')}
+              onOpenComposition={() => setActiveTab('composicion')}
+              onNavigateStep={onNavigateStep}
+            />
             <DocumentHealthPanel
               project={project}
               violations={documentViolations}
               copy={copy}
-              checks={preflightChecks}
               diff={diff}
               recomposedFromPage={recomposedFromPage}
               telemetry={telemetry}

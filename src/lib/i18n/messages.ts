@@ -569,6 +569,50 @@ export type AppMessages = {
     preflightSeverityError: string;
     preflightSeverityWarning: string;
     preflightSeverityInfo: string;
+    preflightWorkspaceChannelsHeading: string;
+    preflightWorkspaceChannelsSubtitle: string;
+    preflightWorkspaceChannelKdpDesc: string;
+    preflightWorkspaceChannelIngramDesc: string;
+    preflightWorkspaceChannelKoboDesc: string;
+    preflightWorkspaceGenericChannelLabel: string;
+    preflightWorkspaceGenericChannelDesc: string;
+    preflightWorkspaceStatusReady: string;
+    preflightWorkspaceSummaryHeading: string;
+    preflightWorkspaceSummarySubtitle: string;
+    preflightWorkspaceStatBlocking: string;
+    preflightWorkspaceStatWarnings: string;
+    preflightWorkspaceStatInfo: string;
+    preflightWorkspaceInfoNote: string;
+    preflightWorkspaceIncidencesHeading: string;
+    preflightWorkspaceIncidencesSubtitle: string;
+    preflightWorkspaceFilterAll: string;
+    preflightWorkspaceFilterErrors: string;
+    preflightWorkspaceFilterWarnings: string;
+    preflightWorkspaceFilterInfo: string;
+    preflightWorkspaceAreaLabel: string;
+    preflightWorkspaceImpactLabel: string;
+    preflightWorkspaceImpactBlocking: string;
+    preflightWorkspaceImpactWarning: string;
+    preflightWorkspaceImpactInfo: string;
+    preflightWorkspaceGoToMetadataAction: string;
+    preflightWorkspaceGoToCompositionAction: string;
+    preflightWorkspaceViewInPreviewAction: string;
+    preflightWorkspaceAreaMetadata: string;
+    preflightWorkspaceAreaStructure: string;
+    preflightWorkspaceAreaAccessibility: string;
+    preflightWorkspaceReadyHeading: string;
+    preflightWorkspaceReadySubtitle: string;
+    preflightWorkspaceReadyLabel: string;
+    preflightWorkspaceChecklistHeading: string;
+    preflightWorkspaceChecklistSubtitle: string;
+    preflightWorkspaceChecklistOk: string;
+    preflightWorkspaceNextActionHeading: string;
+    preflightWorkspaceNextActionMetadata: string;
+    preflightWorkspaceNextActionStructure: string;
+    preflightWorkspaceNextActionAccessibility: string;
+    preflightWorkspaceNextActionBody: string;
+    preflightWorkspaceNextActionEmptyTitle: string;
+    preflightWorkspaceNextActionEmptyBody: string;
     /** Localized message templates per preflight rule key (`{param}` placeholders). */
     preflightRules: Record<string, string>;
     aiAssistantEyebrow: string;
@@ -2076,6 +2120,50 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       preflightSeverityError: 'error',
       preflightSeverityWarning: 'aviso',
       preflightSeverityInfo: 'info',
+      preflightWorkspaceChannelsHeading: 'Canales de publicación',
+      preflightWorkspaceChannelsSubtitle: 'Valida tu publicación en todos los canales',
+      preflightWorkspaceChannelKdpDesc: 'Amazon Kindle Direct Publishing',
+      preflightWorkspaceChannelIngramDesc: 'Distribución global',
+      preflightWorkspaceChannelKoboDesc: 'Kobo Writing Life',
+      preflightWorkspaceGenericChannelLabel: 'PDF / EPUB',
+      preflightWorkspaceGenericChannelDesc: 'Archivo de distribución',
+      preflightWorkspaceStatusReady: 'Listo',
+      preflightWorkspaceSummaryHeading: 'Resumen de incidencias',
+      preflightWorkspaceSummarySubtitle: 'Total en los canales de publicación',
+      preflightWorkspaceStatBlocking: 'bloqueos',
+      preflightWorkspaceStatWarnings: 'avisos',
+      preflightWorkspaceStatInfo: 'informaciones',
+      preflightWorkspaceInfoNote: 'Corrige los errores bloqueantes para poder publicar tu libro en los canales seleccionados.',
+      preflightWorkspaceIncidencesHeading: 'Incidencias · {channel}',
+      preflightWorkspaceIncidencesSubtitle: 'Revisa y soluciona las incidencias detectadas en {channel}',
+      preflightWorkspaceFilterAll: 'Todos',
+      preflightWorkspaceFilterErrors: 'Errores',
+      preflightWorkspaceFilterWarnings: 'Avisos',
+      preflightWorkspaceFilterInfo: 'Info',
+      preflightWorkspaceAreaLabel: 'Área afectada',
+      preflightWorkspaceImpactLabel: 'Impacto',
+      preflightWorkspaceImpactBlocking: 'Bloquea la publicación en {channel}',
+      preflightWorkspaceImpactWarning: 'Requiere revisión, no bloquea la publicación',
+      preflightWorkspaceImpactInfo: 'Sugerencia de mejora, no bloquea',
+      preflightWorkspaceGoToMetadataAction: 'Ir a Metadatos',
+      preflightWorkspaceGoToCompositionAction: 'Ir a Composición',
+      preflightWorkspaceViewInPreviewAction: 'Ver en preview',
+      preflightWorkspaceAreaMetadata: 'Metadatos',
+      preflightWorkspaceAreaStructure: 'Estructura',
+      preflightWorkspaceAreaAccessibility: 'Accesibilidad y medios',
+      preflightWorkspaceReadyHeading: 'Listo para publicar',
+      preflightWorkspaceReadySubtitle: 'Estado general de la publicación',
+      preflightWorkspaceReadyLabel: 'Preparación para publicación',
+      preflightWorkspaceChecklistHeading: 'Checklist por área',
+      preflightWorkspaceChecklistSubtitle: 'Requisitos detectados automáticamente en el documento',
+      preflightWorkspaceChecklistOk: 'Correcto',
+      preflightWorkspaceNextActionHeading: 'Siguiente acción',
+      preflightWorkspaceNextActionMetadata: 'Completar metadatos',
+      preflightWorkspaceNextActionStructure: 'Revisar composición',
+      preflightWorkspaceNextActionAccessibility: 'Revisar accesibilidad',
+      preflightWorkspaceNextActionBody: 'Soluciona el error en {area} para continuar con la publicación en {channel}.',
+      preflightWorkspaceNextActionEmptyTitle: 'Sin bloqueos',
+      preflightWorkspaceNextActionEmptyBody: 'No hay errores que impidan publicar. Revisa los avisos para pulir la publicación.',
       preflightRules: {
         'kdp.metadata.title': 'KDP exige un título en los metadatos de la publicación.',
         'kdp.metadata.author': 'KDP exige autor/a en los metadatos de la publicación.',
@@ -3613,6 +3701,50 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       preflightSeverityError: 'error',
       preflightSeverityWarning: 'warning',
       preflightSeverityInfo: 'info',
+      preflightWorkspaceChannelsHeading: 'Publishing channels',
+      preflightWorkspaceChannelsSubtitle: 'Validate your publication across every channel',
+      preflightWorkspaceChannelKdpDesc: 'Amazon Kindle Direct Publishing',
+      preflightWorkspaceChannelIngramDesc: 'Global distribution',
+      preflightWorkspaceChannelKoboDesc: 'Kobo Writing Life',
+      preflightWorkspaceGenericChannelLabel: 'PDF / EPUB',
+      preflightWorkspaceGenericChannelDesc: 'Distribution file',
+      preflightWorkspaceStatusReady: 'Ready',
+      preflightWorkspaceSummaryHeading: 'Findings summary',
+      preflightWorkspaceSummarySubtitle: 'Total across publishing channels',
+      preflightWorkspaceStatBlocking: 'blocking',
+      preflightWorkspaceStatWarnings: 'warnings',
+      preflightWorkspaceStatInfo: 'notes',
+      preflightWorkspaceInfoNote: 'Fix the blocking errors to publish your book on the selected channels.',
+      preflightWorkspaceIncidencesHeading: 'Findings · {channel}',
+      preflightWorkspaceIncidencesSubtitle: 'Review and resolve the findings detected on {channel}',
+      preflightWorkspaceFilterAll: 'All',
+      preflightWorkspaceFilterErrors: 'Errors',
+      preflightWorkspaceFilterWarnings: 'Warnings',
+      preflightWorkspaceFilterInfo: 'Info',
+      preflightWorkspaceAreaLabel: 'Affected area',
+      preflightWorkspaceImpactLabel: 'Impact',
+      preflightWorkspaceImpactBlocking: 'Blocks publishing on {channel}',
+      preflightWorkspaceImpactWarning: 'Needs review, does not block publishing',
+      preflightWorkspaceImpactInfo: 'Improvement suggestion, does not block',
+      preflightWorkspaceGoToMetadataAction: 'Go to Metadata',
+      preflightWorkspaceGoToCompositionAction: 'Go to Composition',
+      preflightWorkspaceViewInPreviewAction: 'View in preview',
+      preflightWorkspaceAreaMetadata: 'Metadata',
+      preflightWorkspaceAreaStructure: 'Structure',
+      preflightWorkspaceAreaAccessibility: 'Accessibility and media',
+      preflightWorkspaceReadyHeading: 'Ready to publish',
+      preflightWorkspaceReadySubtitle: 'Overall publication status',
+      preflightWorkspaceReadyLabel: 'Publishing readiness',
+      preflightWorkspaceChecklistHeading: 'Checklist by area',
+      preflightWorkspaceChecklistSubtitle: 'Requirements detected automatically in the document',
+      preflightWorkspaceChecklistOk: 'Correct',
+      preflightWorkspaceNextActionHeading: 'Next action',
+      preflightWorkspaceNextActionMetadata: 'Complete metadata',
+      preflightWorkspaceNextActionStructure: 'Review composition',
+      preflightWorkspaceNextActionAccessibility: 'Review accessibility',
+      preflightWorkspaceNextActionBody: 'Fix the error in {area} to continue publishing on {channel}.',
+      preflightWorkspaceNextActionEmptyTitle: 'No blockers',
+      preflightWorkspaceNextActionEmptyBody: 'No errors are blocking publishing. Review the warnings to polish the publication.',
       preflightRules: {
         'kdp.metadata.title': 'KDP requires a title in the publication metadata.',
         'kdp.metadata.author': 'KDP requires an author in the publication metadata.',

@@ -3425,3 +3425,358 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Pre-flight tab: channel list + summary (left) / incidence list (center) /
+   readiness + checklist + next action (right). */
+.talent-preflight-workspace {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.talent-preflight-workspace__channels,
+.talent-preflight-workspace__incidences,
+.talent-preflight-workspace__readiness {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.talent-preflight-workspace__channel-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.talent-preflight-workspace__channel-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: var(--surface-soft);
+  text-align: left;
+  transition: border-color 0.15s ease;
+}
+
+.talent-preflight-workspace__channel-card:hover {
+  border-color: var(--accent);
+}
+
+.talent-preflight-workspace__channel-card[data-active='true'] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-soft));
+}
+
+.talent-preflight-workspace__channel-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent-text);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.talent-preflight-workspace__channel-name {
+  display: block;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.talent-preflight-workspace__channel-desc {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+}
+
+.talent-preflight-workspace__channel-count {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.talent-preflight-workspace__channel-count[data-state='ok'] {
+  color: var(--success);
+}
+
+.talent-preflight-workspace__channel-count[data-state='warn'] {
+  color: var(--warning);
+}
+
+.talent-preflight-workspace__summary-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.talent-preflight-workspace__summary-stats > div {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 10px 6px;
+  border-radius: 12px;
+  background: var(--surface-soft);
+  text-align: center;
+}
+
+.talent-preflight-workspace__summary-stats > div p {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.talent-preflight-workspace__summary-stats > div span {
+  font-size: 0.62rem;
+  color: var(--text-tertiary);
+}
+
+.talent-preflight-workspace__summary-stats > div[data-state='error'] p {
+  color: var(--danger);
+}
+
+.talent-preflight-workspace__summary-stats > div[data-state='warn'] p {
+  color: var(--warning);
+}
+
+.talent-preflight-workspace__note {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--surface-soft);
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.talent-preflight-workspace__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.talent-preflight-workspace__filter {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.talent-preflight-workspace__filter[data-active='true'] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.talent-preflight-workspace__incidence-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.talent-preflight-workspace__incidence {
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: var(--surface-soft);
+  overflow: hidden;
+}
+
+.talent-preflight-workspace__incidence[data-severity='error'] {
+  border-color: color-mix(in srgb, var(--danger) 40%, var(--border-subtle));
+}
+
+.talent-preflight-workspace__incidence-header {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  text-align: left;
+}
+
+.talent-preflight-workspace__incidence-severity {
+  flex-shrink: 0;
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+}
+
+.talent-preflight-workspace__incidence-rule {
+  flex-shrink: 0;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--accent-text);
+}
+
+.talent-preflight-workspace__incidence-message {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.talent-preflight-workspace__incidence-body {
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.talent-preflight-workspace__incidence-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.talent-preflight-workspace__incidence-meta-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  margin-bottom: 4px;
+}
+
+.talent-preflight-workspace__chip {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.talent-preflight-workspace__chip[data-tone='error'] {
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+  color: var(--danger);
+}
+
+.talent-preflight-workspace__incidence-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.talent-preflight-workspace__readiness-value {
+  margin: 10px 0 0;
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.talent-preflight-workspace__readiness-bar {
+  height: 8px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-soft);
+}
+
+.talent-preflight-workspace__readiness-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.talent-preflight-workspace__readiness-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.talent-preflight-workspace__readiness-stats > div {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 10px 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  text-align: center;
+  color: var(--text-tertiary);
+}
+
+.talent-preflight-workspace__readiness-stats > div p {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.talent-preflight-workspace__readiness-stats > div span {
+  font-size: 0.6rem;
+}
+
+.talent-preflight-workspace__readiness-stats > div[data-state='error'] {
+  color: var(--danger);
+}
+
+.talent-preflight-workspace__readiness-stats > div[data-state='warn'] {
+  color: var(--warning);
+}
+
+.talent-preflight-workspace__checklist {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.talent-preflight-workspace__checklist-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.talent-preflight-workspace__checklist-row:disabled {
+  cursor: default;
+}
+
+.talent-preflight-workspace__next-action {
+  padding: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  background: var(--surface-soft);
+}
+
+.talent-preflight-workspace__next-action-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 1200px) {
+  .talent-preflight-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
