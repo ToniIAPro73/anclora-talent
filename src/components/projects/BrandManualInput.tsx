@@ -9,10 +9,12 @@ export function BrandManualInput({
   copy,
   onFileChange,
   onPreprocessingChange,
+  onWarnings,
 }: {
   copy: AppMessages['project'];
   onFileChange?: (fileName: string, profileId?: string) => void;
   onPreprocessingChange?: (isProcessing: boolean) => void;
+  onWarnings?: (warnings: string[]) => void;
 }) {
   const [isPending, startTransition] = useTransition();
   const [brandProfileId, setBrandProfileId] = useState<string | null>(null);
@@ -43,6 +45,7 @@ export function BrandManualInput({
           setBrandProfileName(result.name || file.name);
           setStatus('ready');
           onFileChange?.(result.name || file.name, result.profileId);
+          onWarnings?.(result.warnings);
         } else {
           setStatus('error');
           setErrorMsg(copy.brandManualError);
@@ -64,6 +67,7 @@ export function BrandManualInput({
     setErrorMsg('');
     onFileChange?.('');
     onPreprocessingChange?.(false);
+    onWarnings?.([]);
   };
 
   return (

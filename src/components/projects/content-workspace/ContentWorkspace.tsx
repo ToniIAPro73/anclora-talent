@@ -6,7 +6,7 @@ import { ContentSummary } from './ContentSummary';
 import { ContentTabs, contentTabLabels, type ContentTabId } from './ContentTabs';
 import { MetadataWorkspace } from './metadata/MetadataWorkspace';
 import { CompositionWorkspace } from './composition/CompositionWorkspace';
-import { BrandProfilePanel } from '../BrandProfilePanel';
+import { BrandWorkspace } from './brand/BrandWorkspace';
 import { DocumentHealthPanel } from '../DocumentHealthPanel';
 import { HistoryPanel } from '../HistoryPanel';
 import { CoAuthorPanel } from '../CoAuthorPanel';
@@ -119,7 +119,13 @@ export function ContentWorkspace({
         )}
 
         {activeTab === 'marca' && (
-          <BrandProfilePanel key={`brand-${project.updatedAt}`} project={project} profiles={brandProfiles} copy={copy} />
+          <BrandWorkspace
+            key={`brand-${project.updatedAt}`}
+            project={project}
+            profiles={brandProfiles}
+            copy={copy}
+            locale={locale}
+          />
         )}
 
         {activeTab === 'preflight' && (

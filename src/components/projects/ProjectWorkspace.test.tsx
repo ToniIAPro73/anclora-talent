@@ -38,6 +38,8 @@ vi.mock('@/lib/projects/actions', () => ({
 // real brand module never pulls the db/neon chain into jsdom.
 vi.mock('@/lib/brand/actions', () => ({
   setProjectBrandProfileAction: vi.fn().mockResolvedValue({ ok: true }),
+  setBrandProfileStatusAction: vi.fn().mockResolvedValue({ ok: true, status: 'active' }),
+  createBrandProfileAction: vi.fn().mockResolvedValue({ ok: true, profileId: 'profile-1', name: 'Mock brand', warnings: [] }),
 }));
 
 // Tiptap requires a real browser DOM — stub it out for jsdom

@@ -3153,3 +3153,275 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Marca tab: applied identity (left) / visual system + surfaces (center) /
+   status + tools (right). */
+.talent-brand-workspace {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(0, 2fr) minmax(260px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.talent-brand-workspace__identity,
+.talent-brand-workspace__visual,
+.talent-brand-workspace__sidebar {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.talent-brand-workspace__profile-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: var(--surface-soft);
+}
+
+.talent-brand-workspace__profile-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent-text);
+}
+
+.talent-brand-workspace__status-pill {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.talent-brand-workspace__status-pill--active {
+  background: color-mix(in srgb, var(--success) 16%, transparent);
+  color: var(--success);
+}
+
+.talent-brand-workspace__status-pill--draft {
+  background: color-mix(in srgb, var(--warning) 16%, transparent);
+  color: var(--warning);
+}
+
+.talent-brand-workspace__status-pill--deprecated {
+  background: color-mix(in srgb, var(--text-tertiary) 20%, transparent);
+  color: var(--text-tertiary);
+}
+
+.talent-brand-workspace__meta {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 0.8rem;
+}
+
+.talent-brand-workspace__meta dt {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+}
+
+.talent-brand-workspace__meta dd {
+  color: var(--text-primary);
+}
+
+.talent-brand-workspace__palette {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.talent-brand-workspace__swatch {
+  padding: 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--surface-soft);
+}
+
+.talent-brand-workspace__swatch-color {
+  display: block;
+  width: 100%;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+}
+
+.talent-brand-workspace__swatch-hex {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.talent-brand-workspace__swatch-role {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.talent-brand-workspace__swatch-meta {
+  margin-top: 2px;
+  font-size: 0.64rem;
+  color: var(--text-tertiary);
+}
+
+.talent-brand-workspace__typefaces {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.talent-brand-workspace__typeface-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: var(--surface-soft);
+}
+
+.talent-brand-workspace__typeface-specimen {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.talent-brand-workspace__tokens {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.talent-brand-workspace__tokens li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+}
+
+.talent-brand-workspace__token-dot {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+}
+
+.talent-brand-workspace__surfaces {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.talent-brand-workspace__surfaces li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+}
+
+.talent-brand-workspace__surfaces li > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.talent-brand-workspace__checklist {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.talent-brand-workspace__checklist li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.82rem;
+}
+
+.talent-brand-workspace__checklist li p {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.talent-brand-workspace__checklist li span {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+.talent-brand-workspace__manage-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.talent-brand-workspace__manage-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+}
+
+.talent-brand-workspace__manage-list li > div {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+}
+
+.talent-brand-workspace__applied-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--success) 16%, transparent);
+  color: var(--success);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 1200px) {
+  .talent-brand-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .talent-brand-workspace__palette {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

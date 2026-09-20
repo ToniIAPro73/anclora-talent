@@ -636,6 +636,68 @@ export type AppMessages = {
     brandUploading: string;
     brandSaved: string;
     brandVersionLabel: string;
+    brandWorkspaceIdentityHeading: string;
+    brandWorkspaceIdentitySubtitle: string;
+    brandWorkspaceSourceLabel: string;
+    brandWorkspaceUploadDateLabel: string;
+    brandWorkspaceChangeProfileAction: string;
+    brandWorkspaceDisconnectAction: string;
+    brandWorkspaceAboutHeading: string;
+    brandWorkspaceAboutEmpty: string;
+    brandWorkspacePaletteEmpty: string;
+    brandWorkspaceTypefaceEmpty: string;
+    brandWorkspaceNoProfileTitle: string;
+    brandWorkspaceNoProfileBody: string;
+    brandWorkspaceVisualSystemHeading: string;
+    brandWorkspaceVisualSystemSubtitle: string;
+    brandWorkspacePaletteHeading: string;
+    brandWorkspaceTypographyHeading: string;
+    brandWorkspaceTypographyDisplayCaption: string;
+    brandWorkspaceTypographyBodyCaption: string;
+    brandWorkspaceTokensHeading: string;
+    brandWorkspaceTokenAccent: string;
+    brandWorkspaceTokenSurface: string;
+    brandWorkspaceTokenText: string;
+    brandWorkspaceTokenAccentMuted: string;
+    brandWorkspacePaletteRoleInk: string;
+    brandWorkspacePaletteRolePaper: string;
+    brandWorkspacePaletteRoleAccent: string;
+    brandWorkspacePaletteRoleAccentMuted: string;
+    brandWorkspaceApplicationHeading: string;
+    brandWorkspaceApplicationSubtitle: string;
+    brandWorkspaceSurfaceDocument: string;
+    brandWorkspaceSurfaceExport: string;
+    brandWorkspaceSurfaceCover: string;
+    brandWorkspaceSurfaceBackCover: string;
+    brandWorkspaceStatusApplied: string;
+    brandWorkspaceStatusNotConnected: string;
+    brandWorkspaceStatusNone: string;
+    brandWorkspaceDocumentAppliedDesc: string;
+    brandWorkspaceExportAppliedDesc: string;
+    brandWorkspaceCoverNotConnectedDesc: string;
+    brandWorkspaceBackCoverNotConnectedDesc: string;
+    brandWorkspaceStatusHeading: string;
+    brandWorkspaceStatusSubtitle: string;
+    brandWorkspaceCheckManualTitle: string;
+    brandWorkspaceCheckManualBody: string;
+    brandWorkspaceCheckActiveTitle: string;
+    brandWorkspaceCheckActiveBodyOk: string;
+    brandWorkspaceCheckActiveBodyWarn: string;
+    brandWorkspaceCheckSurfacesTitle: string;
+    brandWorkspaceCheckSurfacesBody: string;
+    brandWorkspaceCheckDecoupledTitle: string;
+    brandWorkspaceCheckDecoupledBody: string;
+    brandWorkspaceToolsHeading: string;
+    brandWorkspaceToolsSubtitle: string;
+    brandWorkspaceManageHeading: string;
+    brandWorkspaceManageEmpty: string;
+    brandWorkspaceApplyAction: string;
+    brandWorkspaceAppliedBadge: string;
+    brandWorkspaceInfoNote: string;
+    brandWorkspaceUsageLabel: string;
+    brandConfidenceHigh: string;
+    brandConfidenceMedium: string;
+    brandConfidenceLow: string;
     reimportButton: string;
     reimportDialogTitle: string;
     reimportDialogDescription: string;
@@ -2099,6 +2161,68 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       brandUploading: 'Extrayendo…',
       brandSaved: 'Perfil de marca actualizado',
       brandVersionLabel: 'versión',
+      brandWorkspaceIdentityHeading: 'Identidad aplicada',
+      brandWorkspaceIdentitySubtitle: 'Perfil de marca en uso en esta publicación',
+      brandWorkspaceSourceLabel: 'Fuente',
+      brandWorkspaceUploadDateLabel: 'Fecha de carga',
+      brandWorkspaceChangeProfileAction: 'Cambiar perfil',
+      brandWorkspaceDisconnectAction: 'Desconectar',
+      brandWorkspaceAboutHeading: 'Acerca de este perfil',
+      brandWorkspaceAboutEmpty: 'Este perfil no tiene reglas de marca registradas en el manual analizado.',
+      brandWorkspacePaletteEmpty: 'No se detectaron colores declarados en el manual analizado.',
+      brandWorkspaceTypefaceEmpty: 'No se detectó esta tipografía en el manual analizado.',
+      brandWorkspaceNoProfileTitle: 'Sin identidad de marca aplicada',
+      brandWorkspaceNoProfileBody: 'Aplica un perfil existente o crea uno nuevo desde un manual de identidad en PDF.',
+      brandWorkspaceVisualSystemHeading: 'Sistema visual',
+      brandWorkspaceVisualSystemSubtitle: 'Elementos de identidad aplicados a esta publicación',
+      brandWorkspacePaletteHeading: 'Paleta de color',
+      brandWorkspaceTypographyHeading: 'Tipografías de la marca',
+      brandWorkspaceTypographyDisplayCaption: 'Títulos y destacados',
+      brandWorkspaceTypographyBodyCaption: 'Texto y datos',
+      brandWorkspaceTokensHeading: 'Tokens de marca aplicados',
+      brandWorkspaceTokenAccent: 'Acento',
+      brandWorkspaceTokenSurface: 'Superficie',
+      brandWorkspaceTokenText: 'Texto',
+      brandWorkspaceTokenAccentMuted: 'Acento secundario',
+      brandWorkspacePaletteRoleInk: 'Principal',
+      brandWorkspacePaletteRolePaper: 'Superficie',
+      brandWorkspacePaletteRoleAccent: 'Acento',
+      brandWorkspacePaletteRoleAccentMuted: 'Acento secundario',
+      brandWorkspaceApplicationHeading: 'Aplicación en la publicación',
+      brandWorkspaceApplicationSubtitle: 'Estado real de la identidad visual en cada superficie',
+      brandWorkspaceSurfaceDocument: 'Documento',
+      brandWorkspaceSurfaceExport: 'Exportación',
+      brandWorkspaceSurfaceCover: 'Portada',
+      brandWorkspaceSurfaceBackCover: 'Contraportada',
+      brandWorkspaceStatusApplied: 'Aplicado',
+      brandWorkspaceStatusNotConnected: 'No conectado',
+      brandWorkspaceStatusNone: 'Sin perfil',
+      brandWorkspaceDocumentAppliedDesc: 'Tipografías y colores aplicados a la composición',
+      brandWorkspaceExportAppliedDesc: 'Perfil incrustado en PDF y EPUB',
+      brandWorkspaceCoverNotConnectedDesc: 'La portada usa su propio estudio de diseño, independiente del perfil de marca',
+      brandWorkspaceBackCoverNotConnectedDesc: 'La contraportada usa su propio estudio de diseño, independiente del perfil de marca',
+      brandWorkspaceStatusHeading: 'Estado de identidad',
+      brandWorkspaceStatusSubtitle: 'Validación del perfil aplicado',
+      brandWorkspaceCheckManualTitle: 'Manual analizado',
+      brandWorkspaceCheckManualBody: '{fileName} procesado correctamente.',
+      brandWorkspaceCheckActiveTitle: 'Perfil activo',
+      brandWorkspaceCheckActiveBodyOk: 'Aplicado a esta publicación.',
+      brandWorkspaceCheckActiveBodyWarn: 'El perfil aplicado sigue en borrador.',
+      brandWorkspaceCheckSurfacesTitle: '{count} superficies vinculadas',
+      brandWorkspaceCheckSurfacesBody: 'Documento y exportación (PDF, EPUB).',
+      brandWorkspaceCheckDecoupledTitle: 'Reglas de estructura independientes',
+      brandWorkspaceCheckDecoupledBody: 'Convive con las reglas de maquetación del proyecto sin conflictos.',
+      brandWorkspaceToolsHeading: 'Herramientas',
+      brandWorkspaceToolsSubtitle: 'Gestiona perfiles de marca para tus publicaciones.',
+      brandWorkspaceManageHeading: 'Ver y aplicar perfiles',
+      brandWorkspaceManageEmpty: 'Todavía no has creado ningún perfil de marca.',
+      brandWorkspaceApplyAction: 'Aplicar',
+      brandWorkspaceAppliedBadge: 'Aplicado',
+      brandWorkspaceInfoNote: 'La identidad visual se aplica automáticamente a la composición y exportación del proyecto.',
+      brandWorkspaceUsageLabel: '{percent}% de uso',
+      brandConfidenceHigh: 'Confianza alta',
+      brandConfidenceMedium: 'Confianza media',
+      brandConfidenceLow: 'Confianza baja',
       reimportButton: 'Reimportar DOCX',
       reimportDialogTitle: 'Reimportar documento',
       reimportDialogDescription: 'Sube la versión revisada del archivo original. El contenido se fusiona por estructura: se conservan portada, contraportada, reglas y ajustes manuales.',
@@ -3574,6 +3698,68 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       brandUploading: 'Extracting…',
       brandSaved: 'Brand profile updated',
       brandVersionLabel: 'version',
+      brandWorkspaceIdentityHeading: 'Applied identity',
+      brandWorkspaceIdentitySubtitle: 'Brand profile in use on this publication',
+      brandWorkspaceSourceLabel: 'Source',
+      brandWorkspaceUploadDateLabel: 'Upload date',
+      brandWorkspaceChangeProfileAction: 'Change profile',
+      brandWorkspaceDisconnectAction: 'Disconnect',
+      brandWorkspaceAboutHeading: 'About this profile',
+      brandWorkspaceAboutEmpty: 'This profile has no brand rules recorded from the analyzed manual.',
+      brandWorkspacePaletteEmpty: 'No declared colors were detected in the analyzed manual.',
+      brandWorkspaceTypefaceEmpty: 'This typeface was not detected in the analyzed manual.',
+      brandWorkspaceNoProfileTitle: 'No brand identity applied',
+      brandWorkspaceNoProfileBody: 'Apply an existing profile or create one from an identity manual PDF.',
+      brandWorkspaceVisualSystemHeading: 'Visual system',
+      brandWorkspaceVisualSystemSubtitle: 'Identity elements applied to this publication',
+      brandWorkspacePaletteHeading: 'Color palette',
+      brandWorkspaceTypographyHeading: 'Brand typefaces',
+      brandWorkspaceTypographyDisplayCaption: 'Headings and highlights',
+      brandWorkspaceTypographyBodyCaption: 'Text and data',
+      brandWorkspaceTokensHeading: 'Applied brand tokens',
+      brandWorkspaceTokenAccent: 'Accent',
+      brandWorkspaceTokenSurface: 'Surface',
+      brandWorkspaceTokenText: 'Text',
+      brandWorkspaceTokenAccentMuted: 'Secondary accent',
+      brandWorkspacePaletteRoleInk: 'Primary',
+      brandWorkspacePaletteRolePaper: 'Surface',
+      brandWorkspacePaletteRoleAccent: 'Accent',
+      brandWorkspacePaletteRoleAccentMuted: 'Secondary accent',
+      brandWorkspaceApplicationHeading: 'Applied to the publication',
+      brandWorkspaceApplicationSubtitle: 'Real status of the visual identity on each surface',
+      brandWorkspaceSurfaceDocument: 'Document',
+      brandWorkspaceSurfaceExport: 'Export',
+      brandWorkspaceSurfaceCover: 'Cover',
+      brandWorkspaceSurfaceBackCover: 'Back cover',
+      brandWorkspaceStatusApplied: 'Applied',
+      brandWorkspaceStatusNotConnected: 'Not connected',
+      brandWorkspaceStatusNone: 'No profile',
+      brandWorkspaceDocumentAppliedDesc: 'Typefaces and colors applied to composition',
+      brandWorkspaceExportAppliedDesc: 'Profile embedded in PDF and EPUB',
+      brandWorkspaceCoverNotConnectedDesc: 'The cover uses its own design studio, independent from the brand profile',
+      brandWorkspaceBackCoverNotConnectedDesc: 'The back cover uses its own design studio, independent from the brand profile',
+      brandWorkspaceStatusHeading: 'Identity status',
+      brandWorkspaceStatusSubtitle: 'Validation of the applied profile',
+      brandWorkspaceCheckManualTitle: 'Manual analyzed',
+      brandWorkspaceCheckManualBody: '{fileName} processed successfully.',
+      brandWorkspaceCheckActiveTitle: 'Active profile',
+      brandWorkspaceCheckActiveBodyOk: 'Applied to this publication.',
+      brandWorkspaceCheckActiveBodyWarn: 'The applied profile is still a draft.',
+      brandWorkspaceCheckSurfacesTitle: '{count} surfaces linked',
+      brandWorkspaceCheckSurfacesBody: 'Document and export (PDF, EPUB).',
+      brandWorkspaceCheckDecoupledTitle: 'Independent structure rules',
+      brandWorkspaceCheckDecoupledBody: "Coexists with the project's layout rules with no conflicts.",
+      brandWorkspaceToolsHeading: 'Tools',
+      brandWorkspaceToolsSubtitle: 'Manage brand profiles for your publications.',
+      brandWorkspaceManageHeading: 'View and apply profiles',
+      brandWorkspaceManageEmpty: "You haven't created any brand profile yet.",
+      brandWorkspaceApplyAction: 'Apply',
+      brandWorkspaceAppliedBadge: 'Applied',
+      brandWorkspaceInfoNote: "The visual identity is applied automatically to the project's composition and export.",
+      brandWorkspaceUsageLabel: '{percent}% usage',
+      brandConfidenceHigh: 'High confidence',
+      brandConfidenceMedium: 'Medium confidence',
+      brandConfidenceLow: 'Low confidence',
       reimportButton: 'Reimport DOCX',
       reimportDialogTitle: 'Reimport document',
       reimportDialogDescription: 'Upload the revised version of the original file. Content is merged by structure: cover, back cover, rules and manual tweaks are preserved.',
