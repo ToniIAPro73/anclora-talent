@@ -804,6 +804,22 @@ export type AppMessages = {
     contentSummaryBottomAssistant: string;
     contentSummaryBottomCoherence: string;
     contentSummarySaveVersionAction: string;
+    metadataIdentityTitle: string;
+    metadataIdentitySubtitle: string;
+    metadataSyncBanner: string;
+    metadataChangeCoverAction: string;
+    metadataCoverSyncCaption: string;
+    metadataKeywordsChipHelper: string;
+    metadataCompletenessTitle: string;
+    metadataCompletenessSubtitle: string;
+    metadataStatusComplete: string;
+    metadataStatusMissing: string;
+    metadataStatusPending: string;
+    metadataStatusRecommended: string;
+    metadataRecommendationsTitle: string;
+    metadataRecommendationsBody: string;
+    metadataSummaryTitle: string;
+    metadataSaveHelper: string;
   };
   filestudio: {
     badgeLocal: string;
@@ -2225,6 +2241,22 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       contentSummaryBottomAssistant: 'Asistente editorial',
       contentSummaryBottomCoherence: 'Revisar coherencia',
       contentSummarySaveVersionAction: 'Guardar versión',
+      metadataIdentityTitle: 'Identidad de la publicación',
+      metadataIdentitySubtitle: 'Información bibliográfica y comercial de tu libro.',
+      metadataSyncBanner: 'Datos principales sincronizan portada, contraportada y exportación.',
+      metadataChangeCoverAction: 'Cambiar portada',
+      metadataCoverSyncCaption: 'La portada se actualiza automáticamente con los metadatos.',
+      metadataKeywordsChipHelper: 'Añade hasta 10 palabras clave.',
+      metadataCompletenessTitle: 'Completitud de metadatos',
+      metadataCompletenessSubtitle: 'Completa la información para una mejor visibilidad.',
+      metadataStatusComplete: 'Completo',
+      metadataStatusMissing: 'Requerido',
+      metadataStatusPending: 'Pendiente',
+      metadataStatusRecommended: 'Recomendado',
+      metadataRecommendationsTitle: '{count} recomendaciones',
+      metadataRecommendationsBody: 'Completa los campos pendientes para mejorar la visibilidad de tu publicación.',
+      metadataSummaryTitle: 'Resumen de publicación',
+      metadataSaveHelper: 'Los cambios se guardan en el proyecto y se aplican a la portada, contraportada y exportación.',
     },
     filestudio: {
       badgeLocal: 'Procesado en tu dispositivo',
@@ -3654,6 +3686,22 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       contentSummaryBottomAssistant: 'Editorial assistant',
       contentSummaryBottomCoherence: 'Review coherence',
       contentSummarySaveVersionAction: 'Save version',
+      metadataIdentityTitle: 'Publication identity',
+      metadataIdentitySubtitle: 'Bibliographic and commercial information about your book.',
+      metadataSyncBanner: 'Core data syncs the cover, back cover and export.',
+      metadataChangeCoverAction: 'Change cover',
+      metadataCoverSyncCaption: 'The cover updates automatically with the metadata.',
+      metadataKeywordsChipHelper: 'Add up to 10 keywords.',
+      metadataCompletenessTitle: 'Metadata completeness',
+      metadataCompletenessSubtitle: 'Complete the information for better visibility.',
+      metadataStatusComplete: 'Complete',
+      metadataStatusMissing: 'Required',
+      metadataStatusPending: 'Pending',
+      metadataStatusRecommended: 'Recommended',
+      metadataRecommendationsTitle: '{count} recommendations',
+      metadataRecommendationsBody: "Complete the pending fields to improve your publication's discoverability.",
+      metadataSummaryTitle: 'Publication summary',
+      metadataSaveHelper: 'Changes are saved to the project and applied to the cover, back cover and export.',
     },
     filestudio: {
       badgeLocal: 'Processed on your device',

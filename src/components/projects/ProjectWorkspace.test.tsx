@@ -169,8 +169,8 @@ describe('ProjectWorkspace', () => {
   test('shows the document metadata form under the Metadatos tab in Step 1', () => {
     render(<ProjectWorkspace project={makeProject()} copy={copy} />);
     fireEvent.click(screen.getByTestId('content-tab-metadatos'));
-    expect(screen.getByTestId('project-metadata-form')).toBeInTheDocument();
-    expect(screen.getByTestId('project-document-title-input')).toHaveValue('Mi Proyecto');
+    expect(screen.getByTestId('metadata-workspace')).toBeInTheDocument();
+    expect(screen.getByTestId('metadata-title-input')).toHaveValue('Mi Proyecto');
   });
 
   test('restores the persisted workflow step and marks previous steps as completed', () => {

@@ -4,14 +4,12 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { ContentSummary } from './ContentSummary';
 import { ContentTabs, contentTabLabels, type ContentTabId } from './ContentTabs';
-import { ProductMetadataPanel } from '../ProductMetadataPanel';
+import { MetadataWorkspace } from './metadata/MetadataWorkspace';
 import { DocumentRulesPanel } from '../DocumentRulesPanel';
 import { BrandProfilePanel } from '../BrandProfilePanel';
 import { DocumentHealthPanel } from '../DocumentHealthPanel';
 import { HistoryPanel } from '../HistoryPanel';
 import { CoAuthorPanel } from '../CoAuthorPanel';
-import { SubmitButton } from '@/components/ui/SubmitButton';
-import { saveProjectDocumentAction } from '@/lib/projects/actions';
 import { saveDocumentSnapshotAction } from '@/lib/snapshots/actions';
 import { resolveDocumentRules } from '@/lib/compose/rules';
 import type { AppMessages } from '@/lib/i18n/messages';
@@ -99,66 +97,13 @@ export function ContentWorkspace({
         )}
 
         {activeTab === 'metadatos' && (
-          <div className="flex flex-col gap-6">
-            <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-8 shadow-[var(--shadow-strong)]">
-              <div className="mb-6 flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--text-tertiary)]">
-                  {copy.editorMetaEyebrow}
-                </p>
-              </div>
-              <form
-                key={project.updatedAt}
-                action={saveProjectDocumentAction}
-                className="space-y-6"
-                data-testid="project-metadata-form"
-              >
-                <input type="hidden" name="projectId" value={project.id} data-testid="project-document-project-id-input" />
-                <input type="hidden" name="chapterId" value={activeChapter.id} data-testid="project-document-chapter-id-input" />
-                <input
-                  type="hidden"
-                  name="chapterTitle"
-                  value={activeChapter.title}
-                  data-testid="project-document-chapter-title-input"
-                />
-                <div className="grid gap-6 md:grid-cols-2">
-                  <label className="block space-y-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorTitleLabel}</span>
-                    <input
-                      data-testid="project-document-title-input"
-                      name="title"
-                      defaultValue={project.document.title}
-                      className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
-                    />
-                  </label>
-                  <label className="block space-y-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorAuthorLabel}</span>
-                    <input
-                      data-testid="project-document-author-input"
-                      name="author"
-                      defaultValue={project.document.author}
-                      className="w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
-                    />
-                  </label>
-                </div>
-                <label className="block space-y-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">{copy.editorSubtitleLabel}</span>
-                  <textarea
-                    data-testid="project-document-subtitle-input"
-                    name="subtitle"
-                    defaultValue={project.document.subtitle}
-                    className="min-h-32 w-full rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
-                  />
-                </label>
-                <div className="flex justify-end">
-                  <SubmitButton className="dashboard-button dashboard-button--primary" data-testid="project-document-save-button">
-                    {copy.saveChanges}
-                  </SubmitButton>
-                </div>
-              </form>
-            </section>
-
-            <ProductMetadataPanel key={`meta-${project.updatedAt}`} project={project} copy={copy} />
-          </div>
+          <MetadataWorkspace
+            key={`meta-${project.updatedAt}`}
+            project={project}
+            activeChapter={activeChapter}
+            copy={copy}
+            onNavigateStep={onNavigateStep}
+          />
         )}
 
         {activeTab === 'composicion' && (

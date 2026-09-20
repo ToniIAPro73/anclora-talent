@@ -44,7 +44,7 @@ export async function buildFixedPdfSemanticSidecar(project: ProjectRecord): Prom
 
   const blocks = ensureBlockIds(chapterAstBlocks.flat());
 
-  // Explicit project metadata (ProductMetadataPanel) always wins over a
+  // Explicit project metadata (Contenido → Metadatos) always wins over a
   // fresh re-extraction of the original file — see cover title precedence
   // (Fase 7.6) for the same principle applied elsewhere.
   const metadata = project.document.metadata;
