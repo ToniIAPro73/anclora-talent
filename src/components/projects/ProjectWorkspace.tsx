@@ -12,7 +12,7 @@ import { FixedPdfPreview } from './FixedPdfPreview';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { CollaborationPanel } from './CollaborationPanel';
 import { AIAssistant } from './AIAssistant';
-import { ChapterEditorModal } from './ChapterEditorModal';
+import { ChapterEditorFullscreen } from './advanced-chapter-editor/ChapterEditorFullscreen';
 import { AddChapterDialog } from './AddChapterDialog';
 import { ImportChapterDialog } from './ImportChapterDialog';
 import { ReimportDialog } from './ReimportDialog';
@@ -230,6 +230,11 @@ export function ProjectWorkspace({
     [project.document.chapters, editingChapterId],
   );
 
+  const openChapterEditor = (chapterId: string) => {
+    setActiveChapterId(chapterId);
+    setEditingChapterId(chapterId);
+  };
+
   // Compute chapter page metrics (Commit 3)
   const chapterMetricsById = useMemo(() => {
     const metrics = computeChapterPageMetrics(project);
@@ -384,7 +389,7 @@ export function ProjectWorkspace({
               chapters={project.document.chapters}
               activeChapterId={resolvedActiveChapterId}
               onSelect={setActiveChapterId}
-              onEditChapter={setEditingChapterId}
+              onEditChapter={openChapterEditor}
               onAddChapter={() => setIsAddDialogOpen(true)}
               onImportChapter={() => setIsImportDialogOpen(true)}
               onReimportChapter={() => setIsReimportDialogOpen(true)}
@@ -590,6 +595,23 @@ export function ProjectWorkspace({
       : copy.contentSavedMinutesAgo.replace('{count}', String(minutes));
   })();
 
+  if (editingChapterId !== null && editingChapterIndex >= 0) {
+    return (
+      <div
+        className="chapter-editor-route"
+        data-testid="chapter-editor-workspace"
+        style={{ height: 'calc(100vh - 68px)', minHeight: 0, overflow: 'hidden' }}
+      >
+        <ChapterEditorFullscreen
+          chapters={project.document.chapters}
+          initialChapterIndex={editingChapterIndex}
+          projectId={project.id}
+          onClose={() => setEditingChapterId(null)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="ac-workspace-stage talent-workspace-stage" data-testid="project-workspace">
       {/* Header: portalled into the shared app shell's compact editor topbar
@@ -698,18 +720,9 @@ export function ProjectWorkspace({
         </div>
       </div>
 
-      {/* Modals rendered via Portal to escape any transform/backdrop-filter trapping */}
+      {/* Dialogs remain portalled; the chapter editor is a workspace state, not
+          an overlay, so the management screen is unmounted while editing. */}
       <Portal>
-        {editingChapterId !== null && editingChapterIndex >= 0 && (
-          <ChapterEditorModal
-            chapters={project.document.chapters}
-            currentChapterIndex={editingChapterIndex}
-            isOpen={editingChapterId !== null}
-            projectId={project.id}
-            onClose={() => setEditingChapterId(null)}
-          />
-        )}
-
         <AddChapterDialog
           isOpen={isAddDialogOpen}
           projectId={project.id}

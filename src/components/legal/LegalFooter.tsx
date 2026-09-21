@@ -28,7 +28,7 @@ export function LegalFooter({ mode = 'global' }: LegalFooterProps) {
   return (
     <footer
       data-testid="legal-footer"
-      className="border-t border-[var(--border-subtle)] bg-[var(--background)] px-5 py-6 text-xs text-[var(--text-tertiary)] transition-colors"
+      className="talent-legal-footer border-t border-[var(--border-subtle)] bg-[var(--background)] px-5 py-6 text-xs text-[var(--text-tertiary)] transition-colors"
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">

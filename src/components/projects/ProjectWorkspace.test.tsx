@@ -55,6 +55,14 @@ vi.mock('./design-surface/CoverStudioV2', () => ({
   ),
 }));
 
+vi.mock('./advanced-chapter-editor/ChapterEditorFullscreen', () => ({
+  ChapterEditorFullscreen: ({ chapters, initialChapterIndex }: { chapters: ProjectRecord['document']['chapters']; initialChapterIndex: number }) => (
+    <div data-testid="chapter-editor-rendered" data-chapter-id={chapters[initialChapterIndex]?.id}>
+      Editor {chapters[initialChapterIndex]?.title}
+    </div>
+  ),
+}));
+
 // Fixed-PDF document mode: the viewer is a client-only pdfjs-dist canvas
 // renderer, irrelevant to workspace-gating assertions here — stub it.
 vi.mock('pdfjs-dist', () => ({
@@ -230,6 +238,18 @@ describe('ProjectWorkspace', () => {
     expect(screen.getAllByText('Capítulo 2').length).toBeGreaterThan(0);
     expect(screen.queryByTestId('previous-step-button')).not.toBeInTheDocument();
     expect(screen.queryByTestId('next-step-button')).not.toBeInTheDocument();
+  });
+
+  test('replaces chapter management with the editor workspace', () => {
+    const { container } = render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+
+    clickStepperStep(container, 2);
+    fireEvent.click(screen.getByTestId('chapter-open-button'));
+
+    expect(screen.getByTestId('chapter-editor-rendered')).toHaveAttribute('data-chapter-id', 'ch-1');
+    expect(screen.queryByTestId('chapter-organizer')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('chapter-overview')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('chapter-properties-title')).not.toBeInTheDocument();
   });
 
   test('shows the pagination sync action in Step 2 and updates its state when clicked', () => {
