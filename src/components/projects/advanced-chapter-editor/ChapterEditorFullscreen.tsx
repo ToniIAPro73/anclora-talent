@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp, ZoomIn, ZoomOut, ArrowLeft, Maximize2, FileText, Clock3 } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp, ZoomIn, ZoomOut, ArrowLeft, Maximize2, FileText, Clock3 } from 'lucide-react';
 import { AdvancedRichTextEditor } from '../AdvancedRichTextEditor';
 import { useChapterEditor } from './useChapterEditor';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
@@ -138,6 +138,7 @@ export function ChapterEditorFullscreen({
     >
       <header className="ac-editor-shell__header">
         <div className="ac-editor-shell__titles">
+          <span className="chapter-editor-brand">Anclora Talent</span>
           <button type="button" className="ac-editor-back ac-button ac-button--secondary ac-button--sm" onClick={handleClose} disabled={editor.isSaving} data-testid="chapter-editor-back-button"><ArrowLeft className="h-4 w-4" />{locale === 'es' ? 'Volver a Capítulos' : 'Back to Chapters'}</button>
           <h2 className="ac-editor-shell__title">
             {locale === 'es' ? 'Capítulo' : 'Chapter'} {editor.currentIndex + 1}/{editor.totalChapters}
@@ -228,6 +229,16 @@ export function ChapterEditorFullscreen({
             </span>
           )}
           <button
+            type="button"
+            onClick={handleSave}
+            disabled={editor.isSaving || (!editor.hasChanges && editor.lastSaved !== null)}
+            className="ac-button ac-button--primary ac-button--sm"
+            data-testid="chapter-editor-header-save-button"
+          >
+            {editor.isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            {copy.save}
+          </button>
+          <button
             data-testid="chapter-editor-close-button"
             onClick={handleClose}
             disabled={editor.isSaving}
@@ -258,7 +269,7 @@ export function ChapterEditorFullscreen({
         <div className="chapter-editor-layout">
           <aside className="chapter-editor-outline"><div className="chapter-editor-outline__heading"><strong>{locale === 'es' ? 'Esquema' : 'Outline'}</strong><span>{editor.currentChapter.blocks.length}</span></div>{editor.currentChapter.blocks.slice(0, 8).map((block, index) => <button type="button" key={block.id} className="chapter-editor-outline__item" onClick={() => undefined} data-testid={`chapter-outline-item-${index + 1}`}><span>{index + 1}</span>{block.content.replace(/<[^>]+>/g, ' ').slice(0, 34) || (locale === 'es' ? 'Bloque sin título' : 'Untitled block')}</button>)}</aside>
           <div className="ac-editor-shell__surface min-h-0 overflow-hidden"><AdvancedRichTextEditor defaultContent={editor.htmlContent} onUpdate={editor.setHtmlContent} currentPage={editor.currentPage} totalPages={editor.totalPages} onPageCountChange={editor.setMeasuredTotalPages} contentZoom={zoom} /></div>
-          <aside className="chapter-editor-inspector"><h3>{locale === 'es' ? 'Capítulo' : 'Chapter'}</h3><label htmlFor="editor-chapter-title">{locale === 'es' ? 'Título del capítulo' : 'Chapter title'}</label><input id="editor-chapter-title" value={editor.title} onChange={(event) => editor.setTitle(event.target.value)} data-testid="chapter-editor-title-input" /><div className="chapter-editor-inspector__stats"><p><FileText />{editor.htmlContent.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).filter(Boolean).length.toLocaleString()} {locale === 'es' ? 'palabras' : 'words'}</p><p><Clock3 />{editor.totalPages} {locale === 'es' ? 'páginas (aprox.)' : 'pages (approx.)'}</p></div><details><summary>{locale === 'es' ? 'Notas' : 'Notes'}</summary><p>{locale === 'es' ? 'Las notas del capítulo se gestionan desde el proyecto.' : 'Chapter notes are managed from the project.'}</p></details></aside>
+          <aside className="chapter-editor-inspector"><h3>{locale === 'es' ? 'Capítulo' : 'Chapter'}</h3><label htmlFor="editor-chapter-title">{locale === 'es' ? 'Título del capítulo' : 'Chapter title'}</label><input id="editor-chapter-title" value={editor.title} onChange={(event) => editor.setTitle(event.target.value)} data-testid="chapter-editor-title-input" /><div className="chapter-editor-inspector__stats"><p><FileText />{editor.htmlContent.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).filter(Boolean).length.toLocaleString()} {locale === 'es' ? 'palabras' : 'words'}</p><p><Clock3 />{editor.totalPages} {locale === 'es' ? 'páginas (aprox.)' : 'pages (approx.)'}</p></div><section className="chapter-editor-inspector__health"><div><strong>{locale === 'es' ? 'Salud del capítulo' : 'Chapter health'}</strong><span className="chapter-editor-health-good">● {locale === 'es' ? 'Disponible' : 'Available'}</span></div><div className="chapter-editor-health-bar"><i /><i /><i /><i /></div><p><Check /> {locale === 'es' ? 'Contenido disponible' : 'Content available'}</p><p><Check /> {locale === 'es' ? 'Estructura detectada' : 'Structure detected'}</p><p><Check /> {locale === 'es' ? 'Listo para editar' : 'Ready to edit'}</p></section><details><summary>{locale === 'es' ? 'Notas' : 'Notes'}</summary><p>{locale === 'es' ? 'Las notas del capítulo se gestionan desde el proyecto.' : 'Chapter notes are managed from the project.'}</p></details></aside>
         </div>
       </div>
 

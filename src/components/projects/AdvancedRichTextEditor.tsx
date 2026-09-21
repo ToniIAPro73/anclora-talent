@@ -1968,6 +1968,8 @@ export function AdvancedRichTextEditor({
                 width: calc(100% - ${margins.left + margins.right}px);
                 height: ${contentHeight}px;
                 overflow: hidden;
+                background: #f4f0e8;
+                color: #172238;
               }
               .multipage-editor-flow-track {
                 height: ${contentHeight}px;
@@ -1977,6 +1979,10 @@ export function AdvancedRichTextEditor({
                 height: ${contentHeight}px;
                 width: ${flowWidth}px;
                 padding: 0;
+                color: #172238;
+                font-family: Georgia, 'Times New Roman', serif;
+                font-size: 18px;
+                line-height: 1.55;
                 column-width: ${contentWidth}px;
                 column-gap: ${columnGap}px;
                 column-fill: auto;
@@ -1987,7 +1993,8 @@ export function AdvancedRichTextEditor({
                 page-break-inside: avoid;
               }
               .multipage-page-frame {
-                background: var(--surface, #111C28);
+                background: #f4f0e8;
+                color: #172238;
                 min-height: ${pageHeight}px;
                 box-shadow: var(--shadow-lg, 0 20px 50px rgba(0,0,0,0.15));
                 border-radius: 2px;

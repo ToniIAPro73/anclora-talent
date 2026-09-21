@@ -2,7 +2,7 @@
 
 import { useEffect, useTransition, useState, useMemo, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Loader2, Download } from 'lucide-react';
+import { Check, Download, Loader2 } from 'lucide-react';
 import { Stepper, type Step } from '@/components/ui/Stepper';
 import { ChapterOrganizer } from './ChapterOrganizer';
 import { ContentWorkspace } from './content-workspace/ContentWorkspace';
@@ -379,16 +379,6 @@ export function ProjectWorkspace({
         if (fixedPdf) return renderFixedPdfIncludedPanel(copy.stepChapters);
         return (
           <section className="chapters-workspace-host">
-            <div className="mb-3 flex justify-end">
-              <button
-                type="button"
-                data-testid="reimport-open-button"
-                onClick={() => setIsReimportDialogOpen(true)}
-                className="ac-button ac-button--secondary ac-button--sm"
-              >
-                {copy.reimportButton}
-              </button>
-            </div>
             <ChapterOrganizer
               projectId={project.id}
               chapters={project.document.chapters}
@@ -397,6 +387,7 @@ export function ProjectWorkspace({
               onEditChapter={setEditingChapterId}
               onAddChapter={() => setIsAddDialogOpen(true)}
               onImportChapter={() => setIsImportDialogOpen(true)}
+              onReimportChapter={() => setIsReimportDialogOpen(true)}
               onSyncPageNumbers={handleSyncPageNumbers}
               pageNumberSyncState={
                 pageNumberSyncState === 'saving'
@@ -666,8 +657,8 @@ export function ProjectWorkspace({
 
       {/* Step Layout */}
       <div className="ac-workflow-shell talent-workflow-shell">
-        <div className={`ac-workflow-shell__layout${activeStep === 1 ? ' talent-workflow-shell__layout--full' : ''}`}>
-        {activeStep !== 1 && (
+        <div className={`ac-workflow-shell__layout${activeStep <= 2 ? ' talent-workflow-shell__layout--full' : ''}`}>
+        {activeStep > 2 && (
           <aside className="ac-workflow-shell__rail xl:sticky xl:top-8 xl:self-start">
              <div className="ac-workflow-shell__panel ac-surface-panel ac-surface-panel--subtle p-5">
                 <h4 className="ac-workflow-shell__panel-meta">Progreso</h4>

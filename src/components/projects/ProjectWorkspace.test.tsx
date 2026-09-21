@@ -139,9 +139,9 @@ function makeProject(overrides: Partial<ProjectRecord> = {}): ProjectRecord {
   };
 }
 
-// Step 1 (Content) has no "Siguiente paso" rail (removed so the tabbed
-// Resumen workspace can use the full row width); advance from it via the
-// canonical stepper instead. The rail still exists on steps 2-8.
+// The canonical stepper is the sole workflow navigation/progress system for
+// the content and chapters workspaces. Later workflow screens retain the
+// legacy rail for their own transition affordances.
 function clickStepperStep(container: HTMLElement, step: number) {
   const trigger = container.querySelectorAll('.ac-stepper__trigger')[step - 1] as HTMLElement | undefined;
   if (!trigger) throw new Error(`Stepper trigger for step ${step} not found`);
@@ -226,8 +226,10 @@ describe('ProjectWorkspace', () => {
     // Navigate to step 2 (Capítulos)
     clickStepperStep(container, 2);
 
-    expect(screen.getByText('Capítulo 1')).toBeInTheDocument();
-    expect(screen.getByText('Capítulo 2')).toBeInTheDocument();
+    expect(screen.getAllByText('Capítulo 1').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Capítulo 2').length).toBeGreaterThan(0);
+    expect(screen.queryByTestId('previous-step-button')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('next-step-button')).not.toBeInTheDocument();
   });
 
   test('shows the pagination sync action in Step 2 and updates its state when clicked', () => {
@@ -272,11 +274,11 @@ describe('ProjectWorkspace', () => {
 
     // Step 1 -> 2 (no rail on Step 1; use the canonical stepper)
     clickStepperStep(container, 2);
-    expect(screen.getByText('de 8 pasos')).toBeInTheDocument();
+    expect(screen.queryByText('de 8 pasos')).not.toBeInTheDocument();
     expect(screen.getAllByText('2').length).toBeGreaterThan(0);
 
     // Step 2 -> 3
-    fireEvent.click(screen.getByText('Siguiente paso'));
+    clickStepperStep(container, 3);
     expect(screen.getAllByText('3').length).toBeGreaterThan(0);
   });
 
@@ -286,7 +288,7 @@ describe('ProjectWorkspace', () => {
     // 1 -> 2
     clickStepperStep(container, 2);
     // 2 -> 3
-    fireEvent.click(screen.getByText('Siguiente paso'));
+    clickStepperStep(container, 3);
 
     expect(screen.getByTestId('cover-studio-v2')).toHaveAttribute('data-surface-kind', 'cover');
   });
@@ -296,11 +298,10 @@ describe('ProjectWorkspace', () => {
 
     // 1 -> 2
     clickStepperStep(container, 2);
-    const nextButton = screen.getByText('Siguiente paso');
     // 2 -> 3
-    fireEvent.click(nextButton);
+    clickStepperStep(container, 3);
     // 3 -> 4
-    fireEvent.click(nextButton);
+    clickStepperStep(container, 4);
 
     expect(screen.getByTestId('cover-studio-v2')).toHaveAttribute('data-surface-kind', 'back-cover');
   });
