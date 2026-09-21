@@ -28,7 +28,13 @@ export function DashboardWorkspace({ projects, dataAvailable, locale, copy, proj
   const router = useRouter();
   const recent = useMemo(() => [...projects].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt)), [projects]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(() => recent[0]?.id ?? null);
-  const [pageSize, setPageSize] = useState(() => getDashboardPageSize(typeof window === 'undefined' ? 1440 : window.innerWidth));
+  // Server-safe default (matches the desktop breakpoint): reading
+  // `window.innerWidth` here would let the very first client render disagree
+  // with the server-rendered markup whenever the real viewport is narrower
+  // than 1200px, producing a hydration mismatch on the project list. The
+  // resize effect below corrects `pageSize` for the actual viewport right
+  // after mount, once hydration is safely past.
+  const [pageSize, setPageSize] = useState(() => getDashboardPageSize(1440));
   const retrieval = useProjectRetrieval(projects, pageSize);
   const { setPage } = retrieval;
   const [layout, setLayout] = useState<'list' | 'grid'>('list');
