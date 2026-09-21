@@ -64,9 +64,8 @@ anclora-talent-log-export-*.json
 
 # Playwright
 playwright-report/
-test-results/*
-!test-results/qa/
-artifacts/
+test-results/
+artifacts/qa/
 .vercel
 .vercel-backup/
 
@@ -81,4 +80,3 @@ validation/
 # Manual PDF temporary artifacts (canonical manual assets live under docs/public)
 tmp/manual-pdf/
 tmp/
-test-results/
