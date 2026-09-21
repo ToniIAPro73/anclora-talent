@@ -2439,6 +2439,9 @@ ul.toc-list > li {
 }
 
 .chapter-editor-contextbar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 16px; border-bottom:1px solid var(--border-subtle); background:var(--surface-panel); }
+.chapter-editor-stepper { border-bottom: 1px solid var(--border-subtle); background: var(--surface-panel); }
+.chapter-editor-stepper .ac-stepper { padding: 5px 12px; }
+.chapter-editor-stepper .ac-stepper__label { font-size: 10px; }
 .chapter-editor-contextbar__nav { display:flex; gap:8px; }
 .chapter-editor-contextbar__save { display:flex; align-items:center; gap:8px; color:var(--text-secondary); font-size:12px; }
 .ac-editor-back { margin-bottom:6px; }

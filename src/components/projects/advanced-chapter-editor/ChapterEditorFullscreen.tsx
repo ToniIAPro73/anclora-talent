@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Check, ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp, ZoomIn, ZoomOut, ArrowLeft, Maximize2, FileText, Clock3 } from 'lucide-react';
 import { AdvancedRichTextEditor } from '../AdvancedRichTextEditor';
+import { Stepper, type Step } from '@/components/ui/Stepper';
 import { useChapterEditor } from './useChapterEditor';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
@@ -34,6 +35,10 @@ export function ChapterEditorFullscreen({
   const copy = resolveLocaleMessages(locale).editor;
   const { preferences } = useEditorPreferences();
   const [zoom, setZoom] = useState(100);
+  const editorSteps: Step[] = (locale === 'es'
+    ? ['Contenido', 'Capítulos', 'Portada', 'Contraportada', 'Vista previa', 'Colaborar', 'Asistente IA', 'Exportar']
+    : ['Content', 'Chapters', 'Cover', 'Back cover', 'Preview', 'Collaborate', 'AI assistant', 'Export'])
+    .map((title, index) => ({ id: index + 1, title, status: index === 0 ? 'completed' : index === 1 ? 'active' : 'pending' }));
 
   // Use saved preferences if available, otherwise use passed defaults
   const device = (preferences.device as 'mobile' | 'tablet' | 'desktop') || defaultDevice;
@@ -250,6 +255,10 @@ export function ChapterEditorFullscreen({
           <button type="button" className="ac-button ac-button--ghost ac-button--icon" aria-label={locale === 'es' ? 'Modo enfoque' : 'Focus mode'} title={locale === 'es' ? 'Modo enfoque' : 'Focus mode'} data-testid="chapter-editor-focus-button"><Maximize2 className="h-4 w-4" /></button>
         </div>
       </header>
+
+      <div className="chapter-editor-stepper talent-content-stepper-bar">
+        <Stepper steps={editorSteps} activeStep={2} />
+      </div>
 
       <div className="chapter-editor-contextbar">
         <div className="chapter-editor-contextbar__nav"><button type="button" className="ac-button ac-button--secondary ac-button--sm" onClick={editor.goToPrevChapter} disabled={!editor.canNavigatePrev || editor.isSaving} data-testid="chapter-editor-context-prev-button"><ChevronLeft className="h-4 w-4" />{locale === 'es' ? 'Capítulo anterior' : 'Previous chapter'}</button><button type="button" className="ac-button ac-button--secondary ac-button--sm" onClick={editor.goToNextChapter} disabled={!editor.canNavigateNext || editor.isSaving} data-testid="chapter-editor-context-next-button">{locale === 'es' ? 'Capítulo siguiente' : 'Next chapter'}<ChevronRight className="h-4 w-4" /></button></div>
