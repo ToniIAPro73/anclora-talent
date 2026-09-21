@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, Sun, Moon, Globe, ArrowRight } from 'lucide-react';
+import { Menu, X, Sun, Moon, Globe } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import type { MarketingNav } from './marketing-data';
@@ -41,7 +41,7 @@ export function LandingHeader({
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[var(--border-subtle)] bg-[var(--background)]/85 backdrop-blur-md transition-colors">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 md:px-4 lg:px-8">
         {/* Brand */}
         <Link
           href="/"
@@ -54,13 +54,13 @@ export function LandingHeader({
         {/* Desktop Nav */}
         <nav
           aria-label="Navegación principal"
-          className="hidden items-center gap-6 md:flex"
+          className="hidden items-center gap-3 md:flex lg:gap-6"
         >
           {navLinks.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+              className="text-xs font-medium uppercase tracking-[0.02em] text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] lg:tracking-[0.14em]"
             >
               {link.label}
             </a>
@@ -68,7 +68,7 @@ export function LandingHeader({
         </nav>
 
         {/* Right side controls */}
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-1.5 md:flex lg:gap-3">
           {/* Theme Toggle */}
           <button
             type="button"
@@ -94,27 +94,17 @@ export function LandingHeader({
 
           {/* Auth CTAs */}
           {isAuthenticated ? (
-            <Link
-              href={primaryCta.href}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 text-xs font-semibold text-[var(--accent-fg)] shadow-sm transition hover:bg-[var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
-            >
+            <Link href={primaryCta.href} className="dashboard-button dashboard-button--primary">
               {primaryCta.label}
-              <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 lg:gap-2">
               {secondaryCta ? (
-                <Link
-                  href={secondaryCta.href}
-                  className="inline-flex h-9 items-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3.5 text-xs font-semibold text-[var(--text-primary)] transition hover:border-[var(--border-strong)] hover:bg-[var(--surface-elevated)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
-                >
+                <Link href={secondaryCta.href} className="dashboard-button">
                   {secondaryCta.label}
                 </Link>
               ) : null}
-              <Link
-                href={primaryCta.href}
-                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 text-xs font-semibold text-[var(--accent-fg)] shadow-sm transition hover:bg-[var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
-              >
+              <Link href={primaryCta.href} className="dashboard-button dashboard-button--primary">
                 {primaryCta.label}
               </Link>
             </div>
@@ -172,17 +162,16 @@ export function LandingHeader({
               <Link
                 href={primaryCta.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[var(--accent)] text-sm font-semibold text-[var(--accent-fg)]"
+                className="dashboard-button dashboard-button--primary w-full"
               >
                 {primaryCta.label}
-                <ArrowRight className="h-4 w-4" />
               </Link>
             ) : (
               <>
                 <Link
                   href={primaryCta.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[var(--accent)] text-sm font-semibold text-[var(--accent-fg)]"
+                  className="dashboard-button dashboard-button--primary w-full"
                 >
                   {primaryCta.label}
                 </Link>
@@ -190,7 +179,7 @@ export function LandingHeader({
                   <Link
                     href={secondaryCta.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex h-11 w-full items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-sm font-semibold text-[var(--text-primary)]"
+                    className="dashboard-button w-full"
                   >
                     {secondaryCta.label}
                   </Link>

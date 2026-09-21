@@ -1,8 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
 import type { MarketingCta } from './marketing-helpers';
-import { premiumPrimaryMintButton } from '@/components/ui/button-styles';
 
 type LandingFinalCtaProps = {
   eyebrow: string;
@@ -45,18 +43,11 @@ export function LandingFinalCta({
           {note}
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <Link
-            href={primaryCta.href}
-            className={`${premiumPrimaryMintButton} focus-visible:ring-offset-[var(--background)]`}
-          >
-            <span>{primaryCta.label}</span>
-            <ArrowRight className="h-4 w-4" />
+          <Link href={primaryCta.href} className="dashboard-button dashboard-button--primary">
+            {primaryCta.label}
           </Link>
           {secondaryCta ? (
-            <Link
-              href={secondaryCta.href}
-              className="inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-6 py-3 text-sm font-semibold text-[var(--button-secondary-fg)] transition hover:border-[var(--button-secondary-hover-border)] hover:bg-[var(--button-secondary-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]"
-            >
+            <Link href={secondaryCta.href} className="dashboard-button">
               {secondaryCta.label}
             </Link>
           ) : null}

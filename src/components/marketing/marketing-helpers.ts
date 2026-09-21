@@ -1,29 +1,31 @@
+import type { MarketingNav } from './marketing-data';
+
 export type MarketingCta = {
   href: string;
   label: string;
 };
 
-export function getPrimaryCta(userId: string | null): MarketingCta {
+export function getPrimaryCta(userId: string | null, nav: Pick<MarketingNav, 'dashboard' | 'signUp'>): MarketingCta {
   if (userId) {
     return {
       href: '/dashboard',
-      label: 'Ir al dashboard',
+      label: nav.dashboard,
     };
   }
 
   return {
     href: '/sign-up',
-    label: 'Crear cuenta',
+    label: nav.signUp,
   };
 }
 
-export function getSecondaryCta(userId: string | null): MarketingCta | null {
+export function getSecondaryCta(userId: string | null, nav: Pick<MarketingNav, 'signIn'>): MarketingCta | null {
   if (userId) {
     return null;
   }
 
   return {
     href: '/sign-in',
-    label: 'Iniciar sesión',
+    label: nav.signIn,
   };
 }

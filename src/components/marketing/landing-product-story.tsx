@@ -118,10 +118,11 @@ export function LandingProductStory({
                     <button
                       type="button"
                       onClick={() => setCoverView('front')}
-                      className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                      aria-pressed={coverView === 'front'}
+                      className={`rounded-[4px] border px-3.5 py-1.5 text-xs font-semibold transition ${
                         coverView === 'front'
-                          ? 'bg-[var(--accent)] text-[var(--accent-foreground)] shadow-sm'
-                          : 'border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                          ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-text)]'
+                          : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                       }`}
                     >
                       {frontLabel}
@@ -129,10 +130,11 @@ export function LandingProductStory({
                     <button
                       type="button"
                       onClick={() => setCoverView('back')}
-                      className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                      aria-pressed={coverView === 'back'}
+                      className={`rounded-[4px] border px-3.5 py-1.5 text-xs font-semibold transition ${
                         coverView === 'back'
-                          ? 'bg-[var(--accent)] text-[var(--accent-foreground)] shadow-sm'
-                          : 'border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                          ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-text)]'
+                          : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                       }`}
                     >
                       {backLabel}

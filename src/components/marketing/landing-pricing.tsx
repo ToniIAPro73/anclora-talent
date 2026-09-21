@@ -1,6 +1,5 @@
 import Link from 'next/link';
-import { Check, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
-import { premiumPrimaryMintButton } from '@/components/ui/button-styles';
+import { Check, ShieldCheck, Sparkles } from 'lucide-react';
 
 type LandingPricingProps = {
   eyebrow: string;
@@ -82,12 +81,8 @@ export function LandingPricing({
         </div>
 
         <div className="mt-8 flex flex-col items-center gap-3 border-t border-[var(--border-subtle)] pt-6">
-          <Link
-            href="/sign-up"
-            className={`w-full sm:w-auto ${premiumPrimaryMintButton} justify-center`}
-          >
-            <span>{ctaText}</span>
-            <ArrowRight className="h-4 w-4" />
+          <Link href="/sign-up" className="dashboard-button dashboard-button--primary w-full sm:w-auto">
+            {ctaText}
           </Link>
           <div className="flex items-center gap-1.5 text-xs text-[var(--text-tertiary)]">
             <ShieldCheck className="h-3.5 w-3.5 text-[var(--accent-text)]" />

@@ -14,8 +14,8 @@ export default async function HomePage() {
   const user = await getCurrentUser();
   const { locale } = await readUiPreferences();
   const messages = resolveLocaleMessages(locale).landing;
-  const primaryCta = getPrimaryCta(user?.id ?? null);
-  const secondaryCta = getSecondaryCta(user?.id ?? null);
+  const primaryCta = getPrimaryCta(user?.id ?? null, messages.nav);
+  const secondaryCta = getSecondaryCta(user?.id ?? null, messages.nav);
   const isAuthenticated = Boolean(user?.id);
 
   // 3 high-impact questions for landing FAQ

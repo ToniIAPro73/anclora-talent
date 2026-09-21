@@ -1,9 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
+import { ShieldCheck, Sparkles } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import type { MarketingCta } from './marketing-helpers';
-import { premiumPrimaryMintButton } from '@/components/ui/button-styles';
 
 type LandingHeroProps = {
   eyebrow: string;
@@ -84,28 +83,17 @@ export function LandingHero({
 
           {/* CTAs */}
           <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Link
-              href={primaryCta.href}
-              className={`${premiumPrimaryMintButton} focus-visible:ring-offset-[var(--background)]`}
-            >
-              <span>{primaryCta.label}</span>
-              <ArrowRight className="h-4 w-4" />
+            <Link href={primaryCta.href} className="dashboard-button dashboard-button--primary">
+              {primaryCta.label}
             </Link>
             {secondaryCta ? (
-              <Link
-                href={secondaryCta.href}
-                className="inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-6 py-3 text-sm font-semibold text-[var(--button-secondary-fg)] transition hover:border-[var(--button-secondary-hover-border)] hover:bg-[var(--button-secondary-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]"
-              >
+              <Link href={secondaryCta.href} className="dashboard-button">
                 {secondaryCta.label}
               </Link>
             ) : null}
             {exploreProductLabel ? (
-              <a
-                href="#producto"
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
-              >
-                <span>{exploreProductLabel}</span>
-                <span aria-hidden="true">↓</span>
+              <a href="#producto" className="dashboard-preview-link">
+                {exploreProductLabel}
               </a>
             ) : null}
           </div>
