@@ -26,7 +26,7 @@ export function LandingFinalCta({
           alt=""
           fill
           sizes="(max-width: 1280px) 100vw, 1280px"
-          className="object-cover object-center opacity-20 dark:opacity-30 mix-blend-overlay"
+          className="landing-cta-texture object-cover object-center"
         />
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[var(--accent-glow)] blur-3xl opacity-60" />
         <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-[var(--accent-glow-soft)] blur-3xl opacity-40" />

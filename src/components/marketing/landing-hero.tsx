@@ -31,17 +31,20 @@ export function LandingHero({
 }: LandingHeroProps) {
   return (
     <section className="relative overflow-hidden rounded-[36px] border border-[var(--border-subtle)] bg-[var(--shell-main-surface)] px-5 py-8 text-[var(--text-primary)] shadow-[var(--shadow-strong)] sm:px-8 sm:py-12 lg:px-12 lg:py-16">
-      {/* Editorial Canvas Background Art */}
+      {/* Editorial Canvas Background Art. Both themes render the SAME cotton-
+          paper photo (not two different assets) — dark mode derives its tone
+          from it with a pure color filter (.landing-hero-texture--dark) so
+          grain/geometry/composition stay identical and only color adapts. */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-        {/* Dark Theme: Renaissance Book Proportion Grid & Warm Lighting */}
+        {/* Dark Theme: same cotton-paper photo, ink-navy color grade */}
         <div className="theme-dark-only absolute inset-0">
           <Image
-            src="/landing/backgrounds/hero-dark-editorial.jpg"
+            src="/landing/backgrounds/hero-light-paper.jpg"
             alt=""
             fill
             priority
             sizes="(max-width: 1280px) 100vw, 1280px"
-            className="object-cover object-right opacity-35 mix-blend-screen"
+            className="landing-hero-texture--dark object-cover object-right opacity-90"
           />
         </div>
 
