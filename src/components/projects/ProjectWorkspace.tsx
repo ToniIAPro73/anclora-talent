@@ -673,7 +673,7 @@ export function ProjectWorkspace({
       </SlotPortal>
 
       {/* Stepper Navigation */}
-      <div className="talent-content-stepper-bar">
+      <div className="talent-content-stepper-bar" data-testid="chapter-workflow-stepper">
         <Stepper steps={steps} activeStep={activeStep} onStepClick={setActiveStep} />
       </div>
 

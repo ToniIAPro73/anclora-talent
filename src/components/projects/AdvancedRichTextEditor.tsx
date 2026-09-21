@@ -263,6 +263,7 @@ function ToolbarButton({ onClick, active, disabled, dataTestId, title, children 
       onClick={onClick}
       disabled={disabled}
       data-testid={dataTestId}
+      aria-label={title}
       title={title}
       data-active={active ? 'true' : 'false'}
       className="ac-text-editor__button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
@@ -307,6 +308,7 @@ function SplitToolbarButton({
           onClick={onPrimaryClick}
           disabled={disabled}
           data-testid={dataTestId}
+          aria-label={title}
           title={title}
           className="ac-text-editor__split-main"
         >
@@ -317,6 +319,7 @@ function SplitToolbarButton({
           onClick={() => !disabled && setIsOpen((open) => !open)}
           disabled={disabled}
           data-testid={toggleDataTestId}
+          aria-label={`Opciones de ${title.toLowerCase()}`}
           title={`Opciones de ${title.toLowerCase()}`}
           className="ac-text-editor__split-toggle"
         >

@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Check, ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp, ZoomIn, ZoomOut, ArrowLeft, Maximize2, FileText, Clock3 } from 'lucide-react';
 import { AdvancedRichTextEditor } from '../AdvancedRichTextEditor';
-import { Stepper, type Step } from '@/components/ui/Stepper';
 import { useChapterEditor } from './useChapterEditor';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
@@ -36,11 +35,6 @@ export function ChapterEditorFullscreen({
   const { preferences } = useEditorPreferences();
   const [zoom, setZoom] = useState(100);
   const [focusMode, setFocusMode] = useState(false);
-  const editorSteps: Step[] = (locale === 'es'
-    ? ['Contenido', 'Capítulos', 'Portada', 'Contraportada', 'Vista previa', 'Colaborar', 'Asistente IA', 'Exportar']
-    : ['Content', 'Chapters', 'Cover', 'Back cover', 'Preview', 'Collaborate', 'AI assistant', 'Export'])
-    .map((title, index) => ({ id: index + 1, title, status: index === 0 ? 'completed' : index === 1 ? 'active' : 'pending' }));
-
   // Use saved preferences if available, otherwise use passed defaults
   const device = (preferences.device as 'mobile' | 'tablet' | 'desktop') || defaultDevice;
   const fontSize = preferences.fontSize || defaultFontSize;
@@ -147,7 +141,7 @@ export function ChapterEditorFullscreen({
       <header className="ac-editor-shell__header">
         <div className="ac-editor-shell__titles">
           <span className="chapter-editor-brand">Anclora Talent</span>
-          <button type="button" className="ac-editor-back ac-button ac-button--secondary ac-button--sm" onClick={handleClose} disabled={editor.isSaving} data-testid="chapter-editor-back-button"><ArrowLeft className="h-4 w-4" />{locale === 'es' ? 'Volver a Capítulos' : 'Back to Chapters'}</button>
+          <button type="button" className="ac-editor-back ac-button ac-button--secondary ac-button--compact" onClick={handleClose} disabled={editor.isSaving} data-testid="chapter-editor-back-button"><ArrowLeft className="h-4 w-4" />{locale === 'es' ? 'Volver a Capítulos' : 'Back to Chapters'}</button>
           <h2 className="ac-editor-shell__title">
             {locale === 'es' ? 'Capítulo' : 'Chapter'} {editor.currentIndex + 1}/{editor.totalChapters}
           </h2>
@@ -160,7 +154,8 @@ export function ChapterEditorFullscreen({
             data-testid="chapter-editor-prev-chapter-button"
             onClick={editor.goToPrevChapter}
             disabled={!editor.canNavigatePrev || editor.isSaving}
-            className="ac-button ac-button--ghost ac-button--sm disabled:opacity-50"
+            className="ac-button ac-button--ghost ac-button--compact ac-button--icon disabled:opacity-50"
+            aria-label={copy.chapterPrevious}
             title={copy.chapterPrevious}
           >
             <ChevronLeft className="h-4 w-4" />
@@ -170,7 +165,8 @@ export function ChapterEditorFullscreen({
             data-testid="chapter-editor-next-chapter-button"
             onClick={editor.goToNextChapter}
             disabled={!editor.canNavigateNext || editor.isSaving}
-            className="ac-button ac-button--ghost ac-button--sm disabled:opacity-50"
+            className="ac-button ac-button--ghost ac-button--compact ac-button--icon disabled:opacity-50"
+            aria-label={copy.chapterNext}
             title={copy.chapterNext}
           >
             <ChevronRight className="h-4 w-4" />
@@ -183,7 +179,8 @@ export function ChapterEditorFullscreen({
                 data-testid="chapter-editor-prev-page-button"
                 onClick={editor.goToPagePrev}
                 disabled={!editor.canNavigatePagePrev || editor.isSaving}
-                className="ac-button ac-button--ghost ac-button--sm disabled:opacity-50"
+                className="ac-button ac-button--ghost ac-button--compact ac-button--icon disabled:opacity-50"
+                aria-label={copy.pagePrevious}
                 title={copy.pagePrevious}
               >
                 <ArrowUp className="h-4 w-4" />
@@ -197,7 +194,8 @@ export function ChapterEditorFullscreen({
                 data-testid="chapter-editor-next-page-button"
                 onClick={editor.goToPageNext}
                 disabled={!editor.canNavigatePageNext || editor.isSaving}
-                className="ac-button ac-button--ghost ac-button--sm disabled:opacity-50"
+                className="ac-button ac-button--ghost ac-button--compact ac-button--icon disabled:opacity-50"
+                aria-label={copy.pageNext}
                 title={copy.pageNext}
               >
                 <ArrowDown className="h-4 w-4" />
@@ -210,7 +208,8 @@ export function ChapterEditorFullscreen({
             type="button"
             data-testid="chapter-editor-zoom-out-button"
             onClick={() => handleZoomChange(zoom - 10)}
-            className="ac-button ac-button--ghost ac-button--sm"
+            className="ac-button ac-button--ghost ac-button--compact ac-button--icon"
+            aria-label={copy.zoomOut}
             title={copy.zoomOut}
           >
             <ZoomOut className="h-4 w-4" />
@@ -222,7 +221,8 @@ export function ChapterEditorFullscreen({
             type="button"
             data-testid="chapter-editor-zoom-in-button"
             onClick={() => handleZoomChange(zoom + 10)}
-            className="ac-button ac-button--ghost ac-button--sm"
+            className="ac-button ac-button--ghost ac-button--compact ac-button--icon"
+            aria-label={copy.zoomIn}
             title={copy.zoomIn}
           >
             <ZoomIn className="h-4 w-4" />
@@ -240,19 +240,15 @@ export function ChapterEditorFullscreen({
             type="button"
             onClick={handleSave}
             disabled={editor.isSaving || (!editor.hasChanges && editor.lastSaved !== null)}
-            className="ac-button ac-button--primary ac-button--sm"
+            className="ac-button ac-button--primary ac-button--compact"
             data-testid="chapter-editor-header-save-button"
           >
             {editor.isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
             {copy.save}
           </button>
-          <button type="button" className="ac-button ac-button--ghost ac-button--icon" aria-label={focusMode ? (locale === 'es' ? 'Salir del modo enfoque' : 'Exit focus mode') : (locale === 'es' ? 'Modo enfoque' : 'Focus mode')} aria-pressed={focusMode} title={focusMode ? (locale === 'es' ? 'Salir del modo enfoque' : 'Exit focus mode') : (locale === 'es' ? 'Modo enfoque' : 'Focus mode')} data-testid="chapter-editor-focus-button" onClick={() => setFocusMode((value) => !value)}><Maximize2 className="h-4 w-4" /></button>
+          <button type="button" className="ac-button ac-button--ghost ac-button--compact ac-button--icon" aria-label={focusMode ? (locale === 'es' ? 'Salir del modo enfoque' : 'Exit focus mode') : (locale === 'es' ? 'Modo enfoque' : 'Focus mode')} aria-pressed={focusMode} title={focusMode ? (locale === 'es' ? 'Salir del modo enfoque' : 'Exit focus mode') : (locale === 'es' ? 'Modo enfoque' : 'Focus mode')} data-testid="chapter-editor-focus-button" onClick={() => setFocusMode((value) => !value)}><Maximize2 className="h-4 w-4" /></button>
         </div>
       </header>
-
-      <div className="chapter-editor-stepper talent-content-stepper-bar">
-        <Stepper steps={editorSteps} activeStep={2} />
-      </div>
 
       <div className="ac-editor-shell__main">
         {editor.error && (

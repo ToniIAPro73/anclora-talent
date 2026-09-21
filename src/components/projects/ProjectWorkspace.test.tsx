@@ -56,9 +56,10 @@ vi.mock('./design-surface/CoverStudioV2', () => ({
 }));
 
 vi.mock('./advanced-chapter-editor/ChapterEditorFullscreen', () => ({
-  ChapterEditorFullscreen: ({ chapters, initialChapterIndex }: { chapters: ProjectRecord['document']['chapters']; initialChapterIndex: number }) => (
+  ChapterEditorFullscreen: ({ chapters, initialChapterIndex, onClose }: { chapters: ProjectRecord['document']['chapters']; initialChapterIndex: number; onClose: () => void }) => (
     <div data-testid="chapter-editor-rendered" data-chapter-id={chapters[initialChapterIndex]?.id}>
       Editor {chapters[initialChapterIndex]?.title}
+      <button type="button" data-testid="chapter-editor-back-button" onClick={onClose}>Volver a Capítulos</button>
     </div>
   ),
 }));
@@ -244,12 +245,17 @@ describe('ProjectWorkspace', () => {
     const { container } = render(<ProjectWorkspace project={makeProject()} copy={copy} />);
 
     clickStepperStep(container, 2);
+    expect(screen.getByTestId('chapter-workflow-stepper')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('chapter-open-button'));
 
     expect(screen.getByTestId('chapter-editor-rendered')).toHaveAttribute('data-chapter-id', 'ch-1');
+    expect(screen.queryByTestId('chapter-workflow-stepper')).not.toBeInTheDocument();
     expect(screen.queryByTestId('chapter-organizer')).not.toBeInTheDocument();
     expect(screen.queryByTestId('chapter-overview')).not.toBeInTheDocument();
     expect(screen.queryByTestId('chapter-properties-title')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('chapter-editor-back-button'));
+    expect(screen.getByTestId('chapter-workflow-stepper')).toBeInTheDocument();
   });
 
   test('shows the pagination sync action in Step 2 and updates its state when clicked', () => {

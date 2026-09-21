@@ -14,11 +14,17 @@ the existing Anclora button primitives and preserving real chapter behavior.
 - The editor fills the usable application content viewport and owns one
   deliberate internal scroll model.
 - Chapter navigation appears once, in the editor header.
+- The canonical eight-step workflow rail is rendered in Chapter Management and
+  is not rendered in the Chapter Editor; the editor header is the only route
+  context/navigation chrome for the active chapter.
 - Save remains a real action and the bottom bar reports real editor status.
 - Normal editing is already full viewport; focus mode is an additional
   distraction-free state.
 - Chapter controls use the existing `ac-button` variants and compact icon
   treatment; no new visual button system is introduced.
+- Management and editor controls use the design-system `0.6.0` contract for
+  compact density and icon-only accessible names, while the rich-text toolbar
+  continues to use the design-system editorial toolbar pattern.
 - Existing chapter CRUD, ordering, persistence, navigation, formatting, and
   responsive behavior remain functional.
 
