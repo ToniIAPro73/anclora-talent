@@ -173,6 +173,20 @@ describe('ProjectWorkspace', () => {
     expect(screen.getByTestId('content-workspace-topbar')).toHaveTextContent('Mi Proyecto');
   });
 
+  test('uses the compact shared button family for workspace header actions', () => {
+    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
+
+    const preview = screen.getByTestId('content-workspace-preview-button');
+    const documentData = screen.getByTestId('document-data-open-button');
+
+    expect(preview).toHaveClass('ac-button', 'ac-button--compact');
+    expect(preview).not.toHaveClass('ac-button--primary');
+    expect(documentData).toHaveClass('ac-button', 'ac-button--compact');
+    expect(documentData).not.toHaveClass('ac-button--primary');
+    expect(preview).not.toHaveTextContent(/[\uE000-\uF8FF]/);
+    expect(documentData).not.toHaveTextContent(/[\uE000-\uF8FF]/);
+  });
+
   test('shows the Resumen tab by default in Step 1', () => {
     render(<ProjectWorkspace project={makeProject()} copy={copy} />);
     expect(screen.getByTestId('content-summary')).toBeInTheDocument();

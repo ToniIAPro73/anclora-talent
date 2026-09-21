@@ -656,7 +656,7 @@ export function ProjectWorkspace({
               type="button"
               data-testid="content-workspace-preview-button"
               onClick={() => setActiveStep(5)}
-              className="ac-button ac-button--compact ac-button--primary"
+              className="ac-button ac-button--compact"
             >
               {copy.contentPreviewAction}
             </button>
