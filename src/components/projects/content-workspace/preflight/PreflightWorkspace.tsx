@@ -393,17 +393,17 @@ export function PreflightWorkspace({
 
                         <div className="talent-preflight-workspace__incidence-actions">
                           {area === 'metadata' && (
-                            <button type="button" onClick={onOpenMetadata} className="dashboard-button" data-testid={`preflight-action-metadata-${key}`}>
+                            <button type="button" onClick={onOpenMetadata} className="ac-button ac-button--compact" data-testid={`preflight-action-metadata-${key}`}>
                               {copy.preflightWorkspaceGoToMetadataAction}
                             </button>
                           )}
                           {area === 'structure' && (
-                            <button type="button" onClick={onOpenComposition} className="dashboard-button" data-testid={`preflight-action-composition-${key}`}>
+                            <button type="button" onClick={onOpenComposition} className="ac-button ac-button--compact" data-testid={`preflight-action-composition-${key}`}>
                               {copy.preflightWorkspaceGoToCompositionAction}
                             </button>
                           )}
                           {check.page !== undefined && (
-                            <button type="button" onClick={() => onNavigateStep(5)} className="dashboard-button" data-testid={`preflight-action-preview-${key}`}>
+                            <button type="button" onClick={() => onNavigateStep(5)} className="ac-button ac-button--compact" data-testid={`preflight-action-preview-${key}`}>
                               {copy.preflightWorkspaceViewInPreviewAction}
                             </button>
                           )}
@@ -412,7 +412,7 @@ export function PreflightWorkspace({
                               type="button"
                               data-testid={`ai-propose-fix-${key}`}
                               onClick={() => handleProposeFix(key, check)}
-                              className="dashboard-button"
+                              className="ac-button ac-button--compact"
                             >
                               <Send className="h-3.5 w-3.5" />
                               {copy.aiProposeFix}
@@ -528,7 +528,7 @@ export function PreflightWorkspace({
                     setExpandedKey(null);
                   }
                 }}
-                className="dashboard-button dashboard-button--primary mt-3 w-full justify-center"
+                className="ac-button ac-button--compact ac-button--primary mt-3 w-full justify-center"
               >
                 {nextAction.area === 'metadata'
                   ? copy.preflightWorkspaceNextActionMetadata

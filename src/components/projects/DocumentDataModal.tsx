@@ -591,7 +591,7 @@ function DocumentDataModalForm({
             type="button"
             data-testid="document-data-cancel-button"
             onClick={onClose}
-            className="dashboard-button"
+            className="ac-button ac-button--compact"
           >
             {copy.documentDataCancelLabel}
           </button>
@@ -600,7 +600,7 @@ function DocumentDataModalForm({
               type="button"
               data-testid="document-data-save-button"
               onClick={handlePreCreateConfirm}
-              className="dashboard-button dashboard-button--primary"
+              className="ac-button ac-button--compact ac-button--primary"
             >
               {copy.documentDataConfirmLabel}
             </button>
@@ -610,7 +610,7 @@ function DocumentDataModalForm({
               data-testid="document-data-save-button"
               onClick={handleProjectSave}
               disabled={isPending}
-              className="dashboard-button dashboard-button--primary"
+              className="ac-button ac-button--compact ac-button--primary"
             >
               {isPending ? (
                 <span className="inline-flex items-center gap-2">

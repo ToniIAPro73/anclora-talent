@@ -198,7 +198,7 @@ export function BrandWorkspace({
                 data-testid="brand-disconnect-button"
                 onClick={handleDisconnect}
                 disabled={isPending}
-                className="dashboard-button mt-2 w-full justify-center"
+                className="ac-button ac-button--compact mt-2 w-full justify-center"
               >
                 {copy.brandWorkspaceDisconnectAction}
               </button>
@@ -481,7 +481,7 @@ export function BrandWorkspace({
                         data-testid={`brand-activate-button-${profile.id}`}
                         onClick={() => handleActivate(profile.id)}
                         disabled={isPending}
-                        className="dashboard-button"
+                        className="ac-button ac-button--compact"
                       >
                         {copy.brandActivateAction}
                       </button>
@@ -492,7 +492,7 @@ export function BrandWorkspace({
                         data-testid={`brand-apply-button-${profile.id}`}
                         onClick={() => handleApply(profile.id)}
                         disabled={isPending}
-                        className="dashboard-button"
+                        className="ac-button ac-button--compact"
                       >
                         {copy.brandWorkspaceApplyAction}
                       </button>

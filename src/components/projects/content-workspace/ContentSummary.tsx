@@ -156,7 +156,7 @@ export function ContentSummary({
               type="button"
               data-testid="content-summary-edit-metadata"
               onClick={onEditMetadata}
-              className="dashboard-button"
+              className="ac-button ac-button--compact"
             >
               {copy.contentSummaryEditMetadataAction}
             </button>
@@ -258,7 +258,7 @@ export function ContentSummary({
                 type="button"
                 data-testid="content-summary-view-history"
                 onClick={onOpenVersions}
-                className="dashboard-button"
+                className="ac-button ac-button--compact"
               >
                 <HistoryIcon className="h-3.5 w-3.5" />
                 {copy.contentSummaryViewHistoryAction}
@@ -289,7 +289,7 @@ export function ContentSummary({
               type="button"
               data-testid="content-summary-configure-composition"
               onClick={onOpenComposition}
-              className="dashboard-button"
+              className="ac-button ac-button--compact"
             >
               {copy.contentSummaryConfigureAction}
             </button>
@@ -343,7 +343,7 @@ export function ContentSummary({
               type="button"
               data-testid="content-summary-review-rules"
               onClick={onOpenComposition}
-              className="dashboard-button"
+              className="ac-button ac-button--compact"
             >
               {copy.contentSummaryReviewRulesAction}
             </button>
@@ -361,7 +361,7 @@ export function ContentSummary({
               type="button"
               data-testid="content-summary-edit-brand"
               onClick={onOpenBrand}
-              className="dashboard-button"
+              className="ac-button ac-button--compact"
             >
               {copy.contentSummaryEditAction}
             </button>
@@ -498,7 +498,7 @@ export function ContentSummary({
             <button
               type="button"
               onClick={onOpenPreflight}
-              className="dashboard-button"
+              className="ac-button ac-button--compact"
               data-testid="content-summary-open-preflight"
             >
               {copy.contentSummaryReviewRulesAction}
@@ -510,10 +510,10 @@ export function ContentSummary({
       {/* BOTTOM ACTION BAR */}
       <div className="talent-content-summary__actions" data-testid="content-summary-actions">
         <div className="talent-content-summary__actions-secondary">
-          <button type="button" onClick={onOpenAssistant} className="dashboard-button" data-testid="content-summary-open-assistant">
+          <button type="button" onClick={onOpenAssistant} className="ac-button ac-button--compact" data-testid="content-summary-open-assistant">
             {copy.contentSummaryBottomAssistant}
           </button>
-          <button type="button" onClick={onOpenPreflight} className="dashboard-button" data-testid="content-summary-review-coherence">
+          <button type="button" onClick={onOpenPreflight} className="ac-button ac-button--compact" data-testid="content-summary-review-coherence">
             {copy.contentSummaryBottomCoherence}
           </button>
           {onSaveVersion && (
@@ -521,17 +521,17 @@ export function ContentSummary({
               type="button"
               onClick={onSaveVersion}
               disabled={isSavingVersion}
-              className="dashboard-button"
+              className="ac-button ac-button--compact"
               data-testid="content-summary-save-version"
             >
               {isSavingVersion ? historyCopy?.savingVersion : copy.contentSummarySaveVersionAction}
             </button>
           )}
-          <button type="button" onClick={onOpenVersions} className="dashboard-button" data-testid="content-summary-open-versions">
+          <button type="button" onClick={onOpenVersions} className="ac-button ac-button--compact" data-testid="content-summary-open-versions">
             {copy.contentSummaryViewHistoryAction}
           </button>
         </div>
-        <button type="button" onClick={onOpenPreview} className="dashboard-button dashboard-button--primary" data-testid="content-summary-open-preview">
+        <button type="button" onClick={onOpenPreview} className="ac-button ac-button--compact ac-button--primary" data-testid="content-summary-open-preview">
           {copy.editorOpenPreview}
         </button>
       </div>
