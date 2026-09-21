@@ -81,9 +81,9 @@ export function AppShell({
             )}
 
             <div className="talent-shell-topbar-actions">
-              {compactDashboard && <NavigatingLink href="/projects/new" pendingLabel={messages.navNewProject} className="dashboard-button dashboard-button--primary dashboard-header-create">{messages.navNewProject}</NavigatingLink>}
-              {compactNewProject && <><NavigatingLink href="/dashboard" pendingLabel={messages.navDashboard} className="dashboard-button dashboard-button--primary new-project-dashboard">{messages.navDashboard}</NavigatingLink><NavigatingLink href="/dashboard" pendingLabel={messages.navCancel} className="dashboard-button dashboard-button--primary new-project-cancel">{messages.navCancel}</NavigatingLink></>}
-              {compactEditor && <NavigatingLink href="/dashboard" pendingLabel={messages.navDashboard} className="dashboard-button">{messages.navDashboard}</NavigatingLink>}
+              {compactDashboard && <NavigatingLink href="/projects/new" pendingLabel={messages.navNewProject} className="ac-button ac-button--compact ac-button--primary dashboard-header-create">{messages.navNewProject}</NavigatingLink>}
+              {compactNewProject && <><NavigatingLink href="/dashboard" pendingLabel={messages.navDashboard} className="ac-button ac-button--compact ac-button--primary new-project-dashboard">{messages.navDashboard}</NavigatingLink><NavigatingLink href="/dashboard" pendingLabel={messages.navCancel} className="ac-button ac-button--compact ac-button--primary new-project-cancel">{messages.navCancel}</NavigatingLink></>}
+              {compactEditor && <NavigatingLink href="/dashboard" pendingLabel={messages.navDashboard} className="ac-button ac-button--compact">{messages.navDashboard}</NavigatingLink>}
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen((open) => !open)}

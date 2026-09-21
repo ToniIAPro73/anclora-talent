@@ -161,7 +161,7 @@ export function MetadataWorkspace({
                 type="button"
                 data-testid="metadata-change-cover"
                 onClick={() => onNavigateStep(3)}
-                className="dashboard-button"
+                className="ac-button ac-button--compact"
               >
                 {copy.metadataChangeCoverAction}
               </button>
@@ -304,7 +304,7 @@ export function MetadataWorkspace({
         <section className="ac-surface-panel ac-surface-panel--subtle" data-testid="metadata-summary-panel">
           <div className="ac-surface-panel__meta">
             <p className="ac-surface-panel__eyebrow">{copy.metadataSummaryTitle}</p>
-            <button type="button" data-testid="metadata-summary-edit" onClick={focusTitle} className="dashboard-button">
+            <button type="button" data-testid="metadata-summary-edit" onClick={focusTitle} className="ac-button ac-button--compact">
               {copy.contentSummaryEditAction}
             </button>
           </div>
@@ -338,7 +338,7 @@ export function MetadataWorkspace({
               data-testid="metadata-save-button"
               onClick={handleSave}
               disabled={isPending}
-              className="dashboard-button dashboard-button--primary"
+              className="ac-button ac-button--compact ac-button--primary"
             >
               {isPending ? '…' : saved ? <Check className="h-4 w-4" /> : null}
               {copy.metadataSave}

@@ -221,7 +221,7 @@ export function VersionsWorkspace({
             data-testid="versions-save-button"
             onClick={handleSaveVersion}
             disabled={isPending}
-            className="dashboard-button dashboard-button--primary"
+            className="ac-button ac-button--compact ac-button--primary"
           >
             <Save className="h-4 w-4" />
             {isPending ? copy.savingVersion : copy.saveVersionButton}
@@ -373,7 +373,7 @@ export function VersionsWorkspace({
                     type="button"
                     data-testid="versions-compare-button"
                     onClick={handleCustomCompare}
-                    className="dashboard-button"
+                    className="ac-button ac-button--compact"
                   >
                     <GitCompareArrows className="h-4 w-4" />
                     {copy.compareButton}

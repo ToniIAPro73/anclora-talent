@@ -303,7 +303,7 @@ export function CompositionWorkspace({
               type="button"
               data-testid="composition-reset-button"
               onClick={handleReset}
-              className="dashboard-button"
+              className="ac-button ac-button--compact"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               {copy.compositionResetAction}
@@ -671,7 +671,7 @@ export function CompositionWorkspace({
               data-testid="composition-save-button"
               onClick={handleSave}
               disabled={isPending}
-              className="dashboard-button dashboard-button--primary"
+              className="ac-button ac-button--compact ac-button--primary"
             >
               {copy.compositionSave}
             </button>
@@ -748,7 +748,7 @@ export function CompositionWorkspace({
               type="button"
               data-testid="composition-review-preview-button"
               onClick={() => onNavigateStep(5)}
-              className="dashboard-button"
+              className="ac-button ac-button--compact"
             >
               {copy.compositionReviewInPreviewAction}
             </button>

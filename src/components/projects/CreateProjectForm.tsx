@@ -114,7 +114,7 @@ export function CreateProjectForm({
             {copy.createProjectHint}
           </p>
           <SubmitButton
-            className="dashboard-button dashboard-button--primary w-full"
+            className="ac-button ac-button--compact ac-button--primary w-full"
             data-testid="create-project-submit-button"
             disabled={isPreprocessing}
           >

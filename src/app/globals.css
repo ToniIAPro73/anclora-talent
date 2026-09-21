@@ -447,18 +447,36 @@ body {
   border-color: var(--talent-button-secondary-hover-border);
 }
 
-.ac-button {
+.ac-button:not(.ac-button--compact) {
+  /* Anatomy layer: text-transform/letter-spacing/font-size/font-weight/
+     padding-inline have no sanctioned DS extension point yet (only color,
+     via --ac-button-bg/fg/border/shadow, and radius, via --ac-button-radius,
+     are exposed as component tokens as of design-system 0.5.0) — these
+     remain a documented brand-anatomy override, tracked as design-system
+     feedback (Wave 1 pilot report) rather than silently accepted. Radius is
+     migrated to the sanctioned --ac-button-radius token below: same visual
+     result (18px), now expressed through the DS's own extension point
+     instead of overriding border-radius directly on the base selector.
+
+     Scoped with :not(.ac-button--compact): both this selector and the DS's
+     own .ac-button--compact have equal specificity (one class), so without
+     this exclusion this rule — being later in the cascade than the
+     imported button.css — would silently win and cancel out every
+     .ac-button--compact usage migrated from .dashboard-button (Wave 1
+     pilot), making the whole migration a no-op. Compact buttons are meant
+     to use the DS's own compact anatomy, not this app's larger brand
+     anatomy shrunk down. */
   text-transform: none;
   letter-spacing: -0.015em;
   font-size: 0.92rem;
   font-weight: 800;
-  border-radius: 18px;
+  --ac-button-radius: 18px;
   padding-inline: 22px;
 }
 
-.ac-button--sm {
+.ac-button--sm:not(.ac-button--compact) {
   font-size: 0.84rem;
-  border-radius: 16px;
+  --ac-button-radius: 16px;
 }
 
 .ac-button--lg {

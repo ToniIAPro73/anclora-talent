@@ -28,8 +28,8 @@ describe('Dashboard workspace', () => {
     expect(within(rows[0]).getByRole('heading', { name: 'Forms' })).toBeInTheDocument();
     expect(within(rows[0]).getByRole('link', { name: appMessages.en.project.cardOpenEditor })).toHaveAttribute('href', '/projects/recent/editor');
     expect(within(rows[0]).getByRole('link', { name: appMessages.en.project.cardPreview })).toHaveAttribute('href', '/projects/recent/preview');
-    expect(within(rows[0]).getByRole('link', { name: appMessages.en.project.cardOpenEditor })).toHaveClass('dashboard-button--primary');
-    expect(within(rows[1]).getByRole('link', { name: appMessages.en.project.cardOpenEditor })).toHaveClass('dashboard-button--primary');
+    expect(within(rows[0]).getByRole('link', { name: appMessages.en.project.cardOpenEditor })).toHaveClass('ac-button--primary');
+    expect(within(rows[1]).getByRole('link', { name: appMessages.en.project.cardOpenEditor })).toHaveClass('ac-button--primary');
     fireEvent.click(within(rows[0]).getByRole('button', { name: appMessages.en.project.cardActionsMenu }));
     expect(screen.getByTestId('project-card-document-data-button')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('project-card-document-data-button'));
@@ -45,8 +45,8 @@ describe('Dashboard workspace', () => {
     fireEvent.click(rows[1]);
     expect(rows[0]).toHaveAttribute('data-selected', 'false');
     expect(rows[1]).toHaveAttribute('data-selected', 'true');
-    expect(within(rows[1]).getByRole('link', { name: appMessages.en.project.cardOpenEditor })).toHaveClass('dashboard-button--primary');
-    expect(within(rows[0]).getByRole('link', { name: appMessages.en.project.cardOpenEditor })).toHaveClass('dashboard-button--primary');
+    expect(within(rows[1]).getByRole('link', { name: appMessages.en.project.cardOpenEditor })).toHaveClass('ac-button--primary');
+    expect(within(rows[0]).getByRole('link', { name: appMessages.en.project.cardOpenEditor })).toHaveClass('ac-button--primary');
   });
   test('searches, sorts, filters and switches layout without losing results', () => {
     mount();
