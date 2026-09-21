@@ -52,6 +52,7 @@ build/
 target/
 .gradle/
 .next/
+.next-*/
 .vercel/
 output/
 next-env.d.ts
