@@ -45,4 +45,10 @@ describe('app shell v3 contract', () => {
     expect(appShell).toContain('<ThemeToggle />');
     expect(globalsCss).toMatch(/@media \(max-width: 480px\)[\s\S]*\.talent-shell-nav\s*\{[\s\S]*display: none/);
   });
+
+  test('renders the shared legal footer after the application shell', () => {
+    expect(appShell).toContain("import { LegalFooter } from '@/components/legal/LegalFooter';");
+    expect(appShell).toContain('<LegalFooter mode="application" />');
+    expect(globalsCss).not.toContain('.talent-app-shell-frame + footer');
+  });
 });

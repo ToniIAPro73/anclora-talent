@@ -524,10 +524,6 @@ body {
   padding: 16px;
 }
 
-.talent-app-shell-frame + footer {
-  display: none;
-}
-
 .talent-shell-main {
   min-height: calc(100vh - 32px);
   border: 1px solid var(--border-subtle);

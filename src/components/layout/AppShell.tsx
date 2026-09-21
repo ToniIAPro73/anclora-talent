@@ -12,6 +12,7 @@ import { NavigatingLink } from '@/components/ui/NavigatingLink';
 import { LocaleToggle } from './LocaleToggle';
 import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
+import { LegalFooter } from '@/components/legal/LegalFooter';
 
 export function AppShell({
   user,
@@ -44,6 +45,7 @@ export function AppShell({
   ];
 
   return (
+    <>
       <div className={`talent-app-shell-frame min-h-screen bg-[var(--app-gradient)] text-[var(--text-primary)]${compactDashboard ? ' talent-dashboard-shell' : ''}${compactNewProject ? ' talent-new-project-shell' : ''}${compactEditor ? ' talent-editor-shell' : ''}`}>
       <div className="talent-shell-grid">
         <div className="talent-shell-main min-w-0">
@@ -116,7 +118,9 @@ export function AppShell({
 
           <main id="main-content" className="talent-shell-content">{children}</main>
         </div>
+        </div>
       </div>
-    </div>
+      <LegalFooter mode="application" />
+    </>
   );
 }
