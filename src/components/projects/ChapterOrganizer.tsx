@@ -1,207 +1,43 @@
 'use client';
 
-import { ChevronDown, ChevronUp, Trash2, Edit2, Plus, Download, Hash, Loader2, Check } from 'lucide-react';
+import { Check, Download, GripVertical, Hash, MoreVertical, Plus, BookOpen, Clock3, FileText, Pencil, Loader2, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
 import { deleteChapterAction, moveChapterAction } from '@/lib/projects/actions';
 import { calculateWordCount } from '@/lib/projects/document-stats';
 import { formatChapterPageMetrics, type ChapterPageMetrics } from '@/lib/preview/metrics';
 import type { DocumentChapter } from '@/lib/projects/types';
 
-export function ChapterOrganizer({
-  projectId,
-  chapters,
-  activeChapterId,
-  onSelect,
-  onEditChapter,
-  onAddChapter,
-  onImportChapter,
-  onSyncPageNumbers,
-  pageNumberSyncState = 'idle',
-  pageNumberIsStale = false,
-  syncPageNumbersLabel = 'Actualizar numeración',
-  syncPageNumbersTitle = 'Recalcular la numeración del preview y la exportación',
-  syncPageNumbersHelper = 'Sincroniza el índice y los pies de página con la maquetación actual.',
-  chapterActionEdit = 'Editar capítulo',
-  chapterActionMoveUp = 'Mover capítulo arriba',
-  chapterActionMoveDown = 'Mover capítulo abajo',
-  chapterActionDelete = 'Eliminar capítulo',
-  metricsById = {},
-}: {
-  projectId: string;
-  chapters: DocumentChapter[];
-  activeChapterId: string;
-  onSelect: (chapterId: string) => void;
-  onEditChapter: (chapterId: string) => void;
-  onAddChapter: () => void;
-  onImportChapter: () => void;
-  onSyncPageNumbers: () => void;
-  pageNumberSyncState?: 'idle' | 'syncing' | 'synced';
-  pageNumberIsStale?: boolean;
-  syncPageNumbersLabel?: string;
-  syncPageNumbersTitle?: string;
-  syncPageNumbersHelper?: string;
-  chapterActionEdit?: string;
-  chapterActionMoveUp?: string;
-  chapterActionMoveDown?: string;
-  chapterActionDelete?: string;
-  metricsById?: Record<string, ChapterPageMetrics>;
+function plainText(chapter: DocumentChapter) {
+  return chapter.blocks.map((block) => block.content.replace(/<[^>]+>/g, ' ')).join(' ').replace(/\s+/g, ' ').trim();
+}
+
+export function ChapterOrganizer({ projectId, chapters, activeChapterId, onSelect, onEditChapter, onAddChapter, onImportChapter, onSyncPageNumbers, pageNumberSyncState = 'idle', pageNumberIsStale = false, syncPageNumbersLabel = 'Sincronizar numeración', syncPageNumbersTitle = 'Recalcular numeración', syncPageNumbersHelper = '', chapterActionEdit = 'Editar capítulo', chapterActionMoveUp = 'Mover capítulo arriba', chapterActionMoveDown = 'Mover capítulo abajo', chapterActionDelete = 'Eliminar capítulo', metricsById = {}, locale = 'es' }: {
+  projectId: string; chapters: DocumentChapter[]; activeChapterId: string; onSelect: (chapterId: string) => void; onEditChapter: (chapterId: string) => void; onAddChapter: () => void; onImportChapter: () => void; onSyncPageNumbers: () => void; pageNumberSyncState?: 'idle' | 'syncing' | 'synced'; pageNumberIsStale?: boolean; syncPageNumbersLabel?: string; syncPageNumbersTitle?: string; syncPageNumbersHelper?: string; chapterActionEdit?: string; chapterActionMoveUp?: string; chapterActionMoveDown?: string; chapterActionDelete?: string; metricsById?: Record<string, ChapterPageMetrics>; locale?: 'es' | 'en';
 }) {
-  return (
-    <nav
-      aria-label="Capítulos"
-      data-testid="chapter-organizer"
-      className="ac-chapter-rail"
-    >
-      <div className="ac-chapter-rail__header">
-        <div className="ac-chapter-rail__titles">
-          <p className="ac-chapter-rail__title">
-            Capítulos ({chapters.length})
-          </p>
-          <p className="ac-chapter-rail__summary">
-            {syncPageNumbersHelper}
-          </p>
-        </div>
-        <div className="ac-chapter-rail__toolbar">
-          <div className="relative">
-            <button
-              onClick={onSyncPageNumbers}
-              className="ac-button ac-button--secondary ac-button--sm"
-              title={syncPageNumbersTitle}
-              data-testid="sync-page-numbers-button"
-              data-sync-state={pageNumberSyncState}
-              data-stale={pageNumberIsStale ? 'true' : 'false'}
-            >
-              {pageNumberSyncState === 'syncing' ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : pageNumberSyncState === 'synced' ? (
-                <Check className="h-3.5 w-3.5" />
-              ) : (
-                <Hash className="h-3.5 w-3.5" />
-              )}
-              <span>{syncPageNumbersLabel}</span>
-            </button>
-            {pageNumberIsStale && pageNumberSyncState === 'idle' && (
-              <span
-                className="pointer-events-none absolute -right-1 -top-1 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-amber-400"
-                aria-label="Numeración desactualizada"
-                data-testid="sync-stale-badge"
-              />
-            )}
-          </div>
-          <button
-            onClick={onAddChapter}
-            className="ac-button ac-button--ghost ac-button--sm"
-            title="Agregar nuevo capítulo"
-            data-testid="add-chapter-button"
-          >
-            <Plus className="h-3.5 w-3.5" />
-          </button>
-          <button
-            onClick={onImportChapter}
-            className="ac-button ac-button--ghost ac-button--sm"
-            title="Importar capítulo"
-            data-testid="import-chapter-button"
-          >
-            <Download className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      </div>
-      
-      {chapters.map((chapter, index) => {
-        const isActive = chapter.id === activeChapterId;
-        const wordCount = chapter.blocks.reduce((total, block) => total + calculateWordCount(block.content), 0);
+  const activeIndex = Math.max(0, chapters.findIndex((chapter) => chapter.id === activeChapterId));
+  const activeChapter = chapters[activeIndex] ?? chapters[0];
+  const activeWords = activeChapter?.blocks.reduce((total, block) => total + calculateWordCount(block.content), 0) ?? 0;
+  const activeText = activeChapter ? plainText(activeChapter) : '';
+  const readingMinutes = Math.max(1, Math.ceil(activeWords / 220));
+  const headings = activeChapter?.blocks.filter((block) => block.type === 'heading').length ?? 0;
+  const totalWords = chapters.reduce((total, chapter) => total + chapter.blocks.reduce((sum, block) => sum + calculateWordCount(block.content), 0), 0);
+  const labels = locale === 'en' ? { structure: 'Structure', chapters: 'Chapters', add: 'Add chapter', import: 'Import', words: 'words', editing: 'Editing', draft: 'Draft', properties: 'Properties', title: 'Chapter title', editHint: 'Edit the title from the editor.', number: 'Number', status: 'Status', health: 'Chapter health', available: 'Available', length: 'Calculated length', sections: 'Structure detected', content: 'Content available', ready: 'Ready to edit', blocks: 'content blocks', reading: 'reading time', preview: 'Open chapter', rename: 'Rename' } : { structure: 'Estructura', chapters: 'Capítulos', add: 'Añadir capítulo', import: 'Importar', words: 'palabras', editing: 'En edición', draft: 'Borrador', properties: 'Propiedades', title: 'Título del capítulo', editHint: 'Edita el título desde el editor.', number: 'Número', status: 'Estado', health: 'Salud del capítulo', available: 'Disponible', length: 'Extensión calculada', sections: 'Estructura detectada', content: 'Contenido disponible', ready: 'Listo para editar', blocks: 'bloques de contenido', reading: 'tiempo de lectura', preview: 'Abrir capítulo', rename: 'Renombrar' };
+  const showLargeTitle = !/^Capítulo \d+$/i.test(activeChapter?.title ?? '');
 
-        return (
-          <div
-            key={chapter.id}
-            className="ac-chapter-rail__item"
-            data-active={isActive ? 'true' : 'false'}
-          >
-            <div className="ac-chapter-rail__item-shell">
-              <button
-                type="button"
-                data-testid={`chapter-organizer-button-${index + 1}`}
-                onClick={() => onSelect(chapter.id)}
-                aria-current={isActive ? 'page' : undefined}
-                className="ac-chapter-rail__trigger min-w-0 flex-1 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
-              >
-                <span className="ac-chapter-rail__index mt-0.5">
-                  {index + 1}
-                </span>
-                <div className="ac-chapter-rail__body">
-                  <div className="ac-chapter-rail__chapter-title line-clamp-2">
-                    {chapter.title}
-                  </div>
-                  <div className="ac-chapter-rail__meta">
-                    {wordCount} palabras
-                  </div>
-                  {metricsById[chapter.id] && (
-                    <div className="ac-chapter-rail__metrics">
-                      {formatChapterPageMetrics(metricsById[chapter.id])}
-                    </div>
-                  )}
-                </div>
-              </button>
-
-              <div className="ac-chapter-rail__actions">
-                <button
-                  type="button"
-                  onClick={() => onEditChapter(chapter.id)}
-                  className="ac-button ac-button--ghost ac-button--sm min-h-11 min-w-11"
-                  aria-label={`${chapterActionEdit}: ${chapter.title}`}
-                  title={`${chapterActionEdit}: ${chapter.title}`}
-                  data-testid={`chapter-edit-button-${index + 1}`}
-                >
-                  <Edit2 className="h-3.5 w-3.5" />
-                </button>
-                <form action={moveChapterAction}>
-                  <input type="hidden" name="projectId" value={projectId} data-testid={`chapter-move-up-project-id-input-${index + 1}`} />
-                  <input type="hidden" name="chapterId" value={chapter.id} data-testid={`chapter-move-up-chapter-id-input-${index + 1}`} />
-                  <input type="hidden" name="direction" value="up" data-testid={`chapter-move-up-direction-input-${index + 1}`} />
-                  <button
-                    type="submit"
-                    data-testid={`chapter-move-up-button-${index + 1}`}
-                    aria-label={`${chapterActionMoveUp}: ${chapter.title}`}
-                    title={`${chapterActionMoveUp}: ${chapter.title}`}
-                    disabled={index === 0}
-                    className="ac-button ac-button--ghost ac-button--sm min-h-11 min-w-11 disabled:opacity-30"
-                  >
-                    <ChevronUp className="h-3.5 w-3.5" />
-                  </button>
-                </form>
-                <form action={moveChapterAction}>
-                  <input type="hidden" name="projectId" value={projectId} data-testid={`chapter-move-down-project-id-input-${index + 1}`} />
-                  <input type="hidden" name="chapterId" value={chapter.id} data-testid={`chapter-move-down-chapter-id-input-${index + 1}`} />
-                  <input type="hidden" name="direction" value="down" data-testid={`chapter-move-down-direction-input-${index + 1}`} />
-                  <button
-                    type="submit"
-                    data-testid={`chapter-move-down-button-${index + 1}`}
-                    aria-label={`${chapterActionMoveDown}: ${chapter.title}`}
-                    title={`${chapterActionMoveDown}: ${chapter.title}`}
-                    disabled={index === chapters.length - 1}
-                    className="ac-button ac-button--ghost ac-button--sm min-h-11 min-w-11 disabled:opacity-30"
-                  >
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  </button>
-                </form>
-                <form action={deleteChapterAction}>
-                  <input type="hidden" name="projectId" value={projectId} data-testid={`chapter-delete-project-id-input-${index + 1}`} />
-                  <input type="hidden" name="chapterId" value={chapter.id} data-testid={`chapter-delete-chapter-id-input-${index + 1}`} />
-                  <button
-                    type="submit"
-                    data-testid={`chapter-delete-button-${index + 1}`}
-                    aria-label={`${chapterActionDelete}: ${chapter.title}`}
-                    title={`${chapterActionDelete}: ${chapter.title}`}
-                    disabled={chapters.length <= 1}
-                    className="ac-button ac-button--destructive ac-button--sm min-h-11 min-w-11 disabled:opacity-30"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </nav>
-  );
+  return <section className="chapters-workspace" data-testid="chapter-organizer">
+    <aside className="chapters-workspace__list" aria-label={labels.chapters}>
+      <div className="chapters-workspace__panel-heading"><div><p className="chapters-workspace__eyebrow">{labels.structure}</p><h2>{labels.chapters}</h2></div><span className="chapters-workspace__count">{chapters.length}</span></div>
+      <div className="chapters-workspace__list-actions"><button type="button" onClick={onAddChapter} className="ac-button ac-button--primary ac-button--sm" data-testid="add-chapter-button"><Plus className="h-4 w-4" />{labels.add}</button><button type="button" onClick={onImportChapter} className="ac-button ac-button--secondary ac-button--sm" data-testid="import-chapter-button"><Download className="h-4 w-4" />{labels.import}</button></div>
+      <div className="chapters-workspace__items">{chapters.map((chapter, index) => { const selected = chapter.id === activeChapter?.id; const words = chapter.blocks.reduce((total, block) => total + calculateWordCount(block.content), 0); return <div key={chapter.id} className="chapters-workspace__item" data-active={selected ? 'true' : 'false'}>
+        <button type="button" className="chapters-workspace__item-trigger" onClick={() => onSelect(chapter.id)} aria-current={selected ? 'page' : undefined} data-testid={`chapter-organizer-button-${index + 1}`}><GripVertical className="chapters-workspace__grip" aria-hidden="true" /><span className="chapters-workspace__item-number">{index + 1}</span><span className="chapters-workspace__item-copy"><strong>{chapter.title}</strong><small>{words.toLocaleString()} {labels.words}</small></span><span className={`chapters-workspace__status-dot ${selected ? 'is-active' : ''}`} aria-label={selected ? labels.editing : labels.draft} /></button>
+        <div className="chapters-workspace__item-menu"><button type="button" className="ac-button ac-button--ghost ac-button--icon min-w-11" onClick={() => onEditChapter(chapter.id)} aria-label={`${chapterActionEdit}: ${chapter.title}`} title={`${chapterActionEdit}: ${chapter.title}`} data-testid={`chapter-edit-button-${index + 1}`}><MoreVertical className="h-4 w-4" /></button>
+          <form action={moveChapterAction}><input type="hidden" name="projectId" value={projectId} data-testid={`chapter-move-up-project-id-input-${index + 1}`} /><input type="hidden" name="chapterId" value={chapter.id} data-testid={`chapter-move-up-chapter-id-input-${index + 1}`} /><input type="hidden" name="direction" value="up" data-testid={`chapter-move-up-direction-input-${index + 1}`} /><button type="submit" className="ac-button ac-button--ghost ac-button--icon min-w-11" disabled={index === 0} aria-label={`${chapterActionMoveUp}: ${chapter.title}`} data-testid={`chapter-move-up-button-${index + 1}`}><ChevronUp className="h-3.5 w-3.5" /></button></form>
+          <form action={moveChapterAction}><input type="hidden" name="projectId" value={projectId} data-testid={`chapter-move-down-project-id-input-${index + 1}`} /><input type="hidden" name="chapterId" value={chapter.id} data-testid={`chapter-move-down-chapter-id-input-${index + 1}`} /><input type="hidden" name="direction" value="down" data-testid={`chapter-move-down-direction-input-${index + 1}`} /><button type="submit" className="ac-button ac-button--ghost ac-button--icon min-w-11" disabled={index === chapters.length - 1} aria-label={`${chapterActionMoveDown}: ${chapter.title}`} data-testid={`chapter-move-down-button-${index + 1}`}><ChevronDown className="h-3.5 w-3.5" /></button></form>
+          <form action={deleteChapterAction}><input type="hidden" name="projectId" value={projectId} data-testid={`chapter-delete-project-id-input-${index + 1}`} /><input type="hidden" name="chapterId" value={chapter.id} data-testid={`chapter-delete-chapter-id-input-${index + 1}`} /><button type="submit" className="ac-button ac-button--ghost ac-button--icon min-w-11" disabled={chapters.length <= 1} aria-label={`${chapterActionDelete}: ${chapter.title}`} data-testid={`chapter-delete-button-${index + 1}`}><Trash2 className="h-3.5 w-3.5" /></button></form>
+        </div></div>; })}</div>
+      <div className="chapters-workspace__list-footer"><span>{chapters.length} {labels.chapters.toLocaleLowerCase()}</span><span>·</span><span>{totalWords.toLocaleString()} {labels.words}</span></div>
+      <button type="button" onClick={onSyncPageNumbers} className="ac-button ac-button--secondary chapters-workspace__sync" title={syncPageNumbersTitle} data-testid="sync-page-numbers-button" data-sync-state={pageNumberSyncState} data-stale={pageNumberIsStale ? 'true' : 'false'}>{pageNumberSyncState === 'syncing' ? <Loader2 className="h-4 w-4 animate-spin" /> : pageNumberSyncState === 'synced' ? <Check className="h-4 w-4" /> : <Hash className="h-4 w-4" />} {syncPageNumbersLabel}</button><span className="sr-only">{syncPageNumbersHelper}</span>
+    </aside>
+    <article className="chapters-workspace__overview" data-testid="chapter-overview">{activeChapter ? <><div className="chapters-workspace__chapter-kicker">{locale === 'en' ? 'CHAPTER' : 'CAPÍTULO'} {activeIndex + 1}</div><div className="chapters-workspace__accent-line" />{showLargeTitle && <h1>{activeChapter.title}</h1>}<p className="chapters-workspace__chapter-summary">{activeText.slice(0, 160)}{activeText.length > 160 ? '…' : ''}</p><div className="chapters-workspace__metrics"><span><FileText />{activeWords.toLocaleString()}<small>{labels.words}</small></span><span><Clock3 />{readingMinutes} min<small>{labels.reading}</small></span><span><Pencil />{activeChapter.blocks.length}<small>{labels.blocks}</small></span></div><div className="chapters-workspace__preview"><p>{activeText || (locale === 'en' ? 'This chapter has no content yet.' : 'Este capítulo todavía no tiene contenido.')}</p></div><div className="chapters-workspace__actions"><button type="button" className="ac-button ac-button--primary" onClick={() => onEditChapter(activeChapter.id)} data-testid="chapter-open-button"><BookOpen className="h-4 w-4" />{labels.preview}</button><button type="button" className="ac-button ac-button--secondary" onClick={() => onEditChapter(activeChapter.id)} data-testid="chapter-rename-button"><Pencil className="h-4 w-4" />{labels.rename}</button></div></> : <p>{locale === 'en' ? 'No chapters available.' : 'No hay capítulos disponibles.'}</p>}</article>
+    <aside className="chapters-workspace__properties" aria-label={labels.properties}><div className="chapters-workspace__panel-heading"><div><p className="chapters-workspace__eyebrow">{labels.properties}</p><h2>{labels.structure}</h2></div></div>{activeChapter && <><label htmlFor="chapter-title">{labels.title}</label><input id="chapter-title" value={activeChapter.title} readOnly aria-describedby="chapter-title-help" data-testid="chapter-properties-title" /><p id="chapter-title-help" className="chapters-workspace__hint">{labels.editHint}</p><div className="chapters-workspace__property-grid"><div><label>{labels.number}</label><output>{activeIndex + 1}</output></div><div><label>{labels.status}</label><output><span className="chapters-workspace__status-dot is-active" />{labels.editing}</output></div></div><div className="chapters-workspace__health"><div className="chapters-workspace__health-heading"><h3>{labels.health}</h3><span><span className="chapters-workspace__status-dot is-good" />{labels.available}</span></div><div className="chapters-workspace__health-bar"><i /><i /><i /><i /></div><p><Check /> {labels.length} <strong>{activeWords.toLocaleString()} {labels.words}</strong></p><p><Check /> {labels.sections} <strong>{headings} {locale === 'en' ? 'sections' : 'secciones'}</strong></p><p><Check /> {labels.content} <strong>{activeChapter.blocks.length} {labels.blocks}</strong></p><p><Check /> {labels.ready}</p></div>{metricsById[activeChapter.id] && <p className="chapters-workspace__hint">{formatChapterPageMetrics(metricsById[activeChapter.id])}</p>}</>}</aside>
+  </section>;
 }

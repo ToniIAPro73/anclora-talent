@@ -378,8 +378,8 @@ export function ProjectWorkspace({
       case 2: // Chapters
         if (fixedPdf) return renderFixedPdfIncludedPanel(copy.stepChapters);
         return (
-          <section className="rounded-[28px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
-            <div className="mb-4 flex justify-end">
+          <section className="chapters-workspace-host">
+            <div className="mb-3 flex justify-end">
               <button
                 type="button"
                 data-testid="reimport-open-button"
@@ -414,6 +414,7 @@ export function ProjectWorkspace({
               chapterActionMoveDown={copy.chapterActionMoveDown}
               chapterActionDelete={copy.chapterActionDelete}
               metricsById={chapterMetricsById}
+              locale={locale}
             />
           </section>
         );

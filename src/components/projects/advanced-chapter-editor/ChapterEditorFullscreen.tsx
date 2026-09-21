@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp, ZoomIn, ZoomOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp, ZoomIn, ZoomOut, ArrowLeft, Maximize2, FileText, Clock3 } from 'lucide-react';
 import { AdvancedRichTextEditor } from '../AdvancedRichTextEditor';
 import { useChapterEditor } from './useChapterEditor';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
@@ -138,6 +138,7 @@ export function ChapterEditorFullscreen({
     >
       <header className="ac-editor-shell__header">
         <div className="ac-editor-shell__titles">
+          <button type="button" className="ac-editor-back ac-button ac-button--secondary ac-button--sm" onClick={handleClose} disabled={editor.isSaving} data-testid="chapter-editor-back-button"><ArrowLeft className="h-4 w-4" />{locale === 'es' ? 'Volver a Capítulos' : 'Back to Chapters'}</button>
           <h2 className="ac-editor-shell__title">
             {locale === 'es' ? 'Capítulo' : 'Chapter'} {editor.currentIndex + 1}/{editor.totalChapters}
           </h2>
@@ -235,8 +236,14 @@ export function ChapterEditorFullscreen({
           >
             {copy.close}
           </button>
+          <button type="button" className="ac-button ac-button--ghost ac-button--icon" aria-label={locale === 'es' ? 'Modo enfoque' : 'Focus mode'} title={locale === 'es' ? 'Modo enfoque' : 'Focus mode'} data-testid="chapter-editor-focus-button"><Maximize2 className="h-4 w-4" /></button>
         </div>
       </header>
+
+      <div className="chapter-editor-contextbar">
+        <div className="chapter-editor-contextbar__nav"><button type="button" className="ac-button ac-button--secondary ac-button--sm" onClick={editor.goToPrevChapter} disabled={!editor.canNavigatePrev || editor.isSaving} data-testid="chapter-editor-context-prev-button"><ChevronLeft className="h-4 w-4" />{locale === 'es' ? 'Capítulo anterior' : 'Previous chapter'}</button><button type="button" className="ac-button ac-button--secondary ac-button--sm" onClick={editor.goToNextChapter} disabled={!editor.canNavigateNext || editor.isSaving} data-testid="chapter-editor-context-next-button">{locale === 'es' ? 'Capítulo siguiente' : 'Next chapter'}<ChevronRight className="h-4 w-4" /></button></div>
+        <span className="chapter-editor-contextbar__save"><span className="chapters-workspace__status-dot is-good" />{editor.isSaving ? copy.saving : editor.lastSaved ? copy.saved : (locale === 'es' ? 'Listo para editar' : 'Ready to edit')}</span>
+      </div>
 
       <div className="ac-editor-shell__main">
         {editor.error && (
@@ -248,15 +255,10 @@ export function ChapterEditorFullscreen({
         {/* Fase 6: this must clip, not scroll — .ac-text-editor__content--scroll
             below is the one intended scroll region. Two independent
             `overflow-auto` ancestors produced competing scrollbars. */}
-        <div className="ac-editor-shell__surface min-h-0 overflow-hidden">
-          <AdvancedRichTextEditor
-            defaultContent={editor.htmlContent}
-            onUpdate={editor.setHtmlContent}
-            currentPage={editor.currentPage}
-            totalPages={editor.totalPages}
-            onPageCountChange={editor.setMeasuredTotalPages}
-            contentZoom={zoom}
-          />
+        <div className="chapter-editor-layout">
+          <aside className="chapter-editor-outline"><div className="chapter-editor-outline__heading"><strong>{locale === 'es' ? 'Esquema' : 'Outline'}</strong><span>{editor.currentChapter.blocks.length}</span></div>{editor.currentChapter.blocks.slice(0, 8).map((block, index) => <button type="button" key={block.id} className="chapter-editor-outline__item" onClick={() => undefined} data-testid={`chapter-outline-item-${index + 1}`}><span>{index + 1}</span>{block.content.replace(/<[^>]+>/g, ' ').slice(0, 34) || (locale === 'es' ? 'Bloque sin título' : 'Untitled block')}</button>)}</aside>
+          <div className="ac-editor-shell__surface min-h-0 overflow-hidden"><AdvancedRichTextEditor defaultContent={editor.htmlContent} onUpdate={editor.setHtmlContent} currentPage={editor.currentPage} totalPages={editor.totalPages} onPageCountChange={editor.setMeasuredTotalPages} contentZoom={zoom} /></div>
+          <aside className="chapter-editor-inspector"><h3>{locale === 'es' ? 'Capítulo' : 'Chapter'}</h3><label htmlFor="editor-chapter-title">{locale === 'es' ? 'Título del capítulo' : 'Chapter title'}</label><input id="editor-chapter-title" value={editor.title} onChange={(event) => editor.setTitle(event.target.value)} data-testid="chapter-editor-title-input" /><div className="chapter-editor-inspector__stats"><p><FileText />{editor.htmlContent.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).filter(Boolean).length.toLocaleString()} {locale === 'es' ? 'palabras' : 'words'}</p><p><Clock3 />{editor.totalPages} {locale === 'es' ? 'páginas (aprox.)' : 'pages (approx.)'}</p></div><details><summary>{locale === 'es' ? 'Notas' : 'Notes'}</summary><p>{locale === 'es' ? 'Las notas del capítulo se gestionan desde el proyecto.' : 'Chapter notes are managed from the project.'}</p></details></aside>
         </div>
       </div>
 
