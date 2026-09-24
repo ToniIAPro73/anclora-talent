@@ -462,8 +462,8 @@ body {
      own .ac-button--compact have equal specificity (one class), so without
      this exclusion this rule — being later in the cascade than the
      imported button.css — would silently win and cancel out every
-     .ac-button--compact usage migrated from .dashboard-button (Wave 1
-     pilot), making the whole migration a no-op. Compact buttons are meant
+     .ac-button--compact usage migrated from the former workspace-specific
+     family (Wave 1 pilot), making the whole migration a no-op. Compact buttons are meant
      to use the DS's own compact anatomy, not this app's larger brand
      anatomy shrunk down. */
   text-transform: none;
@@ -531,6 +531,41 @@ body {
   --ac-button-fg: var(--talent-button-destructive-fg);
   --ac-button-border: var(--talent-button-destructive-border);
   --ac-button-shadow: var(--talent-button-destructive-shadow);
+}
+
+/* Landing is the approved visual source of truth for application actions.
+   The design-system compact variant carries its exact 36px workspace/landing
+   geometry; semantic variants only change emphasis, never the button language. */
+.ac-button--compact {
+  --ac-button-padding-x: 14px;
+  --ac-button-min-height: 36px;
+  --ac-button-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  background-size: 200% 100%;
+  background-position: 0 50%;
+  transition: background-position .22s ease, border-color .16s ease, color .16s ease, transform .16s ease, box-shadow .16s ease;
+}
+
+.ac-button--compact:hover,
+.ac-button--compact:focus-visible {
+  background: var(--talent-button-primary-hover-surface);
+  background-size: 100% 100%;
+  background-position: 50% 50%;
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.ac-button--compact:active,
+.ac-button--compact[aria-pressed="true"] {
+  transform: translateY(1px);
+}
+
+.ac-button.ac-button--compact.ac-button--icon {
+  width: 36px;
+  padding-inline: 0;
 }
 
 .talent-shell-grid {
@@ -635,34 +670,12 @@ body {
   color: var(--text-primary);
 }
 
-.talent-shell-locale-pill,
-.talent-shell-theme-flip,
-.talent-shell-mobile-menu-button {
-  display: inline-flex;
-  height: 42px;
-  width: 42px;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid color-mix(in srgb, var(--accent) 72%, var(--border-strong));
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface-panel) 94%, var(--background));
-  color: var(--text-primary);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent), 0 8px 18px rgba(7, 16, 25, 0.2);
-  transition: border-color 180ms ease, background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
-}
-
 .talent-shell-locale-pill {
   width: auto;
   min-width: 88px;
   gap: 7px;
-  padding: 0 12px;
-  font-size: 0.82rem;
-  font-weight: 900;
+  padding-inline: 12px;
   letter-spacing: 0.08em;
-}
-
-.talent-shell-theme-flip {
-  border-radius: 50%;
 }
 
 .talent-shell-theme-flip__cube {
@@ -678,34 +691,20 @@ body {
   place-items: center;
 }
 
-.talent-shell-locale-pill:hover,
-.talent-shell-locale-pill:focus-visible,
-.talent-shell-theme-flip:hover,
-.talent-shell-theme-flip:focus-visible {
-  border-color: var(--accent-hover);
-  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface-panel));
-  color: var(--text-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent), 0 10px 24px rgba(7, 16, 25, 0.24);
-}
-
-/* Keep the shared controls authoritative when a header also carries utility
-   classes from the landing/header composition. */
-button.talent-shell-theme-flip {
-  width: 42px !important;
-  height: 42px !important;
-  padding: 0 !important;
-}
-
-button.talent-shell-locale-pill {
-  min-width: 88px !important;
-  height: 42px !important;
-  gap: 7px !important;
-  padding-inline: 12px !important;
-}
-
 .talent-shell-mobile-menu-button,
 .talent-shell-mobile-menu {
   display: none;
+}
+
+@media (max-width: 900px) and (min-width: 768px) {
+  .talent-landing-header nav,
+  .talent-landing-header > div > .hidden.items-center {
+    display: none;
+  }
+
+  .talent-landing-header > div > .flex.items-center.gap-2 {
+    display: flex;
+  }
 }
 
 .talent-shell-content {
@@ -2417,14 +2416,11 @@ ul.toc-list > li {
 .chapters-workspace__item-menu summary::-webkit-details-marker { display: none; }
 .chapters-workspace__item-menu-popover { position: absolute; z-index: 12; top: 32px; right: 0; display: grid; min-width: 190px; gap: 2px; padding: 6px; border: 1px solid var(--border-strong); border-radius: 5px; background: var(--surface-elevated); box-shadow: var(--shadow-lg); }
 .chapters-workspace__item-menu form { display: contents; }
-.chapters-workspace__menu-action { display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 7px 8px; border: 0; border-radius: 4px; color: var(--text-secondary); background: transparent; font-size: 11px; text-align: left; }
-.chapters-workspace__menu-action:hover, .chapters-workspace__menu-action:focus-visible { color: var(--text-primary); background: var(--surface-highlight); outline: none; }
-.chapters-workspace__menu-action:disabled { opacity: .35; cursor: not-allowed; }
-.chapters-workspace__menu-action--danger:hover, .chapters-workspace__menu-action--danger:focus-visible { color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, transparent); }
+.chapters-workspace__menu-action { display: flex; width: 100%; justify-content: flex-start; text-align: left; }
+.chapters-workspace__menu-action--danger:hover, .chapters-workspace__menu-action--danger:focus-visible { color: var(--text-primary); }
 .chapters-workspace__list-footer { margin-top: auto; padding: 12px 4px 10px; border-top: 1px solid var(--border-subtle); font-size: 10px; }
 .chapters-workspace__sync { min-height: 36px; border-radius: 4px; }
-.chapters-workspace__reimport { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 7px; padding: 4px; border: 0; color: var(--text-tertiary); background: transparent; font-size: 10px; }
-.chapters-workspace__reimport:hover, .chapters-workspace__reimport:focus-visible { color: var(--accent-text); outline: none; }
+.chapters-workspace__reimport { width: 100%; margin-top: 7px; }
 .chapters-workspace__overview { padding: 36px 20px 18px; background: radial-gradient(circle at 50% 5%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 35%), var(--surface-canvas); }
 .chapters-workspace__overview h1 { font-size: clamp(38px, 3.5vw, 58px); line-height: 1.02; }
 .chapters-workspace__chapter-summary { max-width: 650px; margin: 14px 0 20px; font-size: 20px; }
@@ -2684,8 +2680,8 @@ html[data-theme="light"] .talent-dashboard-shell .talent-shell-brand__name { col
 .dashboard-filter { display: flex; justify-content: flex-end; margin: -5px 0 10px; }
 .dashboard-filter select { color: var(--text-secondary); }
 .dashboard-view-controls { display: flex; border-left: 1px solid var(--dashboard-border); padding-left: 16px; }
-.dashboard-view-controls button { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--dashboard-border); border-radius: 4px; color: var(--text-secondary); }
-.dashboard-view-controls button[aria-pressed="true"] { color: var(--accent-text); border-color: var(--accent); background: var(--accent-soft); }
+.dashboard-view-controls .ac-button { display: grid; place-items: center; }
+.dashboard-view-controls .ac-button[aria-pressed="true"] { color: var(--accent-text); border-color: var(--accent); background: var(--accent-soft); }
 .dashboard-project-list { display: grid; gap: 14px; }
 .dashboard-project-row { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(160px, .9fr) minmax(190px, 1.1fr); align-items: center; min-height: 150px; border: 1px solid var(--dashboard-border); border-radius: 6px; padding: 14px 22px; background: var(--dashboard-panel); cursor: pointer; touch-action: manipulation; }
 .dashboard-project-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
@@ -2710,14 +2706,6 @@ html[data-theme="light"] .dashboard-cover { color: var(--text-primary); backgrou
 .dashboard-project-meta time { display: block; line-height: 1.5; }
 .dashboard-project-actions { display: flex; flex-direction: column; gap: 10px; border-left: 1px solid var(--dashboard-border); padding-left: 24px; min-width: 0; }
 .dashboard-project-counts { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--text-secondary); }
-/* Every dashboard-button (default and --primary alike) uses the same
-   accent gradient + hover as Vista previa — see the ac-button note above. */
-.dashboard-button { display: inline-flex; justify-content: center; align-items: center; gap: 12px; min-height: 36px; padding: 7px 14px; border-radius: 4px; border: 1px solid var(--accent); color: var(--text-on-accent); background: var(--talent-button-primary-bg); background-size: 200% 100%; background-position: 0 50%; font-size: 12px; font-weight: 500; transition: background-position .22s ease, border-color .16s ease, color .16s ease; }
-.dashboard-button:hover, .dashboard-button:focus-visible { background: var(--talent-button-primary-hover-surface); background-size: 100% 100%; background-position: 50% 50%; border-color: var(--accent); color: var(--text-primary); outline: none; }
-.dashboard-button--primary { background: var(--talent-button-primary-bg); border-color: var(--accent); color: var(--text-on-accent); }
-.dashboard-button--primary:hover, .dashboard-button--primary:focus-visible { background: var(--talent-button-primary-hover-surface); background-size: 100% 100%; background-position: 50% 50%; border-color: var(--accent); color: var(--text-primary); }
-.dashboard-button:disabled { opacity: .45; cursor: not-allowed; }
-.dashboard-button--icon { width: 36px; min-height: 36px; padding: 0; }
 .project-card-menu__item { display:flex; width:100%; min-height:36px; align-items:center; border:0; border-radius:5px; padding:8px 10px; color:var(--text-primary); background:transparent; font-size:12px; font-weight:600; text-align:left; transition:background .16s ease,color .16s ease; }
 .project-card-menu__item:hover, .project-card-menu__item:focus-visible { background:var(--surface-highlight); color:var(--text-primary); outline:none; }
 .project-card-menu__item--destructive { width:100%; padding:0; }
@@ -2734,8 +2722,7 @@ html[data-theme="light"] .dashboard-cover { color: var(--text-primary); backgrou
 .dashboard-document-modal__header { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border-subtle); }
 .dashboard-document-modal__header h2 { margin-top:4px; font-size:22px; font-weight:700; }
 .dashboard-document-modal__header p:last-child { margin-top:4px; color:var(--text-secondary); font-size:13px; }
-.dashboard-modal-close { display:flex; width:36px; height:36px; align-items:center; justify-content:center; border:1px solid var(--border-strong); border-radius:5px; color:var(--text-secondary); transition:background .16s ease,border-color .16s ease,color .16s ease; }
-.dashboard-modal-close:hover, .dashboard-modal-close:focus-visible { border-color:var(--accent); background:var(--surface-highlight); color:var(--text-primary); outline:none; }
+.dashboard-modal-close { flex-shrink: 0; }
 .dashboard-document-modal__body { display:grid; gap:18px; padding-top:18px; }
 .dashboard-document-modal__body h3 { margin-bottom:10px; color:var(--text-tertiary); font-size:11px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
 .dashboard-document-modal__metadata { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
@@ -2880,7 +2867,7 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
   .talent-shell-editor-slot { grid-area: slot; overflow-x: auto; }
   .talent-editor-topbar { gap: 10px; padding-left: 0; border-left: none; width: max-content; min-width: 100%; }
   .talent-editor-topbar__title { max-width: 11rem; }
-  .talent-editor-topbar__actions .dashboard-button:not(.dashboard-button--primary) { display: none; }
+  .talent-editor-topbar__actions .ac-button:not(.ac-button--primary) { display: none; }
 }
 
 /* New project workspace v1: focused composition aligned with the workspace mockup. */
@@ -2895,17 +2882,6 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
 .talent-new-project-shell .talent-shell-topbar-actions { grid-column: 3; grid-row: 1; gap: 12px; }
 .talent-new-project-shell .talent-shell-content { padding: 0; }
 .new-project-dashboard, .new-project-cancel { min-width: 92px; }
-.talent-new-project-shell .new-project-dashboard, .talent-new-project-shell .new-project-cancel { background: var(--talent-button-primary-bg); border-color: var(--accent); color: var(--text-on-accent); }
-.talent-new-project-shell .new-project-dashboard:hover, .talent-new-project-shell .new-project-dashboard:focus-visible, .talent-new-project-shell .new-project-cancel:hover, .talent-new-project-shell .new-project-cancel:focus-visible { background: var(--talent-button-primary-hover-surface); border-color: var(--accent); color: var(--text-primary); }
-.talent-new-project-form .ac-button,
-.talent-new-project-form .talent-action-button,
-.talent-new-project-form .ac-button--primary,
-.talent-new-project-form .ac-button--secondary,
-.talent-new-project-form .ac-button--ghost { border-radius: 5px; box-shadow: none; transform: none; transition: background .16s ease, border-color .16s ease, color .16s ease; }
-.talent-new-project-form .ac-button--primary { background: var(--talent-button-primary-bg); border-color: var(--accent); color: var(--text-on-accent); }
-.talent-new-project-form .ac-button--primary:hover, .talent-new-project-form .ac-button--primary:focus-visible { background: var(--talent-button-primary-hover-surface); background-size: 100% 100%; background-position: 50% 50%; border-color: var(--accent); color: var(--text-primary); }
-.talent-new-project-form .ac-button--secondary, .talent-new-project-form .ac-button--ghost { background: var(--talent-button-primary-bg); border-color: var(--accent); color: var(--text-on-accent); }
-.talent-new-project-form .ac-button--secondary:hover, .talent-new-project-form .ac-button--secondary:focus-visible, .talent-new-project-form .ac-button--ghost:hover, .talent-new-project-form .ac-button--ghost:focus-visible { background: var(--talent-button-primary-hover-surface); background-size: 100% 100%; background-position: 50% 50%; border-color: var(--accent); color: var(--text-primary); }
 .talent-new-project-form .talent-action-button::before { display:none; }
 .talent-new-project-page { width: 100%; margin: 0 auto; padding: 28px 10px 64px; }
 .talent-new-project-back { display: inline-flex; align-items: center; gap: 8px; color: var(--accent-text); font-size: 13px; font-weight: 600; white-space: nowrap; }
@@ -2964,9 +2940,6 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
 .talent-new-project-summary__ready { display: flex; align-items: center; gap: 8px; margin: 20px 0; color: var(--success); font-size: .8rem; font-weight: 700; }
 .talent-new-project-summary__ready-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 .talent-new-project-form .talent-create-form__optional > .flex { margin-top: 2px; }
-.talent-new-project-form .talent-create-form__optional > .flex .talent-action-button,
-.talent-new-project-form .talent-create-form__optional > .flex .ac-button { min-height: 50px; }
-
 /* The new-project mockup is intentionally dense: its complete decision surface
    should remain visible at normal browser zoom without sacrificing hierarchy. */
 .talent-new-project-page { padding-top: 14px; padding-bottom: 28px; }
@@ -3014,18 +2987,7 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
 .talent-new-project-form .talent-new-project-summary__items strong { font-size: .72rem; }
 .talent-new-project-form .talent-new-project-summary__ready { margin: 10px 0; font-size: .7rem; }
 .talent-new-project-form .talent-create-form__optional > .flex { gap: 8px; }
-.talent-new-project-form .talent-create-form__optional > .flex .ac-button { min-height: 40px; font-size: .72rem; }
 .talent-new-project-form .talent-create-form__optional > .flex p { font-size: .66rem; line-height: 1.35; }
-.talent-new-project-form .ac-button,
-.talent-new-project-form .dashboard-button,
-.talent-dashboard-shell .dashboard-button { border-radius: 5px; }
-.talent-new-project-form .ac-button:hover,
-.talent-new-project-form .dashboard-button:hover,
-.talent-new-project-form .dashboard-button:focus-visible,
-.talent-dashboard-shell .dashboard-button:hover,
-.talent-dashboard-shell .dashboard-button:focus-visible { border-color: var(--accent); background: var(--talent-button-primary-hover-surface); background-size: 100% 100%; background-position: 50% 50%; color: var(--text-primary); }
-.talent-new-project-form .ac-button { background: var(--talent-button-primary-bg); background-size: 200% 100%; background-position: 0 50%; border-color: var(--accent); color: var(--text-on-accent); }
-.talent-new-project-form .ac-button:hover, .talent-new-project-form .ac-button:focus-visible { background: var(--talent-button-primary-hover-surface); background-size: 100% 100%; background-position: 50% 50%; border-color: var(--accent); color: var(--text-primary); }
 .talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] { margin-top: 10px; border-radius: 10px; padding: 10px; column-gap: 14px; }
 .talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] [role="radiogroup"] { gap: 6px; margin-top: 0; }
 .talent-new-project-form .talent-create-form__primary > [data-testid="new-project-editorial-style-section"] [role="radio"] { padding: 9px; border-radius: 10px; }
@@ -3124,7 +3086,6 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
   .dashboard-activity li { min-height: 100px; }
   .dashboard-activity { padding: 24px 16px; }
 }
-.dashboard-button > span > span:first-child { display: inline-flex; align-items: center; justify-content: center; gap: 12px; }
 .dashboard-cover > svg { flex-shrink: 0; }
 .dashboard-cover > span { flex: 1; min-height: 0; margin-block: 8px; -webkit-line-clamp: 3; }
 .dashboard-cover > small { flex-shrink: 0; max-height: 18px; overflow: hidden; }

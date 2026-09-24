@@ -119,10 +119,10 @@ export function LandingProductStory({
                       type="button"
                       onClick={() => setCoverView('front')}
                       aria-pressed={coverView === 'front'}
-                      className={`rounded-[4px] border px-3.5 py-1.5 text-xs font-semibold transition ${
+                      className={`ac-button ac-button--compact ${
                         coverView === 'front'
-                          ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-text)]'
-                          : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                          ? 'ac-button--primary'
+                          : 'ac-button--secondary'
                       }`}
                     >
                       {frontLabel}
@@ -131,10 +131,10 @@ export function LandingProductStory({
                       type="button"
                       onClick={() => setCoverView('back')}
                       aria-pressed={coverView === 'back'}
-                      className={`rounded-[4px] border px-3.5 py-1.5 text-xs font-semibold transition ${
-                        coverView === 'back'
-                          ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-text)]'
-                          : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                        className={`ac-button ac-button--compact ${
+                          coverView === 'back'
+                          ? 'ac-button--primary'
+                          : 'ac-button--secondary'
                       }`}
                     >
                       {backLabel}

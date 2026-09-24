@@ -167,8 +167,8 @@ test.describe('landing page', () => {
 
 /**
  * Landing button system alignment — matches the LANDING-BTN-* matrix.
- * Verifies the marketing CTAs reuse the same `.dashboard-button` /
- * `.dashboard-button--primary` primitive as the Dashboard/Workspace, render
+ * Verifies the marketing CTAs reuse the canonical `.ac-button` /
+ * `.ac-button--primary` primitive as the Dashboard/Workspace, render
  * text only (no icon), and keep working navigation/selection behavior.
  */
 test.describe('landing button system', () => {
@@ -187,8 +187,9 @@ test.describe('landing button system', () => {
     const headerCta = page.locator('header a[href="/sign-up"]').first();
     await expect(headerCta).toBeVisible();
     await expect(headerCta.locator('svg')).toHaveCount(0);
-    await expect(headerCta).toHaveClass(/dashboard-button/);
-    await expect(headerCta).toHaveClass(/dashboard-button--primary/);
+    await expect(headerCta).toHaveClass(/ac-button/);
+    await expect(headerCta).toHaveClass(/ac-button--compact/);
+    await expect(headerCta).toHaveClass(/ac-button--primary/);
 
     await headerCta.click();
     await expect(page).toHaveURL(/\/sign-up$/);
@@ -209,7 +210,7 @@ test.describe('landing button system', () => {
     await expect(front).toHaveAttribute('aria-pressed', 'false');
   });
 
-  test('LANDING-BTN-08/09: primary and secondary CTAs match the dashboard-button box model', async ({ page }) => {
+  test('LANDING-BTN-08/09: primary and secondary CTAs match the canonical box model', async ({ page }) => {
     const primary = page.locator('header a[href="/sign-up"]').first();
     const secondary = page.locator('header a[href="/sign-in"]').first();
     await expect(secondary).toBeVisible();
@@ -242,7 +243,7 @@ test.describe('landing button system', () => {
     await page.keyboard.press('Tab'); // logo
     await cta.focus();
     const focusOutline = await cta.evaluate((el) => getComputedStyle(el).outlineStyle);
-    // The dashboard-button system signals focus via its own background/border
+    // The compact button system signals focus via its own background/border
     // change rather than a ring (see globals.css) — assert it is focusable
     // and does not silently lose all affordance (no default browser outline
     // fighting the custom one).

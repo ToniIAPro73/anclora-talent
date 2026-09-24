@@ -80,8 +80,8 @@ export function DashboardWorkspace({ projects, dataAvailable, locale, copy, proj
             <label className="dashboard-search"><Search size={16} aria-hidden="true" /><input data-testid="dashboard-search" type="search" aria-label={copy.projectsSearchLabel} placeholder={copy.projectsSearchLabel + '…'} value={retrieval.query} onChange={(event) => retrieval.setQuery(event.target.value)} /></label>
             <label className="dashboard-sort"><span>{copy.projectsSortLabel}</span><select data-testid="dashboard-sort" aria-label={copy.projectsSortLabel} value={retrieval.sort} onChange={(event) => retrieval.setSort(event.target.value as ProjectSort)}><option value="recent">{copy.projectsSortRecent}</option><option value="oldest">{copy.projectsSortOldest}</option><option value="title">{copy.projectsSortTitle}</option></select></label>
             <div className="dashboard-view-controls">
-              <button data-testid="dashboard-grid-view" type="button" aria-label={copy.workspaceGrid} aria-pressed={layout === 'grid'} onClick={() => setLayout('grid')}><LayoutGrid size={17} /></button>
-              <button data-testid="dashboard-list-view" type="button" aria-label={copy.workspaceList} aria-pressed={layout === 'list'} onClick={() => setLayout('list')}><List size={18} /></button>
+              <button className="ac-button ac-button--ghost ac-button--compact ac-button--icon" data-testid="dashboard-grid-view" type="button" aria-label={copy.workspaceGrid} aria-pressed={layout === 'grid'} onClick={() => setLayout('grid')}><LayoutGrid size={17} /></button>
+              <button className="ac-button ac-button--ghost ac-button--compact ac-button--icon" data-testid="dashboard-list-view" type="button" aria-label={copy.workspaceList} aria-pressed={layout === 'list'} onClick={() => setLayout('list')}><List size={18} /></button>
             </div>
           </div>}
         </header>

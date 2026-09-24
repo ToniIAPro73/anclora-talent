@@ -81,7 +81,7 @@ export function LandingPricing({
         </div>
 
         <div className="mt-8 flex flex-col items-center gap-3 border-t border-[var(--border-subtle)] pt-6">
-          <Link href="/sign-up" className="dashboard-button dashboard-button--primary w-full sm:w-auto">
+          <Link href="/sign-up" className="ac-button ac-button--compact ac-button--primary w-full sm:w-auto">
             {ctaText}
           </Link>
           <div className="flex items-center gap-1.5 text-xs text-[var(--text-tertiary)]">

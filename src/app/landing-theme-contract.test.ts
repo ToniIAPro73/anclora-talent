@@ -19,12 +19,12 @@ describe('landing theme contract', () => {
     expect(landingHero).not.toContain('linear-gradient(180deg,_rgba(7,37,47,0.92)_0%,_rgba(11,19,63,0.96)_100%)');
   });
 
-  test('final CTA reuses the shared, theme-aware dashboard-button focus treatment', () => {
-    // The primary/secondary CTAs reuse `.dashboard-button` (globals.css),
+  test('final CTA reuses the canonical, theme-aware ac-button focus treatment', () => {
+    // The primary/secondary CTAs reuse `.ac-button` (design-system CSS),
     // whose hover/focus-visible states are driven entirely by semantic
     // tokens (--accent, --talent-button-primary-hover-surface) — no inline
     // ring-offset or hardcoded color is needed or present here anymore.
-    expect(landingFinalCta).toContain('dashboard-button dashboard-button--primary');
+    expect(landingFinalCta).toContain('ac-button ac-button--compact ac-button--primary');
     expect(landingFinalCta).not.toContain('focus-visible:ring-offset-[#0a1120]');
     expect(landingFinalCta).not.toMatch(/#[0-9a-fA-F]{3,8}/);
   });

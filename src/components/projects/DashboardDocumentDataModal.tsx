@@ -38,7 +38,7 @@ export function DashboardDocumentDataModal({
             <h2 id="dashboard-document-data-title">{project.title}</h2>
             <p>{copy.documentDataModalDescriptionProject}</p>
           </div>
-          <button type="button" className="dashboard-modal-close" aria-label={copy.documentDataCloseLabel} data-testid="dashboard-document-data-close" onClick={onClose}><X size={20} aria-hidden="true" /></button>
+          <button type="button" className="ac-button ac-button--ghost ac-button--compact ac-button--icon dashboard-modal-close" aria-label={copy.documentDataCloseLabel} data-testid="dashboard-document-data-close" onClick={onClose}><X size={20} aria-hidden="true" /></button>
         </header>
         <div className="dashboard-document-modal__body">
           <section><h3>{copy.documentDataSummaryHeading}</h3><dl className="dashboard-document-modal__metadata">{metadata.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></section>

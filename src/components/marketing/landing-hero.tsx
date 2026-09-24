@@ -86,11 +86,11 @@ export function LandingHero({
 
           {/* CTAs */}
           <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Link href={primaryCta.href} className="dashboard-button dashboard-button--primary">
+            <Link href={primaryCta.href} className="ac-button ac-button--compact ac-button--primary">
               {primaryCta.label}
             </Link>
             {secondaryCta ? (
-              <Link href={secondaryCta.href} className="dashboard-button">
+              <Link href={secondaryCta.href} className="ac-button ac-button--compact ac-button--secondary">
                 {secondaryCta.label}
               </Link>
             ) : null}

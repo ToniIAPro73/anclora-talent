@@ -30,7 +30,7 @@ const nav = {
 /**
  * Standard landing CTA buttons must render as text only — no svg/img
  * descendant — and reuse the shared Dashboard/Workspace button primitive
- * (`dashboard-button` / `dashboard-button--primary`), not a one-off
+ * (`ac-button` / `ac-button--primary`), not a one-off
  * landing-specific class. Icon-only system controls (theme toggle, locale
  * toggle, mobile menu button) are explicitly whitelisted and excluded from
  * this assertion — they are dedicated controls, not text CTAs.
@@ -39,11 +39,12 @@ function expectNoIconTextButton(el: HTMLElement) {
   expect(el.querySelector('svg')).toBeNull();
   expect(el.querySelector('img')).toBeNull();
   expect(el.querySelector('[data-icon]')).toBeNull();
-  expect(el.className).toMatch(/\bdashboard-button\b/);
+  expect(el.className).toMatch(/\bac-button\b/);
+  expect(el.className).toMatch(/\bac-button--compact\b/);
 }
 
-describe('landing CTA buttons — shared Dashboard button system, no icons', () => {
-  it('LandingHeader: unauthenticated desktop CTAs use dashboard-button classes with no icon', () => {
+describe('landing CTA buttons — canonical shared button system, no icons', () => {
+  it('LandingHeader: unauthenticated desktop CTAs use ac-button classes with no icon', () => {
     render(
       <UiPreferencesProvider initialPreferences={{ locale: 'es', theme: 'dark' }}>
         <LandingHeader
@@ -58,9 +59,9 @@ describe('landing CTA buttons — shared Dashboard button system, no icons', () 
     const primary = screen.getAllByRole('link', { name: 'Crear cuenta' })[0];
     const secondary = screen.getAllByRole('link', { name: 'Iniciar sesión' })[0];
     expectNoIconTextButton(primary);
-    expect(primary.className).toMatch(/\bdashboard-button--primary\b/);
+    expect(primary.className).toMatch(/\bac-button--primary\b/);
     expectNoIconTextButton(secondary);
-    expect(secondary.className).not.toMatch(/\bdashboard-button--primary\b/);
+    expect(secondary.className).not.toMatch(/\bac-button--primary\b/);
   });
 
   it('LandingHeader: authenticated "Ir al dashboard" CTA has no icon and uses the primary variant', () => {
@@ -79,7 +80,7 @@ describe('landing CTA buttons — shared Dashboard button system, no icons', () 
     expect(dashboardLinks.length).toBeGreaterThan(0);
     dashboardLinks.forEach((link) => {
       expectNoIconTextButton(link);
-      expect(link.className).toMatch(/\bdashboard-button--primary\b/);
+      expect(link.className).toMatch(/\bac-button--primary\b/);
       expect(link).toHaveAttribute('href', '/dashboard');
     });
   });
@@ -103,7 +104,7 @@ describe('landing CTA buttons — shared Dashboard button system, no icons', () 
     expect(localeToggle.querySelector('svg')).not.toBeNull();
   });
 
-  it('LandingHero: primary and secondary CTAs use dashboard-button classes with no icon', () => {
+  it('LandingHero: primary and secondary CTAs use ac-button classes with no icon', () => {
     render(
       <LandingHero
         eyebrow="Anclora Talent"
@@ -118,7 +119,7 @@ describe('landing CTA buttons — shared Dashboard button system, no icons', () 
     const primary = screen.getByRole('link', { name: 'Crear cuenta gratis' });
     const secondary = screen.getByRole('link', { name: 'Iniciar sesión' });
     expectNoIconTextButton(primary);
-    expect(primary.className).toMatch(/\bdashboard-button--primary\b/);
+    expect(primary.className).toMatch(/\bac-button--primary\b/);
     expectNoIconTextButton(secondary);
 
     const explore = screen.getByRole('link', { name: 'Ver flujo editorial' });
@@ -126,7 +127,7 @@ describe('landing CTA buttons — shared Dashboard button system, no icons', () 
     expect(explore.textContent?.includes('↓')).toBe(false);
   });
 
-  it('LandingPricing: CTA uses dashboard-button--primary with no icon', () => {
+  it('LandingPricing: CTA uses ac-button--primary with no icon', () => {
     render(
       <LandingPricing
         eyebrow="Acceso"
@@ -144,10 +145,10 @@ describe('landing CTA buttons — shared Dashboard button system, no icons', () 
 
     const cta = screen.getByRole('link', { name: 'Crear cuenta gratuita' });
     expectNoIconTextButton(cta);
-    expect(cta.className).toMatch(/\bdashboard-button--primary\b/);
+    expect(cta.className).toMatch(/\bac-button--primary\b/);
   });
 
-  it('LandingFinalCta: primary and secondary CTAs use dashboard-button classes with no icon', () => {
+  it('LandingFinalCta: primary and secondary CTAs use ac-button classes with no icon', () => {
     render(
       <LandingFinalCta
         eyebrow="Siguiente paso"
@@ -161,7 +162,7 @@ describe('landing CTA buttons — shared Dashboard button system, no icons', () 
     const primary = screen.getByRole('link', { name: 'Crear cuenta' });
     const secondary = screen.getByRole('link', { name: 'Iniciar sesión' });
     expectNoIconTextButton(primary);
-    expect(primary.className).toMatch(/\bdashboard-button--primary\b/);
+    expect(primary.className).toMatch(/\bac-button--primary\b/);
     expectNoIconTextButton(secondary);
   });
 

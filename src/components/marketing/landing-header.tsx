@@ -40,7 +40,7 @@ export function LandingHeader({
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-[var(--border-subtle)] bg-[var(--background)]/85 backdrop-blur-md transition-colors">
+    <header className="talent-landing-header sticky top-0 z-40 w-full border-b border-[var(--border-subtle)] bg-[var(--background)]/85 backdrop-blur-md transition-colors">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 md:px-4 lg:px-8">
         {/* Brand */}
         <Link
@@ -75,7 +75,7 @@ export function LandingHeader({
             data-testid="landing-theme-toggle"
             onClick={toggleTheme}
             aria-label={nav.toggleTheme}
-            className="talent-shell-theme-flip inline-flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+            className="ac-button ac-button--ghost ac-button--compact ac-button--icon talent-shell-theme-flip"
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
@@ -86,7 +86,7 @@ export function LandingHeader({
             data-testid="landing-locale-toggle"
             onClick={toggleLocale}
             aria-label={nav.toggleLocale}
-            className="talent-shell-locale-pill inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+            className="ac-button ac-button--ghost ac-button--compact talent-shell-locale-pill"
           >
             <Globe className="h-3.5 w-3.5" />
             <span>{locale.toUpperCase()}</span>
@@ -94,17 +94,17 @@ export function LandingHeader({
 
           {/* Auth CTAs */}
           {isAuthenticated ? (
-            <Link href={primaryCta.href} className="dashboard-button dashboard-button--primary">
+            <Link href={primaryCta.href} className="ac-button ac-button--compact ac-button--primary">
               {primaryCta.label}
             </Link>
           ) : (
             <div className="flex items-center gap-1.5 lg:gap-2">
               {secondaryCta ? (
-                <Link href={secondaryCta.href} className="dashboard-button">
+                <Link href={secondaryCta.href} className="ac-button ac-button--compact ac-button--secondary">
                   {secondaryCta.label}
                 </Link>
               ) : null}
-              <Link href={primaryCta.href} className="dashboard-button dashboard-button--primary">
+              <Link href={primaryCta.href} className="ac-button ac-button--compact ac-button--primary">
                 {primaryCta.label}
               </Link>
             </div>
@@ -117,7 +117,7 @@ export function LandingHeader({
             type="button"
             onClick={toggleTheme}
             aria-label={nav.toggleTheme}
-            className="talent-shell-theme-flip inline-flex items-center justify-center"
+            className="ac-button ac-button--ghost ac-button--compact ac-button--icon talent-shell-theme-flip"
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
@@ -125,7 +125,7 @@ export function LandingHeader({
             type="button"
             onClick={toggleLocale}
             aria-label={nav.toggleLocale}
-            className="talent-shell-locale-pill inline-flex items-center"
+            className="ac-button ac-button--ghost ac-button--compact talent-shell-locale-pill"
           >
             <Globe className="h-4 w-4" aria-hidden="true" />
             <span>{locale.toUpperCase()}</span>
@@ -135,7 +135,7 @@ export function LandingHeader({
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-expanded={mobileMenuOpen}
             aria-label={mobileMenuOpen ? nav.closeMenu : nav.openMenu}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-primary)] transition hover:border-[var(--border-strong)]"
+            className="ac-button ac-button--ghost ac-button--compact ac-button--icon talent-shell-mobile-menu-button"
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -162,7 +162,7 @@ export function LandingHeader({
               <Link
                 href={primaryCta.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="dashboard-button dashboard-button--primary w-full"
+                className="ac-button ac-button--compact ac-button--primary w-full"
               >
                 {primaryCta.label}
               </Link>
@@ -171,7 +171,7 @@ export function LandingHeader({
                 <Link
                   href={primaryCta.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="dashboard-button dashboard-button--primary w-full"
+                  className="ac-button ac-button--compact ac-button--primary w-full"
                 >
                   {primaryCta.label}
                 </Link>
@@ -179,7 +179,7 @@ export function LandingHeader({
                   <Link
                     href={secondaryCta.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="dashboard-button w-full"
+                    className="ac-button ac-button--compact ac-button--secondary w-full"
                   >
                     {secondaryCta.label}
                   </Link>
