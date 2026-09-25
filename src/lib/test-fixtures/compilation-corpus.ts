@@ -28,3 +28,6 @@ export function loadTestPackBuffers(): TestPackBuffers {
     brandPdf: fs.readFileSync(paths.brandPdf),
   };
 }
+
+export const loadCompilationCorpus = loadTestPackBuffers;
+
