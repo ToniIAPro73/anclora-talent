@@ -49,8 +49,24 @@ export function ChapterEditorFullscreen({
   const [showOutline, setShowOutline] = useState(true);
   // Use saved preferences if available, otherwise use passed defaults
   const device = (preferences.device as 'mobile' | 'tablet' | 'desktop') || defaultDevice;
-  const fontSize = preferences.fontSize || defaultFontSize;
-  const margins = preferences.margins || defaultMargins;
+  const sourcePageWidth = documentStyleMap?.page.widthPt
+    ? documentStyleMap.page.widthPt * (96 / 72)
+    : undefined;
+  const sourcePageHeight = documentStyleMap?.page.heightPt
+    ? documentStyleMap.page.heightPt * (96 / 72)
+    : undefined;
+  const sourceMargins = documentStyleMap?.page.marginsPt
+    ? {
+        top: documentStyleMap.page.marginsPt.top * (96 / 72),
+        bottom: documentStyleMap.page.marginsPt.bottom * (96 / 72),
+        left: documentStyleMap.page.marginsPt.left * (96 / 72),
+        right: documentStyleMap.page.marginsPt.right * (96 / 72),
+      }
+    : undefined;
+  const fontSize = documentStyleMap?.body.fontSizePt
+    ? `${documentStyleMap.body.fontSizePt * (96 / 72)}px`
+    : preferences.fontSize || defaultFontSize;
+  const margins = sourceMargins || preferences.margins || defaultMargins;
 
   const editor = useChapterEditor({
     chapters,
@@ -59,6 +75,9 @@ export function ChapterEditorFullscreen({
     device,
     fontSize,
     margins,
+    pageWidth: sourcePageWidth,
+    pageHeight: sourcePageHeight,
+    lineHeight: documentStyleMap?.body.lineHeight,
   });
 
   // Handle close with unsaved changes check
@@ -338,7 +357,10 @@ export function ChapterEditorFullscreen({
               </div>
             </div>
             <div className="chapter-editor-outline__list">
-              {editor.currentChapter.blocks.slice(0, 12).map((block, index) => (
+              {editor.currentChapter.blocks
+                .filter((block) => block.type === 'heading')
+                .slice(0, 12)
+                .map((block, index) => (
                 <button
                   type="button"
                   key={block.id}
@@ -352,7 +374,7 @@ export function ChapterEditorFullscreen({
                     {block.content.replace(/<[^>]+>/g, ' ').slice(0, 34) || (locale === 'es' ? 'Bloque sin título' : 'Untitled block')}
                   </span>
                 </button>
-              ))}
+                ))}
             </div>
           </aside>
           <div className="ac-editor-shell__surface min-h-0 overflow-hidden">

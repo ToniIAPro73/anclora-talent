@@ -20,15 +20,19 @@ export interface UseChapterEditorOptions {
   device?: 'mobile' | 'tablet' | 'desktop';
   fontSize?: string;
   margins?: { top: number; bottom: number; left: number; right: number };
+  pageWidth?: number;
+  pageHeight?: number;
+  lineHeight?: number;
 }
 
 function buildPreviewConfig(
   device: 'mobile' | 'tablet' | 'desktop',
   fontSize: string,
   margins: { top: number; bottom: number; left: number; right: number },
+  pagination?: { pageWidth?: number; pageHeight?: number; lineHeight?: number },
 ) {
   const previewFormat = device === 'desktop' ? 'laptop' : device;
-  return buildPaginationConfig(previewFormat, { fontSize, margins });
+  return buildPaginationConfig(previewFormat, { fontSize, margins, ...pagination });
 }
 
 function normalizeLoadedChapterHtml(
@@ -36,9 +40,10 @@ function normalizeLoadedChapterHtml(
   device: 'mobile' | 'tablet' | 'desktop',
   fontSize: string,
   margins: { top: number; bottom: number; left: number; right: number },
+  pagination?: { pageWidth?: number; pageHeight?: number; lineHeight?: number },
 ) {
   return normalizeHtmlContent(
-    reconcileOverflowBreaks(content, buildPreviewConfig(device, fontSize, margins)),
+    reconcileOverflowBreaks(content, buildPreviewConfig(device, fontSize, margins, pagination)),
   );
 }
 
@@ -51,6 +56,9 @@ export function useChapterEditor({
   device = 'desktop',
   fontSize = '16px',
   margins = { top: 24, bottom: 24, left: 24, right: 24 },
+  pageWidth,
+  pageHeight,
+  lineHeight,
 }: UseChapterEditorOptions) {
   const router = useRouter();
   const initialChapter = chapters[initialChapterIndex];
@@ -60,6 +68,7 @@ export function useChapterEditor({
         device,
         fontSize,
         margins,
+        { pageWidth, pageHeight, lineHeight },
       )
     : '';
   const [localChapters, setLocalChapters] = useState(chapters);
@@ -78,8 +87,8 @@ export function useChapterEditor({
   const canNavigatePrev = currentIndex > 0;
   const canNavigateNext = currentIndex < localChapters.length - 1;
   const previewConfig = useMemo(
-    () => buildPreviewConfig(device, fontSize, margins),
-    [device, fontSize, margins],
+    () => buildPreviewConfig(device, fontSize, margins, { pageWidth, pageHeight, lineHeight }),
+    [device, fontSize, lineHeight, margins, pageHeight, pageWidth],
   );
 
   // Memoized page calculation with dynamic config
@@ -226,6 +235,7 @@ export function useChapterEditor({
         device,
         fontSize,
         margins,
+        { pageWidth, pageHeight, lineHeight },
       );
       savedBaselineRef.current = normalizeHtmlContent(reconstructedHtml);
       setCurrentIndex(newIndex);
@@ -236,7 +246,7 @@ export function useChapterEditor({
       setCurrentPage(0); // Reset to first page when changing chapters
       onChapterChange?.(newIndex);
     },
-    [device, fontSize, hasChanges, localChapters, margins, onChapterChange, persistCurrentChapter]
+    [device, fontSize, hasChanges, lineHeight, localChapters, margins, onChapterChange, pageHeight, pageWidth, persistCurrentChapter]
   );
 
   const goToPagePrev = useCallback(() => {
