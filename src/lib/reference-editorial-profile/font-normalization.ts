@@ -54,7 +54,31 @@ export function normalizePdfFontName(rawName: string): NormalizedPdfFont {
   return { family: cleanFamily(raw), variant, weight, italic };
 }
 
-export function resolveEditorialFont(detectedFontFamily: string, availableFonts: string[]): ResolvedEditorialFont {
+export const DEFAULT_AVAILABLE_EDITORIAL_FONTS = [
+  'Noto Serif',
+  'Noto Sans',
+  'EB Garamond',
+  'Cormorant Garamond',
+  'Libre Baskerville',
+  'Playfair Display',
+  'Lora',
+  'Merriweather',
+  'Inter',
+  'Montserrat',
+  'DM Sans',
+  'DM Serif Display',
+  'Fraunces',
+  'Cinzel',
+  'Roboto',
+  'Open Sans',
+  'Lato',
+  'Georgia',
+];
+
+export function resolveEditorialFont(
+  detectedFontFamily: string,
+  availableFonts: string[] = DEFAULT_AVAILABLE_EDITORIAL_FONTS,
+): ResolvedEditorialFont {
   const normalized = detectedFontFamily.trim();
   const exact = availableFonts.find((font) => font.toLowerCase() === normalized.toLowerCase());
   if (exact) {
