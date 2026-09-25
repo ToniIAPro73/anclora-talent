@@ -389,6 +389,25 @@ export function resolveDocumentStyles({
     lineHeight: 1.3,
   };
 
+  // 7b. Editorial kicker (small label above a heading, e.g. "INTRODUCCIÓN")
+  const kickerFallback: ResolvedTextStyle = {
+    ...body,
+    fontFamily: brandDisplayFont ?? body.fontFamily,
+    fontWeight: 'bold',
+    fontSizePt: Math.max(8, body.fontSizePt - 2),
+    color: headingColor ?? body.color,
+    textAlign: 'left',
+  };
+  const kicker = resolveTextStyle(
+    'kicker',
+    kickerFallback,
+    sourceStyleProfile?.kicker,
+    null,
+    null,
+    null,
+    roleOverrides.get('kicker'),
+  );
+
   // 8. Headers & Footers
   const header: ResolvedTextStyle & { borderBottom?: boolean } = {
     ...body,
@@ -432,6 +451,7 @@ export function resolveDocumentStyles({
     list,
     table,
     footnote,
+    kicker,
     header,
     footer,
     decorations,

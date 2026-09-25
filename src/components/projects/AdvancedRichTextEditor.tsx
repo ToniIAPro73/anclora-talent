@@ -2027,6 +2027,24 @@ export function AdvancedRichTextEditor({
                 border-left-color: var(--talent-quote-border-color, #d97706);
                 border-left-width: var(--talent-quote-border-width, 3px);
               }
+              .ProseMirror p.editorial-kicker,
+              .preview-page p.editorial-kicker {
+                font-family: var(--talent-kicker-font, inherit);
+                font-size: var(--talent-kicker-size, 0.8rem);
+                font-weight: var(--talent-kicker-weight, 700);
+                color: var(--talent-kicker-color, var(--text-secondary));
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                margin: 0 0 0.25rem 0;
+              }
+              .ProseMirror p.editorial-footnote,
+              .preview-page p.editorial-footnote {
+                font-family: var(--talent-footnote-font, inherit);
+                font-size: var(--talent-footnote-size, 0.8rem);
+                color: var(--talent-footnote-color, var(--text-tertiary));
+                line-height: 1.3;
+                margin: 0.35rem 0 0.75rem 0;
+              }
               .ProseMirror h5,
               .preview-page h5,
               .ProseMirror h6,

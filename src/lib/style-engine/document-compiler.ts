@@ -3,6 +3,7 @@ import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profil
 import type { BrandProfile } from '@/lib/brand/brand-profile';
 import type { OriginalDocumentStyleProfile } from '@/lib/projects/source-style-profile';
 import { resolveDocumentStyles } from './cascade-resolver';
+import { buildFontFamilyStack } from './font-stack';
 import type { CompiledDocument, DocumentStyleMap, UserStyleOverride } from './model';
 
 export interface CompileDocumentOptions {
@@ -27,7 +28,7 @@ export function generateCssVariables(styleMap: DocumentStyleMap): Record<string,
     '--talent-page-margin-right': `${styleMap.page.marginsPt.right}pt`,
 
     // Body
-    '--talent-body-font': styleMap.body.fontFamily,
+    '--talent-body-font': buildFontFamilyStack(styleMap.body.fontFamily),
     '--talent-body-size': `${styleMap.body.fontSizePt}pt`,
     '--talent-body-color': styleMap.body.color,
     '--talent-body-line-height': `${styleMap.body.lineHeight}`,
@@ -36,7 +37,7 @@ export function generateCssVariables(styleMap: DocumentStyleMap): Record<string,
     '--talent-body-spacing-after': `${styleMap.body.spacingAfterPt ?? 0}pt`,
 
     // Headings
-    '--talent-h1-font': styleMap.headings.h1.fontFamily,
+    '--talent-h1-font': buildFontFamilyStack(styleMap.headings.h1.fontFamily),
     '--talent-h1-size': `${styleMap.headings.h1.fontSizePt}pt`,
     '--talent-h1-color': styleMap.headings.h1.color,
     '--talent-h1-weight': styleMap.headings.h1.fontWeight,
@@ -45,7 +46,7 @@ export function generateCssVariables(styleMap: DocumentStyleMap): Record<string,
     '--talent-h1-spacing-before': `${styleMap.headings.h1.spacingBeforePt ?? 0}pt`,
     '--talent-h1-spacing-after': `${styleMap.headings.h1.spacingAfterPt ?? 0}pt`,
 
-    '--talent-h2-font': styleMap.headings.h2.fontFamily,
+    '--talent-h2-font': buildFontFamilyStack(styleMap.headings.h2.fontFamily),
     '--talent-h2-size': `${styleMap.headings.h2.fontSizePt}pt`,
     '--talent-h2-color': styleMap.headings.h2.color,
     '--talent-h2-weight': styleMap.headings.h2.fontWeight,
@@ -54,7 +55,7 @@ export function generateCssVariables(styleMap: DocumentStyleMap): Record<string,
     '--talent-h2-spacing-before': `${styleMap.headings.h2.spacingBeforePt ?? 0}pt`,
     '--talent-h2-spacing-after': `${styleMap.headings.h2.spacingAfterPt ?? 0}pt`,
 
-    '--talent-h3-font': styleMap.headings.h3.fontFamily,
+    '--talent-h3-font': buildFontFamilyStack(styleMap.headings.h3.fontFamily),
     '--talent-h3-size': `${styleMap.headings.h3.fontSizePt}pt`,
     '--talent-h3-color': styleMap.headings.h3.color,
     '--talent-h3-weight': styleMap.headings.h3.fontWeight,
@@ -63,7 +64,7 @@ export function generateCssVariables(styleMap: DocumentStyleMap): Record<string,
     '--talent-h3-spacing-before': `${styleMap.headings.h3.spacingBeforePt ?? 0}pt`,
     '--talent-h3-spacing-after': `${styleMap.headings.h3.spacingAfterPt ?? 0}pt`,
 
-    '--talent-h4-font': styleMap.headings.h4.fontFamily,
+    '--talent-h4-font': buildFontFamilyStack(styleMap.headings.h4.fontFamily),
     '--talent-h4-size': `${styleMap.headings.h4.fontSizePt}pt`,
     '--talent-h4-color': styleMap.headings.h4.color,
     '--talent-h4-weight': styleMap.headings.h4.fontWeight,
@@ -73,7 +74,7 @@ export function generateCssVariables(styleMap: DocumentStyleMap): Record<string,
     '--talent-h4-spacing-after': `${styleMap.headings.h4.spacingAfterPt ?? 0}pt`,
 
     // Quotes
-    '--talent-quote-font': styleMap.quote.fontFamily,
+    '--talent-quote-font': buildFontFamilyStack(styleMap.quote.fontFamily),
     '--talent-quote-size': `${styleMap.quote.fontSizePt}pt`,
     '--talent-quote-color': styleMap.quote.color,
     '--talent-quote-border-color': styleMap.quote.borderLeftColor,
@@ -90,6 +91,13 @@ export function generateCssVariables(styleMap: DocumentStyleMap): Record<string,
     // Footnotes
     '--talent-footnote-size': `${styleMap.footnote.fontSizePt}pt`,
     '--talent-footnote-color': styleMap.footnote.color,
+    '--talent-footnote-font': buildFontFamilyStack(styleMap.footnote.fontFamily),
+
+    // Editorial kicker (small label above a heading)
+    '--talent-kicker-font': buildFontFamilyStack(styleMap.kicker.fontFamily),
+    '--talent-kicker-size': `${styleMap.kicker.fontSizePt}pt`,
+    '--talent-kicker-color': styleMap.kicker.color,
+    '--talent-kicker-weight': styleMap.kicker.fontWeight,
 
     // Global Accent & Dividers
     '--talent-accent-color': styleMap.decorations.accentColor,

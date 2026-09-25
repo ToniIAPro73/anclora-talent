@@ -882,6 +882,49 @@ function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
   }));
 }
 
+/**
+ * Mammoth converts DOCX footnotes into inline `<sup><a href="#footnote-N">`
+ * references plus a single `<ol>` of all footnote text appended at the very
+ * end of the WHOLE document — never per-chapter, never near its reference.
+ * Chapter segmentation then orphans that trailing list into whichever
+ * chapter happens to be last, so a footnote referenced in chapter 1 renders
+ * nowhere near it (or not at all, if the list gets discarded as a stray
+ * block). This inlines each footnote's text as its own styled paragraph
+ * right after the paragraph that references it, so the content survives
+ * chapter segmentation and stays next to its reference.
+ */
+function inlineDocxFootnotes(html: string): string {
+  const footnoteListRe = /<ol>((?:<li id="footnote-\d+">[\s\S]*?<\/li>)+)<\/ol>\s*$/;
+  const listMatch = html.match(footnoteListRe);
+  if (!listMatch) return html;
+
+  const footnotes = new Map<string, string>();
+  const liRe = /<li id="footnote-(\d+)">([\s\S]*?)<\/li>/g;
+  let liMatch: RegExpExecArray | null;
+  while ((liMatch = liRe.exec(listMatch[1])) !== null) {
+    const content = normalizeHtmlFragment(
+      liMatch[2].replace(/<a href="#footnote-ref-\d+">[^<]*<\/a>/g, ''),
+    )
+      .replace(/^<p>/, '')
+      .replace(/<\/p>$/, '')
+      .trim();
+    if (content) footnotes.set(liMatch[1], content);
+  }
+
+  if (footnotes.size === 0) return html;
+
+  const body = html.slice(0, listMatch.index);
+  return body.replace(/<p[^>]*>[\s\S]*?<\/p>/g, (paragraph) => {
+    const refs = Array.from(paragraph.matchAll(/href="#footnote-(\d+)"/g)).map((m) => m[1]);
+    if (refs.length === 0) return paragraph;
+
+    const notes = refs
+      .map((id) => (footnotes.has(id) ? `<p class="editorial-footnote" data-footnote-id="${id}">[${id}] ${footnotes.get(id)}</p>` : ''))
+      .join('');
+    return paragraph + notes;
+  });
+}
+
 function parseHtmlBlocks(input: string) {
   const normalized = normalizeHtmlFragment(input);
   const matches = normalized.match(BLOCK_TAG_RE)?? [];
@@ -1308,19 +1351,16 @@ function buildChaptersFromBlocks(
       .filter((block) => block.text.trim().length > 0 || block.kind === 'rule')
       .map(toDocumentBlock);
 
-    // Only prepend the title heading if the first block isn't already that same title
-    const firstBlockText = currentBlocks[0]?.text?.trim().toLowerCase() || '';
-    const titleText = currentTitle.trim().toLowerCase();
-    const shouldPrependTitle = firstBlockText !== titleText;
-
+    // `currentBlocks` always starts with the chapter's own heading block
+    // (see the assignment below), so there is never a need to synthesize
+    // an extra heading here — doing so used to duplicate the title whenever
+    // `currentTitle` differed textually from the heading (e.g. after fusing
+    // an editorial-kicker prefix into it for the outline label).
     chapters.push({
       title: currentTitle,
-      blocks: [
-        ...(shouldPrependTitle ? [{ type: 'heading' as const, content: currentTitle }] : []),
-        ...(documentBlocks.length > 0
-          ? documentBlocks
-          : [{ type: 'paragraph' as const, content: currentTitle }]),
-      ],
+      blocks: documentBlocks.length > 0
+        ? documentBlocks
+        : [{ type: 'paragraph' as const, content: currentTitle }],
     });
   };
 
@@ -1340,9 +1380,16 @@ function buildChaptersFromBlocks(
       let headingText = cleanHeadingText(block.text);
       const targetPool = currentTitle !== null ? currentBlocks : frontMatter;
       const lastPoolBlock = targetPool[targetPool.length - 1];
+      let kickerBlock: ParsedBlock | null = null;
       if (lastPoolBlock && lastPoolBlock.html && /class="[^"]*\beditorial-kicker\b[^"]*"/i.test(lastPoolBlock.html)) {
         const kickerText = lastPoolBlock.text.trim();
-        targetPool.pop();
+        // The kicker paragraph (e.g. "INTRODUCCIÓN") is only used to derive
+        // the chapter's title for the outline/TOC; it is NOT removed from
+        // the document — it is carried over as the new chapter's own
+        // leading block, preserving its source styling (editorial-kicker
+        // class, including any custom color/size) instead of being
+        // discarded, and keeping the reading order kicker -> heading intact.
+        kickerBlock = targetPool.pop() ?? null;
         if (CHAPTER_MARKER_RE.test(kickerText)) {
           headingText = `${toEditorialTitleCase(kickerText)}. ${headingText}`;
         } else if (/^introducci[oó]n$/i.test(kickerText)) {
@@ -1379,14 +1426,11 @@ function buildChaptersFromBlocks(
 
       flushCurrent();
       currentTitle = headingText || `Capítulo ${chapters.length + 1}`;
-      // The heading block goes first, folded-in leading content (e.g. a
-      // dedication with no heading of its own, folded into the upcoming
-      // Índice chapter above) after it — never the other way round.
-      // `flushCurrent()` only prepends a synthetic heading when
-      // `currentBlocks[0]` isn't already the chapter's own title; putting
-      // the real heading block first here keeps that check true and avoids
-      // emitting the same heading twice.
-      currentBlocks = [block, ...leadingBlocks];
+      // Reading order: kicker (if any) -> heading -> folded-in leading
+      // content (e.g. a dedication with no heading of its own, folded into
+      // the upcoming Índice chapter above). The heading block is always
+      // present here, so `flushCurrent()` never needs to synthesize one.
+      currentBlocks = [...(kickerBlock ? [kickerBlock] : []), block, ...leadingBlocks];
       continue;
     }
 
@@ -1913,7 +1957,7 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
           ],
         },
       );
-      const richHtml = normalizeHtmlFragment(result.value).replace(/<p([^>]*)>(\s*[·._\-—]{3,}\s*\d+\s*)<\/p>/gi, '<p$1 class="toc-entry">$2</p>');
+      const richHtml = inlineDocxFootnotes(normalizeHtmlFragment(result.value)).replace(/<p([^>]*)>(\s*[·._\-—]{3,}\s*\d+\s*)<\/p>/gi, '<p$1 class="toc-entry">$2</p>');
       const richText = normalizeText(textFromHtml(richHtml));
 
       if (richText) {

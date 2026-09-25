@@ -450,6 +450,33 @@ export async function extractOriginalDocumentStyleProfile(
       }
     }
 
+    // 5. Resolve the custom "Editorial Kicker" paragraph style, when present.
+    const kickerAliases = ['editorial kicker', 'editorialkicker'];
+    let resolvedKicker: ParsedXmlStyle | null = null;
+    for (const alias of kickerAliases) {
+      if (stylesMap.has(alias)) {
+        resolvedKicker = resolveInheritedStyle(alias, stylesMap, defaults);
+        break;
+      }
+    }
+    if (resolvedKicker) {
+      const kickerStyle: Partial<ResolvedTextStyle> = {};
+      if (resolvedKicker.fontFamily) kickerStyle.fontFamily = resolvedKicker.fontFamily;
+      if (resolvedKicker.fontSizePt !== undefined) kickerStyle.fontSizePt = resolvedKicker.fontSizePt;
+      if (resolvedKicker.fontWeight) kickerStyle.fontWeight = resolvedKicker.fontWeight;
+      if (resolvedKicker.fontStyle) kickerStyle.fontStyle = resolvedKicker.fontStyle;
+      if (resolvedKicker.color) kickerStyle.color = resolvedKicker.color;
+      if (resolvedKicker.lineHeight !== undefined) kickerStyle.lineHeight = resolvedKicker.lineHeight;
+      if (resolvedKicker.textAlign) kickerStyle.textAlign = resolvedKicker.textAlign;
+      if (resolvedKicker.spacingBeforePt !== undefined) kickerStyle.spacingBeforePt = resolvedKicker.spacingBeforePt;
+      if (resolvedKicker.spacingAfterPt !== undefined) kickerStyle.spacingAfterPt = resolvedKicker.spacingAfterPt;
+
+      if (Object.keys(kickerStyle).length > 0) {
+        profile.kicker = kickerStyle;
+        profile.provenance!['kicker'] = { source: 'docx-styles', confidence: 0.95 };
+      }
+    }
+
     return profile;
   } catch {
     return profile;

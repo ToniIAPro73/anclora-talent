@@ -59,6 +59,9 @@ export interface OriginalDocumentStyleProfile {
     h4?: Partial<ResolvedTextStyle>;
   };
 
+  /** Custom "Editorial Kicker" paragraph style (e.g. "INTRODUCCIÓN" labels). */
+  kicker?: Partial<ResolvedTextStyle>;
+
   provenance?: Record<string, PropertyProvenance>;
 }
 

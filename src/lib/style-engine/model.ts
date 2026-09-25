@@ -10,6 +10,7 @@ export type EditorialRole =
   | 'list'
   | 'table'
   | 'footnote'
+  | 'kicker'
   | 'header'
   | 'footer';
 
@@ -69,6 +70,7 @@ export interface DocumentStyleMap {
     borderWidthPt: number;
   };
   footnote: ResolvedTextStyle;
+  kicker: ResolvedTextStyle;
   header: ResolvedTextStyle & { borderBottom?: boolean };
   footer: ResolvedTextStyle & { borderTop?: boolean };
   decorations: ResolvedDecorationStyle;

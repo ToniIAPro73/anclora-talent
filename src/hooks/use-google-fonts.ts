@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { isLocallySubstitutedFont } from '@/lib/style-engine/font-stack';
 
 export interface GoogleFont {
   family: string;
@@ -101,6 +102,15 @@ export function useGoogleFonts() {
    */
   const loadFont = useCallback((fontFamily: string) => {
     if (loadedFontFamilies.has(fontFamily)) return;
+
+    // Fuentes extraídas de un documento fuente (p. ej. la familia Liberation
+    // de LibreOffice) no existen en el catálogo de Google Fonts: pedirlas
+    // solo produce una petición fallida y una sustitución silenciosa del
+    // navegador. Se resuelven localmente vía buildFontFamilyStack.
+    if (isLocallySubstitutedFont(fontFamily)) {
+      setLoadedFontFamilies((prev) => new Set([...prev, fontFamily]));
+      return;
+    }
 
     // Crear enlace a Google Fonts
     const link = document.createElement('link');
