@@ -334,7 +334,7 @@ html[data-theme="light"] {
   --button-primary-fg: #fffdf8;
   --button-primary-hover: #0C141E;
   --button-primary-border: rgba(74, 159, 216, 0.18);
-  --button-secondary-bg: #FFFFFF;
+  --button-secondary-bg: rgba(255, 253, 248, 0.92);
   --button-secondary-fg: #0C1820;
   --button-secondary-border: rgba(16, 37, 58, 0.22);
   --button-secondary-hover-bg: #F4F8FC;
@@ -349,7 +349,7 @@ html[data-theme="light"] {
   --talent-button-primary-shadow: 0 12px 24px rgba(74, 159, 216, 0.24);
   --talent-button-primary-hover-bg: linear-gradient(135deg, #5CB4E8 0%, #4A9FD8 52%, #3A88BE 100%);
   --talent-button-primary-hover-surface: linear-gradient(135deg, #E8F3FB 0%, #D8EAF7 100%);
-  --talent-button-secondary-bg: #FFFFFF;
+  --talent-button-secondary-bg: rgba(255, 253, 248, 0.92);
   --talent-button-secondary-fg: #0C1820;
   --talent-button-secondary-border: rgba(16, 37, 58, 0.22);
   --talent-button-secondary-shadow: 0 2px 8px rgba(16, 37, 58, 0.08);
