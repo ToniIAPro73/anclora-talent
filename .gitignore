@@ -81,3 +81,6 @@ validation/
 # Manual PDF temporary artifacts (canonical manual assets live under docs/public)
 tmp/manual-pdf/
 tmp/
+
+# Local Claude Code settings (per-user, never versioned)
+.claude/settings.local.json
