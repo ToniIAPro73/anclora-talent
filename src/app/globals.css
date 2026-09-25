@@ -3751,10 +3751,10 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
   }
 }
 
-/* Marca tab: visual system + surfaces (main) / identity + status + tools (sidebar). */
+/* Marca tab: visual system + surfaces (left) / identity + status (right) / tools (full width horizontal). */
 .talent-brand-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 380px);
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
   gap: 20px;
   align-items: start;
 }
@@ -3766,6 +3766,36 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
   display: grid;
   gap: 16px;
   min-width: 0;
+}
+
+.talent-brand-workspace__tools {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.talent-brand-workspace__tools-content {
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.talent-brand-workspace__tools-upload {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.talent-brand-workspace__tools-upload [data-testid="brand-manual-section"] {
+  margin-top: 0 !important;
+}
+
+.talent-brand-workspace__tools-profiles {
+  min-width: 0;
+  border-left: 1px solid var(--border-subtle);
+  padding-left: 28px;
 }
 
 .talent-brand-workspace__profile-card {
@@ -4117,7 +4147,8 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
 
 .talent-brand-workspace__manage-list {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
   margin-top: 12px;
   padding: 0;
   list-style: none;
@@ -4126,6 +4157,7 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
 .talent-brand-workspace__manage-list li {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 10px;
   padding: 12px 14px;
   border: 1px solid var(--border-subtle);
@@ -4177,6 +4209,18 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
 @media (max-width: 1080px) {
   .talent-brand-workspace {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .talent-brand-workspace__tools-content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .talent-brand-workspace__tools-profiles {
+    border-left: none;
+    padding-left: 0;
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 20px;
   }
 }
 

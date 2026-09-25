@@ -450,27 +450,43 @@ export function BrandWorkspace({
             <p className="mt-4 text-sm text-[var(--text-secondary)]">{copy.brandWorkspaceNoProfileBody}</p>
           )}
         </section>
+      </div>
 
-        <section className="ac-surface-panel ac-surface-panel--subtle" data-testid="brand-tools-panel">
+      {/* FULL-WIDTH HORIZONTAL TOOLS & PROFILES CARD */}
+      <section
+        className="talent-brand-workspace__tools ac-surface-panel ac-surface-panel--subtle"
+        data-testid="brand-tools-panel"
+      >
+        <div>
           <p className="ac-surface-panel__eyebrow">{copy.brandWorkspaceToolsHeading}</p>
           <p className="mt-1 text-xs text-[var(--text-secondary)]">{copy.brandWorkspaceToolsSubtitle}</p>
+        </div>
 
-          <BrandManualInput
-            copy={copy}
-            onFileChange={(_name, profileId) => {
-              if (profileId) router.refresh();
-            }}
-            onWarnings={setWarnings}
-          />
-          {warnings.length > 0 && (
-            <ul className="mt-2 space-y-1 text-xs text-[var(--text-tertiary)]" data-testid="brand-warnings">
-              {warnings.map((warning) => (
-                <li key={warning}>⚠ {warning}</li>
-              ))}
-            </ul>
-          )}
+        <div className="talent-brand-workspace__tools-content">
+          {/* LEFT: File Upload & Helper */}
+          <div className="talent-brand-workspace__tools-upload">
+            <BrandManualInput
+              copy={copy}
+              onFileChange={(_name, profileId) => {
+                if (profileId) router.refresh();
+              }}
+              onWarnings={setWarnings}
+            />
+            {warnings.length > 0 && (
+              <ul className="mt-2 space-y-1 text-xs text-[var(--text-tertiary)]" data-testid="brand-warnings">
+                {warnings.map((warning) => (
+                  <li key={warning}>⚠ {warning}</li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-3 flex items-start gap-2 text-[11px] leading-5 text-[var(--text-tertiary)]">
+              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              {copy.brandWorkspaceInfoNote}
+            </p>
+          </div>
 
-          <div className="mt-5 border-t border-[var(--border-subtle)] pt-4">
+          {/* RIGHT: Available Profiles Horizontal Grid */}
+          <div className="talent-brand-workspace__tools-profiles">
             <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
               {copy.brandWorkspaceManageHeading}
             </p>
@@ -517,16 +533,11 @@ export function BrandWorkspace({
                 ))}
               </ul>
             ) : (
-              <p className="mt-2 text-sm text-[var(--text-secondary)]">{copy.brandWorkspaceManageEmpty}</p>
+              <p className="mt-3 text-sm text-[var(--text-secondary)]">{copy.brandWorkspaceManageEmpty}</p>
             )}
           </div>
-
-          <p className="mt-4 flex items-start gap-2 text-[11px] leading-5 text-[var(--text-tertiary)]">
-            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            {copy.brandWorkspaceInfoNote}
-          </p>
-        </section>
-      </div>
+        </div>
+      </section>
     </div>
   );
 }
