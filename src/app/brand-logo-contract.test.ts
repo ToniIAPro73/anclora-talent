@@ -15,6 +15,11 @@ const brandLogo = readFileSync(
   'utf8',
 );
 
+const landingHeader = readFileSync(
+  resolve(process.cwd(), 'src/components/marketing/landing-header.tsx'),
+  'utf8',
+);
+
 describe('brand logo contract', () => {
   test('uses the uploaded Anclora Talent brand asset in landing and app shell', () => {
     expect(landingHero).toContain('BrandLogo');
@@ -24,5 +29,11 @@ describe('brand logo contract', () => {
     expect(brandLogo).toContain('TALENT_BRAND.logoPath');
     expect(brandLogo).toContain('object-contain');
     expect(brandLogo).not.toContain('rounded-full');
+  });
+
+  test('normalizes header logo symbol size to 32px across landing and authenticated app shell', () => {
+    expect(landingHeader).toContain('<BrandLogo size={32}');
+    expect(appShell).toContain('<BrandLogo size={32}');
+    expect(brandLogo).toContain('size = 32');
   });
 });

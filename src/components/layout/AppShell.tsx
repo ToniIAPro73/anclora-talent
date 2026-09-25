@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import Image from 'next/image';
 import { Menu, X } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
@@ -51,7 +50,7 @@ export function AppShell({
         <div className="talent-shell-main min-w-0">
           <header className="talent-shell-topbar">
             <div className="talent-shell-brand">
-              {focusedWorkspace ? <Image src="/brand/anclora-talent.webp" alt="" width={34} height={34} priority className="object-contain" /> : <BrandLogo size={42} />}
+              <BrandLogo size={32} priority />
               <div className="talent-shell-brand__name">{messages.brand}</div>
             </div>
 

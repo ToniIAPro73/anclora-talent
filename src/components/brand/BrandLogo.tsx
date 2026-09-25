@@ -5,7 +5,7 @@ export function BrandLogo({
   className = '',
   imageClassName = '',
   priority = false,
-  size = 28,
+  size = 32,
 }: {
   className?: string;
   imageClassName?: string;

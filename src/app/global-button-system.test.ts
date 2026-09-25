@@ -18,11 +18,27 @@ describe('global button system contract', () => {
     expect(css).toContain('[aria-pressed="true"]');
   });
 
+  test('contains all canonical variants with semantic interaction tokens', () => {
+    expect(css).toContain('.ac-button--primary');
+    expect(css).toContain('.ac-button--secondary');
+    expect(css).toContain('.ac-button--outline');
+    expect(css).toContain('.ac-button--ghost');
+    expect(css).toContain('.ac-button--destructive');
+    expect(css).toContain('.ac-button--active');
+    expect(css).toContain('.ac-button:disabled');
+  });
+
   test('Landing, Chapters, and Chapter Editor consume the same primitive', () => {
     expect(landing).toContain('ac-button ac-button--compact');
     expect(productStory).toContain('ac-button ac-button--compact');
     expect(chapters).toContain('ac-button');
     expect(editor).toContain('ac-button');
     expect(editor).toContain('ac-button--icon');
+  });
+
+  test('hardens contrast on navigation and filter selections without blue-on-blue', () => {
+    expect(css).toContain('.talent-composition-workspace__section-item[data-active=\'true\']');
+    expect(css).toContain('.talent-preflight-workspace__filter[data-active=\'true\']');
+    expect(css).not.toContain('.talent-composition-workspace__section-item[data-active=\'true\'] {\n  background: var(--accent);\n  color: var(--accent-text);');
   });
 });

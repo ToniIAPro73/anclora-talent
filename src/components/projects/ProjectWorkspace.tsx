@@ -681,7 +681,7 @@ export function ProjectWorkspace({
               type="button"
               data-testid="content-workspace-preview-button"
               onClick={() => setActiveStep(5)}
-              className="ac-button ac-button--compact"
+              className="ac-button ac-button--compact ac-button--secondary"
             >
               {copy.contentPreviewAction}
             </button>
@@ -689,7 +689,7 @@ export function ProjectWorkspace({
               type="button"
               data-testid="document-data-open-button"
               onClick={() => setIsDocumentDataOpen(true)}
-              className="ac-button ac-button--compact"
+              className="ac-button ac-button--compact ac-button--secondary"
             >
               {copy.documentDataOpen}
             </button>

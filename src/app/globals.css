@@ -165,7 +165,7 @@ html[data-theme="dark"] {
   --preview-quote-bg: rgba(14, 24, 37, 0.82);
   --preview-quote-border: #4A9FD8;
 
-  /* ── Buttons ── */
+  /* ── Buttons (Dark Mode) ── */
   --button-highlight-bg: var(--accent);
   --button-highlight-fg: #050b12;
   --button-highlight-hover: var(--accent-hover);
@@ -174,27 +174,44 @@ html[data-theme="dark"] {
   --button-primary-fg: #fffdf8;
   --button-primary-hover: #1C2E40;
   --button-primary-border: rgba(74, 159, 216, 0.16);
-  --button-secondary-bg: rgba(14, 24, 37, 0.68);
-  --button-secondary-fg: #EDF2F8;
-  --button-secondary-border: rgba(74, 159, 216, 0.16);
-  --button-secondary-hover-bg: rgba(28, 46, 64, 0.8);
-  --button-secondary-hover-border: rgba(74, 159, 216, 0.34);
+  --button-secondary-bg: rgba(18, 30, 44, 0.82);
+  --button-secondary-fg: #F4F8FC;
+  --button-secondary-border: rgba(92, 180, 232, 0.32);
+  --button-secondary-hover-bg: rgba(28, 48, 70, 0.95);
+  --button-secondary-hover-border: rgba(92, 180, 232, 0.55);
   --talent-button-primary-bg: linear-gradient(135deg, #5CB4E8 0%, #4A9FD8 52%, #3A88BE 100%);
   --talent-button-primary-fg: #081019;
-  --talent-button-primary-border: rgba(92, 180, 232, 0.42);
-  --talent-button-primary-shadow: 0 18px 34px rgba(74, 159, 216, 0.24);
+  --talent-button-primary-border: rgba(92, 180, 232, 0.45);
+  --talent-button-primary-shadow: 0 14px 28px rgba(74, 159, 216, 0.28);
   --talent-button-primary-hover-bg: linear-gradient(135deg, #7CC4EF 0%, #5CB4E8 54%, #4A9FD8 100%);
   --talent-button-primary-hover-surface: linear-gradient(135deg, #1A3043 0%, #102334 100%);
-  --talent-button-secondary-bg: rgba(255, 255, 255, 0.055);
-  --talent-button-secondary-fg: #f4f8fc;
-  --talent-button-secondary-border: rgba(255, 255, 255, 0.16);
-  --talent-button-secondary-shadow: 0 16px 30px rgba(4, 12, 22, 0.2);
-  --talent-button-secondary-hover-bg: rgba(255, 255, 255, 0.095);
-  --talent-button-secondary-hover-border: rgba(255, 255, 255, 0.24);
-  --talent-button-destructive-bg: linear-gradient(135deg, rgba(122, 22, 30, 0.96) 0%, rgba(86, 14, 22, 0.96) 100%);
-  --talent-button-destructive-fg: #fff4f4;
-  --talent-button-destructive-border: rgba(255, 154, 154, 0.24);
-  --talent-button-destructive-shadow: 0 16px 30px rgba(86, 14, 22, 0.24);
+  --talent-button-secondary-bg: rgba(18, 30, 44, 0.82);
+  --talent-button-secondary-fg: #F4F8FC;
+  --talent-button-secondary-border: rgba(92, 180, 232, 0.32);
+  --talent-button-secondary-shadow: 0 4px 14px rgba(4, 12, 22, 0.32);
+  --talent-button-secondary-hover-bg: rgba(28, 48, 70, 0.95);
+  --talent-button-secondary-hover-border: rgba(92, 180, 232, 0.55);
+  --talent-button-outline-bg: transparent;
+  --talent-button-outline-fg: #F4F8FC;
+  --talent-button-outline-border: rgba(92, 180, 232, 0.32);
+  --talent-button-outline-hover-bg: rgba(92, 180, 232, 0.12);
+  --talent-button-outline-hover-border: rgba(92, 180, 232, 0.55);
+  --talent-button-ghost-bg: transparent;
+  --talent-button-ghost-fg: #F4F8FC;
+  --talent-button-ghost-border: transparent;
+  --talent-button-ghost-hover-bg: rgba(92, 180, 232, 0.12);
+  --talent-button-ghost-hover-border: rgba(92, 180, 232, 0.24);
+  --talent-button-destructive-bg: linear-gradient(135deg, rgba(142, 28, 38, 0.96) 0%, rgba(98, 16, 26, 0.96) 100%);
+  --talent-button-destructive-fg: #FFF4F4;
+  --talent-button-destructive-border: rgba(255, 154, 154, 0.32);
+  --talent-button-destructive-shadow: 0 14px 28px rgba(86, 14, 22, 0.32);
+  --talent-button-selected-bg: var(--talent-button-primary-bg);
+  --talent-button-selected-fg: var(--talent-button-primary-fg);
+  --talent-button-selected-border: var(--talent-button-primary-border);
+  --talent-button-disabled-bg: rgba(18, 30, 44, 0.36);
+  --talent-button-disabled-fg: rgba(244, 248, 252, 0.44);
+  --talent-button-disabled-border: rgba(92, 180, 232, 0.14);
+  --button-focus-ring: var(--focus-ring);
 
   /* ── App gradient ── */
   --app-gradient: radial-gradient(circle at top center, rgba(74, 159, 216, 0.12), transparent 24%),
@@ -308,7 +325,7 @@ html[data-theme="light"] {
   --preview-quote-bg: #E8F0F8;
   --preview-quote-border: #3A88BE;
 
-  /* ── Buttons ── */
+  /* ── Buttons (Light Mode) ── */
   --button-highlight-bg: var(--accent);
   --button-highlight-fg: #050b12;
   --button-highlight-hover: var(--accent-hover);
@@ -317,31 +334,48 @@ html[data-theme="light"] {
   --button-primary-fg: #fffdf8;
   --button-primary-hover: #0C141E;
   --button-primary-border: rgba(74, 159, 216, 0.18);
-  --button-secondary-bg: rgba(255, 253, 248, 0.92);
+  --button-secondary-bg: #FFFFFF;
   --button-secondary-fg: #0C1820;
-  --button-secondary-border: rgba(12, 24, 32, 0.24);
-  --button-secondary-hover-bg: rgba(255, 255, 255, 0.98);
-  --button-secondary-hover-border: rgba(12, 24, 32, 0.36);
+  --button-secondary-border: rgba(16, 37, 58, 0.22);
+  --button-secondary-hover-bg: #F4F8FC;
+  --button-secondary-hover-border: rgba(58, 136, 190, 0.52);
   /* Light theme: the full-strength 3-stop gradient reads oversaturated on
      white surfaces, so the light CTA uses a dimmer 2-stop gradient built only
      from contracted accent hexes (#4A9FD8/#3A88BE). Hover recovers the
      contracted 3-stop gradient. Foreground stays #081019 (≥4.5:1). */
   --talent-button-primary-bg: linear-gradient(135deg, #4A9FD8 0%, #3A88BE 100%);
   --talent-button-primary-fg: #081019;
-  --talent-button-primary-border: rgba(58, 136, 190, 0.32);
-  --talent-button-primary-shadow: 0 18px 32px rgba(74, 159, 216, 0.22);
+  --talent-button-primary-border: rgba(58, 136, 190, 0.45);
+  --talent-button-primary-shadow: 0 12px 24px rgba(74, 159, 216, 0.24);
   --talent-button-primary-hover-bg: linear-gradient(135deg, #5CB4E8 0%, #4A9FD8 52%, #3A88BE 100%);
   --talent-button-primary-hover-surface: linear-gradient(135deg, #E8F3FB 0%, #D8EAF7 100%);
-  --talent-button-secondary-bg: rgba(255, 255, 255, 0.88);
-  --talent-button-secondary-fg: #10253a;
-  --talent-button-secondary-border: rgba(16, 37, 58, 0.12);
-  --talent-button-secondary-shadow: 0 14px 28px rgba(16, 37, 58, 0.1);
-  --talent-button-secondary-hover-bg: rgba(255, 255, 255, 0.98);
-  --talent-button-secondary-hover-border: rgba(16, 37, 58, 0.2);
-  --talent-button-destructive-bg: linear-gradient(135deg, #a9313b 0%, #851f29 100%);
-  --talent-button-destructive-fg: #fff5f5;
-  --talent-button-destructive-border: rgba(133, 31, 41, 0.18);
-  --talent-button-destructive-shadow: 0 14px 28px rgba(133, 31, 41, 0.12);
+  --talent-button-secondary-bg: #FFFFFF;
+  --talent-button-secondary-fg: #0C1820;
+  --talent-button-secondary-border: rgba(16, 37, 58, 0.22);
+  --talent-button-secondary-shadow: 0 2px 8px rgba(16, 37, 58, 0.08);
+  --talent-button-secondary-hover-bg: #F4F8FC;
+  --talent-button-secondary-hover-border: rgba(58, 136, 190, 0.52);
+  --talent-button-outline-bg: transparent;
+  --talent-button-outline-fg: #0C1820;
+  --talent-button-outline-border: rgba(16, 37, 58, 0.22);
+  --talent-button-outline-hover-bg: rgba(74, 159, 216, 0.10);
+  --talent-button-outline-hover-border: rgba(58, 136, 190, 0.52);
+  --talent-button-ghost-bg: transparent;
+  --talent-button-ghost-fg: #0C1820;
+  --talent-button-ghost-border: transparent;
+  --talent-button-ghost-hover-bg: rgba(74, 159, 216, 0.10);
+  --talent-button-ghost-hover-border: rgba(58, 136, 190, 0.25);
+  --talent-button-destructive-bg: linear-gradient(135deg, #A9313B 0%, #851F29 100%);
+  --talent-button-destructive-fg: #FFF5F5;
+  --talent-button-destructive-border: rgba(133, 31, 41, 0.26);
+  --talent-button-destructive-shadow: 0 10px 20px rgba(133, 31, 41, 0.16);
+  --talent-button-selected-bg: var(--talent-button-primary-bg);
+  --talent-button-selected-fg: var(--talent-button-primary-fg);
+  --talent-button-selected-border: var(--talent-button-primary-border);
+  --talent-button-disabled-bg: rgba(16, 37, 58, 0.06);
+  --talent-button-disabled-fg: rgba(12, 24, 32, 0.38);
+  --talent-button-disabled-border: rgba(16, 37, 58, 0.12);
+  --button-focus-ring: var(--focus-ring);
 
   /* ── App gradient ── */
   --app-gradient: radial-gradient(circle at top center, rgba(58, 136, 190, 0.10), transparent 24%),
@@ -454,31 +488,15 @@ body {
 .talent-button--secondary:focus-visible {
   background: var(--talent-button-secondary-hover-bg);
   border-color: var(--talent-button-secondary-hover-border);
+  color: var(--talent-button-secondary-fg);
 }
 
+/* ── Canonical Button System ── */
 .ac-button:not(.ac-button--compact) {
-  /* Anatomy layer: text-transform/letter-spacing/font-size/font-weight/
-     padding-inline have no sanctioned DS extension point yet (only color,
-     via --ac-button-bg/fg/border/shadow, and radius, via --ac-button-radius,
-     are exposed as component tokens as of design-system 0.5.0) — these
-     remain a documented brand-anatomy override, tracked as design-system
-     feedback (Wave 1 pilot report) rather than silently accepted. Radius is
-     migrated to the sanctioned --ac-button-radius token below: same visual
-     result (18px), now expressed through the DS's own extension point
-     instead of overriding border-radius directly on the base selector.
-
-     Scoped with :not(.ac-button--compact): both this selector and the DS's
-     own .ac-button--compact have equal specificity (one class), so without
-     this exclusion this rule — being later in the cascade than the
-     imported button.css — would silently win and cancel out every
-     .ac-button--compact usage migrated from the former workspace-specific
-     family (Wave 1 pilot), making the whole migration a no-op. Compact buttons are meant
-     to use the DS's own compact anatomy, not this app's larger brand
-     anatomy shrunk down. */
   text-transform: none;
   letter-spacing: -0.015em;
   font-size: 0.92rem;
-  font-weight: 800;
+  font-weight: 700;
   --ac-button-radius: 18px;
   padding-inline: 22px;
 }
@@ -493,82 +511,173 @@ body {
   padding-inline: 26px;
 }
 
+/* Base default (.ac-button): defaults to high-contrast secondary action */
+.ac-button {
+  --ac-button-bg: var(--talent-button-secondary-bg);
+  --ac-button-fg: var(--talent-button-secondary-fg);
+  --ac-button-border: var(--talent-button-secondary-border);
+  --ac-button-shadow: var(--talent-button-secondary-shadow);
+  color: var(--ac-button-fg);
+  background: var(--ac-button-bg);
+  border: 1px solid var(--ac-button-border);
+  box-shadow: var(--ac-button-shadow);
+  transition: transform .16s ease, border-color .16s ease, background .16s ease, color .16s ease, box-shadow .16s ease;
+}
+
+.ac-button:hover,
+.ac-button:focus-visible {
+  color: var(--talent-button-secondary-fg);
+  border-color: var(--talent-button-secondary-hover-border);
+  background: var(--talent-button-secondary-hover-bg);
+}
+
+/* PRIMARY */
 .ac-button--primary {
   --ac-button-bg: var(--talent-button-primary-bg);
   --ac-button-fg: var(--talent-button-primary-fg);
   --ac-button-border: var(--talent-button-primary-border);
   --ac-button-shadow: var(--talent-button-primary-shadow);
+  color: var(--talent-button-primary-fg);
+  background: var(--talent-button-primary-bg);
+  border: 1px solid var(--talent-button-primary-border);
+  box-shadow: var(--talent-button-primary-shadow);
 }
 
 .ac-button--primary:hover,
 .ac-button--primary:focus-visible {
+  color: var(--talent-button-primary-fg);
   background: var(--talent-button-primary-hover-bg);
 }
 
-/* Product decision: every non-destructive button (primary, secondary,
-   ghost, and the "premium" composites built on ac-button--secondary) uses
-   the same accent gradient and hover treatment as the primary action, so
-   the whole app reads as one consistent button language. Destructive stays
-   its own color intentionally — recoloring a delete action blue would hide
-   the one signal it's a dangerous action. */
+/* SECONDARY */
 .ac-button--secondary {
-  --ac-button-bg: var(--talent-button-primary-bg);
-  --ac-button-fg: var(--talent-button-primary-fg);
-  --ac-button-border: var(--talent-button-primary-border);
-  --ac-button-shadow: var(--talent-button-primary-shadow);
+  --ac-button-bg: var(--talent-button-secondary-bg);
+  --ac-button-fg: var(--talent-button-secondary-fg);
+  --ac-button-border: var(--talent-button-secondary-border);
+  --ac-button-shadow: var(--talent-button-secondary-shadow);
+  color: var(--talent-button-secondary-fg);
+  background: var(--talent-button-secondary-bg);
+  border: 1px solid var(--talent-button-secondary-border);
+  box-shadow: var(--talent-button-secondary-shadow);
 }
 
 .ac-button--secondary:hover,
 .ac-button--secondary:focus-visible {
-  background: var(--talent-button-primary-hover-bg);
+  color: var(--talent-button-secondary-fg);
+  border-color: var(--talent-button-secondary-hover-border);
+  background: var(--talent-button-secondary-hover-bg);
 }
 
+/* OUTLINE */
+.ac-button--outline {
+  --ac-button-bg: var(--talent-button-outline-bg);
+  --ac-button-fg: var(--talent-button-outline-fg);
+  --ac-button-border: var(--talent-button-outline-border);
+  --ac-button-shadow: none;
+  color: var(--talent-button-outline-fg);
+  background: var(--talent-button-outline-bg);
+  border: 1px solid var(--talent-button-outline-border);
+  box-shadow: none;
+}
+
+.ac-button--outline:hover,
+.ac-button--outline:focus-visible {
+  color: var(--talent-button-outline-fg);
+  background: var(--talent-button-outline-hover-bg);
+  border-color: var(--talent-button-outline-hover-border);
+}
+
+/* GHOST */
 .ac-button--ghost {
-  --ac-button-bg: var(--talent-button-primary-bg);
-  --ac-button-fg: var(--talent-button-primary-fg);
-  --ac-button-border: var(--talent-button-primary-border);
-  --ac-button-shadow: var(--talent-button-primary-shadow);
+  --ac-button-bg: var(--talent-button-ghost-bg);
+  --ac-button-fg: var(--talent-button-ghost-fg);
+  --ac-button-border: var(--talent-button-ghost-border);
+  --ac-button-shadow: none;
+  color: var(--talent-button-ghost-fg);
+  background: var(--talent-button-ghost-bg);
+  border: 1px solid transparent;
+  box-shadow: none;
 }
 
 .ac-button--ghost:hover,
 .ac-button--ghost:focus-visible {
-  background: var(--talent-button-primary-hover-bg);
+  color: var(--talent-button-ghost-fg);
+  background: var(--talent-button-ghost-hover-bg);
+  border-color: var(--talent-button-ghost-hover-border);
 }
 
+/* DESTRUCTIVE */
 .ac-button--destructive {
   --ac-button-bg: var(--talent-button-destructive-bg);
   --ac-button-fg: var(--talent-button-destructive-fg);
   --ac-button-border: var(--talent-button-destructive-border);
   --ac-button-shadow: var(--talent-button-destructive-shadow);
+  color: var(--talent-button-destructive-fg);
+  background: var(--talent-button-destructive-bg);
+  border: 1px solid var(--talent-button-destructive-border);
+  box-shadow: var(--talent-button-destructive-shadow);
 }
 
-/* Landing is the approved visual source of truth for application actions.
-   The design-system compact variant carries its exact 36px workspace/landing
-   geometry; semantic variants only change emphasis, never the button language. */
+.ac-button--destructive:hover,
+.ac-button--destructive:focus-visible {
+  color: var(--talent-button-destructive-fg);
+  background: var(--talent-button-destructive-bg);
+  filter: brightness(1.12);
+}
+
+/* ACTIVE / PRESSED / SELECTED */
+.ac-button--active,
+.ac-button--pressed,
+.ac-button[aria-pressed="true"],
+.ac-button[aria-selected="true"],
+.ac-button[data-active="true"] {
+  --ac-button-bg: var(--talent-button-selected-bg);
+  --ac-button-fg: var(--talent-button-selected-fg);
+  --ac-button-border: var(--talent-button-selected-border);
+  --ac-button-shadow: var(--talent-button-primary-shadow);
+  color: var(--talent-button-selected-fg);
+  background: var(--talent-button-selected-bg);
+  border-color: var(--talent-button-selected-border);
+}
+
+.ac-button--active:hover,
+.ac-button--pressed:hover,
+.ac-button[aria-pressed="true"]:hover,
+.ac-button[aria-selected="true"]:hover,
+.ac-button[data-active="true"]:hover {
+  color: var(--talent-button-selected-fg);
+  background: var(--talent-button-primary-hover-bg);
+}
+
+/* DISABLED */
+.ac-button:disabled,
+.ac-button[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+  box-shadow: none;
+  transform: none !important;
+}
+
+/* FOCUS-VISIBLE */
+.ac-button:focus-visible {
+  outline: 2px solid var(--button-focus-ring);
+  outline-offset: 2px;
+}
+
+/* COMPACT (Workspace / Operational density) */
 .ac-button--compact {
   --ac-button-padding-x: 14px;
   --ac-button-min-height: 36px;
   --ac-button-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
   letter-spacing: normal;
   text-transform: none;
-  background-size: 200% 100%;
-  background-position: 0 50%;
-  transition: background-position .22s ease, border-color .16s ease, color .16s ease, transform .16s ease, box-shadow .16s ease;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease, box-shadow .16s ease;
 }
 
-.ac-button--compact:hover,
-.ac-button--compact:focus-visible {
-  background: var(--talent-button-primary-hover-surface);
-  background-size: 100% 100%;
-  background-position: 50% 50%;
-  border-color: var(--accent);
-  color: var(--text-primary);
-}
-
-.ac-button--compact:active,
-.ac-button--compact[aria-pressed="true"] {
+.ac-button--compact:active {
   transform: translateY(1px);
 }
 
@@ -659,24 +768,34 @@ body {
 
 .talent-shell-nav__link,
 .talent-shell-mobile-menu__link {
-  min-height: 40px;
-  border: 1px solid transparent;
-  border-radius: 999px;
+  min-height: 36px;
+  border: 1px solid var(--talent-button-secondary-border);
+  border-radius: 4px;
   padding: 0 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.82rem;
-  font-weight: 800;
-  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--talent-button-secondary-bg);
+  color: var(--talent-button-secondary-fg);
+  transition: all .16s ease;
 }
 
 .talent-shell-nav__link:hover,
 .talent-shell-nav__link:focus-visible,
-.talent-shell-nav__link[aria-current="page"] {
-  border-color: rgba(74, 159, 216, 0.34);
-  background: color-mix(in srgb, var(--surface-panel-strong) 86%, transparent);
-  color: var(--text-primary);
+.talent-shell-mobile-menu__link:hover,
+.talent-shell-mobile-menu__link:focus-visible {
+  border-color: var(--talent-button-secondary-hover-border);
+  background: var(--talent-button-secondary-hover-bg);
+  color: var(--talent-button-secondary-fg);
+}
+
+.talent-shell-nav__link[aria-current="page"],
+.talent-shell-mobile-menu__link[aria-current="page"] {
+  border-color: var(--talent-button-primary-border);
+  background: var(--talent-button-primary-bg);
+  color: var(--talent-button-primary-fg);
 }
 
 .global-header-control {
@@ -1401,6 +1520,28 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
 .talent-content-tabs .ac-tabs__tab {
   min-height: 32px;
   padding: 0 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--talent-button-secondary-fg);
+  border: 1px solid transparent;
+  transition: all .16s ease;
+}
+
+.talent-content-tabs .ac-tabs__tab:hover,
+.talent-content-tabs .ac-tabs__tab:focus-visible {
+  background: var(--talent-button-secondary-hover-bg);
+  border-color: var(--talent-button-secondary-border);
+  color: var(--talent-button-secondary-fg);
+}
+
+.talent-content-tabs .ac-tabs__tab[aria-current="page"],
+.talent-content-tabs .ac-tabs__tab[aria-selected="true"] {
+  border-color: var(--talent-button-primary-border);
+  background: var(--talent-button-primary-bg);
+  color: var(--talent-button-primary-fg);
 }
 
 .talent-content-shell__panel {
@@ -2751,7 +2892,7 @@ html[data-theme="light"] .talent-dashboard-shell .talent-shell-brand__name { col
 .dashboard-filter select { color: var(--text-secondary); }
 .dashboard-view-controls { display: flex; border-left: 1px solid var(--dashboard-border); padding-left: 16px; }
 .dashboard-view-controls .ac-button { display: grid; place-items: center; }
-.dashboard-view-controls .ac-button[aria-pressed="true"] { color: var(--accent-text); border-color: var(--accent); background: var(--accent-soft); }
+.dashboard-view-controls .ac-button[aria-pressed="true"] { color: var(--talent-button-primary-fg); border-color: var(--talent-button-primary-border); background: var(--talent-button-primary-bg); }
 .dashboard-project-list { display: grid; gap: 14px; }
 .dashboard-project-row { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(160px, .9fr) minmax(190px, 1.1fr); align-items: center; min-height: 150px; border: 1px solid var(--dashboard-border); border-radius: 6px; padding: 14px 22px; background: var(--dashboard-panel); cursor: pointer; touch-action: manipulation; }
 .dashboard-project-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
@@ -3245,19 +3386,29 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: 12px;
-  color: var(--text-secondary);
+  border-radius: 8px;
+  border: 1px solid transparent;
+  color: var(--text-primary);
   text-align: left;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-.talent-composition-workspace__section-item:hover {
-  background: var(--surface-soft);
+.talent-composition-workspace__section-item:hover,
+.talent-composition-workspace__section-item:focus-visible {
+  background: var(--talent-button-secondary-hover-bg);
+  border-color: var(--talent-button-secondary-border);
+  color: var(--text-primary);
 }
 
 .talent-composition-workspace__section-item[data-active='true'] {
-  background: var(--accent);
-  color: var(--accent-text);
+  background: var(--talent-button-primary-bg);
+  border-color: var(--talent-button-primary-border);
+  color: var(--talent-button-primary-fg);
+}
+
+.talent-composition-workspace__section-item[data-active='true'] .talent-composition-workspace__section-label,
+.talent-composition-workspace__section-item[data-active='true'] .talent-composition-workspace__section-desc {
+  color: var(--talent-button-primary-fg);
 }
 
 .talent-composition-workspace__section-label {
@@ -3269,7 +3420,8 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
 .talent-composition-workspace__section-desc {
   display: block;
   font-size: 0.7rem;
-  opacity: 0.75;
+  color: var(--text-secondary);
+  opacity: 0.85;
 }
 
 .talent-composition-workspace__applied-typography {
@@ -3843,16 +3995,27 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
 .talent-preflight-workspace__filter {
   padding: 6px 14px;
   border-radius: 999px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--talent-button-secondary-border);
+  background: var(--talent-button-secondary-bg);
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--talent-button-secondary-fg);
+  transition: all 0.16s ease;
+  cursor: pointer;
 }
 
-.talent-preflight-workspace__filter[data-active='true'] {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--accent-text);
+.talent-preflight-workspace__filter:hover,
+.talent-preflight-workspace__filter:focus-visible {
+  background: var(--talent-button-secondary-hover-bg);
+  border-color: var(--talent-button-secondary-hover-border);
+  color: var(--talent-button-secondary-fg);
+}
+
+.talent-preflight-workspace__filter[data-active='true'],
+.talent-preflight-workspace__filter[aria-selected='true'] {
+  border-color: var(--talent-button-primary-border);
+  background: var(--talent-button-primary-bg);
+  color: var(--talent-button-primary-fg);
 }
 
 .talent-preflight-workspace__incidence-list {

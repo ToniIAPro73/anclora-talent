@@ -39,7 +39,7 @@ export function LandingHeader({
           href="/"
           className="flex items-center gap-2.5 font-bold tracking-tight text-[var(--text-primary)] transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
         >
-          <BrandLogo size={24} priority />
+          <BrandLogo size={32} priority />
           <span className="text-base font-semibold tracking-tight">Anclora Talent</span>
         </Link>
 
