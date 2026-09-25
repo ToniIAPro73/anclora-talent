@@ -2369,6 +2369,7 @@ ul.toc-list > li {
 
 .ac-text-editor__content--scroll {
   overflow-x: auto;
+  justify-content: safe center;
 }
 
 /* Fase 6: chapter editor scroll fix.
@@ -2543,8 +2544,8 @@ ul.toc-list > li {
 .chapter-editor-layout .ac-text-editor__toolbar { position: absolute; z-index: 4; inset: 0 0 auto; min-height: 52px; overflow-x: auto; border: 1px solid var(--border-subtle); border-radius: 5px; background: var(--surface-panel); box-shadow: none; scrollbar-width: thin; }
 .chapter-editor-layout .ac-text-editor__toolbar { flex-wrap: nowrap; gap: .25rem; padding: .45rem .6rem; }
 .chapter-editor-layout .ac-text-editor__toolbar-section { flex-shrink: 0; flex-wrap: nowrap; gap: .2rem; border-right-color: var(--border-subtle); }
-.chapter-editor-layout .ac-text-editor__toolbar-actions { display: flex; align-items: center; gap: .35rem; flex-shrink: 0; }
-.chapter-editor-layout .ac-text-editor__toolbar-actions .ac-text-editor__button { width: auto; min-width: 2.5rem; height: 1.85rem; padding: 0 .55rem; }
+.chapter-editor-layout .ac-text-editor__toolbar-actions { display: flex; align-items: center; gap: .25rem; flex-shrink: 0; }
+.chapter-editor-layout .ac-text-editor__toolbar-actions .ac-text-editor__button { width: 1.85rem; height: 1.85rem; padding: 0; }
 .chapter-editor-layout .ac-text-editor__button { width: 1.85rem; height: 1.85rem; border-radius: 4px; }
 .chapter-editor-layout .ac-text-editor__split-main { width: 1.85rem; height: 1.85rem; }
 .chapter-editor-layout .ac-text-editor__split-toggle { width: 1.3rem; }

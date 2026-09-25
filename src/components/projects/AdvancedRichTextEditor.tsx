@@ -46,7 +46,9 @@ import {
   Minus,
   X,
   IndentIncrease,
-  IndentDecrease
+  IndentDecrease,
+  Undo2,
+  Redo2,
 } from 'lucide-react';
 import { EditorPopover } from './EditorPopover';
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
@@ -68,7 +70,7 @@ import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { PAGE_BREAK_HTML } from '@/lib/preview/page-breaks';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
-import { resolveEditorViewportLayout } from './editor-viewport';
+import { resolveEditorViewportLayout, calculateSpreadFitFactor } from './editor-viewport';
 
 type ChainedCommand = ReturnType<Editor['chain']>;
 type ApplyToSelectionTarget = (command: (chain: ChainedCommand) => ChainedCommand) => boolean;
@@ -1214,18 +1216,16 @@ const MenuBar = ({
           disabled={!editor.can().undo()}
           dataTestId="editor-toolbar-undo-button"
           title={copy.undo}
-          className="!w-auto px-2.5 min-w-[2.5rem]"
         >
-          <span className="text-[11px] font-semibold leading-none">{copy.undo}</span>
+          <Undo2 className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().redo()}
           dataTestId="editor-toolbar-redo-button"
           title={copy.redo}
-          className="!w-auto px-2.5 min-w-[2.5rem]"
         >
-          <span className="text-[11px] font-semibold leading-none">{copy.redo}</span>
+          <Redo2 className="h-4 w-4" />
         </ToolbarButton>
       </div>
     </div>
@@ -1254,8 +1254,10 @@ export function AdvancedRichTextEditor({
   const { locale } = useUiPreferences();
   const { preferences, setPreferences } = useEditorPreferences();
   const [physicalWidth, setPhysicalWidth] = useState(0);
+  const [containerInnerWidth, setContainerInnerWidth] = useState(0);
   const isSyncingExternalContentRef = useRef(false);
   const multipageFlowRef = useRef<HTMLDivElement>(null);
+  const contentScrollRef = useRef<HTMLDivElement>(null);
   const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop'>(
     (preferences.device as 'mobile' | 'tablet' | 'desktop') || 'desktop'
   );
@@ -1299,6 +1301,43 @@ export function AdvancedRichTextEditor({
     updatePhysicalWidth();
     window.addEventListener('resize', updatePhysicalWidth);
     return () => window.removeEventListener('resize', updatePhysicalWidth);
+  }, []);
+
+  useEffect(() => {
+    const el = contentScrollRef.current;
+    if (!el) return;
+
+    const measure = () => {
+      if (el) {
+        const style = window.getComputedStyle(el);
+        const padLeft = parseFloat(style.paddingLeft) || 16;
+        const padRight = parseFloat(style.paddingRight) || 16;
+        const usable = Math.max(0, el.clientWidth - padLeft - padRight);
+        if (usable > 0) {
+          setContainerInnerWidth(usable);
+        }
+      }
+    };
+
+    measure();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const width = entry.contentRect?.width;
+          if (width && width > 0) {
+            setContainerInnerWidth(width);
+          } else if (entry.target?.clientWidth) {
+            measure();
+          }
+        }
+      });
+      ro.observe(el);
+      return () => ro.disconnect();
+    }
+
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
   }, []);
 
   const publicationFormat = device === 'desktop' ? 'laptop' : device;
@@ -1593,7 +1632,18 @@ export function AdvancedRichTextEditor({
   const contentWidth = Math.max(120, pageWidth - margins.left - margins.right);
   const contentHeight = Math.max(120, pageHeight - margins.top - margins.bottom);
   const columnGap = pageGap + margins.left + margins.right;
-  const viewportWidth = showSecondPage ? pageWidth * 2 + pageGap : pageWidth;
+  const spreadNaturalWidth = showSecondPage ? pageWidth * 2 + pageGap : pageWidth;
+  const viewportWidth = spreadNaturalWidth;
+  const estimatedFallbackWidth = Math.max(
+    320,
+    physicalWidth > 0 ? physicalWidth - 480 - 48 : 0,
+  );
+  const availableManuscriptWidth = containerInnerWidth > 0 ? containerInnerWidth : estimatedFallbackWidth;
+  const spreadFitFactor = calculateSpreadFitFactor({
+    availableWidth: availableManuscriptWidth,
+    naturalWidth: spreadNaturalWidth,
+  });
+  const effectiveScale = zoomScale * viewportLayout.scale * spreadFitFactor;
   const effectivePages = Math.max(
     totalRenderablePages,
     showSecondPage ? spreadStartPage + 2 : spreadStartPage + 1,
@@ -1654,7 +1704,7 @@ export function AdvancedRichTextEditor({
 
       const relativePageIndex = Math.max(0, pageIndex - spreadStartPage);
       const coords = {
-        left: flowBounds.left + relativePageIndex * (pageWidth + pageGap) + 1,
+        left: flowBounds.left + relativePageIndex * (pageWidth + pageGap) * effectiveScale + 1,
         top: flowBounds.top + 1,
       };
       const resolved = posAtCoords(coords);
@@ -1763,20 +1813,23 @@ export function AdvancedRichTextEditor({
         effectiveFontFamily={effectiveFont}
       />
 
-      <div className="ac-text-editor__content ac-text-editor__content--scroll flex justify-center bg-[var(--background)] p-4 custom-scrollbar">
+      <div
+        ref={contentScrollRef}
+        className="ac-text-editor__content ac-text-editor__content--scroll flex bg-[var(--background)] p-4 custom-scrollbar"
+      >
         <div
-          className={`transition-all duration-500 ease-in-out ${deviceClasses[layoutDevice]}`}
+          className={`transition-all duration-300 ease-in-out m-auto shrink-0 ${deviceClasses[layoutDevice]}`}
           style={{
-            width: `${viewportWidth * zoomScale * viewportLayout.scale}px`,
-            minHeight: `${pageHeight * zoomScale * viewportLayout.scale}px`,
+            width: `${viewportWidth * effectiveScale}px`,
+            minHeight: `${pageHeight * effectiveScale}px`,
           }}
         >
           <div
-            className="relative mx-auto overflow-hidden"
+            className="relative overflow-hidden origin-top-left"
             style={{
               width: `${viewportWidth}px`,
               minHeight: `${pageHeight}px`,
-              transform: `scale(${zoomScale * viewportLayout.scale})`,
+              transform: `scale(${effectiveScale})`,
               transformOrigin: 'top left',
             }}
           >

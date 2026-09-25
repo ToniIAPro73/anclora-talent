@@ -34,10 +34,10 @@ describe('Chapter Editor Remediation & Global No-Arrow Contract', () => {
     });
   });
 
-  describe('Objective 2: Global Rule - No Arrow Icons Inside Normal Buttons', () => {
-    test('AdvancedRichTextEditor replaces undo/redo arrow icons with text buttons', () => {
-      expect(advancedEditorCode).not.toContain('Undo2');
-      expect(advancedEditorCode).not.toContain('Redo2');
+  describe('Objective 2: Standard Undo / Redo Icons and No Navigation Arrows', () => {
+    test('AdvancedRichTextEditor uses standard Undo2 and Redo2 editor icons with copy.undo and copy.redo accessible labels', () => {
+      expect(advancedEditorCode).toContain('Undo2');
+      expect(advancedEditorCode).toContain('Redo2');
       expect(advancedEditorCode).toContain('copy.undo');
       expect(advancedEditorCode).toContain('copy.redo');
     });

@@ -41,3 +41,21 @@ export function resolveEditorViewportLayout({
     scale: Math.min(1, availableWidth / pageWidth),
   };
 }
+
+export function calculateSpreadFitFactor({
+  availableWidth,
+  naturalWidth,
+  minScale = 0.5,
+}: {
+  availableWidth: number;
+  naturalWidth: number;
+  minScale?: number;
+}): number {
+  if (availableWidth <= 0 || naturalWidth <= 0) {
+    return 1;
+  }
+  if (naturalWidth <= availableWidth) {
+    return 1;
+  }
+  return Math.max(minScale, availableWidth / naturalWidth);
+}

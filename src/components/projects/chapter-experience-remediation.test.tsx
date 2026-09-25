@@ -152,19 +152,19 @@ describe('ANCLORA TALENT — CHAPTER EXPERIENCE REMEDIATION', () => {
     });
   });
 
-  describe('Objective C: Undo / Redo Distinct Controls and Layout', () => {
-    test('Undo and Redo are distinct controls with separate click areas and no arrow icons', () => {
+  describe('Objective C: Undo / Redo Standard Editor Icons', () => {
+    test('Undo and Redo use standard Undo2 and Redo2 editor icons with distinct click areas', () => {
       expect(advancedEditorCode).toContain('dataTestId="editor-toolbar-undo-button"');
       expect(advancedEditorCode).toContain('dataTestId="editor-toolbar-redo-button"');
-      expect(advancedEditorCode).not.toContain('Undo2');
-      expect(advancedEditorCode).not.toContain('Redo2');
+      expect(advancedEditorCode).toContain('Undo2');
+      expect(advancedEditorCode).toContain('Redo2');
     });
 
-    test('CSS applies flex layout and unconstrained button width to prevent text overlap', () => {
+    test('CSS applies flex layout and standard compact button dimensions', () => {
       expect(globalsCss).toContain('.chapter-editor-layout .ac-text-editor__toolbar-actions');
       expect(globalsCss).toMatch(/\.chapter-editor-layout \.ac-text-editor__toolbar-actions\s*\{\s*display:\s*flex/);
       expect(globalsCss).toContain('.chapter-editor-layout .ac-text-editor__toolbar-actions .ac-text-editor__button');
-      expect(globalsCss).toMatch(/width:\s*auto/);
+      expect(globalsCss).toMatch(/width:\s*1\.85rem/);
     });
   });
 
@@ -182,6 +182,19 @@ describe('ANCLORA TALENT — CHAPTER EXPERIENCE REMEDIATION', () => {
       expect(advancedEditorCode).toContain('effectivePages = Math.max');
     });
 
+    test('spread fit factor scales spread to available manuscript width without cropping left page', () => {
+      expect(advancedEditorCode).toContain('calculateSpreadFitFactor');
+      expect(advancedEditorCode).toContain('spreadFitFactor');
+      expect(advancedEditorCode).toContain('effectiveScale');
+      expect(advancedEditorCode).toContain('contentScrollRef');
+    });
+
+    test('container layout uses safe center and m-auto to protect left page from clipping', () => {
+      expect(globalsCss).toContain('justify-content: safe center;');
+      expect(advancedEditorCode).toContain('m-auto shrink-0');
+      expect(advancedEditorCode).toContain('origin-top-left');
+    });
+
     test('multipage-editor-flow has transparent background to preserve distinct facing page frames and gutter', () => {
       expect(globalsCss).toContain('.chapter-editor-layout .multipage-editor-flow { background: transparent');
       expect(advancedEditorCode).toContain('.multipage-editor-flow {');
@@ -189,7 +202,7 @@ describe('ANCLORA TALENT — CHAPTER EXPERIENCE REMEDIATION', () => {
     });
 
     test('content scroll allows horizontal scrolling for spread viewports exceeding width', () => {
-      expect(globalsCss).toMatch(/\.ac-text-editor__content--scroll\s*\{\s*overflow-x:\s*auto;/);
+      expect(globalsCss).toMatch(/\.ac-text-editor__content--scroll\s*\{[^}]*overflow-x:\s*auto;/);
     });
   });
 });
