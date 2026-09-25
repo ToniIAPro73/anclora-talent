@@ -235,6 +235,21 @@ describe('projectToSemanticDocument / templateFromPaginationConfig', () => {
     expect(text).toContain('Contenido del capítulo uno.');
   });
 
+  it('merges partial persisted metadata with the document product fields', () => {
+    const project = createProject();
+    project.document.metadata = { title: 'Book', composition: { fontSizePt: 11 } };
+
+    const { document } = projectToSemanticDocument(project);
+
+    expect(document.metadata).toMatchObject({
+      title: 'Book',
+      subtitle: 'Sub',
+      author: 'Anon',
+      language: 'es',
+    });
+    expect(document.metadata.composition?.fontSizePt).toBe(11);
+  });
+
   it('maps PaginationConfig 1:1 into a ComposeTemplate', () => {
     const template = templateFromPaginationConfig(config);
     expect(template.pageWidth).toBe(config.pageWidth);

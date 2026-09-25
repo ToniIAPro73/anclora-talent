@@ -79,11 +79,16 @@ export function projectToSemanticDocument(project: ProjectRecord): {
   chapterStartIds: string[];
   chapterById: Map<string, ProjectChapterInfo>;
 } {
-  const metadata = project.document.metadata ?? {
+  // `document.metadata` is an optional, progressively-enriched object. A
+  // project may already have style/reference metadata without carrying the
+  // basic product fields, which still live on `document`. Keep those fields
+  // visible to the semantic pipeline and let explicit metadata values win.
+  const metadata = {
     title: project.document.title,
     subtitle: project.document.subtitle || undefined,
     author: project.document.author || undefined,
     language: project.document.language,
+    ...(project.document.metadata ?? {}),
   };
 
   const chapterById = new Map<string, ProjectChapterInfo>();
