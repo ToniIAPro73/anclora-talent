@@ -82,7 +82,14 @@ export function getBrandColor(
   profile: Pick<BrandProfile, 'palette'>,
   role: BrandColorRole,
 ): BrandPaletteColor | null {
-  return profile.palette.find((color) => color.role === role) ?? null;
+  const matches = profile.palette.filter((color) => color.role === role);
+  if (matches.length === 0) return null;
+  if (role === 'ink') {
+    const namedDark = matches.find((c) => /carb[oó]n|negro|black|tinta|authority/i.test(c.name ?? ''));
+    if (namedDark) return namedDark;
+  }
+  const highConfidence = matches.find((c) => c.confidence === 'high');
+  return highConfidence ?? matches[0] ?? null;
 }
 
 export interface CreateBrandProfileInput {
