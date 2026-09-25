@@ -247,6 +247,8 @@ function cleanHeadingText(input: string) {
   return stripMarkdownInline(
     input
       .replace(/^#{1,6}\s+/, '')
+      .replace(/[\t\s]+[·._\-—―]+\s*\d{1,4}\s*$/, '')
+      .replace(/[\t\s]+\d{1,4}\s*$/, '')
       .replace(/^\d+(?:\.\d+)*[.)]\s+/, '')
       .trim()
   );
@@ -914,6 +916,7 @@ function determineChapterBoundaryLevel(blocks: ParsedBlock[]) {
 
 function isMajorChapterBlock(block: ParsedBlock, chapterBoundaryLevel: number) {
   if (block.kind !== 'heading') return false;
+  if (block.html && /class="[^"]*\btoc-entry\b[^"]*"/i.test(block.html)) return false;
   const normalized = cleanHeadingText(block.text);
   if (!normalized) return false;
 
@@ -1317,7 +1320,24 @@ function buildChaptersFromBlocks(
     }
 
     if (isMajorChapterBlock(block, chapterBoundaryLevel)) {
-      const headingText = cleanHeadingText(block.text);
+      let headingText = cleanHeadingText(block.text);
+      const targetPool = currentTitle !== null ? currentBlocks : frontMatter;
+      const lastPoolBlock = targetPool[targetPool.length - 1];
+      if (lastPoolBlock && lastPoolBlock.html && /class="[^"]*\beditorial-kicker\b[^"]*"/i.test(lastPoolBlock.html)) {
+        const kickerText = lastPoolBlock.text.trim();
+        targetPool.pop();
+        if (CHAPTER_MARKER_RE.test(kickerText)) {
+          headingText = `${toEditorialTitleCase(kickerText)}. ${headingText}`;
+        } else if (/^introducci[oó]n$/i.test(kickerText)) {
+          headingText = `Introducción: ${headingText}`;
+        } else if (/^conclusi[oó]n$/i.test(kickerText)) {
+          headingText = `Conclusión: ${headingText}`;
+        } else if (/^ep[ií]logo$/i.test(kickerText)) {
+          headingText = `Epílogo: ${headingText}`;
+        } else if (/^pr[oó]logo$/i.test(kickerText)) {
+          headingText = `Prólogo: ${headingText}`;
+        }
+      }
       const triggeringIsToc = isTocChapterTitle(headingText);
       let leadingBlocks: ParsedBlock[] = [];
 
@@ -1849,14 +1869,30 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
             "p[style-name='Heading 3'] => h3:fresh",
             "p[style-name='Heading 4'] => h4:fresh",
             "p[style-name='Heading 5'] => h5:fresh",
-            "p[style-name='TOC 1'] => p:fresh",
-            "p[style-name='TOC 2'] => p:fresh",
-            "p[style-name='TOC 3'] => p:fresh",
-            "p[style-name='TOC Heading'] => h2:fresh",
-            "p[style-name='Índice 1'] => p:fresh",
-            "p[style-name='Índice 2'] => p:fresh",
-            "p[style-name='Indice 1'] => p:fresh",
-            "p[style-name='Indice 2'] => p:fresh",
+            "p[style-name='Título 1'] => h1:fresh",
+            "p[style-name='Título 2'] => h2:fresh",
+            "p[style-name='Título 3'] => h3:fresh",
+            "p[style-name='Título 4'] => h4:fresh",
+            "p[style-name='Título 5'] => h5:fresh",
+            "p[style-name='Encabezado 1'] => h1:fresh",
+            "p[style-name='Encabezado 2'] => h2:fresh",
+            "p[style-name='Encabezado 3'] => h3:fresh",
+            "p[style-name='Título'] => h1:fresh",
+            "p[style-name='Subtítulo'] => h2:fresh",
+            "p[style-name='TOC Entry'] => p.toc-entry:fresh",
+            "p[style-name='TOCEntry'] => p.toc-entry:fresh",
+            "p[style-name='TOC 1'] => p.toc-entry:fresh",
+            "p[style-name='TOC 2'] => p.toc-entry:fresh",
+            "p[style-name='TOC 3'] => p.toc-entry:fresh",
+            "p[style-name='TOC Heading'] => h2.toc-heading:fresh",
+            "p[style-name='Índice 1'] => p.toc-entry:fresh",
+            "p[style-name='Índice 2'] => p.toc-entry:fresh",
+            "p[style-name='Indice 1'] => p.toc-entry:fresh",
+            "p[style-name='Indice 2'] => p.toc-entry:fresh",
+            "p[style-name='Editorial Kicker'] => p.editorial-kicker:fresh",
+            "p[style-name='EditorialKicker'] => p.editorial-kicker:fresh",
+            "p[style-name='Block Quote'] => blockquote:fresh",
+            "p[style-name='BlockQuote'] => blockquote:fresh",
           ],
         },
       );
