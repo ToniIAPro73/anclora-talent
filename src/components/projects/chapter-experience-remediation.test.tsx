@@ -4,7 +4,6 @@ import { resolve } from 'node:path';
 import { describe, expect, test, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ChapterRepresentativePreview } from './ChapterRepresentativePreview';
-import { ChapterOrganizer } from './ChapterOrganizer';
 import type { DocumentChapter } from '@/lib/projects/types';
 
 vi.mock('@/lib/projects/actions', () => ({

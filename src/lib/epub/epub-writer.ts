@@ -33,6 +33,7 @@ import { inlineToPlainText, type DocumentBlock } from '@/lib/document/model';
 
 import { resolveDocumentStyles } from '@/lib/style-engine/cascade-resolver';
 import type { DocumentStyleMap } from '@/lib/style-engine/model';
+import type { BrandProfile } from '@/lib/brand/brand-profile';
 
 export interface BuildEpubOptions {
   /** Embed Liberation TTF fonts when available (default true). */
@@ -44,6 +45,7 @@ export interface BuildEpubOptions {
    */
   template?: Partial<ComposeTemplate>;
   referenceProfile?: ReferenceEditorialProfile | null;
+  brandProfile?: BrandProfile | null;
   styleMap?: DocumentStyleMap | null;
 }
 
@@ -544,7 +546,7 @@ ${metadata.author ? `<p class="cover-author">${escapeXml(metadata.author)}</p>` 
   const refProfile = options.referenceProfile ?? project.document.metadata?.referenceEditorialProfile;
   const styleMap = options.styleMap ?? resolveDocumentStyles({
     referenceProfile: refProfile,
-    brandProfile: (project as any).brandProfile,
+    brandProfile: options.brandProfile ?? project.brandProfile,
     userOverrides: project.document.metadata?.userOverrides,
     composition: options.template,
   });

@@ -13,12 +13,13 @@ import { compileDocument } from './document-compiler';
 import { createProjectRecord } from '@/lib/projects/factories';
 import { composeProjectPreview } from '@/lib/compose/preview-adapter';
 import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
-import { buildProjectDocxBuffer, buildProjectPdfWithConfig, resolvePdfBrandTheme } from '@/lib/projects/export-builder';
+import { buildProjectDocxBuffer, resolvePdfBrandTheme } from '@/lib/projects/export-builder';
 import {
   applyReferenceEditorialProfileAction,
   saveUserStyleOverrideAction,
 } from '@/lib/reference-editorial-profile/actions';
 import { projectRepository } from '@/lib/db/repositories';
+import type { BrandProfile } from '@/lib/brand/brand-profile';
 
 vi.mock('server-only', () => ({}));
 vi.mock('@/lib/auth/guards', () => ({
@@ -42,9 +43,9 @@ describe('Phase 11: End-to-End Canonical Test Pack Verification', () => {
       html: extracted.html,
     });
 
-    expect(seed.chapters.length).toBeGreaterThan(0);
+    expect(seed.chapters?.length).toBeGreaterThan(0);
 
-    const titles = seed.chapters.map((ch) => ch.title);
+    const titles = seed.chapters?.map((ch) => ch.title) ?? [];
     console.log('E2E Generated Chapter Titles:', titles);
 
     // Criterion 1: TOC entries (with page numbers or dots) did not become chapters
@@ -97,9 +98,9 @@ describe('Phase 11: End-to-End Canonical Test Pack Verification', () => {
 
     // Criterion 5: Heading hierarchy and body typography
     expect(profile.body.fontSize).toBeDefined();
-    expect(profile.headings.h1.fontSize).toBeDefined();
-    expect(profile.headings.h1.fontFamily).toBeDefined();
-    expect(profile.headings.h2.fontSize).toBeDefined();
+    expect(profile.headings.h1?.fontSize).toBeDefined();
+    expect(profile.headings.h1?.fontFamily).toBeDefined();
+    expect(profile.headings.h2?.fontSize).toBeDefined();
   });
 
   test('E2E Criterion 6: Brand PDF produces valid semantic tokens', async () => {
@@ -121,16 +122,26 @@ describe('Phase 11: End-to-End Canonical Test Pack Verification', () => {
     const { profile: referenceProfile } = await extractEditorialProfileFromDocx(corpus.referenceDocx, {
       filename: 'ANCLORA_TALENT_REFERENCE_STYLE.docx',
     });
-    const { profile: brandProfile } = await extractBrandProfileFromPdf(
+    const { profile: extractedBrand } = await extractBrandProfileFromPdf(
       corpus.brandPdf,
       'ANCLORA_INSIGHTS_BRAND_IDENTITY_REFERENCE.pdf',
     );
+    const brandProfile: BrandProfile = {
+      ...extractedBrand,
+      id: 'brand-e2e-1',
+      userId: 'user-e2e-1',
+      version: 1,
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
 
     const project = createProjectRecord('user-e2e-1', { title: 'Pipeline E2E Project' });
     project.document.metadata = {
+      title: project.document.title,
       referenceEditorialProfile: referenceProfile,
     };
-    (project as any).brandProfile = brandProfile;
+    project.brandProfile = brandProfile;
 
     // Resolve Cascade
     const styleMap = resolveDocumentStyles({
@@ -143,7 +154,7 @@ describe('Phase 11: End-to-End Canonical Test Pack Verification', () => {
       projectId: project.id,
       semanticDoc: {
         version: 1,
-        title: project.document.title,
+        metadata: { title: project.document.title },
         blocks: [],
       },
       referenceProfile,
@@ -179,8 +190,8 @@ describe('Phase 11: End-to-End Canonical Test Pack Verification', () => {
         id: 'ch-intro',
         title: 'Introducción',
         blocks: [
-          { id: 'b-intro-h', type: 'heading', content: 'Introducción' },
-          { id: 'b-intro-p', type: 'paragraph', content: 'Contenido redactado manualmente por el autor.' },
+          { id: 'b-intro-h', type: 'heading', order: 1, content: 'Introducción' },
+          { id: 'b-intro-p', type: 'paragraph', order: 2, content: 'Contenido redactado manualmente por el autor.' },
         ],
       },
     ];
@@ -221,19 +232,28 @@ describe('Phase 11: End-to-End Canonical Test Pack Verification', () => {
     expect(userOverrides?.[0].styles.fontSizePt).toBe(32);
 
     // Criterion 12: Recompilation with updated brand profile leaves manuscript content unchanged
-    const { profile: brandProfile } = await extractBrandProfileFromPdf(
+    const { profile: extractedBrand2 } = await extractBrandProfileFromPdf(
       corpus.brandPdf,
       'ANCLORA_INSIGHTS_BRAND_IDENTITY_REFERENCE.pdf',
     );
+    const brandProfile2: BrandProfile = {
+      ...extractedBrand2,
+      id: 'brand-e2e-2',
+      userId: 'user-e2e-1',
+      version: 1,
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
     const recompiled = compileDocument({
       projectId: project.id,
       semanticDoc: {
         version: 1,
-        title: project.document.title,
+        metadata: { title: project.document.title },
         blocks: [],
       },
       referenceProfile: newRefProfile,
-      brandProfile,
+      brandProfile: brandProfile2,
       userOverrides,
     });
 

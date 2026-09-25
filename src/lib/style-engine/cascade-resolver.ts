@@ -149,6 +149,24 @@ function resolveTextStyle(
   return result;
 }
 
+export interface LegacyCompositionSettings {
+  bodyFontFamily?: string;
+  fontFamily?: string;
+  displayFontFamily?: string;
+  lineHeight?: number;
+  headingColor?: string;
+  bodyColor?: string;
+  paperColor?: string;
+  accentColor?: string;
+  accentMutedColor?: string;
+  margins?: {
+    top?: number | null;
+    bottom?: number | null;
+    left?: number | null;
+    right?: number | null;
+  };
+}
+
 export function resolveDocumentStyles({
   referenceProfile,
   brandProfile,
@@ -158,17 +176,17 @@ export function resolveDocumentStyles({
   referenceProfile?: ReferenceEditorialProfile | null;
   brandProfile?: BrandProfile | null;
   userOverrides?: UserStyleOverride[];
-  composition?: Record<string, any> | null;
+  composition?: LegacyCompositionSettings | null;
 }): DocumentStyleMap {
   // Extract Legacy Composition fallbacks
-  const legacyBodyFont = (composition as any)?.bodyFontFamily || (composition as any)?.fontFamily || null;
-  const legacyDisplayFont = (composition as any)?.displayFontFamily || null;
-  const legacyLineHeight = (composition as any)?.lineHeight || null;
-  const legacyHeadingColor = (composition as any)?.headingColor || null;
-  const legacyBodyColor = (composition as any)?.bodyColor || null;
-  const legacyPaperColor = (composition as any)?.paperColor || null;
-  const legacyAccentColor = (composition as any)?.accentColor || null;
-  const legacyAccentMuted = (composition as any)?.accentMutedColor || null;
+  const legacyBodyFont = composition?.bodyFontFamily || composition?.fontFamily || null;
+  const legacyDisplayFont = composition?.displayFontFamily || null;
+  const legacyLineHeight = composition?.lineHeight || null;
+  const legacyHeadingColor = composition?.headingColor || null;
+  const legacyBodyColor = composition?.bodyColor || null;
+  const legacyPaperColor = composition?.paperColor || null;
+  const legacyAccentColor = composition?.accentColor || null;
+  const legacyAccentMuted = composition?.accentMutedColor || null;
 
   // Extract Brand Tokens
   const brandInk = brandProfile ? (getBrandColor(brandProfile, 'ink')?.hex ?? null) : legacyBodyColor;
@@ -196,12 +214,12 @@ export function resolveDocumentStyles({
       if (refPage.margins.left !== null) page.marginsPt.left = refPage.margins.left;
       if (refPage.margins.right !== null) page.marginsPt.right = refPage.margins.right;
     }
-  } else if ((composition as any)?.margins) {
-    const m = (composition as any).margins;
-    if (m.top) page.marginsPt.top = m.top;
-    if (m.bottom) page.marginsPt.bottom = m.bottom;
-    if (m.left) page.marginsPt.left = m.left;
-    if (m.right) page.marginsPt.right = m.right;
+  } else if (composition?.margins) {
+    const m = composition.margins;
+    if (m.top !== undefined && m.top !== null) page.marginsPt.top = m.top;
+    if (m.bottom !== undefined && m.bottom !== null) page.marginsPt.bottom = m.bottom;
+    if (m.left !== undefined && m.left !== null) page.marginsPt.left = m.left;
+    if (m.right !== undefined && m.right !== null) page.marginsPt.right = m.right;
   }
 
   // 2. Body Text
@@ -326,9 +344,9 @@ export function resolveDocumentStyles({
   const brandAccentMuted = brandProfile ? getBrandColor(brandProfile, 'accentMuted')?.hex ?? null : null;
   const palette = {
     ink: brandInk ?? body.color,
-    paper: brandPaper ?? SYSTEM_DEFAULTS.palette.paper,
+    paper: brandPaper ?? legacyPaperColor ?? SYSTEM_DEFAULTS.palette.paper,
     accent: brandAccent ?? decorations.accentColor,
-    accentMuted: brandAccentMuted ?? decorations.dividerColor,
+    accentMuted: brandAccentMuted ?? legacyAccentMuted ?? decorations.dividerColor,
   };
 
   return {

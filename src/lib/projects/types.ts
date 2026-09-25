@@ -4,6 +4,7 @@ import type { ProvenanceMap } from '@/lib/ai/provenance';
 import type { SurfaceState } from './cover-surface';
 import type { DesignSurface } from './design-surface';
 import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profile/model';
+import type { BrandProfile } from '@/lib/brand/brand-profile';
 import type { CompositionSettings } from './composition';
 
 export type ProjectStatus = 'draft' | 'active';
@@ -167,6 +168,7 @@ export interface ProjectRecord {
   workflowStep?: number;
   /** F2: optional BrandProfile applied to exports as templateOverrides (G1). */
   brandProfileId?: string | null;
+  brandProfile?: BrandProfile | null;
   /** F2: product template that seeded the project (drives the launch pack). */
   templateId?: string | null;
   createdAt: string;

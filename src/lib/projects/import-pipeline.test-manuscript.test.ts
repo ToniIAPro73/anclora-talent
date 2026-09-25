@@ -19,7 +19,7 @@ describe('Phase 1 — Manuscript Importer & TOC Sanitization', () => {
       sourcePageCount: extracted.pageCount,
     });
 
-    const chapterTitles = seed.chapters.map((ch) => ch.title);
+    const chapterTitles = seed.chapters?.map((ch) => ch.title) ?? [];
 
     // 1. None of the titles should have trailing page numbers like "Introducción 3" or "ruido 4"
     for (const title of chapterTitles) {

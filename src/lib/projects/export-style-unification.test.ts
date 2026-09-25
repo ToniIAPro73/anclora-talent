@@ -6,7 +6,6 @@ import JSZip from 'jszip';
 import { createProjectRecord } from './factories';
 import {
   buildProjectDocxBuffer,
-  buildProjectPdf,
   renderProjectExportHtml,
   resolvePdfBrandTheme,
   buildCompiledDocumentCss,
@@ -15,34 +14,25 @@ import { buildEpub } from '@/lib/epub/epub-writer';
 import { composeProjectPreview } from '@/lib/compose/preview-adapter';
 import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 import { resolveDocumentStyles } from '@/lib/style-engine/cascade-resolver';
-import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profile/model';
+import {
+  createDefaultReferenceEditorialProfile,
+  type ReferenceEditorialProfile,
+} from '@/lib/reference-editorial-profile/model';
 
 function makeTestReferenceProfile(): ReferenceEditorialProfile {
-  return {
-    version: 1,
-    extractedAt: '2026-09-25T00:00:00.000Z',
-    page: {
-      width: 432,
-      height: 648,
-      margins: { top: 36, bottom: 36, left: 36, right: 36, gutter: 0 },
-      columns: 1,
-      gutter: 0,
-      runningHeaders: true,
-      facingPages: false,
-    },
+  const base = createDefaultReferenceEditorialProfile();
+  return createDefaultReferenceEditorialProfile({
     body: {
+      ...base.body,
       fontFamily: 'Noto Serif',
       resolvedFontFamily: 'Noto Serif',
       fontSize: 11.5,
-      lineHeight: 1.5,
       color: '#222222',
       textAlign: 'justify',
-      fontWeight: 'normal',
-      fontStyle: 'normal',
-      paragraphSpacingAfter: 6,
     },
     headings: {
       h1: {
+        ...base.body,
         fontFamily: 'Cinzel',
         resolvedFontFamily: 'Cinzel',
         fontSize: 24,
@@ -50,9 +40,9 @@ function makeTestReferenceProfile(): ReferenceEditorialProfile {
         color: '#111827',
         textAlign: 'center',
         fontWeight: 'bold',
-        fontStyle: 'normal',
       },
       h2: {
+        ...base.body,
         fontFamily: 'Cinzel',
         resolvedFontFamily: 'Cinzel',
         fontSize: 18,
@@ -60,9 +50,9 @@ function makeTestReferenceProfile(): ReferenceEditorialProfile {
         color: '#1F2937',
         textAlign: 'left',
         fontWeight: 'bold',
-        fontStyle: 'normal',
       },
       h3: {
+        ...base.body,
         fontFamily: 'Cinzel',
         resolvedFontFamily: 'Cinzel',
         fontSize: 14,
@@ -70,58 +60,12 @@ function makeTestReferenceProfile(): ReferenceEditorialProfile {
         color: '#374151',
         textAlign: 'left',
         fontWeight: 'semibold',
-        fontStyle: 'normal',
       },
+      h4: null,
     },
-    chapterOpening: {
-      detected: true,
-      hasDropCap: false,
-      titleStyle: {
-        fontFamily: 'Cinzel',
-        resolvedFontFamily: 'Cinzel',
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center',
-      },
-    },
-    quote: {
-      fontFamily: 'Noto Serif',
-      resolvedFontFamily: 'Noto Serif',
-      fontSize: 10.5,
-      fontStyle: 'italic',
-      color: '#4B5563',
-    },
-    lists: {
-      unordered: { style: 'bullet', spacing: 4 },
-      ordered: { style: 'decimal', spacing: 4 },
-    },
-    tables: {
-      headerStyle: { fontWeight: 'bold' },
-      cellPadding: 4,
-      borders: 'horizontal',
-    },
-    footnotes: {
-      numbering: 'arabic',
-      placement: 'bottom-of-page',
-    },
-    header: {
-      enabled: true,
-      style: { fontSize: 8.5, textAlign: 'center' },
-    },
-    footer: {
-      enabled: true,
-      style: { fontSize: 8.5, textAlign: 'center' },
-    },
-    pageNumber: {
-      enabled: true,
-      alignment: 'center',
-      format: 'arabic',
-    },
-    toc: {
-      leaderStyle: 'dots',
-      alignment: 'right',
-    },
-  };
+    header: { enabled: true, position: 'top', style: null, alignment: 'center' },
+    footer: { enabled: true, position: 'bottom', style: null, alignment: 'center' },
+  });
 }
 
 describe('Export Pipeline Style Unification (Phase 8)', () => {

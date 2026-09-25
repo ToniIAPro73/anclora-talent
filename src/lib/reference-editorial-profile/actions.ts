@@ -8,6 +8,7 @@ import { hasUsableEditorialEvidence, type ReferenceEditorialProfile } from './mo
 import { extractEditorialProfileFromPdf, ReferenceAnalysisTimeoutError } from './pdf';
 import { extractEditorialProfileFromDocx } from './docx';
 import { projectRepository } from '@/lib/db/repositories';
+import type { DocumentMetadata } from '@/lib/document/model';
 import type { UserStyleOverride, EditorialRole } from '@/lib/style-engine/model';
 import { isReferenceEditorialProfile } from './legacy';
 
@@ -88,9 +89,12 @@ export async function applyReferenceEditorialProfileAction(
   const project = await projectRepository.getProjectById(userId, projectId);
   if (!project) throw new Error('Project not found');
 
-  const currentMetadata = project.document.metadata ?? {};
-  const nextMetadata = {
+  const currentMetadata: DocumentMetadata = project.document.metadata ?? {
+    title: project.document.title,
+  };
+  const nextMetadata: DocumentMetadata = {
     ...currentMetadata,
+    title: currentMetadata.title || project.document.title,
     referenceEditorialProfile: profile,
     userOverrides: keepOverrides ? (currentMetadata.userOverrides ?? []) : [],
   };
@@ -111,7 +115,9 @@ export async function saveUserStyleOverrideAction(
   const project = await projectRepository.getProjectById(userId, projectId);
   if (!project) throw new Error('Project not found');
 
-  const currentMetadata = project.document.metadata ?? {};
+  const currentMetadata: DocumentMetadata = project.document.metadata ?? {
+    title: project.document.title,
+  };
   const currentOverrides: UserStyleOverride[] = currentMetadata.userOverrides ?? [];
 
   const nextOverrides = currentOverrides.filter((o) => {
@@ -128,8 +134,9 @@ export async function saveUserStyleOverrideAction(
   });
   nextOverrides.push(override);
 
-  const nextMetadata = {
+  const nextMetadata: DocumentMetadata = {
     ...currentMetadata,
+    title: currentMetadata.title || project.document.title,
     userOverrides: nextOverrides,
   };
 
@@ -149,15 +156,18 @@ export async function resetUserStyleOverridesAction(
   const project = await projectRepository.getProjectById(userId, projectId);
   if (!project) throw new Error('Project not found');
 
-  const currentMetadata = project.document.metadata ?? {};
+  const currentMetadata: DocumentMetadata = project.document.metadata ?? {
+    title: project.document.title,
+  };
   const currentOverrides: UserStyleOverride[] = currentMetadata.userOverrides ?? [];
 
   const nextOverrides = role
     ? currentOverrides.filter((o) => o.targetRole !== role)
     : [];
 
-  const nextMetadata = {
+  const nextMetadata: DocumentMetadata = {
     ...currentMetadata,
+    title: currentMetadata.title || project.document.title,
     userOverrides: nextOverrides,
   };
 

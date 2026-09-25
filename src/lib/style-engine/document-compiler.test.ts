@@ -18,12 +18,12 @@ describe('Phase 5 — Document Style Compiler & CSS Variable Generator (P5-T01)'
         id: 'block-1',
         type: 'heading',
         level: 1,
-        content: 'Capítulo 1',
+        content: [{ type: 'text', text: 'Capítulo 1' }],
       },
       {
         id: 'block-2',
         type: 'paragraph',
-        content: 'Este es el texto del capítulo con estilo de referencia.',
+        content: [{ type: 'text', text: 'Este es el texto del capítulo con estilo de referencia.' }],
       },
     ],
   };
@@ -85,14 +85,14 @@ describe('Phase 5 — Document Style Compiler & CSS Variable Generator (P5-T01)'
       id: 'brand-999',
       name: 'Test Brand',
       palette: [
-        { name: 'Ink', hex: '#1C242B', role: 'ink', isPrimary: true },
+        { name: 'Ink', hex: '#1C242B', role: 'ink', usagePercent: 55, confidence: 'high' },
       ],
       typography: { display: null, body: null },
     };
 
     const compiled = compileDocument({
       projectId: 'proj-456',
-      document: sampleDoc,
+      semanticDoc: sampleDoc,
       referenceProfile: mockRef as ReferenceEditorialProfile,
       brandProfile: mockBrand as BrandProfile,
       userOverrides: [

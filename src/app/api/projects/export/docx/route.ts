@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const slug = project.slug || 'proyecto';
     const filename = `${slug}.docx`;
 
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

@@ -8,9 +8,6 @@ import type { DocumentChapter } from '@/lib/projects/types';
 import type { DocumentStyleMap } from '@/lib/style-engine/model';
 import { ChapterRepresentativePreview } from './ChapterRepresentativePreview';
 
-function plainText(chapter: DocumentChapter) {
-  return chapter.blocks.map((block) => block.content.replace(/<[^>]+>/g, ' ')).join(' ').replace(/\s+/g, ' ').trim();
-}
 
 export function ChapterOrganizer({
   projectId, chapters, activeChapterId, onSelect, onEditChapter, onAddChapter, onImportChapter, onReimportChapter,
@@ -29,7 +26,6 @@ export function ChapterOrganizer({
   const activeChapter = chapters[activeIndex] ?? chapters[0];
   const activeWords = activeChapter?.blocks.reduce((total, block) => total + calculateWordCount(block.content), 0) ?? 0;
   const activeSubtitle = (activeChapter as unknown as { subtitle?: string })?.subtitle?.trim() || '';
-  const activeText = activeChapter ? plainText(activeChapter) : '';
   const readingMinutes = Math.max(1, Math.ceil(activeWords / 220));
   const headings = activeChapter?.blocks.filter((block) => block.type === 'heading').length ?? 0;
   const totalWords = chapters.reduce((total, chapter) => total + chapter.blocks.reduce((sum, block) => sum + calculateWordCount(block.content), 0), 0);

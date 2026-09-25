@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { compileDocument } from './document-compiler';
-import { resolveDocumentStyles } from './cascade-resolver';
 import { composeProjectPreview } from '@/lib/compose/preview-adapter';
 import type { ProjectRecord } from '@/lib/projects/types';
 import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profile/model';
@@ -56,16 +55,16 @@ describe('Phase 6 & Phase 7 — Chapter Editor & Preview Engine Style Integratio
     id: 'brand-1',
     userId: 'user-1',
     name: 'Anclora Insights',
-    slug: 'anclora-insights',
+    version: 1,
+    status: 'active',
     palette: [
-      { name: 'Carbón', hex: '#1C242B', role: 'ink', isPrimary: true },
-      { name: 'Oro', hex: '#D4AF37', role: 'accent', isPrimary: false },
+      { name: 'Carbón', hex: '#1C242B', role: 'ink', usagePercent: 55, confidence: 'high' },
+      { name: 'Oro', hex: '#D4AF37', role: 'accent', usagePercent: 10, confidence: 'high' },
     ],
     typography: { display: null, body: null },
-    visualStyle: { borderStyle: 'clean', cornerRadius: 'none', shadowIntensity: 'none', density: 'comfortable' },
-    rules: { alwaysUppercaseHeadings: false, centerAlignTitles: false, accentColorDividers: true, enableDropCaps: false, quoteMarksStyle: 'guillemets' },
-    assets: {},
-    isDefault: false,
+    proportions: { ink: 55, paper: 30, accent: 10, accentMuted: 5 },
+    rules: [],
+    voicePairs: [],
     createdAt: '',
     updatedAt: '',
   };
@@ -73,12 +72,12 @@ describe('Phase 6 & Phase 7 — Chapter Editor & Preview Engine Style Integratio
   it('compiles document and binds CSS variables for the Chapter Editor shell (P6-T01)', () => {
     const compiled = compileDocument({
       projectId: 'proj-editor-1',
-      document: {
+      semanticDoc: {
         version: 1,
         metadata: { title: 'Test Book' },
         blocks: [
-          { id: 'b1', type: 'heading', level: 1, content: 'Introducción' },
-          { id: 'b2', type: 'paragraph', content: 'Texto del capítulo.' },
+          { id: 'b1', type: 'heading', level: 1, content: [{ type: 'text', text: 'Introducción' }] },
+          { id: 'b2', type: 'paragraph', content: [{ type: 'text', text: 'Texto del capítulo.' }] },
         ],
       },
       referenceProfile: mockRef as ReferenceEditorialProfile,
@@ -102,6 +101,7 @@ describe('Phase 6 & Phase 7 — Chapter Editor & Preview Engine Style Integratio
         subtitle: 'Subtítulo',
         palette: 'obsidian',
         backgroundImageUrl: null,
+        thumbnailUrl: null,
       },
       document: {
         id: 'doc-1',

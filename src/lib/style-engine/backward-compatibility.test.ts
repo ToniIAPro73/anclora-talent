@@ -45,7 +45,7 @@ describe('Phase 10: Backward Compatibility & Legacy Project Hydration', () => {
       projectId: legacyProject.id,
       semanticDoc: {
         version: 1,
-        title: legacyProject.document.title,
+        metadata: { title: legacyProject.document.title },
         blocks: [],
       },
       referenceProfile: null,

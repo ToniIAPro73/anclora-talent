@@ -26,7 +26,7 @@ import type { ProjectRecord } from './types';
 
 export async function buildFixedPdfSemanticSidecar(project: ProjectRecord): Promise<SemanticDocument> {
   const { buffer, fileName } = await fetchOriginalPdfBuffer(project);
-  const file = new File([buffer], fileName, { type: 'application/pdf' });
+  const file = new File([new Uint8Array(buffer)], fileName, { type: 'application/pdf' });
   const seed = await extractImportedDocumentSeed(file);
 
   const seedChapters = seed.chapters?.length ? seed.chapters : [{ title: seed.chapterTitle, blocks: seed.blocks }];

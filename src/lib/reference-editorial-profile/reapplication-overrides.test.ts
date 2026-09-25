@@ -6,7 +6,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 import { projectRepository } from '@/lib/db/repositories';
 import { createProjectRecord } from '@/lib/projects/factories';
-import type { ReferenceEditorialProfile } from './model';
+import {
+  createDefaultReferenceEditorialProfile,
+  type ReferenceEditorialProfile,
+} from './model';
 import {
   applyReferenceEditorialProfileAction,
   saveUserStyleOverrideAction,
@@ -22,31 +25,19 @@ vi.mock('next/cache', () => ({
 }));
 
 function makeSampleProfile(fontFamily: string): ReferenceEditorialProfile {
-  return {
-    version: 1,
-    extractedAt: '2026-09-25T00:00:00.000Z',
-    page: {
-      width: 432,
-      height: 648,
-      margins: { top: 36, bottom: 36, left: 36, right: 36, gutter: 0 },
-      columns: 1,
-      gutter: 0,
-      runningHeaders: true,
-      facingPages: false,
-    },
+  const base = createDefaultReferenceEditorialProfile();
+  return createDefaultReferenceEditorialProfile({
     body: {
+      ...base.body,
       fontFamily,
       resolvedFontFamily: fontFamily,
       fontSize: 11,
-      lineHeight: 1.5,
       color: '#111827',
       textAlign: 'justify',
-      fontWeight: 'normal',
-      fontStyle: 'normal',
-      paragraphSpacingAfter: 6,
     },
     headings: {
       h1: {
+        ...base.body,
         fontFamily,
         resolvedFontFamily: fontFamily,
         fontSize: 22,
@@ -54,9 +45,9 @@ function makeSampleProfile(fontFamily: string): ReferenceEditorialProfile {
         color: '#111827',
         textAlign: 'left',
         fontWeight: 'bold',
-        fontStyle: 'normal',
       },
       h2: {
+        ...base.body,
         fontFamily,
         resolvedFontFamily: fontFamily,
         fontSize: 16,
@@ -64,9 +55,9 @@ function makeSampleProfile(fontFamily: string): ReferenceEditorialProfile {
         color: '#1F2937',
         textAlign: 'left',
         fontWeight: 'bold',
-        fontStyle: 'normal',
       },
       h3: {
+        ...base.body,
         fontFamily,
         resolvedFontFamily: fontFamily,
         fontSize: 13,
@@ -74,35 +65,10 @@ function makeSampleProfile(fontFamily: string): ReferenceEditorialProfile {
         color: '#374151',
         textAlign: 'left',
         fontWeight: 'semibold',
-        fontStyle: 'normal',
       },
+      h4: null,
     },
-    chapterOpening: { detected: false, hasDropCap: false },
-    quote: {
-      fontFamily,
-      resolvedFontFamily: fontFamily,
-      fontSize: 10,
-      fontStyle: 'italic',
-      color: '#4B5563',
-    },
-    lists: {
-      unordered: { style: 'bullet', spacing: 4 },
-      ordered: { style: 'decimal', spacing: 4 },
-    },
-    tables: {
-      headerStyle: { fontWeight: 'bold' },
-      cellPadding: 4,
-      borders: 'horizontal',
-    },
-    footnotes: {
-      numbering: 'arabic',
-      placement: 'bottom-of-page',
-    },
-    header: { enabled: false },
-    footer: { enabled: false },
-    pageNumber: { enabled: true, alignment: 'center', format: 'arabic' },
-    toc: { leaderStyle: 'dots', alignment: 'right' },
-  };
+  });
 }
 
 describe('Non-Destructive Reapplication & User Overrides (Phase 9)', () => {
@@ -116,8 +82,8 @@ describe('Non-Destructive Reapplication & User Overrides (Phase 9)', () => {
         id: 'ch-1',
         title: 'Capítulo 1',
         blocks: [
-          { id: 'b-1', type: 'heading', content: 'Capítulo 1' },
-          { id: 'b-2', type: 'paragraph', content: 'Texto inmutable del manuscrito.' },
+          { id: 'b-1', type: 'heading', order: 1, content: 'Capítulo 1' },
+          { id: 'b-2', type: 'paragraph', order: 2, content: 'Texto inmutable del manuscrito.' },
         ],
       },
     ];

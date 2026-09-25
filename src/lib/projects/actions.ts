@@ -375,7 +375,7 @@ export async function createEditableCopyAction(formData: FormData) {
 
   const { fetchOriginalPdfBuffer } = await import('./original-pdf');
   const { buffer, fileName } = await fetchOriginalPdfBuffer(sourceProject);
-  const file = new File([buffer], fileName, { type: 'application/pdf' });
+  const file = new File([new Uint8Array(buffer)], fileName, { type: 'application/pdf' });
 
   const { extractImportedDocumentSeed } = await import('./import');
   const seed = await extractImportedDocumentSeed(file);
