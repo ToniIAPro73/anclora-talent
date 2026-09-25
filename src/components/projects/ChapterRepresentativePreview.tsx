@@ -8,6 +8,7 @@ interface ChapterRepresentativePreviewProps {
   locale?: 'es' | 'en';
   maxBlocks?: number;
   maxWords?: number;
+  styleMap?: import('@/lib/style-engine/model').DocumentStyleMap | null;
 }
 
 /**
@@ -92,6 +93,7 @@ export function ChapterRepresentativePreview({
   locale = 'es',
   maxBlocks = 3,
   maxWords = 220,
+  styleMap,
 }: ChapterRepresentativePreviewProps) {
   const { previewHtml, hasMore } = React.useMemo(
     () => extractRepresentativeBlocks(chapter, maxBlocks, maxWords),
@@ -107,7 +109,11 @@ export function ChapterRepresentativePreview({
   }
 
   return (
-    <div className="chapter-rep-preview relative" data-testid="chapter-representative-preview">
+    <div
+      className="chapter-rep-preview relative"
+      data-testid="chapter-representative-preview"
+      style={styleMap?.body.fontFamily ? { fontFamily: styleMap.body.fontFamily, color: styleMap.body.color } : undefined}
+    >
       <div
         className="chapter-rep-preview__body"
         dangerouslySetInnerHTML={{ __html: previewHtml }}

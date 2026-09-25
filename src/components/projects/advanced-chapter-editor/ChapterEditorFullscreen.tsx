@@ -9,6 +9,7 @@ import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { DocumentChapter } from '@/lib/projects/types';
 import type { CompositionSettings } from '@/lib/projects/composition';
+import type { DocumentStyleMap } from '@/lib/style-engine/model';
 
 interface ChapterEditorFullscreenProps {
   chapters: DocumentChapter[];
@@ -21,6 +22,8 @@ interface ChapterEditorFullscreenProps {
   defaultMargins?: { top: number; bottom: number; left: number; right: number };
   effectiveFontFamily?: string;
   composition?: CompositionSettings | null;
+  documentStyleMap?: DocumentStyleMap | null;
+  compiledCssVariables?: Record<string, string> | null;
 }
 
 export function ChapterEditorFullscreen({
@@ -34,6 +37,8 @@ export function ChapterEditorFullscreen({
   defaultMargins = { top: 24, bottom: 24, left: 24, right: 24 },
   effectiveFontFamily,
   composition,
+  documentStyleMap,
+  compiledCssVariables,
 }: ChapterEditorFullscreenProps) {
   const { locale } = useUiPreferences();
   const copy = resolveLocaleMessages(locale).editor;
@@ -267,7 +272,7 @@ export function ChapterEditorFullscreen({
             `overflow-auto` ancestors produced competing scrollbars. */}
         <div className="chapter-editor-layout">
           <aside className="chapter-editor-outline" style={focusMode ? { display: 'none' } : undefined}><div className="chapter-editor-outline__heading"><strong>{locale === 'es' ? 'Esquema' : 'Outline'}</strong><span>{editor.currentChapter.blocks.length}</span></div>{editor.currentChapter.blocks.slice(0, 8).map((block, index) => <button type="button" key={block.id} className="chapter-editor-outline__item" onClick={() => undefined} data-testid={`chapter-outline-item-${index + 1}`}><span>{index + 1}</span>{block.content.replace(/<[^>]+>/g, ' ').slice(0, 34) || (locale === 'es' ? 'Bloque sin título' : 'Untitled block')}</button>)}</aside>
-          <div className="ac-editor-shell__surface min-h-0 overflow-hidden"><AdvancedRichTextEditor defaultContent={editor.htmlContent} onUpdate={editor.setHtmlContent} currentPage={editor.currentPage} totalPages={editor.totalPages} onPageCountChange={editor.setMeasuredTotalPages} contentZoom={zoom} effectiveFontFamily={effectiveFontFamily} composition={composition} /></div>
+          <div className="ac-editor-shell__surface min-h-0 overflow-hidden"><AdvancedRichTextEditor defaultContent={editor.htmlContent} onUpdate={editor.setHtmlContent} currentPage={editor.currentPage} totalPages={editor.totalPages} onPageCountChange={editor.setMeasuredTotalPages} contentZoom={zoom} effectiveFontFamily={effectiveFontFamily} composition={composition} documentStyleMap={documentStyleMap} compiledCssVariables={compiledCssVariables} /></div>
           <aside className="chapter-editor-inspector" style={focusMode ? { display: 'none' } : undefined}><h3>{locale === 'es' ? 'Capítulo' : 'Chapter'}</h3><label htmlFor="editor-chapter-title">{locale === 'es' ? 'Título del capítulo' : 'Chapter title'}</label><input id="editor-chapter-title" value={editor.title} onChange={(event) => editor.setTitle(event.target.value)} data-testid="chapter-editor-title-input" /><div className="chapter-editor-inspector__stats"><p><FileText />{editor.htmlContent.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).filter(Boolean).length.toLocaleString()} {locale === 'es' ? 'palabras' : 'words'}</p><p><Clock3 />{editor.totalPages} {locale === 'es' ? 'páginas (aprox.)' : 'pages (approx.)'}</p></div><section className="chapter-editor-inspector__health"><div><strong>{locale === 'es' ? 'Salud del capítulo' : 'Chapter health'}</strong><span className="chapter-editor-health-good">● {locale === 'es' ? 'Disponible' : 'Available'}</span></div><div className="chapter-editor-health-bar"><i /><i /><i /><i /></div><p><Check /> {locale === 'es' ? 'Contenido disponible' : 'Content available'}</p><p><Check /> {locale === 'es' ? 'Estructura detectada' : 'Structure detected'}</p><p><Check /> {locale === 'es' ? 'Listo para editar' : 'Ready to edit'}</p></section><details><summary>{locale === 'es' ? 'Notas' : 'Notes'}</summary><p>{locale === 'es' ? 'Las notas del capítulo se gestionan desde el proyecto.' : 'Chapter notes are managed from the project.'}</p></details></aside>
         </div>
       </div>

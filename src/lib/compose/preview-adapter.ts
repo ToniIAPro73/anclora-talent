@@ -34,6 +34,7 @@ import type { PaginationConfig } from '@/lib/preview/device-configs';
 import { isTocChapter, type PreviewPage } from '@/lib/preview/preview-builder';
 import { ComposeResult, ComposeTemplate, compose, composeIncremental } from './compose';
 import { TextMeasurer, createHeuristicMeasurer, wrapTextLines } from './measure';
+import { resolveDocumentStyles } from '@/lib/style-engine/cascade-resolver';
 
 export type { PreviewPage };
 
@@ -207,15 +208,28 @@ export function composeProjectPreview(
   measurer?: TextMeasurer,
   templateOverrides?: Partial<ComposeTemplate>,
 ): ComposedPreview {
-  const composition = project.document.metadata?.composition;
-  const referenceTemplate: Partial<ComposeTemplate> = composition
-    ? {
-        ...(composition.fontFamily ? { fontFamily: composition.fontFamily } : {}),
-        ...(composition.fontSizePt ? { baseFontSize: composition.fontSizePt } : {}),
-        ...(composition.lineHeight ? { lineHeight: composition.lineHeight } : {}),
-        ...(composition.margins ? { margins: composition.margins } : {}),
-      }
-    : {};
+  const metadata = project.document.metadata;
+  const styleMap = resolveDocumentStyles({
+    referenceProfile: metadata?.referenceEditorialProfile ?? null,
+    userOverrides: metadata?.userOverrides ?? [],
+  });
+
+  const composition = metadata?.composition;
+  const referenceTemplate: Partial<ComposeTemplate> = {
+    fontFamily: styleMap.body.fontFamily,
+    baseFontSize: styleMap.body.fontSizePt,
+    lineHeight: styleMap.body.lineHeight,
+    margins: {
+      top: styleMap.page.marginsPt.top,
+      bottom: styleMap.page.marginsPt.bottom,
+      left: styleMap.page.marginsPt.left,
+      right: styleMap.page.marginsPt.right,
+    },
+    ...(composition?.fontFamily ? { fontFamily: composition.fontFamily } : {}),
+    ...(composition?.fontSizePt ? { baseFontSize: composition.fontSizePt } : {}),
+    ...(composition?.lineHeight ? { lineHeight: composition.lineHeight } : {}),
+    ...(composition?.margins ? { margins: composition.margins } : {}),
+  };
   const template = { ...templateFromPaginationConfig(config), ...referenceTemplate, ...templateOverrides };
   const { document, chapterStartIds, chapterById } = projectToSemanticDocument(project);
   const result = compose(document, project.document.rules, template, measurer, {

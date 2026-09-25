@@ -23,6 +23,7 @@ import { PdfExportButton } from './PdfExportButton';
 import { CreateEditableCopyButton } from './CreateEditableCopyButton';
 import { WorkspaceOnboarding } from './WorkspaceOnboarding';
 import { useDocumentComposition } from './useDocumentComposition';
+import { compileDocument } from '@/lib/style-engine/document-compiler';
 import { resolveDocumentRules } from '@/lib/compose/rules';
 import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
 import { countPreflightErrors, preflight } from '@/lib/preflight/preflight';
@@ -241,6 +242,21 @@ export function ProjectWorkspace({
     return Object.fromEntries(metrics.map((m) => [m.chapterId, m]));
   }, [project]);
 
+  // Canonical style compilation (Reference + Brand Pipeline)
+  const compiledDocument = useMemo(() => {
+    const rawDoc = project.document.documentModel ?? {
+      version: 1,
+      metadata: project.document.metadata ?? { title: project.title },
+      blocks: [],
+    };
+    return compileDocument({
+      projectId: project.id,
+      document: rawDoc,
+      referenceProfile: project.document.metadata?.referenceEditorialProfile ?? null,
+      userOverrides: project.document.metadata?.userOverrides ?? [],
+    });
+  }, [project.id, project.title, project.document.documentModel, project.document.metadata]);
+
   const steps: Step[] = useMemo(() => {
     // Fixed-PDF document mode: steps 2-4 (chapters/cover/back
     // cover) are already resolved by the original PDF — shown as
@@ -411,6 +427,7 @@ export function ProjectWorkspace({
               chapterActionDelete={copy.chapterActionDelete}
               metricsById={chapterMetricsById}
               locale={locale}
+              styleMap={compiledDocument.styleMap}
             />
           </section>
         );
@@ -597,8 +614,9 @@ export function ProjectWorkspace({
 
   if (editingChapterId !== null && editingChapterIndex >= 0) {
     const effectiveFontFamily =
-      project.document.metadata?.composition?.fontFamily ??
-      'Liberation Serif';
+      compiledDocument.styleMap.body.fontFamily ||
+      (project.document.metadata?.composition?.fontFamily ??
+      'Liberation Serif');
     return (
       <div
         className="chapter-editor-route"
@@ -612,6 +630,8 @@ export function ProjectWorkspace({
           onClose={() => setEditingChapterId(null)}
           effectiveFontFamily={effectiveFontFamily}
           composition={project.document.metadata?.composition ?? null}
+          documentStyleMap={compiledDocument.styleMap}
+          compiledCssVariables={compiledDocument.cssVariables}
         />
       </div>
     );

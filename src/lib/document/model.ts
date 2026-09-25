@@ -142,6 +142,8 @@ export interface DocumentMetadata {
   referenceEditorialProfile?: ReferenceEditorialProfile | null;
   /** U6: explicit "no brand" marker; wins over any default brand profile. */
   brandChoice?: 'none';
+  /** Granular user formatting overrides. */
+  userOverrides?: import('@/lib/style-engine/model').UserStyleOverride[];
 }
 
 export interface SemanticDocument {

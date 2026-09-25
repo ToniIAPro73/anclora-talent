@@ -18,6 +18,7 @@ import { ResizableImage } from './resizable-image-extension';
 import { PageBreak } from './page-break-extension';
 import { FontSize } from './font-size-extension';
 import type { CompositionSettings } from '@/lib/projects/composition';
+import type { DocumentStyleMap } from '@/lib/style-engine/model';
 import {
   Bold,
   Italic,
@@ -440,12 +441,14 @@ const AdvancedFontSelector = ({
   isAvailable,
   unavailableTitle,
   effectiveFontFamily,
+  documentStyleMap,
 }: {
   editor: Editor;
   applyToWordOrSelection: ApplyToSelectionTarget;
   isAvailable: boolean;
   unavailableTitle: string;
   effectiveFontFamily?: string;
+  documentStyleMap?: DocumentStyleMap | null;
 }) => {
   const { locale } = useUiPreferences();
   const copy = resolveLocaleMessages(locale).editor;
@@ -454,7 +457,30 @@ const AdvancedFontSelector = ({
   const [searchQuery, setSearchQuery] = useState('');
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const effectiveFont = effectiveFontFamily?.trim() || 'Liberation Serif';
+  // Read current block node type from Tiptap editor
+  const blockType = editor.isActive('heading', { level: 1 })
+    ? 'h1'
+    : editor.isActive('heading', { level: 2 })
+    ? 'h2'
+    : editor.isActive('heading', { level: 3 })
+    ? 'h3'
+    : editor.isActive('heading', { level: 4 })
+    ? 'h4'
+    : 'body';
+
+  const roleFont = documentStyleMap
+    ? (blockType === 'h1'
+        ? documentStyleMap.headings.h1.fontFamily
+        : blockType === 'h2'
+        ? documentStyleMap.headings.h2.fontFamily
+        : blockType === 'h3'
+        ? documentStyleMap.headings.h3.fontFamily
+        : blockType === 'h4'
+        ? documentStyleMap.headings.h4.fontFamily
+        : documentStyleMap.body.fontFamily)
+    : effectiveFontFamily?.trim() || 'Liberation Serif';
+
+  const effectiveFont = roleFont;
 
   const filteredFonts = useMemo(() => {
     return fonts
@@ -752,6 +778,7 @@ const MenuBar = ({
   onFontSizeChange,
   wordsPerPage,
   effectiveFontFamily,
+  documentStyleMap,
 }: {
   editor: Editor;
   viewMode: string;
@@ -764,6 +791,7 @@ const MenuBar = ({
   onFontSizeChange: (size: string) => void;
   wordsPerPage?: number;
   effectiveFontFamily?: string;
+  documentStyleMap?: DocumentStyleMap | null;
 }) => {
   const { locale } = useUiPreferences();
   const copy = resolveLocaleMessages(locale).editor;
@@ -973,6 +1001,7 @@ const MenuBar = ({
           isAvailable={inlineTargetAvailable}
           unavailableTitle={inlineUnavailableTitle}
           effectiveFontFamily={effectiveFontFamily}
+          documentStyleMap={documentStyleMap}
         />
         <FontSizeSelector
           editor={editor}
@@ -1252,6 +1281,8 @@ export function AdvancedRichTextEditor({
   contentZoom = 100,
   effectiveFontFamily,
   composition,
+  documentStyleMap,
+  compiledCssVariables,
 }: {
   defaultContent: string;
   onUpdate: (html: string) => void;
@@ -1261,6 +1292,8 @@ export function AdvancedRichTextEditor({
   contentZoom?: number;
   effectiveFontFamily?: string;
   composition?: CompositionSettings | null;
+  documentStyleMap?: DocumentStyleMap | null;
+  compiledCssVariables?: Record<string, string> | null;
 }) {
   const { locale } = useUiPreferences();
   const { preferences, setPreferences } = useEditorPreferences();
@@ -1276,7 +1309,11 @@ export function AdvancedRichTextEditor({
   const [viewMode, setViewMode] = useState<'single' | 'double'>(
     device === 'mobile' ? 'single' : 'double'
   );
-  const effectiveFont = effectiveFontFamily?.trim() || composition?.fontFamily?.trim() || 'Liberation Serif';
+  const effectiveFont =
+    documentStyleMap?.body.fontFamily ||
+    effectiveFontFamily?.trim() ||
+    composition?.fontFamily?.trim() ||
+    'Liberation Serif';
   const initialMargins = composition?.margins ?? preferences.margins ?? MARGIN_PRESETS.normal;
   const [prevCompositionMargins, setPrevCompositionMargins] = useState(composition?.margins);
   const [margins, setMargins] = useState<MarginConfig>(initialMargins);
@@ -1807,8 +1844,11 @@ export function AdvancedRichTextEditor({
 
   return (
     <div
-      className="ac-text-editor h-full shadow-2xl"
-      style={{ '--editor-document-font': effectiveFont } as React.CSSProperties}
+      className="ac-text-editor talent-chapter-editor-shell h-full shadow-2xl"
+      style={{
+        '--editor-document-font': effectiveFont,
+        ...(compiledCssVariables ?? {}),
+      } as React.CSSProperties}
     >
       <MenuBar
         editor={editor}
@@ -1822,6 +1862,7 @@ export function AdvancedRichTextEditor({
         onFontSizeChange={handleFontSizeChange}
         wordsPerPage={wordsPerPage}
         effectiveFontFamily={effectiveFont}
+        documentStyleMap={documentStyleMap}
       />
 
       <div
@@ -1846,9 +1887,10 @@ export function AdvancedRichTextEditor({
           >
             <style>{`
               .ProseMirror {
-                font-family: var(--editor-document-font, ${effectiveFont});
-                font-size: ${previewConfig.fontSize}px;
-                line-height: ${composition?.lineHeight ?? previewConfig.lineHeight};
+                font-family: var(--talent-body-font, var(--editor-document-font, ${effectiveFont}));
+                font-size: var(--talent-body-size, ${previewConfig.fontSize}px);
+                line-height: var(--talent-body-line-height, ${composition?.lineHeight ?? previewConfig.lineHeight});
+                color: var(--talent-body-color, inherit);
                 word-wrap: break-word;
                 overflow-wrap: break-word;
               }
@@ -1915,35 +1957,47 @@ export function AdvancedRichTextEditor({
               }
               .ProseMirror h1,
               .preview-page h1 {
-                font-size: 2rem;
-                line-height: 1.1;
-                font-weight: 800;
-                margin: 0 0 1rem 0;
-                color: var(--text-primary);
+                font-family: var(--talent-h1-font, inherit);
+                font-size: var(--talent-h1-size, 2rem);
+                line-height: var(--talent-h1-line-height, 1.1);
+                font-weight: var(--talent-h1-weight, 800);
+                margin: var(--talent-h1-spacing-before, 0) 0 var(--talent-h1-spacing-after, 1rem) 0;
+                color: var(--talent-h1-color, var(--text-primary));
               }
               .ProseMirror h2,
               .preview-page h2 {
-                font-size: 1.5rem;
-                line-height: 1.2;
-                font-weight: 750;
-                margin: 0 0 0.85rem 0;
-                color: var(--text-primary);
+                font-family: var(--talent-h2-font, inherit);
+                font-size: var(--talent-h2-size, 1.5rem);
+                line-height: var(--talent-h2-line-height, 1.2);
+                font-weight: var(--talent-h2-weight, 750);
+                margin: var(--talent-h2-spacing-before, 0) 0 var(--talent-h2-spacing-after, 0.85rem) 0;
+                color: var(--talent-h2-color, var(--text-primary));
               }
               .ProseMirror h3,
               .preview-page h3 {
-                font-size: 1.2rem;
-                line-height: 1.3;
-                font-weight: 700;
-                margin: 0 0 0.75rem 0;
-                color: var(--text-primary);
+                font-family: var(--talent-h3-font, inherit);
+                font-size: var(--talent-h3-size, 1.2rem);
+                line-height: var(--talent-h3-line-height, 1.3);
+                font-weight: var(--talent-h3-weight, 700);
+                margin: var(--talent-h3-spacing-before, 0) 0 var(--talent-h3-spacing-after, 0.75rem) 0;
+                color: var(--talent-h3-color, var(--text-primary));
               }
               .ProseMirror h4,
               .preview-page h4 {
-                font-size: 1.05rem;
-                line-height: 1.35;
-                font-weight: 700;
-                margin: 0 0 0.65rem 0;
-                color: var(--text-primary);
+                font-family: var(--talent-h4-font, inherit);
+                font-size: var(--talent-h4-size, 1.05rem);
+                line-height: var(--talent-h4-line-height, 1.35);
+                font-weight: var(--talent-h4-weight, 700);
+                margin: var(--talent-h4-spacing-before, 0) 0 var(--talent-h4-spacing-after, 0.65rem) 0;
+                color: var(--talent-h4-color, var(--text-primary));
+              }
+              .ProseMirror blockquote,
+              .preview-page blockquote {
+                font-family: var(--talent-quote-font, inherit);
+                font-size: var(--talent-quote-size, inherit);
+                color: var(--talent-quote-color, inherit);
+                border-left-color: var(--talent-quote-border-color, #d97706);
+                border-left-width: var(--talent-quote-border-width, 3px);
               }
               .ProseMirror h5,
               .preview-page h5,
@@ -2144,10 +2198,10 @@ export function AdvancedRichTextEditor({
                 height: ${contentHeight}px;
                 width: ${flowWidth}px;
                 padding: 0;
-                color: #172238;
-                font-family: Georgia, 'Times New Roman', serif;
-                font-size: 18px;
-                line-height: 1.55;
+                color: var(--talent-body-color, #172238);
+                font-family: var(--talent-body-font, var(--editor-document-font, ${effectiveFont}, Georgia, 'Times New Roman', serif));
+                font-size: var(--talent-body-size, 18px);
+                line-height: var(--talent-body-line-height, 1.55);
                 column-width: ${contentWidth}px;
                 column-gap: ${columnGap}px;
                 column-fill: auto;

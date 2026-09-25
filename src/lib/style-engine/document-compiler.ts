@@ -117,8 +117,8 @@ export function compileDocument({
     styleMap,
     cssVariables,
     bindings: {
-      referenceProfileId: referenceProfile?.source.sourceAssetId ?? undefined,
-      referenceSourceHash: referenceProfile?.source.hash ?? undefined,
+      referenceProfileId: referenceProfile?.source?.sourceAssetId ?? undefined,
+      referenceSourceHash: referenceProfile?.source?.hash ?? undefined,
       brandProfileId: brandProfile?.id,
       brandVersion: brandProfile ? 1 : undefined,
       overridesCount: userOverrides.length,
