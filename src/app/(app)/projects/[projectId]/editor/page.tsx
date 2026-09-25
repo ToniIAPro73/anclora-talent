@@ -17,6 +17,7 @@ import { aiOperationsLog } from '@/lib/ai/operations-log';
 import { buildKdpDisclosure } from '@/lib/ai/kdp-disclosure';
 import { getCollaborationViewForProject } from '@/lib/collaboration/view';
 import { isFixedPdfProject } from '@/lib/projects/types';
+import { resolveBrandProfileId } from '@/lib/projects/composition';
 
 export default async function ProjectEditorPage({
   params,
@@ -88,9 +89,16 @@ export default async function ProjectEditorPage({
   // the asset metadata (name/type) but never reads the Blob URL directly;
   // FixedPdfPreview uses the authenticated projectId route instead. Strip
   // the URL before crossing the server/client boundary so private Blob paths
-  // cannot enter the RSC payload or client-side props.
+  const activeBrandProfileId = resolveBrandProfileId(
+    project.brandProfileId,
+    project.document.metadata?.brandChoice === 'none',
+    brandProfiles,
+  );
+  const activeBrandProfile = brandProfiles.find((bp) => bp.id === activeBrandProfileId) ?? null;
+
   const clientProject = {
     ...project,
+    brandProfile: activeBrandProfile,
     assets: project.assets.map((asset) =>
       asset.usage === 'source-document' ? { ...asset, blobUrl: null } : asset,
     ),

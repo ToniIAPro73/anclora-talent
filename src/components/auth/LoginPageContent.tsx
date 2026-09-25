@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -32,16 +32,13 @@ export function LoginPageContent({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Surface the outcome of a social OAuth round-trip (?oauth={provider}_{reason}).
-  useEffect(() => {
+  const [error, setError] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
     const value = new URLSearchParams(window.location.search).get('oauth');
-    if (!value) return;
+    if (!value) return null;
 
     const match = OAUTH_FEEDBACK_PATTERN.exec(value);
-    if (!match) return;
+    if (!match) return null;
 
     const providerName = match[1] === 'google' ? t.google : t.github;
     const template =
@@ -51,8 +48,9 @@ export function LoginPageContent({
           ? t.oauthInvalidState
           : t.oauthError;
 
-    setError(template.replace('{provider}', providerName));
-  }, [t]);
+    return template.replace('{provider}', providerName);
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

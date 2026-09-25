@@ -253,9 +253,10 @@ export function ProjectWorkspace({
       projectId: project.id,
       document: rawDoc,
       referenceProfile: project.document.metadata?.referenceEditorialProfile ?? null,
+      brandProfile: project.brandProfile ?? null,
       userOverrides: project.document.metadata?.userOverrides ?? [],
     });
-  }, [project.id, project.title, project.document.documentModel, project.document.metadata]);
+  }, [project.id, project.title, project.document.documentModel, project.document.metadata, project.brandProfile]);
 
   const steps: Step[] = useMemo(() => {
     // Fixed-PDF document mode: steps 2-4 (chapters/cover/back
@@ -393,6 +394,7 @@ export function ProjectWorkspace({
             locale={locale}
             history={history}
             coAuthor={coAuthor}
+            styleMap={compiledDocument.styleMap}
             onNavigateStep={setActiveStep}
           />
         );

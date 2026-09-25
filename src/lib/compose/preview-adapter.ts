@@ -204,10 +204,11 @@ function resolveComposeTemplate(
   const metadata = project.document.metadata;
   const styleMap = resolveDocumentStyles({
     referenceProfile: metadata?.referenceEditorialProfile ?? null,
+    brandProfile: project.brandProfile ?? null,
     userOverrides: metadata?.userOverrides ?? [],
+    composition: metadata?.composition ?? null,
   });
 
-  const composition = metadata?.composition;
   const referenceTemplate: Partial<ComposeTemplate> = {
     fontFamily: styleMap.body.fontFamily,
     baseFontSize: styleMap.body.fontSizePt,
@@ -218,10 +219,6 @@ function resolveComposeTemplate(
       left: styleMap.page.marginsPt.left,
       right: styleMap.page.marginsPt.right,
     },
-    ...(composition?.fontFamily ? { fontFamily: composition.fontFamily } : {}),
-    ...(composition?.fontSizePt ? { baseFontSize: composition.fontSizePt } : {}),
-    ...(composition?.lineHeight ? { lineHeight: composition.lineHeight } : {}),
-    ...(composition?.margins ? { margins: composition.margins } : {}),
   };
   return { ...templateFromPaginationConfig(config), ...referenceTemplate, ...templateOverrides };
 }

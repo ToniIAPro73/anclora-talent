@@ -774,8 +774,17 @@ function stripImportedTocPageMarkup(fragment: string) {
 
   sanitized = sanitized.replace(
     /(<(p|li|h[1-6])(?:\s[^>]*)?>)([\s\S]*?)(<\/\2>)/gi,
-    (_match, open: string, _tag: string, inner: string, close: string) => {
-      const cleanedInner = inner.replace(/\s*[·._\-—~∿]{2,}\s*\d+\s*$/u, '').trim();
+    (_match, open: string, tag: string, inner: string, close: string) => {
+      let cleanedInner = inner
+        .replace(/\t+[·._\-—~∿]*\s*\d{1,4}\s*$/u, '')
+        .replace(/\s*[·._\-—~∿]{2,}\s*\d{1,4}\s*$/u, '')
+        .trim();
+      if (tag.toLowerCase().startsWith('h')) {
+        const textOnly = cleanedInner.replace(/<[^>]+>/g, '').trim();
+        if (!/(?:cap[ií]tulo|chapter|parte|fase|secci[oó]n|volumen|lecci[oó]n|tema|nivel|acto|escena)\s+\d+$/i.test(textOnly)) {
+          cleanedInner = cleanedInner.replace(/[\t\s]+\d{1,4}\s*$/u, '').trim();
+        }
+      }
       return `${open}${cleanedInner}${close}`;
     },
   );
@@ -1234,9 +1243,10 @@ function toDocumentBlock(block: ParsedBlock) {
     // genera <h${level+1}>, así que sigue yendo como texto plano.
     const preservesSourceLevel =
       block.structural && block.level !== null && block.html.startsWith(`<h${block.level}`);
+    const cleanedText = cleanHeadingText(block.text);
     return {
       type: 'heading' as const,
-      content: preservesSourceLevel ? block.html : cleanHeadingText(block.text),
+      content: preservesSourceLevel ? `<h${block.level}>${cleanedText}</h${block.level}>` : cleanedText,
     };
   }
 

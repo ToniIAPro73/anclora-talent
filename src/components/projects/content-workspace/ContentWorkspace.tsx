@@ -21,6 +21,7 @@ import type { PreflightCheck } from '@/lib/preflight/preflight';
 import type { DocumentSnapshotMeta } from '@/lib/snapshots/model';
 import type { RecompositionTelemetry } from '../useDocumentComposition';
 import type { CoAuthorChapter } from '@/lib/ai/co-author';
+import type { DocumentStyleMap } from '@/lib/style-engine/model';
 
 type Copy = AppMessages['project'];
 
@@ -38,6 +39,7 @@ export function ContentWorkspace({
   locale,
   history,
   coAuthor,
+  styleMap,
   onNavigateStep,
 }: {
   project: ProjectRecord;
@@ -53,6 +55,7 @@ export function ContentWorkspace({
   locale: 'es' | 'en';
   history?: { copy: AppMessages['history']; snapshots: DocumentSnapshotMeta[] };
   coAuthor?: { chapters: CoAuthorChapter[]; cloudAvailable: boolean };
+  styleMap?: DocumentStyleMap | null;
   onNavigateStep: (step: number) => void;
 }) {
   const [activeTab, setActiveTab] = useState<ContentTabId>('resumen');
@@ -115,6 +118,7 @@ export function ContentWorkspace({
             documentViolations={documentViolations}
             preflightChecks={preflightChecks}
             telemetry={telemetry}
+            styleMap={styleMap}
             onNavigateStep={onNavigateStep}
           />
         )}

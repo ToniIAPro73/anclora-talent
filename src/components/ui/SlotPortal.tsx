@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
+
+const emptySubscribe = () => () => {};
 
 /**
  * Portals `children` into a DOM node elsewhere in the tree, identified by
@@ -10,11 +12,11 @@ import { createPortal } from 'react-dom';
  * topbar) without prop-drilling page-specific state through the layout.
  */
 export function SlotPortal({ slotId, children }: { slotId: string; children: React.ReactNode }) {
-  const [node, setNode] = useState<Element | null>(null);
-
-  useEffect(() => {
-    setNode(document.getElementById(slotId));
-  }, [slotId]);
+  const node = useSyncExternalStore(
+    emptySubscribe,
+    () => document.getElementById(slotId),
+    () => null,
+  );
 
   if (!node) return null;
 

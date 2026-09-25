@@ -43,11 +43,8 @@ export function NavigatingLink({
   // delete-project redirect back to /dashboard).
   const searchParams = useSearchParams();
   const currentUrl = searchParams.size > 0 ? `${pathname}?${searchParams.toString()}` : pathname;
-  const [isNavigating, setIsNavigating] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsNavigating(false);
-  }, [currentUrl]);
+  const [navigatingTo, setNavigatingTo] = React.useState<string | null>(null);
+  const isNavigating = navigatingTo !== null && navigatingTo !== currentUrl;
 
   const handleClick = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
     // Preserve native link behavior for modified clicks, middle clicks and
@@ -66,7 +63,7 @@ export function NavigatingLink({
       return;
     }
 
-    setIsNavigating(true);
+    setNavigatingTo(href);
     onClick?.();
   }, [href, onClick, currentUrl, target]);
 

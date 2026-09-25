@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { ProjectRecord } from '@/lib/projects/types';
+import type { DocumentStyleMap } from '@/lib/style-engine/model';
 import type { ComposeViolation } from '@/lib/compose/compose';
 import { DocumentRules, resolveDocumentRules } from '@/lib/compose/rules';
 import { saveProjectCompositionAction, saveProjectRulesAction } from '@/lib/projects/actions';
@@ -98,6 +99,7 @@ export function CompositionWorkspace({
   documentViolations,
   preflightChecks,
   telemetry,
+  styleMap,
   onNavigateStep,
 }: {
   project: ProjectRecord;
@@ -105,6 +107,7 @@ export function CompositionWorkspace({
   documentViolations: ComposeViolation[];
   preflightChecks: PreflightCheck[];
   telemetry?: RecompositionTelemetry;
+  styleMap?: DocumentStyleMap | null;
   onNavigateStep: (step: number) => void;
 }) {
   const router = useRouter();
@@ -119,13 +122,24 @@ export function CompositionWorkspace({
     parseCompositionSettings(project.document.metadata?.composition) ?? {};
   const baseMargins: CompositionMargins = baseComposition.margins ?? { ...MARGIN_PRESETS.normal };
 
-  const [fontFamily, setFontFamily] = useState(() => baseComposition.fontFamily ?? '');
-  const [fontSizePt, setFontSizePt] = useState(() =>
-    baseComposition.fontSizePt !== undefined ? String(baseComposition.fontSizePt) : '',
-  );
-  const [lineHeight, setLineHeight] = useState(() =>
-    baseComposition.lineHeight !== undefined ? String(baseComposition.lineHeight) : '',
-  );
+  const resolvedFontFamily =
+    baseComposition.fontFamily || styleMap?.body.fontFamily || '';
+  const resolvedFontSizePt =
+    baseComposition.fontSizePt !== undefined
+      ? String(baseComposition.fontSizePt)
+      : styleMap?.body.fontSizePt !== undefined
+        ? String(styleMap.body.fontSizePt)
+        : '';
+  const resolvedLineHeight =
+    baseComposition.lineHeight !== undefined
+      ? String(baseComposition.lineHeight)
+      : styleMap?.body.lineHeight !== undefined
+        ? String(Math.round(styleMap.body.lineHeight * 100) / 100)
+        : '';
+
+  const [fontFamily, setFontFamily] = useState(() => resolvedFontFamily);
+  const [fontSizePt, setFontSizePt] = useState(() => resolvedFontSizePt);
+  const [lineHeight, setLineHeight] = useState(() => resolvedLineHeight);
   const [margins, setMargins] = useState<CompositionMargins>(() => baseMargins);
   const [marginPreset, setMarginPreset] = useState<MarginPresetKey>(() => detectMarginPreset(baseMargins));
 
@@ -541,10 +555,10 @@ export function CompositionWorkspace({
                   <p className="mt-1 text-xs text-[var(--text-secondary)]">{copy.compositionAppliedTypographySubtitle}</p>
                 </div>
                 <div className="talent-composition-workspace__applied-typography-preview">
-                  <span style={{ fontFamily: fontFamily || undefined }}>Aa</span>
-                  <span>{fontFamily || copy.documentDataFontFamilyLabel}</span>
-                  <span>{fontSizePt ? `${fontSizePt} px` : '—'}</span>
-                  <span>{lineHeight || '—'}</span>
+                  <span style={{ fontFamily: fontFamily || resolvedFontFamily || undefined }}>Aa</span>
+                  <span>{fontFamily || resolvedFontFamily || copy.documentDataFontFamilyLabel}</span>
+                  <span>{fontSizePt || resolvedFontSizePt ? `${fontSizePt || resolvedFontSizePt} pt` : '—'}</span>
+                  <span>{lineHeight || resolvedLineHeight || '—'}</span>
                 </div>
               </div>
             </div>

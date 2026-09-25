@@ -1324,9 +1324,11 @@ export function AdvancedRichTextEditor({
     }
   }
 
-  const initialFontSize = composition?.fontSizePt
-    ? `${Math.round(composition.fontSizePt * 1.333)}px`
-    : (preferences.fontSize || '16px');
+  const initialFontSize = documentStyleMap?.body.fontSizePt
+    ? `${Math.round(documentStyleMap.body.fontSizePt * 1.333)}px`
+    : composition?.fontSizePt
+      ? `${Math.round(composition.fontSizePt * 1.333)}px`
+      : (preferences.fontSize || '16px');
   const [prevCompositionFontSizePt, setPrevCompositionFontSizePt] = useState(composition?.fontSizePt);
   const [currentFontSize, setCurrentFontSize] = useState<string>(initialFontSize);
   if (composition?.fontSizePt !== prevCompositionFontSizePt) {

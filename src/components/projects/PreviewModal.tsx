@@ -61,9 +61,11 @@ export function PreviewModal({
   const [totalContentPages, setTotalContentPages] = useState(1);
   const viewportRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
+  const [prevPreferredFormat, setPrevPreferredFormat] = useState(preferredFormat);
+  if (preferredFormat !== prevPreferredFormat) {
+    setPrevPreferredFormat(preferredFormat);
     setFormat(preferredFormat || 'laptop');
-  }, [preferredFormat]);
+  }
 
   // Generate pages based on selected format
   const paginationConfig = useMemo(
@@ -159,9 +161,11 @@ export function PreviewModal({
     setZoom(Math.max(50, Math.min(150, nextZoom)));
   };
 
-  useEffect(() => {
+  const [prevCurrentPage, setPrevCurrentPage] = useState(currentPage);
+  if (currentPage !== prevCurrentPage) {
+    setPrevCurrentPage(currentPage);
     setPageInput(String(currentPage + 1));
-  }, [currentPage]);
+  }
 
   const commitPageInput = useCallback(() => {
     const parsed = Number.parseInt(pageInput, 10);

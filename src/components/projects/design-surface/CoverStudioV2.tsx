@@ -61,17 +61,18 @@ export function CoverStudioV2({
   brandColors,
 }: CoverStudioV2Props) {
   const [surface, setSurface] = useState<DesignSurface>(initialSurface);
-  const [mode, setMode] = useState<EditorMode>('basic');
+  const [mode, setMode] = useState<EditorMode>(() => {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'advanced') {
+      return 'advanced';
+    }
+    return 'basic';
+  });
   const [palette, setPalette] = useState<SurfacePalette>('obsidian');
   const [promptDismissed, setPromptDismissed] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [originalBackgroundSrc, setOriginalBackgroundSrc] = useState<string | undefined>(undefined);
 
   const isWideViewport = useMediaQuery(WIDE_VIEWPORT_QUERY);
-
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('mode') === 'advanced') setMode('advanced');
-  }, []);
 
   const pendingSaveRef = useRef<DesignSurface | null>(null);
   const inFlightRef = useRef(false);

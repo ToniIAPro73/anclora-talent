@@ -29,9 +29,11 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
       preset.right === margins.right,
   );
 
-  useEffect(() => {
+  const [prevMargins, setPrevMargins] = useState(margins);
+  if (margins !== prevMargins) {
+    setPrevMargins(margins);
     setCustomMargins(margins);
-  }, [margins]);
+  }
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

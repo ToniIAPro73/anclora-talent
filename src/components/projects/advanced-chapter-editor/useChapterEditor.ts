@@ -1,7 +1,7 @@
 'use client';
 
 import { normalizeHtmlContent } from '@/lib/preview/html-normalize';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { saveChapterContentAction } from '@/lib/projects/actions';
 import { recordLastChapterSave } from './last-chapter-save';
@@ -108,17 +108,26 @@ export function useChapterEditor({
       : Math.max(estimatedTotalPages, measuredTotalPages),
   );
 
-  useEffect(() => {
+  const layoutKey = `${currentIndex}-${htmlContent}-${device}-${fontSize}-${margins.bottom}-${margins.left}-${margins.right}-${margins.top}`;
+  const [prevLayoutKey, setPrevLayoutKey] = useState(layoutKey);
+  if (layoutKey !== prevLayoutKey) {
+    setPrevLayoutKey(layoutKey);
     setMeasuredTotalPages(null);
-  }, [currentIndex, htmlContent, device, fontSize, margins.bottom, margins.left, margins.right, margins.top]);
+  }
 
-  useEffect(() => {
+  const [prevChapters, setPrevChapters] = useState(chapters);
+  if (chapters !== prevChapters) {
+    setPrevChapters(chapters);
     setLocalChapters(chapters);
-  }, [chapters]);
+  }
 
-  useEffect(() => {
-    setCurrentPage((page) => Math.min(page, Math.max(totalPages - 1, 0)));
-  }, [totalPages]);
+  const [prevTotalPages, setPrevTotalPages] = useState(totalPages);
+  if (totalPages !== prevTotalPages) {
+    setPrevTotalPages(totalPages);
+    if (currentPage > Math.max(totalPages - 1, 0)) {
+      setCurrentPage(Math.max(totalPages - 1, 0));
+    }
+  }
 
   const canNavigatePagePrev = currentPage > 0;
   const canNavigatePageNext = currentPage < totalPages - 1;

@@ -153,9 +153,9 @@ function walkDocument(document: SemanticDocument): DocumentWalk {
       continue;
     }
     if (tocZoneLevel !== null) {
-      // The zone ends at the next heading strictly above the TOC heading level
-      // (e.g. the first real H1 after an H2 "Índice").
-      if (block.level < tocZoneLevel) {
+      // The zone ends at the next heading strictly above the TOC heading level,
+      // or at the first non-TOC heading when the TOC itself was an H1.
+      if (block.level < tocZoneLevel || (tocZoneLevel === 1 && !isTocChapter(text))) {
         tocZoneLevel = null;
       } else {
         continue;

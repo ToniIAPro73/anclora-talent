@@ -178,6 +178,17 @@ function extractTypography(text: string): CreateBrandProfileInput['typography'] 
     };
   }
 
+  // Recommended portable equivalent: e.g. "Equivalente recomendado para implementación portable: Noto Serif Display (display)... y Noto Sans (cuerpo funcional...)"
+  const portable = text.match(
+    /(?:equivalente\s+recomendado|implementaci[oó]n\s+portable|tipograf[ií]a\s+recomendada)[\s\S]*?:\s*([A-Za-z0-9\s\-]+?)\s*\((?:display|titulares)\)[\s\S]*?y\s*([A-Za-z0-9\s\-]+?)\s*\((?:cuerpo\s+funcional|cuerpo|body|funcional)/i,
+  );
+  if (portable) {
+    return {
+      display: { family: portable[1].trim(), confidence: 'high' as const },
+      body: { family: portable[2].trim(), confidence: 'high' as const },
+    };
+  }
+
   // Governance fallback: "Titulares en X, cuerpo en Y".
   const governance = text.match(/Titulares en ([^.,\n]+),\s*cuerpo en ([^.,\n]+)/i);
   if (governance) {

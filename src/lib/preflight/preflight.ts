@@ -19,7 +19,7 @@
  */
 
 import type { ComposeResult } from '@/lib/compose/compose';
-import type { DocumentMetadata, ImageBlock, SemanticDocument } from '@/lib/document/model';
+import { inlineToPlainText, type DocumentMetadata, type ImageBlock, type SemanticDocument } from '@/lib/document/model';
 
 export type PreflightChannel = 'kdp' | 'ingramspark' | 'kobo';
 export type PreflightSeverity = 'error' | 'warning' | 'info';
@@ -169,6 +169,30 @@ export function preflightKdp(input: PreflightInput): PreflightCheck[] {
       rule: 'kdp.fonts.embed',
       params: { font: fontFamily },
     });
+  }
+
+  for (const block of document.blocks) {
+    if (block.type === 'heading') {
+      const text = inlineToPlainText(block.content).trim();
+      if (
+        /[\t\s]+[·._\-—~∿]+\s*\d{1,4}$/.test(text) ||
+        (/[\t\s]+\d{1,4}$/.test(text) &&
+          !/(?:cap[ií]tulo|chapter|parte|fase|secci[oó]n|volumen|lecci[oó]n|tema|nivel|acto|escena)\s+\d+$/i.test(text))
+      ) {
+        checks.push(
+          anchorCheck(
+            {
+              channel: 'kdp',
+              severity: 'warning',
+              rule: 'kdp.heading.tocContamination',
+              params: { heading: text },
+              blockId: block.id,
+            },
+            composed,
+          ),
+        );
+      }
+    }
   }
 
   return checks;
