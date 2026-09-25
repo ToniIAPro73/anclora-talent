@@ -50,6 +50,7 @@ import {
   Undo2,
   Redo2,
 } from 'lucide-react';
+import { Portal } from '@/components/ui/Portal';
 import { EditorPopover } from './EditorPopover';
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
 import { MarginSelector, type MarginConfig } from './MarginSelector';
@@ -355,19 +356,21 @@ function ListDropdownButton({
       </button>
 
       {isOpen && coords && (
-        <div
-          ref={popoverRef}
-          role="menu"
-          style={{
-            position: 'fixed',
-            top: `${coords.top}px`,
-            left: `${coords.left}px`,
-            zIndex: 150,
-          }}
-          className="rounded-xl border border-[var(--border-strong)] bg-[#0E1825] p-2.5 shadow-2xl shadow-black animate-in fade-in zoom-in duration-150"
-        >
-          {children(() => setIsOpen(false))}
-        </div>
+        <Portal>
+          <div
+            ref={popoverRef}
+            role="menu"
+            style={{
+              position: 'fixed',
+              top: `${coords.top}px`,
+              left: `${coords.left}px`,
+              zIndex: 150,
+            }}
+            className="rounded-xl border border-[var(--border-strong)] bg-[var(--surface-panel)] text-[var(--text-primary)] p-2.5 shadow-[var(--shadow-lg)] animate-in fade-in zoom-in duration-150"
+          >
+            {children(() => setIsOpen(false))}
+          </div>
+        </Portal>
       )}
     </>
   );
@@ -497,7 +500,7 @@ const AdvancedFontSelector = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             data-testid="editor-toolbar-font-search-input"
-            className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--background)] py-2 pl-8 pr-3 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+            className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] py-2 pl-8 pr-3 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
             autoFocus
           />
         </div>
@@ -509,12 +512,16 @@ const AdvancedFontSelector = ({
               setIsOpen(false);
             }}
             data-testid="font-option-default"
-            className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]"
+            className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition-colors ${
+              !editor.getAttributes('textStyle').fontFamily
+                ? 'bg-[var(--accent)]/15 text-[var(--accent-text)] font-semibold'
+                : 'text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]'
+            }`}
           >
             <span className="truncate">
               {effectiveFont} <span className="text-[10px] opacity-70">({locale === 'es' ? 'Documento' : 'Document'})</span>
             </span>
-            {!editor.getAttributes('textStyle').fontFamily && <Check className="h-3 w-3" />}
+            {!editor.getAttributes('textStyle').fontFamily && <Check className="h-3 w-3 text-[var(--accent-text)]" />}
           </button>
           {filteredFonts.map((font) => (
             <button
@@ -523,7 +530,11 @@ const AdvancedFontSelector = ({
               onClick={() => selectFont(font.family)}
               data-testid={`font-option-${font.family.replace(/\s+/g, '-').toLowerCase()}`}
               style={{ fontFamily: font.family }}
-              className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm text-[var(--text-primary)] hover:bg-[var(--hover)]"
+              className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                currentFont === font.family
+                  ? 'bg-[var(--accent)]/15 text-[var(--accent-text)] font-semibold'
+                  : 'text-[var(--text-primary)] hover:bg-[var(--hover)]'
+              }`}
             >
               {font.family}
               {currentFont === font.family && <Check className="h-3 w-3 text-[var(--accent-text)]" />}
@@ -684,7 +695,7 @@ const ColorSelector = ({
           <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)] mb-2">
             Paleta de Colores
           </div>
-          <div className="flex items-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--background)]/50 p-2">
+          <div className="flex items-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-2">
             <div
               className="h-5 w-5 rounded border border-[var(--border-strong)]"
               style={{ backgroundColor: currentColor === 'inherit' ? 'var(--text-primary)' : currentColor }}
@@ -706,13 +717,13 @@ const ColorSelector = ({
               data-testid={`color-option-${color.value.replace('#', '')}`}
               className={`group flex items-center gap-2.5 rounded-lg border px-2.5 py-1.5 text-left transition-all duration-150 ${
                 currentColor === color.value
-                  ? 'border-[var(--accent)] bg-[var(--accent)]/10'
-                  : 'border-[var(--border-subtle)] bg-[var(--background)]/30 hover:border-[var(--accent)]/50 hover:bg-[var(--hover)]'
+                  ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--text-primary)]'
+                  : 'border-[var(--border-subtle)] bg-[var(--surface-elevated)]/60 hover:border-[var(--accent)]/50 hover:bg-[var(--hover)]'
               }`}
               title={color.name}
             >
               <div
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-white/20 text-[8px] font-bold"
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-[var(--border-strong)] text-[8px] font-bold text-[var(--text-primary)]"
                 style={{ backgroundColor: color.value === 'inherit' ? 'transparent' : color.value }}
               >
                 {color.value === 'inherit' ? '∅' : ''}
@@ -2203,7 +2214,7 @@ export function AdvancedRichTextEditor({
         </div>
       </div>
 
-      <div className="border-t border-[var(--border-strong)] bg-[#0E1825] px-6 py-2.5 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)]">
+      <div className="border-t border-[var(--border-subtle)] bg-[var(--surface-panel)] px-6 py-2.5 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)]">
         <div className="flex gap-6">
           <span className="flex items-center gap-1.5"><Type className="h-3 w-3" /> {editor.storage.characterCount.words()} palabras</span>
           <span className="flex items-center gap-1.5"><Baseline className="h-3 w-3" /> {editor.storage.characterCount.characters()} caracteres</span>

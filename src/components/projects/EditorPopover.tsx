@@ -113,7 +113,7 @@ export function EditorPopover({
           minWidth: minWidth ? (typeof minWidth === 'number' ? `${minWidth}px` : minWidth) : undefined,
           maxWidth: maxWidth ? (typeof maxWidth === 'number' ? `${maxWidth}px` : maxWidth) : undefined,
         }}
-        className={`rounded-xl border border-[var(--border-strong)] bg-[#0E1825] p-2.5 shadow-2xl shadow-black animate-in fade-in zoom-in duration-150 ${className}`}
+        className={`rounded-xl border border-[var(--border-strong)] bg-[var(--surface-panel)] text-[var(--text-primary)] p-2.5 shadow-[var(--shadow-lg)] animate-in fade-in zoom-in duration-150 ${className}`}
       >
         {children}
       </div>
