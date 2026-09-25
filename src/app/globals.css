@@ -3751,17 +3751,17 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
   }
 }
 
-/* Marca tab: applied identity (left) / visual system + surfaces (center) /
-   status + tools (right). */
+/* Marca tab: visual system + surfaces (main) / identity + status + tools (sidebar). */
 .talent-brand-workspace {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(0, 2fr) minmax(260px, 1fr);
+  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 380px);
   gap: 20px;
   align-items: start;
 }
 
-.talent-brand-workspace__identity,
+.talent-brand-workspace__main,
 .talent-brand-workspace__visual,
+.talent-brand-workspace__identity,
 .talent-brand-workspace__sidebar {
   display: grid;
   gap: 16px;
@@ -3770,31 +3770,33 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
 
 .talent-brand-workspace__profile-card {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   margin-top: 14px;
   padding: 14px;
   border: 1px solid var(--border-subtle);
-  border-radius: 16px;
+  border-radius: 14px;
   background: var(--surface-soft);
+  min-width: 0;
 }
 
 .talent-brand-workspace__profile-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   flex-shrink: 0;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
   color: var(--accent-text);
 }
 
 .talent-brand-workspace__status-pill {
   display: inline-flex;
   align-items: center;
-  margin-top: 6px;
+  margin-top: 4px;
   padding: 2px 8px;
   border-radius: 999px;
   font-size: 0.66rem;
@@ -3804,18 +3806,21 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
 }
 
 .talent-brand-workspace__status-pill--active {
-  background: color-mix(in srgb, var(--success) 16%, transparent);
+  background: color-mix(in srgb, var(--success) 14%, transparent);
   color: var(--success);
+  border: 1px solid color-mix(in srgb, var(--success) 24%, transparent);
 }
 
 .talent-brand-workspace__status-pill--draft {
-  background: color-mix(in srgb, var(--warning) 16%, transparent);
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
   color: var(--warning);
+  border: 1px solid color-mix(in srgb, var(--warning) 24%, transparent);
 }
 
 .talent-brand-workspace__status-pill--deprecated {
-  background: color-mix(in srgb, var(--text-tertiary) 20%, transparent);
+  background: color-mix(in srgb, var(--text-tertiary) 14%, transparent);
   color: var(--text-tertiary);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 80%, transparent);
 }
 
 .talent-brand-workspace__meta {
@@ -3835,75 +3840,126 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
 
 .talent-brand-workspace__meta dd {
   color: var(--text-primary);
+  word-break: break-all;
 }
 
 .talent-brand-workspace__palette {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 10px;
-  margin-top: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .talent-brand-workspace__swatch {
-  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
   background: var(--surface-soft);
+  min-width: 0;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+.talent-brand-workspace__swatch:hover {
+  border-color: var(--border-default);
 }
 
 .talent-brand-workspace__swatch-color {
   display: block;
   width: 100%;
-  height: 40px;
+  height: 52px;
   border-radius: 10px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 
 .talent-brand-workspace__swatch-hex {
-  margin-top: 8px;
-  font-size: 0.78rem;
+  margin-top: 10px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.84rem;
   font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: 0.02em;
 }
 
 .talent-brand-workspace__swatch-role {
-  font-size: 0.72rem;
+  margin-top: 2px;
+  font-size: 0.74rem;
+  font-weight: 500;
   color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .talent-brand-workspace__swatch-meta {
-  margin-top: 2px;
-  font-size: 0.64rem;
+  margin-top: 4px;
+  font-size: 0.66rem;
   color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .talent-brand-workspace__typefaces {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 10px;
-  margin-top: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .talent-brand-workspace__typeface-card {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px;
+  gap: 16px;
+  padding: 16px;
   border: 1px solid var(--border-subtle);
-  border-radius: 16px;
+  border-radius: 14px;
   background: var(--surface-soft);
+  min-width: 0;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+.talent-brand-workspace__typeface-card:hover {
+  border-color: var(--border-default);
 }
 
 .talent-brand-workspace__typeface-specimen {
-  font-size: 1.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
+  font-size: 1.85rem;
   font-weight: 700;
+  line-height: 1;
   color: var(--text-primary);
+}
+
+.talent-brand-workspace__confidence-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--surface-canvas) 80%, transparent);
+  border: 1px solid var(--border-subtle);
 }
 
 .talent-brand-workspace__tokens {
   display: grid;
-  gap: 6px;
-  margin-top: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
   padding: 0;
   list-style: none;
 }
@@ -3911,25 +3967,54 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
 .talent-brand-workspace__tokens li {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  gap: 10px;
+  padding: 10px 14px;
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
-  font-size: 0.8rem;
+  background: var(--surface-soft);
+  min-width: 0;
+  font-size: 0.82rem;
   color: var(--text-primary);
+  transition: border-color 0.15s ease;
+}
+
+.talent-brand-workspace__tokens li:hover {
+  border-color: var(--border-default);
 }
 
 .talent-brand-workspace__token-dot {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
   border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.talent-brand-workspace__token-label {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.talent-brand-workspace__token-hex {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--surface-canvas) 80%, transparent);
   border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
 }
 
 .talent-brand-workspace__surfaces {
   display: grid;
-  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
   margin-top: 14px;
   padding: 0;
   list-style: none;
@@ -3937,16 +4022,72 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
 
 .talent-brand-workspace__surfaces li {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
+  background: var(--surface-soft);
+  min-width: 0;
+  transition: border-color 0.15s ease;
 }
 
-.talent-brand-workspace__surfaces li > div {
-  flex: 1;
+.talent-brand-workspace__surfaces li:hover {
+  border-color: var(--border-default);
+}
+
+.talent-brand-workspace__surface-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   min-width: 0;
+}
+
+.talent-brand-workspace__surface-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.talent-brand-workspace__surface-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+
+.talent-brand-workspace__surface-badge--applied {
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  color: var(--success);
+  border: 1px solid color-mix(in srgb, var(--success) 24%, transparent);
+}
+
+.talent-brand-workspace__surface-badge--unconnected {
+  background: color-mix(in srgb, var(--text-tertiary) 14%, transparent);
+  color: var(--text-tertiary);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 80%, transparent);
+}
+
+.talent-brand-workspace__surface-badge--warning {
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+  color: var(--warning);
+  border: 1px solid color-mix(in srgb, var(--warning) 24%, transparent);
+}
+
+.talent-brand-workspace__surface-desc {
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
 }
 
 .talent-brand-workspace__checklist {
@@ -3976,34 +4117,56 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
 
 .talent-brand-workspace__manage-list {
   display: grid;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 10px;
+  margin-top: 12px;
   padding: 0;
   list-style: none;
 }
 
 .talent-brand-workspace__manage-list li {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
-  padding: 8px 10px;
+  padding: 12px 14px;
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
+  background: var(--surface-soft);
+  min-width: 0;
+  transition: border-color 0.15s ease;
 }
 
-.talent-brand-workspace__manage-list li > div {
-  flex: 1;
+.talent-brand-workspace__manage-list li:hover {
+  border-color: var(--border-default);
+}
+
+.talent-brand-workspace__manage-item-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   min-width: 0;
+}
+
+.talent-brand-workspace__manage-item-actions {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.82rem;
+  width: 100%;
+}
+
+.talent-brand-workspace__manage-item-actions .ac-button {
+  width: 100%;
+  justify-content: center;
 }
 
 .talent-brand-workspace__applied-badge {
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--success) 16%, transparent);
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success) 24%, transparent);
   color: var(--success);
   font-size: 0.66rem;
   font-weight: 700;
@@ -4011,15 +4174,23 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
   letter-spacing: 0.06em;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1080px) {
   .talent-brand-workspace {
     grid-template-columns: minmax(0, 1fr);
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .talent-brand-workspace__palette {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .talent-brand-workspace__typefaces,
+  .talent-brand-workspace__tokens,
+  .talent-brand-workspace__surfaces {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

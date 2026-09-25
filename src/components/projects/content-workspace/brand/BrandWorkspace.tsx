@@ -137,8 +137,156 @@ export function BrandWorkspace({
 
   return (
     <div className="talent-brand-workspace" data-testid="brand-workspace">
-      {/* IDENTITY COLUMN */}
-      <div className="talent-brand-workspace__identity">
+      {/* MAIN VISUAL & EDITORIAL COLUMN */}
+      <div className="talent-brand-workspace__main talent-brand-workspace__visual">
+        <section className="ac-surface-panel ac-surface-panel--subtle" data-testid="brand-visual-system-panel">
+          <p className="ac-surface-panel__eyebrow">{copy.brandWorkspaceVisualSystemHeading}</p>
+          <p className="mt-1 text-xs text-[var(--text-secondary)]">{copy.brandWorkspaceVisualSystemSubtitle}</p>
+
+          {selectedProfile ? (
+            <>
+              <div className="mt-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                  {copy.brandWorkspacePaletteHeading}
+                </p>
+                {selectedProfile.palette.length > 0 ? (
+                  <div className="talent-brand-workspace__palette">
+                    {BRAND_COLOR_ROLES.map((role) => {
+                      const color = selectedProfile.palette.find((entry) => entry.role === role);
+                      if (!color) return null;
+                      return (
+                        <div key={role} className="talent-brand-workspace__swatch" data-testid={`brand-palette-${role}`}>
+                          <span className="talent-brand-workspace__swatch-color" style={{ backgroundColor: color.hex }} />
+                          <p className="talent-brand-workspace__swatch-hex">{color.hex}</p>
+                          <p className="talent-brand-workspace__swatch-role">{color.name ?? paletteRoleLabel(role, copy)}</p>
+                          <p className="talent-brand-workspace__swatch-meta">
+                            {color.usagePercent !== null && copy.brandWorkspaceUsageLabel.replace('{percent}', String(color.usagePercent))}
+                            {color.usagePercent !== null && ' · '}
+                            {copy[CONFIDENCE_COPY_KEYS[color.confidence]]}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="mt-2 text-sm text-[var(--text-secondary)]">{copy.brandWorkspacePaletteEmpty}</p>
+                )}
+              </div>
+
+              <div className="mt-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                  {copy.brandWorkspaceTypographyHeading}
+                </p>
+                <div className="talent-brand-workspace__typefaces">
+                  {(
+                    [
+                      ['display', selectedProfile.typography.display, copy.brandWorkspaceTypographyDisplayCaption],
+                      ['body', selectedProfile.typography.body, copy.brandWorkspaceTypographyBodyCaption],
+                    ] as const
+                  ).map(([key, typeface, caption]) => (
+                    <div key={key} className="talent-brand-workspace__typeface-card" data-testid={`brand-typeface-${key}`}>
+                      {typeface ? (
+                        <>
+                          <span className="talent-brand-workspace__typeface-specimen" style={{ fontFamily: typeface.family }}>
+                            Aa
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-[var(--text-primary)] truncate" title={typeface.family}>
+                              {typeface.family}
+                            </p>
+                            <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate">{caption}</p>
+                            <span className="talent-brand-workspace__confidence-pill mt-1.5">
+                              {copy[CONFIDENCE_COPY_KEYS[typeface.confidence]]}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-sm text-[var(--text-secondary)]">{copy.brandWorkspaceTypefaceEmpty}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {tokens && (
+                <div className="mt-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                    {copy.brandWorkspaceTokensHeading}
+                  </p>
+                  <ul className="talent-brand-workspace__tokens" data-testid="brand-tokens">
+                    {(
+                      [
+                        [tokens.accentColor, copy.brandWorkspaceTokenAccent],
+                        [tokens.paperColor, copy.brandWorkspaceTokenSurface],
+                        [tokens.bodyColor, copy.brandWorkspaceTokenText],
+                        [tokens.accentMutedColor, copy.brandWorkspaceTokenAccentMuted],
+                      ] as const
+                    )
+                      .filter(([hex]) => Boolean(hex))
+                      .map(([hex, label]) => (
+                        <li key={label}>
+                          <span className="talent-brand-workspace__token-dot" style={{ backgroundColor: hex }} />
+                          <span className="talent-brand-workspace__token-label">{label}</span>
+                          <span className="talent-brand-workspace__token-hex">{hex}</span>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="mt-4 text-sm text-[var(--text-secondary)]">{copy.brandWorkspaceNoProfileBody}</p>
+          )}
+        </section>
+
+        <section className="ac-surface-panel ac-surface-panel--subtle" data-testid="brand-application-panel">
+          <p className="ac-surface-panel__eyebrow">{copy.brandWorkspaceApplicationHeading}</p>
+          <p className="mt-1 text-xs text-[var(--text-secondary)]">{copy.brandWorkspaceApplicationSubtitle}</p>
+
+          <ul className="talent-brand-workspace__surfaces">
+            {surfaceRows.map((row) => {
+              const applied = selectedProfile && row.connected;
+              return (
+                <li key={row.key} data-testid={`brand-surface-${row.key}`}>
+                  <div className="talent-brand-workspace__surface-header">
+                    <div className="talent-brand-workspace__surface-title">
+                      {applied ? (
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-[var(--success)]" />
+                      ) : row.connected ? (
+                        <AlertTriangle className="h-4 w-4 shrink-0 text-[var(--warning)]" />
+                      ) : (
+                        <XCircle className="h-4 w-4 shrink-0 text-[var(--text-tertiary)]" />
+                      )}
+                      <span className="truncate">{row.label}</span>
+                    </div>
+                    <span
+                      className={`talent-brand-workspace__surface-badge talent-brand-workspace__surface-badge--${
+                        applied ? 'applied' : row.connected ? 'warning' : 'unconnected'
+                      }`}
+                    >
+                      {applied
+                        ? copy.brandWorkspaceStatusApplied
+                        : row.connected
+                          ? copy.brandWorkspaceStatusNone
+                          : copy.brandWorkspaceStatusNotConnected}
+                    </span>
+                  </div>
+                  <p className="talent-brand-workspace__surface-desc">
+                    {applied
+                      ? row.desc
+                      : row.connected
+                        ? copy.brandWorkspaceStatusNone
+                        : row.desc}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      </div>
+
+      {/* SIDEBAR / CONTROL PANEL COLUMN */}
+      <div className="talent-brand-workspace__sidebar">
         <section className="ac-surface-panel ac-surface-panel--subtle" data-testid="brand-identity-panel">
           <p className="ac-surface-panel__eyebrow">{copy.brandWorkspaceIdentityHeading}</p>
           <p className="mt-1 text-xs text-[var(--text-secondary)]">{copy.brandWorkspaceIdentitySubtitle}</p>
@@ -149,8 +297,10 @@ export function BrandWorkspace({
                 <div className="talent-brand-workspace__profile-icon">
                   <Palette className="h-5 w-5" />
                 </div>
-                <div>
-                  <p className="font-semibold text-[var(--text-primary)]">{selectedProfile.name}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-[var(--text-primary)] truncate" title={selectedProfile.name}>
+                    {selectedProfile.name}
+                  </p>
                   <p className="text-xs text-[var(--text-tertiary)]">
                     {copy.brandVersionLabel} {selectedProfile.version}
                   </p>
@@ -164,7 +314,7 @@ export function BrandWorkspace({
                 {selectedProfile.sourceFileName && (
                   <div>
                     <dt>{copy.brandWorkspaceSourceLabel}</dt>
-                    <dd>{selectedProfile.sourceFileName}</dd>
+                    <dd title={selectedProfile.sourceFileName}>{selectedProfile.sourceFileName}</dd>
                   </div>
                 )}
                 <div>
@@ -254,148 +404,7 @@ export function BrandWorkspace({
             </span>
           )}
         </section>
-      </div>
 
-      {/* VISUAL SYSTEM COLUMN */}
-      <div className="talent-brand-workspace__visual">
-        <section className="ac-surface-panel ac-surface-panel--subtle" data-testid="brand-visual-system-panel">
-          <p className="ac-surface-panel__eyebrow">{copy.brandWorkspaceVisualSystemHeading}</p>
-          <p className="mt-1 text-xs text-[var(--text-secondary)]">{copy.brandWorkspaceVisualSystemSubtitle}</p>
-
-          {selectedProfile ? (
-            <>
-              <div className="mt-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
-                  {copy.brandWorkspacePaletteHeading}
-                </p>
-                {selectedProfile.palette.length > 0 ? (
-                  <div className="talent-brand-workspace__palette">
-                    {BRAND_COLOR_ROLES.map((role) => {
-                      const color = selectedProfile.palette.find((entry) => entry.role === role);
-                      if (!color) return null;
-                      return (
-                        <div key={role} className="talent-brand-workspace__swatch" data-testid={`brand-palette-${role}`}>
-                          <span className="talent-brand-workspace__swatch-color" style={{ backgroundColor: color.hex }} />
-                          <p className="talent-brand-workspace__swatch-hex">{color.hex}</p>
-                          <p className="talent-brand-workspace__swatch-role">{color.name ?? paletteRoleLabel(role, copy)}</p>
-                          <p className="talent-brand-workspace__swatch-meta">
-                            {color.usagePercent !== null && copy.brandWorkspaceUsageLabel.replace('{percent}', String(color.usagePercent))}
-                            {color.usagePercent !== null && ' · '}
-                            {copy[CONFIDENCE_COPY_KEYS[color.confidence]]}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="mt-2 text-sm text-[var(--text-secondary)]">{copy.brandWorkspacePaletteEmpty}</p>
-                )}
-              </div>
-
-              <div className="mt-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
-                  {copy.brandWorkspaceTypographyHeading}
-                </p>
-                <div className="talent-brand-workspace__typefaces">
-                  {(
-                    [
-                      ['display', selectedProfile.typography.display, copy.brandWorkspaceTypographyDisplayCaption],
-                      ['body', selectedProfile.typography.body, copy.brandWorkspaceTypographyBodyCaption],
-                    ] as const
-                  ).map(([key, typeface, caption]) => (
-                    <div key={key} className="talent-brand-workspace__typeface-card" data-testid={`brand-typeface-${key}`}>
-                      {typeface ? (
-                        <>
-                          <span className="talent-brand-workspace__typeface-specimen" style={{ fontFamily: typeface.family }}>
-                            Aa
-                          </span>
-                          <div>
-                            <p className="font-semibold text-[var(--text-primary)]">{typeface.family}</p>
-                            <p className="text-xs text-[var(--text-tertiary)]">{caption}</p>
-                            <p className="text-[11px] text-[var(--text-tertiary)]">{copy[CONFIDENCE_COPY_KEYS[typeface.confidence]]}</p>
-                          </div>
-                        </>
-                      ) : (
-                        <p className="text-sm text-[var(--text-secondary)]">{copy.brandWorkspaceTypefaceEmpty}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {tokens && (
-                <div className="mt-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
-                    {copy.brandWorkspaceTokensHeading}
-                  </p>
-                  <ul className="talent-brand-workspace__tokens" data-testid="brand-tokens">
-                    {(
-                      [
-                        [tokens.accentColor, copy.brandWorkspaceTokenAccent],
-                        [tokens.paperColor, copy.brandWorkspaceTokenSurface],
-                        [tokens.bodyColor, copy.brandWorkspaceTokenText],
-                        [tokens.accentMutedColor, copy.brandWorkspaceTokenAccentMuted],
-                      ] as const
-                    )
-                      .filter(([hex]) => Boolean(hex))
-                      .map(([hex, label]) => (
-                        <li key={label}>
-                          <span className="talent-brand-workspace__token-dot" style={{ backgroundColor: hex }} />
-                          <span className="flex-1">{label}</span>
-                          <span className="text-[var(--text-tertiary)]">{hex}</span>
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-              )}
-            </>
-          ) : (
-            <p className="mt-4 text-sm text-[var(--text-secondary)]">{copy.brandWorkspaceNoProfileBody}</p>
-          )}
-        </section>
-
-        <section className="ac-surface-panel ac-surface-panel--subtle" data-testid="brand-application-panel">
-          <p className="ac-surface-panel__eyebrow">{copy.brandWorkspaceApplicationHeading}</p>
-          <p className="mt-1 text-xs text-[var(--text-secondary)]">{copy.brandWorkspaceApplicationSubtitle}</p>
-
-          <ul className="talent-brand-workspace__surfaces">
-            {surfaceRows.map((row) => {
-              const applied = selectedProfile && row.connected;
-              return (
-                <li key={row.key} data-testid={`brand-surface-${row.key}`}>
-                  {applied ? (
-                    <CheckCircle2 className="h-4 w-4 text-[var(--success)]" />
-                  ) : row.connected ? (
-                    <AlertTriangle className="h-4 w-4 text-[var(--warning)]" />
-                  ) : (
-                    <XCircle className="h-4 w-4 text-[var(--text-tertiary)]" />
-                  )}
-                  <div>
-                    <p className="font-semibold text-[var(--text-primary)]">{row.label}</p>
-                    <p className="text-xs text-[var(--text-tertiary)]">
-                      {applied
-                        ? row.desc
-                        : row.connected
-                          ? copy.brandWorkspaceStatusNone
-                          : row.desc}
-                    </p>
-                  </div>
-                  <span className="text-xs font-semibold text-[var(--text-tertiary)]">
-                    {applied
-                      ? copy.brandWorkspaceStatusApplied
-                      : row.connected
-                        ? copy.brandWorkspaceStatusNone
-                        : copy.brandWorkspaceStatusNotConnected}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      </div>
-
-      {/* SIDEBAR COLUMN */}
-      <div className="talent-brand-workspace__sidebar">
         <section className="ac-surface-panel ac-surface-panel--subtle" data-testid="brand-status-panel">
           <p className="ac-surface-panel__eyebrow">{copy.brandWorkspaceStatusHeading}</p>
           <p className="mt-1 text-xs text-[var(--text-secondary)]">{copy.brandWorkspaceStatusSubtitle}</p>
@@ -469,37 +478,41 @@ export function BrandWorkspace({
               <ul className="talent-brand-workspace__manage-list" data-testid="brand-manage-list">
                 {profiles.map((profile) => (
                   <li key={profile.id} data-testid={`brand-manage-item-${profile.id}`}>
-                    <div>
-                      <p className="font-semibold text-[var(--text-primary)]">{profile.name}</p>
+                    <div className="talent-brand-workspace__manage-item-info">
+                      <p className="font-semibold text-sm text-[var(--text-primary)] truncate" title={profile.name}>
+                        {profile.name}
+                      </p>
                       <span className={`talent-brand-workspace__status-pill talent-brand-workspace__status-pill--${profile.status}`}>
                         {copy[STATUS_COPY_KEYS[profile.status]]}
                       </span>
                     </div>
-                    {profile.status === 'draft' && (
-                      <button
-                        type="button"
-                        data-testid={`brand-activate-button-${profile.id}`}
-                        onClick={() => handleActivate(profile.id)}
-                        disabled={isPending}
-                        className="ac-button ac-button--compact"
-                      >
-                        {copy.brandActivateAction}
-                      </button>
-                    )}
-                    {profile.status !== 'deprecated' && profile.id !== project.brandProfileId && (
-                      <button
-                        type="button"
-                        data-testid={`brand-apply-button-${profile.id}`}
-                        onClick={() => handleApply(profile.id)}
-                        disabled={isPending}
-                        className="ac-button ac-button--compact"
-                      >
-                        {copy.brandWorkspaceApplyAction}
-                      </button>
-                    )}
-                    {profile.id === project.brandProfileId && (
-                      <span className="talent-brand-workspace__applied-badge">{copy.brandWorkspaceAppliedBadge}</span>
-                    )}
+                    <div className="talent-brand-workspace__manage-item-actions">
+                      {profile.status === 'draft' && (
+                        <button
+                          type="button"
+                          data-testid={`brand-activate-button-${profile.id}`}
+                          onClick={() => handleActivate(profile.id)}
+                          disabled={isPending}
+                          className="ac-button ac-button--compact"
+                        >
+                          {copy.brandActivateAction}
+                        </button>
+                      )}
+                      {profile.status !== 'deprecated' && profile.id !== project.brandProfileId && (
+                        <button
+                          type="button"
+                          data-testid={`brand-apply-button-${profile.id}`}
+                          onClick={() => handleApply(profile.id)}
+                          disabled={isPending}
+                          className="ac-button ac-button--compact"
+                        >
+                          {copy.brandWorkspaceApplyAction}
+                        </button>
+                      )}
+                      {profile.id === project.brandProfileId && (
+                        <span className="talent-brand-workspace__applied-badge">{copy.brandWorkspaceAppliedBadge}</span>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>
