@@ -7,6 +7,8 @@ import { structureProfileRepository } from '@/lib/structure-profile/repository';
 import { hasUsableEditorialEvidence, type ReferenceEditorialProfile } from './model';
 import { extractEditorialProfileFromPdf, ReferenceAnalysisTimeoutError } from './pdf';
 import { extractEditorialProfileFromDocx } from './docx';
+import { projectRepository } from '@/lib/db/repositories';
+import type { UserStyleOverride, EditorialRole } from '@/lib/style-engine/model';
 import { isReferenceEditorialProfile } from './legacy';
 
 const MAX_REFERENCE_BYTES = 50 * 1024 * 1024;
@@ -76,3 +78,94 @@ export async function saveReferenceEditorialProfileAction(formData: FormData) {
   revalidatePath('/projects');
   return { ok: true as const, profileId: saved.id, version: saved.version };
 }
+
+export async function applyReferenceEditorialProfileAction(
+  projectId: string,
+  profile: ReferenceEditorialProfile,
+  keepOverrides: boolean = true,
+) {
+  const userId = await requireUserId();
+  const project = await projectRepository.getProjectById(userId, projectId);
+  if (!project) throw new Error('Project not found');
+
+  const currentMetadata = project.document.metadata ?? {};
+  const nextMetadata = {
+    ...currentMetadata,
+    referenceEditorialProfile: profile,
+    userOverrides: keepOverrides ? (currentMetadata.userOverrides ?? []) : [],
+  };
+
+  const updatedProject = await projectRepository.saveDocumentExtras(userId, projectId, {
+    metadata: nextMetadata,
+  });
+
+  revalidatePath(`/projects/${projectId}`);
+  return { ok: true as const, project: updatedProject };
+}
+
+export async function saveUserStyleOverrideAction(
+  projectId: string,
+  override: UserStyleOverride,
+) {
+  const userId = await requireUserId();
+  const project = await projectRepository.getProjectById(userId, projectId);
+  if (!project) throw new Error('Project not found');
+
+  const currentMetadata = project.document.metadata ?? {};
+  const currentOverrides: UserStyleOverride[] = currentMetadata.userOverrides ?? [];
+
+  const nextOverrides = currentOverrides.filter((o) => {
+    if (override.scope === 'role' && o.scope === 'role' && o.targetRole === override.targetRole) {
+      return false;
+    }
+    if (override.scope === 'block' && o.scope === 'block' && o.targetBlockId === override.targetBlockId) {
+      return false;
+    }
+    if (override.scope === 'global' && o.scope === 'global') {
+      return false;
+    }
+    return true;
+  });
+  nextOverrides.push(override);
+
+  const nextMetadata = {
+    ...currentMetadata,
+    userOverrides: nextOverrides,
+  };
+
+  const updatedProject = await projectRepository.saveDocumentExtras(userId, projectId, {
+    metadata: nextMetadata,
+  });
+
+  revalidatePath(`/projects/${projectId}`);
+  return { ok: true as const, project: updatedProject };
+}
+
+export async function resetUserStyleOverridesAction(
+  projectId: string,
+  role?: EditorialRole,
+) {
+  const userId = await requireUserId();
+  const project = await projectRepository.getProjectById(userId, projectId);
+  if (!project) throw new Error('Project not found');
+
+  const currentMetadata = project.document.metadata ?? {};
+  const currentOverrides: UserStyleOverride[] = currentMetadata.userOverrides ?? [];
+
+  const nextOverrides = role
+    ? currentOverrides.filter((o) => o.targetRole !== role)
+    : [];
+
+  const nextMetadata = {
+    ...currentMetadata,
+    userOverrides: nextOverrides,
+  };
+
+  const updatedProject = await projectRepository.saveDocumentExtras(userId, projectId, {
+    metadata: nextMetadata,
+  });
+
+  revalidatePath(`/projects/${projectId}`);
+  return { ok: true as const, project: updatedProject };
+}
+
