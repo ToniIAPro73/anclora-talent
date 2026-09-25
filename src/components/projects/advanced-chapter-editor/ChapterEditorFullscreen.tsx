@@ -328,6 +328,7 @@ export function ChapterEditorFullscreen({
                 <span>{editor.currentChapter.blocks.length}</span>
                 <button
                   type="button"
+                  data-testid="chapter-outline-close-button"
                   className="ac-button ac-button--ghost ac-button--compact ac-button--icon h-5 w-5 min-h-0 p-0 text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
                   onClick={() => setShowOutline(false)}
                   title={locale === 'es' ? 'Ocultar esquema' : 'Hide outline'}
@@ -373,6 +374,7 @@ export function ChapterEditorFullscreen({
               <h3 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">{locale === 'es' ? 'Capítulo' : 'Chapter'}</h3>
               <button
                 type="button"
+                data-testid="chapter-inspector-close-button"
                 className="ac-button ac-button--ghost ac-button--compact ac-button--icon"
                 onClick={() => setShowInspector(false)}
                 title={locale === 'es' ? 'Cerrar panel' : 'Close panel'}

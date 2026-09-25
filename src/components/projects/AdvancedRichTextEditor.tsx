@@ -1297,9 +1297,10 @@ export function AdvancedRichTextEditor({
 }) {
   const { locale } = useUiPreferences();
   const { preferences, setPreferences } = useEditorPreferences();
-  const [physicalWidth, setPhysicalWidth] = useState(0);
+  const [physicalWidth, setPhysicalWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 0));
   const [containerInnerWidth, setContainerInnerWidth] = useState(0);
   const isSyncingExternalContentRef = useRef(false);
+  const lastFocusedCurrentPageRef = useRef<number | null>(null);
   const multipageFlowRef = useRef<HTMLDivElement>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
   const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop'>(
@@ -1833,6 +1834,11 @@ export function AdvancedRichTextEditor({
       return;
     }
 
+    if (lastFocusedCurrentPageRef.current === currentPage) {
+      return;
+    }
+
+    lastFocusedCurrentPageRef.current = currentPage;
     focusVisiblePage(currentPage);
   }, [currentPage, editor, focusVisiblePage, totalRenderablePages]);
 
