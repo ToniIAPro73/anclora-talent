@@ -1,0 +1,194 @@
+{
+  "$comment": "Estado: CURRENT = UI vigente (solo branding actualizado); STALE = UI obsoleta, pendiente de recaptura; PLACEHOLDER = imagen de relleno o ausente; STATIC = asset de marca, no se captura.",
+  "version": 1,
+  "change": "CHG-0014",
+  "generated": "2026-09-25",
+  "product": "Anclora Talent",
+  "screenshots_dir": "docs/manual/screenshots",
+  "env_file": ".env.local",
+  "app_url_default": "http://localhost:3000",
+  "start": "npm run dev   # Next.js en http://localhost:3000 (base de datos de producción según contrato; este flujo solo lee)",
+  "generator": "node scripts/generate-manual-pdf.mjs",
+  "outputs": [
+    "public/manuals/anclora-talent-manual-usuario-es.pdf"
+  ],
+  "qa_domains": [
+    "@anclora-talent.test"
+  ],
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "device_scale_factor": 1,
+  "cookies": [
+    {
+      "name": "anclora-theme",
+      "value": "dark"
+    },
+    {
+      "name": "anclora-locale",
+      "value": "es"
+    }
+  ],
+  "roles": {
+    "qa": {
+      "login": "form",
+      "login_path": "/sign-in",
+      "selectors": {
+        "email": "#email",
+        "password": "#password",
+        "submit": "button[type=\"submit\"]"
+      },
+      "success_url": "dashboard",
+      "email_env": "MANUAL_QA_EMAIL",
+      "password_env": "MANUAL_QA_PASSWORD",
+      "default_email": "e2e.auth@anclora-talent.test"
+    },
+    "qa_empty": {
+      "login": "form",
+      "login_path": "/sign-in",
+      "selectors": {
+        "email": "#email",
+        "password": "#password",
+        "submit": "button[type=\"submit\"]"
+      },
+      "success_url": "dashboard",
+      "email_env": "MANUAL_QA_EMPTY_EMAIL",
+      "password_env": "MANUAL_QA_EMPTY_PASSWORD"
+    }
+  },
+  "required_env": [
+    "MANUAL_QA_PASSWORD",
+    "MANUAL_QA_PROJECT_ID",
+    "MANUAL_QA_EMPTY_EMAIL",
+    "MANUAL_QA_EMPTY_PASSWORD"
+  ],
+  "data": "Proyecto QA existente de la cuenta QA (MANUAL_QA_PROJECT_ID) con capítulos, portada y contraportada; documento sintético para la importación asistida; segunda identidad QA @anclora-talent.test sin proyectos para el dashboard vacío.",
+  "screens": [
+    {
+      "file": "logo.png",
+      "mode": "static",
+      "role": "-",
+      "status": "STATIC",
+      "instructions": "Logo Premium de portada (ya actualizado)."
+    },
+    {
+      "file": "landing-dark.png",
+      "mode": "auto",
+      "role": "guest",
+      "path": "/",
+      "full_page": true,
+      "status": "STALE",
+      "instructions": "Landing actual de Anclora Talent en tema oscuro (sección «1. Empieza aquí»)"
+    },
+    {
+      "file": "sign-up-current.png",
+      "mode": "auto",
+      "role": "guest",
+      "path": "/sign-up",
+      "full_page": false,
+      "status": "STALE",
+      "instructions": "Formulario actual de registro (sección «Crear una cuenta»)"
+    },
+    {
+      "file": "sign-in-current.png",
+      "mode": "auto",
+      "role": "guest",
+      "path": "/sign-in",
+      "full_page": false,
+      "status": "STALE",
+      "instructions": "Formulario actual de inicio de sesión (sección «Iniciar sesión»)"
+    },
+    {
+      "file": "recovery-current.png",
+      "mode": "auto",
+      "role": "guest",
+      "path": "/forgot-password",
+      "full_page": true,
+      "status": "STALE",
+      "instructions": "Pantalla actual de recuperación de contraseña (sección «Recuperar la contraseña»)"
+    },
+    {
+      "file": "dashboard-dark.png",
+      "mode": "auto",
+      "role": "qa",
+      "path": "/dashboard",
+      "full_page": false,
+      "status": "STALE",
+      "instructions": "Dashboard con proyecto nuevo y selector de idioma, tema y cuenta (sección «3. Dashboard y proyectos»)"
+    },
+    {
+      "file": "dashboard-empty-light.png",
+      "mode": "assisted",
+      "role": "qa_empty",
+      "path": "/dashboard",
+      "status": "STALE",
+      "instructions": "Cuenta QA sin proyectos. Cambia a tema claro con el control global antes de capturar. — Dashboard sin proyectos (sección «Dashboard vacío»)"
+    },
+    {
+      "file": "workspace-editor.png",
+      "mode": "auto",
+      "role": "qa",
+      "path": "/projects/${MANUAL_QA_PROJECT_ID}/editor",
+      "full_page": false,
+      "status": "STALE",
+      "instructions": "Workspace editorial con estado del documento y controles de composición (sección «5. Workspace editorial»)"
+    },
+    {
+      "file": "import-analysis.png",
+      "mode": "assisted",
+      "role": "qa",
+      "path": "/dashboard",
+      "status": "STALE",
+      "instructions": "Con la cuenta QA, importa el documento sintético de QA y deja visible el análisis de importación (nunca documentos reales). — Análisis de importación con datos sintéticos (sección «Pasos de importación»)"
+    },
+    {
+      "file": "cover-studio.png",
+      "mode": "auto",
+      "role": "qa",
+      "path": "/projects/${MANUAL_QA_PROJECT_ID}/cover",
+      "full_page": false,
+      "status": "STALE",
+      "instructions": "Cover Studio con datos sintéticos (sección «Cover Studio»)"
+    },
+    {
+      "file": "back-cover.png",
+      "mode": "auto",
+      "role": "qa",
+      "path": "/projects/${MANUAL_QA_PROJECT_ID}/back-cover",
+      "full_page": false,
+      "status": "STALE",
+      "instructions": "Contraportada del proyecto (sección «Contraportada»)"
+    },
+    {
+      "file": "preview-full.png",
+      "mode": "auto",
+      "role": "qa",
+      "path": "/projects/${MANUAL_QA_PROJECT_ID}/preview",
+      "full_page": false,
+      "status": "STALE",
+      "instructions": "Preview paginada con portada y controles de dispositivo (sección «Preview del proyecto»)"
+    },
+    {
+      "file": "exports.png",
+      "mode": "assisted",
+      "role": "qa",
+      "path": "/projects/${MANUAL_QA_PROJECT_ID}/preview",
+      "status": "STALE",
+      "instructions": "Desplaza hasta los botones Exportar HTML / PDF / Word y deja visible el bloque de exportación. — Acciones de exportación del proyecto (sección «Antes de descargar»)"
+    },
+    {
+      "file": "mobile-editor.png",
+      "mode": "auto",
+      "role": "qa",
+      "path": "/projects/${MANUAL_QA_PROJECT_ID}/editor",
+      "full_page": false,
+      "status": "STALE",
+      "instructions": "Editor en viewport móvil (sección «12. Trabajar en móvil y tablet»)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      }
+    }
+  ]
+}
