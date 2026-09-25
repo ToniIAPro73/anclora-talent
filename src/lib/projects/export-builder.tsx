@@ -325,6 +325,7 @@ export async function renderProjectExportHtml(
   const pages = composeProjectPreview(project, exportConfig, undefined, templateOverrides).pages;
   assertExportArtifactIntegrity(project, pages, 'HTML');
   const styleMap = resolveDocumentStyles({
+    sourceStyleProfile: project.document.metadata?.originalDocumentStyleProfile ?? null,
     referenceProfile: project.document.metadata?.referenceEditorialProfile,
     brandProfile: project.brandProfile,
     userOverrides: project.document.metadata?.userOverrides,
@@ -974,6 +975,7 @@ export async function buildProjectPdfWithConfig(
   assertExportArtifactIntegrity(project, pages, 'PDF');
   const profile = project.document.metadata?.referenceEditorialProfile;
   const styleMap = resolveDocumentStyles({
+    sourceStyleProfile: project.document.metadata?.originalDocumentStyleProfile ?? null,
     referenceProfile: profile,
     brandProfile: project.brandProfile,
     userOverrides: project.document.metadata?.userOverrides,
@@ -1272,6 +1274,7 @@ export async function buildProjectDocxBuffer(
   const pages = composeProjectPreview(project, exportConfig, undefined, templateOverrides).pages;
   assertExportArtifactIntegrity(project, pages, 'DOCX');
   const styleMap = styleMapOverride ?? resolveDocumentStyles({
+    sourceStyleProfile: project.document.metadata?.originalDocumentStyleProfile ?? null,
     referenceProfile: project.document.metadata?.referenceEditorialProfile,
     brandProfile: project.brandProfile,
     userOverrides: project.document.metadata?.userOverrides,

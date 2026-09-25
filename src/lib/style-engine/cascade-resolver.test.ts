@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { resolveDocumentStyles, SYSTEM_DEFAULTS } from './cascade-resolver';
 import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profile/model';
-import type { BrandProfile } from '@/lib/brand/brand-profile';
+import { createBrandProfileRecord } from '@/lib/brand/brand-profile';
 import type { UserStyleOverride } from './model';
+import type { OriginalDocumentStyleProfile } from '@/lib/projects/source-style-profile';
 
 describe('Phase 4 — Deterministic Style Cascade Resolver (P4-T01)', () => {
   it('falls back cleanly to system defaults when no profiles are provided', () => {
@@ -13,6 +14,102 @@ describe('Phase 4 — Deterministic Style Cascade Resolver (P4-T01)', () => {
     expect(styleMap.headings.h1.fontSizePt).toBe(SYSTEM_DEFAULTS.h1.fontSizePt);
     expect(styleMap.page.widthPt).toBe(SYSTEM_DEFAULTS.page.widthPt);
     expect(styleMap.version).toBe(1);
+  });
+
+  it('CASCADE-01: applies source document style profile as the primary baseline', () => {
+    const sourceStyleProfile: OriginalDocumentStyleProfile = {
+      version: 1,
+      parserVersion: 'docx-v2',
+      page: {
+        widthPt: 450,
+        heightPt: 700,
+        orientation: 'portrait',
+        marginsPt: { top: 50, bottom: 50, left: 40, right: 40 },
+        gutterPt: 0,
+      },
+      body: {
+        fontFamily: 'Liberation Serif',
+        fontSizePt: 12,
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        color: '#1a1a1a',
+        lineHeight: 1.15,
+        textAlign: 'justify',
+        firstLineIndentPt: 18,
+        leftIndentPt: 0,
+        rightIndentPt: 0,
+        spacingBeforePt: 0,
+        spacingAfterPt: 6,
+      },
+      headings: {
+        h1: {
+          fontFamily: 'Liberation Sans',
+          fontSizePt: 22,
+          fontWeight: 'bold',
+          fontStyle: 'normal',
+          color: '#000000',
+          textAlign: 'center',
+          spacingBeforePt: 24,
+          spacingAfterPt: 12,
+        },
+      },
+      provenance: {},
+    };
+
+    const styleMap = resolveDocumentStyles({
+      sourceStyleProfile,
+    });
+
+    expect(styleMap.body.fontFamily).toBe('Liberation Serif');
+    expect(styleMap.body.fontSizePt).toBe(12);
+    expect(styleMap.body.textAlign).toBe('justify');
+    expect(styleMap.page.widthPt).toBe(450);
+    expect(styleMap.page.marginsPt.left).toBe(40);
+    expect(styleMap.headings.h1.fontFamily).toBe('Liberation Sans');
+    expect(styleMap.headings.h1.fontSizePt).toBe(22);
+    expect(styleMap.headings.h1.textAlign).toBe('center');
+  });
+
+  it('CASCADE-02: source + user override -> user override wins only changed property', () => {
+    const sourceStyleProfile: OriginalDocumentStyleProfile = {
+      version: 1,
+      parserVersion: 'docx-v2',
+      body: {
+        fontFamily: 'Liberation Serif',
+        fontSizePt: 12,
+        textAlign: 'justify',
+      },
+      page: {
+        widthPt: 450,
+        heightPt: 700,
+        marginsPt: { top: 50, bottom: 50, left: 40, right: 40 },
+      },
+      provenance: {},
+    };
+
+    const userOverrides: UserStyleOverride[] = [
+      {
+        scope: 'role',
+        targetRole: 'body',
+        styles: {
+          fontFamily: 'EB Garamond',
+        },
+        updatedAt: new Date().toISOString(),
+      },
+    ];
+
+    const styleMap = resolveDocumentStyles({
+      sourceStyleProfile,
+      userOverrides,
+    });
+
+    // font family overridden by user
+    expect(styleMap.body.fontFamily).toBe('EB Garamond');
+    // other properties remain from source
+    expect(styleMap.body.fontSizePt).toBe(12);
+    expect(styleMap.body.textAlign).toBe('justify');
+    expect(styleMap.page.widthPt).toBe(450);
+    expect(styleMap.page.marginsPt.left).toBe(40);
   });
 
   it('applies reference editorial profile layout, geometry, and typography', () => {
@@ -81,7 +178,7 @@ describe('Phase 4 — Deterministic Style Cascade Resolver (P4-T01)', () => {
       toc: { detected: false, titleStyle: null, entryStyle: null, pageNumberStyle: null, leaderStyle: 'unknown' },
       separators: null,
       palette: ['#222222', '#111111'],
-      source: { format: 'docx', filename: 'ref.docx', analysedAt: '', parserVersion: 'v1' },
+      source: { sourceAssetId: 'ast-1', hash: 'h1', format: 'docx', filename: 'ref.docx', analysedAt: '', parserVersion: 'v1' },
       metrics: { totalHeadings: 1, desglose: { h1Partes: 0, h2Capitulos: 1, h3Subsecciones: 0 }, tablas: 0, imagenes: 0 },
       confidence: { overall: 'high', pageGeometry: 'high', bodyTypography: 'high', headings: 'high', chapterOpening: 'high', headers: 'high', footers: 'high', toc: 'unknown' },
     };
@@ -138,27 +235,18 @@ describe('Phase 4 — Deterministic Style Cascade Resolver (P4-T01)', () => {
       },
     };
 
-    const mockBrand: BrandProfile = {
-      id: 'brand-1',
-      userId: 'user-1',
+    const mockBrand = createBrandProfileRecord('user-1', {
       name: 'Anclora Insights',
-      slug: 'anclora-insights',
       palette: [
-        { name: 'Carbón', hex: '#1C242B', role: 'ink', isPrimary: true },
-        { name: 'Oro', hex: '#D4AF37', role: 'accent', isPrimary: false },
-        { name: 'Crema', hex: '#FDFBF7', role: 'paper', isPrimary: false },
+        { name: 'Carbón', hex: '#1C242B', role: 'ink', usagePercent: 55, confidence: 'high' },
+        { name: 'Oro', hex: '#D4AF37', role: 'accent', usagePercent: 10, confidence: 'high' },
+        { name: 'Crema', hex: '#FDFBF7', role: 'paper', usagePercent: 35, confidence: 'high' },
       ],
       typography: {
-        display: { family: 'Cinzel', fallback: 'serif' },
-        body: { family: 'Source Serif Pro', fallback: 'serif' },
+        display: { family: 'Cinzel', confidence: 'high' },
+        body: { family: 'Source Serif Pro', confidence: 'high' },
       },
-      visualStyle: { borderStyle: 'clean', cornerRadius: 'none', shadowIntensity: 'none', density: 'comfortable' },
-      rules: { alwaysUppercaseHeadings: false, centerAlignTitles: false, accentColorDividers: true, enableDropCaps: false, quoteMarksStyle: 'guillemets' },
-      assets: {},
-      isDefault: false,
-      createdAt: '',
-      updatedAt: '',
-    };
+    });
 
     const styleMap = resolveDocumentStyles({
       referenceProfile: mockRef as ReferenceEditorialProfile,
@@ -212,23 +300,15 @@ describe('Phase 4 — Deterministic Style Cascade Resolver (P4-T01)', () => {
       },
     };
 
-    const mockBrand: BrandProfile = {
-      id: 'brand-1',
-      userId: 'user-1',
+    const mockBrand = createBrandProfileRecord('user-1', {
       name: 'Anclora Insights',
-      version: 1,
-      status: 'active',
       palette: [
         { name: 'Carbón', hex: '#1C242B', role: 'ink', usagePercent: 55, confidence: 'high' },
         { name: 'Oro', hex: '#D4AF37', role: 'accent', usagePercent: 10, confidence: 'high' },
       ],
       typography: { display: null, body: null },
-      proportions: { ink: 55, paper: 30, accent: 10, accentMuted: 5 },
-      rules: [],
-      voicePairs: [],
-      createdAt: '',
-      updatedAt: '',
-    };
+      usageProportions: { ink: 55, paper: 30, accent: 10, accentMuted: 5 },
+    });
 
     const userOverrides: UserStyleOverride[] = [
       {
@@ -254,8 +334,8 @@ describe('Phase 4 — Deterministic Style Cascade Resolver (P4-T01)', () => {
     expect(styleMap.headings.h1.color).toBe('#FF0055');
     expect(styleMap.headings.h1.fontFamily).toBe('Custom Title Font');
 
-    // Body still follows cascade (Noto Serif + Brand ink)
+    // The explicit reference color wins over brand, just like its typography.
     expect(styleMap.body.fontFamily).toBe('Noto Serif');
-    expect(styleMap.body.color).toBe('#1C242B');
+    expect(styleMap.body.color).toBe('#333333');
   });
 });

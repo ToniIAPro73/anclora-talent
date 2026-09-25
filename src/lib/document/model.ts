@@ -138,6 +138,10 @@ export interface DocumentMetadata {
   language?: string;
   /** U6: per-project composition overrides (hierarchy: project > user > system). */
   composition?: CompositionSettings | null;
+  /** Original immutable manuscript style profile extracted from imported source. */
+  originalDocumentStyleProfile?: import('@/lib/projects/source-style-profile').OriginalDocumentStyleProfile | null;
+  /** Durable pagination baseline extracted from original source document. */
+  sourcePaginationBaseline?: import('@/lib/projects/source-style-profile').SourcePaginationBaseline | null;
   /** Reusable visual rules extracted from a reference document. */
   referenceEditorialProfile?: ReferenceEditorialProfile | null;
   /** U6: explicit "no brand" marker; wins over any default brand profile. */

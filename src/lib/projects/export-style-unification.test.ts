@@ -86,6 +86,8 @@ describe('Export Pipeline Style Unification (Phase 8)', () => {
   test('P8-T02: HTML export injects compiled CSS styles matching DocumentStyleMap', async () => {
     const project = createProjectRecord('user-export-test', { title: 'Pipeline Test Project' });
     project.document.metadata = {
+      ...project.document.metadata,
+      title: project.document.title,
       referenceEditorialProfile: makeTestReferenceProfile(),
     };
 
@@ -107,6 +109,8 @@ describe('Export Pipeline Style Unification (Phase 8)', () => {
     const project = createProjectRecord('user-epub-test', { title: 'EPUB Styled Project' });
     const profile = makeTestReferenceProfile();
     project.document.metadata = {
+      ...project.document.metadata,
+      title: project.document.title,
       referenceEditorialProfile: profile,
     };
 
@@ -126,6 +130,8 @@ describe('Export Pipeline Style Unification (Phase 8)', () => {
   test('P8-T02: DOCX export generates valid buffer reflecting custom styles', async () => {
     const project = createProjectRecord('user-docx-test', { title: 'DOCX Styled Project' });
     project.document.metadata = {
+      ...project.document.metadata,
+      title: project.document.title,
       referenceEditorialProfile: makeTestReferenceProfile(),
     };
 

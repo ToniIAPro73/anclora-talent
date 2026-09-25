@@ -252,6 +252,7 @@ export function ProjectWorkspace({
     return compileDocument({
       projectId: project.id,
       document: rawDoc,
+      sourceStyleProfile: project.document.metadata?.originalDocumentStyleProfile ?? null,
       referenceProfile: project.document.metadata?.referenceEditorialProfile ?? null,
       brandProfile: project.brandProfile ?? null,
       userOverrides: project.document.metadata?.userOverrides ?? [],

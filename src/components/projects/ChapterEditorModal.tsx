@@ -12,6 +12,8 @@ interface ChapterEditorModalProps {
   onSave?: () => void;
   effectiveFontFamily?: string;
   composition?: import('@/lib/projects/composition').CompositionSettings | null;
+  documentStyleMap?: import('@/lib/style-engine/model').DocumentStyleMap | null;
+  compiledCssVariables?: Record<string, string> | null;
 }
 
 /**
@@ -27,6 +29,8 @@ export function ChapterEditorModal({
   onSave,
   effectiveFontFamily,
   composition,
+  documentStyleMap,
+  compiledCssVariables,
 }: ChapterEditorModalProps) {
   if (!isOpen) return null;
 
@@ -48,6 +52,8 @@ export function ChapterEditorModal({
         onSave={onSave}
         effectiveFontFamily={effectiveFontFamily}
         composition={composition}
+        documentStyleMap={documentStyleMap}
+        compiledCssVariables={compiledCssVariables}
       />
     </div>
   );

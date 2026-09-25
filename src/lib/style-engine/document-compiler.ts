@@ -1,12 +1,16 @@
 import type { SemanticDocument } from '@/lib/document/model';
 import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profile/model';
 import type { BrandProfile } from '@/lib/brand/brand-profile';
+import type { OriginalDocumentStyleProfile } from '@/lib/projects/source-style-profile';
 import { resolveDocumentStyles } from './cascade-resolver';
 import type { CompiledDocument, DocumentStyleMap, UserStyleOverride } from './model';
 
 export interface CompileDocumentOptions {
   projectId: string;
-  document: SemanticDocument;
+  document?: SemanticDocument;
+  /** Alias for backward compatibility in existing tests */
+  semanticDoc?: SemanticDocument;
+  sourceStyleProfile?: OriginalDocumentStyleProfile | null;
   referenceProfile?: ReferenceEditorialProfile | null;
   brandProfile?: BrandProfile | null;
   userOverrides?: UserStyleOverride[];
@@ -98,11 +102,20 @@ export function generateCssVariables(styleMap: DocumentStyleMap): Record<string,
 export function compileDocument({
   projectId,
   document,
+  semanticDoc,
+  sourceStyleProfile,
   referenceProfile,
   brandProfile,
   userOverrides = [],
 }: CompileDocumentOptions): CompiledDocument {
+  const effectiveDoc: SemanticDocument = document ?? semanticDoc ?? {
+    version: 1,
+    metadata: { title: 'Untitled' },
+    blocks: [],
+  };
+
   const styleMap = resolveDocumentStyles({
+    sourceStyleProfile,
     referenceProfile,
     brandProfile,
     userOverrides,
@@ -113,7 +126,7 @@ export function compileDocument({
   return {
     version: 1,
     projectId,
-    document,
+    document: effectiveDoc,
     styleMap,
     cssVariables,
     bindings: {

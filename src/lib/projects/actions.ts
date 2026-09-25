@@ -18,7 +18,7 @@ import {
 } from '@/lib/preview/preview-builder';
 import { chapterBlocksToHtml } from './chapter-html';
 import { mergeReimportedSeed } from './reimport';
-import { parseCompositionSettings } from './composition';
+import { deriveCompositionOverrides, parseCompositionSettings } from './composition';
 import type { CoverDesign, UpdateBackCoverInput, UpdateCoverInput, UpdateDocumentInput } from './types';
 import { defaultEditorPreferences, type EditorPreferences } from '@/lib/ui-preferences/preferences';
 import type { DesignLayer, DesignSurface } from './design-surface';
@@ -26,6 +26,7 @@ import { parseDesignSurfacePayload } from './design-surface-schema';
 import { isReferenceEditorialProfile } from '@/lib/reference-editorial-profile/legacy';
 import { applyReferenceEditorialProfileToComposition } from '@/lib/reference-editorial-profile/apply';
 import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profile/model';
+import { extractOriginalDocumentStyleProfile } from './docx-styles';
 
 function parsePalette(value: FormDataEntryValue | null): CoverDesign['palette'] {
   if (value === 'teal' || value === 'sand') {
@@ -140,6 +141,8 @@ export async function createProjectAction(formData: FormData) {
               : 'editable';
           const constructed = {
             ...session.extractedSeed,
+            originalDocumentStyleProfile:
+              session.extractedSeed.originalDocumentStyleProfile ?? session.originalDocumentStyleProfile ?? null,
             mode,
             sourceBlobUrl: session.sourceBlobUrl ?? null,
             sourceSha256: session.sourceSha256 ?? undefined,
@@ -168,6 +171,10 @@ export async function createProjectAction(formData: FormData) {
     if (!importedDocument && sourceDocument instanceof File && sourceDocument.size > 0) {
       const { extractImportedDocumentSeed } = await import('./import');
       const result = await extractImportedDocumentSeed(sourceDocument);
+
+      const originalDocumentStyleProfile = sourceDocument.name.toLowerCase().endsWith('.docx')
+        ? await extractOriginalDocumentStyleProfile(Buffer.from(await sourceDocument.arrayBuffer()))
+        : null;
 
       const mode: DocumentMode = isFixedPdfRequested ? 'fixed-pdf' : 'editable';
       let sourceBlobUrl: string | null = null;
@@ -203,7 +210,15 @@ export async function createProjectAction(formData: FormData) {
         mode,
         sourceAccessLevel,
       });
-      importedDocument = { ...result, mode, sourceBlobUrl, sourceSha256, sourceSizeBytes, sourceAccessLevel };
+      importedDocument = {
+        ...result,
+        originalDocumentStyleProfile,
+        mode,
+        sourceBlobUrl,
+        sourceSha256,
+        sourceSizeBytes,
+        sourceAccessLevel,
+      };
     }
 
     const project = await projectRepository.createProject(userId, { title, importedDocument, templateId, referenceEditorialProfile });
@@ -224,7 +239,7 @@ export async function createProjectAction(formData: FormData) {
           const current = await projectRepository.getProjectById(userId, project.id);
           const metadata = {
             ...(current?.document.metadata ?? { title: project.title }),
-            composition,
+            composition: deriveCompositionOverrides(composition, current?.document.metadata?.originalDocumentStyleProfile),
           };
           await projectRepository.saveDocumentExtras(userId, project.id, { metadata });
           console.info('[createProjectAction] composition persisted', {
@@ -246,7 +261,7 @@ export async function createProjectAction(formData: FormData) {
           const current = await projectRepository.getProjectById(userId, project.id);
           const metadata = {
             ...(current?.document.metadata ?? { title: project.title }),
-            composition,
+            composition: deriveCompositionOverrides(composition, current?.document.metadata?.originalDocumentStyleProfile),
           };
           await projectRepository.saveDocumentExtras(userId, project.id, { metadata });
           console.info('[createProjectAction] session composition persisted', {
@@ -1047,7 +1062,7 @@ export async function saveProjectCompositionAction(formData: FormData) {
 
   const metadata = { ...(project.document.metadata ?? { title: project.title }) };
   if (hasCompositionField) {
-    metadata.composition = composition;
+    metadata.composition = deriveCompositionOverrides(composition, project.document.metadata?.originalDocumentStyleProfile);
   }
   if (brandChoiceField === 'none') {
     metadata.brandChoice = 'none';

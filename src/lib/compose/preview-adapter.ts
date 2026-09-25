@@ -203,6 +203,7 @@ function resolveComposeTemplate(
 ): ComposeTemplate {
   const metadata = project.document.metadata;
   const styleMap = resolveDocumentStyles({
+    sourceStyleProfile: metadata?.originalDocumentStyleProfile ?? null,
     referenceProfile: metadata?.referenceEditorialProfile ?? null,
     brandProfile: project.brandProfile ?? null,
     userOverrides: metadata?.userOverrides ?? [],

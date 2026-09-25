@@ -7,6 +7,8 @@ import type { DocumentMode, SourceDocumentAccessLevel } from './types';
 import type { CompositionSettings } from './composition';
 import type { ImportedDocumentSeed } from './types';
 
+import type { OriginalDocumentStyleProfile } from './source-style-profile';
+
 export interface CreateImportSessionInput {
   sourceFileName: string;
   sourceMimeType: string;
@@ -17,6 +19,7 @@ export interface CreateImportSessionInput {
   documentMode?: DocumentMode;
   extractedSeed: ImportedDocumentSeed;
   composition?: CompositionSettings | null;
+  originalDocumentStyleProfile?: OriginalDocumentStyleProfile | null;
   expiresInMs?: number;
 }
 
@@ -32,6 +35,7 @@ export interface ImportSessionRecord {
   documentMode: DocumentMode;
   extractedSeed: ImportedDocumentSeed;
   composition: CompositionSettings | null;
+  originalDocumentStyleProfile?: OriginalDocumentStyleProfile | null;
   status: 'ready' | 'consumed' | 'expired';
   expiresAt: Date;
   createdAt: Date;

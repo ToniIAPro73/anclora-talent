@@ -132,6 +132,10 @@ describe('Phase 11: End-to-End Canonical Test Pack Verification', () => {
       userId: 'user-e2e-1',
       version: 1,
       status: 'active',
+      usageProportions: extractedBrand.usageProportions ?? null,
+      governanceRules: extractedBrand.governanceRules ?? [],
+      voicePairs: extractedBrand.voicePairs ?? [],
+      sourceFileName: extractedBrand.sourceFileName ?? null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -189,6 +193,7 @@ describe('Phase 11: End-to-End Canonical Test Pack Verification', () => {
       {
         id: 'ch-intro',
         title: 'Introducción',
+        order: 1,
         blocks: [
           { id: 'b-intro-h', type: 'heading', order: 1, content: 'Introducción' },
           { id: 'b-intro-p', type: 'paragraph', order: 2, content: 'Contenido redactado manualmente por el autor.' },
@@ -242,6 +247,10 @@ describe('Phase 11: End-to-End Canonical Test Pack Verification', () => {
       userId: 'user-e2e-1',
       version: 1,
       status: 'active',
+      usageProportions: extractedBrand2.usageProportions ?? null,
+      governanceRules: extractedBrand2.governanceRules ?? [],
+      voicePairs: extractedBrand2.voicePairs ?? [],
+      sourceFileName: extractedBrand2.sourceFileName ?? null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

@@ -126,12 +126,18 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
             derivedFromSourceAssetId: input.derivedFrom?.sourceAssetId,
           }
         : null,
-      metadata: input.referenceEditorialProfile
-        ? {
-            title: documentTitle,
-            referenceEditorialProfile: input.referenceEditorialProfile,
-          }
-        : null,
+      metadata:
+        imported || input.originalDocumentStyleProfile || input.referenceEditorialProfile
+          ? {
+              title: documentTitle,
+              originalDocumentStyleProfile:
+                input.originalDocumentStyleProfile ??
+                imported?.originalDocumentStyleProfile ??
+                null,
+              sourcePaginationBaseline: imported?.sourcePaginationBaseline ?? null,
+              referenceEditorialProfile: input.referenceEditorialProfile ?? null,
+            }
+          : null,
     },
     cover: {
       id: randomUUID(),

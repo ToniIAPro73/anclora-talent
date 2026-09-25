@@ -545,6 +545,7 @@ ${metadata.author ? `<p class="cover-author">${escapeXml(metadata.author)}</p>` 
   zip.file('OEBPS/cover.xhtml', coverXhtml);
   const refProfile = options.referenceProfile ?? project.document.metadata?.referenceEditorialProfile;
   const styleMap = options.styleMap ?? resolveDocumentStyles({
+    sourceStyleProfile: project.document.metadata?.originalDocumentStyleProfile ?? null,
     referenceProfile: refProfile,
     brandProfile: options.brandProfile ?? project.brandProfile,
     userOverrides: project.document.metadata?.userOverrides,

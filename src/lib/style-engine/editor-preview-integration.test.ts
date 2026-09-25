@@ -62,9 +62,10 @@ describe('Phase 6 & Phase 7 — Chapter Editor & Preview Engine Style Integratio
       { name: 'Oro', hex: '#D4AF37', role: 'accent', usagePercent: 10, confidence: 'high' },
     ],
     typography: { display: null, body: null },
-    proportions: { ink: 55, paper: 30, accent: 10, accentMuted: 5 },
-    rules: [],
+    usageProportions: { ink: 55, paper: 30, accent: 10, accentMuted: 5 },
+    governanceRules: [],
     voicePairs: [],
+    sourceFileName: null,
     createdAt: '',
     updatedAt: '',
   };
@@ -88,7 +89,7 @@ describe('Phase 6 & Phase 7 — Chapter Editor & Preview Engine Style Integratio
     expect(compiled.cssVariables['--talent-h1-font']).toBe('Noto Sans');
     expect(compiled.cssVariables['--talent-h1-size']).toBe('24pt');
     expect(compiled.cssVariables['--talent-accent-color']).toBe('#D4AF37');
-    expect(compiled.cssVariables['--talent-body-color']).toBe('#1C242B');
+    expect(compiled.cssVariables['--talent-body-color']).toBe('#1A1A1A');
   });
 
   it('unifies composeProjectPreview layout metrics with DocumentStyleMap (P7-T02)', () => {

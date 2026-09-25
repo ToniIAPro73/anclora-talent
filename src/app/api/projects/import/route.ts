@@ -4,7 +4,9 @@ import { getCurrentUser } from '@/lib/auth/guards';
 import { buildImportOcrRunner } from '@/lib/filestudio/ocr';
 import { extractImportedDocumentSeed } from '@/lib/projects/import';
 import { SYSTEM_COMPOSITION_DEFAULTS, type CompositionSource } from '@/lib/projects/composition';
-import { extractDocxNormalStyle } from '@/lib/projects/docx-styles';
+import { extractOriginalDocumentStyleProfile } from '@/lib/projects/docx-styles';
+import type { OriginalDocumentStyleProfile } from '@/lib/projects/source-style-profile';
+import { extractSourcePaginationBaseline } from '@/lib/projects/source-pagination';
 import { importSessionRepository } from '@/lib/projects/import-session';
 import { uploadPrivateProjectDocument, fetchPrivateProjectDocument } from '@/lib/blob/client';
 import { sha256Buffer } from '@/lib/projects/hash';
@@ -156,7 +158,8 @@ export async function POST(request: NextRequest) {
     documentModeChoice = 'fixed-pdf';
   }
 
-  // U6: best-effort composition extraction from the DOCX Normal style.
+  // Extract original document style profile and composition
+  let originalDocumentStyleProfile: OriginalDocumentStyleProfile | null = null;
   let composition: { settings: typeof SYSTEM_COMPOSITION_DEFAULTS; source: CompositionSource } = {
     settings: SYSTEM_COMPOSITION_DEFAULTS,
     source: 'not-extracted',
@@ -164,10 +167,29 @@ export async function POST(request: NextRequest) {
   if (extension === 'docx') {
     try {
       const buffer = Buffer.from(await file.arrayBuffer());
-      const normalStyle = await extractDocxNormalStyle(buffer);
-      if (normalStyle) {
+      originalDocumentStyleProfile = await extractOriginalDocumentStyleProfile(buffer);
+      originalDocumentStyleProfile = {
+        ...originalDocumentStyleProfile,
+        sourceHash: sourceSha256 ?? undefined,
+      };
+      if (originalDocumentStyleProfile) {
+        const body = originalDocumentStyleProfile.body;
+        const page = originalDocumentStyleProfile.page;
         composition = {
-          settings: { ...SYSTEM_COMPOSITION_DEFAULTS, ...normalStyle },
+          settings: {
+            ...SYSTEM_COMPOSITION_DEFAULTS,
+            fontFamily: body.fontFamily ?? SYSTEM_COMPOSITION_DEFAULTS.fontFamily,
+            fontSizePt: body.fontSizePt ?? SYSTEM_COMPOSITION_DEFAULTS.fontSizePt,
+            lineHeight: body.lineHeight ?? SYSTEM_COMPOSITION_DEFAULTS.lineHeight,
+            margins: page.marginsPt
+              ? {
+                  top: page.marginsPt.top,
+                  bottom: page.marginsPt.bottom,
+                  left: page.marginsPt.left,
+                  right: page.marginsPt.right,
+                }
+              : SYSTEM_COMPOSITION_DEFAULTS.margins,
+          },
           source: 'docx-styles',
         };
       }
@@ -182,6 +204,19 @@ export async function POST(request: NextRequest) {
   try {
     const ocr = await buildImportOcrRunner(user.id);
     const seed = await extractImportedDocumentSeed(file, { ocr, manuscriptTypeOverride });
+    // Keep the source profile inside the persisted seed as well as on the
+    // session envelope. The seed is the durable hand-off consumed by project
+    // creation, including when the session row is read back from PostgreSQL.
+    const sourcePaginationBaseline = extension === 'docx'
+      ? await extractSourcePaginationBaseline(
+          Buffer.from(await file.arrayBuffer()),
+          seed.blocks,
+          sourceSha256 ?? '',
+        )
+      : null;
+    const seedWithSourceProfile = originalDocumentStyleProfile
+      ? { ...seed, originalDocumentStyleProfile, sourcePaginationBaseline }
+      : seed;
 
     // Create import session in PostgreSQL to decouple parsing from final create
     const session = await importSessionRepository.createImportSession(user.id, {
@@ -192,8 +227,9 @@ export async function POST(request: NextRequest) {
       sourceSha256,
       sourceSizeBytes: sizeBytes,
       documentMode: documentModeChoice,
-      extractedSeed: seed,
+      extractedSeed: seedWithSourceProfile,
       composition: composition.settings,
+      originalDocumentStyleProfile,
     });
 
     return NextResponse.json({
@@ -212,6 +248,7 @@ export async function POST(request: NextRequest) {
       ocrAppliedMode: seed.ocrAppliedMode,
       parseWarning: Boolean(seed.parseFailed),
       composition,
+      originalDocumentStyleProfile,
       sourceBlobUrl,
       documentMode: documentModeChoice,
     });

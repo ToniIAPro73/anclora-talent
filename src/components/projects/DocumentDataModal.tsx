@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, RotateCcw, X } from 'lucide-react';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { BrandProfile } from '@/lib/brand/brand-profile';
 import type { ProjectRecord } from '@/lib/projects/types';
@@ -122,9 +122,6 @@ function ConfidenceBadge({ confidence, copy }: { confidence: StructureConfidence
  *   applies the brand profile (this product or all projects).
  */
 export function DocumentDataModal(props: DocumentDataModalProps) {
-  // Remount-on-open: while closed the form is unmounted and its state is
-  // destroyed, so each open re-initializes lazily from props (no
-  // set-state-in-effect).
   if (!props.isOpen) return null;
   return <DocumentDataModalForm {...props} />;
 }
@@ -151,7 +148,8 @@ function DocumentDataModalForm({
     if (!panel) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const focusableSelector = 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
+    const focusableSelector =
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
     const focusFirst = () => panel.querySelector<HTMLElement>(focusableSelector)?.focus();
     focusFirst();
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -180,19 +178,39 @@ function DocumentDataModalForm({
     };
   }, [onClose]);
 
-  // Lazy initial state (component remounts on every open).
+  // Source style baseline extracted from original imported document
+  const sourceProfile = project?.document.metadata?.originalDocumentStyleProfile;
+  const sourceFontFamily = sourceProfile?.body?.fontFamily ?? initialSettings?.fontFamily;
+  const sourceFontSizePt = sourceProfile?.body?.fontSizePt ?? initialSettings?.fontSizePt;
+  const sourceLineHeight = sourceProfile?.body?.lineHeight ?? initialSettings?.lineHeight;
+  const sourceMargins = sourceProfile?.page?.marginsPt ?? initialSettings?.margins;
+
+  // Active / effective initial state
   const base: CompositionSettings =
     mode === 'pre-create'
       ? resolveComposition(initialSettings)
-      : (parseCompositionSettings(project?.document.metadata?.composition) ?? {});
-  const baseMargins: CompositionMargins = base.margins ?? { ...MARGIN_PRESETS.normal };
+      : (parseCompositionSettings(project?.document.metadata?.composition) ?? {
+          fontFamily: sourceFontFamily,
+          fontSizePt: sourceFontSizePt,
+          lineHeight: sourceLineHeight,
+          margins: sourceMargins,
+        });
+  const baseMargins: CompositionMargins = base.margins ?? sourceMargins ?? { ...MARGIN_PRESETS.normal };
 
-  const [fontFamily, setFontFamily] = useState(() => base.fontFamily ?? '');
+  const [fontFamily, setFontFamily] = useState(() => base.fontFamily ?? sourceFontFamily ?? '');
   const [fontSizePt, setFontSizePt] = useState(() =>
-    base.fontSizePt !== undefined ? String(base.fontSizePt) : '',
+    base.fontSizePt !== undefined
+      ? String(base.fontSizePt)
+      : sourceFontSizePt !== undefined
+        ? String(sourceFontSizePt)
+        : '',
   );
   const [lineHeight, setLineHeight] = useState(() =>
-    base.lineHeight !== undefined ? String(base.lineHeight) : '',
+    base.lineHeight !== undefined
+      ? String(base.lineHeight)
+      : sourceLineHeight !== undefined
+        ? String(sourceLineHeight)
+        : '',
   );
   const [margins, setMargins] = useState<CompositionMargins>(() => baseMargins);
   const [marginPreset, setMarginPreset] = useState<MarginPresetKey>(() => detectPreset(baseMargins));
@@ -217,6 +235,62 @@ function DocumentDataModalForm({
     }
   }, [mode, project]);
 
+  // Check which properties are modified relative to source baseline
+  const isFontOverridden = Boolean(sourceFontFamily && fontFamily && fontFamily.trim() !== sourceFontFamily.trim());
+  const parsedCurrentSize = Number.parseFloat(fontSizePt);
+  const isSizeOverridden = Boolean(
+    sourceFontSizePt !== undefined &&
+      Number.isFinite(parsedCurrentSize) &&
+      parsedCurrentSize !== sourceFontSizePt,
+  );
+  const parsedCurrentLineHeight = Number.parseFloat(lineHeight);
+  const isLineHeightOverridden = Boolean(
+    sourceLineHeight !== undefined &&
+      Number.isFinite(parsedCurrentLineHeight) &&
+      parsedCurrentLineHeight !== sourceLineHeight,
+  );
+  const isMarginsOverridden = Boolean(
+    sourceMargins &&
+      (margins.top !== sourceMargins.top ||
+        margins.bottom !== sourceMargins.bottom ||
+        margins.left !== sourceMargins.left ||
+        margins.right !== sourceMargins.right),
+  );
+  const hasAnyOverride = isFontOverridden || isSizeOverridden || isLineHeightOverridden || isMarginsOverridden;
+
+  const handleResetFont = () => {
+    if (sourceFontFamily) {
+      setFontFamily(sourceFontFamily);
+      loadFont(sourceFontFamily);
+    }
+  };
+
+  const handleResetSize = () => {
+    if (sourceFontSizePt !== undefined) {
+      setFontSizePt(String(sourceFontSizePt));
+    }
+  };
+
+  const handleResetLineHeight = () => {
+    if (sourceLineHeight !== undefined) {
+      setLineHeight(String(sourceLineHeight));
+    }
+  };
+
+  const handleResetMargins = () => {
+    if (sourceMargins) {
+      setMargins({ ...sourceMargins });
+      setMarginPreset(detectPreset(sourceMargins));
+    }
+  };
+
+  const handleResetAll = () => {
+    handleResetFont();
+    handleResetSize();
+    handleResetLineHeight();
+    handleResetMargins();
+  };
+
   const buildSettings = (): CompositionSettings => {
     const settings: CompositionSettings = {};
     if (fontFamily.trim()) settings.fontFamily = fontFamily.trim();
@@ -224,9 +298,9 @@ function DocumentDataModalForm({
     if (fontSizePt.trim() && Number.isFinite(parsedSize) && parsedSize > 0) {
       settings.fontSizePt = parsedSize;
     }
-    const parsedLineHeight = Number.parseFloat(lineHeight);
-    if (lineHeight.trim() && Number.isFinite(parsedLineHeight) && parsedLineHeight > 0) {
-      settings.lineHeight = parsedLineHeight;
+    const parsedHeight = Number.parseFloat(lineHeight);
+    if (lineHeight.trim() && Number.isFinite(parsedHeight) && parsedHeight > 0) {
+      settings.lineHeight = parsedHeight;
     }
     settings.margins = margins;
     return settings;
@@ -255,7 +329,6 @@ function DocumentDataModalForm({
     setError('');
     startTransition(async () => {
       try {
-        // Composition + explicit "no brand" marker share the metadata writer.
         if (scope === 'project' || brandScope === 'product') {
           const formData = new FormData();
           formData.set('projectId', project.id);
@@ -299,7 +372,10 @@ function DocumentDataModalForm({
   return (
     <div className="ac-modal" role="dialog" aria-modal="true" data-testid="document-data-modal">
       <div className="ac-modal__backdrop" onClick={onClose} />
-      <div ref={panelRef} className="document-data-modal-panel ac-modal__panel max-w-6xl rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]">
+      <div
+        ref={panelRef}
+        className="document-data-modal-panel ac-modal__panel max-w-6xl rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]"
+      >
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold text-[var(--text-primary)]">
@@ -341,7 +417,21 @@ function DocumentDataModalForm({
         <div className="mt-6 space-y-6">
           {/* Composition */}
           <section className="space-y-4">
-            <h4 className={labelClass}>{copy.documentDataCompositionHeading}</h4>
+            <div className="flex items-center justify-between">
+              <h4 className={labelClass}>{copy.documentDataCompositionHeading}</h4>
+              {hasAnyOverride && (
+                <button
+                  type="button"
+                  data-testid="document-data-reset-all-button"
+                  onClick={handleResetAll}
+                  className="inline-flex items-center gap-1.5 text-xs text-[var(--accent)] hover:underline"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  Restablecer valores originales
+                </button>
+              )}
+            </div>
+
             {fixedPdf ? (
               <p
                 className="ac-surface-panel ac-surface-panel--subtle p-4 text-sm text-[var(--text-secondary)]"
@@ -351,102 +441,164 @@ function DocumentDataModalForm({
               </p>
             ) : (
               <>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <label className="flex flex-col gap-1.5">
-                <span className={labelClass}>{copy.documentDataFontFamilyLabel}</span>
-                <FontSelector
-                  selectedFont={fontFamily}
-                  onFontSelect={(value) => {
-                    setFontFamily(value);
-                    loadFont(value);
-                  }}
-                />
-                <select
-                  data-testid="document-data-font-family-input"
-                  aria-label={copy.documentDataFontFamilyLabel}
-                  tabIndex={-1}
-                  value={fontFamily}
-                  onChange={(event) => setFontFamily(event.target.value)}
-                  className="sr-only"
-                >
-                  {availableFontFamilies.map((family) => (
-                    <option key={family} value={family}>{family}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1.5">
-                <span className={labelClass}>{copy.documentDataFontSizeLabel}</span>
-                <input
-                  type="number"
-                  data-testid="document-data-font-size-input"
-                  value={fontSizePt}
-                  min={6}
-                  max={72}
-                  step={0.5}
-                  onChange={(event) => setFontSizePt(event.target.value)}
-                  className={inputClass}
-                />
-              </label>
-              <label className="flex flex-col gap-1.5">
-                <span className={labelClass}>{copy.documentDataLineHeightLabel}</span>
-                <input
-                  type="number"
-                  data-testid="document-data-line-height-input"
-                  value={lineHeight}
-                  min={1}
-                  max={3}
-                  step={0.05}
-                  onChange={(event) => setLineHeight(event.target.value)}
-                  className={inputClass}
-                />
-              </label>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="flex flex-col gap-1.5">
-                <span className={labelClass}>{copy.documentDataMarginPresetLabel}</span>
-                <select
-                  data-testid="document-data-margin-preset-select"
-                  value={marginPreset}
-                  onChange={(event) => handleMarginPresetChange(event.target.value as MarginPresetKey)}
-                  className={inputClass}
-                >
-                  {[...MARGIN_PRESET_KEYS, 'custom' as const].map((key) => (
-                    <option key={key} value={key}>
-                      {presetLabel(key, copy)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="grid grid-cols-4 gap-2">
-                {(
-                  [
-                    ['top', copy.documentDataMarginTopLabel],
-                    ['bottom', copy.documentDataMarginBottomLabel],
-                    ['left', copy.documentDataMarginLeftLabel],
-                    ['right', copy.documentDataMarginRightLabel],
-                  ] as const
-                ).map(([side, label]) => (
-                  <label key={side} className="flex flex-col gap-1.5">
-                    <span className={labelClass}>{label}</span>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <label className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className={labelClass}>{copy.documentDataFontFamilyLabel}</span>
+                      {isFontOverridden && (
+                        <button
+                          type="button"
+                          data-testid="document-data-reset-font-button"
+                          onClick={handleResetFont}
+                          className="text-[10px] text-[var(--accent)] hover:underline"
+                        >
+                          Restablecer
+                        </button>
+                      )}
+                    </div>
+                    <FontSelector
+                      selectedFont={fontFamily}
+                      onFontSelect={(value) => {
+                        setFontFamily(value);
+                        loadFont(value);
+                      }}
+                    />
+                    <select
+                      data-testid="document-data-font-family-input"
+                      aria-label={copy.documentDataFontFamilyLabel}
+                      tabIndex={-1}
+                      value={fontFamily}
+                      onChange={(event) => setFontFamily(event.target.value)}
+                      className="sr-only"
+                    >
+                      {availableFontFamilies.map((family) => (
+                        <option key={family} value={family}>
+                          {family}
+                        </option>
+                      ))}
+                    </select>
+                    {sourceFontFamily && (
+                      <span className="text-[10px] text-[var(--text-tertiary)]">
+                        {isFontOverridden ? `Original: ${sourceFontFamily}` : 'Origen: Documento importado'}
+                      </span>
+                    )}
+                  </label>
+                  <label className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className={labelClass}>{copy.documentDataFontSizeLabel}</span>
+                      {isSizeOverridden && (
+                        <button
+                          type="button"
+                          data-testid="document-data-reset-size-button"
+                          onClick={handleResetSize}
+                          className="text-[10px] text-[var(--accent)] hover:underline"
+                        >
+                          Restablecer
+                        </button>
+                      )}
+                    </div>
                     <input
                       type="number"
-                      data-testid={`document-data-margin-${side}-input`}
-                      value={margins[side]}
-                      min={0}
-                      onChange={(event) => handleMarginChange(side, event.target.value)}
+                      data-testid="document-data-font-size-input"
+                      value={fontSizePt}
+                      min={6}
+                      max={72}
+                      step={0.5}
+                      onChange={(event) => setFontSizePt(event.target.value)}
                       className={inputClass}
                     />
+                    {sourceFontSizePt !== undefined && (
+                      <span className="text-[10px] text-[var(--text-tertiary)]">
+                        {isSizeOverridden ? `Original: ${sourceFontSizePt} pt` : 'Origen: Documento importado'}
+                      </span>
+                    )}
                   </label>
-                ))}
-              </div>
-            </div>
+                  <label className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className={labelClass}>{copy.documentDataLineHeightLabel}</span>
+                      {isLineHeightOverridden && (
+                        <button
+                          type="button"
+                          data-testid="document-data-reset-line-height-button"
+                          onClick={handleResetLineHeight}
+                          className="text-[10px] text-[var(--accent)] hover:underline"
+                        >
+                          Restablecer
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="number"
+                      data-testid="document-data-line-height-input"
+                      value={lineHeight}
+                      min={1}
+                      max={3}
+                      step={0.05}
+                      onChange={(event) => setLineHeight(event.target.value)}
+                      className={inputClass}
+                    />
+                    {sourceLineHeight !== undefined && (
+                      <span className="text-[10px] text-[var(--text-tertiary)]">
+                        {isLineHeightOverridden ? `Original: ${sourceLineHeight}` : 'Origen: Documento importado'}
+                      </span>
+                    )}
+                  </label>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className={labelClass}>{copy.documentDataMarginPresetLabel}</span>
+                      {isMarginsOverridden && (
+                        <button
+                          type="button"
+                          data-testid="document-data-reset-margins-button"
+                          onClick={handleResetMargins}
+                          className="text-[10px] text-[var(--accent)] hover:underline"
+                        >
+                          Restablecer
+                        </button>
+                      )}
+                    </div>
+                    <select
+                      data-testid="document-data-margin-preset-select"
+                      value={marginPreset}
+                      onChange={(event) => handleMarginPresetChange(event.target.value as MarginPresetKey)}
+                      className={inputClass}
+                    >
+                      {[...MARGIN_PRESET_KEYS, 'custom' as const].map((key) => (
+                        <option key={key} value={key}>
+                          {presetLabel(key, copy)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {(
+                      [
+                        ['top', copy.documentDataMarginTopLabel],
+                        ['bottom', copy.documentDataMarginBottomLabel],
+                        ['left', copy.documentDataMarginLeftLabel],
+                        ['right', copy.documentDataMarginRightLabel],
+                      ] as const
+                    ).map(([side, label]) => (
+                      <label key={side} className="flex flex-col gap-1.5">
+                        <span className={labelClass}>{label}</span>
+                        <input
+                          type="number"
+                          data-testid={`document-data-margin-${side}-input`}
+                          value={margins[side]}
+                          min={0}
+                          onChange={(event) => handleMarginChange(side, event.target.value)}
+                          className={inputClass}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </>
             )}
           </section>
 
-          {/* Composition scope only makes sense when there is composition to
-              scope — never for a fixed-pdf project, whose original layout
-              Talent never touches. */}
           {mode === 'project' && !fixedPdf && (
             <>
               {/* Composition scope */}

@@ -71,9 +71,10 @@ describe('resolveBrandProfileId', () => {
     expect(resolveBrandProfileId(null, true, profiles)).toBeNull();
   });
 
-  it('falls back to the active default profile', () => {
-    expect(resolveBrandProfileId(null, false, profiles)).toBe('active-1');
-    expect(resolveBrandProfileId(undefined, false, profiles)).toBe('active-1');
+  it('returns null when no explicit brand is configured (no silent fallback)', () => {
+    expect(resolveBrandProfileId(null, false, profiles)).toBeNull();
+    expect(resolveBrandProfileId(undefined, false, profiles)).toBeNull();
+    expect(resolveBrandProfileId('', false, profiles)).toBeNull();
   });
 
   it('returns null when there is no explicit choice and no active profile', () => {

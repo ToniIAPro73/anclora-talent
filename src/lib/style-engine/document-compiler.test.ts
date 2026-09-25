@@ -8,7 +8,6 @@ import type { BrandProfile } from '@/lib/brand/brand-profile';
 describe('Phase 5 — Document Style Compiler & CSS Variable Generator (P5-T01)', () => {
   const sampleDoc: SemanticDocument = {
     version: 1,
-    schemaVersion: 1,
     metadata: {
       title: 'El Test Editorial',
       author: 'Anclora Author',

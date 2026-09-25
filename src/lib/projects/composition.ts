@@ -16,6 +16,7 @@
  */
 
 import type { BrandProfile } from '@/lib/brand/brand-profile';
+import type { OriginalDocumentStyleProfile } from './source-style-profile';
 
 /** Margin box in px — same unit space as `MARGIN_PRESETS` and the export query. */
 export interface CompositionMargins {
@@ -136,16 +137,47 @@ export function resolveComposition(
 }
 
 /**
- * Brand resolution: an explicit per-project choice always wins — including
- * the explicit "no brand" marker (`brandChoiceNone`) — then the active
- * default profile, then null.
+ * Keeps imported source values out of the project override layer. The
+ * document-data UI edits an effective form, so persistence must reduce that
+ * form back to explicit deltas before writing JSONB.
+ */
+export function deriveCompositionOverrides(
+  settings: CompositionSettings | null | undefined,
+  sourceProfile?: OriginalDocumentStyleProfile | null,
+): CompositionSettings | null {
+  const parsed = parseCompositionSettings(settings);
+  if (!parsed) return null;
+  if (!sourceProfile) return parsed;
+
+  const result: CompositionSettings = {};
+  if (parsed.fontFamily && parsed.fontFamily !== sourceProfile.body.fontFamily) result.fontFamily = parsed.fontFamily;
+  if (parsed.fontSizePt !== undefined && parsed.fontSizePt !== sourceProfile.body.fontSizePt) result.fontSizePt = parsed.fontSizePt;
+  if (parsed.lineHeight !== undefined && parsed.lineHeight !== sourceProfile.body.lineHeight) result.lineHeight = parsed.lineHeight;
+  const sourceMargins = sourceProfile.page.marginsPt;
+  if (parsed.margins && (!sourceMargins ||
+    parsed.margins.top !== sourceMargins.top ||
+    parsed.margins.bottom !== sourceMargins.bottom ||
+    parsed.margins.left !== sourceMargins.left ||
+    parsed.margins.right !== sourceMargins.right
+  )) {
+    result.margins = parsed.margins;
+  }
+
+  return Object.keys(result).length > 0 ? result : null;
+}
+
+/**
+ * Brand resolution: an explicit per-project choice is required.
+ * If brandChoiceNone is true, or if no explicit brand is bound to the project,
+ * returns null. Fresh projects never silently inherit an active brand.
  */
 export function resolveBrandProfileId(
   explicitId: string | null | undefined,
   brandChoiceNone: boolean,
-  profiles: BrandProfile[],
+  _profiles?: BrandProfile[],
 ): string | null {
+  void _profiles;
   if (brandChoiceNone) return null;
-  if (explicitId) return explicitId;
-  return profiles.find((profile) => profile.status === 'active')?.id ?? null;
+  if (explicitId && explicitId.trim()) return explicitId.trim();
+  return null;
 }

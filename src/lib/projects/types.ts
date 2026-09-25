@@ -254,11 +254,14 @@ export interface ImportedDocumentSeed {
   }>;
   sourceFileName: string;
   sourceMimeType: string;
+  originalDocumentStyleProfile?: import('./source-style-profile').OriginalDocumentStyleProfile | null;
+  sourcePaginationBaseline?: import('./source-style-profile').SourcePaginationBaseline | null;
 }
 
 export interface CreateProjectInput {
   title: string;
   importedDocument?: ImportedDocumentSeed | null;
+  originalDocumentStyleProfile?: import('./source-style-profile').OriginalDocumentStyleProfile | null;
   /** F2: product template id; seeds structure + rules when no document is imported. */
   templateId?: string | null;
   /** Fase 3: provenance when this project is an editable copy of a fixed-pdf project. */

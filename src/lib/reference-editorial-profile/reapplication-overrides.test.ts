@@ -81,6 +81,7 @@ describe('Non-Destructive Reapplication & User Overrides (Phase 9)', () => {
       {
         id: 'ch-1',
         title: 'Capítulo 1',
+        order: 1,
         blocks: [
           { id: 'b-1', type: 'heading', order: 1, content: 'Capítulo 1' },
           { id: 'b-2', type: 'paragraph', order: 2, content: 'Texto inmutable del manuscrito.' },
@@ -113,6 +114,8 @@ describe('Non-Destructive Reapplication & User Overrides (Phase 9)', () => {
 
   test('P9-T01: Applying reference with keepOverrides=false clears userOverrides', async () => {
     project.document.metadata = {
+      ...project.document.metadata,
+      title: project.document.title,
       userOverrides: [
         {
           scope: 'role',
@@ -153,6 +156,8 @@ describe('Non-Destructive Reapplication & User Overrides (Phase 9)', () => {
 
   test('P9-T02: Resetting user overrides restores reference values', async () => {
     project.document.metadata = {
+      ...project.document.metadata,
+      title: project.document.title,
       userOverrides: [
         {
           scope: 'role',

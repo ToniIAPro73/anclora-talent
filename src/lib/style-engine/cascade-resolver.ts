@@ -1,6 +1,7 @@
 import type { BrandProfile } from '@/lib/brand/brand-profile';
 import { getBrandColor } from '@/lib/brand/brand-profile';
 import type { ReferenceEditorialProfile, EditorialTextStyle } from '@/lib/reference-editorial-profile/model';
+import type { OriginalDocumentStyleProfile } from '@/lib/projects/source-style-profile';
 import type {
   DocumentStyleMap,
   EditorialRole,
@@ -105,6 +106,7 @@ export const SYSTEM_DEFAULTS = {
 function resolveTextStyle(
   role: EditorialRole,
   fallback: ResolvedTextStyle,
+  sourceStyle?: Partial<ResolvedTextStyle> | null,
   referenceStyle?: EditorialTextStyle | null,
   brandFamily?: string | null,
   brandColor?: string | null,
@@ -112,7 +114,29 @@ function resolveTextStyle(
 ): ResolvedTextStyle {
   const result: ResolvedTextStyle = { ...fallback };
 
-  // 1. Reference Style Layer (overrides typography & scale & layout)
+  // 1. Source Manuscript Layer (baseline for imported documents)
+  if (sourceStyle) {
+    if (sourceStyle.fontFamily) result.fontFamily = sourceStyle.fontFamily;
+    if (sourceStyle.fontSizePt !== undefined) result.fontSizePt = sourceStyle.fontSizePt;
+    if (sourceStyle.fontWeight) result.fontWeight = sourceStyle.fontWeight;
+    if (sourceStyle.fontStyle) result.fontStyle = sourceStyle.fontStyle;
+    if (sourceStyle.color) result.color = sourceStyle.color;
+    if (sourceStyle.lineHeight !== undefined) result.lineHeight = sourceStyle.lineHeight;
+    if (sourceStyle.textAlign) result.textAlign = sourceStyle.textAlign;
+    if (sourceStyle.firstLineIndentPt !== undefined) result.firstLineIndentPt = sourceStyle.firstLineIndentPt;
+    if (sourceStyle.spacingBeforePt !== undefined) result.spacingBeforePt = sourceStyle.spacingBeforePt;
+    if (sourceStyle.spacingAfterPt !== undefined) result.spacingAfterPt = sourceStyle.spacingAfterPt;
+  }
+
+  // 2. Brand Layer (infuses brand theme tokens: colors, or fonts when not specified by reference)
+  if (brandFamily && (!referenceStyle || (!referenceStyle.resolvedFontFamily && !referenceStyle.fontFamily))) {
+    result.fontFamily = brandFamily;
+  }
+  if (brandColor) {
+    result.color = brandColor;
+  }
+
+  // 3. Reference Style Layer (explicit reference overrides typography & layout)
   if (referenceStyle) {
     const refFont = referenceStyle.resolvedFontFamily || referenceStyle.fontFamily;
     if (refFont) result.fontFamily = refFont;
@@ -133,15 +157,7 @@ function resolveTextStyle(
     }
   }
 
-  // 2. Brand Layer (infuses brand theme tokens: colors, or fonts when not specified by reference)
-  if (brandFamily && (!referenceStyle || (!referenceStyle.resolvedFontFamily && !referenceStyle.fontFamily))) {
-    result.fontFamily = brandFamily;
-  }
-  if (brandColor) {
-    result.color = brandColor;
-  }
-
-  // 3. User Override Layer (highest priority)
+  // 4. User Override Layer (highest priority)
   if (userOverride) {
     Object.assign(result, userOverride);
   }
@@ -153,6 +169,7 @@ export interface LegacyCompositionSettings {
   bodyFontFamily?: string;
   fontFamily?: string;
   displayFontFamily?: string;
+  fontSizePt?: number;
   lineHeight?: number;
   headingColor?: string;
   bodyColor?: string;
@@ -168,11 +185,13 @@ export interface LegacyCompositionSettings {
 }
 
 export function resolveDocumentStyles({
+  sourceStyleProfile,
   referenceProfile,
   brandProfile,
   userOverrides = [],
   composition,
 }: {
+  sourceStyleProfile?: OriginalDocumentStyleProfile | null;
   referenceProfile?: ReferenceEditorialProfile | null;
   brandProfile?: BrandProfile | null;
   userOverrides?: UserStyleOverride[];
@@ -188,11 +207,18 @@ export function resolveDocumentStyles({
   const legacyAccentColor = composition?.accentColor || null;
   const legacyAccentMuted = composition?.accentMutedColor || null;
 
-  // Extract Brand Tokens
-  const brandInk = brandProfile ? (getBrandColor(brandProfile, 'ink')?.hex ?? null) : legacyBodyColor;
-  const brandAccent = brandProfile ? (getBrandColor(brandProfile, 'accent')?.hex ?? null) : (legacyAccentColor ?? legacyHeadingColor);
-  const brandDisplayFont = brandProfile?.typography.display?.family ?? legacyDisplayFont;
-  const brandBodyFont = brandProfile?.typography.body?.family ?? legacyBodyFont;
+  // Extract Brand Tokens (only applied when brandProfile is explicitly provided)
+  const brandInk = brandProfile ? (getBrandColor(brandProfile, 'ink')?.hex ?? null) : (sourceStyleProfile ? null : legacyBodyColor);
+  const brandAccent = brandProfile ? (getBrandColor(brandProfile, 'accent')?.hex ?? null) : (sourceStyleProfile ? null : (legacyAccentColor ?? legacyHeadingColor));
+  const brandDisplayFont = brandProfile?.typography.display?.family ?? (sourceStyleProfile ? null : legacyDisplayFont);
+  const brandBodyFont = brandProfile?.typography.body?.family ?? (sourceStyleProfile ? null : legacyBodyFont);
+  const compositionBodyOverride: Partial<ResolvedTextStyle> = sourceStyleProfile && composition
+    ? {
+        ...(composition.fontFamily ? { fontFamily: composition.fontFamily } : {}),
+        ...(composition.fontSizePt !== undefined ? { fontSizePt: composition.fontSizePt } : {}),
+        ...(composition.lineHeight !== undefined ? { lineHeight: composition.lineHeight } : {}),
+      }
+    : {};
 
   // Index User Overrides by role
   const roleOverrides = new Map<EditorialRole, Partial<ResolvedTextStyle>>();
@@ -202,8 +228,30 @@ export function resolveDocumentStyles({
     }
   }
 
-  // 1. Page Geometry
+  // 1. Page Geometry (Cascade: System -> Source -> Reference -> Overrides)
   const page: ResolvedPageGeometry = { ...SYSTEM_DEFAULTS.page };
+
+  // Source page geometry
+  if (sourceStyleProfile?.page) {
+    const srcPage = sourceStyleProfile.page;
+    if (srcPage.widthPt) page.widthPt = srcPage.widthPt;
+    if (srcPage.heightPt) page.heightPt = srcPage.heightPt;
+    if (srcPage.marginsPt) {
+      if (srcPage.marginsPt.top !== undefined) page.marginsPt.top = srcPage.marginsPt.top;
+      if (srcPage.marginsPt.bottom !== undefined) page.marginsPt.bottom = srcPage.marginsPt.bottom;
+      if (srcPage.marginsPt.left !== undefined) page.marginsPt.left = srcPage.marginsPt.left;
+      if (srcPage.marginsPt.right !== undefined) page.marginsPt.right = srcPage.marginsPt.right;
+    }
+    if (srcPage.gutterPt !== undefined) page.gutterPt = srcPage.gutterPt;
+  } else if (composition?.margins) {
+    const m = composition.margins;
+    if (m.top !== undefined && m.top !== null) page.marginsPt.top = m.top;
+    if (m.bottom !== undefined && m.bottom !== null) page.marginsPt.bottom = m.bottom;
+    if (m.left !== undefined && m.left !== null) page.marginsPt.left = m.left;
+    if (m.right !== undefined && m.right !== null) page.marginsPt.right = m.right;
+  }
+
+  // Reference page geometry overrides source
   if (referenceProfile?.page) {
     const refPage = referenceProfile.page;
     if (refPage.width) page.widthPt = refPage.width;
@@ -214,34 +262,55 @@ export function resolveDocumentStyles({
       if (refPage.margins.left !== null) page.marginsPt.left = refPage.margins.left;
       if (refPage.margins.right !== null) page.marginsPt.right = refPage.margins.right;
     }
-  } else if (composition?.margins) {
-    const m = composition.margins;
-    if (m.top !== undefined && m.top !== null) page.marginsPt.top = m.top;
-    if (m.bottom !== undefined && m.bottom !== null) page.marginsPt.bottom = m.bottom;
-    if (m.left !== undefined && m.left !== null) page.marginsPt.left = m.left;
-    if (m.right !== undefined && m.right !== null) page.marginsPt.right = m.right;
   }
 
-  // 2. Body Text
-  const defaultBody = legacyLineHeight
+  // 2. Body Text (Cascade: System -> Source -> Brand -> Reference -> User Override)
+  const defaultBody = !sourceStyleProfile && legacyLineHeight
     ? { ...SYSTEM_DEFAULTS.body, lineHeight: legacyLineHeight }
     : SYSTEM_DEFAULTS.body;
+
+  const sourceBody: Partial<ResolvedTextStyle> | null = sourceStyleProfile?.body
+    ? {
+        fontFamily: sourceStyleProfile.body.fontFamily,
+        fontSizePt: sourceStyleProfile.body.fontSizePt,
+        fontWeight: sourceStyleProfile.body.fontWeight,
+        fontStyle: sourceStyleProfile.body.fontStyle,
+        color: sourceStyleProfile.body.color,
+        lineHeight: sourceStyleProfile.body.lineHeight,
+        textAlign: sourceStyleProfile.body.textAlign,
+        firstLineIndentPt: sourceStyleProfile.body.firstLineIndentPt,
+        spacingBeforePt: sourceStyleProfile.body.spacingBeforePt,
+        spacingAfterPt: sourceStyleProfile.body.spacingAfterPt,
+      }
+    : null;
 
   const body = resolveTextStyle(
     'body',
     defaultBody,
+    sourceBody,
     referenceProfile?.body,
     brandBodyFont,
     brandInk,
-    roleOverrides.get('body'),
+    { ...compositionBodyOverride, ...roleOverrides.get('body') },
   );
 
-  // 3. Headings
-  const headingColor = brandAccent ?? legacyHeadingColor ?? brandInk;
+  if (sourceStyleProfile && composition?.margins) {
+    page.marginsPt = {
+      ...page.marginsPt,
+      ...(composition.margins.top != null ? { top: composition.margins.top } : {}),
+      ...(composition.margins.bottom != null ? { bottom: composition.margins.bottom } : {}),
+      ...(composition.margins.left != null ? { left: composition.margins.left } : {}),
+      ...(composition.margins.right != null ? { right: composition.margins.right } : {}),
+    };
+  }
+
+  // 3. Headings (Cascade: System -> Source -> Brand -> Reference -> User Override)
+  const headingColor = brandAccent ?? (sourceStyleProfile ? null : legacyHeadingColor) ?? brandInk;
 
   const h1 = resolveTextStyle(
     'h1',
     SYSTEM_DEFAULTS.h1,
+    sourceStyleProfile?.headings?.h1,
     referenceProfile?.headings?.h1,
     brandDisplayFont,
     headingColor,
@@ -251,6 +320,7 @@ export function resolveDocumentStyles({
   const h2 = resolveTextStyle(
     'h2',
     SYSTEM_DEFAULTS.h2,
+    sourceStyleProfile?.headings?.h2,
     referenceProfile?.headings?.h2,
     brandDisplayFont,
     brandAccent ?? brandInk,
@@ -260,6 +330,7 @@ export function resolveDocumentStyles({
   const h3 = resolveTextStyle(
     'h3',
     SYSTEM_DEFAULTS.h3,
+    sourceStyleProfile?.headings?.h3,
     referenceProfile?.headings?.h3,
     brandDisplayFont,
     brandInk,
@@ -269,6 +340,7 @@ export function resolveDocumentStyles({
   const h4 = resolveTextStyle(
     'h4',
     SYSTEM_DEFAULTS.h4,
+    sourceStyleProfile?.headings?.h4,
     referenceProfile?.headings?.h4,
     brandDisplayFont,
     brandInk,
@@ -279,6 +351,7 @@ export function resolveDocumentStyles({
   const baseQuote = resolveTextStyle(
     'quote',
     SYSTEM_DEFAULTS.quote,
+    null,
     referenceProfile?.quote,
     brandBodyFont,
     brandInk,
