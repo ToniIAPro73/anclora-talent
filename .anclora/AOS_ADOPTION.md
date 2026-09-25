@@ -53,6 +53,14 @@ Declara qué conocimiento mantiene este repositorio como fuente oficial local.
 | Credenciales de prueba | [`../memory/test_credentials.md`](../memory/test_credentials.md) | AOS Chief Architect | Documento local de pruebas; contiene credenciales fake/test-only y debe permanecer tratado como sensitive-adjacent. |
 | Package metadata | [`../package.json`](../package.json) | AOS Chief Architect | Fuente técnica local para scripts, dependencias y versión de paquete. |
 
+## Adopción de Gobernanza QA Proporcional
+
+- PROPORTIONAL_QA_CONTRACT_ADOPTED=true
+- BATCHED_VALIDATION_CONTRACT_ADOPTED=true
+- QA_MODE_DEFAULT=AUTO
+- QA_OVERRIDE_MODEL_ADOPTED=true
+- WORKSPACE_QA_POLICY_AUTHORITY=ANCLORA_WORKSPACE_AGENT_POLICY.md
+
 ## Política de decisiones locales
 
 Las decisiones locales de producto (PD) de `anclora-talent` tienen como fuente canónica el SDD local: specs, planes y reviews bajo:
@@ -110,6 +118,7 @@ El upgrade debe:
 | 2026-08-08 | v0.2.0 | Declaración inicial de adopción retrospectiva con excepciones. | AOS Chief Architect |
 | 2026-08-08 | v0.2.0 | Revisión de remediación: bootstrap y lenguaje de autoridad alineados con el modelo de 3 niveles; EX-TALENT-001/002/003 resueltas; EX-TALENT-007 abierta (anexos de branding sin fuente canónica en Bóveda). | AOS Chief Architect |
 | 2026-08-08 | v0.2.0 | EX-TALENT-007 resuelta: Bóveda declara `docs/standards/` ubicación canónica de los 4 anexos de branding y los registra en `contracts-registry.json`; copias locales verificadas idénticas a la fuente. `MEMORY.md` reclasificado como memoria histórica no normativa en `AGENTS.md` y en la política de decisiones locales (PD: fuente canónica `sdd/`). | AOS Chief Architect |
+| 2026-09-25 | v2.0 | Adopción de política canónica de QA proporcional, cadencia de puertas por lotes (BATCHED) y modelo de overrides explícitos. | ToniIAPro73 |
 
 ## Documentos relacionados
 
