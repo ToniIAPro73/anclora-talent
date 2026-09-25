@@ -80,6 +80,7 @@ export function PreviewModal({
   );
   const sourcePageWidth = compiledDocument.styleMap.page.widthPt * (96 / 72);
   const sourcePageHeight = compiledDocument.styleMap.page.heightPt * (96 / 72);
+  const sourceLineHeight = compiledDocument.styleMap.body.lineHeight;
   const sourceMargins = useMemo(() => ({
     top: compiledDocument.styleMap.page.marginsPt.top * (96 / 72),
     bottom: compiledDocument.styleMap.page.marginsPt.bottom * (96 / 72),
@@ -104,10 +105,10 @@ export function PreviewModal({
         fontSize: compiledDocument.styleMap.body.fontSizePt * (96 / 72),
         pageWidth: sourcePageWidth,
         pageHeight: sourcePageHeight,
-        lineHeight: compiledDocument.styleMap.body.lineHeight,
+        lineHeight: sourceLineHeight,
         margins: sourceMargins,
       }),
-    [compiledDocument.styleMap.body.fontSizePt, format, sourcePageHeight, sourcePageWidth, sourceMargins],
+    [compiledDocument.styleMap.body.fontSizePt, format, sourceLineHeight, sourcePageHeight, sourcePageWidth, sourceMargins],
   );
 
   // FASE C: the composition engine is the single source for both the
