@@ -1767,7 +1767,7 @@ export function AdvancedRichTextEditor({
         editor.view.focus();
       }
     },
-    [editor, pageGap, pageWidth, spreadStartPage],
+    [editor, effectiveScale, pageGap, pageWidth, spreadStartPage],
   );
 
   useEffect(() => {

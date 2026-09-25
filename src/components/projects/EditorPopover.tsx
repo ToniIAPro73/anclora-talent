@@ -57,7 +57,9 @@ export function EditorPopover({
   useEffect(() => {
     if (!isOpen) return;
 
-    updatePosition();
+    // Position on the next frame, once the popover is mounted and measurable
+    // (setState from a callback, not synchronously in the effect body).
+    const frame = window.requestAnimationFrame(updatePosition);
 
     const handleMousedown = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -89,6 +91,7 @@ export function EditorPopover({
     window.addEventListener('scroll', handleScrollOrResize, true);
 
     return () => {
+      window.cancelAnimationFrame(frame);
       document.removeEventListener('mousedown', handleMousedown);
       document.removeEventListener('keydown', handleKeydown);
       window.removeEventListener('resize', handleScrollOrResize);
