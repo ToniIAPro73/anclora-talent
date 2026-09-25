@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Image as ImageIcon, Trash2, Undo2, Redo2, Grid3x3 } from 'lucide-react';
+import { Image as ImageIcon, Trash2, Grid3x3 } from 'lucide-react';
 import { getFabric, addImageToCanvas } from '@/lib/canvas-utils';
 import { createGuideManager } from '@/lib/canvas-guides';
 
@@ -310,20 +310,22 @@ export function ChapterImageCanvas({
             data-testid="image-canvas-undo-button"
             onClick={handleUndo}
             disabled={historyStep <= 0}
-            className="ac-button ac-button--ghost ac-button--sm disabled:opacity-30"
+            className="ac-button ac-button--ghost ac-button--sm disabled:opacity-30 px-2"
             title="Deshacer"
+            aria-label="Deshacer"
           >
-            <Undo2 className="h-4 w-4" />
+            <span className="text-xs font-medium">Deshacer</span>
           </button>
           <button
             type="button"
             data-testid="image-canvas-redo-button"
             onClick={handleRedo}
             disabled={historyStep >= history.length - 1}
-            className="ac-button ac-button--ghost ac-button--sm disabled:opacity-30"
+            className="ac-button ac-button--ghost ac-button--sm disabled:opacity-30 px-2"
             title="Rehacer"
+            aria-label="Rehacer"
           >
-            <Redo2 className="h-4 w-4" />
+            <span className="text-xs font-medium">Rehacer</span>
           </button>
         </div>
 

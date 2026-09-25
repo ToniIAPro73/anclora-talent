@@ -28,10 +28,8 @@ import {
   Type,
   Magnet,
   Maximize,
-  Redo2,
   RotateCcw,
   ShieldCheck,
-  Undo2,
   ZoomIn,
   ZoomOut,
 } from 'lucide-react';
@@ -218,22 +216,22 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
             data-testid="advanced-editor-undo-button"
             onClick={() => canvasRef.current?.undo()}
             disabled={!historyState.canUndo}
-            className="ac-button ac-button--ghost ac-button--icon ac-button--sm disabled:opacity-30"
+            className="ac-button ac-button--ghost ac-button--compact px-2 disabled:opacity-30"
             title={copy.toolbar.undoLabel}
             aria-label={copy.toolbar.undoLabel}
           >
-            <Undo2 className="h-4 w-4" />
+            <span className="text-xs font-medium">{copy.toolbar.undoLabel}</span>
           </button>
           <button
             type="button"
             data-testid="advanced-editor-redo-button"
             onClick={() => canvasRef.current?.redo()}
             disabled={!historyState.canRedo}
-            className="ac-button ac-button--ghost ac-button--icon ac-button--sm disabled:opacity-30"
+            className="ac-button ac-button--ghost ac-button--compact px-2 disabled:opacity-30"
             title={copy.toolbar.redoLabel}
             aria-label={copy.toolbar.redoLabel}
           >
-            <Redo2 className="h-4 w-4" />
+            <span className="text-xs font-medium">{copy.toolbar.redoLabel}</span>
           </button>
 
           <button

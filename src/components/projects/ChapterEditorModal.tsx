@@ -10,6 +10,8 @@ interface ChapterEditorModalProps {
   projectId: string;
   onClose: () => void;
   onSave?: () => void;
+  effectiveFontFamily?: string;
+  composition?: import('@/lib/projects/composition').CompositionSettings | null;
 }
 
 /**
@@ -23,6 +25,8 @@ export function ChapterEditorModal({
   projectId,
   onClose,
   onSave,
+  effectiveFontFamily,
+  composition,
 }: ChapterEditorModalProps) {
   if (!isOpen) return null;
 
@@ -42,6 +46,8 @@ export function ChapterEditorModal({
         projectId={projectId}
         onClose={onClose}
         onSave={onSave}
+        effectiveFontFamily={effectiveFontFamily}
+        composition={composition}
       />
     </div>
   );

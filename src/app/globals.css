@@ -2541,8 +2541,8 @@ ul.toc-list > li {
 .ac-editor-shell__titles .ac-editor-back { flex: 0 0 auto !important; width: max-content !important; align-self: center; margin: 0; }
 .chapter-editor-brand { flex: 0 0 auto; color: var(--text-primary); font-size: 17px; font-weight: 700; letter-spacing: -.02em; }
 .chapter-editor-layout .multipage-editor-flow { background: #f4f0e8; color: #172238; }
-.chapter-editor-layout .multipage-editor-flow .ProseMirror { color: #172238; font-family: Georgia, 'Times New Roman', serif; font-size: 18px; line-height: 1.55; }
-.chapter-editor-layout .multipage-editor-flow .ProseMirror h1, .chapter-editor-layout .multipage-editor-flow .ProseMirror h2, .chapter-editor-layout .multipage-editor-flow .ProseMirror h3, .chapter-editor-layout .multipage-editor-flow .ProseMirror h4, .chapter-editor-layout .multipage-editor-flow .ProseMirror h5, .chapter-editor-layout .multipage-editor-flow .ProseMirror h6 { color: #172238; font-family: Georgia, 'Times New Roman', serif; }
+.chapter-editor-layout .multipage-editor-flow .ProseMirror { color: #172238; font-family: var(--editor-document-font, Georgia, 'Times New Roman', serif); font-size: 18px; line-height: 1.55; }
+.chapter-editor-layout .multipage-editor-flow .ProseMirror h1, .chapter-editor-layout .multipage-editor-flow .ProseMirror h2, .chapter-editor-layout .multipage-editor-flow .ProseMirror h3, .chapter-editor-layout .multipage-editor-flow .ProseMirror h4, .chapter-editor-layout .multipage-editor-flow .ProseMirror h5, .chapter-editor-layout .multipage-editor-flow .ProseMirror h6 { color: #172238; font-family: var(--editor-document-font, Georgia, 'Times New Roman', serif); }
 .chapter-editor-outline, .chapter-editor-inspector { border-radius: 5px; }
 .chapter-editor-outline { padding: 12px; }
 .chapter-editor-outline__item { min-height: 42px; padding: 10px 4px; }

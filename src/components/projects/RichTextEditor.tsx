@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { Bold, Italic, Heading2, Quote, List, ListOrdered, Undo, Redo } from 'lucide-react';
+import { Bold, Italic, Heading2, Quote, List, ListOrdered } from 'lucide-react';
 
 const DEBOUNCE_MS = 800;
 
@@ -139,7 +139,7 @@ export function RichTextEditor({
             disabled={!editor.can().undo()}
             title="Undo"
           >
-            <Undo className="h-3.5 w-3.5" />
+            <span className="text-[11px] font-semibold leading-none px-1">Undo</span>
           </ToolbarButton>
           <ToolbarButton
             dataTestId="editor-toolbar-redo-button"
@@ -147,7 +147,7 @@ export function RichTextEditor({
             disabled={!editor.can().redo()}
             title="Redo"
           >
-            <Redo className="h-3.5 w-3.5" />
+            <span className="text-[11px] font-semibold leading-none px-1">Redo</span>
           </ToolbarButton>
         </div>
       </div>

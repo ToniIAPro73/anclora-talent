@@ -12,7 +12,7 @@ import Highlight from '@tiptap/extension-highlight';
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough, Code,
   Heading2, Quote, List, ListOrdered, Link as LinkIcon, Image as ImageIcon,
-  Search, RotateCcw, RotateCw, Maximize2, Minimize2,
+  Search, Maximize2, Minimize2,
   Highlighter, Layers
 } from 'lucide-react';
 
@@ -291,7 +291,7 @@ export function EnhancedRichTextEditor({
             disabled={!editor.can().undo()}
             title="Undo"
           >
-            <RotateCcw className="h-3.5 w-3.5" />
+            <span className="text-[11px] font-semibold leading-none px-1">Undo</span>
           </ToolbarButton>
           <ToolbarButton
             dataTestId="editor-toolbar-redo-button"
@@ -299,7 +299,7 @@ export function EnhancedRichTextEditor({
             disabled={!editor.can().redo()}
             title="Redo"
           >
-            <RotateCw className="h-3.5 w-3.5" />
+            <span className="text-[11px] font-semibold leading-none px-1">Redo</span>
           </ToolbarButton>
           {!isFullscreen && (
             <ToolbarButton

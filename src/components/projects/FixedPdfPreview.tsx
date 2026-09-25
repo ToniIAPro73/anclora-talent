@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
+import { ZoomIn, ZoomOut } from 'lucide-react';
 import type { AppMessages } from '@/lib/i18n/messages';
 
 type ViewerStatus = 'loading' | 'ready' | 'error';
@@ -117,10 +117,10 @@ export function FixedPdfPreview({
             data-testid="fixed-pdf-prev-page"
             onClick={() => setPageNumber((current) => Math.max(1, current - 1))}
             disabled={status !== 'ready' || pageNumber <= 1}
-            className="ac-button ac-button--ghost ac-button--sm"
-            aria-label={copy.previewModalPage}
+            className="ac-button ac-button--ghost ac-button--compact px-2 text-xs"
+            aria-label={copy.previewModalPrevious}
           >
-            <ChevronLeft className="h-4 w-4" />
+            {copy.previewModalPrevious}
           </button>
           <span className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]" data-testid="fixed-pdf-page-indicator">
             {status === 'ready' ? `${copy.previewModalPage} ${pageNumber} / ${pageCount}` : ''}
@@ -130,10 +130,10 @@ export function FixedPdfPreview({
             data-testid="fixed-pdf-next-page"
             onClick={() => setPageNumber((current) => Math.min(pageCount, current + 1))}
             disabled={status !== 'ready' || pageNumber >= pageCount}
-            className="ac-button ac-button--ghost ac-button--sm"
-            aria-label={copy.previewModalPage}
+            className="ac-button ac-button--ghost ac-button--compact px-2 text-xs"
+            aria-label={copy.previewModalNext}
           >
-            <ChevronRight className="h-4 w-4" />
+            {copy.previewModalNext}
           </button>
         </div>
         <div className="flex items-center gap-2">

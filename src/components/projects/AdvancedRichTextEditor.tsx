@@ -17,6 +17,7 @@ import { Color } from '@tiptap/extension-color';
 import { ResizableImage } from './resizable-image-extension';
 import { PageBreak } from './page-break-extension';
 import { FontSize } from './font-size-extension';
+import type { CompositionSettings } from '@/lib/projects/composition';
 import {
   Bold,
   Italic,
@@ -25,8 +26,6 @@ import {
   Heading3,
   List,
   ListOrdered,
-  Undo2,
-  Redo2,
   Strikethrough,
   AlignLeft,
   AlignCenter,
@@ -78,18 +77,17 @@ type ToolbarButtonProps = {
   disabled?: boolean;
   dataTestId?: string;
   title: string;
+  className?: string;
   children: React.ReactNode;
 };
 
-type SplitToolbarButtonProps = {
+type ListDropdownButtonProps = {
   icon: React.ReactNode;
   title: string;
-  active?: boolean;
+  active: boolean;
   disabled?: boolean;
-  dataTestId?: string;
-  toggleDataTestId?: string;
-  onPrimaryClick: () => void;
-  children: React.ReactNode;
+  dataTestId: string;
+  children: (close: () => void) => React.ReactNode;
 };
 
 type BulletStyle =
@@ -256,7 +254,7 @@ const TocInlineAttributes = Extension.create({
   },
 });
 
-function ToolbarButton({ onClick, active, disabled, dataTestId, title, children }: ToolbarButtonProps) {
+function ToolbarButton({ onClick, active, disabled, dataTestId, title, className, children }: ToolbarButtonProps) {
   return (
     <button
       type="button"
@@ -266,73 +264,99 @@ function ToolbarButton({ onClick, active, disabled, dataTestId, title, children 
       aria-label={title}
       title={title}
       data-active={active ? 'true' : 'false'}
-      className="ac-text-editor__button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+      className={`ac-text-editor__button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${className ?? ''}`}
     >
       {children}
     </button>
   );
 }
 
-function SplitToolbarButton({
+function ListDropdownButton({
   icon,
   title,
   active,
   disabled,
   dataTestId,
-  toggleDataTestId,
-  onPrimaryClick,
   children,
-}: SplitToolbarButtonProps) {
+}: ListDropdownButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+
+  const toggle = () => {
+    if (disabled) return;
+    if (!isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + 6,
+        left: Math.max(12, Math.min(rect.left, window.innerWidth - 260)),
+      });
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
+  };
 
   useEffect(() => {
+    if (!isOpen) return;
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
-
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
 
   return (
-    <div className="relative" ref={containerRef}>
-      <div
-        className={`ac-text-editor__split-shell ${disabled ? 'opacity-30' : ''}`}
+    <>
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={toggle}
+        disabled={disabled}
+        data-testid={dataTestId}
         data-active={active ? 'true' : 'false'}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        aria-label={title}
+        title={title}
+        className="ac-text-editor__button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
       >
-        <button
-          type="button"
-          onClick={onPrimaryClick}
-          disabled={disabled}
-          data-testid={dataTestId}
-          aria-label={title}
-          title={title}
-          className="ac-text-editor__split-main"
-        >
-          {icon}
-        </button>
-        <button
-          type="button"
-          onClick={() => !disabled && setIsOpen((open) => !open)}
-          disabled={disabled}
-          data-testid={toggleDataTestId}
-          aria-label={`Opciones de ${title.toLowerCase()}`}
-          title={`Opciones de ${title.toLowerCase()}`}
-          className="ac-text-editor__split-toggle"
-        >
-          <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-        </button>
-      </div>
+        {icon}
+      </button>
 
-      {isOpen && !disabled && (
-        <div className="ac-text-editor__popover">
-          {children}
+      {isOpen && coords && (
+        <div
+          ref={popoverRef}
+          role="menu"
+          style={{
+            position: 'fixed',
+            top: `${coords.top}px`,
+            left: `${coords.left}px`,
+            zIndex: 150,
+          }}
+          className="rounded-xl border border-[var(--border-strong)] bg-[#0E1825] p-2.5 shadow-2xl shadow-black animate-in fade-in zoom-in duration-150"
+        >
+          {children(() => setIsOpen(false))}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -399,11 +423,13 @@ const AdvancedFontSelector = ({
   applyToWordOrSelection,
   isAvailable,
   unavailableTitle,
+  effectiveFontFamily,
 }: {
   editor: Editor;
   applyToWordOrSelection: ApplyToSelectionTarget;
   isAvailable: boolean;
   unavailableTitle: string;
+  effectiveFontFamily?: string;
 }) => {
   const { locale } = useUiPreferences();
   const copy = resolveLocaleMessages(locale).editor;
@@ -412,13 +438,15 @@ const AdvancedFontSelector = ({
   const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const effectiveFont = effectiveFontFamily?.trim() || 'Liberation Serif';
+
   const filteredFonts = useMemo(() => {
     return fonts
       .filter(f => f.family.toLowerCase().includes(searchQuery.toLowerCase()))
       .slice(0, 40);
   }, [fonts, searchQuery]);
 
-  const currentFont = editor.getAttributes('textStyle').fontFamily || 'Default';
+  const currentFont = editor.getAttributes('textStyle').fontFamily || effectiveFont;
 
   const selectFont = (fontFamily: string) => {
     loadFont(fontFamily);
@@ -474,7 +502,7 @@ const AdvancedFontSelector = ({
               data-testid="font-option-default"
               className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]"
             >
-              Default
+              <span className="truncate">{effectiveFont} <span className="text-[10px] opacity-70">({locale === 'es' ? 'Documento' : 'Document'})</span></span>
               {!editor.getAttributes('textStyle').fontFamily && <Check className="h-3 w-3" />}
             </button>
             {filteredFonts.map((font) => (
@@ -710,6 +738,7 @@ const MenuBar = ({
   onMarginsChange,
   onFontSizeChange,
   wordsPerPage,
+  effectiveFontFamily,
 }: {
   editor: Editor;
   viewMode: string;
@@ -721,6 +750,7 @@ const MenuBar = ({
   onMarginsChange: (margins: MarginConfig) => void;
   onFontSizeChange: (size: string) => void;
   wordsPerPage?: number;
+  effectiveFontFamily?: string;
 }) => {
   const { locale } = useUiPreferences();
   const copy = resolveLocaleMessages(locale).editor;
@@ -919,6 +949,7 @@ const MenuBar = ({
           applyToWordOrSelection={applyToWordOrSelection}
           isAvailable={inlineTargetAvailable}
           unavailableTitle={inlineUnavailableTitle}
+          effectiveFontFamily={effectiveFontFamily}
         />
         <FontSizeSelector
           editor={editor}
@@ -1074,62 +1105,68 @@ const MenuBar = ({
         >
           <IndentIncrease className="h-4 w-4" />
         </ToolbarButton>
-        <SplitToolbarButton
+        <ListDropdownButton
           icon={<List className="h-4 w-4" />}
           title={copy.bulletList}
           active={editor.isActive('bulletList')}
           dataTestId="editor-toolbar-bullet-list-button"
-          toggleDataTestId="editor-toolbar-bullet-list-options-toggle"
-          onPrimaryClick={() => applyBulletList()}
         >
-          <div className="grid grid-cols-3 gap-2">
-            {BULLET_STYLE_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => applyBulletList(option.value)}
-                data-testid={`bullet-style-option-${option.value}`}
-                className={`rounded-lg border px-3 py-2 text-left transition-colors ${
-                  currentBulletStyle === option.value
-                    ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--text-primary)]'
-                    : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--accent)]/50'
-                }`}
-                title={bulletLabels[option.value]}
-              >
-                <div className="text-lg font-semibold">{option.sample}</div>
-                <div className="mt-1 text-[10px]">{bulletLabels[option.value]}</div>
-              </button>
-            ))}
-          </div>
-        </SplitToolbarButton>
-        <SplitToolbarButton
+          {(close) => (
+            <div className="grid grid-cols-3 gap-2 w-[240px]">
+              {BULLET_STYLE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    applyBulletList(option.value);
+                    close();
+                  }}
+                  data-testid={`bullet-style-option-${option.value}`}
+                  className={`rounded-lg border px-2.5 py-1.5 text-left transition-colors ${
+                    currentBulletStyle === option.value
+                      ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--text-primary)]'
+                      : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--accent)]/50 hover:bg-[var(--hover)]'
+                  }`}
+                  title={bulletLabels[option.value]}
+                >
+                  <div className="text-base font-semibold text-[var(--text-primary)]">{option.sample}</div>
+                  <div className="mt-0.5 text-[9px] text-[var(--text-secondary)] truncate">{bulletLabels[option.value]}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </ListDropdownButton>
+        <ListDropdownButton
           icon={<ListOrdered className="h-4 w-4" />}
           title={copy.orderedList}
           active={editor.isActive('orderedList')}
           dataTestId="editor-toolbar-ordered-list-button"
-          toggleDataTestId="editor-toolbar-ordered-list-options-toggle"
-          onPrimaryClick={() => applyOrderedList()}
         >
-          <div className="grid grid-cols-2 gap-2">
-            {ORDERED_STYLE_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => applyOrderedList(option.value)}
-                data-testid={`ordered-style-option-${option.value}`}
-                className={`rounded-lg border px-3 py-2 text-left transition-colors ${
-                  currentOrderedStyle === option.value
-                    ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--text-primary)]'
-                    : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--accent)]/50'
-                }`}
-                title={option.label}
-              >
-                <div className="text-sm font-semibold">{option.sample}</div>
-                <div className="mt-1 text-[10px]">{option.label}</div>
-              </button>
-            ))}
-          </div>
-        </SplitToolbarButton>
+          {(close) => (
+            <div className="grid grid-cols-2 gap-2 w-[220px]">
+              {ORDERED_STYLE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    applyOrderedList(option.value);
+                    close();
+                  }}
+                  data-testid={`ordered-style-option-${option.value}`}
+                  className={`rounded-lg border px-2.5 py-1.5 text-left transition-colors ${
+                    currentOrderedStyle === option.value
+                      ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--text-primary)]'
+                      : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--accent)]/50 hover:bg-[var(--hover)]'
+                  }`}
+                  title={option.label}
+                >
+                  <div className="text-sm font-semibold text-[var(--text-primary)]">{option.sample}</div>
+                  <div className="mt-0.5 text-[9px] text-[var(--text-secondary)] truncate">{option.label}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </ListDropdownButton>
         <ToolbarButton
           onClick={() => fileInputRef.current?.click()}
           dataTestId="editor-toolbar-insert-image-button"
@@ -1162,11 +1199,23 @@ const MenuBar = ({
       </div>
 
       <div className="ac-text-editor__toolbar-actions">
-        <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} dataTestId="editor-toolbar-undo-button" title={copy.undo}>
-          <Undo2 className="h-4 w-4" />
+        <ToolbarButton
+          onClick={() => editor.chain().focus().undo().run()}
+          disabled={!editor.can().undo()}
+          dataTestId="editor-toolbar-undo-button"
+          title={copy.undo}
+          className="w-auto px-2 min-w-[2rem]"
+        >
+          <span className="text-[11px] font-semibold leading-none">{copy.undo}</span>
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} dataTestId="editor-toolbar-redo-button" title={copy.redo}>
-          <Redo2 className="h-4 w-4" />
+        <ToolbarButton
+          onClick={() => editor.chain().focus().redo().run()}
+          disabled={!editor.can().redo()}
+          dataTestId="editor-toolbar-redo-button"
+          title={copy.redo}
+          className="w-auto px-2 min-w-[2rem]"
+        >
+          <span className="text-[11px] font-semibold leading-none">{copy.redo}</span>
         </ToolbarButton>
       </div>
     </div>
@@ -1180,6 +1229,8 @@ export function AdvancedRichTextEditor({
   totalPages,
   onPageCountChange,
   contentZoom = 100,
+  effectiveFontFamily,
+  composition,
 }: {
   defaultContent: string;
   onUpdate: (html: string) => void;
@@ -1187,6 +1238,8 @@ export function AdvancedRichTextEditor({
   totalPages?: number;
   onPageCountChange?: (pages: number) => void;
   contentZoom?: number;
+  effectiveFontFamily?: string;
+  composition?: CompositionSettings | null;
 }) {
   const { locale } = useUiPreferences();
   const { preferences, setPreferences } = useEditorPreferences();
@@ -1200,10 +1253,36 @@ export function AdvancedRichTextEditor({
   const [viewMode, setViewMode] = useState<'single' | 'double'>(
     device === 'mobile' ? 'single' : 'double'
   );
-  const [margins, setMargins] = useState<MarginConfig>(
-    preferences.margins || MARGIN_PRESETS.normal
-  );
-  const [currentFontSize, setCurrentFontSize] = useState<string>(preferences.fontSize || '16px');
+  const effectiveFont = effectiveFontFamily?.trim() || composition?.fontFamily?.trim() || 'Liberation Serif';
+  const initialMargins = composition?.margins ?? preferences.margins ?? MARGIN_PRESETS.normal;
+  const [prevCompositionMargins, setPrevCompositionMargins] = useState(composition?.margins);
+  const [margins, setMargins] = useState<MarginConfig>(initialMargins);
+  if (composition?.margins !== prevCompositionMargins) {
+    setPrevCompositionMargins(composition?.margins);
+    if (composition?.margins) {
+      setMargins(composition.margins);
+    }
+  }
+
+  const initialFontSize = composition?.fontSizePt
+    ? `${Math.round(composition.fontSizePt * 1.333)}px`
+    : (preferences.fontSize || '16px');
+  const [prevCompositionFontSizePt, setPrevCompositionFontSizePt] = useState(composition?.fontSizePt);
+  const [currentFontSize, setCurrentFontSize] = useState<string>(initialFontSize);
+  if (composition?.fontSizePt !== prevCompositionFontSizePt) {
+    setPrevCompositionFontSizePt(composition?.fontSizePt);
+    if (composition?.fontSizePt) {
+      setCurrentFontSize(`${Math.round(composition.fontSizePt * 1.333)}px`);
+    }
+  }
+
+  const { loadFont } = useGoogleFonts();
+
+  useEffect(() => {
+    if (effectiveFont) {
+      loadFont(effectiveFont);
+    }
+  }, [effectiveFont, loadFont]);
 
   useEffect(() => {
     const updatePhysicalWidth = () => setPhysicalWidth(window.innerWidth);
@@ -1652,7 +1731,10 @@ export function AdvancedRichTextEditor({
   };
 
   return (
-    <div className="ac-text-editor h-full shadow-2xl">
+    <div
+      className="ac-text-editor h-full shadow-2xl"
+      style={{ '--editor-document-font': effectiveFont } as React.CSSProperties}
+    >
       <MenuBar
         editor={editor}
         viewMode={layoutViewMode}
@@ -1664,6 +1746,7 @@ export function AdvancedRichTextEditor({
         onMarginsChange={handleMarginsChange}
         onFontSizeChange={handleFontSizeChange}
         wordsPerPage={wordsPerPage}
+        effectiveFontFamily={effectiveFont}
       />
 
       <div className="ac-text-editor__content ac-text-editor__content--scroll flex justify-center bg-[var(--background)] p-4 custom-scrollbar">
@@ -1685,8 +1768,9 @@ export function AdvancedRichTextEditor({
           >
             <style>{`
               .ProseMirror {
+                font-family: var(--editor-document-font, ${effectiveFont});
                 font-size: ${previewConfig.fontSize}px;
-                line-height: ${previewConfig.lineHeight};
+                line-height: ${composition?.lineHeight ?? previewConfig.lineHeight};
                 word-wrap: break-word;
                 overflow-wrap: break-word;
               }

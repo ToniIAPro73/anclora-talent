@@ -8,8 +8,6 @@
 import * as React from 'react';
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import {
-  ChevronLeft,
-  ChevronRight,
   ZoomIn,
   ZoomOut,
   BookOpen,
@@ -315,9 +313,9 @@ export function PreviewModal({
                   aria-label={copy.previewModalPrevious}
                   onClick={prevPage}
                   disabled={currentPage === 0}
-                  className="ac-button ac-button--ghost ac-button--sm"
+                  className="ac-button ac-button--ghost ac-button--compact px-2 text-white disabled:opacity-50"
                 >
-                  <ChevronLeft className="h-5 w-5 text-white" strokeWidth={2.25} />
+                  {copy.previewModalPrevious}
                 </button>
                 <label className="flex items-center gap-2 px-1 text-sm font-medium text-white">
                   <span className="sr-only">{copy.previewModalPage}</span>
@@ -349,9 +347,9 @@ export function PreviewModal({
                   aria-label={copy.previewModalNext}
                   onClick={nextPage}
                   disabled={currentPage >= logicalTotalPages - 1}
-                  className="ac-button ac-button--ghost ac-button--sm"
+                  className="ac-button ac-button--ghost ac-button--compact px-2 text-white disabled:opacity-50"
                 >
-                  <ChevronRight className="h-5 w-5 text-white" strokeWidth={2.25} />
+                  {copy.previewModalNext}
                 </button>
               </div>
               <div />

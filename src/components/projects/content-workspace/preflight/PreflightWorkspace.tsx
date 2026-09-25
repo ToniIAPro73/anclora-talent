@@ -487,7 +487,6 @@ export function PreflightWorkspace({
                     <span className={ok ? 'text-[var(--success)]' : 'text-[var(--warning)]'}>
                       {ok ? copy.preflightWorkspaceChecklistOk : copy.preflightIssueCount.replace('{count}', String(count))}
                     </span>
-                    {onOpen && <ChevronRight className="h-4 w-4 text-[var(--text-tertiary)]" />}
                   </button>
                 </li>
               );

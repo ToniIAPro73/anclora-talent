@@ -596,6 +596,9 @@ export function ProjectWorkspace({
   })();
 
   if (editingChapterId !== null && editingChapterIndex >= 0) {
+    const effectiveFontFamily =
+      project.document.metadata?.composition?.fontFamily ??
+      'Liberation Serif';
     return (
       <div
         className="chapter-editor-route"
@@ -607,6 +610,8 @@ export function ProjectWorkspace({
           initialChapterIndex={editingChapterIndex}
           projectId={project.id}
           onClose={() => setEditingChapterId(null)}
+          effectiveFontFamily={effectiveFontFamily}
+          composition={project.document.metadata?.composition ?? null}
         />
       </div>
     );

@@ -10,10 +10,6 @@
 
 import { useState } from 'react';
 import {
-  ChevronsDown,
-  ChevronsUp,
-  ChevronDown,
-  ChevronUp,
   Copy,
   Eye,
   EyeOff,
@@ -185,9 +181,9 @@ export function LayersPanel({
               disabled={isFirst}
               title={copy.moveUpLabel}
               aria-label={copy.moveUpLabel}
-              className="ac-button ac-button--ghost ac-button--icon ac-button--sm disabled:opacity-30"
+              className="ac-button ac-button--ghost ac-button--compact text-[10px] px-1.5 disabled:opacity-30"
             >
-              <ChevronUp className="h-3.5 w-3.5" />
+              {copy.moveUpLabel}
             </button>
             <button
               type="button"
@@ -196,9 +192,9 @@ export function LayersPanel({
               disabled={isLast}
               title={copy.moveDownLabel}
               aria-label={copy.moveDownLabel}
-              className="ac-button ac-button--ghost ac-button--icon ac-button--sm disabled:opacity-30"
+              className="ac-button ac-button--ghost ac-button--compact text-[10px] px-1.5 disabled:opacity-30"
             >
-              <ChevronDown className="h-3.5 w-3.5" />
+              {copy.moveDownLabel}
             </button>
             <button
               type="button"
@@ -207,9 +203,9 @@ export function LayersPanel({
               disabled={isFirst}
               title={copy.bringToFrontLabel}
               aria-label={copy.bringToFrontLabel}
-              className="ac-button ac-button--ghost ac-button--icon ac-button--sm disabled:opacity-30"
+              className="ac-button ac-button--ghost ac-button--compact text-[10px] px-1.5 disabled:opacity-30"
             >
-              <ChevronsUp className="h-3.5 w-3.5" />
+              {copy.bringToFrontLabel}
             </button>
             <button
               type="button"
@@ -218,9 +214,9 @@ export function LayersPanel({
               disabled={isLast}
               title={copy.sendToBackLabel}
               aria-label={copy.sendToBackLabel}
-              className="ac-button ac-button--ghost ac-button--icon ac-button--sm disabled:opacity-30"
+              className="ac-button ac-button--ghost ac-button--compact text-[10px] px-1.5 disabled:opacity-30"
             >
-              <ChevronsDown className="h-3.5 w-3.5" />
+              {copy.sendToBackLabel}
             </button>
             <button
               type="button"

@@ -1,13 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Check, ChevronLeft, ChevronRight, Loader2, Save, ArrowDown, ArrowUp, ZoomIn, ZoomOut, ArrowLeft, Maximize2, FileText, Clock3 } from 'lucide-react';
+import { Check, Loader2, Save, ZoomIn, ZoomOut, Maximize2, FileText, Clock3 } from 'lucide-react';
 import { AdvancedRichTextEditor } from '../AdvancedRichTextEditor';
 import { useChapterEditor } from './useChapterEditor';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { DocumentChapter } from '@/lib/projects/types';
+import type { CompositionSettings } from '@/lib/projects/composition';
 
 interface ChapterEditorFullscreenProps {
   chapters: DocumentChapter[];
@@ -18,6 +19,8 @@ interface ChapterEditorFullscreenProps {
   defaultDevice?: 'mobile' | 'tablet' | 'desktop';
   defaultFontSize?: string;
   defaultMargins?: { top: number; bottom: number; left: number; right: number };
+  effectiveFontFamily?: string;
+  composition?: CompositionSettings | null;
 }
 
 export function ChapterEditorFullscreen({
@@ -29,6 +32,8 @@ export function ChapterEditorFullscreen({
   defaultDevice = 'desktop',
   defaultFontSize = '16px',
   defaultMargins = { top: 24, bottom: 24, left: 24, right: 24 },
+  effectiveFontFamily,
+  composition,
 }: ChapterEditorFullscreenProps) {
   const { locale } = useUiPreferences();
   const copy = resolveLocaleMessages(locale).editor;
@@ -141,7 +146,7 @@ export function ChapterEditorFullscreen({
       <header className="ac-editor-shell__header">
         <div className="ac-editor-shell__titles">
           <span className="chapter-editor-brand">Anclora Talent</span>
-          <button type="button" className="ac-editor-back ac-button ac-button--secondary ac-button--compact" onClick={handleClose} disabled={editor.isSaving} data-testid="chapter-editor-back-button"><ArrowLeft className="h-4 w-4" />{locale === 'es' ? 'Volver a Capítulos' : 'Back to Chapters'}</button>
+          <button type="button" className="ac-editor-back ac-button ac-button--secondary ac-button--compact" onClick={handleClose} disabled={editor.isSaving} data-testid="chapter-editor-back-button">{locale === 'es' ? 'Volver a Capítulos' : 'Back to Chapters'}</button>
           <h2 className="ac-editor-shell__title">
             {locale === 'es' ? 'Capítulo' : 'Chapter'} {editor.currentIndex + 1}/{editor.totalChapters}
           </h2>
@@ -154,22 +159,22 @@ export function ChapterEditorFullscreen({
             data-testid="chapter-editor-prev-chapter-button"
             onClick={editor.goToPrevChapter}
             disabled={!editor.canNavigatePrev || editor.isSaving}
-            className="ac-button ac-button--ghost ac-button--compact ac-button--icon disabled:opacity-50"
+            className="ac-button ac-button--ghost ac-button--compact disabled:opacity-50"
             aria-label={copy.chapterPrevious}
             title={copy.chapterPrevious}
           >
-            <ChevronLeft className="h-4 w-4" />
+            {locale === 'es' ? 'Capítulo anterior' : 'Previous chapter'}
           </button>
 
           <button
             data-testid="chapter-editor-next-chapter-button"
             onClick={editor.goToNextChapter}
             disabled={!editor.canNavigateNext || editor.isSaving}
-            className="ac-button ac-button--ghost ac-button--compact ac-button--icon disabled:opacity-50"
+            className="ac-button ac-button--ghost ac-button--compact disabled:opacity-50"
             aria-label={copy.chapterNext}
             title={copy.chapterNext}
           >
-            <ChevronRight className="h-4 w-4" />
+            {locale === 'es' ? 'Capítulo siguiente' : 'Next chapter'}
           </button>
           </div>
 
@@ -179,11 +184,11 @@ export function ChapterEditorFullscreen({
                 data-testid="chapter-editor-prev-page-button"
                 onClick={editor.goToPagePrev}
                 disabled={!editor.canNavigatePagePrev || editor.isSaving}
-                className="ac-button ac-button--ghost ac-button--compact ac-button--icon disabled:opacity-50"
+                className="ac-button ac-button--ghost ac-button--compact disabled:opacity-50 px-2"
                 aria-label={copy.pagePrevious}
                 title={copy.pagePrevious}
               >
-                <ArrowUp className="h-4 w-4" />
+                {locale === 'es' ? 'Pág. anterior' : 'Prev page'}
               </button>
 
               <span className="ac-preview-control-value">
@@ -194,11 +199,11 @@ export function ChapterEditorFullscreen({
                 data-testid="chapter-editor-next-page-button"
                 onClick={editor.goToPageNext}
                 disabled={!editor.canNavigatePageNext || editor.isSaving}
-                className="ac-button ac-button--ghost ac-button--compact ac-button--icon disabled:opacity-50"
+                className="ac-button ac-button--ghost ac-button--compact disabled:opacity-50 px-2"
                 aria-label={copy.pageNext}
                 title={copy.pageNext}
               >
-                <ArrowDown className="h-4 w-4" />
+                {locale === 'es' ? 'Pág. siguiente' : 'Next page'}
               </button>
             </div>
           )}
@@ -262,7 +267,7 @@ export function ChapterEditorFullscreen({
             `overflow-auto` ancestors produced competing scrollbars. */}
         <div className="chapter-editor-layout">
           <aside className="chapter-editor-outline" style={focusMode ? { display: 'none' } : undefined}><div className="chapter-editor-outline__heading"><strong>{locale === 'es' ? 'Esquema' : 'Outline'}</strong><span>{editor.currentChapter.blocks.length}</span></div>{editor.currentChapter.blocks.slice(0, 8).map((block, index) => <button type="button" key={block.id} className="chapter-editor-outline__item" onClick={() => undefined} data-testid={`chapter-outline-item-${index + 1}`}><span>{index + 1}</span>{block.content.replace(/<[^>]+>/g, ' ').slice(0, 34) || (locale === 'es' ? 'Bloque sin título' : 'Untitled block')}</button>)}</aside>
-          <div className="ac-editor-shell__surface min-h-0 overflow-hidden"><AdvancedRichTextEditor defaultContent={editor.htmlContent} onUpdate={editor.setHtmlContent} currentPage={editor.currentPage} totalPages={editor.totalPages} onPageCountChange={editor.setMeasuredTotalPages} contentZoom={zoom} /></div>
+          <div className="ac-editor-shell__surface min-h-0 overflow-hidden"><AdvancedRichTextEditor defaultContent={editor.htmlContent} onUpdate={editor.setHtmlContent} currentPage={editor.currentPage} totalPages={editor.totalPages} onPageCountChange={editor.setMeasuredTotalPages} contentZoom={zoom} effectiveFontFamily={effectiveFontFamily} composition={composition} /></div>
           <aside className="chapter-editor-inspector" style={focusMode ? { display: 'none' } : undefined}><h3>{locale === 'es' ? 'Capítulo' : 'Chapter'}</h3><label htmlFor="editor-chapter-title">{locale === 'es' ? 'Título del capítulo' : 'Chapter title'}</label><input id="editor-chapter-title" value={editor.title} onChange={(event) => editor.setTitle(event.target.value)} data-testid="chapter-editor-title-input" /><div className="chapter-editor-inspector__stats"><p><FileText />{editor.htmlContent.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).filter(Boolean).length.toLocaleString()} {locale === 'es' ? 'palabras' : 'words'}</p><p><Clock3 />{editor.totalPages} {locale === 'es' ? 'páginas (aprox.)' : 'pages (approx.)'}</p></div><section className="chapter-editor-inspector__health"><div><strong>{locale === 'es' ? 'Salud del capítulo' : 'Chapter health'}</strong><span className="chapter-editor-health-good">● {locale === 'es' ? 'Disponible' : 'Available'}</span></div><div className="chapter-editor-health-bar"><i /><i /><i /><i /></div><p><Check /> {locale === 'es' ? 'Contenido disponible' : 'Content available'}</p><p><Check /> {locale === 'es' ? 'Estructura detectada' : 'Structure detected'}</p><p><Check /> {locale === 'es' ? 'Listo para editar' : 'Ready to edit'}</p></section><details><summary>{locale === 'es' ? 'Notas' : 'Notes'}</summary><p>{locale === 'es' ? 'Las notas del capítulo se gestionan desde el proyecto.' : 'Chapter notes are managed from the project.'}</p></details></aside>
         </div>
       </div>
