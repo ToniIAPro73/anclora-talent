@@ -1686,7 +1686,7 @@ export function AdvancedRichTextEditor({
   const viewportWidth = spreadNaturalWidth;
   const estimatedFallbackWidth = Math.max(
     320,
-    physicalWidth > 0 ? physicalWidth - 480 - 48 : 0,
+    physicalWidth > 0 ? physicalWidth - 180 - 32 : 0,
   );
   const availableManuscriptWidth = containerInnerWidth > 0 ? containerInnerWidth : estimatedFallbackWidth;
   const spreadFitFactor = calculateSpreadFitFactor({
