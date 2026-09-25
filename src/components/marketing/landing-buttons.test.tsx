@@ -99,6 +99,9 @@ describe('landing CTA buttons — canonical shared button system, no icons', () 
 
     const themeToggle = screen.getByTestId('landing-theme-toggle');
     const localeToggle = screen.getByTestId('landing-locale-toggle');
+    expect(localeToggle).toHaveClass('talent-shell-locale-pill');
+    expect(localeToggle).toHaveTextContent('ES');
+    expect(themeToggle).toHaveClass('talent-shell-theme-flip');
     // Whitelisted icon-only system controls: preserve their icon.
     expect(themeToggle.querySelector('svg')).not.toBeNull();
     expect(localeToggle.querySelector('svg')).not.toBeNull();

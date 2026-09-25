@@ -120,6 +120,11 @@ html[data-theme="dark"] {
   --text-link: var(--accent);
   --focus-ring: color-mix(in srgb, var(--accent) 52%, white 20%);
   --focus-ring-offset: rgba(12, 20, 30, 0.88);
+  /* Port of TableExtractor's Landing .anclora-toggle tokens. */
+  --global-control-bg: hsl(222 47% 8%);
+  --global-control-border: hsl(199 92% 60%);
+  --global-control-glow: rgba(56, 189, 248, 0.35);
+  --global-control-fg: hsl(210 40% 98%);
   --action-primary-bg: var(--button-highlight-bg);
   --action-primary-fg: var(--button-highlight-fg);
   --action-primary-border: rgba(74, 159, 216, 0.3);
@@ -259,6 +264,10 @@ html[data-theme="light"] {
   --text-link: #2C729F;
   --focus-ring: color-mix(in srgb, var(--accent) 52%, white 10%);
   --focus-ring-offset: rgba(242, 247, 252, 0.92);
+  --global-control-bg: hsl(210 40% 98%);
+  --global-control-border: hsl(200 98% 39%);
+  --global-control-glow: rgba(2, 132, 199, 0.25);
+  --global-control-fg: hsl(222 47% 11%);
   --action-primary-bg: var(--button-highlight-bg);
   --action-primary-fg: var(--button-highlight-fg);
   --action-primary-border: rgba(58, 136, 190, 0.22);
@@ -670,25 +679,81 @@ body {
   color: var(--text-primary);
 }
 
+.global-header-control {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--global-control-border);
+  background-color: var(--global-control-bg);
+  color: var(--global-control-fg);
+  box-shadow: 0 0 10px var(--global-control-glow), inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: box-shadow 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.global-header-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.global-header-control:hover {
+  box-shadow: 0 0 16px var(--global-control-glow), 0 0 4px var(--global-control-glow);
+}
+
+.global-header-control:focus-visible {
+  outline: 2px solid var(--global-control-border);
+  outline-offset: 2px;
+}
+
+.global-header-control:active {
+  transform: scale(0.96);
+}
+
+.global-header-control:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.global-language-control {
+  width: auto;
+  gap: 6px;
+  border-radius: 9999px;
+  padding: 0 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+}
+
+.global-language-control__icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  stroke-width: 1.6;
+}
+
+.global-theme-control {
+  width: 36px;
+  border-radius: 9999px;
+  padding: 0;
+}
+
+.global-theme-control__icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.6;
+}
+
+/* Preserve the approved public Talent Landing control layout. */
 .talent-shell-locale-pill {
   width: auto;
   min-width: 88px;
   gap: 7px;
   padding-inline: 12px;
   letter-spacing: 0.08em;
-}
-
-.talent-shell-theme-flip__cube {
-  position: relative;
-  display: grid;
-  width: 100%;
-  height: 100%;
-  place-items: center;
-}
-
-.talent-shell-theme-flip__face {
-  display: grid;
-  place-items: center;
 }
 
 .talent-shell-mobile-menu-button,
@@ -2663,7 +2728,6 @@ html[data-theme="light"] .talent-dashboard-shell .talent-shell-brand__name { col
 .talent-dashboard-shell .talent-shell-brand__copy p { font-size: 20px; }
 .talent-dashboard-shell .talent-shell-topbar-actions { grid-column: 3; grid-row: 1; gap: 12px; }
 .talent-dashboard-shell .talent-shell-content { padding: 0; min-height: calc(100vh - 68px); }
-.talent-dashboard-shell .talent-shell-locale-pill, .talent-dashboard-shell .talent-shell-theme-flip { height: 42px; }
 .dashboard-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; min-height: calc(100vh - 68px); }
 .dashboard-projects { min-width: 0; padding: 32px; }
 .dashboard-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 62px; margin-bottom: 12px; }
@@ -2776,7 +2840,6 @@ html[data-theme="light"] .talent-editor-shell {
 html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color: var(--text-primary); }
 .talent-editor-shell .talent-shell-topbar-actions { grid-column: 3; grid-row: 1; gap: 10px; }
 .talent-editor-shell .talent-shell-content { padding-top: 16px; }
-.talent-editor-shell .talent-shell-locale-pill, .talent-editor-shell .talent-shell-theme-flip { height: 38px; }
 
 .talent-shell-editor-slot {
   display: flex;
@@ -3070,7 +3133,6 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
   .talent-dashboard-shell .talent-shell-brand { gap: 6px; }
   .talent-dashboard-shell .dashboard-header-create { display: none; }
   .talent-dashboard-shell .talent-shell-topbar-actions { gap: 2px; }
-  .talent-dashboard-shell .talent-shell-locale-pill { min-width: 82px; padding-inline: 10px; }
   .dashboard-toolbar h1 { font-size: 24px; }
   .dashboard-toolbar { gap: 18px; }
   .dashboard-controls { width: 100%; }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, Sun, Moon, Globe } from 'lucide-react';
+import { Globe, Menu, Moon, Sun, X } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import type { MarketingNav } from './marketing-data';
@@ -24,13 +24,8 @@ export function LandingHeader({
   const { theme, locale, setTheme, setLocale } = useUiPreferences();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
-
-  const toggleLocale = () => {
-    setLocale(locale === 'es' ? 'en' : 'es');
-  };
+  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+  const toggleLocale = () => setLocale(locale === 'es' ? 'en' : 'es');
 
   const navLinks = [
     { href: '#producto', label: nav.features },
@@ -69,7 +64,6 @@ export function LandingHeader({
 
         {/* Right side controls */}
         <div className="hidden items-center gap-1.5 md:flex lg:gap-3">
-          {/* Theme Toggle */}
           <button
             type="button"
             data-testid="landing-theme-toggle"
@@ -79,8 +73,6 @@ export function LandingHeader({
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
-
-          {/* Locale Toggle */}
           <button
             type="button"
             data-testid="landing-locale-toggle"

@@ -9,8 +9,8 @@ import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { SessionUser } from '@/lib/auth/session';
 import { NavigatingLink } from '@/components/ui/NavigatingLink';
-import { LocaleToggle } from './LocaleToggle';
-import { ThemeToggle } from './ThemeToggle';
+import { GlobalLanguageControl } from './GlobalLanguageControl';
+import { GlobalThemeControl } from './GlobalThemeControl';
 import { UserMenu } from './UserMenu';
 import { LegalFooter } from '@/components/legal/LegalFooter';
 
@@ -93,8 +93,10 @@ export function AppShell({
               >
                 {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
               </button>
-              <LocaleToggle />
-              <ThemeToggle />
+              <div className="global-header-controls">
+                <GlobalLanguageControl />
+                <GlobalThemeControl />
+              </div>
               <UserMenu user={user} />
             </div>
 

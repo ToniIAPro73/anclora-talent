@@ -6,7 +6,7 @@ const TEST_USER = {
   password: 'E2ePassword123',
 };
 
-test('workspace header actions use compact shared buttons and keep their behavior', async ({ page }) => {
+test('workspace header actions use compact shared buttons and keep their behavior', async ({ page, request }) => {
   const pageErrors: Error[] = [];
   const unexpectedResponses: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error));
@@ -23,12 +23,27 @@ test('workspace header actions use compact shared buttons and keep their behavio
     );
     window.localStorage.setItem('anclora-workspace-onboarding-v1', 'seen');
   });
+  const registration = await request.post('/api/auth/register', { data: TEST_USER });
+  expect([201, 409]).toContain(registration.status());
   await page.goto('/sign-in');
   await page.locator('#email').fill(TEST_USER.email);
   await page.locator('#password').fill(TEST_USER.password);
   await page.getByRole('button', { name: 'Iniciar sesión' }).click();
   await expect(page).toHaveURL(/dashboard/);
+  await expect(page.getByTestId('global-language-control')).toBeVisible();
+  await expect(page.getByTestId('global-language-control')).toHaveClass(/global-language-control/);
+  await expect(page.getByTestId('global-language-control').locator('svg')).toBeVisible();
+  await expect(page.getByTestId('global-theme-control')).toBeVisible();
+  await expect(page.getByTestId('global-theme-control')).toHaveClass(/global-theme-control/);
+  await expect(page.getByTestId('global-theme-control').locator('svg')).toBeVisible();
+
+  await page.goto('/projects/new');
+  await expect(page.getByTestId('global-language-control')).toBeVisible();
+  await expect(page.getByTestId('global-theme-control')).toBeVisible();
+  await page.goto('/dashboard');
   await page.getByRole('link', { name: 'Abrir editor' }).first().click();
+  await expect(page.getByTestId('global-language-control')).toBeVisible();
+  await expect(page.getByTestId('global-theme-control')).toBeVisible();
 
   const preview = page.getByTestId('content-workspace-preview-button');
   const documentData = page.getByTestId('document-data-open-button');

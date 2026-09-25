@@ -41,8 +41,8 @@ describe('app shell v3 contract', () => {
 
   test('mobile burger exists while theme and locale toggles remain top-level controls', () => {
     expect(appShell).toContain('talent-shell-mobile-menu-button');
-    expect(appShell).toContain('<LocaleToggle />');
-    expect(appShell).toContain('<ThemeToggle />');
+    expect(appShell).toContain('<GlobalLanguageControl />');
+    expect(appShell).toContain('<GlobalThemeControl />');
     expect(globalsCss).toMatch(/@media \(max-width: 480px\)[\s\S]*\.talent-shell-nav\s*\{[\s\S]*display: none/);
   });
 
