@@ -89,6 +89,7 @@ export type AppMessages = {
     deviceMobile: string;
     deviceTablet: string;
     deviceDesktop: string;
+    singlePageMode: string;
     doublePageMode: string;
     doublePageModeUnavailable: string;
     inlineUnavailable: string;
@@ -1454,6 +1455,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       deviceMobile: 'Vista móvil',
       deviceTablet: 'Vista tablet',
       deviceDesktop: 'Vista escritorio',
+      singlePageMode: 'Modo de una página',
       doublePageMode: 'Modo de dos páginas',
       doublePageModeUnavailable: 'El modo de dos páginas no está disponible en una pantalla estrecha',
       inlineUnavailable: 'Coloca el cursor dentro de una palabra o selecciona texto',
@@ -3050,6 +3052,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       deviceMobile: 'Mobile view',
       deviceTablet: 'Tablet view',
       deviceDesktop: 'Desktop view',
+      singlePageMode: 'Single-page mode',
       doublePageMode: 'Two-page mode',
       doublePageModeUnavailable: 'Two-page mode is unavailable in a narrow viewport',
       inlineUnavailable: 'Place the cursor inside a word or select text',

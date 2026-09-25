@@ -2368,7 +2368,7 @@ ul.toc-list > li {
 }
 
 .ac-text-editor__content--scroll {
-  overflow-x: hidden;
+  overflow-x: auto;
 }
 
 /* Fase 6: chapter editor scroll fix.
@@ -2482,8 +2482,21 @@ ul.toc-list > li {
 .chapters-workspace__chapter-summary { max-width: 650px; margin: 14px 0 20px; font-size: 20px; }
 .chapters-workspace__metrics { gap: 18px; padding: 15px 0; }
 .chapters-workspace__metrics > span:last-child { display: inline-flex; gap: 8px; align-items: center; color: var(--accent-text); font-size: 12px; }
-.chapters-workspace__preview { min-height: 250px; max-height: 390px; overflow: hidden; margin-top: 18px; padding: 28px 34px; border-radius: 5px; background: #f4f0e8; box-shadow: 0 12px 30px rgb(0 0 0 / 14%); }
-.chapters-workspace__preview p { color: #172238; font-size: 17px; line-height: 1.62; }
+.chapters-workspace__preview { min-height: 250px; max-height: 390px; overflow-y: auto; margin-top: 18px; padding: 28px 34px; border-radius: 5px; background: #f4f0e8; box-shadow: 0 12px 30px rgb(0 0 0 / 14%); }
+.chapters-workspace__preview .chapter-rep-preview__body { font-family: Georgia, 'Times New Roman', serif; color: #172238; }
+.chapters-workspace__preview p { color: #172238; font-family: Georgia, 'Times New Roman', serif; font-size: 16px; line-height: 1.62; margin: 0 0 0.85rem; }
+.chapters-workspace__preview h1, .chapters-workspace__preview h2, .chapters-workspace__preview h3, .chapters-workspace__preview h4 { color: #172238; font-family: Georgia, 'Times New Roman', serif; font-weight: 700; margin: 0 0 0.75rem; }
+.chapters-workspace__preview h1 { font-size: 1.5rem; }
+.chapters-workspace__preview h2 { font-size: 1.25rem; }
+.chapters-workspace__preview h3 { font-size: 1.1rem; }
+.chapters-workspace__preview ul, .chapters-workspace__preview ol { margin: 0 0 0.85rem 1.25rem; padding: 0; color: #172238; }
+.chapters-workspace__preview ul { list-style-type: disc; }
+.chapters-workspace__preview ol { list-style-type: decimal; }
+.chapters-workspace__preview li { margin: 0.3rem 0; font-size: 15px; line-height: 1.55; }
+.chapters-workspace__preview blockquote { border-left: 3px solid #C49A24; padding-left: 12px; margin: 12px 0; font-style: italic; color: #2b3952; }
+.chapters-workspace__preview [data-toc-entry="true"] { display: flex; align-items: baseline; gap: 0; margin: 0; padding: 0; white-space: nowrap; list-style: none; line-height: 1.5; font-size: 15px; }
+.chapters-workspace__preview [data-toc-entry="true"][data-toc-page]::before { content: "················································································"; order: 1; flex: 1 1 auto; overflow: hidden; margin: 0 0.35em; letter-spacing: 0.15em; color: inherit; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.chapters-workspace__preview [data-toc-entry="true"][data-toc-page]::after { content: attr(data-toc-page); order: 2; flex: 0 0 auto; font-variant-numeric: tabular-nums; }
 .chapters-workspace__actions { align-items: stretch; gap: 10px; padding-top: 18px; }
 .chapters-workspace__actions .ac-button { min-height: 40px; border-radius: 4px; }
 .chapters-workspace__actions .ac-button:first-child { flex: 1.05; }
@@ -2530,7 +2543,8 @@ ul.toc-list > li {
 .chapter-editor-layout .ac-text-editor__toolbar { position: absolute; z-index: 4; inset: 0 0 auto; min-height: 52px; overflow-x: auto; border: 1px solid var(--border-subtle); border-radius: 5px; background: var(--surface-panel); box-shadow: none; scrollbar-width: thin; }
 .chapter-editor-layout .ac-text-editor__toolbar { flex-wrap: nowrap; gap: .25rem; padding: .45rem .6rem; }
 .chapter-editor-layout .ac-text-editor__toolbar-section { flex-shrink: 0; flex-wrap: nowrap; gap: .2rem; border-right-color: var(--border-subtle); }
-.chapter-editor-layout .ac-text-editor__toolbar-actions { flex-shrink: 0; }
+.chapter-editor-layout .ac-text-editor__toolbar-actions { display: flex; align-items: center; gap: .35rem; flex-shrink: 0; }
+.chapter-editor-layout .ac-text-editor__toolbar-actions .ac-text-editor__button { width: auto; min-width: 2.5rem; height: 1.85rem; padding: 0 .55rem; }
 .chapter-editor-layout .ac-text-editor__button { width: 1.85rem; height: 1.85rem; border-radius: 4px; }
 .chapter-editor-layout .ac-text-editor__split-main { width: 1.85rem; height: 1.85rem; }
 .chapter-editor-layout .ac-text-editor__split-toggle { width: 1.3rem; }
@@ -2540,7 +2554,7 @@ ul.toc-list > li {
 .ac-editor-shell__titles { display: flex; align-items: center; gap: 14px; }
 .ac-editor-shell__titles .ac-editor-back { flex: 0 0 auto !important; width: max-content !important; align-self: center; margin: 0; }
 .chapter-editor-brand { flex: 0 0 auto; color: var(--text-primary); font-size: 17px; font-weight: 700; letter-spacing: -.02em; }
-.chapter-editor-layout .multipage-editor-flow { background: #f4f0e8; color: #172238; }
+.chapter-editor-layout .multipage-editor-flow { background: transparent; color: #172238; }
 .chapter-editor-layout .multipage-editor-flow .ProseMirror { color: #172238; font-family: var(--editor-document-font, Georgia, 'Times New Roman', serif); font-size: 18px; line-height: 1.55; }
 .chapter-editor-layout .multipage-editor-flow .ProseMirror h1, .chapter-editor-layout .multipage-editor-flow .ProseMirror h2, .chapter-editor-layout .multipage-editor-flow .ProseMirror h3, .chapter-editor-layout .multipage-editor-flow .ProseMirror h4, .chapter-editor-layout .multipage-editor-flow .ProseMirror h5, .chapter-editor-layout .multipage-editor-flow .ProseMirror h6 { color: #172238; font-family: var(--editor-document-font, Georgia, 'Times New Roman', serif); }
 .chapter-editor-outline, .chapter-editor-inspector { border-radius: 5px; }

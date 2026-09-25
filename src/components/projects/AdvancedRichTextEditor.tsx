@@ -42,11 +42,13 @@ import {
   Monitor,
   Tablet,
   Columns,
+  FileText,
   Minus,
   X,
   IndentIncrease,
   IndentDecrease
 } from 'lucide-react';
+import { EditorPopover } from './EditorPopover';
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
 import { MarginSelector, type MarginConfig } from './MarginSelector';
 import {
@@ -78,6 +80,7 @@ type ToolbarButtonProps = {
   dataTestId?: string;
   title: string;
   className?: string;
+  ariaPressed?: boolean;
   children: React.ReactNode;
 };
 
@@ -254,22 +257,30 @@ const TocInlineAttributes = Extension.create({
   },
 });
 
-function ToolbarButton({ onClick, active, disabled, dataTestId, title, className, children }: ToolbarButtonProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      data-testid={dataTestId}
-      aria-label={title}
-      title={title}
-      data-active={active ? 'true' : 'false'}
-      className={`ac-text-editor__button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${className ?? ''}`}
-    >
-      {children}
-    </button>
-  );
-}
+const ToolbarButton = React.forwardRef<HTMLButtonElement, ToolbarButtonProps>(
+  function ToolbarButton(
+    { onClick, active, disabled, dataTestId, title, className, ariaPressed, children },
+    ref
+  ) {
+    return (
+      <button
+        ref={ref}
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        data-testid={dataTestId}
+        aria-label={title}
+        title={title}
+        aria-pressed={ariaPressed !== undefined ? ariaPressed : (active ? true : undefined)}
+        data-active={active ? 'true' : 'false'}
+        className={`ac-text-editor__button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${className ?? ''}`}
+      >
+        {children}
+      </button>
+    );
+  }
+);
+ToolbarButton.displayName = 'ToolbarButton';
 
 function ListDropdownButton({
   icon,
@@ -417,7 +428,7 @@ function countMeaningfulTopLevelBlocks(html: string): number {
   }).length;
 }
 
-// Advanced Font Selector using useGoogleFonts
+// Advanced Font Selector using useGoogleFonts and EditorPopover
 const AdvancedFontSelector = ({
   editor,
   applyToWordOrSelection,
@@ -436,13 +447,13 @@ const AdvancedFontSelector = ({
   const { fonts, loadFont } = useGoogleFonts();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const effectiveFont = effectiveFontFamily?.trim() || 'Liberation Serif';
 
   const filteredFonts = useMemo(() => {
     return fonts
-      .filter(f => f.family.toLowerCase().includes(searchQuery.toLowerCase()))
+      .filter((f) => f.family.toLowerCase().includes(searchQuery.toLowerCase()))
       .slice(0, 40);
   }, [fonts, searchQuery]);
 
@@ -454,19 +465,10 @@ const AdvancedFontSelector = ({
     setIsOpen(false);
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   return (
-    <div className="relative" ref={dropdownRef}>
+    <>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => isAvailable && setIsOpen(!isOpen)}
         disabled={!isAvailable}
@@ -478,50 +480,56 @@ const AdvancedFontSelector = ({
         <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {isOpen && isAvailable && (
-        <div className="absolute left-0 top-11 z-[110] w-[220px] rounded-xl border border-[var(--border-strong)] bg-[#0E1825] p-2 shadow-2xl shadow-black animate-in fade-in zoom-in duration-200">
-          <div className="relative mb-2">
-            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[var(--text-tertiary)]" />
-            <input
-              type="text"
-              placeholder={copy.fontSearch}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              data-testid="editor-toolbar-font-search-input"
-              className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--background)] py-2 pl-8 pr-3 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
-              autoFocus
-            />
-          </div>
-          <div className="max-h-[250px] overflow-y-auto pr-1 custom-scrollbar">
+      <EditorPopover
+        anchorRef={buttonRef}
+        isOpen={isOpen && isAvailable}
+        onClose={() => setIsOpen(false)}
+        width={240}
+        ariaLabel={copy.fontFamily}
+      >
+        <div className="relative mb-2">
+          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[var(--text-tertiary)]" />
+          <input
+            type="text"
+            placeholder={copy.fontSearch}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            data-testid="editor-toolbar-font-search-input"
+            className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--background)] py-2 pl-8 pr-3 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+            autoFocus
+          />
+        </div>
+        <div className="max-h-[250px] overflow-y-auto pr-1 custom-scrollbar">
+          <button
+            type="button"
+            onClick={() => {
+              applyToWordOrSelection((chain) => chain.unsetFontFamily());
+              setIsOpen(false);
+            }}
+            data-testid="font-option-default"
+            className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]"
+          >
+            <span className="truncate">
+              {effectiveFont} <span className="text-[10px] opacity-70">({locale === 'es' ? 'Documento' : 'Document'})</span>
+            </span>
+            {!editor.getAttributes('textStyle').fontFamily && <Check className="h-3 w-3" />}
+          </button>
+          {filteredFonts.map((font) => (
             <button
               type="button"
-              onClick={() => {
-                applyToWordOrSelection((chain) => chain.unsetFontFamily());
-                setIsOpen(false);
-              }}
-              data-testid="font-option-default"
-              className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]"
+              key={font.family}
+              onClick={() => selectFont(font.family)}
+              data-testid={`font-option-${font.family.replace(/\s+/g, '-').toLowerCase()}`}
+              style={{ fontFamily: font.family }}
+              className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm text-[var(--text-primary)] hover:bg-[var(--hover)]"
             >
-              <span className="truncate">{effectiveFont} <span className="text-[10px] opacity-70">({locale === 'es' ? 'Documento' : 'Document'})</span></span>
-              {!editor.getAttributes('textStyle').fontFamily && <Check className="h-3 w-3" />}
+              {font.family}
+              {currentFont === font.family && <Check className="h-3 w-3 text-[var(--accent-text)]" />}
             </button>
-            {filteredFonts.map((font) => (
-              <button
-                type="button"
-                key={font.family}
-                onClick={() => selectFont(font.family)}
-                data-testid={`font-option-${font.family.replace(/\s+/g, '-').toLowerCase()}`}
-                style={{ fontFamily: font.family }}
-                className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm text-[var(--text-primary)] hover:bg-[var(--hover)]"
-              >
-                {font.family}
-                {currentFont === font.family && <Check className="h-3 w-3 text-[var(--accent-text)]" />}
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
-      )}
-    </div>
+      </EditorPopover>
+    </>
   );
 };
 
@@ -541,7 +549,7 @@ const FontSizeSelector = ({
   const { locale } = useUiPreferences();
   const copy = resolveLocaleMessages(locale).editor;
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const sizes = [
     { name: '10', value: '10px' },
@@ -560,19 +568,10 @@ const FontSizeSelector = ({
 
   const currentSize = editor.getAttributes('textStyle')?.fontSize || '16px';
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   return (
-    <div className="relative" ref={dropdownRef}>
+    <>
       <ToolbarButton
+        ref={buttonRef}
         onClick={() => isAvailable && setIsOpen(!isOpen)}
         disabled={!isAvailable}
         dataTestId="editor-toolbar-font-size-button"
@@ -581,8 +580,14 @@ const FontSizeSelector = ({
         <Type className="h-4 w-4" />
       </ToolbarButton>
 
-      {isOpen && isAvailable && (
-        <div className="absolute left-0 top-11 z-[110] flex flex-col gap-0.5 rounded-xl border border-[var(--border-strong)] bg-[#0E1825] p-2 shadow-2xl shadow-black animate-in fade-in zoom-in duration-200">
+      <EditorPopover
+        anchorRef={buttonRef}
+        isOpen={isOpen && isAvailable}
+        onClose={() => setIsOpen(false)}
+        width={100}
+        ariaLabel={copy.fontSize}
+      >
+        <div className="flex max-h-[260px] flex-col gap-0.5 overflow-y-auto pr-1 custom-scrollbar">
           {sizes.map((size) => (
             <button
               type="button"
@@ -593,19 +598,19 @@ const FontSizeSelector = ({
                 setIsOpen(false);
               }}
               data-testid={`font-size-option-${size.name}`}
-              className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+              className={`px-3 py-1.5 text-xs text-left rounded-lg transition-colors ${
                 currentSize === size.value
-                  ? 'bg-[var(--accent)]/20 text-[var(--accent-text)]'
-                  : 'text-[var(--text-secondary)] hover:bg-[var(--hover)]'
+                  ? 'bg-[var(--accent)]/20 text-[var(--accent-text)] font-semibold'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]'
               }`}
               title={size.name}
             >
-              {size.name}
+              {size.name}px
             </button>
           ))}
         </div>
-      )}
-    </div>
+      </EditorPopover>
+    </>
   );
 };
 
@@ -623,7 +628,7 @@ const ColorSelector = ({
   const { locale } = useUiPreferences();
   const copy = resolveLocaleMessages(locale).editor;
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const colors = [
     { name: 'Por Defecto', value: 'inherit', description: 'Color normal del texto' },
@@ -644,21 +649,12 @@ const ColorSelector = ({
   ];
 
   const currentColor = editor.getAttributes('textStyle').color || 'inherit';
-  const currentColorName = colors.find(c => c.value === currentColor)?.name || copy.colorDefault;
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const currentColorName = colors.find((c) => c.value === currentColor)?.name || copy.colorDefault;
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => isAvailable && setIsOpen(!isOpen)}
         disabled={!isAvailable}
@@ -675,55 +671,59 @@ const ColorSelector = ({
         <Palette className="h-4 w-4" />
       </button>
 
-      {isOpen && isAvailable && (
-        <div className="absolute left-0 top-11 z-[110] w-[min(92vw,320px)] rounded-2xl border border-[var(--border-strong)] bg-[#0E1825] p-3 shadow-2xl shadow-black/50 animate-in fade-in zoom-in duration-200">
-          <div className="mb-4">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)] mb-2">
-              Paleta de Colores
-            </div>
-            <div className="flex items-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--background)]/50 p-2.5">
-              <div
-                className="h-6 w-6 rounded-lg border border-[var(--border-strong)]"
-                style={{ backgroundColor: currentColor === 'inherit' ? 'var(--text-primary)' : currentColor }}
-              />
-              <span className="text-xs font-semibold text-[var(--text-primary)]">{currentColorName}</span>
-            </div>
+      <EditorPopover
+        anchorRef={buttonRef}
+        isOpen={isOpen && isAvailable}
+        onClose={() => setIsOpen(false)}
+        width={280}
+        ariaLabel={copy.textColor}
+      >
+        <div className="mb-3">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)] mb-2">
+            Paleta de Colores
           </div>
-
-          <div className="grid max-h-[320px] grid-cols-1 gap-2 overflow-y-auto pr-1 custom-scrollbar">
-            {colors.map((color) => (
-              <button
-                type="button"
-                key={color.value}
-                onClick={() => {
-                  if (color.value === 'inherit') applyToWordOrSelection((chain) => chain.unsetColor());
-                  else applyToWordOrSelection((chain) => chain.setColor(color.value));
-                  setIsOpen(false);
-                }}
-                data-testid={`color-option-${color.value.replace('#', '')}`}
-                className={`group flex items-center gap-3 rounded-xl border px-3 py-2 text-left transition-all duration-200 ${
-                  currentColor === color.value
-                    ? 'border-[var(--accent)] bg-[var(--accent)]/10'
-                    : 'border-[var(--border-subtle)] bg-[var(--background)]/30 hover:border-[var(--accent)]/50'
-                }`}
-                title={color.name}
-              >
-                <div
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-white/20 text-[8px] font-bold transition-transform duration-200 group-hover:scale-105"
-                  style={{ backgroundColor: color.value === 'inherit' ? 'transparent' : color.value }}
-                >
-                  {color.value === 'inherit' ? '∅' : ''}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[11px] font-semibold text-[var(--text-primary)]">{color.name}</div>
-                  <div className="text-[9px] text-[var(--text-tertiary)]">{color.description}</div>
-                </div>
-              </button>
-            ))}
+          <div className="flex items-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--background)]/50 p-2">
+            <div
+              className="h-5 w-5 rounded border border-[var(--border-strong)]"
+              style={{ backgroundColor: currentColor === 'inherit' ? 'var(--text-primary)' : currentColor }}
+            />
+            <span className="text-xs font-semibold text-[var(--text-primary)]">{currentColorName}</span>
           </div>
         </div>
-      )}
-    </div>
+
+        <div className="grid max-h-[280px] grid-cols-1 gap-1.5 overflow-y-auto pr-1 custom-scrollbar">
+          {colors.map((color) => (
+            <button
+              type="button"
+              key={color.value}
+              onClick={() => {
+                if (color.value === 'inherit') applyToWordOrSelection((chain) => chain.unsetColor());
+                else applyToWordOrSelection((chain) => chain.setColor(color.value));
+                setIsOpen(false);
+              }}
+              data-testid={`color-option-${color.value.replace('#', '')}`}
+              className={`group flex items-center gap-2.5 rounded-lg border px-2.5 py-1.5 text-left transition-all duration-150 ${
+                currentColor === color.value
+                  ? 'border-[var(--accent)] bg-[var(--accent)]/10'
+                  : 'border-[var(--border-subtle)] bg-[var(--background)]/30 hover:border-[var(--accent)]/50 hover:bg-[var(--hover)]'
+              }`}
+              title={color.name}
+            >
+              <div
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-white/20 text-[8px] font-bold"
+                style={{ backgroundColor: color.value === 'inherit' ? 'transparent' : color.value }}
+              >
+                {color.value === 'inherit' ? '∅' : ''}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-semibold text-[var(--text-primary)] leading-tight">{color.name}</div>
+                <div className="text-[9px] text-[var(--text-tertiary)] truncate">{color.description}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </EditorPopover>
+    </>
   );
 };
 
@@ -933,11 +933,21 @@ const MenuBar = ({
           <Monitor className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton
-          onClick={() => setViewMode(viewMode === 'single' ? 'double' : 'single')}
+          onClick={() => setViewMode('single')}
+          active={viewMode === 'single'}
+          dataTestId="editor-toolbar-single-page-button"
+          title={copy.singlePageMode}
+          ariaPressed={viewMode === 'single'}
+        >
+          <FileText className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => setViewMode('double')}
           active={viewMode === 'double'}
           disabled={device === 'mobile' || isPhysicalMobile}
           dataTestId="editor-toolbar-double-page-button"
           title={isPhysicalMobile ? copy.doublePageModeUnavailable : copy.doublePageMode}
+          ariaPressed={viewMode === 'double'}
         >
           <Columns className="h-4 w-4" />
         </ToolbarButton>
@@ -1204,7 +1214,7 @@ const MenuBar = ({
           disabled={!editor.can().undo()}
           dataTestId="editor-toolbar-undo-button"
           title={copy.undo}
-          className="w-auto px-2 min-w-[2rem]"
+          className="!w-auto px-2.5 min-w-[2.5rem]"
         >
           <span className="text-[11px] font-semibold leading-none">{copy.undo}</span>
         </ToolbarButton>
@@ -1213,7 +1223,7 @@ const MenuBar = ({
           disabled={!editor.can().redo()}
           dataTestId="editor-toolbar-redo-button"
           title={copy.redo}
-          className="w-auto px-2 min-w-[2rem]"
+          className="!w-auto px-2.5 min-w-[2.5rem]"
         >
           <span className="text-[11px] font-semibold leading-none">{copy.redo}</span>
         </ToolbarButton>
@@ -1337,7 +1347,7 @@ export function AdvancedRichTextEditor({
   );
   const spreadStartPage =
     layoutViewMode === 'double' ? Math.max(0, currentPage - (currentPage % 2)) : currentPage;
-  const showSecondPage = layoutViewMode === 'double' && spreadStartPage + 1 < totalRenderablePages;
+  const showSecondPage = layoutViewMode === 'double';
   const lastPublishedContentRef = useRef(normalizeEditorHtml(defaultContent));
 
   const handleUpdate = useCallback(
@@ -1584,14 +1594,18 @@ export function AdvancedRichTextEditor({
   const contentHeight = Math.max(120, pageHeight - margins.top - margins.bottom);
   const columnGap = pageGap + margins.left + margins.right;
   const viewportWidth = showSecondPage ? pageWidth * 2 + pageGap : pageWidth;
+  const effectivePages = Math.max(
+    totalRenderablePages,
+    showSecondPage ? spreadStartPage + 2 : spreadStartPage + 1,
+  );
   const flowWidth =
-    contentWidth * totalRenderablePages +
-    columnGap * Math.max(totalRenderablePages - 1, 0);
+    contentWidth * effectivePages +
+    columnGap * Math.max(effectivePages - 1, 0);
   const flowOffset = spreadStartPage * (pageWidth + pageGap);
   const visiblePageIndices = Array.from(
     { length: showSecondPage ? 2 : 1 },
     (_, index) => spreadStartPage + index,
-  ).filter((pageIndex) => pageIndex < totalRenderablePages);
+  );
 
   const measureRenderablePages = useCallback(() => {
     const proseMirror = multipageFlowRef.current?.querySelector('.ProseMirror') as HTMLElement | null;
@@ -2055,7 +2069,7 @@ export function AdvancedRichTextEditor({
                 width: calc(100% - ${margins.left + margins.right}px);
                 height: ${contentHeight}px;
                 overflow: hidden;
-                background: #f4f0e8;
+                background: transparent;
                 color: #172238;
               }
               .multipage-editor-flow-track {
