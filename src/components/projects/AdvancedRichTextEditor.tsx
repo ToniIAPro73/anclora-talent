@@ -1315,7 +1315,21 @@ export function AdvancedRichTextEditor({
     effectiveFontFamily?.trim() ||
     composition?.fontFamily?.trim() ||
     'Liberation Serif';
-  const initialMargins = composition?.margins ?? preferences.margins ?? MARGIN_PRESETS.normal;
+  const sourcePageWidth = documentStyleMap?.page.widthPt
+    ? documentStyleMap.page.widthPt * (96 / 72)
+    : undefined;
+  const sourcePageHeight = documentStyleMap?.page.heightPt
+    ? documentStyleMap.page.heightPt * (96 / 72)
+    : undefined;
+  const sourceMargins = documentStyleMap?.page.marginsPt
+    ? {
+        top: documentStyleMap.page.marginsPt.top * (96 / 72),
+        bottom: documentStyleMap.page.marginsPt.bottom * (96 / 72),
+        left: documentStyleMap.page.marginsPt.left * (96 / 72),
+        right: documentStyleMap.page.marginsPt.right * (96 / 72),
+      }
+    : undefined;
+  const initialMargins = composition?.margins ?? sourceMargins ?? preferences.margins ?? MARGIN_PRESETS.normal;
   const [prevCompositionMargins, setPrevCompositionMargins] = useState(composition?.margins);
   const [margins, setMargins] = useState<MarginConfig>(initialMargins);
   if (composition?.margins !== prevCompositionMargins) {
@@ -1396,10 +1410,10 @@ export function AdvancedRichTextEditor({
     () => resolveEditorViewportLayout({
       physicalWidth,
       publicationDevice: publicationFormat,
-      pageWidth: DEVICE_PAGINATION_CONFIGS[publicationFormat].pageWidth,
+      pageWidth: sourcePageWidth ?? DEVICE_PAGINATION_CONFIGS[publicationFormat].pageWidth,
       requestedViewMode: viewMode,
     }),
-    [physicalWidth, publicationFormat, viewMode],
+    [physicalWidth, publicationFormat, sourcePageWidth, viewMode],
   );
   const layoutDevice = viewportLayout.layoutDevice;
   const layoutViewMode = viewportLayout.viewMode;
@@ -1420,13 +1434,15 @@ export function AdvancedRichTextEditor({
     const baseConfig = DEVICE_PAGINATION_CONFIGS[previewFormat];
     return {
       ...baseConfig,
+      pageWidth: sourcePageWidth ?? baseConfig.pageWidth,
+      pageHeight: sourcePageHeight ?? baseConfig.pageHeight,
       fontSize: Number.parseInt(currentFontSize, 10) || baseConfig.fontSize,
       marginTop: margins.top,
       marginBottom: margins.bottom,
       marginLeft: margins.left,
       marginRight: margins.right,
     };
-  }, [currentFontSize, margins.bottom, margins.left, margins.right, margins.top, previewFormat]);
+  }, [currentFontSize, margins.bottom, margins.left, margins.right, margins.top, previewFormat, sourcePageHeight, sourcePageWidth]);
   const actualRenderablePages = useMemo(() => {
     const reconciledHtml = reconcileOverflowBreaks(defaultContent, previewConfig);
     return countRenderablePages(paginateContent(reconciledHtml, previewConfig));
@@ -1908,6 +1924,10 @@ export function AdvancedRichTextEditor({
                 object-fit: cover;
               }
               .ProseMirror p {
+                font-family: var(--talent-body-font, var(--editor-document-font, ${effectiveFont}));
+                font-size: var(--talent-body-size, ${previewConfig.fontSize}px);
+                line-height: var(--talent-body-line-height, ${composition?.lineHeight ?? previewConfig.lineHeight});
+                text-align: var(--talent-body-align, left);
                 margin: 0;
                 overflow-wrap: break-word;
                 word-break: break-word;

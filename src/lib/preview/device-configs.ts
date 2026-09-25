@@ -29,6 +29,9 @@ export interface PaginationConfig {
 
 export interface PaginationConfigOverrides {
   fontSize?: string | number;
+  pageWidth?: number;
+  pageHeight?: number;
+  lineHeight?: number;
   margins?: {
     top: number;
     bottom: number;
@@ -158,6 +161,9 @@ export function buildPaginationConfig(
 
   return {
     ...baseConfig,
+    pageWidth: overrides?.pageWidth ?? baseConfig.pageWidth,
+    pageHeight: overrides?.pageHeight ?? baseConfig.pageHeight,
+    lineHeight: overrides?.lineHeight ?? baseConfig.lineHeight,
     fontSize:
       typeof parsedFontSize === 'number' && Number.isFinite(parsedFontSize)
         ? parsedFontSize

@@ -34,6 +34,7 @@ import {
   type PaginationConfig,
 } from '@/lib/preview/device-configs';
 import { MultipageFlow } from '@/components/projects/MultipageFlow';
+import { compileDocument, generateCssVariables } from '@/lib/style-engine/document-compiler';
 
 interface PreviewModalProps {
   project: ProjectRecord;
@@ -56,6 +57,35 @@ export function PreviewModal({
   const [zoom, setZoom] = useState(100);
   const [hasManualZoom, setHasManualZoom] = useState(false);
   const [pageInput, setPageInput] = useState('1');
+
+  const compiledDocument = useMemo(() => {
+    const rawDoc = project.document.documentModel ?? {
+      version: 1,
+      metadata: project.document.metadata ?? { title: project.title },
+      blocks: [],
+    };
+    return compileDocument({
+      projectId: project.id,
+      document: rawDoc,
+      sourceStyleProfile: project.document.metadata?.originalDocumentStyleProfile ?? null,
+      referenceProfile: project.document.metadata?.referenceEditorialProfile ?? null,
+      brandProfile: project.brandProfile ?? null,
+      userOverrides: project.document.metadata?.userOverrides ?? [],
+    });
+  }, [project]);
+
+  const sourceStyleVariables = useMemo(
+    () => generateCssVariables(compiledDocument.styleMap),
+    [compiledDocument.styleMap],
+  );
+  const sourcePageWidth = compiledDocument.styleMap.page.widthPt * (96 / 72);
+  const sourcePageHeight = compiledDocument.styleMap.page.heightPt * (96 / 72);
+  const sourceMargins = useMemo(() => ({
+    top: compiledDocument.styleMap.page.marginsPt.top * (96 / 72),
+    bottom: compiledDocument.styleMap.page.marginsPt.bottom * (96 / 72),
+    left: compiledDocument.styleMap.page.marginsPt.left * (96 / 72),
+    right: compiledDocument.styleMap.page.marginsPt.right * (96 / 72),
+  }), [compiledDocument.styleMap]);
   
   // CONTENT FLOW STATE
   const [totalContentPages, setTotalContentPages] = useState(1);
@@ -71,10 +101,13 @@ export function PreviewModal({
   const paginationConfig = useMemo(
     () =>
       buildPaginationConfig(format, {
-        fontSize: preferences.fontSize,
-        margins: preferences.margins,
+        fontSize: compiledDocument.styleMap.body.fontSizePt * (96 / 72),
+        pageWidth: sourcePageWidth,
+        pageHeight: sourcePageHeight,
+        lineHeight: compiledDocument.styleMap.body.lineHeight,
+        margins: sourceMargins,
       }),
-    [format, preferences.fontSize, preferences.margins],
+    [compiledDocument.styleMap.body.fontSizePt, format, sourcePageHeight, sourcePageWidth, sourceMargins],
   );
 
   // FASE C: the composition engine is the single source for both the
@@ -288,7 +321,8 @@ export function PreviewModal({
                     config={paginationConfig}
                     currentPage={currentPage >= firstContentIndex && currentPage <= lastContentIndex ? currentPage - firstContentIndex : 0}
                     viewMode={viewMode}
-                    margins={preferences.margins!}
+                    margins={sourceMargins}
+                    styleVariables={sourceStyleVariables}
                     showPageNumbers
                     pageNumberOffset={2}
                     onPageCountChange={setTotalContentPages}

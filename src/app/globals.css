@@ -2292,18 +2292,6 @@ hr[data-page-break="true"]::after {
   letter-spacing: 0.08em;
 }
 
-/* Fuerza mono en TODO el editor para el índice */
-.ProseMirror {
-  font-variant-numeric: tabular-nums !important;
-}
-
-.ProseMirror p,
-.ProseMirror li,
-.ProseMirror h1,
-.ProseMirror h2 {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
-}
-
 /* Índice con CSS leader: el paragraph/li tiene `data-toc-entry="true"`
    y opcionalmente `data-toc-page="N"`. El título va como texto plano dentro
    del bloque (sin spans anidados para que sobreviva al roundtrip del editor).
@@ -2882,8 +2870,18 @@ ul.toc-list > li {
 .ac-editor-shell__summary { margin: 0; font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
 @media (min-width: 1280px) { .ac-editor-shell__summary { max-width: 440px; } }
 .chapter-editor-layout .multipage-editor-flow { background: transparent; color: #172238; }
-.chapter-editor-layout .multipage-editor-flow .ProseMirror { color: #172238; font-family: var(--editor-document-font, Georgia, 'Times New Roman', serif); font-size: 18px; line-height: 1.55; }
-.chapter-editor-layout .multipage-editor-flow .ProseMirror h1, .chapter-editor-layout .multipage-editor-flow .ProseMirror h2, .chapter-editor-layout .multipage-editor-flow .ProseMirror h3, .chapter-editor-layout .multipage-editor-flow .ProseMirror h4, .chapter-editor-layout .multipage-editor-flow .ProseMirror h5, .chapter-editor-layout .multipage-editor-flow .ProseMirror h6 { color: #172238; font-family: var(--editor-document-font, Georgia, 'Times New Roman', serif); }
+.chapter-editor-layout .multipage-editor-flow .ProseMirror {
+  color: var(--talent-body-color, #172238);
+  font-family: var(--talent-body-font, var(--editor-document-font, Georgia, 'Times New Roman', serif));
+  font-size: var(--talent-body-size, 18px);
+  line-height: var(--talent-body-line-height, 1.55);
+}
+.chapter-editor-layout .multipage-editor-flow .ProseMirror h1 { color: var(--talent-h1-color, var(--talent-body-color, #172238)); font-family: var(--talent-h1-font, var(--talent-body-font, var(--editor-document-font, Georgia, 'Times New Roman', serif))); }
+.chapter-editor-layout .multipage-editor-flow .ProseMirror h2 { color: var(--talent-h2-color, var(--talent-body-color, #172238)); font-family: var(--talent-h2-font, var(--talent-body-font, var(--editor-document-font, Georgia, 'Times New Roman', serif))); }
+.chapter-editor-layout .multipage-editor-flow .ProseMirror h3 { color: var(--talent-h3-color, var(--talent-body-color, #172238)); font-family: var(--talent-h3-font, var(--talent-body-font, var(--editor-document-font, Georgia, 'Times New Roman', serif))); }
+.chapter-editor-layout .multipage-editor-flow .ProseMirror h4 { color: var(--talent-h4-color, var(--talent-body-color, #172238)); font-family: var(--talent-h4-font, var(--talent-body-font, var(--editor-document-font, Georgia, 'Times New Roman', serif))); }
+.chapter-editor-layout .multipage-editor-flow .ProseMirror h5,
+.chapter-editor-layout .multipage-editor-flow .ProseMirror h6 { color: var(--talent-body-color, #172238); font-family: var(--talent-body-font, var(--editor-document-font, Georgia, 'Times New Roman', serif)); }
 .ac-editor-shell__footer { display: none; }
 .ac-editor-shell__actions .ac-button--primary { order: 1; }
 .chapter-editor-route { width: 100%; height: calc(100vh - 68px); min-height: 0; overflow: hidden; }
@@ -4827,4 +4825,3 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: var(--border-strong);
 }
-

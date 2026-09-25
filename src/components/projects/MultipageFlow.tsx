@@ -13,6 +13,7 @@ interface MultipageFlowProps {
   onPageCountChange?: (pages: number) => void;
   showPageNumbers?: boolean;
   pageNumberOffset?: number;
+  styleVariables?: Record<string, string>;
 }
 
 export function MultipageFlow({
@@ -24,6 +25,7 @@ export function MultipageFlow({
   onPageCountChange,
   showPageNumbers = false,
   pageNumberOffset = 1,
+  styleVariables = {},
 }: MultipageFlowProps) {
   const multipageFlowRef = useRef<HTMLDivElement>(null);
 
@@ -118,7 +120,9 @@ export function MultipageFlow({
           line-height: ${config.lineHeight};
           word-wrap: break-word;
           overflow-wrap: break-word;
-          color: var(--text-primary);
+          font-family: var(--talent-body-font, Georgia, 'Times New Roman', serif);
+          color: var(--talent-body-color, var(--text-primary));
+          text-align: var(--talent-body-align, left);
         }
         .flow-content-root.ProseMirror > * {
           break-inside: avoid;
@@ -135,6 +139,10 @@ export function MultipageFlow({
           margin: 0;
           overflow-wrap: break-word;
           word-break: break-word;
+          font-family: var(--talent-body-font, Georgia, 'Times New Roman', serif) !important;
+          font-size: var(--talent-body-size, inherit) !important;
+          line-height: var(--talent-body-line-height, inherit) !important;
+          text-align: var(--talent-body-align, left) !important;
         }
         .flow-content-root.ProseMirror p + p {
           margin-top: 0.8rem;
@@ -177,32 +185,40 @@ export function MultipageFlow({
           padding: 0;
         }
         .flow-content-root.ProseMirror h1 {
-          font-size: 2rem;
-          line-height: 1.1;
-          font-weight: 800;
-          margin: 0 0 1rem 0;
-          color: var(--text-primary);
+          font-family: var(--talent-h1-font, inherit);
+          font-size: var(--talent-h1-size, 2rem);
+          line-height: var(--talent-h1-line-height, 1.1);
+          font-weight: var(--talent-h1-weight, 800);
+          text-align: var(--talent-h1-align, left);
+          margin: var(--talent-h1-spacing-before, 0) 0 var(--talent-h1-spacing-after, 1rem);
+          color: var(--talent-h1-color, var(--text-primary));
         }
         .flow-content-root.ProseMirror h2 {
-          font-size: 1.5rem;
-          line-height: 1.2;
-          font-weight: 750;
-          margin: 0 0 0.85rem 0;
-          color: var(--text-primary);
+          font-family: var(--talent-h2-font, inherit);
+          font-size: var(--talent-h2-size, 1.5rem);
+          line-height: var(--talent-h2-line-height, 1.2);
+          font-weight: var(--talent-h2-weight, 750);
+          text-align: var(--talent-h2-align, left);
+          margin: var(--talent-h2-spacing-before, 0) 0 var(--talent-h2-spacing-after, 0.85rem);
+          color: var(--talent-h2-color, var(--text-primary));
         }
         .flow-content-root.ProseMirror h3 {
-          font-size: 1.2rem;
-          line-height: 1.3;
-          font-weight: 700;
-          margin: 0 0 0.75rem 0;
-          color: var(--text-primary);
+          font-family: var(--talent-h3-font, inherit);
+          font-size: var(--talent-h3-size, 1.2rem);
+          line-height: var(--talent-h3-line-height, 1.3);
+          font-weight: var(--talent-h3-weight, 700);
+          text-align: var(--talent-h3-align, left);
+          margin: var(--talent-h3-spacing-before, 0) 0 var(--talent-h3-spacing-after, 0.75rem);
+          color: var(--talent-h3-color, var(--text-primary));
         }
         .flow-content-root.ProseMirror h4 {
-          font-size: 1.05rem;
-          line-height: 1.35;
-          font-weight: 700;
-          margin: 0 0 0.65rem 0;
-          color: var(--text-primary);
+          font-family: var(--talent-h4-font, inherit);
+          font-size: var(--talent-h4-size, 1.05rem);
+          line-height: var(--talent-h4-line-height, 1.35);
+          font-weight: var(--talent-h4-weight, 700);
+          text-align: var(--talent-h4-align, left);
+          margin: var(--talent-h4-spacing-before, 0) 0 var(--talent-h4-spacing-after, 0.65rem);
+          color: var(--talent-h4-color, var(--text-primary));
         }
         .flow-content-root.ProseMirror h5,
         .flow-content-root.ProseMirror h6 {
@@ -392,7 +408,7 @@ export function MultipageFlow({
       <div
         ref={multipageFlowRef}
         className="multipage-flow-container prose prose-invert max-w-none prose-img:rounded-lg prose-img:shadow-md"
-        style={{ ['--column-width' as string]: `${contentWidth}px` }}
+        style={{ ['--column-width' as string]: `${contentWidth}px`, ...styleVariables }}
       >
         <div
           className="multipage-flow-track"
