@@ -196,18 +196,11 @@ export function buildGeneratedTocHtml(
     .join('');
 }
 
-/**
- * Composes a project with the engine and adapts the result to the stable
- * `PreviewPage[]` contract. Drop-in replacement for `buildPreviewPages`.
- * `templateOverrides` lets exports tune engine defaults (e.g. EPUB forces a
- * deeper TOC than the print templates).
- */
-export function composeProjectPreview(
+function resolveComposeTemplate(
   project: ProjectRecord,
   config: PaginationConfig,
-  measurer?: TextMeasurer,
   templateOverrides?: Partial<ComposeTemplate>,
-): ComposedPreview {
+): ComposeTemplate {
   const metadata = project.document.metadata;
   const styleMap = resolveDocumentStyles({
     referenceProfile: metadata?.referenceEditorialProfile ?? null,
@@ -230,7 +223,22 @@ export function composeProjectPreview(
     ...(composition?.lineHeight ? { lineHeight: composition.lineHeight } : {}),
     ...(composition?.margins ? { margins: composition.margins } : {}),
   };
-  const template = { ...templateFromPaginationConfig(config), ...referenceTemplate, ...templateOverrides };
+  return { ...templateFromPaginationConfig(config), ...referenceTemplate, ...templateOverrides };
+}
+
+/**
+ * Composes a project with the engine and adapts the result to the stable
+ * `PreviewPage[]` contract. Drop-in replacement for `buildPreviewPages`.
+ * `templateOverrides` lets exports tune engine defaults (e.g. EPUB forces a
+ * deeper TOC than the print templates).
+ */
+export function composeProjectPreview(
+  project: ProjectRecord,
+  config: PaginationConfig,
+  measurer?: TextMeasurer,
+  templateOverrides?: Partial<ComposeTemplate>,
+): ComposedPreview {
+  const template = resolveComposeTemplate(project, config, templateOverrides);
   const { document, chapterStartIds, chapterById } = projectToSemanticDocument(project);
   const result = compose(document, project.document.rules, template, measurer, {
     ...(chapterStartIds.length > 0 ? { chapterStartIds } : {}),
@@ -257,8 +265,9 @@ export function composeProjectPreviewIncremental(
   changedBlockId: string,
   config: PaginationConfig,
   measurer?: TextMeasurer,
+  templateOverrides?: Partial<ComposeTemplate>,
 ): ComposedPreview {
-  const template = templateFromPaginationConfig(config);
+  const template = resolveComposeTemplate(project, config, templateOverrides);
   const { document, chapterStartIds, chapterById } = projectToSemanticDocument(project);
   const result = composeIncremental(
     previous.result,

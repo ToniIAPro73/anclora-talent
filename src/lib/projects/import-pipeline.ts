@@ -244,14 +244,21 @@ function stripMarkdownInline(input: string): string {
 }
 
 function cleanHeadingText(input: string) {
-  return stripMarkdownInline(
+  let cleaned = stripMarkdownInline(
     input
       .replace(/^#{1,6}\s+/, '')
       .replace(/[\t\s]+[·._\-—―]+\s*\d{1,4}\s*$/, '')
-      .replace(/[\t\s]+\d{1,4}\s*$/, '')
       .replace(/^\d+(?:\.\d+)*[.)]\s+/, '')
       .trim()
   );
+
+  // Strip trailing page numbers (e.g. "Introducción 3", "...ruido 4"),
+  // but protect valid structural markers like "Capítulo 1", "Fase 1", "Parte 2", etc.
+  if (!/(?:cap[ií]tulo|chapter|parte|fase|secci[oó]n|volumen|lecci[oó]n|tema|nivel|acto|escena)\s+\d+$/i.test(cleaned)) {
+    cleaned = cleaned.replace(/[\t\s]+\d{1,4}\s*$/, '').trim();
+  }
+
+  return cleaned;
 }
 
 /**
