@@ -153,16 +153,28 @@ export function resolveDocumentStyles({
   referenceProfile,
   brandProfile,
   userOverrides = [],
+  composition,
 }: {
   referenceProfile?: ReferenceEditorialProfile | null;
   brandProfile?: BrandProfile | null;
   userOverrides?: UserStyleOverride[];
+  composition?: Record<string, any> | null;
 }): DocumentStyleMap {
+  // Extract Legacy Composition fallbacks
+  const legacyBodyFont = (composition as any)?.bodyFontFamily || (composition as any)?.fontFamily || null;
+  const legacyDisplayFont = (composition as any)?.displayFontFamily || null;
+  const legacyLineHeight = (composition as any)?.lineHeight || null;
+  const legacyHeadingColor = (composition as any)?.headingColor || null;
+  const legacyBodyColor = (composition as any)?.bodyColor || null;
+  const legacyPaperColor = (composition as any)?.paperColor || null;
+  const legacyAccentColor = (composition as any)?.accentColor || null;
+  const legacyAccentMuted = (composition as any)?.accentMutedColor || null;
+
   // Extract Brand Tokens
-  const brandInk = brandProfile ? getBrandColor(brandProfile, 'ink')?.hex ?? null : null;
-  const brandAccent = brandProfile ? getBrandColor(brandProfile, 'accent')?.hex ?? null : null;
-  const brandDisplayFont = brandProfile?.typography.display?.family ?? null;
-  const brandBodyFont = brandProfile?.typography.body?.family ?? null;
+  const brandInk = brandProfile ? (getBrandColor(brandProfile, 'ink')?.hex ?? null) : legacyBodyColor;
+  const brandAccent = brandProfile ? (getBrandColor(brandProfile, 'accent')?.hex ?? null) : (legacyAccentColor ?? legacyHeadingColor);
+  const brandDisplayFont = brandProfile?.typography.display?.family ?? legacyDisplayFont;
+  const brandBodyFont = brandProfile?.typography.body?.family ?? legacyBodyFont;
 
   // Index User Overrides by role
   const roleOverrides = new Map<EditorialRole, Partial<ResolvedTextStyle>>();
@@ -184,12 +196,22 @@ export function resolveDocumentStyles({
       if (refPage.margins.left !== null) page.marginsPt.left = refPage.margins.left;
       if (refPage.margins.right !== null) page.marginsPt.right = refPage.margins.right;
     }
+  } else if ((composition as any)?.margins) {
+    const m = (composition as any).margins;
+    if (m.top) page.marginsPt.top = m.top;
+    if (m.bottom) page.marginsPt.bottom = m.bottom;
+    if (m.left) page.marginsPt.left = m.left;
+    if (m.right) page.marginsPt.right = m.right;
   }
 
   // 2. Body Text
+  const defaultBody = legacyLineHeight
+    ? { ...SYSTEM_DEFAULTS.body, lineHeight: legacyLineHeight }
+    : SYSTEM_DEFAULTS.body;
+
   const body = resolveTextStyle(
     'body',
-    SYSTEM_DEFAULTS.body,
+    defaultBody,
     referenceProfile?.body,
     brandBodyFont,
     brandInk,
@@ -197,12 +219,14 @@ export function resolveDocumentStyles({
   );
 
   // 3. Headings
+  const headingColor = brandAccent ?? legacyHeadingColor ?? brandInk;
+
   const h1 = resolveTextStyle(
     'h1',
     SYSTEM_DEFAULTS.h1,
     referenceProfile?.headings?.h1,
     brandDisplayFont,
-    brandAccent ?? brandInk,
+    headingColor,
     roleOverrides.get('h1'),
   );
 
