@@ -22,6 +22,8 @@ import type { PaginationConfig } from '@/lib/preview/device-configs';
 import { type PreviewPage } from '@/lib/preview/preview-builder';
 import { composeProjectPreview, projectToSemanticDocument } from '@/lib/compose/preview-adapter';
 import type { ReferenceEditorialProfile, EditorialTextStyle } from '@/lib/reference-editorial-profile/model';
+import { resolveDocumentStyles } from '@/lib/style-engine/cascade-resolver';
+import type { DocumentStyleMap } from '@/lib/style-engine/model';
 import { inlineToPlainText } from '@/lib/document/model';
 import type { ComposeTemplate } from '@/lib/compose/compose';
 import type { ProjectRecord } from './types';
@@ -300,6 +302,21 @@ export function buildReferenceEditorialCss(profile?: ReferenceEditorialProfile |
   return rules.join('\n    ');
 }
 
+/** CSS-safe compiled document styling derived from DocumentStyleMap */
+export function buildCompiledDocumentCss(styleMap?: DocumentStyleMap | null): string {
+  if (!styleMap) return '';
+  const paper = styleMap.palette?.paper ?? '#ffffff';
+  const accent = styleMap.palette?.accent ?? styleMap.decorations?.accentColor ?? '#d4af37';
+  return [
+    `body { font-family: ${cssFontFamily(styleMap.body.fontFamily)}, Georgia, serif; color: ${styleMap.body.color}; background-color: ${paper}; }`,
+    `.export-content-inner p, .export-content-inner li { font-family: ${cssFontFamily(styleMap.body.fontFamily)}, Georgia, serif; font-size: ${styleMap.body.fontSizePt}pt; color: ${styleMap.body.color}; line-height: ${styleMap.body.lineHeight}; }`,
+    `.export-content-inner h1 { font-family: ${cssFontFamily(styleMap.headings.h1.fontFamily)}, Georgia, serif; font-size: ${styleMap.headings.h1.fontSizePt}pt; color: ${styleMap.headings.h1.color}; }`,
+    `.export-content-inner h2 { font-family: ${cssFontFamily(styleMap.headings.h2.fontFamily)}, Georgia, serif; font-size: ${styleMap.headings.h2.fontSizePt}pt; color: ${styleMap.headings.h2.color}; }`,
+    `.export-content-inner h3 { font-family: ${cssFontFamily(styleMap.headings.h3.fontFamily)}, Georgia, serif; font-size: ${styleMap.headings.h3.fontSizePt}pt; color: ${styleMap.headings.h3.color}; }`,
+    `.export-content-inner blockquote { font-family: ${cssFontFamily(styleMap.quote.fontFamily)}, Georgia, serif; border-left-color: ${accent}; color: ${styleMap.quote.color}; }`,
+  ].join('\n    ');
+}
+
 export async function renderProjectExportHtml(
   project: ProjectRecord,
   exportConfig: PaginationConfig = DEFAULT_EXPORT_CONFIG,
@@ -307,6 +324,12 @@ export async function renderProjectExportHtml(
 ) {
   const pages = composeProjectPreview(project, exportConfig, undefined, templateOverrides).pages;
   assertExportArtifactIntegrity(project, pages, 'HTML');
+  const styleMap = resolveDocumentStyles({
+    referenceProfile: project.document.metadata?.referenceEditorialProfile,
+    brandProfile: (project as any).brandProfile,
+    userOverrides: project.document.metadata?.userOverrides,
+    composition: templateOverrides,
+  });
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
   const footerTitle = project.document.metadata?.title ?? project.document.title;
@@ -521,6 +544,7 @@ export async function renderProjectExportHtml(
     }
     ${buildBrandExportCss(templateOverrides)}
     ${buildReferenceEditorialCss(project.document.metadata?.referenceEditorialProfile)}
+    ${buildCompiledDocumentCss(styleMap)}
   </style>
 </head>
 <body>
@@ -588,11 +612,44 @@ function profileAlign(value: EditorialTextStyle['textAlign'] | undefined): 'left
   return value === 'center' || value === 'right' ? value : 'left';
 }
 
-export function resolvePdfBrandTheme(overrides?: Partial<ComposeTemplate>, profile?: ReferenceEditorialProfile | null): PdfBrandTheme {
+export function resolvePdfBrandTheme(
+  overrides?: Partial<ComposeTemplate>,
+  profile?: ReferenceEditorialProfile | null,
+  styleMap?: DocumentStyleMap | null,
+): PdfBrandTheme {
   const h1 = profile?.headings.h1;
   const h2 = profile?.headings.h2;
   const h3 = profile?.headings.h3;
   const body = profile?.body;
+
+  if (styleMap) {
+    return {
+      headingFont: toBase14Font(styleMap.headings.h1.fontFamily, true),
+      bodyFont: toBase14Font(styleMap.body.fontFamily, false),
+      quoteFont: toBase14Font(styleMap.quote.fontFamily, false),
+      headingColor: styleMap.headings.h1.color,
+      bodyColor: styleMap.body.color,
+      mutedColor: styleMap.palette?.accentMuted ?? styleMap.decorations?.dividerColor ?? '#5f6b7a',
+      accentColor: styleMap.palette?.accent ?? styleMap.decorations?.accentColor ?? '#d4af37',
+      heading1Size: styleMap.headings.h1.fontSizePt,
+      heading2Size: styleMap.headings.h2.fontSizePt,
+      heading3Size: styleMap.headings.h3.fontSizePt,
+      bodySize: styleMap.body.fontSizePt,
+      bodyLineHeight: styleMap.body.lineHeight,
+      headerEnabled: profile?.header.enabled ?? false,
+      footerEnabled: profile?.footer.enabled ?? false,
+      pageNumberEnabled: profile?.pageNumber.enabled ?? true,
+      headerAlign: profileAlign(profile?.header.style?.textAlign),
+      footerAlign: profileAlign(profile?.pageNumber.alignment ?? profile?.footer.alignment),
+      headingAlign: profileAlign(h1?.textAlign),
+      chapterLabelStyle: profile?.chapterOpening.labelStyle ?? null,
+      chapterTitleStyle: profile?.chapterOpening.titleStyle ?? h1 ?? null,
+      chapterSubtitleStyle: profile?.chapterOpening.subtitleStyle ?? null,
+      headerStyle: profile?.header.style ?? null,
+      footerStyle: profile?.pageNumber.style ?? profile?.footer.style ?? null,
+    };
+  }
+
   return {
     headingFont: overrides?.displayFontFamily
       ? toBase14Font(overrides.displayFontFamily, true)
@@ -916,7 +973,13 @@ export async function buildProjectPdfWithConfig(
   const pages = composeProjectPreview(project, exportConfig, undefined, templateOverrides).pages;
   assertExportArtifactIntegrity(project, pages, 'PDF');
   const profile = project.document.metadata?.referenceEditorialProfile;
-  const theme = resolvePdfBrandTheme(templateOverrides, profile);
+  const styleMap = resolveDocumentStyles({
+    referenceProfile: profile,
+    brandProfile: (project as any).brandProfile,
+    userOverrides: project.document.metadata?.userOverrides,
+    composition: templateOverrides,
+  });
+  const theme = resolvePdfBrandTheme(templateOverrides, profile, styleMap);
   const palette = COVER_PALETTE_COLORS[project.cover.palette] ?? COVER_PALETTE_COLORS.obsidian;
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
@@ -1024,7 +1087,7 @@ function toDocxHeadingLevel(level: number) {
   }
 }
 
-function buildDocxPageChildren(page: PreviewPage) {
+function buildDocxPageChildren(page: PreviewPage, styleMap?: DocumentStyleMap | null) {
   if (page.type === 'cover' && page.coverData) {
     return [
       new Paragraph({
@@ -1083,31 +1146,55 @@ function buildDocxPageChildren(page: PreviewPage) {
   const blocks = parsePageContent(page.content);
   return blocks.map((block) => {
     if (block.type === 'heading') {
+      const headingStyle = block.level <= 1
+        ? styleMap?.headings.h1
+        : block.level === 2
+          ? styleMap?.headings.h2
+          : styleMap?.headings.h3;
+      const font = headingStyle?.fontFamily ? { name: headingStyle.fontFamily } : undefined;
+      const color = headingStyle?.color ? headingStyle.color.replace('#', '') : undefined;
+      const size = headingStyle?.fontSizePt ? Math.round(headingStyle.fontSizePt * 2) : undefined;
       return new Paragraph({
-        text: block.text,
+        children: [
+          new TextRun({
+            text: block.text,
+            font,
+            color,
+            size,
+            bold: headingStyle ? (headingStyle.fontWeight === 'bold' || headingStyle.fontWeight === 'semibold') : undefined,
+          }),
+        ],
         heading: toDocxHeadingLevel(block.level),
         spacing: { after: 160 },
       });
     }
     if (block.type === 'quote') {
+      const quoteFont = styleMap?.quote.fontFamily ? { name: styleMap.quote.fontFamily } : undefined;
+      const quoteColor = styleMap?.quote.color ? styleMap.quote.color.replace('#', '') : undefined;
+      const accentColor = styleMap?.palette.accent ? styleMap.palette.accent.replace('#', '') : 'D4AF37';
       return new Paragraph({
-        children: [new TextRun({ text: block.text, italics: true })],
+        children: [new TextRun({ text: block.text, italics: true, font: quoteFont, color: quoteColor })],
         indent: { left: 420 },
         border: {
-          left: { color: 'D4AF37', size: 12, style: 'single' },
+          left: { color: accentColor, size: 12, style: 'single' },
         },
         spacing: { after: 160 },
       });
     }
     if (block.type === 'list-item') {
+      const bodyFont = styleMap?.body.fontFamily ? { name: styleMap.body.fontFamily } : undefined;
+      const bodyColor = styleMap?.body.color ? styleMap.body.color.replace('#', '') : undefined;
       return new Paragraph({
-        text: block.text,
+        children: [new TextRun({ text: block.text, font: bodyFont, color: bodyColor })],
         bullet: { level: 0 },
         spacing: { after: 80 },
       });
     }
+    const bodyFont = styleMap?.body.fontFamily ? { name: styleMap.body.fontFamily } : undefined;
+    const bodyColor = styleMap?.body.color ? styleMap.body.color.replace('#', '') : undefined;
+    const bodySize = styleMap?.body.fontSizePt ? Math.round(styleMap.body.fontSizePt * 2) : undefined;
     return new Paragraph({
-      text: block.text,
+      children: [new TextRun({ text: block.text, font: bodyFont, color: bodyColor, size: bodySize })],
       spacing: { after: 140 },
     });
   });
@@ -1169,6 +1256,8 @@ async function loadImageBytes(imageUrl: string): Promise<DocxImagePayload | null
 export async function buildProjectDocxBuffer(
   project: ProjectRecord,
   exportConfig: PaginationConfig = DEFAULT_EXPORT_CONFIG,
+  templateOverrides?: Partial<ComposeTemplate>,
+  styleMapOverride?: DocumentStyleMap | null,
 ) {
   const PX_TO_TWIPS = 15;
 
@@ -1180,8 +1269,14 @@ export async function buildProjectDocxBuffer(
   const docxImageWidthPx = Math.round(exportConfig.pageWidth);
   const docxImageHeightPx = Math.round(exportConfig.pageHeight);
 
-  const pages = composeProjectPreview(project, exportConfig).pages;
+  const pages = composeProjectPreview(project, exportConfig, undefined, templateOverrides).pages;
   assertExportArtifactIntegrity(project, pages, 'DOCX');
+  const styleMap = styleMapOverride ?? resolveDocumentStyles({
+    referenceProfile: project.document.metadata?.referenceEditorialProfile,
+    brandProfile: (project as any).brandProfile,
+    userOverrides: project.document.metadata?.userOverrides,
+    composition: templateOverrides,
+  });
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
   
@@ -1222,7 +1317,7 @@ export async function buildProjectDocxBuffer(
         }),
       ];
     } else {
-      children = buildDocxPageChildren(page);
+      children = buildDocxPageChildren(page, styleMap);
     }
 
     if (children.length === 0) {

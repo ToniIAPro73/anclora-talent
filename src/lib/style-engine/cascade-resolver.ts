@@ -94,6 +94,12 @@ export const SYSTEM_DEFAULTS = {
     quoteBorderColor: '#D4AF37',
     quoteBorderWidthPt: 3,
   } satisfies ResolvedDecorationStyle,
+  palette: {
+    ink: '#1A1A1A',
+    paper: '#FFFFFF',
+    accent: '#D4AF37',
+    accentMuted: '#5F6B7A',
+  },
 };
 
 function resolveTextStyle(
@@ -292,6 +298,15 @@ export function resolveDocumentStyles({
     quoteBorderWidthPt: 3,
   };
 
+  const brandPaper = brandProfile ? getBrandColor(brandProfile, 'paper')?.hex ?? null : null;
+  const brandAccentMuted = brandProfile ? getBrandColor(brandProfile, 'accentMuted')?.hex ?? null : null;
+  const palette = {
+    ink: brandInk ?? body.color,
+    paper: brandPaper ?? SYSTEM_DEFAULTS.palette.paper,
+    accent: brandAccent ?? decorations.accentColor,
+    accentMuted: brandAccentMuted ?? decorations.dividerColor,
+  };
+
   return {
     version: 1,
     compiledAt: new Date().toISOString(),
@@ -305,5 +320,6 @@ export function resolveDocumentStyles({
     header,
     footer,
     decorations,
+    palette,
   };
 }

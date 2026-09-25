@@ -72,6 +72,12 @@ export interface DocumentStyleMap {
   header: ResolvedTextStyle & { borderBottom?: boolean };
   footer: ResolvedTextStyle & { borderTop?: boolean };
   decorations: ResolvedDecorationStyle;
+  palette: {
+    ink: string;
+    paper: string;
+    accent: string;
+    accentMuted: string;
+  };
 }
 
 export interface UserStyleOverride {

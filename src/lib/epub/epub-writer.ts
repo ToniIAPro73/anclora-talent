@@ -31,6 +31,9 @@ import { isTocChapter } from '@/lib/preview/preview-builder';
 import { blocksToHtml, type ResolvedRefs } from '@/lib/document/to-html';
 import { inlineToPlainText, type DocumentBlock } from '@/lib/document/model';
 
+import { resolveDocumentStyles } from '@/lib/style-engine/cascade-resolver';
+import type { DocumentStyleMap } from '@/lib/style-engine/model';
+
 export interface BuildEpubOptions {
   /** Embed Liberation TTF fonts when available (default true). */
   fonts?: boolean;
@@ -41,6 +44,7 @@ export interface BuildEpubOptions {
    */
   template?: Partial<ComposeTemplate>;
   referenceProfile?: ReferenceEditorialProfile | null;
+  styleMap?: DocumentStyleMap | null;
 }
 
 interface EmbeddedImage {
@@ -78,8 +82,8 @@ const IMAGE_EXTENSION_BY_MEDIA_TYPE: Record<string, string> = {
   'image/webp': 'webp',
 };
 
-function escapeXml(text: string): string {
-  return text
+function escapeXml(text: string | null | undefined): string {
+  return (text ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -286,7 +290,12 @@ function styleCss(style: EditorialTextStyle | null | undefined): string {
   return rules.join('; ');
 }
 
-function buildStylesheet(fonts: EmbeddedFont[], template?: Partial<ComposeTemplate>, profile?: ReferenceEditorialProfile | null): string {
+function buildStylesheet(
+  fonts: EmbeddedFont[],
+  template?: Partial<ComposeTemplate>,
+  profile?: ReferenceEditorialProfile | null,
+  styleMap?: DocumentStyleMap | null,
+): string {
   const fontFaces = fonts
     .map((font) => {
       const weight = font.fileName.includes('Bold') ? 'bold' : 'normal';
@@ -300,9 +309,11 @@ function buildStylesheet(fonts: EmbeddedFont[], template?: Partial<ComposeTempla
   const bodyFont = fonts.length > 0 ? "'Liberation Sans', Georgia, serif" : 'Georgia, serif';
   // F2 brand theme: declared families lead the stack; the embedded/system
   // fonts remain as fallback so the EPUB stays self-contained (EPUBCheck).
-  const brandBodyFont = template?.bodyFontFamily
-    ? `${cssFontFamily(template.bodyFontFamily)}, ${bodyFont}`
-    : bodyFont;
+  const brandBodyFont = styleMap?.body.fontFamily
+    ? `${cssFontFamily(styleMap.body.fontFamily)}, ${bodyFont}`
+    : template?.bodyFontFamily
+      ? `${cssFontFamily(template.bodyFontFamily)}, ${bodyFont}`
+      : bodyFont;
   const brandRules = [
     template?.displayFontFamily
       ? `h1, h2, h3 { font-family: ${cssFontFamily(template.displayFontFamily)}, Georgia, serif; }`
@@ -326,6 +337,15 @@ function buildStylesheet(fonts: EmbeddedFont[], template?: Partial<ComposeTempla
     ['#toc h1', styleCss(profile.toc.titleStyle)],
     ['#toc li, #toc a', styleCss(profile.toc.entryStyle)],
   ].filter(([, css]) => css).map(([selector, css]) => `${selector} { ${css}; }`).join('\n') : '';
+
+  const compiledRules = styleMap ? [
+    `body, p, li { font-family: ${cssFontFamily(styleMap.body.fontFamily)}, ${bodyFont}; font-size: ${styleMap.body.fontSizePt}pt; color: ${styleMap.body.color}; line-height: ${styleMap.body.lineHeight}; }`,
+    `h1 { font-family: ${cssFontFamily(styleMap.headings.h1.fontFamily)}, Georgia, serif; font-size: ${styleMap.headings.h1.fontSizePt}pt; color: ${styleMap.headings.h1.color}; }`,
+    `h2 { font-family: ${cssFontFamily(styleMap.headings.h2.fontFamily)}, Georgia, serif; font-size: ${styleMap.headings.h2.fontSizePt}pt; color: ${styleMap.headings.h2.color}; }`,
+    `h3 { font-family: ${cssFontFamily(styleMap.headings.h3.fontFamily)}, Georgia, serif; font-size: ${styleMap.headings.h3.fontSizePt}pt; color: ${styleMap.headings.h3.color}; }`,
+    `blockquote { font-family: ${cssFontFamily(styleMap.quote.fontFamily)}, Georgia, serif; border-left-color: ${styleMap.palette?.accent ?? styleMap.decorations?.accentColor ?? '#d4af37'}; color: ${styleMap.quote.color}; }`,
+  ].join('\n') : '';
+
   return `${fontFaces}
 body { font-family: ${brandBodyFont}; line-height: 1.5; margin: 5%; }
 h1 { font-size: 1.6em; margin: 1em 0 0.6em; }
@@ -344,7 +364,7 @@ pre { font-family: monospace; white-space: pre-wrap; }
 .cover h1 { font-size: 2em; }
 .cover-subtitle { font-size: 1.2em; color: #555; }
 .cover-author { margin-top: 2em; font-weight: bold; }
-${brandRules ? `${brandRules}\n` : ''}${editorialRules ? `${editorialRules}\n` : ''}`;
+${brandRules ? `${brandRules}\n` : ''}${editorialRules ? `${editorialRules}\n` : ''}${compiledRules ? `${compiledRules}\n` : ''}`;
 }
 
 /**
@@ -360,6 +380,7 @@ export async function buildEpub(
   const { toc, refs } = composed.result;
   const { document, chapterStartIds, chapterById } = projectToSemanticDocument(project);
   const metadata = document.metadata;
+  const docTitle = metadata.title || project.document.title || 'Libro';
   const lang = metadata.language ?? project.document.language ?? 'es';
 
   const startIds = chapterStartIds.length > 0 ? new Set(chapterStartIds) : undefined;
@@ -408,7 +429,7 @@ export async function buildEpub(
   slices.forEach((slice, index) => {
     const fileName = `chapter-${index + 1}.xhtml`;
     const title =
-      slice.heading?.type === 'heading' ? inlineToPlainText(slice.heading.content) : metadata.title;
+      slice.heading?.type === 'heading' ? inlineToPlainText(slice.heading.content) : docTitle;
     chapters.push({ id: `chapter-${index + 1}`, fileName, title });
     for (const block of slice.blocks) {
       hrefByBlockId.set(block.id, `text/${fileName}#${block.id}`);
@@ -443,7 +464,7 @@ export async function buildEpub(
 <package xmlns="http://www.idpf.org/2007/opf" unique-identifier="bookid" version="3.0" xml:lang="${lang}">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:identifier id="bookid">${escapeXml(identifier)}</dc:identifier>
-    <dc:title>${escapeXml(metadata.title)}</dc:title>
+    <dc:title>${escapeXml(docTitle)}</dc:title>
 ${metadata.author ? `    <dc:creator>${escapeXml(metadata.author)}</dc:creator>\n` : ''}    <dc:language>${escapeXml(lang)}</dc:language>
     <dc:date>${toIsoDate(project.createdAt)}</dc:date>
     <meta property="dcterms:modified">${toIsoDateTime(project.updatedAt)}</meta>
@@ -482,7 +503,7 @@ ${chapters.map((chapter) => `    <itemref idref="${chapter.id}"/>`).join('\n')}
   const tocHeading = lang.startsWith('en') ? 'Contents' : 'Índice';
   const navXhtml = xhtmlDocument(
     lang,
-    `${metadata.title} — ${tocHeading}`,
+    `${docTitle} — ${tocHeading}`,
     'styles/epub.css',
     `<nav epub:type="toc" id="toc">
 <h1>${escapeXml(tocHeading)}</h1>
@@ -498,7 +519,7 @@ ${renderNavList(navTree)}
 <meta name="dtb:totalPageCount" content="0"/>
 <meta name="dtb:maxPageNumber" content="0"/>
 </head>
-<docTitle><text>${escapeXml(metadata.title)}</text></docTitle>
+<docTitle><text>${escapeXml(docTitle)}</text></docTitle>
 <navMap>
 ${renderNavPoints(navTree, { next: 1 })}
 </navMap>
@@ -506,11 +527,11 @@ ${renderNavPoints(navTree, { next: 1 })}
 `;
 
   const coverBody = `<section class="cover" epub:type="cover">
-<h1>${escapeXml(metadata.title)}</h1>
+<h1>${escapeXml(docTitle)}</h1>
 ${metadata.subtitle ? `<p class="cover-subtitle">${escapeXml(metadata.subtitle)}</p>` : ''}
 ${metadata.author ? `<p class="cover-author">${escapeXml(metadata.author)}</p>` : ''}
 </section>`;
-  const coverXhtml = xhtmlDocument(lang, metadata.title, 'styles/epub.css', coverBody);
+  const coverXhtml = xhtmlDocument(lang, docTitle, 'styles/epub.css', coverBody);
 
   const zip = new JSZip();
   // OCF contract: mimetype is the first entry and stored uncompressed.
@@ -520,7 +541,14 @@ ${metadata.author ? `<p class="cover-author">${escapeXml(metadata.author)}</p>` 
   zip.file('OEBPS/nav.xhtml', navXhtml);
   zip.file('OEBPS/toc.ncx', ncx);
   zip.file('OEBPS/cover.xhtml', coverXhtml);
-  zip.file('OEBPS/styles/epub.css', buildStylesheet(fonts, options.template, options.referenceProfile ?? project.document.metadata?.referenceEditorialProfile));
+  const refProfile = options.referenceProfile ?? project.document.metadata?.referenceEditorialProfile;
+  const styleMap = options.styleMap ?? resolveDocumentStyles({
+    referenceProfile: refProfile,
+    brandProfile: (project as any).brandProfile,
+    userOverrides: project.document.metadata?.userOverrides,
+    composition: options.template,
+  });
+  zip.file('OEBPS/styles/epub.css', buildStylesheet(fonts, options.template, refProfile, styleMap));
   for (const [path, content] of chapterFiles) {
     zip.file(path, content);
   }
