@@ -14,6 +14,7 @@ interface MultipageFlowProps {
   showPageNumbers?: boolean;
   pageNumberOffset?: number;
   styleVariables?: Record<string, string>;
+  lang?: string;
 }
 
 export function MultipageFlow({
@@ -26,6 +27,7 @@ export function MultipageFlow({
   showPageNumbers = false,
   pageNumberOffset = 1,
   styleVariables = {},
+  lang = 'es',
 }: MultipageFlowProps) {
   const multipageFlowRef = useRef<HTMLDivElement>(null);
 
@@ -143,9 +145,13 @@ export function MultipageFlow({
           font-size: var(--talent-body-size, inherit) !important;
           line-height: var(--talent-body-line-height, inherit) !important;
           text-align: var(--talent-body-align, left) !important;
+          text-indent: var(--talent-body-indent, 0);
+          -webkit-hyphens: auto;
+          -ms-hyphens: auto;
+          hyphens: auto;
         }
         .flow-content-root.ProseMirror p + p {
-          margin-top: 0.8rem;
+          margin-top: var(--talent-body-spacing-after, 0.8rem);
         }
         .flow-content-root.ProseMirror [data-toc-entry="true"] {
           display: flex;
@@ -425,6 +431,7 @@ export function MultipageFlow({
         ref={multipageFlowRef}
         className="multipage-flow-container prose prose-invert max-w-none prose-img:rounded-lg prose-img:shadow-md"
         style={{ ['--column-width' as string]: `${contentWidth}px`, ...styleVariables }}
+        lang={lang}
       >
         <div
           className="multipage-flow-track"

@@ -1928,13 +1928,20 @@ export function AdvancedRichTextEditor({
                 font-size: var(--talent-body-size, ${previewConfig.fontSize}px);
                 line-height: var(--talent-body-line-height, ${composition?.lineHeight ?? previewConfig.lineHeight});
                 text-align: var(--talent-body-align, left);
+                text-indent: var(--talent-body-indent, 0);
                 margin: 0;
                 overflow-wrap: break-word;
                 word-break: break-word;
+                /* Word/LibreOffice hyphenate justified body text by default;
+                   without this, justified text spreads more per line and
+                   reflows into extra lines the source document didn't have. */
+                -webkit-hyphens: auto;
+                -ms-hyphens: auto;
+                hyphens: auto;
               }
               .ProseMirror p + p,
               .preview-page p + p {
-                margin-top: 0.8rem;
+                margin-top: var(--talent-body-spacing-after, 0.8rem);
               }
               /* Indice con leader CSS: el paragraph/li tiene data-toc-entry
                  (contenedor flex) y opcionalmente data-toc-page (numero).
@@ -2302,6 +2309,7 @@ export function AdvancedRichTextEditor({
             <div
               ref={multipageFlowRef}
               className="multipage-editor-flow prose prose-invert max-w-none prose-img:rounded-lg prose-img:shadow-md"
+              lang={locale}
             >
               <div
                 className="multipage-editor-flow-track"
