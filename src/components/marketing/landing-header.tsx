@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Globe, Menu, Moon, Sun, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
-import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
+import { GlobalLanguageControl } from '@/components/layout/GlobalLanguageControl';
+import { GlobalThemeControl } from '@/components/layout/GlobalThemeControl';
 import type { MarketingNav } from './marketing-data';
 import type { MarketingCta } from './marketing-helpers';
 
@@ -21,11 +22,7 @@ export function LandingHeader({
   secondaryCta,
   isAuthenticated,
 }: LandingHeaderProps) {
-  const { theme, locale, setTheme, setLocale } = useUiPreferences();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
-  const toggleLocale = () => setLocale(locale === 'es' ? 'en' : 'es');
 
   const navLinks = [
     { href: '#producto', label: nav.features },
@@ -64,25 +61,10 @@ export function LandingHeader({
 
         {/* Right side controls */}
         <div className="hidden items-center gap-1.5 md:flex lg:gap-3">
-          <button
-            type="button"
-            data-testid="landing-theme-toggle"
-            onClick={toggleTheme}
-            aria-label={nav.toggleTheme}
-            className="ac-button ac-button--ghost ac-button--compact ac-button--icon talent-shell-theme-flip"
-          >
-            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
-          <button
-            type="button"
-            data-testid="landing-locale-toggle"
-            onClick={toggleLocale}
-            aria-label={nav.toggleLocale}
-            className="ac-button ac-button--ghost ac-button--compact talent-shell-locale-pill"
-          >
-            <Globe className="h-3.5 w-3.5" />
-            <span>{locale.toUpperCase()}</span>
-          </button>
+          <div className="global-header-controls">
+            <GlobalLanguageControl data-testid="landing-locale-toggle" />
+            <GlobalThemeControl data-testid="landing-theme-toggle" />
+          </div>
 
           {/* Auth CTAs */}
           {isAuthenticated ? (
@@ -105,23 +87,10 @@ export function LandingHeader({
 
         {/* Mobile menu button */}
         <div className="flex items-center gap-2 md:hidden">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label={nav.toggleTheme}
-            className="ac-button ac-button--ghost ac-button--compact ac-button--icon talent-shell-theme-flip"
-          >
-            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
-          <button
-            type="button"
-            onClick={toggleLocale}
-            aria-label={nav.toggleLocale}
-            className="ac-button ac-button--ghost ac-button--compact talent-shell-locale-pill"
-          >
-            <Globe className="h-4 w-4" aria-hidden="true" />
-            <span>{locale.toUpperCase()}</span>
-          </button>
+          <div className="global-header-controls">
+            <GlobalLanguageControl />
+            <GlobalThemeControl />
+          </div>
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

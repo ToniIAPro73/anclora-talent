@@ -41,7 +41,7 @@ export function ProjectCardMenu({
   }, [open]);
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative flex-shrink-0">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -49,7 +49,7 @@ export function ProjectCardMenu({
         aria-expanded={open}
         aria-label={menuLabel}
         data-testid="project-card-menu"
-        className="ac-button ac-button--ghost ac-button--compact ac-button--icon"
+        className="ac-button ac-button--secondary ac-button--compact ac-button--icon talent-button--secondary"
       >
         <span className="ac-button__icon">
           <MoreVertical className="h-4 w-4" aria-hidden="true" />
