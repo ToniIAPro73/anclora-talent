@@ -14,6 +14,7 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import FontFamily from '@tiptap/extension-font-family';
 import TextAlign from '@tiptap/extension-text-align';
 import { Color } from '@tiptap/extension-color';
+import { TableKit } from '@tiptap/extension-table';
 import { ResizableImage } from './resizable-image-extension';
 import { PageBreak } from './page-break-extension';
 import { FontSize } from './font-size-extension';
@@ -1717,6 +1718,9 @@ export function AdvancedRichTextEditor({
         allowBase64: true,
       }),
       PageBreak,
+      TableKit.configure({
+        table: { resizable: false },
+      }),
     ],
     content: defaultContent,
       onUpdate: ({ editor: ed }) => {
@@ -1975,33 +1979,43 @@ export function AdvancedRichTextEditor({
     [editor, effectiveScale, pageGap, pageWidth, spreadStartPage],
   );
 
+  const scheduleLayoutPass = useCallback(() => {
+    requestAnimationFrame(() => {
+      positionFootnotes();
+      // Removing a footnote from flow can shift later footnotes onto a
+      // different page; one more pass catches that in the common case
+      // without an unbounded convergence loop.
+      requestAnimationFrame(() => {
+        positionFootnotes();
+        measureRenderablePages();
+      });
+    });
+  }, [measureRenderablePages, positionFootnotes]);
+
   useEffect(() => {
     if (!editor) {
       return;
     }
 
-    const scheduleMeasure = () => {
-      requestAnimationFrame(() => {
-        positionFootnotes();
-        // Removing a footnote from flow can shift later footnotes onto a
-        // different page; one more pass catches that in the common case
-        // without an unbounded convergence loop.
-        requestAnimationFrame(() => {
-          positionFootnotes();
-          measureRenderablePages();
-        });
-      });
-    };
-
-    scheduleMeasure();
-    editor.on('update', scheduleMeasure);
-    window.addEventListener('resize', scheduleMeasure);
+    scheduleLayoutPass();
+    editor.on('update', scheduleLayoutPass);
+    window.addEventListener('resize', scheduleLayoutPass);
 
     return () => {
-      editor.off('update', scheduleMeasure);
-      window.removeEventListener('resize', scheduleMeasure);
+      editor.off('update', scheduleLayoutPass);
+      window.removeEventListener('resize', scheduleLayoutPass);
     };
-  }, [editor, measureRenderablePages, positionFootnotes]);
+  }, [editor, scheduleLayoutPass]);
+
+  // The chapter-switch effect above loads new content via
+  // `setContent(..., { emitUpdate: false })` (see syncEditorContent) so it
+  // never fires TipTap's own 'update' event — the only event the previous
+  // effect listens on. Without this, footnote repositioning and the page
+  // count silently went stale on every chapter navigation, only catching up
+  // if the user then typed something or resized the window.
+  useEffect(() => {
+    scheduleLayoutPass();
+  }, [defaultContent, scheduleLayoutPass]);
 
   useEffect(() => {
     if (!editor || totalRenderablePages <= 1) {
@@ -2194,6 +2208,41 @@ export function AdvancedRichTextEditor({
                 border-left-width: var(--talent-quote-border-width, 3px);
                 margin: 1rem 1.5rem 1rem 0;
                 padding: 0.15rem 0 0.15rem 1rem;
+              }
+              .ProseMirror table,
+              .preview-page table {
+                /* !important: imported .docx tables carry an inline width
+                   (from the source Word column widths) that otherwise wins
+                   by specificity and lets the table bleed past the column
+                   edge. */
+                width: ${contentWidth}px !important;
+                max-width: ${contentWidth}px !important;
+                table-layout: fixed;
+                border-collapse: collapse;
+                margin: 0.5rem 0 1rem 0;
+                font-size: var(--talent-body-size, inherit);
+                /* Tables taller than the remaining column space must move
+                   whole to the next column — a mid-table split makes
+                   Chromium bleed the tail past the column's right edge
+                   instead of wrapping it. */
+                break-inside: avoid-column;
+                -webkit-column-break-inside: avoid;
+              }
+              .ProseMirror th,
+              .preview-page th {
+                background: var(--talent-table-header-bg, rgba(0,0,0,0.04));
+                font-weight: 700;
+                text-align: left;
+              }
+              .ProseMirror td,
+              .ProseMirror th,
+              .preview-page td,
+              .preview-page th {
+                border: 1px solid var(--talent-table-border-color, var(--border-subtle, rgba(0,0,0,0.12)));
+                padding: 0.4rem 0.6rem;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                vertical-align: top;
               }
               .ProseMirror p.editorial-kicker,
               .preview-page p.editorial-kicker {
