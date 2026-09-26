@@ -2312,6 +2312,30 @@ export function AdvancedRichTextEditor({
                 margin: 0 0 0.6rem 0;
                 color: var(--text-primary);
               }
+              /* A heading left as the very last line of a column, with its
+                 own body text pushed to the next one, reads as an orphaned
+                 title — the source document always keeps a heading with at
+                 least the start of its own section. break-inside:avoid on
+                 the heading (set above per level) already keeps a
+                 multi-line heading from splitting mid-title; this also
+                 forbids breaking the column immediately after it, which
+                 pushes the whole heading to the next column instead when
+                 there isn't room left for it plus what follows. */
+              .ProseMirror h1,
+              .preview-page h1,
+              .ProseMirror h2,
+              .preview-page h2,
+              .ProseMirror h3,
+              .preview-page h3,
+              .ProseMirror h4,
+              .preview-page h4,
+              .ProseMirror h5,
+              .preview-page h5,
+              .ProseMirror h6,
+              .preview-page h6 {
+                break-after: avoid-column;
+                page-break-after: avoid;
+              }
               .ProseMirror ul,
               .preview-page ul,
               .ProseMirror ol,

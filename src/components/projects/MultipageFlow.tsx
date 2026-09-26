@@ -322,6 +322,15 @@ export function MultipageFlow({
           margin: 0 0 0.6rem 0;
           color: var(--text-primary);
         }
+        .flow-content-root.ProseMirror h1,
+        .flow-content-root.ProseMirror h2,
+        .flow-content-root.ProseMirror h3,
+        .flow-content-root.ProseMirror h4,
+        .flow-content-root.ProseMirror h5,
+        .flow-content-root.ProseMirror h6 {
+          break-after: avoid-column;
+          page-break-after: avoid;
+        }
 
         .flow-content-root.ProseMirror table {
           /* !important: imported .docx tables carry an inline width (from the
