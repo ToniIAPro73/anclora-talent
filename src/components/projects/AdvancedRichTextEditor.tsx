@@ -18,7 +18,7 @@ import { ResizableImage } from './resizable-image-extension';
 import { PageBreak } from './page-break-extension';
 import { FontSize } from './font-size-extension';
 import type { CompositionSettings } from '@/lib/projects/composition';
-import type { DocumentStyleMap } from '@/lib/style-engine/model';
+import type { DocumentStyleMap, ResolvedTextStyle } from '@/lib/style-engine/model';
 import {
   Bold,
   Italic,
@@ -471,6 +471,45 @@ function countMeaningfulTopLevelBlocks(html: string): number {
   }).length;
 }
 
+// The toolbar's font-size and color indicators only ever read
+// `editor.getAttributes('textStyle')`, a TipTap *mark* created solely when a
+// user manually overrides size/color. Imported and role-styled content
+// (h1-h4, the editorial kicker, footnotes) carries no such mark — its size
+// and color come purely from the block's role via CSS variables — so the
+// indicator never changed as the cursor moved between a heading, a kicker
+// and a body paragraph. This resolves the block's editorial role under the
+// cursor so those indicators can fall back to the role's real style instead
+// of a hardcoded default.
+type EditorBlockRole = 'h1' | 'h2' | 'h3' | 'h4' | 'kicker' | 'footnote' | 'body';
+
+function getCurrentBlockRole(editor: Editor): EditorBlockRole {
+  if (editor.isActive('heading', { level: 1 })) return 'h1';
+  if (editor.isActive('heading', { level: 2 })) return 'h2';
+  if (editor.isActive('heading', { level: 3 })) return 'h3';
+  if (editor.isActive('heading', { level: 4 })) return 'h4';
+
+  const editorialClass = editor.getAttributes('paragraph').editorialClass as string | null | undefined;
+  if (editorialClass === 'editorial-kicker') return 'kicker';
+  if (editorialClass === 'editorial-footnote') return 'footnote';
+  return 'body';
+}
+
+function getRoleTextStyle(
+  documentStyleMap: DocumentStyleMap | null | undefined,
+  role: EditorBlockRole,
+): ResolvedTextStyle | undefined {
+  if (!documentStyleMap) return undefined;
+  switch (role) {
+    case 'h1': return documentStyleMap.headings.h1;
+    case 'h2': return documentStyleMap.headings.h2;
+    case 'h3': return documentStyleMap.headings.h3;
+    case 'h4': return documentStyleMap.headings.h4;
+    case 'kicker': return documentStyleMap.kicker;
+    case 'footnote': return documentStyleMap.footnote;
+    default: return documentStyleMap.body;
+  }
+}
+
 // Advanced Font Selector using useGoogleFonts and EditorPopover
 const AdvancedFontSelector = ({
   editor,
@@ -615,12 +654,14 @@ const FontSizeSelector = ({
   applyToWordOrSelection,
   isAvailable,
   unavailableTitle,
+  documentStyleMap,
 }: {
   editor: Editor;
   onFontSizeChange?: (size: string) => void;
   applyToWordOrSelection: ApplyToSelectionTarget;
   isAvailable: boolean;
   unavailableTitle: string;
+  documentStyleMap?: DocumentStyleMap | null;
 }) => {
   const { locale } = useUiPreferences();
   const copy = resolveLocaleMessages(locale).editor;
@@ -642,7 +683,9 @@ const FontSizeSelector = ({
     { name: '48', value: '48px' },
   ];
 
-  const currentSize = editor.getAttributes('textStyle')?.fontSize || '16px';
+  const roleStyle = getRoleTextStyle(documentStyleMap, getCurrentBlockRole(editor));
+  const roleSize = roleStyle ? `${Math.round(roleStyle.fontSizePt * (96 / 72))}px` : '16px';
+  const currentSize = editor.getAttributes('textStyle')?.fontSize || roleSize;
 
   return (
     <>
@@ -695,11 +738,13 @@ const ColorSelector = ({
   applyToWordOrSelection,
   isAvailable,
   unavailableTitle,
+  documentStyleMap,
 }: {
   editor: Editor;
   applyToWordOrSelection: ApplyToSelectionTarget;
   isAvailable: boolean;
   unavailableTitle: string;
+  documentStyleMap?: DocumentStyleMap | null;
 }) => {
   const { locale } = useUiPreferences();
   const copy = resolveLocaleMessages(locale).editor;
@@ -724,7 +769,8 @@ const ColorSelector = ({
     { name: 'Ámbar Profundo', value: '#D97706', description: 'Variante ámbar más cálida' },
   ];
 
-  const currentColor = editor.getAttributes('textStyle').color || 'inherit';
+  const roleStyle = getRoleTextStyle(documentStyleMap, getCurrentBlockRole(editor));
+  const currentColor = editor.getAttributes('textStyle').color || roleStyle?.color || 'inherit';
   const currentColorName = colors.find((c) => c.value === currentColor)?.name || copy.colorDefault;
 
   return (
@@ -1046,12 +1092,14 @@ const MenuBar = ({
           applyToWordOrSelection={applyToWordOrSelection}
           isAvailable={inlineTargetAvailable}
           unavailableTitle={inlineUnavailableTitle}
+          documentStyleMap={documentStyleMap}
         />
         <ColorSelector
           editor={editor}
           applyToWordOrSelection={applyToWordOrSelection}
           isAvailable={inlineTargetAvailable}
           unavailableTitle={inlineUnavailableTitle}
+          documentStyleMap={documentStyleMap}
         />
         <MarginSelector margins={margins} onMarginsChange={onMarginsChange} wordsPerPage={wordsPerPage} />
       </div>
