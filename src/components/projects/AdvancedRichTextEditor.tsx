@@ -1839,6 +1839,69 @@ export function AdvancedRichTextEditor({
     onPageCountChange(measuredPages);
   }, [columnGap, contentWidth, onPageCountChange]);
 
+  // Footnote paragraphs (`p.editorial-footnote`) live in the same linear
+  // block flow as everything else, so left in normal CSS-column flow they
+  // consume column height the source page never spent on them (Word keeps
+  // footnote text in the page's footer band, outside the body's flow) —
+  // every footnote pushes later content further down, compounding into a
+  // growing page-count mismatch against the source document.
+  //
+  // This removes each footnote from normal flow and re-anchors it near the
+  // bottom of whichever page it naturally falls on, so its height is
+  // reclaimed by the column flow (fixing the page-count drift) while the
+  // footnote still visually reads as "at the foot of its page". It is a
+  // single-pass approximation, not real per-page pagination: it measures
+  // each footnote's natural (in-flow) position, then removes it from flow,
+  // so a footnote whose own removal shifts *later* footnotes onto a
+  // different page will only be correct after the next re-run (editor
+  // updates and resizes both re-run it, so it converges quickly in
+  // practice, but a single keystroke can transiently show one on the
+  // "wrong" page until the next pass). A footnote taller than the page's
+  // bottom margin can also overlap the last line of body text — a fully
+  // correct fix would need the column layout itself to reserve space for
+  // it, which CSS multi-column cannot express.
+  const positionFootnotes = useCallback(() => {
+    const proseMirror = multipageFlowRef.current?.querySelector('.ProseMirror') as HTMLElement | null;
+    if (!proseMirror) return;
+
+    const footnotes = Array.from(
+      proseMirror.querySelectorAll<HTMLElement>('p.editorial-footnote'),
+    );
+    if (footnotes.length === 0) return;
+
+    // Reset to normal flow so each footnote's natural position can be
+    // measured before it gets pulled out of flow again below.
+    footnotes.forEach((el) => {
+      el.style.position = '';
+      el.style.top = '';
+      el.style.left = '';
+      el.style.width = '';
+    });
+    // Force layout to settle with footnotes back in flow before measuring.
+    void proseMirror.offsetHeight;
+
+    const proseMirrorRect = proseMirror.getBoundingClientRect();
+    const columnStride = contentWidth + columnGap;
+    const stackedHeightByPage = new Map<number, number>();
+
+    footnotes.forEach((el) => {
+      const rect = el.getBoundingClientRect();
+      const pageIndex = Math.max(
+        0,
+        Math.floor((rect.left - proseMirrorRect.left + 1) / columnStride),
+      );
+      const stacked = stackedHeightByPage.get(pageIndex) ?? 0;
+      const height = rect.height;
+
+      el.style.position = 'absolute';
+      el.style.left = `${pageIndex * columnStride}px`;
+      el.style.width = `${contentWidth}px`;
+      el.style.top = `${Math.max(0, contentHeight - stacked - height)}px`;
+
+      stackedHeightByPage.set(pageIndex, stacked + height + 8);
+    });
+  }, [columnGap, contentHeight, contentWidth]);
+
   const focusVisiblePage = useCallback(
     (pageIndex: number) => {
       if (!editor) {
@@ -1913,12 +1976,21 @@ export function AdvancedRichTextEditor({
   );
 
   useEffect(() => {
-    if (!editor || !onPageCountChange) {
+    if (!editor) {
       return;
     }
 
     const scheduleMeasure = () => {
-      requestAnimationFrame(measureRenderablePages);
+      requestAnimationFrame(() => {
+        positionFootnotes();
+        // Removing a footnote from flow can shift later footnotes onto a
+        // different page; one more pass catches that in the common case
+        // without an unbounded convergence loop.
+        requestAnimationFrame(() => {
+          positionFootnotes();
+          measureRenderablePages();
+        });
+      });
     };
 
     scheduleMeasure();
@@ -1929,7 +2001,7 @@ export function AdvancedRichTextEditor({
       editor.off('update', scheduleMeasure);
       window.removeEventListener('resize', scheduleMeasure);
     };
-  }, [editor, measureRenderablePages, onPageCountChange]);
+  }, [editor, measureRenderablePages, positionFootnotes]);
 
   useEffect(() => {
     if (!editor || totalRenderablePages <= 1) {
@@ -2340,6 +2412,7 @@ export function AdvancedRichTextEditor({
                 transition: transform 0.25s ease;
               }
               .multipage-editor-flow .ProseMirror {
+                position: relative;
                 height: ${contentHeight}px;
                 width: ${flowWidth}px;
                 padding: 0;

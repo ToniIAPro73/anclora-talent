@@ -58,7 +58,7 @@ export function MultipageFlow({
   ).filter((pageIndex) => pageIndex < measuredTotalPages);
 
   const measureRenderablePages = useCallback(() => {
-    if (!multipageFlowRef.current || !onPageCountChange) return;
+    if (!multipageFlowRef.current) return;
 
     const contentArea = multipageFlowRef.current.querySelector(
       '.flow-content-root',
@@ -72,17 +72,75 @@ export function MultipageFlow({
     );
 
     setMeasuredTotalPages(pages);
-    onPageCountChange(pages);
+    onPageCountChange?.(pages);
   }, [columnGap, contentWidth, onPageCountChange]);
 
+  // See the identical helper in AdvancedRichTextEditor.tsx for the full
+  // rationale: footnote paragraphs left in normal CSS-column flow consume
+  // page height the source document never spent on them (Word keeps
+  // footnotes in the footer band, outside the body flow), so every footnote
+  // pushes later content onto a later page than the source. This removes
+  // each footnote from flow and re-anchors it near the bottom of whichever
+  // page it naturally falls on, reclaiming that height. Single-pass
+  // approximation, not real per-page pagination — see the sibling component
+  // for the known limitations.
+  const positionFootnotes = useCallback(() => {
+    const contentArea = multipageFlowRef.current?.querySelector(
+      '.flow-content-root',
+    ) as HTMLElement | null;
+    if (!contentArea) return;
+
+    const footnotes = Array.from(
+      contentArea.querySelectorAll<HTMLElement>('p.editorial-footnote'),
+    );
+    if (footnotes.length === 0) return;
+
+    footnotes.forEach((el) => {
+      el.style.position = '';
+      el.style.top = '';
+      el.style.left = '';
+      el.style.width = '';
+    });
+    void contentArea.offsetHeight;
+
+    const contentAreaRect = contentArea.getBoundingClientRect();
+    const columnStride = contentWidth + columnGap;
+    const stackedHeightByPage = new Map<number, number>();
+
+    footnotes.forEach((el) => {
+      const rect = el.getBoundingClientRect();
+      const pageIndex = Math.max(
+        0,
+        Math.floor((rect.left - contentAreaRect.left + 1) / columnStride),
+      );
+      const stacked = stackedHeightByPage.get(pageIndex) ?? 0;
+      const height = rect.height;
+
+      el.style.position = 'absolute';
+      el.style.left = `${pageIndex * columnStride}px`;
+      el.style.width = `${contentWidth}px`;
+      el.style.top = `${Math.max(0, contentHeight - stacked - height)}px`;
+
+      stackedHeightByPage.set(pageIndex, stacked + height + 8);
+    });
+  }, [columnGap, contentHeight, contentWidth]);
+
   useEffect(() => {
-    const timeoutId = setTimeout(measureRenderablePages, 50);
-    window.addEventListener('resize', measureRenderablePages);
+    const runLayoutPass = () => {
+      positionFootnotes();
+      requestAnimationFrame(() => {
+        positionFootnotes();
+        measureRenderablePages();
+      });
+    };
+
+    const timeoutId = setTimeout(runLayoutPass, 50);
+    window.addEventListener('resize', runLayoutPass);
     return () => {
       clearTimeout(timeoutId);
-      window.removeEventListener('resize', measureRenderablePages);
+      window.removeEventListener('resize', runLayoutPass);
     };
-  }, [measureRenderablePages, html, config]);
+  }, [measureRenderablePages, positionFootnotes, html, config]);
 
   const pagePaddingStyle = {
     paddingTop: `${margins.top}px`,
@@ -111,6 +169,7 @@ export function MultipageFlow({
           transition: transform 0.25s ease;
         }
         .flow-content-root.ProseMirror {
+          position: relative;
           height: ${contentHeight}px;
           width: ${flowWidth}px;
           padding: 0;
