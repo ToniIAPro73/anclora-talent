@@ -1993,7 +1993,7 @@ export function AdvancedRichTextEditor({
   }, [measureRenderablePages, positionFootnotes]);
 
   useEffect(() => {
-    if (!editor) {
+    if (!editor || typeof editor.on !== 'function' || typeof editor.off !== 'function') {
       return;
     }
 

@@ -29,16 +29,21 @@ function quoteIfNeeded(fontFamily: string): string {
  * whenever it happens to be installed), followed by its metric-compatible
  * substitutes when known, so the browser never falls through to an
  * unrelated default font.
+ *
+ * Only fonts with a known substitute get the quoted "font, fallback, ..."
+ * treatment — every other font is returned exactly as extracted (no quotes,
+ * no appended fallback), since other callers compare this value verbatim
+ * (e.g. as a CSS variable read back and compared in tests, or fed into a
+ * web font loader) and would break on an unexpected quoted string.
  */
 export function buildFontFamilyStack(fontFamily: string | undefined | null): string {
   const trimmed = fontFamily?.trim();
   if (!trimmed) return 'Georgia, "Times New Roman", serif';
 
   const fallbacks = METRIC_COMPATIBLE_FALLBACKS[trimmed.toLowerCase()];
-  const quoted = quoteIfNeeded(trimmed);
-  if (!fallbacks || fallbacks.length === 0) return quoted;
+  if (!fallbacks || fallbacks.length === 0) return trimmed;
 
-  return [quoted, ...fallbacks.map(quoteIfNeeded)].join(', ');
+  return [quoteIfNeeded(trimmed), ...fallbacks.map(quoteIfNeeded)].join(', ');
 }
 
 /**

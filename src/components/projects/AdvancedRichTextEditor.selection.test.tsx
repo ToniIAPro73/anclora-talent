@@ -582,7 +582,9 @@ describe('AdvancedRichTextEditor selection behavior', () => {
       .join('\n');
 
     expect(styles).toContain('.ProseMirror p + p');
-    expect(styles).toContain('margin-top: 0.8rem');
+    // Sourced from the document's own spacingAfterPt (--talent-body-spacing-after)
+    // when available, falling back to 0.8rem for content with no source style.
+    expect(styles).toContain('margin-top: var(--talent-body-spacing-after, 0.8rem)');
   });
 
   test('re-emits html containing auto breaks after overflow reconciliation', () => {
