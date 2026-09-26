@@ -230,7 +230,7 @@ export function ChapterEditorFullscreen({
               </button>
 
               <span className="ac-preview-control-value">
-                P.{editor.currentPage + 1}
+                P.{editor.currentPage + 1 + editor.pageNumberOffset}
               </span>
 
               <button
@@ -383,6 +383,7 @@ export function ChapterEditorFullscreen({
               onUpdate={editor.setHtmlContent}
               currentPage={editor.currentPage}
               totalPages={editor.totalPages}
+              pageNumberOffset={editor.pageNumberOffset}
               onPageCountChange={editor.setMeasuredTotalPages}
               contentZoom={zoom}
               effectiveFontFamily={effectiveFontFamily}

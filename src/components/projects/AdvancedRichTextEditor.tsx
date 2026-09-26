@@ -1364,6 +1364,7 @@ export function AdvancedRichTextEditor({
   onUpdate,
   currentPage = 0,
   totalPages,
+  pageNumberOffset = 0,
   onPageCountChange,
   contentZoom = 100,
   effectiveFontFamily,
@@ -1375,6 +1376,9 @@ export function AdvancedRichTextEditor({
   onUpdate: (html: string) => void;
   currentPage?: number;
   totalPages?: number;
+  /** Pages occupied by preceding chapters, so page badges number
+   *  continuously through the whole book instead of restarting at 1. */
+  pageNumberOffset?: number;
   onPageCountChange?: (pages: number) => void;
   contentZoom?: number;
   effectiveFontFamily?: string;
@@ -1898,10 +1902,18 @@ export function AdvancedRichTextEditor({
       const stacked = stackedHeightByPage.get(pageIndex) ?? 0;
       const height = rect.height;
 
+      // Anchored from the bottom edge (not a computed `top`): if the
+      // measured height here (before max-width/line-height are fully
+      // settled) ends up slightly off from the actual rendered height, a
+      // `top` computed from it could push part of the note past
+      // contentHeight, where the page's `overflow: hidden` silently clips
+      // it — exactly the "note 1 cuts off mid-sentence" symptom. Anchoring
+      // the bottom edge instead means the box grows upward from a fixed
+      // point and is never clipped, regardless of any height mismatch.
       decorations.push({
         pos,
         nodeSize,
-        style: `position:absolute;left:${pageIndex * columnStride}px;width:${contentWidth}px;top:${Math.max(0, contentHeight - stacked - height)}px;`,
+        style: `position:absolute;left:${pageIndex * columnStride}px;width:${contentWidth}px;bottom:${stacked}px;`,
       });
 
       stackedHeightByPage.set(pageIndex, stacked + height + 8);
@@ -2531,7 +2543,7 @@ export function AdvancedRichTextEditor({
                   <div className="pointer-events-none absolute inset-x-0 bottom-7 flex justify-center">
                     <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(7,12,20,0.05)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[var(--text-tertiary)]">
                       <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
-                      <span>{pageIndex + 1}</span>
+                      <span>{pageIndex + 1 + pageNumberOffset}</span>
                       <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
                     </span>
                   </div>

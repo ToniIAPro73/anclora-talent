@@ -117,6 +117,45 @@ export function useChapterEditor({
       : Math.max(estimatedTotalPages, measuredTotalPages),
   );
 
+  // The source manuscript numbers pages continuously through the whole
+  // book (chapter 5 starts on page 9, not page 1) — not per chapter. The
+  // editor only ever mounts one chapter's content at a time, so there is
+  // no live-measured page count for chapters the user hasn't visited yet;
+  // this estimates every OTHER chapter's page count with the same
+  // heuristic paginator already used for the current chapter's own
+  // estimate, and sums the ones before the current chapter for the
+  // offset to add to its page numbers. Good enough to match the source
+  // numbering closely without pre-rendering the whole book, though it can
+  // drift slightly from the exact number for chapters not yet visited.
+  const pageNumberOffset = useMemo(() => {
+    let offset = 0;
+    for (let index = 0; index < currentIndex; index += 1) {
+      const chapter = localChapters[index];
+      if (!chapter) continue;
+      const html = normalizeLoadedChapterHtml(
+        chapterBlocksToHtml(chapter.blocks),
+        device,
+        fontSize,
+        margins,
+        { pageWidth, pageHeight, lineHeight },
+      );
+      const reconciled = reconcileOverflowBreaks(html, previewConfig);
+      const count =
+        typeof window !== 'undefined' && typeof DOMParser !== 'undefined'
+          ? countRenderablePages(paginateContent(reconciled, previewConfig))
+          : estimateTotalPages(reconciled, {
+              device: device as 'mobile' | 'tablet' | 'desktop',
+              fontSize,
+              marginTop: margins.top,
+              marginBottom: margins.bottom,
+              marginLeft: margins.left,
+              marginRight: margins.right,
+            });
+      offset += Math.max(1, count);
+    }
+    return offset;
+  }, [currentIndex, localChapters, device, fontSize, margins, pageWidth, pageHeight, lineHeight, previewConfig]);
+
   const layoutKey = `${currentIndex}-${htmlContent}-${device}-${fontSize}-${margins.bottom}-${margins.left}-${margins.right}-${margins.top}`;
   const [prevLayoutKey, setPrevLayoutKey] = useState(layoutKey);
   if (layoutKey !== prevLayoutKey) {
@@ -290,6 +329,7 @@ export function useChapterEditor({
     // Page state
     currentPage,
     totalPages,
+    pageNumberOffset,
     canNavigatePagePrev,
     canNavigatePageNext,
 

@@ -792,7 +792,32 @@ function stripImportedTocPageMarkup(fragment: string) {
   return sanitized;
 }
 
-function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
+/**
+ * Detects the real TOC signal (a "Título ·····5" or "Título<TAB>5" leader)
+ * on a RAW, not-yet-sanitized <ul>/<ol> fragment — stripImportedTocPageMarkup()
+ * removes exactly this pattern before splitHtmlListBlocks() ever sees the
+ * fragment, so it must be read here first.
+ */
+function fragmentHasTocLeaderPattern(rawFragment: string): boolean {
+  const items = Array.from(rawFragment.matchAll(/<li[^>]*>[\s\S]*?<\/li>/gi)).map((m) =>
+    textFromHtml(m[0]).trim(),
+  );
+  return items.some((text, index) => {
+    const nextText = items[index + 1] ?? '';
+    return /^[·._\-—\s]{2,}\d+\s*$/.test(nextText) || /\t\s*\d+\s*$/.test(text);
+  });
+}
+
+// This function used to treat EVERY <ul>/<ol> in the document as a
+// potential table-of-contents candidate, wrapping every item in
+// data-toc-entry="true" (rendered with no visible marker, just a flex row)
+// even when the list had nothing to do with a TOC — a numbered
+// "pre-mortem" checklist in chapter body content came out exactly like
+// this: five flush lines with no numbers, no bullets. Real TOC lists are
+// now only given that treatment when `hasTocLeaderPattern` (computed by
+// the caller from the raw, pre-sanitized fragment) says the leader-dot/tab
+// signal was actually present; everything else renders as an ordinary list.
+function splitHtmlListBlocks(fragment: string, hasTocLeaderPattern = false): ParsedBlock[] {
   const tag =
     fragment.match(/^<(ul|ol)/i)?.[1]?.toLowerCase() === 'ol' ? 'ol' : 'ul';
   const items = Array.from(
@@ -811,6 +836,31 @@ function splitHtmlListBlocks(fragment: string): ParsedBlock[] {
         structural: false,
       },
     ];
+  }
+
+  if (!hasTocLeaderPattern) {
+    const groups: string[][] = [];
+    let cur: string[] = [];
+    let w = 0;
+    for (const item of items) {
+      const words = textFromHtml(item).split(/\s+/).length;
+      if (cur.length >= 6 || w + words > 140) {
+        groups.push(cur);
+        cur = [];
+        w = 0;
+      }
+      cur.push(item);
+      w += words;
+    }
+    if (cur.length) groups.push(cur);
+
+    return groups.map((g) => ({
+      kind: 'list' as const,
+      text: g.map(textFromHtml).join('\n'),
+      html: `<${tag}>${g.join('')}</${tag}>`,
+      level: null,
+      structural: false,
+    }));
   }
 
   // FUSIONA <li>Título</li> + <li>·····5</li> en una sola entrada semántica:
@@ -947,7 +997,10 @@ function parseHtmlBlocks(input: string) {
     if (tag.startsWith('h')) {
       blocks.push({ kind: 'heading', text: cleanHeadingText(text), html: clean, level: Number(tag.replace('h','')), structural: true });
     } else if (tag === 'ul' || tag === 'ol') {
-      blocks.push(...splitHtmlListBlocks(clean));
+      // Leader-dot/tab-before-pagenum patterns (the actual TOC signal) get
+      // stripped by stripImportedTocPageMarkup() above before `clean` is
+      // built, so that signal has to be read from the RAW fragment here.
+      blocks.push(...splitHtmlListBlocks(clean, fragmentHasTocLeaderPattern(fragment)));
     } else if (tag === 'blockquote') {
       blocks.push({ kind: 'quote', text, html: clean, level: null, structural: true });
     } else {
