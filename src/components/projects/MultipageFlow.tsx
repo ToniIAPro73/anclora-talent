@@ -237,12 +237,23 @@ export function MultipageFlow({
         }
         .flow-content-root.ProseMirror p.editorial-footnote {
           font-family: var(--talent-footnote-font, inherit);
-          font-size: var(--talent-footnote-size, 0.8rem);
+          font-size: var(--talent-footnote-size, 0.8rem) !important;
           color: var(--talent-footnote-color, var(--text-tertiary));
-          line-height: 1.3;
-          margin: 0.6rem 0 0.75rem 0;
-          padding-top: 0.35rem;
-          border-top: 1px solid var(--border-subtle, rgba(0,0,0,0.12));
+          line-height: 1.3 !important;
+          margin: 0.85rem 0 1rem 0 !important;
+          padding-top: 0.5rem;
+          border-top: 1px solid var(--talent-footnote-color, var(--border-strong, rgba(0,0,0,0.3)));
+          max-width: 45%;
+        }
+        .flow-content-root.ProseMirror blockquote {
+          font-family: var(--talent-quote-font, inherit);
+          font-size: var(--talent-quote-size, inherit);
+          color: var(--talent-quote-color, inherit);
+          border-left-style: solid;
+          border-left-color: var(--talent-quote-border-color, #d97706);
+          border-left-width: var(--talent-quote-border-width, 3px);
+          margin: 1rem 1.5rem 1rem 0;
+          padding: 0.15rem 0 0.15rem 1rem;
         }
         .flow-content-root.ProseMirror h5,
         .flow-content-root.ProseMirror h6 {
