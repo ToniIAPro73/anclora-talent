@@ -5,6 +5,7 @@ import { CookieConsent } from '@/components/legal/CookieConsent';
 import { LegalFooter } from '@/components/legal/LegalFooter';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
 import { TALENT_BRAND } from '@/lib/talent-brand';
+import { versionedPublicAsset } from '@/lib/branding/icon-metadata';
 import './globals.css';
 
 // DM Sans is the contractual app typeface. Self-hosted (variable font,
@@ -30,10 +31,10 @@ export const metadata: Metadata = {
   description: TALENT_BRAND.description,
   icons: {
     icon: [
-      { url: TALENT_BRAND.faviconPath, sizes: 'any' },
-      { url: TALENT_BRAND.favicon32Path, type: 'image/png', sizes: '32x32' },
+      { url: versionedPublicAsset(TALENT_BRAND.faviconPath), sizes: 'any' },
+      { url: versionedPublicAsset(TALENT_BRAND.favicon32Path), type: 'image/png', sizes: '32x32' },
     ],
-    apple: [{ url: TALENT_BRAND.appleTouchIconPath, sizes: '180x180' }],
+    apple: [{ url: versionedPublicAsset(TALENT_BRAND.appleTouchIconPath), sizes: '180x180' }],
   },
 };
 
