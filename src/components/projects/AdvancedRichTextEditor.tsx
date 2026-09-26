@@ -1859,15 +1859,18 @@ export function AdvancedRichTextEditor({
   // This removes each footnote from normal flow and re-anchors it near the
   // bottom of whichever page it naturally falls on, so its height is
   // reclaimed by the column flow (fixing the page-count drift) while the
-  // footnote still visually reads as "at the foot of its page". It is a
-  // single-pass approximation, not real per-page pagination: it measures
-  // each footnote's natural (in-flow) position, then removes it from flow,
-  // so a footnote whose own removal shifts *later* footnotes onto a
-  // different page will only be correct after the next re-run (editor
-  // updates and resizes both re-run it, so it converges quickly in
-  // practice, but a single keystroke can transiently show one on the
-  // "wrong" page until the next pass). A footnote taller than the page's
-  // bottom margin can also overlap the last line of body text — a fully
+  // footnote still visually reads as "at the foot of its page". Footnotes
+  // are processed one at a time, in document order, applying each one's
+  // decoration before measuring the next: removing a footnote from flow
+  // reclaims its height, which shifts everything after it upward — measure
+  // all footnotes against the same fully-inline snapshot instead, and two
+  // footnotes that actually belong on different pages can both end up
+  // measured onto the page the removal left them on (exactly what
+  // happened before this: notes 2 and 3 both landed on note 2's page,
+  // page 4 left empty). Measuring each one only after every earlier one is
+  // already in its final position makes each measurement reflect the
+  // layout it will actually end up in. A footnote taller than the page's
+  // bottom margin can still overlap the last line of body text — a fully
   // correct fix would need the column layout itself to reserve space for
   // it, which CSS multi-column cannot express.
   const positionFootnotes = useCallback(() => {
@@ -1884,8 +1887,8 @@ export function AdvancedRichTextEditor({
     });
     if (footnotes.length === 0) return;
 
-    // Clear existing decorations first so each footnote's natural (in-flow)
-    // position can be measured before it is pulled out of flow again below.
+    // Clear existing decorations first so the first footnote's natural
+    // (in-flow) position can be measured against a fully in-flow document.
     setFootnoteDecorations(editor.view, []);
 
     const proseMirrorRect = proseMirror.getBoundingClientRect();
@@ -1917,9 +1920,11 @@ export function AdvancedRichTextEditor({
       });
 
       stackedHeightByPage.set(pageIndex, stacked + height + 8);
-    }
 
-    setFootnoteDecorations(editor.view, decorations);
+      // Apply immediately, before measuring the next footnote: its
+      // measurement must reflect this one already being out of flow.
+      setFootnoteDecorations(editor.view, decorations);
+    }
   }, [columnGap, contentHeight, contentWidth, editor]);
 
   const focusVisiblePage = useCallback(
@@ -1997,10 +2002,12 @@ export function AdvancedRichTextEditor({
 
   const scheduleLayoutPass = useCallback(() => {
     requestAnimationFrame(() => {
+      // positionFootnotes() now measures and decorates footnotes one at a
+      // time in document order, so a single pass is self-consistent (each
+      // footnote's measurement already reflects every earlier one being
+      // out of flow). The extra rAF is kept only as a safety net against
+      // any layout not having fully settled on the first frame.
       positionFootnotes();
-      // Removing a footnote from flow can shift later footnotes onto a
-      // different page; one more pass catches that in the common case
-      // without an unbounded convergence loop.
       requestAnimationFrame(() => {
         positionFootnotes();
         measureRenderablePages();
