@@ -227,6 +227,43 @@ const TocBlockAttributes = Extension.create({
   },
 });
 
+// StarterKit's default paragraph schema has no `attrs` beyond node content,
+// so ProseMirror silently drops any `class`/`data-*` attribute on `<p>` when
+// parsing imported HTML — including `class="editorial-kicker"` and
+// `class="editorial-footnote"` emitted by the DOCX importer. Without this,
+// every imported paragraph renders identically regardless of its editorial
+// role, which is why a kicker or footnote looks just like body text.
+const EDITORIAL_PARAGRAPH_CLASS_RE = /\beditorial-(kicker|footnote)\b/;
+
+const EditorialParagraphAttributes = Extension.create({
+  name: 'editorialParagraphAttributes',
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['paragraph'],
+        attributes: {
+          editorialClass: {
+            default: null,
+            parseHTML: (element) => {
+              const match = element.getAttribute('class')?.match(EDITORIAL_PARAGRAPH_CLASS_RE);
+              return match ? match[0] : null;
+            },
+            renderHTML: (attributes) =>
+              attributes.editorialClass ? { class: attributes.editorialClass } : {},
+          },
+          footnoteId: {
+            default: null,
+            parseHTML: (element) => element.getAttribute('data-footnote-id'),
+            renderHTML: (attributes) =>
+              attributes.footnoteId ? { 'data-footnote-id': attributes.footnoteId } : {},
+          },
+        },
+      },
+    ];
+  },
+});
+
 const TocInlineAttributes = Extension.create({
   name: 'tocInlineAttributes',
 
@@ -1614,6 +1651,7 @@ export function AdvancedRichTextEditor({
       StyledBulletList,
       StyledOrderedList,
       ParagraphIndent,
+      EditorialParagraphAttributes,
       TocBlockAttributes,
       TocInlineAttributes,
       Placeholder.configure({
@@ -2050,7 +2088,9 @@ export function AdvancedRichTextEditor({
                 font-size: var(--talent-footnote-size, 0.8rem);
                 color: var(--talent-footnote-color, var(--text-tertiary));
                 line-height: 1.3;
-                margin: 0.35rem 0 0.75rem 0;
+                margin: 0.6rem 0 0.75rem 0;
+                padding-top: 0.35rem;
+                border-top: 1px solid var(--border-subtle, rgba(0,0,0,0.12));
               }
               .ProseMirror h5,
               .preview-page h5,

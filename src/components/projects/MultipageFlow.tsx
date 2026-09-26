@@ -240,7 +240,9 @@ export function MultipageFlow({
           font-size: var(--talent-footnote-size, 0.8rem);
           color: var(--talent-footnote-color, var(--text-tertiary));
           line-height: 1.3;
-          margin: 0.35rem 0 0.75rem 0;
+          margin: 0.6rem 0 0.75rem 0;
+          padding-top: 0.35rem;
+          border-top: 1px solid var(--border-subtle, rgba(0,0,0,0.12));
         }
         .flow-content-root.ProseMirror h5,
         .flow-content-root.ProseMirror h6 {
