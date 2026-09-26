@@ -127,8 +127,15 @@ export function useChapterEditor({
   // offset to add to its page numbers. Good enough to match the source
   // numbering closely without pre-rendering the whole book, though it can
   // drift slightly from the exact number for chapters not yet visited.
+  //
+  // COVER_PAGE_COUNT accounts for the book's own cover, which every
+  // project has (see project.cover) as a physical page 1 that precedes
+  // chapter[0] but is never itself imported as a chapter. Because of it,
+  // the first chapter (typically the Índice) starts on page 2 in the
+  // source manuscript, not page 1.
   const pageNumberOffset = useMemo(() => {
-    let offset = 0;
+    const COVER_PAGE_COUNT = 1;
+    let offset = COVER_PAGE_COUNT;
     for (let index = 0; index < currentIndex; index += 1) {
       const chapter = localChapters[index];
       if (!chapter) continue;
