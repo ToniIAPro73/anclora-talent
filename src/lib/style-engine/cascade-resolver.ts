@@ -370,16 +370,32 @@ export function resolveDocumentStyles({
     markerColor: brandAccent ?? body.color,
   };
 
-  // 6. Tables
+  // 6. Tables — mammoth's HTML conversion drops per-cell DOCX shading and
+  // run styling entirely, so the source table's own header/band colors
+  // (extracted directly from the OOXML into sourceStyleProfile.table) are
+  // the only way to recover them; without a source profile, fall back to
+  // brand/system defaults as before.
+  const sourceTable = sourceStyleProfile?.table;
   const table = {
     header: {
       ...body,
+      fontFamily: sourceTable?.headerFontFamily ?? body.fontFamily,
+      fontSizePt: sourceTable?.headerFontSizePt ?? body.fontSizePt,
+      color: sourceTable?.headerColor ?? body.color,
       fontWeight: 'semibold' as const,
-      backgroundColor: brandProfile ? getBrandColor(brandProfile, 'paper')?.hex ?? '#F9FAFB' : '#F9FAFB',
+      backgroundColor:
+        sourceTable?.headerBackground ??
+        (brandProfile ? getBrandColor(brandProfile, 'paper')?.hex ?? '#F9FAFB' : '#F9FAFB'),
     },
-    cell: { ...body },
+    cell: {
+      ...body,
+      fontFamily: sourceTable?.bodyFontFamily ?? body.fontFamily,
+      fontSizePt: sourceTable?.bodyFontSizePt ?? body.fontSizePt,
+      color: sourceTable?.bodyColor ?? body.color,
+    },
     borderColor: '#E5E7EB',
     borderWidthPt: 1,
+    bandBackgroundColor: sourceTable?.bandBackground,
   };
 
   // 7. Footnotes

@@ -29,6 +29,12 @@ vi.mock('@tiptap/pm/state', () => ({
   TextSelection: {
     create: (...args: [unknown, number, number]) => textSelectionCreateMock(...args),
   },
+  Plugin: vi.fn().mockImplementation(function Plugin(config: unknown) {
+    return config;
+  }),
+  PluginKey: vi.fn().mockImplementation(function PluginKey(name: string) {
+    return { name, getState: vi.fn() };
+  }),
 }));
 
 vi.mock('@tiptap/starter-kit', () => ({

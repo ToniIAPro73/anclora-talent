@@ -68,6 +68,7 @@ export interface DocumentStyleMap {
     cell: ResolvedTextStyle;
     borderColor: string;
     borderWidthPt: number;
+    bandBackgroundColor?: string;
   };
   footnote: ResolvedTextStyle;
   kicker: ResolvedTextStyle;

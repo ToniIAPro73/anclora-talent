@@ -62,6 +62,21 @@ export interface OriginalDocumentStyleProfile {
   /** Custom "Editorial Kicker" paragraph style (e.g. "INTRODUCCIÓN" labels). */
   kicker?: Partial<ResolvedTextStyle>;
 
+  /**
+   * Table header-row and banded-row shading/text style, extracted from the
+   * first table in the document (mammoth's HTML output loses this entirely).
+   */
+  table?: {
+    headerBackground?: string;
+    headerColor?: string;
+    headerFontFamily?: string;
+    headerFontSizePt?: number;
+    bandBackground?: string;
+    bodyColor?: string;
+    bodyFontFamily?: string;
+    bodyFontSizePt?: number;
+  };
+
   provenance?: Record<string, PropertyProvenance>;
 }
 

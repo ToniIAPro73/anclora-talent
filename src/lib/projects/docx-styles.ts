@@ -310,6 +310,72 @@ export function extractDominantDocumentAlignment(documentXml: string): 'left' | 
   return dominant;
 }
 
+interface ExtractedTableStyle {
+  headerBackground?: string;
+  headerColor?: string;
+  headerFontFamily?: string;
+  headerFontSizePt?: number;
+  bandBackground?: string;
+  bodyColor?: string;
+  bodyFontFamily?: string;
+  bodyFontSizePt?: number;
+}
+
+/**
+ * Mammoth's default HTML conversion drops per-cell shading and run styling
+ * from DOCX tables entirely (it only preserves structure: <table>/<thead>/
+ * <tr>/<td>), so the app previously fell back to generic gray table colors
+ * regardless of what the source document actually used. This extracts the
+ * FIRST table's header-row and banded-row cell shading/text style directly
+ * from the OOXML, to reapply globally via CSS — a good approximation for
+ * documents (the common case) that use one consistent table style
+ * throughout, though it won't capture per-table variation.
+ */
+function extractTableStyleFromDocumentXml(documentXml: string): ExtractedTableStyle | null {
+  const tblMatch = documentXml.match(/<w:tbl>([\s\S]*?)<\/w:tbl>/);
+  if (!tblMatch) return null;
+
+  const rows = Array.from(tblMatch[1].matchAll(/<w:tr\b[^>]*>([\s\S]*?)<\/w:tr>/g)).map((m) => m[1]);
+  if (rows.length === 0) return null;
+
+  const isHeaderRow = (row: string) => /<w:tblHeader\b[^>]*\bw:val="(?:1|true|on)"/i.test(row) || /<w:tblHeader\s*\/>/.test(row);
+  const headerRow = rows.find(isHeaderRow) ?? rows[0];
+  const dataRows = rows.filter((row) => row !== headerRow);
+
+  function firstCellStyle(row: string) {
+    const cellMatch = row.match(/<w:tc\b[^>]*>([\s\S]*?)<\/w:tc>/);
+    if (!cellMatch) return {};
+    const cell = cellMatch[1];
+    const shdFill = cell.match(/<w:shd\b[^>]*\bw:fill="([0-9a-fA-F]{6})"/)?.[1];
+    const rpr = cell.match(/<w:rPr>([\s\S]*?)<\/w:rPr>/)?.[1] ?? '';
+    return {
+      background: shdFill ? `#${shdFill.toUpperCase()}` : undefined,
+      color: parseColor(rpr),
+      fontFamily: parseFontFamily(rpr),
+      fontSizePt: parseFontSizePt(rpr),
+    };
+  }
+
+  const header = firstCellStyle(headerRow);
+  const bandedRow = dataRows.find((row) => /<w:shd\b[^>]*\bw:fill="[0-9a-fA-F]{6}"/.test(row));
+  const bandBackground = bandedRow
+    ? `#${bandedRow.match(/<w:shd\b[^>]*\bw:fill="([0-9a-fA-F]{6})"/)![1].toUpperCase()}`
+    : undefined;
+  const body = dataRows[0] ? firstCellStyle(dataRows[0]) : {};
+
+  const result: ExtractedTableStyle = {};
+  if (header.background) result.headerBackground = header.background;
+  if (header.color) result.headerColor = header.color;
+  if (header.fontFamily) result.headerFontFamily = header.fontFamily;
+  if (header.fontSizePt !== undefined) result.headerFontSizePt = header.fontSizePt;
+  if (bandBackground) result.bandBackground = bandBackground;
+  if (body.color) result.bodyColor = body.color;
+  if (body.fontFamily) result.bodyFontFamily = body.fontFamily;
+  if (body.fontSizePt !== undefined) result.bodyFontSizePt = body.fontSizePt;
+
+  return Object.keys(result).length > 0 ? result : null;
+}
+
 /**
  * Deep extraction of the complete original document style profile from a DOCX buffer.
  */
@@ -474,6 +540,16 @@ export async function extractOriginalDocumentStyleProfile(
       if (Object.keys(kickerStyle).length > 0) {
         profile.kicker = kickerStyle;
         profile.provenance!['kicker'] = { source: 'docx-styles', confidence: 0.95 };
+      }
+    }
+
+    // 6. Table shading/text style (header row + banded rows), when the
+    // document has at least one table.
+    if (documentXml) {
+      const tableStyle = extractTableStyleFromDocumentXml(documentXml);
+      if (tableStyle) {
+        profile.table = tableStyle;
+        profile.provenance!['table'] = { source: 'docx-direct', confidence: 0.9 };
       }
     }
 

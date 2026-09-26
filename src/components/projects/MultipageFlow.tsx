@@ -338,8 +338,27 @@ export function MultipageFlow({
           break-inside: avoid-column;
           -webkit-column-break-inside: avoid;
         }
+        .flow-content-root.ProseMirror th {
+          background: var(--talent-table-header-bg, rgba(0,0,0,0.04));
+          color: var(--talent-table-header-color, inherit);
+          font-family: var(--talent-table-header-font, inherit);
+          font-size: var(--talent-table-header-size, inherit);
+          font-weight: 700;
+          text-align: left;
+        }
+        .flow-content-root.ProseMirror td {
+          background: transparent;
+          color: var(--talent-table-cell-color, inherit);
+          font-family: var(--talent-table-cell-font, inherit);
+          font-size: var(--talent-table-cell-size, inherit);
+        }
+        .flow-content-root.ProseMirror tbody tr:nth-child(even) td {
+          background: var(--talent-table-band-bg, transparent);
+        }
         .flow-content-root.ProseMirror td,
         .flow-content-root.ProseMirror th {
+          border: 1px solid var(--talent-table-border-color, var(--border-subtle, rgba(0,0,0,0.12)));
+          padding: 0.4rem 0.6rem;
           word-wrap: break-word;
           overflow-wrap: break-word;
           vertical-align: top;

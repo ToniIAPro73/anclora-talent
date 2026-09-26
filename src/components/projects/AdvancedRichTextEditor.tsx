@@ -17,6 +17,7 @@ import { Color } from '@tiptap/extension-color';
 import { TableKit } from '@tiptap/extension-table';
 import { ResizableImage } from './resizable-image-extension';
 import { PageBreak } from './page-break-extension';
+import { FootnoteLayout, setFootnoteDecorations, type FootnoteDecorationInput } from './footnote-layout-extension';
 import { FontSize } from './font-size-extension';
 import type { CompositionSettings } from '@/lib/projects/composition';
 import type { DocumentStyleMap, ResolvedTextStyle } from '@/lib/style-engine/model';
@@ -1721,6 +1722,7 @@ export function AdvancedRichTextEditor({
       TableKit.configure({
         table: { resizable: false },
       }),
+      FootnoteLayout,
     ],
     content: defaultContent,
       onUpdate: ({ editor: ed }) => {
@@ -1865,46 +1867,48 @@ export function AdvancedRichTextEditor({
   // correct fix would need the column layout itself to reserve space for
   // it, which CSS multi-column cannot express.
   const positionFootnotes = useCallback(() => {
+    if (!editor?.view || typeof editor.state?.doc?.descendants !== 'function') return;
+
     const proseMirror = multipageFlowRef.current?.querySelector('.ProseMirror') as HTMLElement | null;
     if (!proseMirror) return;
 
-    const footnotes = Array.from(
-      proseMirror.querySelectorAll<HTMLElement>('p.editorial-footnote'),
-    );
+    const footnotes: Array<{ pos: number; nodeSize: number }> = [];
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name === 'paragraph' && node.attrs?.editorialClass === 'editorial-footnote') {
+        footnotes.push({ pos, nodeSize: node.nodeSize });
+      }
+    });
     if (footnotes.length === 0) return;
 
-    // Reset to normal flow so each footnote's natural position can be
-    // measured before it gets pulled out of flow again below.
-    footnotes.forEach((el) => {
-      el.style.position = '';
-      el.style.top = '';
-      el.style.left = '';
-      el.style.width = '';
-    });
-    // Force layout to settle with footnotes back in flow before measuring.
-    void proseMirror.offsetHeight;
+    // Clear existing decorations first so each footnote's natural (in-flow)
+    // position can be measured before it is pulled out of flow again below.
+    setFootnoteDecorations(editor.view, []);
 
     const proseMirrorRect = proseMirror.getBoundingClientRect();
     const columnStride = contentWidth + columnGap;
     const stackedHeightByPage = new Map<number, number>();
+    const decorations: FootnoteDecorationInput[] = [];
 
-    footnotes.forEach((el) => {
-      const rect = el.getBoundingClientRect();
-      const pageIndex = Math.max(
-        0,
-        Math.floor((rect.left - proseMirrorRect.left + 1) / columnStride),
-      );
+    for (const { pos, nodeSize } of footnotes) {
+      const dom = editor.view.nodeDOM(pos) as HTMLElement | null;
+      if (!dom || typeof dom.getBoundingClientRect !== 'function') continue;
+
+      const rect = dom.getBoundingClientRect();
+      const pageIndex = Math.max(0, Math.floor((rect.left - proseMirrorRect.left + 1) / columnStride));
       const stacked = stackedHeightByPage.get(pageIndex) ?? 0;
       const height = rect.height;
 
-      el.style.position = 'absolute';
-      el.style.left = `${pageIndex * columnStride}px`;
-      el.style.width = `${contentWidth}px`;
-      el.style.top = `${Math.max(0, contentHeight - stacked - height)}px`;
+      decorations.push({
+        pos,
+        nodeSize,
+        style: `position:absolute;left:${pageIndex * columnStride}px;width:${contentWidth}px;top:${Math.max(0, contentHeight - stacked - height)}px;`,
+      });
 
       stackedHeightByPage.set(pageIndex, stacked + height + 8);
-    });
-  }, [columnGap, contentHeight, contentWidth]);
+    }
+
+    setFootnoteDecorations(editor.view, decorations);
+  }, [columnGap, contentHeight, contentWidth, editor]);
 
   const focusVisiblePage = useCallback(
     (pageIndex: number) => {
@@ -2231,8 +2235,22 @@ export function AdvancedRichTextEditor({
               .ProseMirror th,
               .preview-page th {
                 background: var(--talent-table-header-bg, rgba(0,0,0,0.04));
+                color: var(--talent-table-header-color, inherit);
+                font-family: var(--talent-table-header-font, inherit);
+                font-size: var(--talent-table-header-size, inherit);
                 font-weight: 700;
                 text-align: left;
+              }
+              .ProseMirror td,
+              .preview-page td {
+                background: transparent;
+                color: var(--talent-table-cell-color, inherit);
+                font-family: var(--talent-table-cell-font, inherit);
+                font-size: var(--talent-table-cell-size, inherit);
+              }
+              .ProseMirror tbody tr:nth-child(even) td,
+              .preview-page tbody tr:nth-child(even) td {
+                background: var(--talent-table-band-bg, transparent);
               }
               .ProseMirror td,
               .ProseMirror th,

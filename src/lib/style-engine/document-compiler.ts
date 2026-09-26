@@ -87,6 +87,13 @@ export function generateCssVariables(styleMap: DocumentStyleMap): Record<string,
     // Tables
     '--talent-table-border-color': styleMap.table.borderColor,
     '--talent-table-header-bg': styleMap.table.header.backgroundColor,
+    '--talent-table-header-color': styleMap.table.header.color,
+    '--talent-table-header-font': buildFontFamilyStack(styleMap.table.header.fontFamily),
+    '--talent-table-header-size': `${styleMap.table.header.fontSizePt}pt`,
+    '--talent-table-cell-font': buildFontFamilyStack(styleMap.table.cell.fontFamily),
+    '--talent-table-cell-size': `${styleMap.table.cell.fontSizePt}pt`,
+    '--talent-table-cell-color': styleMap.table.cell.color,
+    '--talent-table-band-bg': styleMap.table.bandBackgroundColor ?? 'transparent',
 
     // Footnotes
     '--talent-footnote-size': `${styleMap.footnote.fontSizePt}pt`,
