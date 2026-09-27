@@ -2168,6 +2168,18 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
   overflow-y: auto;
 }
 
+/* The document-data modal is a compact decision surface. The shared surface
+   token intentionally uses generous dashboard spacing, so keep this density
+   override scoped to the Markdown import modal only. */
+.document-data-modal-panel .ac-surface-panel {
+  gap: 8px;
+  padding: 12px;
+}
+
+.document-data-modal-panel label.ac-surface-panel {
+  display: flex;
+}
+
 .font-selector--open {
   z-index: 101;
 }

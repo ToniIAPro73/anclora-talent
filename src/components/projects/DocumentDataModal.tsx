@@ -392,7 +392,8 @@ function DocumentDataModalForm({
       <div className="ac-modal__backdrop" onClick={onClose} />
       <div
         ref={panelRef}
-        className="document-data-modal-panel ac-modal__panel max-w-6xl rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 shadow-[var(--shadow-strong)]"
+        data-testid="document-data-modal-panel"
+        className="document-data-modal-panel ac-modal__panel max-w-[1240px] rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-4 shadow-[var(--shadow-strong)] sm:p-5 lg:p-5"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -432,70 +433,72 @@ function DocumentDataModalForm({
           </div>
         </div>
 
-        <div className="mt-6 space-y-6">
+        <div className="mt-4 space-y-4">
           {markdownSource && (
-            <section className="space-y-4" data-testid="markdown-import-data">
-              <div className="ac-surface-panel ac-surface-panel--subtle space-y-3 p-4">
+            <section className="space-y-3" data-testid="markdown-import-data">
+              <div className="ac-surface-panel ac-surface-panel--subtle space-y-2 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h4 className={labelClass}>{copy.markdownSourceHeading}</h4>
                   <span className="inline-flex rounded-full border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--accent-text)]">Markdown</span>
                 </div>
-                <p className="text-sm text-[var(--text-secondary)]">{copy.markdownSourceDescription}</p>
+                <p className="text-xs leading-5 text-[var(--text-secondary)]">{copy.markdownSourceDescription}</p>
               </div>
               {mode === 'pre-create' && onImportPresentationModeChange ? (
-                <div className="space-y-3" data-testid="markdown-import-mode-selector">
+                <div className="space-y-2" data-testid="markdown-import-mode-selector">
                   <h4 className={labelClass}>{copy.markdownImportModeHeading}</h4>
-                  {([
+                  <div className="grid gap-2 md:grid-cols-2">
+                    {([
                     ['source-semantic', copy.markdownModeSourceSemanticTitle, copy.markdownModeSourceSemanticDescription, true],
                     ['materialized', copy.markdownModeMaterializedTitle, copy.markdownModeMaterializedDescription, false],
-                  ] as const).map(([value, title, description, recommended]) => (
-                    <label key={value} className={`ac-surface-panel ac-surface-panel--subtle flex cursor-pointer gap-3 p-4 text-left ${markdownMode === value ? 'border-[var(--accent)]' : ''}`}>
-                      <input
-                        type="radio"
-                        name="markdown-import-mode"
-                        data-testid={`markdown-import-mode-${value}`}
-                        value={value}
-                        checked={markdownMode === value}
-                        onChange={() => onImportPresentationModeChange(value)}
-                        className="mt-1 h-4 w-4 shrink-0"
-                      />
-                      <span className="min-w-0 space-y-1">
-                        <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
-                          {title}
-                          {recommended ? <span className="ac-button ac-button--ghost ac-button--sm pointer-events-none text-[10px] uppercase tracking-[0.1em]">{copy.markdownModeRecommended}</span> : null}
+                    ] as const).map(([value, title, description, recommended]) => (
+                      <label key={value} className={`ac-surface-panel ac-surface-panel--subtle flex cursor-pointer gap-2.5 p-3 text-left ${markdownMode === value ? 'border-[var(--accent)]' : ''}`}>
+                        <input
+                          type="radio"
+                          name="markdown-import-mode"
+                          data-testid={`markdown-import-mode-${value}`}
+                          value={value}
+                          checked={markdownMode === value}
+                          onChange={() => onImportPresentationModeChange(value)}
+                          className="mt-0.5 h-4 w-4 shrink-0"
+                        />
+                        <span className="min-w-0 space-y-0.5">
+                          <span className="flex flex-wrap items-center gap-2 text-sm font-semibold leading-5 text-[var(--text-primary)]">
+                            {title}
+                            {recommended ? <span className="ac-button ac-button--ghost ac-button--sm pointer-events-none text-[10px] uppercase tracking-[0.1em]">{copy.markdownModeRecommended}</span> : null}
+                          </span>
+                          <span className="block text-xs leading-5 text-[var(--text-secondary)]">{description}</span>
                         </span>
-                        <span className="block text-xs leading-6 text-[var(--text-secondary)]">{description}</span>
-                      </span>
-                    </label>
-                  ))}
+                      </label>
+                    ))}
+                  </div>
                 </div>
               ) : null}
               {effectiveMarkdownStats && (
-                <div className="space-y-3" data-testid="markdown-semantic-stats">
+                <div className="space-y-2" data-testid="markdown-semantic-stats">
                   <h4 className={labelClass}>{copy.markdownStructureHeading}</h4>
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
                     {([
                       [copy.markdownStatH1, effectiveMarkdownStats.h1], [copy.markdownStatH2, effectiveMarkdownStats.h2], [copy.markdownStatH3, effectiveMarkdownStats.h3], [copy.markdownStatH4, effectiveMarkdownStats.h4],
                       [copy.markdownStatParagraphs, effectiveMarkdownStats.paragraphs], [copy.markdownStatLists, effectiveMarkdownStats.orderedLists + effectiveMarkdownStats.unorderedLists], [copy.markdownStatBlockquotes, effectiveMarkdownStats.blockquotes], [copy.markdownStatTables, effectiveMarkdownStats.tables],
                       [copy.markdownStatLinks, effectiveMarkdownStats.links], [copy.markdownStatImages, effectiveMarkdownStats.images], [copy.markdownStatCode, effectiveMarkdownStats.codeBlocks], [copy.markdownStatFootnotes, effectiveMarkdownStats.footnotes],
-                    ] as const).map(([label, value]) => <div key={label} className="ac-surface-panel ac-surface-panel--subtle p-3"><p className={labelClass}>{label}</p><p className="mt-1 text-lg font-semibold text-[var(--text-primary)]">{value}</p></div>)}
+                    ] as const).map(([label, value]) => <div key={label} className="ac-surface-panel ac-surface-panel--subtle min-h-[64px] p-2.5"><p className={labelClass}>{label}</p><p className="mt-0.5 text-base font-semibold text-[var(--text-primary)]">{value}</p></div>)}
                   </div>
                 </div>
               )}
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="ac-surface-panel ac-surface-panel--subtle p-4">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="ac-surface-panel ac-surface-panel--subtle p-3">
                   <p className={labelClass}>{copy.markdownSourcePresentationHeading}</p>
                   <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{copy.markdownSourcePresentationNone}</p>
                 </div>
-                <div className="ac-surface-panel ac-surface-panel--subtle p-4">
+                <div className="ac-surface-panel ac-surface-panel--subtle p-3">
                   <p className={labelClass}>{copy.markdownCurrentPresentationHeading}</p>
                   <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{markdownMode === 'materialized' ? copy.markdownMaterializedOrigin : copy.markdownDefaultOrigin}</p>
                 </div>
               </div>
               {markdownMode === 'materialized' && (
-                <div className="ac-surface-panel ac-surface-panel--subtle p-4" data-testid="markdown-materialized-presentation">
+                <div className="ac-surface-panel ac-surface-panel--subtle p-3" data-testid="markdown-materialized-presentation">
                   <p className={labelClass}>{copy.markdownMaterializedPresentationHeading}</p>
-                  <p className="mt-2 text-sm text-[var(--text-secondary)]">{MARKDOWN_MATERIALIZED_PROFILE.settings.fontFamily} · {MARKDOWN_MATERIALIZED_PROFILE.settings.fontSizePt} pt · {MARKDOWN_MATERIALIZED_PROFILE.settings.lineHeight} · {copy.markdownMaterializedOrigin}</p>
+                  <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{MARKDOWN_MATERIALIZED_PROFILE.settings.fontFamily} · {MARKDOWN_MATERIALIZED_PROFILE.settings.fontSizePt} pt · {MARKDOWN_MATERIALIZED_PROFILE.settings.lineHeight} · {copy.markdownMaterializedOrigin}</p>
                 </div>
               )}
             </section>
@@ -816,10 +819,6 @@ function DocumentDataModalForm({
             </>
           )}
 
-          <p className="text-xs leading-6 text-[var(--text-tertiary)]">
-            {copy.documentDataHierarchyHint}
-          </p>
-
           {error && (
             <p role="alert" className="text-sm font-semibold text-red-600">
               {error}
@@ -827,7 +826,7 @@ function DocumentDataModalForm({
           )}
         </div>
 
-        <div className="mt-6 flex items-center justify-between gap-3">
+        <div className="mt-4 flex items-center justify-between gap-3 border-t border-[var(--border-subtle)] pt-2">
           <button
             type="button"
             data-testid="document-data-cancel-button"
