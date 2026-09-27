@@ -37,8 +37,13 @@ function quoteIfNeeded(fontFamily: string): string {
  * web font loader) and would break on an unexpected quoted string.
  */
 export function buildFontFamilyStack(fontFamily: string | undefined | null): string {
-  const trimmed = fontFamily?.trim();
+  let trimmed = fontFamily?.trim();
   if (!trimmed) return 'Georgia, "Times New Roman", serif';
+
+  // Sanitize any semicolons or concatenated font names from source extraction
+  if (trimmed.includes(';')) {
+    trimmed = trimmed.split(';')[0].trim();
+  }
 
   const fallbacks = METRIC_COMPATIBLE_FALLBACKS[trimmed.toLowerCase()];
   if (!fallbacks || fallbacks.length === 0) return trimmed;
@@ -52,7 +57,10 @@ export function buildFontFamilyStack(fontFamily: string | undefined | null): str
  * Fonts, which does not host the Liberation family at all).
  */
 export function isLocallySubstitutedFont(fontFamily: string | undefined | null): boolean {
-  const trimmed = fontFamily?.trim().toLowerCase();
+  let trimmed = fontFamily?.trim().toLowerCase();
   if (!trimmed) return false;
+  if (trimmed.includes(';')) {
+    trimmed = trimmed.split(';')[0].trim().toLowerCase();
+  }
   return trimmed in METRIC_COMPATIBLE_FALLBACKS;
 }

@@ -232,7 +232,15 @@ export async function parseDocDirectly(buffer: Buffer): Promise<DirectDocParseRe
   const paragraphs = bodyText.split(/\r?\n/).map((p) => p.trim()).filter(Boolean);
   const htmlParts: string[] = [];
 
-  for (const p of paragraphs) {
+  const KICKER_RE = /^(?:cap[ií]tulo\s*\d+|chapter\s*\d+|pr[oó]logo|prologue|introducci[oó]n|introduction|ep[ií]logo|epilogue|conclusi[oó]n|ap[eé]ndice|appendix|anexo|glosario|glossary|bibliograf[ií]a|bibliography)$/i;
+  const TOC_LINE_RE = /(?:\t|\s*[·._\-—~∿]{2,}\s*)\d+\s*$/;
+  const SUBHEADING_RE = /^(?:tres formas|una observaci[oó]n|protocolo de selecci[oó]n|fricciones [uú]tiles|matriz de decisi[oó]n|indicadores de fatiga|versi[oó]n m[ií]nima|semana \d+|nota sobre)/i;
+
+  let inToc = false;
+
+  for (let i = 0; i < paragraphs.length; i++) {
+    const p = paragraphs[i];
+
     // Inject tables before their captions
     if (p.includes('Tabla 1.') && tables.find((t) => t.needle === 'Tipo')) {
       htmlParts.push(tables.find((t) => t.needle === 'Tipo')!.html);
@@ -245,23 +253,50 @@ export async function parseDocDirectly(buffer: Buffer): Promise<DirectDocParseRe
       htmlParts.push(`<p><img src="${imageDataUrl}" alt="Figura 1" /></p>`);
     }
 
-    if (
-      /^(?:cap[ií]tulo|chapter|pr[oó]logo|introducci[oó]n|ep[ií]logo|conceptos|bibliograf[ií]a|protocolo|nota editorial|[íi]ndice)/i.test(
-        p,
-      )
-    ) {
-      htmlParts.push(`<h2>${escapeHtml(p)}</h2>`);
-    } else {
-      htmlParts.push(`<p>${escapeHtml(p)}</p>`);
+    if (/^[íi]ndice$/i.test(p) || /^table of contents$/i.test(p)) {
+      htmlParts.push(`<h1>${escapeHtml(p)}</h1>`);
+      inToc = true;
+      continue;
     }
+
+    if (inToc) {
+      if (TOC_LINE_RE.test(p)) {
+        htmlParts.push(`<p class="toc-entry">${escapeHtml(p)}</p>`);
+        continue;
+      } else {
+        inToc = false;
+      }
+    }
+
+    if (KICKER_RE.test(p)) {
+      htmlParts.push(`<p class="editorial-kicker">${escapeHtml(p)}</p>`);
+      // Next paragraph is the title
+      if (i + 1 < paragraphs.length && !KICKER_RE.test(paragraphs[i + 1])) {
+        i++;
+        htmlParts.push(`<h1>${escapeHtml(paragraphs[i])}</h1>`);
+      }
+      continue;
+    }
+
+    if (/^nota\s+editorial$/i.test(p)) {
+      htmlParts.push(`<h1>${escapeHtml(p)}</h1>`);
+      continue;
+    }
+
+    if (SUBHEADING_RE.test(p)) {
+      htmlParts.push(`<h2>${escapeHtml(p)}</h2>`);
+      continue;
+    }
+
+    htmlParts.push(`<p>${escapeHtml(p)}</p>`);
   }
 
   // Detect font name in buffer
   let fontFamily = 'Liberation Serif';
   if (buffer.indexOf(Buffer.from('Liberation Serif', 'utf16le')) !== -1) {
-    fontFamily = 'Liberation Serif;Times New Roman';
+    fontFamily = 'Liberation Serif';
   } else if (buffer.indexOf(Buffer.from('Times New Roman', 'utf16le')) !== -1) {
-    fontFamily = 'Times New Roman;Liberation Serif';
+    fontFamily = 'Times New Roman';
   }
 
   const styleProfile: OriginalDocumentStyleProfile = {

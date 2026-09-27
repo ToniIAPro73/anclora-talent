@@ -1,4 +1,4 @@
-import type { ImportedDocumentSeed, ImportFieldConfidence } from './types';
+import type { ImportedDocumentSeed, ImportFieldConfidence, SectionSemanticType, SectionStructureItem } from './types';
 
 const SUPPORTED_IMPORT_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'txt', 'md']);
 const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote|table)[^>]*>[\s\S]*?<\/\1>/gi;
@@ -1070,6 +1070,63 @@ function buildOutlineEntriesFromBlocks(
   }, []);
 }
 
+export function inferSectionSemantics(title: string): {
+  semanticType: SectionSemanticType;
+  chapterNumber: number | null;
+} {
+  const normalized = title.trim();
+  const lower = normalized.toLowerCase();
+
+  // TOC
+  if (isTocChapterTitle(lower) || /^[íi]ndice\b/i.test(lower)) {
+    return { semanticType: 'toc', chapterNumber: null };
+  }
+
+  // Front matter / Editorial note
+  if (/^nota\s+editorial\b/i.test(lower) || /^cr[eé]ditos\b/i.test(lower) || /^portada\b/i.test(lower)) {
+    return { semanticType: 'front-matter', chapterNumber: null };
+  }
+
+  // Prologue
+  if (/^pr[oó]logo\b/i.test(lower) || /^preface\b/i.test(lower) || /^prefacio\b/i.test(lower)) {
+    return { semanticType: 'prologue', chapterNumber: null };
+  }
+
+  // Introduction
+  if (/^introducci[oó]n\b/i.test(lower) || /^introduction\b/i.test(lower)) {
+    return { semanticType: 'introduction', chapterNumber: null };
+  }
+
+  // Epilogue / Conclusion
+  if (/^ep[ií]logo\b/i.test(lower) || /^epilogue\b/i.test(lower) || /^conclusi[oó]n\b/i.test(lower) || /^conclusiones\b/i.test(lower)) {
+    return { semanticType: 'epilogue', chapterNumber: null };
+  }
+
+  // Appendix
+  if (/^ap[eé]ndice\b/i.test(lower) || /^appendix\b/i.test(lower) || /^anexo\b/i.test(lower)) {
+    return { semanticType: 'appendix', chapterNumber: null };
+  }
+
+  // Glossary
+  if (/^glosario\b/i.test(lower) || /^glossary\b/i.test(lower)) {
+    return { semanticType: 'glossary', chapterNumber: null };
+  }
+
+  // Bibliography
+  if (/^bibliograf[ií]a\b/i.test(lower) || /^bibliography\b/i.test(lower) || /^referencias\b/i.test(lower)) {
+    return { semanticType: 'bibliography', chapterNumber: null };
+  }
+
+  // Numbered Chapter: "Capítulo N", "Chapter N", "Capítulo 1.", etc.
+  const chapterMatch = normalized.match(/^(?:cap[ií]tulo|chapter)\s*(\d+)\b/i);
+  if (chapterMatch) {
+    const num = parseInt(chapterMatch[1], 10);
+    return { semanticType: 'chapter', chapterNumber: isNaN(num) ? null : num };
+  }
+
+  return { semanticType: 'other', chapterNumber: null };
+}
+
 /** Mirrors preview-builder isTocChapter so import uses consistent detection. */
 function isTocChapterTitle(title: string) {
   const normalized = title
@@ -1454,6 +1511,14 @@ function buildChaptersFromBlocks(
           headingText = `Epílogo: ${headingText}`;
         } else if (/^pr[oó]logo$/i.test(kickerText)) {
           headingText = `Prólogo: ${headingText}`;
+        } else if (/^ap[eé]ndice$/i.test(kickerText)) {
+          headingText = `Apéndice: ${headingText}`;
+        } else if (/^glosario$/i.test(kickerText)) {
+          headingText = `Glosario: ${headingText}`;
+        } else if (/^bibliograf[ií]a$/i.test(kickerText)) {
+          headingText = `Bibliografía: ${headingText}`;
+        } else if (/^nota\s+editorial$/i.test(kickerText)) {
+          headingText = `Nota editorial: ${headingText}`;
         }
       }
       const triggeringIsToc = isTocChapterTitle(headingText);
@@ -1792,19 +1857,33 @@ export function buildImportedDocumentSeed({
         ];
 
   const normalizedDetectedChapters = detectedChapters.map(
-    (chapter): NonNullable<ImportedDocumentSeed['chapters']>[number] => ({
-      title: chapter.title,
-      blocks: chapter.blocks.map((block) => ({
-        type: block.type as ImportedDocumentSeed['blocks'][number]['type'],
-        content: block.content,
-      })),
-    }),
+    (chapter): NonNullable<ImportedDocumentSeed['chapters']>[number] => {
+      const semantics = inferSectionSemantics(chapter.title);
+      return {
+        title: chapter.title,
+        semanticType: semantics.semanticType,
+        chapterNumber: semantics.chapterNumber,
+        blocks: chapter.blocks.map((block) => ({
+          type: block.type as ImportedDocumentSeed['blocks'][number]['type'],
+          content: block.content,
+        })),
+      };
+    },
   );
 
   const chapters: NonNullable<ImportedDocumentSeed['chapters']> =
     normalizedDetectedChapters.length > 0
-     ? normalizedDetectedChapters
-      : [{ title, blocks }];
+      ? normalizedDetectedChapters
+      : [{ title, blocks, semanticType: 'chapter', chapterNumber: 1 }];
+
+  const structureModel: SectionStructureItem[] = chapters.map((ch, idx) => ({
+    sectionId: `section-${idx + 1}`,
+    order: idx + 1,
+    semanticType: ch.semanticType ?? 'other',
+    title: ch.title,
+    chapterNumber: ch.chapterNumber ?? null,
+    headingLevel: 1,
+  }));
 
   const warnings: string[] = [];
   if (!author) warnings.push('No se detectó con certeza el autor; revísalo tras importar.');
@@ -1833,6 +1912,7 @@ export function buildImportedDocumentSeed({
     chapterTitle: detectedChapters[0]?.title || title,
     blocks,
     chapters,
+    structureModel,
     sourceFileName: fileName,
     sourceMimeType: mimeType,
   };

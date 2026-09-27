@@ -26,11 +26,13 @@ import type {
   ProjectDocument,
   ProjectRecord,
   ProjectSummary,
+  SectionStructureItem,
   UpdateBackCoverInput,
   UpdateCoverInput,
   UpdateDocumentExtrasInput,
   UpdateDocumentInput,
 } from '@/lib/projects/types';
+import { inferSectionSemantics } from '@/lib/projects/import-pipeline';
 
 type MemoryStore = Map<string, ProjectRecord>;
 
@@ -170,6 +172,7 @@ async function replaceSurfaceStateRows(
 
 export function reconstructChaptersFromBlockRows(
   blockRows: Array<typeof documentBlocks.$inferSelect>,
+  structureModel?: SectionStructureItem[] | null,
 ): DocumentChapter[] {
   const chapterMap = new Map<string, DocumentChapter>();
 
@@ -208,7 +211,19 @@ export function reconstructChaptersFromBlockRows(
     });
   }
 
-  return Array.from(chapterMap.values()).sort((left, right) => left.order - right.order);
+  return Array.from(chapterMap.values())
+    .sort((left, right) => left.order - right.order)
+    .map((chapter) => {
+      const modelItem = structureModel?.find(
+        (item) => item.sectionId === chapter.id || item.order === chapter.order || item.title === chapter.title,
+      );
+      const semantics = inferSectionSemantics(chapter.title);
+      return {
+        ...chapter,
+        semanticType: modelItem?.semanticType ?? semantics.semanticType,
+        chapterNumber: modelItem?.chapterNumber !== undefined ? modelItem.chapterNumber : semantics.chapterNumber,
+      };
+    });
 }
 
 export function mapRowsToProject(
@@ -253,7 +268,10 @@ export function mapRowsToProject(
       subtitle: documentRow.subtitle,
       author: documentRow.author,
       language: documentRow.language,
-      chapters: reconstructChaptersFromBlockRows(blockRows),
+      chapters: reconstructChaptersFromBlockRows(
+        blockRows,
+        (documentRow.metadata as ProjectDocument['metadata'])?.structureModel,
+      ),
       rules: (documentRow.rules ?? null) as ProjectDocument['rules'],
       documentModel: (documentRow.documentModel ?? null) as ProjectDocument['documentModel'],
       metadata: (documentRow.metadata ?? null) as ProjectDocument['metadata'],

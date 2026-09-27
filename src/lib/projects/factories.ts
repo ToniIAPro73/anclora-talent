@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { resolveDocumentRules } from '@/lib/compose/rules';
 import { getProductTemplate } from '@/lib/templates/product-templates';
+import { inferSectionSemantics } from './import-pipeline';
 import { createDefaultSurfaceState } from './cover-surface';
 import type {
   CreateProjectInput,
@@ -67,25 +68,37 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
     ];
   const chapters =
     imported?.chapters?.length
-      ? imported.chapters.map((chapter, chapterIndex) => ({
-          id: randomUUID(),
-          order: chapterIndex + 1,
-          title: chapter.title || `Capítulo ${chapterIndex + 1}`,
-          blocks: buildChapterBlocks(chapter.blocks),
-        }))
-      : template
-        ? template.chapters.map((chapter, chapterIndex) => ({
+      ? imported.chapters.map((chapter, chapterIndex) => {
+          const semantics = inferSectionSemantics(chapter.title);
+          return {
             id: randomUUID(),
             order: chapterIndex + 1,
-            title: chapter.title,
+            title: chapter.title || `Capítulo ${chapterIndex + 1}`,
             blocks: buildChapterBlocks(chapter.blocks),
-          }))
+            semanticType: chapter.semanticType ?? semantics.semanticType,
+            chapterNumber: chapter.chapterNumber ?? semantics.chapterNumber,
+          };
+        })
+      : template
+        ? template.chapters.map((chapter, chapterIndex) => {
+            const semantics = inferSectionSemantics(chapter.title);
+            return {
+              id: randomUUID(),
+              order: chapterIndex + 1,
+              title: chapter.title,
+              blocks: buildChapterBlocks(chapter.blocks),
+              semanticType: semantics.semanticType,
+              chapterNumber: semantics.chapterNumber,
+            };
+          })
         : [
           {
             id: randomUUID(),
             order: 1,
             title: chapterTitle,
             blocks: buildChapterBlocks(documentBlocks),
+            semanticType: inferSectionSemantics(chapterTitle).semanticType,
+            chapterNumber: inferSectionSemantics(chapterTitle).chapterNumber,
           },
         ];
 
@@ -130,6 +143,7 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
         imported || input.originalDocumentStyleProfile || input.referenceEditorialProfile
           ? {
               title: documentTitle,
+              structureModel: imported?.structureModel ?? null,
               originalDocumentStyleProfile:
                 input.originalDocumentStyleProfile ??
                 imported?.originalDocumentStyleProfile ??

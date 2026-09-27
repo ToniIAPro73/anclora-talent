@@ -32,6 +32,29 @@ export interface ChapterImage {
   createdAt: string;
 }
 
+export type SectionSemanticType =
+  | 'front-matter'
+  | 'toc'
+  | 'prologue'
+  | 'introduction'
+  | 'chapter'
+  | 'subheading'
+  | 'epilogue'
+  | 'appendix'
+  | 'glossary'
+  | 'bibliography'
+  | 'other';
+
+export interface SectionStructureItem {
+  sectionId: string;
+  order: number;
+  semanticType: SectionSemanticType;
+  title: string;
+  chapterNumber?: number | null;
+  headingLevel?: number;
+  sourceStyle?: string;
+}
+
 export interface DocumentChapter {
   id: string;
   order: number;
@@ -39,6 +62,8 @@ export interface DocumentChapter {
   blocks: DocumentBlock[];
   images?: ChapterImage[];
   imageCanvasHeight?: number;
+  semanticType?: SectionSemanticType;
+  chapterNumber?: number | null;
 }
 
 /**
@@ -251,7 +276,10 @@ export interface ImportedDocumentSeed {
       type: DocumentBlockType;
       content: string;
     }>;
+    semanticType?: SectionSemanticType;
+    chapterNumber?: number | null;
   }>;
+  structureModel?: SectionStructureItem[];
   sourceFileName: string;
   sourceMimeType: string;
   originalDocumentStyleProfile?: import('./source-style-profile').OriginalDocumentStyleProfile | null;

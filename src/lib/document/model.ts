@@ -148,6 +148,8 @@ export interface DocumentMetadata {
   brandChoice?: 'none';
   /** Granular user formatting overrides. */
   userOverrides?: import('@/lib/style-engine/model').UserStyleOverride[];
+  /** Canonical persisted structure model containing semantic types and chapter numbering. */
+  structureModel?: import('@/lib/projects/types').SectionStructureItem[] | null;
 }
 
 export interface SemanticDocument {

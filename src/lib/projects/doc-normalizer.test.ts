@@ -87,4 +87,72 @@ describe('doc-normalizer and legacy .doc fidelity pipeline', () => {
     expect(direct.styleProfile.body.textAlign).toBe('justify');
     expect(direct.styleProfile.headings?.h1?.fontFamily).toBe('Calibri');
   });
+
+  it('reconciles canonical 15-section structure and effective typography for extended .doc', async () => {
+    if (!hasSampleDoc) return;
+
+    const { parseDocDirectly } = await import('./doc-normalizer');
+    const { buildImportedDocumentSeed, inferSectionSemantics } = await import('./import-pipeline');
+    const { buildFontFamilyStack } = await import('@/lib/style-engine/font-stack');
+    const { createProjectRecord } = await import('./factories');
+
+    const docBuffer = fs.readFileSync(sampleDocPath);
+    const direct = await parseDocDirectly(docBuffer);
+
+    // Font stack check
+    expect(direct.styleProfile.body.fontFamily).toBe('Liberation Serif');
+    expect(direct.styleProfile.body.fontFamily).not.toContain(';');
+    const fontStack = buildFontFamilyStack(direct.styleProfile.body.fontFamily);
+    expect(fontStack).toBe('"Liberation Serif", "Times New Roman", Times, serif');
+
+    const seed = buildImportedDocumentSeed({
+      fileName: 'ANCLORA_TALENT_MANUSCRIPT_EXTENDED.doc',
+      mimeType: 'application/msword',
+      text: direct.text,
+      html: direct.html,
+      sourcePageCount: direct.pageCount,
+    });
+
+    expect(seed.chapters).toBeDefined();
+    // Exactly 15 top-level sections
+    expect(seed.chapters!.length).toBe(15);
+
+    // Exactly 7 numbered chapters (1 to 7)
+    const numberedChapters = seed.chapters!.filter((c) => c.chapterNumber != null);
+    expect(numberedChapters.length).toBe(7);
+    expect(numberedChapters.map((c) => c.chapterNumber)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+
+    // Exactly 8 unnumbered structural sections
+    const unnumberedSections = seed.chapters!.filter((c) => c.chapterNumber == null);
+    expect(unnumberedSections.length).toBe(8);
+    expect(unnumberedSections.map((c) => c.semanticType)).toEqual([
+      'front-matter',
+      'toc',
+      'prologue',
+      'introduction',
+      'epilogue',
+      'appendix',
+      'glossary',
+      'bibliography',
+    ]);
+
+    // Structure model contains 15 entries
+    expect(seed.structureModel).toBeDefined();
+    expect(seed.structureModel!.length).toBe(15);
+
+    // Project factory check
+    const project = createProjectRecord('test-user', {
+      title: 'QA DOC Import — Canonical Structure',
+      importedDocument: seed,
+      originalDocumentStyleProfile: direct.styleProfile,
+    });
+
+    expect(project.document.chapters.length).toBe(15);
+    expect(project.document.metadata?.structureModel?.length).toBe(15);
+    expect(project.document.chapters[4].chapterNumber).toBe(1);
+    expect(project.document.chapters[5].chapterNumber).toBe(2);
+    expect(project.document.chapters[10].chapterNumber).toBe(7);
+    expect(project.document.chapters[3].chapterNumber).toBeNull();
+    expect(project.document.chapters[3].semanticType).toBe('introduction');
+  });
 });

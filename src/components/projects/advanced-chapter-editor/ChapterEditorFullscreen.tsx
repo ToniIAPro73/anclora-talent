@@ -183,7 +183,19 @@ export function ChapterEditorFullscreen({
           <div className="ac-editor-title-divider hidden sm:block" />
           <div className="ac-editor-shell__chapter-context flex items-center gap-2 min-w-0">
             <h2 className="ac-editor-shell__title shrink-0">
-              {locale === 'es' ? 'Capítulo' : 'Chapter'} {editor.currentIndex + 1}/{editor.totalChapters}
+              {editor.currentChapter.chapterNumber != null
+                ? `${locale === 'es' ? 'Capítulo' : 'Chapter'} ${editor.currentChapter.chapterNumber}`
+                : editor.currentChapter.semanticType && editor.currentChapter.semanticType !== 'other'
+                  ? (editor.currentChapter.semanticType === 'toc' ? (locale === 'es' ? 'Índice' : 'Table of Contents')
+                    : editor.currentChapter.semanticType === 'prologue' ? (locale === 'es' ? 'Prólogo' : 'Prologue')
+                    : editor.currentChapter.semanticType === 'introduction' ? (locale === 'es' ? 'Introducción' : 'Introduction')
+                    : editor.currentChapter.semanticType === 'epilogue' ? (locale === 'es' ? 'Epílogo' : 'Epilogue')
+                    : editor.currentChapter.semanticType === 'appendix' ? (locale === 'es' ? 'Apéndice' : 'Appendix')
+                    : editor.currentChapter.semanticType === 'glossary' ? (locale === 'es' ? 'Glosario' : 'Glossary')
+                    : editor.currentChapter.semanticType === 'bibliography' ? (locale === 'es' ? 'Bibliografía' : 'Bibliography')
+                    : editor.currentChapter.semanticType === 'front-matter' ? (locale === 'es' ? 'Nota Editorial' : 'Front Matter')
+                    : `${locale === 'es' ? 'Sección' : 'Section'} ${editor.currentIndex + 1}`)
+                  : `${locale === 'es' ? 'Sección' : 'Section'} ${editor.currentIndex + 1}`}
             </h2>
             <p className="ac-editor-shell__summary truncate" title={editor.currentChapter.title}>
               {editor.currentChapter.title}
