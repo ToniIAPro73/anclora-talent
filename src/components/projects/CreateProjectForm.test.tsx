@@ -30,7 +30,7 @@ describe('CreateProjectForm', () => {
     expect(screen.getByText('Arrastra tu documento aquí')).toBeInTheDocument();
     expect(fileInput).toHaveAttribute(
       'accept',
-      '.pdf,.doc,.docx,.txt,.md,text/plain,text/markdown,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     );
   });
 

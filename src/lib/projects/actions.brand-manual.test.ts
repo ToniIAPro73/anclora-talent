@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 /**
- * U5 — optional brand manual in createProjectAction: the BrandProfile is
- * extracted best-effort, created active and linked; any failure leaves the
- * project creation untouched.
+ * The simplified new-project flow keeps brand identity disabled. Legacy
+ * `brandManual` form data must not trigger extraction or a project binding.
  */
 describe('createProjectAction brand manual (U5)', () => {
   beforeEach(() => {
@@ -53,19 +52,19 @@ describe('createProjectAction brand manual (U5)', () => {
     return formData;
   }
 
-  test('extracts the profile, activates it and links it to the new project', async () => {
+  test('ignores the legacy brand manual field while creating the project', async () => {
     const mocks = setupMocks();
     const { createProjectAction } = await import('./actions');
 
     await expect(createProjectAction(formWithManual())).rejects.toThrow('NEXT_REDIRECT:/projects/p-1/editor');
 
-    expect(mocks.extractBrandProfileFromPdf).toHaveBeenCalledTimes(1);
-    expect(mocks.createBrandProfile).toHaveBeenCalledWith('u-1', { name: 'Anclora' });
-    expect(mocks.setBrandProfileStatus).toHaveBeenCalledWith('u-1', 'bp-1', 'active');
-    expect(mocks.saveProjectBrandProfile).toHaveBeenCalledWith('u-1', 'p-1', 'bp-1');
+    expect(mocks.extractBrandProfileFromPdf).not.toHaveBeenCalled();
+    expect(mocks.createBrandProfile).not.toHaveBeenCalled();
+    expect(mocks.setBrandProfileStatus).not.toHaveBeenCalled();
+    expect(mocks.saveProjectBrandProfile).not.toHaveBeenCalled();
   });
 
-  test('a failing extraction never blocks project creation', async () => {
+  test('does not invoke extraction even when the legacy manual would fail', async () => {
     const mocks = setupMocks({
       extractImpl: async () => {
         throw new Error('corrupt pdf');
@@ -77,6 +76,7 @@ describe('createProjectAction brand manual (U5)', () => {
     await expect(createProjectAction(formWithManual())).rejects.toThrow('NEXT_REDIRECT:/projects/p-1/editor');
 
     expect(mocks.createProject).toHaveBeenCalledTimes(1);
+    expect(mocks.extractBrandProfileFromPdf).not.toHaveBeenCalled();
     expect(mocks.saveProjectBrandProfile).not.toHaveBeenCalled();
     consoleSpy.mockRestore();
   });

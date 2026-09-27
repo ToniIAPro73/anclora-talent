@@ -87,11 +87,15 @@ describe('DocumentImporter', () => {
     expect(fileInput).toHaveAttribute('type', 'file');
     expect(fileInput).toHaveAttribute(
       'accept',
-      '.pdf,.doc,.docx,.txt,.md,text/plain,text/markdown,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     );
 
-    for (const format of ['DOCX', 'DOC', 'PDF', 'TXT', 'MD']) {
+    for (const format of ['DOCX', 'DOC']) {
       expect(screen.getByText(format)).toBeInTheDocument();
+    }
+
+    for (const format of ['PDF', 'TXT', 'MD']) {
+      expect(screen.queryByText(format)).not.toBeInTheDocument();
     }
   });
 

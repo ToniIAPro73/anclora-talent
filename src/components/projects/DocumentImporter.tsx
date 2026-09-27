@@ -469,7 +469,7 @@ export function DocumentImporter({
                   </p>
                 </div>
                 <div className="flex flex-wrap justify-center gap-2">
-                  {['DOCX', 'DOC', 'PDF', 'TXT', 'MD'].map((format) => (
+                  {['DOCX', 'DOC'].map((format) => (
                     <span
                       key={format}
                       className="ac-button ac-button--ghost ac-button--sm pointer-events-none"
