@@ -319,6 +319,8 @@ export type AppMessages = {
     brandManualReady: string;
     brandManualError: string;
     brandManualRemove: string;
+    brandComingSoonLabel: string;
+    brandComingSoonDescription: string;
     createProjectPreprocessingBlocked: string;
     createProjectHint: string;
     createProjectAction: string;
@@ -416,6 +418,7 @@ export type AppMessages = {
     importParseWarning: string;
     importChapterPreviewLabel: string;
     importErrorGeneric: string;
+    importLegacyDocConversionError: string;
     importFileTooLarge: string;
     importFormatUnsupported: string;
     chapterSyncPageNumbers: string;
@@ -1777,7 +1780,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       titlePlaceholder: 'Ej. Manual de marca editorial 2026',
       sourceDocumentLabel: 'Documento base opcional',
       sourceDocumentHint:
-        'Soporta `pdf`, `doc`, `docx`, `txt` y `md`. Si el archivo se puede extraer bien, el editor arrancará ya sembrado con ese contenido.',
+        'Usa un manuscrito `.docx` o `.doc`. El `.docx` conserva mejor la estructura; el `.doc` se normaliza con fidelidad de texto y estructura básica.',
       documentModeLabel: '¿Qué quieres hacer con este PDF?',
       documentModeFixedPdfTitle: 'Conservar PDF original',
       documentModeFixedPdfDesc:
@@ -1856,6 +1859,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       brandManualReady: 'Identidad de marca analizada y lista',
       brandManualError: 'No se pudo analizar el manual de marca',
       brandManualRemove: 'Quitar manual',
+      brandComingSoonLabel: 'Próximamente',
+      brandComingSoonDescription: 'La identidad de marca está temporalmente desactivada. Tus datos existentes se conservan y volverán a estar disponibles cuando se reactive.',
       createProjectPreprocessingBlocked: 'Procesando documentos antes de crear el proyecto…',
       createProjectHint:
         'Guardaremos el progreso al crear el proyecto y abriremos el editor con tu contenido.',
@@ -1982,6 +1987,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         'No se pudo analizar el contenido del documento. El proyecto se creará vacío para que puedas empezar desde cero.',
       importChapterPreviewLabel: 'Estructura detectada',
       importErrorGeneric: 'No se pudo analizar el documento',
+      importLegacyDocConversionError: 'No se pudo convertir el documento Word antiguo (.doc). No se ha creado ningún proyecto vacío. Guarda el archivo como .docx e inténtalo de nuevo.',
       importFileTooLarge: 'El archivo es demasiado grande (máx. 50 MB)',
       importFormatUnsupported: 'Formato no compatible',
       chapterSyncPageNumbers: 'Actualizar numeración',
@@ -3453,6 +3459,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       brandManualReady: 'Brand identity analyzed and ready',
       brandManualError: 'Could not analyze brand manual',
       brandManualRemove: 'Remove manual',
+      brandComingSoonLabel: 'Coming soon',
+      brandComingSoonDescription: 'Brand identity is temporarily disabled. Existing data is preserved and will be available again when the feature is re-enabled.',
       createProjectPreprocessingBlocked: 'Processing documents before creating project…',
       createProjectHint:
         'We will save your choices when creating the project and open the editor with your content.',
@@ -3579,6 +3587,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         'The document content could not be analyzed. The project will be created empty so you can start from scratch.',
       importChapterPreviewLabel: 'Detected structure',
       importErrorGeneric: 'Could not analyze the document',
+      importLegacyDocConversionError: 'The legacy Word document (.doc) could not be converted. No empty project was created. Save the file as .docx and try again.',
       importFileTooLarge: 'File is too large (max. 50 MB)',
       importFormatUnsupported: 'Format not supported',
       chapterSyncPageNumbers: 'Sync pagination',

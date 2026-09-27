@@ -33,6 +33,10 @@ export async function extractImportedDocumentSeed(
   try {
     extractedSource = await extractTextFromBuffer(fileName, mimeType, buffer);
   } catch (error) {
+    if (fileName.toLowerCase().endsWith('.doc')) {
+      console.error('[import] legacy .doc normalization failed', { fileName, mimeType, error });
+      throw new Error('LEGACY_DOC_CONVERSION_FAILED');
+    }
     console.error('[import] source parse failed; continuing with an empty document', {
       fileName,
       mimeType,

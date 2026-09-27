@@ -36,7 +36,7 @@ function uploadFormData() {
   return formData;
 }
 
-describe('brand profile actions (CRUD)', () => {
+describe.skip('brand profile actions (CRUD — legacy enabled-mode contract)', () => {
   test('creates a draft profile from the identity manual PDF', async () => {
     const result = await createBrandProfileAction(uploadFormData());
 
@@ -122,5 +122,20 @@ describe('brand profile actions (CRUD)', () => {
     applyForm.set('projectId', project.id);
     applyForm.set('brandProfileId', created.profileId);
     await expect(setProjectBrandProfileAction(applyForm)).rejects.toThrow('deprecated');
+  });
+});
+
+describe('brand identity capability', () => {
+  test('blocks new brand mutations while preserving the legacy implementation', async () => {
+    await expect(createBrandProfileAction(uploadFormData())).rejects.toThrow('BRAND_IDENTITY_DISABLED');
+
+    const statusForm = new FormData();
+    statusForm.set('profileId', 'legacy-profile');
+    statusForm.set('status', 'active');
+    await expect(setBrandProfileStatusAction(statusForm)).rejects.toThrow('BRAND_IDENTITY_DISABLED');
+
+    const applyForm = new FormData();
+    applyForm.set('projectId', 'legacy-project');
+    await expect(setProjectBrandProfileAction(applyForm)).rejects.toThrow('BRAND_IDENTITY_DISABLED');
   });
 });

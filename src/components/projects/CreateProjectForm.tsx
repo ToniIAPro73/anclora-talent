@@ -93,6 +93,7 @@ export function CreateProjectForm({
           <div className="talent-new-project-step__heading"><span className="talent-new-project-step__number">4</span><div><h2>{copy.newProjectBrandTitle}</h2><p>{copy.newProjectBrandDescription}</p></div></div>
           <BrandManualInput
             copy={copy}
+            disabled
             onFileChange={(fileName) => setBrandSummary(fileName || copy.newProjectNoBrand)}
             onPreprocessingChange={setIsAnalyzingBrand}
           />

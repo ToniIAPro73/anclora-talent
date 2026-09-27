@@ -198,6 +198,37 @@ describe('document import parser isolation', () => {
     expect(result.chapters?.length).toBeGreaterThan(0);
   });
 
+  test('legacy .doc is normalized through the binary Word extractor', async () => {
+    vi.doMock('server-only', () => ({}));
+    vi.doMock('word-extractor', () => ({
+      default: class WordExtractorMock {
+        extract = vi.fn(async () => ({ getBody: () => 'Título legado\n\nCapítulo 1\n\nContenido' }));
+      },
+    }));
+
+    const { extractImportedDocumentSeed } = await import('./import');
+    const file = new File([new Uint8Array([0xd0, 0xcf, 0x11, 0xe0])], 'legado.doc', { type: 'application/msword' });
+    const result = await extractImportedDocumentSeed(file);
+
+    expect(result.parseFailed).toBe(false);
+    expect(result.title).toBe('Título legado');
+    expect(result.blocks.length).toBeGreaterThan(0);
+  });
+
+  test('legacy .doc conversion failure is actionable and never creates an empty shell', async () => {
+    vi.doMock('server-only', () => ({}));
+    vi.doMock('word-extractor', () => ({
+      default: class WordExtractorMock {
+        extract = vi.fn(async () => { throw new Error('legacy parser unavailable'); });
+      },
+    }));
+
+    const { extractImportedDocumentSeed } = await import('./import');
+    const file = new File([new Uint8Array([0xd0, 0xcf, 0x11, 0xe0])], 'roto.doc', { type: 'application/msword' });
+
+    await expect(extractImportedDocumentSeed(file)).rejects.toThrow('LEGACY_DOC_CONVERSION_FAILED');
+  });
+
   test('structural h1 day headings become independent chapters while index entries do not', async () => {
     vi.doMock('server-only', () => ({}));
 

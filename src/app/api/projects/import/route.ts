@@ -44,9 +44,9 @@ export async function POST(request: NextRequest) {
     try {
       const body = await request.json();
       sourceBlobUrl = body.sourceBlobUrl ? String(body.sourceBlobUrl).trim() : null;
-      fileName = String(body.fileName ?? '').trim();
-      mimeType = String(body.mimeType ?? '').trim();
-      sizeBytes = Number(body.sizeBytes ?? 0);
+      fileName = String(body.fileName ?? body.sourceFileName ?? '').trim();
+      mimeType = String(body.mimeType ?? body.sourceMimeType ?? '').trim();
+      sizeBytes = Number(body.sizeBytes ?? body.sourceSizeBytes ?? 0);
       documentModeChoice = body.documentMode === 'fixed-pdf' ? 'fixed-pdf' : 'editable';
 
       if (

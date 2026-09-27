@@ -26,6 +26,7 @@ import type { StructureConfidence } from '@/lib/structure-profile/model';
 import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
 import { FontSelector } from './cover-studio/FontSelector';
+import { BRAND_IDENTITY_ENABLED } from '@/lib/features/capabilities';
 
 type Copy = AppMessages['project'];
 
@@ -346,12 +347,12 @@ function DocumentDataModalForm({
           formData.set('overwriteCustom', String(overwriteCustom));
           await saveUserCompositionDefaultsAction(formData);
         }
-        if (brandScope === 'product') {
+        if (BRAND_IDENTITY_ENABLED && brandScope === 'product') {
           const formData = new FormData();
           formData.set('projectId', project.id);
           formData.set('brandProfileId', brandProfileId);
           await setProjectBrandProfileAction(formData);
-        } else {
+        } else if (BRAND_IDENTITY_ENABLED) {
           const formData = new FormData();
           formData.set('brandProfileId', brandProfileId);
           await setBrandForAllProjectsAction(formData);
@@ -679,7 +680,8 @@ function DocumentDataModalForm({
 
               {/* Brand */}
               <section className="space-y-3">
-                <h4 className={labelClass}>{copy.documentDataBrandHeading}</h4>
+                <h4 className={labelClass}>{copy.documentDataBrandHeading} · {copy.brandComingSoonLabel}</h4>
+                <p className="text-xs text-[var(--text-secondary)]">{copy.brandComingSoonDescription}</p>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="flex flex-col gap-1.5">
                     <span className={labelClass}>{copy.documentDataBrandProfileLabel}</span>
@@ -687,6 +689,7 @@ function DocumentDataModalForm({
                       data-testid="document-data-brand-select"
                       value={brandProfileId}
                       onChange={(event) => setBrandProfileId(event.target.value)}
+                      disabled={!BRAND_IDENTITY_ENABLED}
                       className={inputClass}
                     >
                       <option value="">{copy.documentDataBrandNoneOption}</option>
@@ -701,8 +704,9 @@ function DocumentDataModalForm({
                     <span className={labelClass}>{copy.documentDataBrandScopeHeading}</span>
                     <div className="flex flex-wrap gap-4">
                       <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
-                        <input
-                          type="radio"
+                          <input
+                            type="radio"
+                            disabled={!BRAND_IDENTITY_ENABLED}
                           name="document-data-brand-scope"
                           data-testid="document-data-brand-scope-product"
                           checked={brandScope === 'product'}
@@ -714,6 +718,7 @@ function DocumentDataModalForm({
                         <input
                           type="radio"
                           name="document-data-brand-scope"
+                          disabled={!BRAND_IDENTITY_ENABLED}
                           data-testid="document-data-brand-scope-all"
                           checked={brandScope === 'all'}
                           onChange={() => setBrandScope('all')}

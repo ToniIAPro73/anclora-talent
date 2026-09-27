@@ -81,6 +81,10 @@ function isDocxFile(file: File) {
   );
 }
 
+function isLegacyDocFile(file: File) {
+  return file.name.toLowerCase().endsWith('.doc') && !isDocxFile(file);
+}
+
 function isPdfFile(file: File) {
   return file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
 }
@@ -268,7 +272,7 @@ export function DocumentImporter({
       }));
 
       if (!response.ok) {
-        const localAnalysis = await analyzeDocxLocally(file, copy);
+        const localAnalysis = isLegacyDocFile(file) ? null : await analyzeDocxLocally(file, copy);
         if (localAnalysis) {
           setAnalysis(localAnalysis);
           setConfirmedComposition(null);
@@ -282,7 +286,9 @@ export function DocumentImporter({
         const message =
           data.error === 'FILE_TOO_LARGE'
             ? copy.importFileTooLarge
-            : data.error === 'FORMAT_UNSUPPORTED'
+            : data.error === 'LEGACY_DOC_CONVERSION_FAILED'
+              ? copy.importLegacyDocConversionError
+              : data.error === 'FORMAT_UNSUPPORTED'
               ? copy.importFormatUnsupported
               : copy.importErrorGeneric;
         setImportState('error');
@@ -317,7 +323,7 @@ export function DocumentImporter({
       setImportState('ready');
       onPreprocessingChange?.(false);
     } catch {
-      const localAnalysis = await analyzeDocxLocally(file, copy);
+      const localAnalysis = isLegacyDocFile(file) ? null : await analyzeDocxLocally(file, copy);
       if (localAnalysis) {
         setAnalysis(localAnalysis);
         setConfirmedComposition(null);
@@ -328,7 +334,7 @@ export function DocumentImporter({
         return;
       }
       setImportState('error');
-      setErrorMessage(copy.importErrorGeneric);
+      setErrorMessage(isLegacyDocFile(file) ? copy.importLegacyDocConversionError : copy.importErrorGeneric);
       onPreprocessingChange?.(false);
     }
   };

@@ -13,12 +13,14 @@ import { projectRepository } from '@/lib/db/repositories';
 import { extractBrandProfileFromPdf } from './extract-brand-profile';
 import { brandProfileRepository } from './repository';
 import type { BrandProfileStatus } from './brand-profile';
+import { BRAND_IDENTITY_ENABLED } from '@/lib/features/capabilities';
 
 /**
  * Creates a BrandProfile draft from an uploaded identity-manual PDF.
  * The extractor is heuristic; per-field confidence travels in the profile.
  */
 export async function createBrandProfileAction(formData: FormData) {
+  if (!BRAND_IDENTITY_ENABLED) throw new Error('BRAND_IDENTITY_DISABLED');
   const userId = await requireUserId();
   const file = formData.get('manualPdf');
   if (!(file instanceof File) || file.size === 0) {
@@ -42,6 +44,7 @@ export async function createBrandProfileAction(formData: FormData) {
 
 /** Status transition (draft → active, active → deprecated…). */
 export async function setBrandProfileStatusAction(formData: FormData) {
+  if (!BRAND_IDENTITY_ENABLED) throw new Error('BRAND_IDENTITY_DISABLED');
   const userId = await requireUserId();
   const profileId = String(formData.get('profileId') ?? '').trim();
   const status = String(formData.get('status') ?? '').trim() as BrandProfileStatus;
@@ -63,6 +66,7 @@ export async function setBrandProfileStatusAction(formData: FormData) {
  * Only non-deprecated profiles can be applied.
  */
 export async function setProjectBrandProfileAction(formData: FormData) {
+  if (!BRAND_IDENTITY_ENABLED) throw new Error('BRAND_IDENTITY_DISABLED');
   const userId = await requireUserId();
   const projectId = String(formData.get('projectId') ?? '').trim();
   const brandProfileId = String(formData.get('brandProfileId') ?? '').trim() || null;

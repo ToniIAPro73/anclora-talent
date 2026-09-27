@@ -10,11 +10,13 @@ export function BrandManualInput({
   onFileChange,
   onPreprocessingChange,
   onWarnings,
+  disabled = false,
 }: {
   copy: AppMessages['project'];
   onFileChange?: (fileName: string, profileId?: string) => void;
   onPreprocessingChange?: (isProcessing: boolean) => void;
   onWarnings?: (warnings: string[]) => void;
+  disabled?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
   const [brandProfileId, setBrandProfileId] = useState<string | null>(null);
@@ -23,6 +25,7 @@ export function BrandManualInput({
   const [errorMsg, setErrorMsg] = useState<string>('');
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return;
     const file = event.target.files?.[0] ?? null;
     if (!file) {
       handleRemove();
@@ -83,9 +86,15 @@ export function BrandManualInput({
         accept=".pdf,application/pdf"
         data-testid="brand-manual-input"
         onChange={handleFileChange}
-        disabled={isPending}
+        disabled={disabled || isPending}
         className="block w-full rounded-[14px] border border-dashed border-[var(--border-strong)] bg-[var(--surface-soft)] px-3 py-3 text-sm text-[var(--text-secondary)] file:mr-3 file:rounded-[10px] file:border-0 file:bg-[var(--surface-highlight)] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[var(--text-primary)]"
       />
+
+      {disabled && (
+        <p className="text-xs font-semibold text-[var(--accent-text)]" data-testid="brand-manual-disabled">
+          {copy.brandComingSoonLabel}
+        </p>
+      )}
 
       {status === 'analyzing' && (
         <div

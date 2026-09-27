@@ -5,7 +5,7 @@ import { requireUserId } from '@/lib/auth/guards';
 import { sha256Buffer } from '@/lib/projects/hash';
 import { structureProfileRepository } from '@/lib/structure-profile/repository';
 import { hasUsableEditorialEvidence, type ReferenceEditorialProfile } from './model';
-import { extractEditorialProfileFromPdf, ReferenceAnalysisTimeoutError } from './pdf';
+import { ReferenceAnalysisTimeoutError } from './pdf';
 import { extractEditorialProfileFromDocx } from './docx';
 import { projectRepository } from '@/lib/db/repositories';
 import type { DocumentMetadata } from '@/lib/document/model';
@@ -32,12 +32,13 @@ export async function extractReferenceEditorialProfileAction(formData: FormData)
       return { ok: false as const, error: 'El archivo de referencia excede el tamaño máximo permitido (50 MB).', warnings: ['Reference document is too large'] };
     }
     const filename = file.name || 'reference.pdf';
+    const isDocx = file.type.includes('wordprocessingml') || filename.toLowerCase().endsWith('.docx');
+    if (!isDocx) {
+      return { ok: false as const, error: 'La referencia editorial debe ser un archivo .docx.', warnings: ['REFERENCE_DOCX_ONLY'] };
+    }
     const buffer = Buffer.from(await file.arrayBuffer());
     const hash = sha256Buffer(buffer);
-    const isDocx = file.type.includes('wordprocessingml') || filename.toLowerCase().endsWith('.docx');
-    const result = isDocx
-      ? await extractEditorialProfileFromDocx(buffer, { filename, hash })
-      : await extractEditorialProfileFromPdf(buffer, { filename, format: 'pdf', hash });
+    const result = await extractEditorialProfileFromDocx(buffer, { filename, hash });
     if (!hasUsableEditorialEvidence(result.profile)) {
       const warnings = 'analysis' in result ? result.analysis.warnings : [];
       return {
@@ -49,7 +50,10 @@ export async function extractReferenceEditorialProfileAction(formData: FormData)
     return {
       ok: true as const,
       profile: result.profile,
-      analysis: result.analysis,
+      // The UI also renders legacy PDF analysis payloads from saved/tested
+      // flows; keep this boundary structurally open while new uploads are
+      // canonical DOCX-only.
+      analysis: result.analysis as unknown as Record<string, unknown>,
       suggestedName: filename.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim() || 'Reference editorial profile',
     };
   } catch (error) {
@@ -178,4 +182,3 @@ export async function resetUserStyleOverridesAction(
   revalidatePath(`/projects/${projectId}`);
   return { ok: true as const, project: updatedProject };
 }
-

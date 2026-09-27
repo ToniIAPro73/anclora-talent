@@ -57,7 +57,6 @@ export async function createProjectAction(formData: FormData) {
   const templateId = String(formData.get('templateId') ?? '').trim() || undefined;
   const sourceDocument = formData.get('sourceDocument');
   const importSessionId = String(formData.get('importSessionId') ?? '').trim() || undefined;
-  const brandProfileId = String(formData.get('brandProfileId') ?? '').trim() || undefined;
   // Fixed-PDF document mode: only meaningful for a PDF upload; any other
   // value (or absence) behaves as the existing editable flow.
   const documentModeRaw = String(formData.get('documentMode') ?? '').trim();
@@ -69,10 +68,6 @@ export async function createProjectAction(formData: FormData) {
   // only exists after explicit human confirmation in the UI).
   const structureSchemaRaw = String(formData.get('structureSchema') ?? '').trim();
   const referenceEditorialProfileRaw = String(formData.get('referenceEditorialProfile') ?? '').trim();
-  // U5: optional identity-manual PDF → best-effort BrandProfile, created
-  // active and linked to the new project. Any failure here is logged but
-  // NEVER blocks project creation.
-  const brandManual = formData.get('brandManual');
   // U6: composition reviewed in the pre-create document-data modal (JSON).
   const compositionRaw = String(formData.get('composition') ?? '').trim();
 
@@ -81,7 +76,6 @@ export async function createProjectAction(formData: FormData) {
     titleLength: title.length,
     hasSourceDocument: sourceDocument instanceof File,
     hasImportSessionId: Boolean(importSessionId),
-    hasBrandProfileId: Boolean(brandProfileId),
     sourceDocumentName: sourceDocument instanceof File ? sourceDocument.name : null,
     sourceDocumentType: sourceDocument instanceof File ? sourceDocument.type : null,
     sourceDocumentSize: sourceDocument instanceof File ? sourceDocument.size : null,
@@ -286,62 +280,6 @@ export async function createProjectAction(formData: FormData) {
         referenceEditorialProfile,
       };
       await projectRepository.saveDocumentExtras(userId, project.id, { metadata });
-    }
-
-    if (brandProfileId) {
-      try {
-        const { brandProfileRepository } = await import('@/lib/brand/repository');
-        await brandProfileRepository.setBrandProfileStatus(userId, brandProfileId, 'active');
-        await projectRepository.saveProjectBrandProfile(userId, project.id, brandProfileId);
-        console.info('[createProjectAction] brand profile linked from id', {
-          userId,
-          projectId: project.id,
-          brandProfileId,
-        });
-      } catch (brandError) {
-        console.error('[createProjectAction] brand profile linking failed; project kept', {
-          userId,
-          projectId: project.id,
-          brandProfileId,
-          brandError,
-        });
-      }
-    } else if (brandManual instanceof File && brandManual.size > 0) {
-      const brandManualIsPdf =
-        brandManual.type === 'application/pdf' || brandManual.name.toLowerCase().endsWith('.pdf');
-      if (!brandManualIsPdf) {
-        console.info('[createProjectAction] brand manual skipped; only PDF manuals are supported', {
-          userId,
-          projectId: project.id,
-          brandManualName: brandManual.name,
-          brandManualType: brandManual.type,
-        });
-      } else {
-        try {
-          const { extractBrandProfileFromPdf } = await import('@/lib/brand/extract-brand-profile');
-          const { brandProfileRepository } = await import('@/lib/brand/repository');
-          const buffer = Buffer.from(await brandManual.arrayBuffer());
-          const extraction = await extractBrandProfileFromPdf(buffer, brandManual.name);
-          const profile = await brandProfileRepository.createBrandProfile(userId, extraction.profile);
-          if (profile.status !== 'active') {
-            await brandProfileRepository.setBrandProfileStatus(userId, profile.id, 'active');
-          }
-          await projectRepository.saveProjectBrandProfile(userId, project.id, profile.id);
-          console.info('[createProjectAction] brand profile linked', {
-            userId,
-            projectId: project.id,
-            brandProfileId: profile.id,
-            warnings: extraction.warnings,
-          });
-        } catch (brandError) {
-          console.error('[createProjectAction] brand manual extraction failed; project kept', {
-            userId,
-            projectId: project.id,
-            brandManualName: brandManual.name,
-            brandError,
-          });
-        }
-      }
     }
 
     // U6: when a manuscript was imported but the user did NOT review the

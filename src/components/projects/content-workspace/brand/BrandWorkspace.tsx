@@ -17,6 +17,7 @@ import {
   setProjectBrandProfileAction,
 } from '@/lib/brand/actions';
 import { BrandManualInput } from '../../BrandManualInput';
+import { BRAND_IDENTITY_ENABLED } from '@/lib/features/capabilities';
 
 type Copy = AppMessages['project'];
 
@@ -80,6 +81,24 @@ export function BrandWorkspace({
     () => (selectedProfile ? brandProfileToTemplateOverrides(selectedProfile) : null),
     [selectedProfile],
   );
+
+  if (!BRAND_IDENTITY_ENABLED) {
+    return (
+      <section className="ac-surface-panel ac-surface-panel--subtle" data-testid="brand-workspace-disabled">
+        <p className="ac-surface-panel__eyebrow">{copy.brandWorkspaceIdentityHeading}</p>
+        <h2 className="mt-2 text-xl font-semibold text-[var(--text-primary)]">{copy.brandComingSoonLabel}</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--text-secondary)]">
+          {copy.brandComingSoonDescription}
+        </p>
+        {selectedProfile && (
+          <p className="mt-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-3 text-xs text-[var(--text-secondary)]">
+            {copy.brandWorkspaceSourceLabel}: {selectedProfile.name}
+          </p>
+        )}
+        <BrandManualInput copy={copy} disabled />
+      </section>
+    );
+  }
 
   const handleApply = (brandProfileId: string) => {
     setSaved(false);
