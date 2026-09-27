@@ -169,11 +169,30 @@ export async function POST(request: NextRequest) {
     effectiveDocxBuffer = Buffer.from(await file.arrayBuffer());
   } else if (extension === 'doc') {
     try {
-      const { normalizeDocToDocx } = await import('@/lib/projects/doc-normalizer');
+      const { normalizeDocToDocx, parseDocDirectly } = await import('@/lib/projects/doc-normalizer');
       const rawDocBuffer = Buffer.from(await file.arrayBuffer());
       const normalized = await normalizeDocToDocx(rawDocBuffer);
       if (normalized?.docxBuffer) {
         effectiveDocxBuffer = normalized.docxBuffer;
+      } else {
+        // Pure JS fallback when LibreOffice is not installed (e.g. Vercel Serverless)
+        const direct = await parseDocDirectly(rawDocBuffer);
+        if (direct?.styleProfile) {
+          originalDocumentStyleProfile = {
+            ...direct.styleProfile,
+            sourceHash: sourceSha256 ?? undefined,
+          };
+          composition = {
+            settings: {
+              ...SYSTEM_COMPOSITION_DEFAULTS,
+              fontFamily: direct.styleProfile.body.fontFamily ?? SYSTEM_COMPOSITION_DEFAULTS.fontFamily,
+              fontSizePt: direct.styleProfile.body.fontSizePt ?? SYSTEM_COMPOSITION_DEFAULTS.fontSizePt,
+              lineHeight: direct.styleProfile.body.lineHeight ?? SYSTEM_COMPOSITION_DEFAULTS.lineHeight,
+              margins: direct.styleProfile.page.marginsPt ?? SYSTEM_COMPOSITION_DEFAULTS.margins,
+            },
+            source: 'docx-styles',
+          };
+        }
       }
     } catch (normError) {
       console.warn('[import-route] legacy .doc normalization failed; continuing with defaults', {

@@ -68,4 +68,23 @@ describe('doc-normalizer and legacy .doc fidelity pipeline', () => {
     expect(titles.some((t) => /bibliograf[ií]a/i.test(t))).toBe(true);
     expect(titles.some((t) => /protocolo de treinta d[íi]as/i.test(t))).toBe(true);
   }, 25000);
+
+  it('pure JS parseDocDirectly extracts tables, images, and styleProfile without LibreOffice', async () => {
+    if (!hasSampleDoc) return;
+
+    const { parseDocDirectly } = await import('./doc-normalizer');
+    const docBuffer = fs.readFileSync(sampleDocPath);
+    const direct = await parseDocDirectly(docBuffer);
+
+    expect(direct).toBeDefined();
+    expect(direct.text.length).toBeGreaterThan(1000);
+    expect(direct.html).toContain('<table>');
+    expect(direct.html).toContain('Tipo');
+    expect(direct.html).toContain('Alternativa');
+    expect(direct.html).toContain('<img');
+    expect(direct.html).toContain('data:image/png;base64');
+    expect(direct.styleProfile.body.fontFamily).toContain('Liberation Serif');
+    expect(direct.styleProfile.body.textAlign).toBe('justify');
+    expect(direct.styleProfile.headings?.h1?.fontFamily).toBe('Calibri');
+  });
 });

@@ -1976,11 +1976,20 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
 
   if (extension === 'doc') {
     try {
-      const { normalizeDocToDocx } = await import('./doc-normalizer');
+      const { normalizeDocToDocx, parseDocDirectly } = await import('./doc-normalizer');
       const normalized = await normalizeDocToDocx(buffer);
       if (normalized?.docxBuffer) {
         const docxResult = await extractDocxRichContent(normalized.docxBuffer);
         if (docxResult) return docxResult;
+      }
+      // Pure JS fallback when LibreOffice is not available (e.g. Vercel Serverless)
+      const direct = await parseDocDirectly(buffer);
+      if (direct?.html) {
+        return {
+          text: direct.text,
+          html: direct.html,
+          pageCount: direct.pageCount,
+        } satisfies ExtractedImportSource;
       }
     } catch (normError) {
       console.warn('[import-pipeline] .doc to .docx normalization failed; falling back to WordExtractor', normError);
