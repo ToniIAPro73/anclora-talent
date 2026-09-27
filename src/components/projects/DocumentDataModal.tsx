@@ -151,7 +151,10 @@ function DocumentDataModalForm({
 }: DocumentDataModalProps) {
   const router = useRouter();
   const fixedPdf = documentMode === 'fixed-pdf' || project?.document.source?.mode === 'fixed-pdf';
-  const markdownSource = sourceFormat === 'markdown' || project?.document.source?.sourceFormat === 'markdown';
+  const markdownSource =
+    sourceFormat === 'markdown' ||
+    project?.document.source?.sourceFormat === 'markdown' ||
+    project?.document.metadata?.sourceFormat === 'markdown';
   const markdownMode = importPresentationMode ?? project?.document.metadata?.importPresentationMode ?? 'source-semantic';
   const effectiveMarkdownStats = sourceStats ?? (project?.document.metadata?.sourceModel ? summarizeSourceModel(project.document.metadata.sourceModel) : undefined);
   const [isPending, startTransition] = useTransition();

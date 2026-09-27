@@ -269,6 +269,48 @@ describe('repository persistence helpers', () => {
     expect(isFixedPdfProject(project)).toBe(false);
   });
 
+  test('mapRowsToProject preserves Markdown source metadata for post-create document data', () => {
+    const sourceModel = {
+      format: 'markdown',
+      family: 'semantic',
+      capabilities: { semanticHeadings: true },
+    };
+    const project = mapRowsToProject(
+      baseProjectRow() as never,
+      {
+        ...baseProjectRow(),
+        id: 'doc-markdown',
+        sourceMetadata: {
+          fileName: 'manuscrito.md',
+          mimeType: 'text/markdown',
+          importedAt: '2026-01-01T00:00:00.000Z',
+          sourceFormat: 'markdown',
+          sourceFamily: 'semantic',
+          capabilities: sourceModel.capabilities,
+          importPresentationMode: 'source-semantic',
+        },
+        metadata: {
+          sourceModel,
+          sourceFormat: 'markdown',
+          sourceFamily: 'semantic',
+          importPresentationMode: 'source-semantic',
+          presentationProvenance: 'TALENT_DEFAULT',
+        },
+      } as never,
+      [] as never,
+      baseCoverRow() as never,
+      null,
+      [] as never,
+      [] as never,
+    );
+
+    expect(project.document.source).toMatchObject({
+      sourceFormat: 'markdown',
+      sourceFamily: 'semantic',
+      importPresentationMode: 'source-semantic',
+    });
+  });
+
   test('mapRowsToProject preserves a v2 DesignSurface payload instead of collapsing it back to a legacy default (regression)', () => {
     const documentRow = {
       id: 'doc-1',

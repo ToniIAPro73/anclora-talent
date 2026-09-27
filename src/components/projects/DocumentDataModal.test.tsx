@@ -90,7 +90,7 @@ describe('DocumentDataModal — composition scope (project mode)', () => {
     const project = makeProject({
       document: {
         ...makeProject().document,
-        source: { fileName: 'manuscrito.md', mimeType: 'text/markdown', importedAt: '2026-01-01T00:00:00Z', mode: 'editable', sourceFormat: 'markdown', sourceFamily: 'semantic', capabilities: sourceModel.capabilities, importPresentationMode: 'materialized' },
+        source: { fileName: 'manuscrito.md', mimeType: 'text/markdown', importedAt: '2026-01-01T00:00:00Z', mode: 'editable' },
         metadata: { title: 'Mi Proyecto', sourceModel, sourceFormat: 'markdown', sourceFamily: 'semantic', sourceCapabilities: sourceModel.capabilities, importPresentationMode: 'materialized', presentationProvenance: 'TALENT_MATERIALIZED', presentationProfileId: 'talent-editorial-markdown-v1' },
       },
     });

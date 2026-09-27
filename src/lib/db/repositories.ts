@@ -249,6 +249,10 @@ export function mapRowsToProject(
             row.kind === BACK_COVER_SURFACE_STATE_KIND,
         )?.payload ?? null
       : null;
+  const sourceMetadata =
+    documentRow.sourceMetadata && typeof documentRow.sourceMetadata === 'object'
+      ? (documentRow.sourceMetadata as Record<string, unknown>)
+      : null;
 
   return {
     id: projectRow.id,
@@ -277,41 +281,53 @@ export function mapRowsToProject(
       metadata: (documentRow.metadata ?? null) as ProjectDocument['metadata'],
       provenance: (documentRow.provenance ?? null) as ProjectDocument['provenance'],
       source:
-        documentRow.sourceMetadata && typeof documentRow.sourceMetadata === 'object'
+        sourceMetadata
           ? {
-              fileName: String((documentRow.sourceMetadata as Record<string, unknown>).fileName ?? ''),
-              mimeType: String((documentRow.sourceMetadata as Record<string, unknown>).mimeType ?? 'application/octet-stream'),
-              importedAt: String((documentRow.sourceMetadata as Record<string, unknown>).importedAt ?? projectRow.createdAt.toISOString()),
+              fileName: String(sourceMetadata.fileName ?? ''),
+              mimeType: String(sourceMetadata.mimeType ?? 'application/octet-stream'),
+              importedAt: String(sourceMetadata.importedAt ?? projectRow.createdAt.toISOString()),
               pageCount:
-                typeof (documentRow.sourceMetadata as Record<string, unknown>).pageCount === 'number'
-                  ? Number((documentRow.sourceMetadata as Record<string, unknown>).pageCount)
+                typeof sourceMetadata.pageCount === 'number'
+                  ? Number(sourceMetadata.pageCount)
                   : undefined,
-              outline: Array.isArray((documentRow.sourceMetadata as Record<string, unknown>).outline)
-                ? ((documentRow.sourceMetadata as Record<string, unknown>).outline as EditorialMapEntry[])
+              outline: Array.isArray(sourceMetadata.outline)
+                ? (sourceMetadata.outline as EditorialMapEntry[])
                 : undefined,
               mode:
-                (documentRow.sourceMetadata as Record<string, unknown>).mode === 'fixed-pdf'
+                sourceMetadata.mode === 'fixed-pdf'
                   ? 'fixed-pdf'
                   : undefined,
               sizeBytes:
-                typeof (documentRow.sourceMetadata as Record<string, unknown>).sizeBytes === 'number'
-                  ? Number((documentRow.sourceMetadata as Record<string, unknown>).sizeBytes)
+                typeof sourceMetadata.sizeBytes === 'number'
+                  ? Number(sourceMetadata.sizeBytes)
                   : undefined,
               sha256:
-                typeof (documentRow.sourceMetadata as Record<string, unknown>).sha256 === 'string'
-                  ? String((documentRow.sourceMetadata as Record<string, unknown>).sha256)
+                typeof sourceMetadata.sha256 === 'string'
+                  ? String(sourceMetadata.sha256)
                   : undefined,
               sourceAssetId:
-                typeof (documentRow.sourceMetadata as Record<string, unknown>).sourceAssetId === 'string'
-                  ? String((documentRow.sourceMetadata as Record<string, unknown>).sourceAssetId)
+                typeof sourceMetadata.sourceAssetId === 'string'
+                  ? String(sourceMetadata.sourceAssetId)
                   : undefined,
               sourceAccessLevel:
-                (documentRow.sourceMetadata as Record<string, unknown>).sourceAccessLevel === 'private' ||
-                (documentRow.sourceMetadata as Record<string, unknown>).sourceAccessLevel === 'public-proxy-only'
-                  ? ((documentRow.sourceMetadata as Record<string, unknown>).sourceAccessLevel as
+                sourceMetadata.sourceAccessLevel === 'private' ||
+                sourceMetadata.sourceAccessLevel === 'public-proxy-only'
+                  ? (sourceMetadata.sourceAccessLevel as
                       | 'private'
                       | 'public-proxy-only')
                   : undefined,
+              sourceFormat: typeof sourceMetadata.sourceFormat === 'string'
+                ? sourceMetadata.sourceFormat as NonNullable<ProjectDocument['source']>['sourceFormat']
+                : undefined,
+              sourceFamily: typeof sourceMetadata.sourceFamily === 'string'
+                ? sourceMetadata.sourceFamily as NonNullable<ProjectDocument['source']>['sourceFamily']
+                : undefined,
+              capabilities: sourceMetadata.capabilities && typeof sourceMetadata.capabilities === 'object'
+                ? sourceMetadata.capabilities as NonNullable<ProjectDocument['source']>['capabilities']
+                : undefined,
+              importPresentationMode: sourceMetadata.importPresentationMode === 'source-semantic' || sourceMetadata.importPresentationMode === 'materialized'
+                ? sourceMetadata.importPresentationMode
+                : undefined,
             }
           : null,
     },
