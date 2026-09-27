@@ -3,7 +3,7 @@ import type { ImportedDocumentSeed, ImportFieldConfidence } from './types';
 const SUPPORTED_IMPORT_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'txt', 'md']);
 const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote|table)[^>]*>[\s\S]*?<\/\1>/gi;
 const ALL_CAPS_RE = /^(?=.{40,})[^a-z]*[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ0-9 .,·:;()\-–—]+$/;
-const MAJOR_HEADING_RE = /^(?:cap[ií]tulo|chapter|introducci[oó]n|pr[oó]logo|prologo|[íi]ndice|indice|fase\s+\d+|parte\s+\d+|secci[oó]n|ep[ií]logo|cierre|despu[eé]s\s+de|recursos(?:\s+recomendados)?|anexos?|ap[eé]ndices?)(?:\b|:)/i;
+const MAJOR_HEADING_RE = /^(?:cap[ií]tulo|chapter|introducci[oó]n|pr[oó]logo|prologo|[íi]ndice|indice|fase\s+\d+|parte\s+\d+|secci[oó]n|ep[ií]logo|conclusi[oó]n|glosario|bibliograf[ií]a|cierre|despu[eé]s\s+de|recursos(?:\s+recomendados)?|anexos?|ap[eé]ndices?)(?:\b|:)/i;
 const MINOR_HEADING_RE = /^(?:d[ií]a\s+\d+|tema\s+\d+|idea\s+clave|reto\s+de\s+acci[oó]n|preguntas?\s+de\s+reflexi[oó]n|ejercicio|caso|las\s+cinco\s+claves|cierre\s+de\s+fase)(?:\b|:)/i;
 
 /**
@@ -982,9 +982,10 @@ function parseHtmlBlocks(input: string) {
 
   for (const fragment of matches) {
     const clean = normalizeHtmlFragment(stripImportedTocPageMarkup(fragment));
-    const tag = clean.match(/^<(h[1-6]|p|ul|ol|blockquote|table)/i)?.[1]?.toLowerCase()?? 'p';
+    const tag = clean.match(/^<(h[1-6]|p|ul|ol|blockquote|table)/i)?.[1]?.toLowerCase() ?? 'p';
     const text = textFromHtml(clean);
-    if (!text || isDecorativeLine(text)) continue;
+    const hasImage = /<img\b[^>]*>/i.test(clean);
+    if ((!text && !hasImage) || (text && isDecorativeLine(text))) continue;
 
     const isLeader = /^[·._\-—\s]{2,}\d+\s*$/.test(text.trim());
 
@@ -995,16 +996,16 @@ function parseHtmlBlocks(input: string) {
     }
 
     if (tag.startsWith('h')) {
-      blocks.push({ kind: 'heading', text: cleanHeadingText(text), html: clean, level: Number(tag.replace('h','')), structural: true });
+      blocks.push({ kind: 'heading', text: cleanHeadingText(text), html: clean, level: Number(tag.replace('h', '')), structural: true });
     } else if (tag === 'ul' || tag === 'ol') {
       // Leader-dot/tab-before-pagenum patterns (the actual TOC signal) get
       // stripped by stripImportedTocPageMarkup() above before `clean` is
       // built, so that signal has to be read from the RAW fragment here.
       blocks.push(...splitHtmlListBlocks(clean, fragmentHasTocLeaderPattern(fragment)));
     } else if (tag === 'blockquote') {
-      blocks.push({ kind: 'quote', text, html: clean, level: null, structural: true });
+      blocks.push({ kind: 'quote', text: text || '[Cita]', html: clean, level: null, structural: true });
     } else {
-      blocks.push({ kind: 'paragraph', text, html: clean, level: null, structural: false });
+      blocks.push({ kind: 'paragraph', text: text || (hasImage ? '[Imagen]' : ''), html: clean, level: null, structural: false });
     }
   }
   return blocks;
@@ -1969,59 +1970,20 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
   }
 
   if (extension === 'docx') {
-    try {
-      const mammoth = await import('mammoth');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await (mammoth.default as any).convertToHtml(
-        { buffer },
-        {
-          styleMap: [
-            "p[style-name='Title'] => h1:fresh",
-            "p[style-name='Subtitle'] => h2:fresh",
-            "p[style-name='Heading 1'] => h1:fresh",
-            "p[style-name='Heading 2'] => h2:fresh",
-            "p[style-name='Heading 3'] => h3:fresh",
-            "p[style-name='Heading 4'] => h4:fresh",
-            "p[style-name='Heading 5'] => h5:fresh",
-            "p[style-name='Título 1'] => h1:fresh",
-            "p[style-name='Título 2'] => h2:fresh",
-            "p[style-name='Título 3'] => h3:fresh",
-            "p[style-name='Título 4'] => h4:fresh",
-            "p[style-name='Título 5'] => h5:fresh",
-            "p[style-name='Encabezado 1'] => h1:fresh",
-            "p[style-name='Encabezado 2'] => h2:fresh",
-            "p[style-name='Encabezado 3'] => h3:fresh",
-            "p[style-name='Título'] => h1:fresh",
-            "p[style-name='Subtítulo'] => h2:fresh",
-            "p[style-name='TOC Entry'] => p.toc-entry:fresh",
-            "p[style-name='TOCEntry'] => p.toc-entry:fresh",
-            "p[style-name='TOC 1'] => p.toc-entry:fresh",
-            "p[style-name='TOC 2'] => p.toc-entry:fresh",
-            "p[style-name='TOC 3'] => p.toc-entry:fresh",
-            "p[style-name='TOC Heading'] => h2.toc-heading:fresh",
-            "p[style-name='Índice 1'] => p.toc-entry:fresh",
-            "p[style-name='Índice 2'] => p.toc-entry:fresh",
-            "p[style-name='Indice 1'] => p.toc-entry:fresh",
-            "p[style-name='Indice 2'] => p.toc-entry:fresh",
-            "p[style-name='Editorial Kicker'] => p.editorial-kicker:fresh",
-            "p[style-name='EditorialKicker'] => p.editorial-kicker:fresh",
-            "p[style-name='Block Quote'] => blockquote:fresh",
-            "p[style-name='BlockQuote'] => blockquote:fresh",
-          ],
-        },
-      );
-      const richHtml = inlineDocxFootnotes(normalizeHtmlFragment(result.value)).replace(/<p([^>]*)>(\s*[·._\-—]{3,}\s*\d+\s*)<\/p>/gi, '<p$1 class="toc-entry">$2</p>');
-      const richText = normalizeText(textFromHtml(richHtml));
+    const docxResult = await extractDocxRichContent(buffer);
+    if (docxResult) return docxResult;
+  }
 
-      if (richText) {
-        return {
-          text: richText,
-          html: richHtml,
-          pageCount: await extractDocxPageCount(buffer),
-        } satisfies ExtractedImportSource;
+  if (extension === 'doc') {
+    try {
+      const { normalizeDocToDocx } = await import('./doc-normalizer');
+      const normalized = await normalizeDocToDocx(buffer);
+      if (normalized?.docxBuffer) {
+        const docxResult = await extractDocxRichContent(normalized.docxBuffer);
+        if (docxResult) return docxResult;
       }
-    } catch {
-      // Fallback to WordExtractor below when Mammoth is unavailable or fails.
+    } catch (normError) {
+      console.warn('[import-pipeline] .doc to .docx normalization failed; falling back to WordExtractor', normError);
     }
   }
 
@@ -2037,6 +1999,64 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
   }
 
   throw new Error(`Import format is not supported yet: ${extension}`);
+}
+
+async function extractDocxRichContent(buffer: Buffer): Promise<ExtractedImportSource | null> {
+  try {
+    const mammoth = await import('mammoth');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await (mammoth.default as any).convertToHtml(
+      { buffer },
+      {
+        styleMap: [
+          "p[style-name='Title'] => h1:fresh",
+          "p[style-name='Subtitle'] => h2:fresh",
+          "p[style-name='Heading 1'] => h1:fresh",
+          "p[style-name='Heading 2'] => h2:fresh",
+          "p[style-name='Heading 3'] => h3:fresh",
+          "p[style-name='Heading 4'] => h4:fresh",
+          "p[style-name='Heading 5'] => h5:fresh",
+          "p[style-name='Título 1'] => h1:fresh",
+          "p[style-name='Título 2'] => h2:fresh",
+          "p[style-name='Título 3'] => h3:fresh",
+          "p[style-name='Título 4'] => h4:fresh",
+          "p[style-name='Título 5'] => h5:fresh",
+          "p[style-name='Encabezado 1'] => h1:fresh",
+          "p[style-name='Encabezado 2'] => h2:fresh",
+          "p[style-name='Encabezado 3'] => h3:fresh",
+          "p[style-name='Título'] => h1:fresh",
+          "p[style-name='Subtítulo'] => h2:fresh",
+          "p[style-name='TOC Entry'] => p.toc-entry:fresh",
+          "p[style-name='TOCEntry'] => p.toc-entry:fresh",
+          "p[style-name='TOC 1'] => p.toc-entry:fresh",
+          "p[style-name='TOC 2'] => p.toc-entry:fresh",
+          "p[style-name='TOC 3'] => p.toc-entry:fresh",
+          "p[style-name='TOC Heading'] => h2.toc-heading:fresh",
+          "p[style-name='Índice 1'] => p.toc-entry:fresh",
+          "p[style-name='Índice 2'] => p.toc-entry:fresh",
+          "p[style-name='Indice 1'] => p.toc-entry:fresh",
+          "p[style-name='Indice 2'] => p.toc-entry:fresh",
+          "p[style-name='Editorial Kicker'] => p.editorial-kicker:fresh",
+          "p[style-name='EditorialKicker'] => p.editorial-kicker:fresh",
+          "p[style-name='Block Quote'] => blockquote:fresh",
+          "p[style-name='BlockQuote'] => blockquote:fresh",
+        ],
+      },
+    );
+    const richHtml = inlineDocxFootnotes(normalizeHtmlFragment(result.value)).replace(/<p([^>]*)>(\s*[·._\-—]{3,}\s*\d+\s*)<\/p>/gi, '<p$1 class="toc-entry">$2</p>');
+    const richText = normalizeText(textFromHtml(richHtml));
+
+    if (richText) {
+      return {
+        text: richText,
+        html: richHtml,
+        pageCount: await extractDocxPageCount(buffer),
+      } satisfies ExtractedImportSource;
+    }
+  } catch {
+    // Fallback to WordExtractor below when Mammoth is unavailable or fails.
+  }
+  return null;
 }
 
 async function extractDocxPageCount(buffer: Buffer): Promise<number | undefined> {

@@ -164,10 +164,28 @@ export async function POST(request: NextRequest) {
     settings: SYSTEM_COMPOSITION_DEFAULTS,
     source: 'not-extracted',
   };
+  let effectiveDocxBuffer: Buffer | null = null;
   if (extension === 'docx') {
+    effectiveDocxBuffer = Buffer.from(await file.arrayBuffer());
+  } else if (extension === 'doc') {
     try {
-      const buffer = Buffer.from(await file.arrayBuffer());
-      originalDocumentStyleProfile = await extractOriginalDocumentStyleProfile(buffer);
+      const { normalizeDocToDocx } = await import('@/lib/projects/doc-normalizer');
+      const rawDocBuffer = Buffer.from(await file.arrayBuffer());
+      const normalized = await normalizeDocToDocx(rawDocBuffer);
+      if (normalized?.docxBuffer) {
+        effectiveDocxBuffer = normalized.docxBuffer;
+      }
+    } catch (normError) {
+      console.warn('[import-route] legacy .doc normalization failed; continuing with defaults', {
+        fileName,
+        normError,
+      });
+    }
+  }
+
+  if (effectiveDocxBuffer) {
+    try {
+      originalDocumentStyleProfile = await extractOriginalDocumentStyleProfile(effectiveDocxBuffer);
       originalDocumentStyleProfile = {
         ...originalDocumentStyleProfile,
         sourceHash: sourceSha256 ?? undefined,
@@ -207,9 +225,9 @@ export async function POST(request: NextRequest) {
     // Keep the source profile inside the persisted seed as well as on the
     // session envelope. The seed is the durable hand-off consumed by project
     // creation, including when the session row is read back from PostgreSQL.
-    const sourcePaginationBaseline = extension === 'docx'
+    const sourcePaginationBaseline = effectiveDocxBuffer
       ? await extractSourcePaginationBaseline(
-          Buffer.from(await file.arrayBuffer()),
+          effectiveDocxBuffer,
           seed.blocks,
           sourceSha256 ?? '',
         )
