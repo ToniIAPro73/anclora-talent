@@ -1,6 +1,7 @@
 import 'server-only';
 export { supportedImportAccept } from './import-config';
 import { buildImportedDocumentSeed, extractTextFromBuffer, isScannedPdfSource, normalizeText } from './import-pipeline';
+import { createSourceModel, detectSourceFormat, escapeSourceHtml, parseOdtSource, type CanonicalSourceDocument } from './source-model';
 
 export { buildImportedDocumentSeed } from './import-pipeline';
 
@@ -29,9 +30,30 @@ export async function extractImportedDocumentSeed(
   // never abort the import. Degrade to an empty shell document and flag the
   // seed so callers can show a non-blocking warning.
   let extractedSource: Awaited<ReturnType<typeof extractTextFromBuffer>>;
+  let sourceModel: CanonicalSourceDocument | null = null;
   let parseFailed = false;
   try {
     extractedSource = await extractTextFromBuffer(fileName, mimeType, buffer);
+    const sourceFormat = detectSourceFormat(fileName, mimeType);
+    if (sourceFormat === 'odt') {
+      sourceModel = await parseOdtSource(buffer);
+      const odtBlocks = sourceModel.blocks
+        .filter((block) => block.text)
+        .map((block) => {
+          const text = block.text ?? '';
+          return block.type === 'heading'
+            ? `<h${Math.min(block.level ?? 1, 6)}>${escapeSourceHtml(text)}</h${Math.min(block.level ?? 1, 6)}>`
+            : `<p>${escapeSourceHtml(text)}</p>`;
+        })
+        .join('');
+      extractedSource = {
+        text: sourceModel.blocks.map((block) => block.text ?? '').join('\n\n'),
+        html: odtBlocks,
+        pageCount: undefined,
+      };
+    } else if (sourceFormat) {
+      sourceModel = createSourceModel(sourceFormat, { text: extractedSource.text, html: extractedSource.html });
+    }
   } catch (error) {
     if (fileName.toLowerCase().endsWith('.doc')) {
       console.error('[import] legacy .doc normalization failed', { fileName, mimeType, error });
@@ -84,6 +106,7 @@ export async function extractImportedDocumentSeed(
     text: normalized,
     html: extractedSource.html,
     sourcePageCount: extractedSource.pageCount,
+    sourceModel,
     manuscriptTypeOverride: options.manuscriptTypeOverride,
   });
 

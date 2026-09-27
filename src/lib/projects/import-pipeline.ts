@@ -1,6 +1,7 @@
 import type { ImportedDocumentSeed, ImportFieldConfidence, SectionSemanticType, SectionStructureItem } from './types';
+import { createSourceModel, escapeSourceHtml, type CanonicalSourceDocument, detectSourceFormat } from './source-model';
 
-const SUPPORTED_IMPORT_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'txt', 'md']);
+const SUPPORTED_IMPORT_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'odt', 'txt', 'md', 'markdown']);
 const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote|table)[^>]*>[\s\S]*?<\/\1>/gi;
 const ALL_CAPS_RE = /^(?=.{40,})[^a-z]*[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ0-9 .,·:;()\-–—]+$/;
 const MAJOR_HEADING_RE = /^(?:cap[ií]tulo|chapter|introducci[oó]n|pr[oó]logo|prologo|[íi]ndice|indice|fase\s+\d+|parte\s+\d+|secci[oó]n|ep[ií]logo|conclusi[oó]n|glosario|bibliograf[ií]a|cierre|despu[eé]s\s+de|recursos(?:\s+recomendados)?|anexos?|ap[eé]ndices?)(?:\b|:)/i;
@@ -1712,6 +1713,7 @@ export function buildImportedDocumentSeed({
   text,
   html,
   sourcePageCount,
+  sourceModel: sourceModelInput,
   manuscriptTypeOverride,
 }: {
   fileName: string;
@@ -1719,6 +1721,7 @@ export function buildImportedDocumentSeed({
   text: string;
   html?: string | null;
   sourcePageCount?: number;
+  sourceModel?: CanonicalSourceDocument | null;
   /** M5 — explicit preset from the analysis panel selector; leave unset to
    *  keep today's auto-detected chapter-splitting behavior unchanged. */
   manuscriptTypeOverride?: ManuscriptType;
@@ -1915,6 +1918,13 @@ export function buildImportedDocumentSeed({
     structureModel,
     sourceFileName: fileName,
     sourceMimeType: mimeType,
+    sourceFormat: sourceModelInput?.format ?? detectSourceFormat(fileName, mimeType) ?? undefined,
+    sourceFamily: sourceModelInput?.family,
+    sourceCapabilities: sourceModelInput?.capabilities,
+    sourceModel: sourceModelInput ?? createSourceModel(
+      detectSourceFormat(fileName, mimeType) ?? 'txt',
+      { text: contentText, html: normalizedHtml },
+    ),
   };
 }
 
@@ -2005,7 +2015,7 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
     throw new Error(`Unsupported import format: ${extension || 'unknown'}`);
   }
 
-  if (extension === 'txt' || extension === 'md' || mimeType.startsWith('text/')) {
+  if (extension === 'txt' || extension === 'md' || extension === 'markdown' || mimeType.startsWith('text/')) {
       return {
         text: buffer.toString('utf8'),
         html: null,
@@ -2052,6 +2062,25 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
   if (extension === 'docx') {
     const docxResult = await extractDocxRichContent(buffer);
     if (docxResult) return docxResult;
+  }
+
+  if (extension === 'odt') {
+    const { parseOdtSource } = await import('./source-model');
+    const source = await parseOdtSource(buffer);
+    const html = source.blocks
+      .filter((block) => block.text)
+      .map((block) => {
+        const text = block.text ?? '';
+        return block.type === 'heading'
+          ? `<h${Math.min(block.level ?? 1, 6)}>${escapeSourceHtml(text)}</h${Math.min(block.level ?? 1, 6)}>`
+          : `<p>${escapeSourceHtml(text)}</p>`;
+      })
+      .join('');
+    return {
+      text: source.blocks.map((block) => block.text ?? '').join('\n\n'),
+      html,
+      pageCount: undefined,
+    } satisfies ExtractedImportSource;
   }
 
   if (extension === 'doc') {

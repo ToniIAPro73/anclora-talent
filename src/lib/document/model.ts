@@ -16,6 +16,7 @@
 
 import type { CompositionSettings } from '@/lib/projects/composition';
 import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profile/model';
+import type { CanonicalSourceDocument, SourceCapabilities, SourceFamily, SourceFormat } from '@/lib/projects/source-model';
 
 export type InlineMarkType = 'bold' | 'italic' | 'link';
 
@@ -150,6 +151,11 @@ export interface DocumentMetadata {
   userOverrides?: import('@/lib/style-engine/model').UserStyleOverride[];
   /** Canonical persisted structure model containing semantic types and chapter numbering. */
   structureModel?: import('@/lib/projects/types').SectionStructureItem[] | null;
+  /** Source-aware import model; immutable source facts stay separate from edits. */
+  sourceModel?: CanonicalSourceDocument | null;
+  sourceFormat?: SourceFormat;
+  sourceFamily?: SourceFamily;
+  sourceCapabilities?: SourceCapabilities;
 }
 
 export interface SemanticDocument {

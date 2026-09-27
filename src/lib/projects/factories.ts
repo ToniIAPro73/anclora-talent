@@ -135,6 +135,9 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
             sha256: imported.sourceSha256,
             sourceAssetId,
             sourceAccessLevel: imported.sourceAccessLevel,
+            sourceFormat: imported.sourceFormat,
+            sourceFamily: imported.sourceFamily,
+            capabilities: imported.sourceCapabilities,
             derivedFromProjectId: input.derivedFrom?.projectId,
             derivedFromSourceAssetId: input.derivedFrom?.sourceAssetId,
           }
@@ -149,6 +152,10 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
                 imported?.originalDocumentStyleProfile ??
                 null,
               sourcePaginationBaseline: imported?.sourcePaginationBaseline ?? null,
+              sourceModel: imported?.sourceModel ?? null,
+              sourceFormat: imported?.sourceFormat,
+              sourceFamily: imported?.sourceFamily,
+              sourceCapabilities: imported?.sourceCapabilities,
               referenceEditorialProfile: input.referenceEditorialProfile ?? null,
             }
           : null,

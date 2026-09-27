@@ -27,6 +27,7 @@ import { isReferenceEditorialProfile } from '@/lib/reference-editorial-profile/l
 import { applyReferenceEditorialProfileToComposition } from '@/lib/reference-editorial-profile/apply';
 import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profile/model';
 import { extractOriginalDocumentStyleProfile } from './docx-styles';
+import { detectSourceFormat, isActiveImportFormat } from './source-model';
 
 function parsePalette(value: FormDataEntryValue | null): CoverDesign['palette'] {
   if (value === 'teal' || value === 'sand') {
@@ -490,6 +491,9 @@ export async function importChapterAction(formData: FormData) {
 
   if (!projectId || !(sourceDocument instanceof File) || sourceDocument.size === 0) {
     throw new Error('Project ID and valid file are required');
+  }
+  if (!isActiveImportFormat(detectSourceFormat(sourceDocument.name, sourceDocument.type))) {
+    throw new Error('FORMAT_UNSUPPORTED');
   }
 
   // Extract document content from file

@@ -19,7 +19,7 @@ vi.mock('@/lib/projects/import', () => ({
   extractImportedDocumentSeed: extractImportedDocumentSeedMock,
 }));
 
-function buildRequest(fileName = 'escaneado.pdf', mimeType = 'application/pdf') {
+function buildRequest(fileName = 'escaneado.docx', mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
   const formData = new FormData();
   formData.append('sourceDocument', new File([new Uint8Array([1, 2, 3])], fileName, { type: mimeType }));
   // The route only reads request.formData(); jsdom's NextRequest cannot parse
@@ -34,7 +34,7 @@ function seed(ocrAppliedMode: 'local' | 'service' | null = null) {
     author: 'Autora',
     chapters: [{ title: 'Capítulo 1' }],
     warnings: [],
-    sourceFileName: 'escaneado.pdf',
+    sourceFileName: 'escaneado.docx',
     ocrAppliedMode,
   };
 }
@@ -92,6 +92,14 @@ describe('POST /api/projects/import (F2 OCR de ingesta)', () => {
 
     expect(response.status).toBe(422);
     expect(buildImportOcrRunnerMock).not.toHaveBeenCalled();
+    expect(extractImportedDocumentSeedMock).not.toHaveBeenCalled();
+  });
+
+  test('temporarily disabled PDF import is rejected before parsing', async () => {
+    const { POST } = await import('./route');
+    const response = await POST(buildRequest('documento.pdf', 'application/pdf'));
+    expect(response.status).toBe(422);
+    expect((await response.json()).error).toBe('FORMAT_UNSUPPORTED');
     expect(extractImportedDocumentSeedMock).not.toHaveBeenCalled();
   });
 

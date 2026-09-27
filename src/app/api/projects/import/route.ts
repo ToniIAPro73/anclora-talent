@@ -11,9 +11,10 @@ import { importSessionRepository } from '@/lib/projects/import-session';
 import { uploadPrivateProjectDocument, fetchPrivateProjectDocument } from '@/lib/blob/client';
 import { sha256Buffer } from '@/lib/projects/hash';
 import type { DocumentMode, ManuscriptType, SourceDocumentAccessLevel } from '@/lib/projects/types';
+import { detectSourceFormat, isActiveImportFormat } from '@/lib/projects/source-model';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
-const SUPPORTED_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'txt', 'md']);
+const SUPPORTED_EXTENSIONS = new Set(['doc', 'docx', 'odt', 'txt', 'md', 'markdown']);
 const MANUSCRIPT_TYPES = new Set<ManuscriptType>(['essay', 'guide', 'novel', 'non-fiction']);
 
 function getExtension(fileName: string) {
@@ -154,9 +155,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'FORMAT_UNSUPPORTED' }, { status: 422 });
   }
 
-  if (extension === 'pdf') {
-    documentModeChoice = 'fixed-pdf';
+  const sourceFormat = detectSourceFormat(fileName, mimeType);
+  if (!isActiveImportFormat(sourceFormat)) {
+    return NextResponse.json({ error: 'FORMAT_UNSUPPORTED' }, { status: 422 });
   }
+
+  const compatibleMimeTypes: Record<string, string[]> = {
+    doc: ['application/msword', 'application/octet-stream', ''],
+    docx: ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/octet-stream', ''],
+    odt: ['application/vnd.oasis.opendocument.text', 'application/octet-stream', ''],
+    markdown: ['text/markdown', 'text/plain', 'application/octet-stream', ''],
+    txt: ['text/plain', 'application/octet-stream', ''],
+  };
+  if (!(compatibleMimeTypes[sourceFormat] ?? []).includes(mimeType)) {
+    return NextResponse.json({ error: 'FORMAT_UNSUPPORTED' }, { status: 422 });
+  }
+
+  // PDF remains available to legacy fixed-document code paths, but is not an
+  // active source format in the current import flow.
 
   // Extract original document style profile and composition
   let originalDocumentStyleProfile: OriginalDocumentStyleProfile | null = null;
@@ -282,6 +298,9 @@ export async function POST(request: NextRequest) {
       manuscriptType: seed.manuscriptType,
       detectedManuscriptType: seed.detectedManuscriptType,
       sourceFileName: seed.sourceFileName,
+      sourceFormat: seed.sourceFormat,
+      sourceFamily: seed.sourceFamily,
+      sourceCapabilities: seed.sourceCapabilities,
       ocrAppliedMode: seed.ocrAppliedMode,
       parseWarning: Boolean(seed.parseFailed),
       composition,

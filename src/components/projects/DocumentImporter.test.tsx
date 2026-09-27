@@ -87,15 +87,18 @@ describe('DocumentImporter', () => {
     expect(fileInput).toHaveAttribute('type', 'file');
     expect(fileInput).toHaveAttribute(
       'accept',
-      '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '.doc,.docx,.odt,.md,.markdown,.txt,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text,text/markdown,text/plain',
     );
 
     for (const format of ['DOCX', 'DOC']) {
       expect(screen.getByText(format)).toBeInTheDocument();
     }
 
-    for (const format of ['PDF', 'TXT', 'MD']) {
+    for (const format of ['PDF']) {
       expect(screen.queryByText(format)).not.toBeInTheDocument();
+    }
+    for (const format of ['ODT', 'MD', 'TXT']) {
+      expect(screen.getByText(format)).toBeInTheDocument();
     }
   });
 
@@ -141,7 +144,7 @@ describe('DocumentImporter', () => {
     render(<DocumentImporter copy={copy} />);
 
     const fileInput = screen.getByTestId('source-document-input');
-    fireEvent.change(fileInput, { target: { files: [new File(['x'], 'doc.pdf')] } });
+    fireEvent.change(fileInput, { target: { files: [new File(['x'], 'doc.odt')] } });
 
     await waitFor(() => {
       expect(screen.getByText('No se pudo analizar el documento')).toBeInTheDocument();
@@ -167,7 +170,7 @@ describe('DocumentImporter', () => {
     render(<DocumentImporter copy={copy} />);
 
     const fileInput = screen.getByTestId('source-document-input');
-    const largeFile = new File(['x'.repeat(100)], 'grande.pdf');
+    const largeFile = new File(['x'.repeat(100)], 'grande.docx');
     Object.defineProperty(largeFile, 'size', { value: 51 * 1024 * 1024 });
 
     fireEvent.change(fileInput, { target: { files: [largeFile] } });
@@ -184,7 +187,7 @@ describe('DocumentImporter', () => {
     render(<DocumentImporter copy={copy} />);
 
     const fileInput = screen.getByTestId('source-document-input');
-    fireEvent.change(fileInput, { target: { files: [new File(['x'], 'doc.pdf')] } });
+    fireEvent.change(fileInput, { target: { files: [new File(['x'], 'doc.odt')] } });
 
     await waitFor(() => {
       expect(screen.getByText('No se pudo analizar el documento')).toBeInTheDocument();
@@ -229,7 +232,7 @@ describe('DocumentImporter', () => {
           chapterCount: 1,
           chapterTitles: [],
           warnings: [],
-          sourceFileName: 'roto.pdf',
+          sourceFileName: 'roto.docx',
           parseWarning: true,
         }),
       }),
@@ -238,7 +241,7 @@ describe('DocumentImporter', () => {
 
     const fileInput = screen.getByTestId('source-document-input');
     fireEvent.change(fileInput, {
-      target: { files: [new File(['x'], 'roto.pdf', { type: 'application/pdf' })] },
+      target: { files: [new File(['x'], 'roto.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })] },
     });
 
     // U4: the flow must reach the ready state — never the error state.
@@ -250,8 +253,7 @@ describe('DocumentImporter', () => {
     expect(screen.queryByText(copy.importErrorGeneric)).not.toBeInTheDocument();
   });
 
-  test('shows the fixed-pdf mode selector, recommended and checked by default, for a PDF', async () => {
-    mockFetchSuccess(14, 'El Plan de Escape de la Mediana Edad');
+  test('rejects PDF files because PDF import is temporarily disabled', async () => {
     render(<DocumentImporter copy={copy} />);
 
     const fileInput = screen.getByTestId('source-document-input');
@@ -260,40 +262,8 @@ describe('DocumentImporter', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Listo para importar')).toBeInTheDocument();
+      expect(screen.getByText('Formato no compatible')).toBeInTheDocument();
     });
-
-    const selector = screen.getByTestId('document-mode-selector');
-    expect(selector).toBeInTheDocument();
-    expect(screen.getByText(copy.documentModeFixedPdfTitle)).toBeInTheDocument();
-    expect(screen.getByText(copy.documentModeEditableTitle)).toBeInTheDocument();
-    expect(screen.getByText(copy.documentModeFixedPdfRecommended)).toBeInTheDocument();
-
-    const fixedRadio = screen.getByTestId('document-mode-fixed-pdf').querySelector('input[type="radio"]');
-    expect(fixedRadio).toBeChecked();
-
-    const hiddenInput = screen.getByTestId('document-mode-hidden-input');
-    expect(hiddenInput).toHaveAttribute('value', 'fixed-pdf');
-  });
-
-  test('switching to "convert to editable" updates the submitted hidden field', async () => {
-    mockFetchSuccess(14, 'El Plan de Escape de la Mediana Edad');
-    render(<DocumentImporter copy={copy} />);
-
-    const fileInput = screen.getByTestId('source-document-input');
-    fireEvent.change(fileInput, {
-      target: { files: [new File(['x'], 'El_Plan_de_Escape_EBOOK.pdf', { type: 'application/pdf' })] },
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText('Listo para importar')).toBeInTheDocument();
-    });
-
-    const editableRadio = screen.getByTestId('document-mode-editable').querySelector('input[type="radio"]');
-    expect(editableRadio).not.toBeNull();
-    fireEvent.click(editableRadio!);
-
-    expect(screen.getByTestId('document-mode-hidden-input')).toHaveAttribute('value', 'editable');
   });
 
   test('does not show the fixed-pdf mode selector for a DOCX file', async () => {
@@ -317,23 +287,6 @@ describe('DocumentImporter', () => {
 
     expect(screen.queryByTestId('document-mode-selector')).not.toBeInTheDocument();
     expect(screen.queryByTestId('document-mode-hidden-input')).not.toBeInTheDocument();
-  });
-
-  test('fixed-pdf mode labels composition controls as not applicable in the document data modal', async () => {
-    mockFetchSuccess(14, 'El Plan de Escape de la Mediana Edad');
-    render(<DocumentImporter copy={copy} />);
-
-    const fileInput = screen.getByTestId('source-document-input');
-    fireEvent.change(fileInput, {
-      target: { files: [new File(['x'], 'El_Plan_de_Escape_EBOOK.pdf', { type: 'application/pdf' })] },
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('document-data-modal')).toBeInTheDocument();
-    });
-
-    expect(screen.getByTestId('document-data-composition-not-applicable')).toBeInTheDocument();
-    expect(screen.queryByTestId('document-data-font-family-input')).not.toBeInTheDocument();
   });
 
   test('keeps the confirmed font family when reopening the document data modal', async () => {

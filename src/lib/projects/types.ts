@@ -6,6 +6,12 @@ import type { DesignSurface } from './design-surface';
 import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profile/model';
 import type { BrandProfile } from '@/lib/brand/brand-profile';
 import type { CompositionSettings } from './composition';
+import type {
+  CanonicalSourceDocument,
+  SourceCapabilities,
+  SourceFamily,
+  SourceFormat,
+} from './source-model';
 
 export type ProjectStatus = 'draft' | 'active';
 
@@ -96,6 +102,9 @@ export interface ProjectDocumentSource {
   sha256?: string;
   sourceAssetId?: string;
   sourceAccessLevel?: SourceDocumentAccessLevel;
+  sourceFormat?: SourceFormat;
+  sourceFamily?: SourceFamily;
+  capabilities?: SourceCapabilities;
   /**
    * Fase 3: set on an editable copy created from a fixed-pdf project via
    * "Crear copia editable" — the two projects are independent from this
@@ -282,6 +291,10 @@ export interface ImportedDocumentSeed {
   structureModel?: SectionStructureItem[];
   sourceFileName: string;
   sourceMimeType: string;
+  sourceFormat?: SourceFormat;
+  sourceFamily?: SourceFamily;
+  sourceCapabilities?: SourceCapabilities;
+  sourceModel?: CanonicalSourceDocument | null;
   originalDocumentStyleProfile?: import('./source-style-profile').OriginalDocumentStyleProfile | null;
   sourcePaginationBaseline?: import('./source-style-profile').SourcePaginationBaseline | null;
 }

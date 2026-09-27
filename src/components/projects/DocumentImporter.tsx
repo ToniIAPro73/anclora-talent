@@ -51,6 +51,14 @@ type AnalysisResult = {
   detectedManuscriptType?: ManuscriptType;
   /** U6: composition detected from the source file (DOCX Normal style). */
   composition?: { settings: CompositionSettings; source: CompositionSource };
+  sourceFormat?: string;
+  sourceFamily?: string;
+  sourceCapabilities?: {
+    richTypography: boolean | 'semanticMarksOnly' | 'inferred';
+    pageGeometry: boolean | 'semanticMarksOnly' | 'inferred';
+    runFormatting: boolean | 'semanticMarksOnly' | 'inferred';
+    semanticHeadings: boolean | 'semanticMarksOnly' | 'inferred';
+  };
 };
 
 function ConfidenceBadge({ level, copy, testId }: { level: FieldConfidence; copy: AppMessages['project']; testId: string }) {
@@ -87,6 +95,11 @@ function isLegacyDocFile(file: File) {
 
 function isPdfFile(file: File) {
   return file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+}
+
+function isActiveImportFile(file: File) {
+  const extension = file.name.toLowerCase().split('.').pop() ?? '';
+  return ['doc', 'docx', 'odt', 'md', 'markdown', 'txt'].includes(extension) && !isPdfFile(file);
 }
 
 type DocumentMode = 'fixed-pdf' | 'editable';
@@ -207,6 +220,13 @@ export function DocumentImporter({
       return;
     }
 
+    if (!isActiveImportFile(file)) {
+      setImportState('error');
+      setErrorMessage(copy.importFormatUnsupported);
+      onPreprocessingChange?.(false);
+      return;
+    }
+
     try {
       let response: Response;
       let blobUrl: string | null = null;
@@ -267,6 +287,9 @@ export function DocumentImporter({
         parseWarning?: boolean;
         /** U6: composition detected from the source file. */
         composition?: { settings: CompositionSettings; source: CompositionSource };
+        sourceFormat?: string;
+        sourceFamily?: string;
+        sourceCapabilities?: AnalysisResult['sourceCapabilities'];
       } = await response.json().catch(() => ({
         error: response.status === 413 ? 'FILE_TOO_LARGE' : 'IMPORT_FAILED',
       }));
@@ -313,6 +336,9 @@ export function DocumentImporter({
         manuscriptType: data.manuscriptType,
         detectedManuscriptType: data.detectedManuscriptType,
         composition: data.composition,
+        sourceFormat: data.sourceFormat,
+        sourceFamily: data.sourceFamily,
+        sourceCapabilities: data.sourceCapabilities,
       };
       setAnalysis(nextAnalysis);
       onAnalysisChange?.({ fileName: nextAnalysis.sourceFileName, title: nextAnalysis.title });
@@ -469,7 +495,7 @@ export function DocumentImporter({
                   </p>
                 </div>
                 <div className="flex flex-wrap justify-center gap-2">
-                  {['DOCX', 'DOC'].map((format) => (
+                  {['DOCX', 'DOC', 'ODT', 'MD', 'TXT'].map((format) => (
                     <span
                       key={format}
                       className="ac-button ac-button--ghost ac-button--sm pointer-events-none"
@@ -621,6 +647,24 @@ export function DocumentImporter({
                     </p>
                   </div>
                 </div>
+                {analysis.sourceFormat && (
+                  <div className="ac-surface-panel ac-surface-panel--subtle grid gap-3 p-4 sm:grid-cols-3" data-testid="import-source-capabilities">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Source</p>
+                      <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{analysis.sourceFormat.toUpperCase()}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Family</p>
+                      <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{analysis.sourceFamily === 'rich' ? 'Rich document' : analysis.sourceFamily === 'semantic' ? 'Semantic source' : 'Plain text'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Presentation</p>
+                      <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                        {analysis.sourceCapabilities?.richTypography === true ? 'Source-defined' : analysis.sourceFamily === 'semantic' ? 'Semantic only' : 'Not defined by source'}
+                      </p>
+                    </div>
+                  </div>
+                )}
                 {analysis.manuscriptType ? (
                   <div className="ac-surface-panel ac-surface-panel--subtle gap-2 p-4">
                     <label
