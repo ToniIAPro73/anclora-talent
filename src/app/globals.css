@@ -2180,6 +2180,18 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
   display: flex;
 }
 
+.document-data-modal-panel [data-testid="markdown-semantic-stats"] .ac-surface-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 0;
+  padding: 8px 10px;
+}
+
+.document-data-modal-panel [data-testid="markdown-semantic-stats"] .ac-surface-panel p {
+  margin: 0;
+}
+
 .font-selector--open {
   z-index: 101;
 }

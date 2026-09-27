@@ -393,7 +393,7 @@ function DocumentDataModalForm({
       <div
         ref={panelRef}
         data-testid="document-data-modal-panel"
-        className="document-data-modal-panel ac-modal__panel max-w-[1240px] rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-4 shadow-[var(--shadow-strong)] sm:p-5 lg:p-5"
+        className="document-data-modal-panel ac-modal__panel max-w-[1280px] rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-4 shadow-[var(--shadow-strong)] sm:p-5 lg:p-5"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -476,12 +476,12 @@ function DocumentDataModalForm({
               {effectiveMarkdownStats && (
                 <div className="space-y-2" data-testid="markdown-semantic-stats">
                   <h4 className={labelClass}>{copy.markdownStructureHeading}</h4>
-                  <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
                     {([
                       [copy.markdownStatH1, effectiveMarkdownStats.h1], [copy.markdownStatH2, effectiveMarkdownStats.h2], [copy.markdownStatH3, effectiveMarkdownStats.h3], [copy.markdownStatH4, effectiveMarkdownStats.h4],
                       [copy.markdownStatParagraphs, effectiveMarkdownStats.paragraphs], [copy.markdownStatLists, effectiveMarkdownStats.orderedLists + effectiveMarkdownStats.unorderedLists], [copy.markdownStatBlockquotes, effectiveMarkdownStats.blockquotes], [copy.markdownStatTables, effectiveMarkdownStats.tables],
                       [copy.markdownStatLinks, effectiveMarkdownStats.links], [copy.markdownStatImages, effectiveMarkdownStats.images], [copy.markdownStatCode, effectiveMarkdownStats.codeBlocks], [copy.markdownStatFootnotes, effectiveMarkdownStats.footnotes],
-                    ] as const).map(([label, value]) => <div key={label} className="ac-surface-panel ac-surface-panel--subtle min-h-[64px] p-2.5"><p className={labelClass}>{label}</p><p className="mt-0.5 text-base font-semibold text-[var(--text-primary)]">{value}</p></div>)}
+                    ] as const).map(([label, value]) => <div key={label} className="ac-surface-panel ac-surface-panel--subtle p-2"><p className={labelClass}>{label}</p><p className="mt-0.5 text-base font-semibold text-[var(--text-primary)]">{value}</p></div>)}
                   </div>
                 </div>
               )}
