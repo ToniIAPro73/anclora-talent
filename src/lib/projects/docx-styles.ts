@@ -75,8 +75,12 @@ function parseFontFamily(rpr: string): string | undefined {
   const ascii = attrs.match(/\bw:ascii="([^"]+)"/)?.[1];
   const hAnsi = attrs.match(/\bw:hAnsi="([^"]+)"/)?.[1];
   const cs = attrs.match(/\bw:cs="([^"]+)"/)?.[1];
-  const family = ascii ?? hAnsi ?? cs;
-  return family?.trim() || undefined;
+  let family = ascii ?? hAnsi ?? cs;
+  if (!family) return undefined;
+  if (family.includes(';')) {
+    family = family.split(';')[0].trim();
+  }
+  return family.trim() || undefined;
 }
 
 function parseFontSizePt(rpr: string): number | undefined {
