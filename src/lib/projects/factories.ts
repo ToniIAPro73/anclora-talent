@@ -138,6 +138,7 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
             sourceFormat: imported.sourceFormat,
             sourceFamily: imported.sourceFamily,
             capabilities: imported.sourceCapabilities,
+            importPresentationMode: imported.importPresentationMode,
             derivedFromProjectId: input.derivedFrom?.projectId,
             derivedFromSourceAssetId: input.derivedFrom?.sourceAssetId,
           }
@@ -156,6 +157,9 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
               sourceFormat: imported?.sourceFormat,
               sourceFamily: imported?.sourceFamily,
               sourceCapabilities: imported?.sourceCapabilities,
+              importPresentationMode: imported?.importPresentationMode,
+              presentationProvenance: imported?.presentationProvenance,
+              presentationProfileId: imported?.presentationProfileId,
               referenceEditorialProfile: input.referenceEditorialProfile ?? null,
             }
           : null,

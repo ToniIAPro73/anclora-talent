@@ -18,7 +18,7 @@ import {
 } from '@/lib/preview/preview-builder';
 import { chapterBlocksToHtml } from './chapter-html';
 import { mergeReimportedSeed } from './reimport';
-import { deriveCompositionOverrides, parseCompositionSettings } from './composition';
+import { deriveCompositionOverrides, parseCompositionSettings, SYSTEM_COMPOSITION_DEFAULTS } from './composition';
 import type { CoverDesign, UpdateBackCoverInput, UpdateCoverInput, UpdateDocumentInput } from './types';
 import { defaultEditorPreferences, type EditorPreferences } from '@/lib/ui-preferences/preferences';
 import type { DesignLayer, DesignSurface } from './design-surface';
@@ -28,6 +28,7 @@ import { applyReferenceEditorialProfileToComposition } from '@/lib/reference-edi
 import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profile/model';
 import { extractOriginalDocumentStyleProfile } from './docx-styles';
 import { detectSourceFormat, isActiveImportFormat } from './source-model';
+import { isMarkdownPresentationMode, materializedMarkdownComposition, type ImportPresentationMode } from './markdown-presentation';
 
 function parsePalette(value: FormDataEntryValue | null): CoverDesign['palette'] {
   if (value === 'teal' || value === 'sand') {
@@ -71,6 +72,9 @@ export async function createProjectAction(formData: FormData) {
   const referenceEditorialProfileRaw = String(formData.get('referenceEditorialProfile') ?? '').trim();
   // U6: composition reviewed in the pre-create document-data modal (JSON).
   const compositionRaw = String(formData.get('composition') ?? '').trim();
+  const importPresentationModeRaw = String(formData.get('importPresentationMode') ?? '').trim();
+  const requestedImportPresentationMode: ImportPresentationMode | undefined =
+    isMarkdownPresentationMode(importPresentationModeRaw) ? importPresentationModeRaw : undefined;
 
   console.info('[createProjectAction] submit received', {
     userId,
@@ -128,6 +132,9 @@ export async function createProjectAction(formData: FormData) {
     if (!importedDocument && importSessionId) {
       try {
         const { importSessionRepository } = await import('./import-session');
+        if (requestedImportPresentationMode) {
+          await importSessionRepository.setImportPresentationMode(userId, importSessionId, requestedImportPresentationMode);
+        }
         const session = await importSessionRepository.consumeImportSession(userId, importSessionId);
         if (session && session.extractedSeed) {
           const mode: DocumentMode =
@@ -146,6 +153,18 @@ export async function createProjectAction(formData: FormData) {
           };
           importedDocument = constructed;
           sessionComposition = session.composition;
+          if (constructed.sourceFormat === 'markdown') {
+            const mode = requestedImportPresentationMode ?? constructed.importPresentationMode ?? 'source-semantic';
+            importedDocument = {
+              ...constructed,
+              importPresentationMode: mode,
+              presentationProvenance: mode === 'materialized' ? 'TALENT_MATERIALIZED' : 'TALENT_DEFAULT',
+              presentationProfileId: mode === 'materialized' ? 'talent-editorial-markdown-v1' : undefined,
+            };
+            if (mode === 'materialized' && !sessionComposition && !compositionRaw) {
+              sessionComposition = materializedMarkdownComposition();
+            }
+          }
           console.info('[createProjectAction] consumed import session', {
             userId,
             importSessionId,
@@ -214,6 +233,18 @@ export async function createProjectAction(formData: FormData) {
         sourceSizeBytes,
         sourceAccessLevel,
       };
+      if (result.sourceFormat === 'markdown') {
+        const mode = requestedImportPresentationMode ?? 'source-semantic';
+        importedDocument = {
+          ...importedDocument,
+          importPresentationMode: mode,
+          presentationProvenance: mode === 'materialized' ? 'TALENT_MATERIALIZED' : 'TALENT_DEFAULT',
+          presentationProfileId: mode === 'materialized' ? 'talent-editorial-markdown-v1' : undefined,
+        };
+        if (mode === 'materialized' && !compositionRaw) {
+          sessionComposition = materializedMarkdownComposition();
+        }
+      }
     }
 
     const project = await projectRepository.createProject(userId, { title, importedDocument, templateId, referenceEditorialProfile });
@@ -232,9 +263,12 @@ export async function createProjectAction(formData: FormData) {
         const composition = parseCompositionSettings(JSON.parse(compositionRaw));
         if (composition) {
           const current = await projectRepository.getProjectById(userId, project.id);
-          const metadata = {
+            const metadata = {
             ...(current?.document.metadata ?? { title: project.title }),
             composition: deriveCompositionOverrides(composition, current?.document.metadata?.originalDocumentStyleProfile),
+            ...(current?.document.metadata?.sourceFormat === 'markdown' || current?.document.source?.sourceFormat === 'markdown'
+              ? { presentationProvenance: 'USER_OVERRIDE' as const }
+              : {}),
           };
           await projectRepository.saveDocumentExtras(userId, project.id, { metadata });
           console.info('[createProjectAction] composition persisted', {
@@ -1005,6 +1039,16 @@ export async function saveProjectCompositionAction(formData: FormData) {
   const metadata = { ...(project.document.metadata ?? { title: project.title }) };
   if (hasCompositionField) {
     metadata.composition = deriveCompositionOverrides(composition, project.document.metadata?.originalDocumentStyleProfile);
+    if (project.document.metadata?.sourceFormat === 'markdown') {
+      const baseline = project.document.metadata.importPresentationMode === 'materialized'
+        ? materializedMarkdownComposition()
+        : SYSTEM_COMPOSITION_DEFAULTS;
+      const sameMargins = JSON.stringify(composition?.margins ?? null) === JSON.stringify(baseline.margins ?? null);
+      const samePresentation = composition?.fontFamily === baseline.fontFamily && composition?.fontSizePt === baseline.fontSizePt && composition?.lineHeight === baseline.lineHeight && sameMargins;
+      metadata.presentationProvenance = samePresentation
+        ? project.document.metadata.importPresentationMode === 'materialized' ? 'TALENT_MATERIALIZED' : 'TALENT_DEFAULT'
+        : 'USER_OVERRIDE';
+    }
   }
   if (brandChoiceField === 'none') {
     metadata.brandChoice = 'none';

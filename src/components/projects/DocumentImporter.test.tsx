@@ -48,6 +48,7 @@ function mockFetchSuccess(chapterCount = 3, title = 'El título detectado') {
         chapterTitles: ['Introducción', 'Fase 1: Percepción', 'Fase 2: Presencia'],
         warnings: ['La portada contenía varias líneas y se han condensado en un único subtítulo editable.'],
         sourceFileName: 'capitulos.docx',
+        sourceFormat: 'docx',
       }),
     }),
   );
@@ -294,7 +295,7 @@ describe('DocumentImporter', () => {
     render(<DocumentImporter copy={copy} />);
 
     fireEvent.change(screen.getByTestId('source-document-input'), {
-      target: { files: [new File(['contenido'], 'libro.md', { type: 'text/markdown' })] },
+      target: { files: [new File(['contenido'], 'libro.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })] },
     });
 
     await waitFor(() => {
@@ -308,5 +309,36 @@ describe('DocumentImporter', () => {
     fireEvent.click(screen.getByTestId('document-data-reopen-button'));
 
     expect(screen.getByTestId('font-selector-toggle')).toHaveTextContent('Roboto');
+  });
+
+  test('offers Markdown import modes and keeps the source-semantic mode as default', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        title: 'Markdown',
+        chapterCount: 2,
+        chapterTitles: ['Introducción'],
+        warnings: [],
+        sourceFileName: 'manuscrito.md',
+        sourceFormat: 'markdown',
+        sourceFamily: 'semantic',
+        sourceCapabilities: { richTypography: false, pageGeometry: false, runFormatting: 'semanticMarksOnly', semanticHeadings: true },
+        sourceStats: { h1: 1, h2: 2, h3: 1, h4: 0, paragraphs: 4, orderedLists: 1, unorderedLists: 1, blockquotes: 1, tables: 1, links: 2, images: 0, codeBlocks: 1, footnotes: 1 },
+      }),
+    }));
+    render(<DocumentImporter copy={copy} />);
+    fireEvent.change(screen.getByTestId('source-document-input'), {
+      target: { files: [new File(['# H1'], 'manuscrito.md', { type: 'text/markdown' })] },
+    });
+
+    await waitFor(() => expect(screen.getByTestId('markdown-import-mode-selector')).toBeInTheDocument());
+    expect(screen.getByTestId('markdown-import-mode-source-semantic')).toBeChecked();
+    expect(screen.getByText(copy.markdownSourcePresentationNone)).toBeInTheDocument();
+    expect(screen.getByText(copy.markdownDefaultOrigin)).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('markdown-import-mode-materialized'));
+    expect(screen.getByTestId('markdown-import-mode-materialized')).toBeChecked();
+    expect(screen.getByTestId('markdown-materialized-presentation')).toBeInTheDocument();
+    expect(screen.getByTestId('import-presentation-mode-input')).toHaveValue('materialized');
   });
 });

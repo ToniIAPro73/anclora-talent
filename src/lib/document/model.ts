@@ -17,6 +17,7 @@
 import type { CompositionSettings } from '@/lib/projects/composition';
 import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profile/model';
 import type { CanonicalSourceDocument, SourceCapabilities, SourceFamily, SourceFormat } from '@/lib/projects/source-model';
+import type { ImportPresentationMode, PresentationProvenance } from '@/lib/projects/markdown-presentation';
 
 export type InlineMarkType = 'bold' | 'italic' | 'link';
 
@@ -156,6 +157,9 @@ export interface DocumentMetadata {
   sourceFormat?: SourceFormat;
   sourceFamily?: SourceFamily;
   sourceCapabilities?: SourceCapabilities;
+  importPresentationMode?: ImportPresentationMode;
+  presentationProvenance?: PresentationProvenance;
+  presentationProfileId?: string;
 }
 
 export interface SemanticDocument {

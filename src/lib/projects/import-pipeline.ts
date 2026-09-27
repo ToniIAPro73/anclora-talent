@@ -1,8 +1,9 @@
 import type { ImportedDocumentSeed, ImportFieldConfidence, SectionSemanticType, SectionStructureItem } from './types';
-import { createSourceModel, escapeSourceHtml, type CanonicalSourceDocument, detectSourceFormat } from './source-model';
+import { createSourceModel, escapeSourceHtml, sourceModelToHtml, type CanonicalSourceDocument, detectSourceFormat } from './source-model';
+import type { ImportPresentationMode, PresentationProvenance } from './markdown-presentation';
 
 const SUPPORTED_IMPORT_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'odt', 'txt', 'md', 'markdown']);
-const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote|table)[^>]*>[\s\S]*?<\/\1>/gi;
+const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote|table|pre|figure)[^>]*>[\s\S]*?<\/\1>/gi;
 const ALL_CAPS_RE = /^(?=.{40,})[^a-z]*[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ0-9 .,·:;()\-–—]+$/;
 const MAJOR_HEADING_RE = /^(?:cap[ií]tulo|chapter|introducci[oó]n|pr[oó]logo|prologo|[íi]ndice|indice|fase\s+\d+|parte\s+\d+|secci[oó]n|ep[ií]logo|conclusi[oó]n|glosario|bibliograf[ií]a|cierre|despu[eé]s\s+de|recursos(?:\s+recomendados)?|anexos?|ap[eé]ndices?)(?:\b|:)/i;
 const MINOR_HEADING_RE = /^(?:d[ií]a\s+\d+|tema\s+\d+|idea\s+clave|reto\s+de\s+acci[oó]n|preguntas?\s+de\s+reflexi[oó]n|ejercicio|caso|las\s+cinco\s+claves|cierre\s+de\s+fase)(?:\b|:)/i;
@@ -983,7 +984,7 @@ function parseHtmlBlocks(input: string) {
 
   for (const fragment of matches) {
     const clean = normalizeHtmlFragment(stripImportedTocPageMarkup(fragment));
-    const tag = clean.match(/^<(h[1-6]|p|ul|ol|blockquote|table)/i)?.[1]?.toLowerCase() ?? 'p';
+    const tag = clean.match(/^<(h[1-6]|p|ul|ol|blockquote|table|pre|figure)/i)?.[1]?.toLowerCase() ?? 'p';
     const text = textFromHtml(clean);
     const hasImage = /<img\b[^>]*>/i.test(clean);
     if ((!text && !hasImage) || (text && isDecorativeLine(text))) continue;
@@ -1714,6 +1715,9 @@ export function buildImportedDocumentSeed({
   html,
   sourcePageCount,
   sourceModel: sourceModelInput,
+  importPresentationMode,
+  presentationProvenance,
+  presentationProfileId,
   manuscriptTypeOverride,
 }: {
   fileName: string;
@@ -1722,6 +1726,9 @@ export function buildImportedDocumentSeed({
   html?: string | null;
   sourcePageCount?: number;
   sourceModel?: CanonicalSourceDocument | null;
+  importPresentationMode?: ImportPresentationMode;
+  presentationProvenance?: PresentationProvenance;
+  presentationProfileId?: string;
   /** M5 — explicit preset from the analysis panel selector; leave unset to
    *  keep today's auto-detected chapter-splitting behavior unchanged. */
   manuscriptTypeOverride?: ManuscriptType;
@@ -1732,8 +1739,13 @@ export function buildImportedDocumentSeed({
   const fallbackTitle = fileNameToTitle(fileName) || 'Documento importado';
   const rawTitle = frontMatter.title || (paragraphs[0] && paragraphs[0].length <= 120 ? paragraphs[0] : fallbackTitle);
   const textImportMode = inferTextImportMode(fileName, mimeType);
+  const detectedSourceFormat = detectSourceFormat(fileName, mimeType);
+  const canonicalSourceModel = sourceModelInput ?? createSourceModel(
+    detectedSourceFormat ?? 'txt',
+    { text: contentText, html },
+  );
 
-  const normalizedHtml = html? html : null;
+  const normalizedHtml = detectedSourceFormat === 'markdown' ? sourceModelToHtml(canonicalSourceModel) : html ? html : null;
   const htmlBlocks = normalizedHtml? parseHtmlBlocks(normalizedHtml) : [];
   const textBlocks = parseTextBlocks(contentText, textImportMode);
 
@@ -1868,7 +1880,9 @@ export function buildImportedDocumentSeed({
         chapterNumber: semantics.chapterNumber,
         blocks: chapter.blocks.map((block) => ({
           type: block.type as ImportedDocumentSeed['blocks'][number]['type'],
-          content: block.content,
+          content: detectedSourceFormat === 'markdown' && block.type === 'heading'
+            ? textFromHtml(block.content)
+            : block.content,
         })),
       };
     },
@@ -1918,13 +1932,13 @@ export function buildImportedDocumentSeed({
     structureModel,
     sourceFileName: fileName,
     sourceMimeType: mimeType,
-    sourceFormat: sourceModelInput?.format ?? detectSourceFormat(fileName, mimeType) ?? undefined,
-    sourceFamily: sourceModelInput?.family,
-    sourceCapabilities: sourceModelInput?.capabilities,
-    sourceModel: sourceModelInput ?? createSourceModel(
-      detectSourceFormat(fileName, mimeType) ?? 'txt',
-      { text: contentText, html: normalizedHtml },
-    ),
+    sourceFormat: canonicalSourceModel.format ?? detectedSourceFormat ?? undefined,
+    sourceFamily: canonicalSourceModel.family,
+    sourceCapabilities: canonicalSourceModel.capabilities,
+    sourceModel: canonicalSourceModel,
+    importPresentationMode: importPresentationMode ?? (detectSourceFormat(fileName, mimeType) === 'markdown' ? 'source-semantic' : undefined),
+    presentationProvenance: presentationProvenance ?? (detectSourceFormat(fileName, mimeType) === 'markdown' ? 'TALENT_DEFAULT' : undefined),
+    presentationProfileId,
   };
 }
 

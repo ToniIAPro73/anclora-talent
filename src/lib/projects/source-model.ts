@@ -1,4 +1,8 @@
 import JSZip from 'jszip';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkGfm from 'remark-gfm';
+import type { Content, PhrasingContent, Root, RootContent } from 'mdast';
 
 export type SourceFormat = 'doc' | 'docx' | 'odt' | 'markdown' | 'txt' | 'pages' | 'pdf';
 export type SourceFamily = 'rich' | 'semantic' | 'plain' | 'future' | 'disabled';
@@ -18,6 +22,7 @@ export interface SourceCapabilities {
   richTypography: CapabilityLevel;
   paragraphFormatting: CapabilityLevel;
   runFormatting: CapabilityLevel;
+  semanticInlineMarks: CapabilityLevel;
   pageGeometry: CapabilityLevel;
   sections: CapabilityLevel;
   headersFooters: CapabilityLevel;
@@ -29,6 +34,7 @@ export interface SourceCapabilities {
   images: CapabilityLevel;
   links: CapabilityLevel;
   codeBlocks: CapabilityLevel;
+  footnotes: CapabilityLevel;
 }
 
 export interface SourceProvenanceEntry {
@@ -54,12 +60,13 @@ export interface SourceTextRun {
 
 export interface SourceBlock {
   id: string;
-  type: 'paragraph' | 'heading' | 'blockquote' | 'orderedList' | 'unorderedList' | 'table' | 'image' | 'codeBlock' | 'horizontalRule';
+  type: 'paragraph' | 'heading' | 'blockquote' | 'orderedList' | 'unorderedList' | 'table' | 'image' | 'codeBlock' | 'horizontalRule' | 'footnote' | 'footnoteReference';
   level?: number;
   text?: string;
   runs?: SourceTextRun[];
   items?: SourceBlock[];
   rows?: string[][];
+  cellRuns?: SourceTextRun[][];
   language?: string;
   src?: string;
   alt?: string;
@@ -84,6 +91,7 @@ const RICH_CAPABILITIES: SourceCapabilities = {
   richTypography: true,
   paragraphFormatting: true,
   runFormatting: true,
+  semanticInlineMarks: false,
   pageGeometry: true,
   sections: true,
   headersFooters: true,
@@ -95,12 +103,14 @@ const RICH_CAPABILITIES: SourceCapabilities = {
   images: true,
   links: true,
   codeBlocks: false,
+  footnotes: false,
 };
 
 const MARKDOWN_CAPABILITIES: SourceCapabilities = {
   richTypography: false,
   paragraphFormatting: false,
   runFormatting: 'semanticMarksOnly',
+  semanticInlineMarks: true,
   pageGeometry: false,
   sections: false,
   headersFooters: false,
@@ -112,12 +122,14 @@ const MARKDOWN_CAPABILITIES: SourceCapabilities = {
   images: true,
   links: true,
   codeBlocks: true,
+  footnotes: true,
 };
 
 const TEXT_CAPABILITIES: SourceCapabilities = {
   richTypography: false,
   paragraphFormatting: false,
   runFormatting: false,
+  semanticInlineMarks: false,
   pageGeometry: false,
   sections: false,
   headersFooters: false,
@@ -129,6 +141,7 @@ const TEXT_CAPABILITIES: SourceCapabilities = {
   images: false,
   links: false,
   codeBlocks: false,
+  footnotes: false,
 };
 
 const FUTURE_CAPABILITIES = { ...RICH_CAPABILITIES, richTypography: 'inferred' as const };
@@ -164,6 +177,44 @@ export function isActiveImportFormat(format: SourceFormat | null): format is Exc
   return format === 'doc' || format === 'docx' || format === 'odt' || format === 'markdown' || format === 'txt';
 }
 
+export interface SourceSemanticStats {
+  h1: number;
+  h2: number;
+  h3: number;
+  h4: number;
+  paragraphs: number;
+  orderedLists: number;
+  unorderedLists: number;
+  blockquotes: number;
+  tables: number;
+  links: number;
+  images: number;
+  codeBlocks: number;
+  footnotes: number;
+}
+
+export function summarizeSourceModel(model: CanonicalSourceDocument): SourceSemanticStats {
+  const stats: SourceSemanticStats = {
+    h1: 0, h2: 0, h3: 0, h4: 0, paragraphs: 0, orderedLists: 0, unorderedLists: 0,
+    blockquotes: 0, tables: 0, links: 0, images: 0, codeBlocks: 0, footnotes: 0,
+  };
+  const visit = (block: SourceBlock) => {
+    if (block.type === 'heading' && block.level && block.level <= 4) stats[`h${block.level}` as 'h1' | 'h2' | 'h3' | 'h4'] += 1;
+    if (block.type === 'paragraph') stats.paragraphs += 1;
+    if (block.type === 'orderedList') stats.orderedLists += 1;
+    if (block.type === 'unorderedList') stats.unorderedLists += 1;
+    if (block.type === 'blockquote') stats.blockquotes += 1;
+    if (block.type === 'table') stats.tables += 1;
+    if (block.type === 'image') stats.images += 1;
+    if (block.type === 'codeBlock') stats.codeBlocks += 1;
+    if (block.type === 'footnote' || block.type === 'footnoteReference') stats.footnotes += 1;
+    for (const run of block.runs ?? []) stats.links += (run.semanticMarks ?? []).filter((mark) => mark.type === 'link').length;
+    for (const child of block.items ?? []) visit(child);
+  };
+  for (const block of model.blocks) visit(block);
+  return stats;
+}
+
 function stableId(prefix: string, index: number, value: string) {
   let hash = 5381;
   for (const char of value) hash = (hash * 33) ^ char.charCodeAt(0);
@@ -192,32 +243,50 @@ export function escapeSourceHtml(input: string) {
   return input.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-function markdownRuns(text: string): SourceTextRun[] {
+function mdastText(node: Content): string {
+  if ('value' in node && typeof node.value === 'string') return node.value;
+  if (node.type === 'image') return node.alt ?? '';
+  if (node.type === 'footnoteReference') return `[^${node.identifier}]`;
+  if (node.type === 'break') return '\n';
+  if ('children' in node) return node.children.map((child) => mdastText(child)).join('');
+  return '';
+}
+
+function markdownRuns(children: PhrasingContent[]): SourceTextRun[] {
+  const textParts: string[] = [];
   const marks: SourceInlineMark[] = [];
-  const patterns: Array<[RegExp, SourceInlineMark['type']]> = [
-    [/\*\*([^*\n]+)\*\*/g, 'strong'],
-    [/__([^_\n]+)__/g, 'strong'],
-    [/(?<!\*)\*([^*\n]+)\*(?!\*)/g, 'emphasis'],
-    [/(?<!_)_([^_\n]+)_(?!_)/g, 'emphasis'],
-    [/`([^`\n]+)`/g, 'inlineCode'],
-    [/\[([^\]]+)\]\(([^)]+)\)/g, 'link'],
-    [/~~([^~\n]+)~~/g, 'strikethrough'],
-  ];
-  for (const [pattern, type] of patterns) {
-    for (const match of text.matchAll(pattern)) {
-      const start = match.index ?? 0;
-      const raw = match[0];
-      const valueStart = type === 'link' ? start + 1 : start + (type === 'strong' ? 2 : 1);
-      const valueEnd = type === 'link' ? start + (match[1]?.length ?? 0) + 1 : valueStart + (match[1]?.length ?? 0);
-      marks.push({ type, start: valueStart, end: valueEnd, ...(type === 'link' ? { href: match[2] } : {}) });
-      void raw;
+  let offset = 0;
+  const visit = (nodes: PhrasingContent[], inherited: SourceInlineMark['type'][] = [], href?: string) => {
+    for (const node of nodes) {
+      const text = mdastText(node);
+      const start = offset;
+      if (node.type === 'link') {
+        visit(node.children, [...inherited, 'link'], node.url);
+      } else if (node.type === 'strong') {
+        visit(node.children, [...inherited, 'strong'], href);
+      } else if (node.type === 'emphasis') {
+        visit(node.children, [...inherited, 'emphasis'], href);
+      } else if (node.type === 'delete') {
+        visit(node.children, [...inherited, 'strikethrough'], href);
+      } else if (node.type === 'inlineCode') {
+        textParts.push(text);
+        offset += text.length;
+        marks.push({ type: 'inlineCode', start, end: offset });
+      } else {
+        textParts.push(text);
+        offset += text.length;
+      }
+      for (const type of inherited) {
+        marks.push({ type, start, end: offset, ...(type === 'link' && href ? { href } : {}) });
+      }
     }
-  }
-  const plain = text
-    .replace(/\*\*|__|\*|_|`|~~/g, '')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1');
-  const uniqueMarks = marks.filter((mark, index, all) => all.findIndex((candidate) => candidate.type === mark.type && candidate.href === mark.href && candidate.start < mark.end && mark.start < candidate.end) === index);
-  return [{ text: plain, semanticMarks: uniqueMarks, provenance: provenance('SOURCE_SEMANTIC') }];
+  };
+  visit(children);
+  return [{
+    text: textParts.join(''),
+    semanticMarks: marks.filter((mark) => mark.end > mark.start),
+    provenance: provenance('SOURCE_SEMANTIC'),
+  }];
 }
 
 function markdownBlock(type: SourceBlock['type'], index: number, text: string, extra: Partial<SourceBlock> = {}): SourceBlock {
@@ -225,94 +294,105 @@ function markdownBlock(type: SourceBlock['type'], index: number, text: string, e
     id: stableId('md', index, text),
     type,
     text,
-    runs: type === 'codeBlock' ? undefined : markdownRuns(text),
+    runs: type === 'codeBlock' ? undefined : [{ text, provenance: provenance('SOURCE_SEMANTIC') }],
     provenance: provenance('SOURCE_SEMANTIC'),
     ...extra,
   };
 }
 
-export function parseMarkdownSource(input: string): CanonicalSourceDocument {
-  const lines = input.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').split('\n');
-  const blocks: SourceBlock[] = [];
-  let paragraph: string[] = [];
-  let code: string[] | null = null;
-  let codeLanguage = '';
-
-  const flushParagraph = () => {
-    const text = paragraph.join('\n').trim();
-    if (text) blocks.push(markdownBlock('paragraph', blocks.length, text));
-    paragraph = [];
-  };
-
-  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
-    const line = lines[lineIndex];
-    if (/^\s*\|.*\|\s*$/.test(line) && /^\s*\|?\s*:?-{3,}/.test(lines[lineIndex + 1] ?? '')) {
-      flushParagraph();
-      const rows: string[][] = [];
-      const parseRow = (value: string) => value.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim());
-      rows.push(parseRow(line));
-      lineIndex += 2;
-      while (lineIndex < lines.length && /^\s*\|.*\|\s*$/.test(lines[lineIndex])) {
-        rows.push(parseRow(lines[lineIndex]));
-        lineIndex += 1;
-      }
-      lineIndex -= 1;
-      blocks.push(markdownBlock('table', blocks.length, rows.map((row) => row.join(' | ')).join('\n'), { rows }));
-      continue;
-    }
-    const fence = line.match(/^\s*```(.*)$/);
-    if (fence) {
-      if (code) {
-        blocks.push(markdownBlock('codeBlock', blocks.length, code.join('\n'), { language: codeLanguage, runs: undefined }));
-        code = null;
-        codeLanguage = '';
-      } else {
-        flushParagraph();
-        code = [];
-        codeLanguage = fence[1].trim();
-      }
-      continue;
-    }
-    if (code) {
-      code.push(line);
-      continue;
-    }
-    const heading = line.match(/^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$/);
-    if (heading) {
-      flushParagraph();
-      blocks.push(markdownBlock('heading', blocks.length, heading[2], { level: heading[1].length }));
-      continue;
-    }
-    if (/^\s*(?:---+|___+|\*\*\*+)\s*$/.test(line)) {
-      flushParagraph();
-      blocks.push(markdownBlock('horizontalRule', blocks.length, ''));
-      continue;
-    }
-    if (/^\s*>/.test(line)) {
-      flushParagraph();
-      blocks.push(markdownBlock('blockquote', blocks.length, line.replace(/^\s*>\s?/, '')));
-      continue;
-    }
-    const list = line.match(/^\s*([-*+] |\d+[.)]\s+)(.+)$/);
-    if (list) {
-      flushParagraph();
-      const ordered = /^\d/.test(list[1]);
-      const previous = blocks.at(-1);
-      if (previous?.type === (ordered ? 'orderedList' : 'unorderedList')) {
-        previous.items = [...(previous.items ?? []), markdownBlock('paragraph', blocks.length, list[2])];
-      } else {
-        blocks.push(markdownBlock(ordered ? 'orderedList' : 'unorderedList', blocks.length, '', { items: [markdownBlock('paragraph', blocks.length, list[2])] }));
-      }
-      continue;
-    }
-    if (!line.trim()) {
-      flushParagraph();
-      continue;
-    }
-    paragraph.push(line);
+function markdownBlockFromAst(node: RootContent, index: number): SourceBlock | null {
+  if (node.type === 'heading') {
+    const text = node.children.map((child) => mdastText(child)).join('');
+    return markdownBlock('heading', index, text, { level: node.depth, runs: markdownRuns(node.children) });
   }
-  if (code) blocks.push(markdownBlock('codeBlock', blocks.length, code.join('\n'), { language: codeLanguage, runs: undefined }));
-  flushParagraph();
+  if (node.type === 'paragraph') {
+    const text = node.children.map((child) => mdastText(child)).join('');
+    return text ? markdownBlock('paragraph', index, text, { runs: markdownRuns(node.children) }) : null;
+  }
+  if (node.type === 'blockquote') {
+    const items = node.children.map((child, childIndex) => markdownBlockFromAst(child, childIndex)).filter((item): item is SourceBlock => Boolean(item));
+    return markdownBlock('blockquote', index, items.map((item) => item.text ?? '').join('\n'), { items });
+  }
+  if (node.type === 'list') {
+    const items = node.children.flatMap((item) => item.children.map((child, childIndex) => markdownBlockFromAst(child, childIndex)).filter((child): child is SourceBlock => Boolean(child)));
+    return markdownBlock(node.ordered ? 'orderedList' : 'unorderedList', index, items.map((item) => item.text ?? '').join('\n'), { items });
+  }
+  if (node.type === 'table') {
+    const rows = node.children.map((row) => row.children.map((cell) => cell.children.map((child) => mdastText(child)).join('')));
+    const cellRuns = node.children.flatMap((row) => row.children.map((cell) => markdownRuns(cell.children)));
+    return markdownBlock('table', index, rows.map((row) => row.join(' | ')).join('\n'), { rows, cellRuns });
+  }
+  if (node.type === 'code') {
+    return markdownBlock('codeBlock', index, node.value, { language: node.lang ?? undefined, runs: undefined });
+  }
+  if (node.type === 'thematicBreak') return markdownBlock('horizontalRule', index, '');
+  if (node.type === 'image') return markdownBlock('image', index, node.alt ?? '', { src: node.url, alt: node.alt ?? undefined });
+  if (node.type === 'footnoteDefinition') {
+    const items = node.children.map((child, childIndex) => markdownBlockFromAst(child, childIndex)).filter((item): item is SourceBlock => Boolean(item));
+    return markdownBlock('footnote', index, items.map((item) => item.text ?? '').join('\n'), { items });
+  }
+  if (node.type === 'footnoteReference') {
+    return markdownBlock('footnoteReference', index, node.identifier ?? node.label ?? '');
+  }
+  return null;
+}
+
+function inlineSourceHtml(run: SourceTextRun): string {
+  const marks = [...(run.semanticMarks ?? [])].filter((mark) => mark.end > mark.start).sort((a, b) => a.start - b.start || b.end - a.end);
+  if (marks.length === 0) return escapeSourceHtml(run.text);
+  const boundaries = new Set([0, run.text.length]);
+  for (const mark of marks) {
+    boundaries.add(Math.max(0, Math.min(run.text.length, mark.start)));
+    boundaries.add(Math.max(0, Math.min(run.text.length, mark.end)));
+  }
+  const points = [...boundaries].sort((a, b) => a - b);
+  return points.slice(0, -1).map((start, index) => {
+    const end = points[index + 1];
+    const active = marks.filter((mark) => mark.start <= start && mark.end >= end);
+    let value = escapeSourceHtml(run.text.slice(start, end));
+    for (const mark of active.reverse()) {
+      value = mark.type === 'strong' ? `<strong>${value}</strong>`
+        : mark.type === 'emphasis' ? `<em>${value}</em>`
+          : mark.type === 'strikethrough' ? `<del>${value}</del>`
+            : mark.type === 'inlineCode' ? `<code>${value}</code>`
+              : mark.href ? `<a href="${escapeSourceHtml(mark.href)}">${value}</a>` : value;
+    }
+    return value;
+  }).join('');
+}
+
+function sourceBlockInlineHtml(block: SourceBlock): string {
+  return (block.runs ?? [{ text: block.text ?? '', provenance: provenance('SOURCE_SEMANTIC') }]).map(inlineSourceHtml).join('');
+}
+
+export function sourceModelToHtml(model: CanonicalSourceDocument): string {
+  const render = (block: SourceBlock): string => {
+    if (block.type === 'heading') return `<h${Math.min(block.level ?? 1, 6)}>${sourceBlockInlineHtml(block)}</h${Math.min(block.level ?? 1, 6)}>`;
+    if (block.type === 'paragraph') return `<p>${sourceBlockInlineHtml(block).replace(/\n/g, '<br />')}</p>`;
+    if (block.type === 'blockquote') return `<blockquote>${(block.items ?? []).map(render).join('')}</blockquote>`;
+    if (block.type === 'orderedList' || block.type === 'unorderedList') return `<${block.type === 'orderedList' ? 'ol' : 'ul'}>${(block.items ?? []).map((item) => `<li>${sourceBlockInlineHtml(item)}</li>`).join('')}</${block.type === 'orderedList' ? 'ol' : 'ul'}>`;
+    if (block.type === 'table') {
+      let cellIndex = 0;
+      const renderCell = (cell: string) => {
+        const html = (block.cellRuns?.[cellIndex++] ?? [{ text: cell, provenance: provenance('SOURCE_SEMANTIC') }]).map(inlineSourceHtml).join('');
+        return html;
+      };
+      return `<table><thead><tr>${(block.rows?.[0] ?? []).map((cell) => `<th>${renderCell(cell)}</th>`).join('')}</tr></thead><tbody>${(block.rows ?? []).slice(1).map((row) => `<tr>${row.map((cell) => `<td>${renderCell(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    }
+    if (block.type === 'image') return block.src ? `<figure><img src="${escapeSourceHtml(block.src)}" alt="${escapeSourceHtml(block.alt ?? '')}" /></figure>` : '';
+    if (block.type === 'codeBlock') return `<pre><code${block.language ? ` data-language="${escapeSourceHtml(block.language)}"` : ''}>${escapeSourceHtml(block.text ?? '')}</code></pre>`;
+    if (block.type === 'horizontalRule') return '<hr />';
+    if (block.type === 'footnote') return `<p class="editorial-footnote" data-footnote="true">${escapeSourceHtml(block.text ?? '')}</p>`;
+    return `<sup data-footnote-reference="${escapeSourceHtml(block.text ?? '')}">${escapeSourceHtml(block.text ?? '')}</sup>`;
+  };
+  return model.blocks.map(render).join('');
+}
+
+export function parseMarkdownSource(input: string): CanonicalSourceDocument {
+  const tree = unified().use(remarkParse).use(remarkGfm).parse(input.replace(/^\uFEFF/, '')) as Root;
+  const blocks = tree.children
+    .map((node, index) => markdownBlockFromAst(node, index))
+    .filter((block): block is SourceBlock => Boolean(block));
 
   return {
     version: 1,

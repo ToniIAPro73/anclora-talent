@@ -27,6 +27,9 @@ import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
 import { FontSelector } from './cover-studio/FontSelector';
 import { BRAND_IDENTITY_ENABLED } from '@/lib/features/capabilities';
+import type { ImportPresentationMode } from '@/lib/projects/markdown-presentation';
+import { MARKDOWN_MATERIALIZED_PROFILE } from '@/lib/projects/markdown-presentation';
+import { summarizeSourceModel, type SourceSemanticStats } from '@/lib/projects/source-model';
 
 type Copy = AppMessages['project'];
 
@@ -54,6 +57,10 @@ interface DocumentDataModalProps {
    * instead of silently accepting settings that would never be used.
    */
   documentMode?: 'fixed-pdf' | 'editable';
+  sourceFormat?: string;
+  sourceStats?: SourceSemanticStats;
+  importPresentationMode?: ImportPresentationMode;
+  onImportPresentationModeChange?: (mode: ImportPresentationMode) => void;
 }
 
 type MarginPresetKey = MarginPreset | 'custom';
@@ -137,9 +144,16 @@ function DocumentDataModalForm({
   project,
   brandProfiles = [],
   documentMode,
+  sourceFormat,
+  sourceStats,
+  importPresentationMode,
+  onImportPresentationModeChange,
 }: DocumentDataModalProps) {
   const router = useRouter();
   const fixedPdf = documentMode === 'fixed-pdf' || project?.document.source?.mode === 'fixed-pdf';
+  const markdownSource = sourceFormat === 'markdown' || project?.document.source?.sourceFormat === 'markdown';
+  const markdownMode = importPresentationMode ?? project?.document.metadata?.importPresentationMode ?? 'source-semantic';
+  const effectiveMarkdownStats = sourceStats ?? (project?.document.metadata?.sourceModel ? summarizeSourceModel(project.document.metadata.sourceModel) : undefined);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState('');
   const panelRef = useRef<HTMLDivElement>(null);
@@ -180,7 +194,7 @@ function DocumentDataModalForm({
   }, [onClose]);
 
   // Source style baseline extracted from original imported document
-  const sourceProfile = project?.document.metadata?.originalDocumentStyleProfile;
+  const sourceProfile = markdownSource ? undefined : project?.document.metadata?.originalDocumentStyleProfile;
   const sourceFontFamily = sourceProfile?.body?.fontFamily ?? initialSettings?.fontFamily;
   const sourceFontSizePt = sourceProfile?.body?.fontSizePt ?? initialSettings?.fontSizePt;
   const sourceLineHeight = sourceProfile?.body?.lineHeight ?? initialSettings?.lineHeight;
@@ -321,7 +335,7 @@ function DocumentDataModalForm({
   };
 
   const handlePreCreateConfirm = () => {
-    onConfirm?.(buildSettings());
+    if (!markdownSource) onConfirm?.(buildSettings());
     onClose();
   };
 
@@ -416,8 +430,75 @@ function DocumentDataModalForm({
         </div>
 
         <div className="mt-6 space-y-6">
+          {markdownSource && (
+            <section className="space-y-4" data-testid="markdown-import-data">
+              <div className="ac-surface-panel ac-surface-panel--subtle space-y-3 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className={labelClass}>{copy.markdownSourceHeading}</h4>
+                  <span className="inline-flex rounded-full border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--accent-text)]">Markdown</span>
+                </div>
+                <p className="text-sm text-[var(--text-secondary)]">{copy.markdownSourceDescription}</p>
+              </div>
+              {mode === 'pre-create' && onImportPresentationModeChange ? (
+                <div className="space-y-3" data-testid="markdown-import-mode-selector">
+                  <h4 className={labelClass}>{copy.markdownImportModeHeading}</h4>
+                  {([
+                    ['source-semantic', copy.markdownModeSourceSemanticTitle, copy.markdownModeSourceSemanticDescription, true],
+                    ['materialized', copy.markdownModeMaterializedTitle, copy.markdownModeMaterializedDescription, false],
+                  ] as const).map(([value, title, description, recommended]) => (
+                    <label key={value} className={`ac-surface-panel ac-surface-panel--subtle flex cursor-pointer gap-3 p-4 text-left ${markdownMode === value ? 'border-[var(--accent)]' : ''}`}>
+                      <input
+                        type="radio"
+                        name="markdown-import-mode"
+                        data-testid={`markdown-import-mode-${value}`}
+                        value={value}
+                        checked={markdownMode === value}
+                        onChange={() => onImportPresentationModeChange(value)}
+                        className="mt-1 h-4 w-4 shrink-0"
+                      />
+                      <span className="min-w-0 space-y-1">
+                        <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
+                          {title}
+                          {recommended ? <span className="ac-button ac-button--ghost ac-button--sm pointer-events-none text-[10px] uppercase tracking-[0.1em]">{copy.markdownModeRecommended}</span> : null}
+                        </span>
+                        <span className="block text-xs leading-6 text-[var(--text-secondary)]">{description}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              ) : null}
+              {effectiveMarkdownStats && (
+                <div className="space-y-3" data-testid="markdown-semantic-stats">
+                  <h4 className={labelClass}>{copy.markdownStructureHeading}</h4>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {([
+                      [copy.markdownStatH1, effectiveMarkdownStats.h1], [copy.markdownStatH2, effectiveMarkdownStats.h2], [copy.markdownStatH3, effectiveMarkdownStats.h3], [copy.markdownStatH4, effectiveMarkdownStats.h4],
+                      [copy.markdownStatParagraphs, effectiveMarkdownStats.paragraphs], [copy.markdownStatLists, effectiveMarkdownStats.orderedLists + effectiveMarkdownStats.unorderedLists], [copy.markdownStatBlockquotes, effectiveMarkdownStats.blockquotes], [copy.markdownStatTables, effectiveMarkdownStats.tables],
+                      [copy.markdownStatLinks, effectiveMarkdownStats.links], [copy.markdownStatImages, effectiveMarkdownStats.images], [copy.markdownStatCode, effectiveMarkdownStats.codeBlocks], [copy.markdownStatFootnotes, effectiveMarkdownStats.footnotes],
+                    ] as const).map(([label, value]) => <div key={label} className="ac-surface-panel ac-surface-panel--subtle p-3"><p className={labelClass}>{label}</p><p className="mt-1 text-lg font-semibold text-[var(--text-primary)]">{value}</p></div>)}
+                  </div>
+                </div>
+              )}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="ac-surface-panel ac-surface-panel--subtle p-4">
+                  <p className={labelClass}>{copy.markdownSourcePresentationHeading}</p>
+                  <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{copy.markdownSourcePresentationNone}</p>
+                </div>
+                <div className="ac-surface-panel ac-surface-panel--subtle p-4">
+                  <p className={labelClass}>{copy.markdownCurrentPresentationHeading}</p>
+                  <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{markdownMode === 'materialized' ? copy.markdownMaterializedOrigin : copy.markdownDefaultOrigin}</p>
+                </div>
+              </div>
+              {markdownMode === 'materialized' && (
+                <div className="ac-surface-panel ac-surface-panel--subtle p-4" data-testid="markdown-materialized-presentation">
+                  <p className={labelClass}>{copy.markdownMaterializedPresentationHeading}</p>
+                  <p className="mt-2 text-sm text-[var(--text-secondary)]">{MARKDOWN_MATERIALIZED_PROFILE.settings.fontFamily} · {MARKDOWN_MATERIALIZED_PROFILE.settings.fontSizePt} pt · {MARKDOWN_MATERIALIZED_PROFILE.settings.lineHeight} · {copy.markdownMaterializedOrigin}</p>
+                </div>
+              )}
+            </section>
+          )}
           {/* Composition */}
-          <section className="space-y-4">
+          {(!markdownSource || mode === 'project') && <section className="space-y-4">
             <div className="flex items-center justify-between">
               <h4 className={labelClass}>{copy.documentDataCompositionHeading}</h4>
               {hasAnyOverride && (
@@ -598,7 +679,7 @@ function DocumentDataModalForm({
                 </div>
               </>
             )}
-          </section>
+          </section>}
 
           {mode === 'project' && !fixedPdf && (
             <>

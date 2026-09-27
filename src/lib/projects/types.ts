@@ -12,6 +12,7 @@ import type {
   SourceFamily,
   SourceFormat,
 } from './source-model';
+import type { ImportPresentationMode, PresentationProvenance } from './markdown-presentation';
 
 export type ProjectStatus = 'draft' | 'active';
 
@@ -105,6 +106,7 @@ export interface ProjectDocumentSource {
   sourceFormat?: SourceFormat;
   sourceFamily?: SourceFamily;
   capabilities?: SourceCapabilities;
+  importPresentationMode?: ImportPresentationMode;
   /**
    * Fase 3: set on an editable copy created from a fixed-pdf project via
    * "Crear copia editable" — the two projects are independent from this
@@ -295,6 +297,9 @@ export interface ImportedDocumentSeed {
   sourceFamily?: SourceFamily;
   sourceCapabilities?: SourceCapabilities;
   sourceModel?: CanonicalSourceDocument | null;
+  importPresentationMode?: ImportPresentationMode;
+  presentationProvenance?: PresentationProvenance;
+  presentationProfileId?: string;
   originalDocumentStyleProfile?: import('./source-style-profile').OriginalDocumentStyleProfile | null;
   sourcePaginationBaseline?: import('./source-style-profile').SourcePaginationBaseline | null;
 }

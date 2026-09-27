@@ -11,7 +11,7 @@ import { importSessionRepository } from '@/lib/projects/import-session';
 import { uploadPrivateProjectDocument, fetchPrivateProjectDocument } from '@/lib/blob/client';
 import { sha256Buffer } from '@/lib/projects/hash';
 import type { DocumentMode, ManuscriptType, SourceDocumentAccessLevel } from '@/lib/projects/types';
-import { detectSourceFormat, isActiveImportFormat } from '@/lib/projects/source-model';
+import { detectSourceFormat, isActiveImportFormat, summarizeSourceModel } from '@/lib/projects/source-model';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 const SUPPORTED_EXTENSIONS = new Set(['doc', 'docx', 'odt', 'txt', 'md', 'markdown']);
@@ -301,6 +301,8 @@ export async function POST(request: NextRequest) {
       sourceFormat: seed.sourceFormat,
       sourceFamily: seed.sourceFamily,
       sourceCapabilities: seed.sourceCapabilities,
+      sourceStats: seed.sourceModel ? summarizeSourceModel(seed.sourceModel) : undefined,
+      importPresentationMode: seed.importPresentationMode,
       ocrAppliedMode: seed.ocrAppliedMode,
       parseWarning: Boolean(seed.parseFailed),
       composition,

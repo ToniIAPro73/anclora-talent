@@ -3,6 +3,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { DocumentDataModal } from './DocumentDataModal';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { ProjectRecord } from '@/lib/projects/types';
+import { parseMarkdownSource } from '@/lib/projects/source-model';
 
 vi.mock('server-only', () => ({}));
 
@@ -82,5 +83,21 @@ describe('DocumentDataModal — composition scope (project mode)', () => {
 
     expect(screen.queryByTestId('document-data-composition-not-applicable')).not.toBeInTheDocument();
     expect(screen.getByText(copy.documentDataScopeHeading)).toBeInTheDocument();
+  });
+
+  test('Markdown project data separates source semantics from generated presentation', () => {
+    const sourceModel = parseMarkdownSource('# H1\n\n## H2\n\nBody with **strong**.');
+    const project = makeProject({
+      document: {
+        ...makeProject().document,
+        source: { fileName: 'manuscrito.md', mimeType: 'text/markdown', importedAt: '2026-01-01T00:00:00Z', mode: 'editable', sourceFormat: 'markdown', sourceFamily: 'semantic', capabilities: sourceModel.capabilities, importPresentationMode: 'materialized' },
+        metadata: { title: 'Mi Proyecto', sourceModel, sourceFormat: 'markdown', sourceFamily: 'semantic', sourceCapabilities: sourceModel.capabilities, importPresentationMode: 'materialized', presentationProvenance: 'TALENT_MATERIALIZED', presentationProfileId: 'talent-editorial-markdown-v1' },
+      },
+    });
+    render(<DocumentDataModal isOpen mode="project" copy={copy} onClose={() => {}} project={project} />);
+    expect(screen.getByTestId('markdown-import-data')).toBeInTheDocument();
+    expect(screen.getByText(copy.markdownSourcePresentationNone)).toBeInTheDocument();
+    expect(screen.getByText(copy.markdownMaterializedOrigin)).toBeInTheDocument();
+    expect(screen.getByTestId('markdown-semantic-stats')).toHaveTextContent('H1');
   });
 });

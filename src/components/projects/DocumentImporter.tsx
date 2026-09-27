@@ -12,6 +12,8 @@ import {
   type CompositionSettings,
   type CompositionSource,
 } from '@/lib/projects/composition';
+import type { ImportPresentationMode } from '@/lib/projects/markdown-presentation';
+import type { SourceSemanticStats } from '@/lib/projects/source-model';
 
 type ImportState = 'idle' | 'analyzing' | 'ready' | 'error';
 
@@ -59,6 +61,8 @@ type AnalysisResult = {
     runFormatting: boolean | 'semanticMarksOnly' | 'inferred';
     semanticHeadings: boolean | 'semanticMarksOnly' | 'inferred';
   };
+  sourceStats?: SourceSemanticStats;
+  importPresentationMode?: ImportPresentationMode;
 };
 
 function ConfidenceBadge({ level, copy, testId }: { level: FieldConfidence; copy: AppMessages['project']; testId: string }) {
@@ -195,6 +199,7 @@ export function DocumentImporter({
   // U6: composition reviewed in the pre-create document-data modal; written
   // as a hidden `composition` form field once confirmed.
   const [confirmedComposition, setConfirmedComposition] = useState<CompositionSettings | null>(null);
+  const [importPresentationMode, setImportPresentationMode] = useState<ImportPresentationMode>('source-semantic');
   const [isDocumentDataOpen, setIsDocumentDataOpen] = useState(false);
   // Fixed-PDF document mode: only meaningful for a PDF upload. 'fixed-pdf'
   // is the recommended default — the original PDF's design is preserved.
@@ -210,6 +215,7 @@ export function DocumentImporter({
     }
     setImportState('analyzing');
     setAnalysis(null);
+    setImportPresentationMode('source-semantic');
     setErrorMessage('');
     onAnalysisChange?.(null);
 
@@ -290,6 +296,8 @@ export function DocumentImporter({
         sourceFormat?: string;
         sourceFamily?: string;
         sourceCapabilities?: AnalysisResult['sourceCapabilities'];
+        sourceStats?: SourceSemanticStats;
+        importPresentationMode?: ImportPresentationMode;
       } = await response.json().catch(() => ({
         error: response.status === 413 ? 'FILE_TOO_LARGE' : 'IMPORT_FAILED',
       }));
@@ -339,8 +347,11 @@ export function DocumentImporter({
         sourceFormat: data.sourceFormat,
         sourceFamily: data.sourceFamily,
         sourceCapabilities: data.sourceCapabilities,
+        sourceStats: data.sourceStats,
+        importPresentationMode: data.importPresentationMode,
       };
       setAnalysis(nextAnalysis);
+      setImportPresentationMode(nextAnalysis.sourceFormat === 'markdown' ? nextAnalysis.importPresentationMode ?? 'source-semantic' : 'source-semantic');
       onAnalysisChange?.({ fileName: nextAnalysis.sourceFileName, title: nextAnalysis.title });
       // U6: a fresh analysis resets any previously confirmed composition and
       // auto-opens the pre-create document-data modal.
@@ -761,6 +772,15 @@ export function DocumentImporter({
         />
       )}
 
+      {analysis?.sourceFormat === 'markdown' && (
+        <input
+          type="hidden"
+          name="importPresentationMode"
+          data-testid="import-presentation-mode-input"
+          value={importPresentationMode}
+        />
+      )}
+
       {selectedFile && isPdfFile(selectedFile) && (
         <input
           type="hidden"
@@ -776,10 +796,14 @@ export function DocumentImporter({
           mode="pre-create"
           copy={copy}
           initialSettings={confirmedComposition ?? analysis?.composition?.settings}
-          source={analysis?.composition?.source ?? 'not-extracted'}
+          source={analysis?.sourceFormat === 'markdown' ? undefined : analysis?.composition?.source ?? 'not-extracted'}
           onConfirm={(settings) => setConfirmedComposition(settings)}
           onClose={() => setIsDocumentDataOpen(false)}
           documentMode={selectedFile && isPdfFile(selectedFile) ? documentMode : undefined}
+          sourceFormat={analysis?.sourceFormat}
+          sourceStats={analysis?.sourceStats}
+          importPresentationMode={analysis?.sourceFormat === 'markdown' ? importPresentationMode : undefined}
+          onImportPresentationModeChange={setImportPresentationMode}
         />
       </Portal>
     </div>

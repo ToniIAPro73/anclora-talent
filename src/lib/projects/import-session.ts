@@ -6,6 +6,7 @@ import { importSessions } from '@/lib/db/schema';
 import type { DocumentMode, SourceDocumentAccessLevel } from './types';
 import type { CompositionSettings } from './composition';
 import type { ImportedDocumentSeed } from './types';
+import type { ImportPresentationMode } from './markdown-presentation';
 
 import type { OriginalDocumentStyleProfile } from './source-style-profile';
 
@@ -127,6 +128,32 @@ export const importSessionRepository = {
 
     if (!row) return null;
     return row as unknown as ImportSessionRecord;
+  },
+
+  async setImportPresentationMode(
+    userId: string,
+    sessionId: string,
+    mode: ImportPresentationMode,
+  ): Promise<boolean> {
+    if (!hasDatabase()) {
+      const record = memorySessions.get(sessionId);
+      if (!record || record.userId !== userId || record.status !== 'ready') return false;
+      record.extractedSeed = { ...record.extractedSeed, importPresentationMode: mode };
+      record.updatedAt = new Date();
+      return true;
+    }
+
+    const current = await this.getImportSession(userId, sessionId);
+    if (!current) return false;
+    const db = getDb();
+    await db
+      .update(importSessions)
+      .set({
+        extractedSeed: { ...current.extractedSeed, importPresentationMode: mode } as unknown as Record<string, unknown>,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(importSessions.id, sessionId), eq(importSessions.userId, userId), eq(importSessions.status, 'ready')));
+    return true;
   },
 
   async consumeImportSession(
