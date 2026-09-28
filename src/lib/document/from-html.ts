@@ -49,6 +49,11 @@ function parseRefNode(element: DomElement): InlineNode | null {
   return { type: 'ref', refKind: kind as RefKind, targetId: target, fallback };
 }
 
+function parseFootnoteReferenceNode(element: DomElement): InlineNode | null {
+  const identifier = element.getAttribute('data-footnote-reference');
+  return identifier ? { type: 'footnoteReference', identifier } : null;
+}
+
 function parseInlineChildren(element: DomElement, marks: InlineMark[]): InlineNode[] {
   const nodes: InlineNode[] = [];
   for (let i = 0; i < element.childNodes.length; i += 1) {
@@ -66,6 +71,12 @@ function parseInlineChildren(element: DomElement, marks: InlineMark[]): InlineNo
     const ref = parseRefNode(childEl);
     if (ref) {
       nodes.push(ref);
+      continue;
+    }
+
+    const footnoteReference = parseFootnoteReferenceNode(childEl);
+    if (footnoteReference) {
+      nodes.push(footnoteReference);
       continue;
     }
 
@@ -244,7 +255,15 @@ export function htmlToBlocks(html: string): DocumentBlock[] {
     if (level) {
       push({ type: 'heading', level, content: parseInline(el), id: nextId(el, tag) });
     } else if (tag === 'p') {
-      push({ type: 'paragraph', content: parseInline(el), id: nextId(el, tag) });
+      const editorialClass = el.getAttribute('class')?.match(/\beditorial-(kicker|footnote)\b/)?.[0] as 'editorial-kicker' | 'editorial-footnote' | undefined;
+      const footnoteId = el.getAttribute('data-footnote-id');
+      push({
+        type: 'paragraph',
+        content: parseInline(el),
+        id: nextId(el, tag),
+        ...(editorialClass ? { editorialClass } : {}),
+        ...(footnoteId ? { footnoteId } : {}),
+      });
     } else if (tag === 'ul' || tag === 'ol') {
       push(parseList(el, tag === 'ol', nextId(el, tag)));
     } else if (tag === 'table') {

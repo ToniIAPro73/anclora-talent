@@ -53,6 +53,19 @@ describe('htmlToBlocks', () => {
     expect(ref).toMatchObject({ type: 'ref', refKind: 'figure', targetId: 'fig-1' });
   });
 
+  it('round-trips semantic footnote references and definitions', () => {
+    const blocks = htmlToBlocks(
+      '<p>See <sup data-footnote-reference="1">1</sup> for details.</p>' +
+        '<p class="editorial-footnote" data-footnote="true" data-footnote-id="1">A note.</p>',
+    );
+    const html = blocksToHtml(blocks);
+
+    expect(html).toContain('<sup data-footnote-reference="1">1</sup>');
+    expect(html).toContain('class="editorial-footnote"');
+    expect(html).toContain('data-footnote-id="1"');
+    expect(html).toContain('A note.');
+  });
+
   it('assigns stable unique ids', () => {
     const blocks = htmlToBlocks('<p>a</p><p>a</p>');
     expect(new Set(blocks.map((b) => b.id)).size).toBe(2);

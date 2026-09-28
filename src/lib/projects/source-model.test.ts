@@ -6,6 +6,7 @@ import {
   detectSourceFormat,
   getSourceCapabilities,
   parseMarkdownSource,
+  analyzeFootnoteIntegrity,
   parseOdtSource,
   parsePlainTextSource,
   summarizeSourceModel,
@@ -13,6 +14,8 @@ import {
 import { MARKDOWN_MATERIALIZED_PROFILE, type ImportPresentationMode } from './markdown-presentation';
 import { buildImportedDocumentSeed } from './import-pipeline';
 import { createProjectRecord } from './factories';
+import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
+import { blocksToHtml } from '@/lib/document/to-html';
 
 describe('source-aware import model', () => {
   it('dispatches active formats by extension and MIME without treating PDF as active', () => {
@@ -50,7 +53,22 @@ describe('source-aware import model', () => {
     expect(stats.tables).toBe(1);
     expect(stats.footnotes).toBe(5);
     expect(stats.links).toBeGreaterThan(0);
-    expect(model.blocks.some((block) => block.text?.includes('[^1]'))).toBe(true);
+    const definitions = model.blocks.filter((block) => block.type === 'footnote');
+    const references = model.blocks.flatMap((block) => block.runs ?? [])
+      .flatMap((run) => run.semanticMarks ?? [])
+      .filter((mark) => mark.type === 'footnoteReference');
+    expect(definitions).toHaveLength(5);
+    expect(definitions.map((block) => block.identifier)).toEqual(['1', '2', '3', '4', '5']);
+    expect(references).toHaveLength(5);
+    expect(references.map((mark) => mark.identifier)).toEqual(['1', '2', '3', '4', '5']);
+    expect(model.sourceMetadata.footnotes).toMatchObject({
+      referenceIdentifiers: ['1', '2', '3', '4', '5'],
+      definitionIdentifiers: ['1', '2', '3', '4', '5'],
+      missingDefinitions: [],
+      orphanDefinitions: [],
+      duplicateDefinitions: [],
+    });
+    expect(model.blocks.some((block) => block.text?.includes('[^1]'))).toBe(false);
     const seed = buildImportedDocumentSeed({
       fileName: 'ANCLORA_TALENT_TEST_MANUSCRIPT.md',
       mimeType: 'text/markdown',
@@ -59,10 +77,49 @@ describe('source-aware import model', () => {
     const chapterTitles = (seed.chapters ?? []).map((chapter) => chapter.title.trim().toLowerCase());
     expect(new Set(chapterTitles).size).toBe(chapterTitles.length);
     expect(chapterTitles.filter((title) => title === 'índice')).toHaveLength(1);
+    const notes = seed.chapters?.find((chapter) => chapter.title === 'Notas');
+    expect(notes?.blocks).toHaveLength(6);
+    expect(notes?.blocks.slice(1).map((block) => block.content)).toEqual(
+      expect.arrayContaining(['<p class="editorial-footnote" data-footnote="true" data-footnote-id="1">Herbert A. Simon, “Designing Organizations for an Information-Rich World”, 1971. Simon formuló la relación entre abundancia de información y escasez de atención.</p>']),
+    );
+  });
+
+  it('reports malformed footnote relationships without discarding source blocks', () => {
+    const model = parseMarkdownSource('Body.[^1]\n\n[^2]: Orphan.\n\n[^2]: Duplicate.');
+    expect(analyzeFootnoteIntegrity(model.blocks, 'Body.[^1]\n\n[^2]: Orphan.\n\n[^2]: Duplicate.')).toMatchObject({
+      referenceIdentifiers: ['1'],
+      definitionIdentifiers: ['2'],
+      missingDefinitions: ['1'],
+      orphanDefinitions: ['2'],
+      duplicateDefinitions: ['2'],
+    });
+    expect(model.blocks.filter((block) => block.type === 'footnote')).toHaveLength(2);
+  });
+
+  it('keeps footnote references rendered semantically through editor and preview projection', () => {
+    const sourceModel = parseMarkdownSource('Texto con nota.[^1]\n\n## Notas\n\n[^1]: Contenido de la nota.');
+    const seed = buildImportedDocumentSeed({
+      fileName: 'notas.md',
+      mimeType: 'text/markdown',
+      text: 'Texto con nota.[^1]\n\n## Notas\n\n[^1]: Contenido de la nota.',
+      sourceModel,
+    });
+    const project = createProjectRecord('user-1', { title: 'Notas', importedDocument: seed });
+    const { document } = projectToSemanticDocument(project);
+    const body = document.blocks.find((block) =>
+      block.type === 'paragraph' && block.content.some((node) => node.type === 'footnoteReference'),
+    );
+    const html = blocksToHtml(document.blocks);
+
+    expect(body).toBeDefined();
+    expect(html).toContain('<sup data-footnote-reference="1">1</sup>');
+    expect(html).toContain('class="editorial-footnote"');
+    expect(html).toContain('data-footnote-id="1"');
+    expect(html).toContain('Contenido de la nota.');
   });
 
   it('keeps Mode A and Mode B semantically identical while changing only presentation metadata', () => {
-    const text = '# H1\n\n## H2\n\nBody with **strong**, *emphasis*, [link](https://example.com).\n\n- one\n- two';
+    const text = '# H1\n\n## H2\n\nBody with **strong**, *emphasis*, [link](https://example.com) and a note.[^1]\n\n- one\n- two\n\n## Notas\n\n[^1]: note';
     const sourceModel = parseMarkdownSource(text);
     const makeSeed = (mode: ImportPresentationMode) => buildImportedDocumentSeed({
       fileName: 'sample.md',
@@ -77,6 +134,7 @@ describe('source-aware import model', () => {
     const b = makeSeed('materialized');
     expect(a.sourceModel?.blocks).toEqual(b.sourceModel?.blocks);
     expect(a.chapters).toEqual(b.chapters);
+    expect(a.chapters?.find((chapter) => chapter.title === 'Notas')?.blocks).toHaveLength(2);
     expect(a.importPresentationMode).toBe('source-semantic');
     expect(b.importPresentationMode).toBe('materialized');
     expect(b.presentationProvenance).toBe('TALENT_MATERIALIZED');

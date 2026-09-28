@@ -45,7 +45,11 @@ function textNodeToMarkdown(node: TextInlineNode): string {
 
 export function inlineToMarkdown(nodes: InlineNode[]): string {
   return nodes
-    .map((node) => (node.type === 'text' ? textNodeToMarkdown(node) : node.fallback ?? ''))
+    .map((node) => {
+      if (node.type === 'text') return textNodeToMarkdown(node);
+      if (node.type === 'footnoteReference') return `[^${node.identifier}]`;
+      return node.fallback ?? '';
+    })
     .join('')
     .trim();
 }

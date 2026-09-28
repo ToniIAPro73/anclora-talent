@@ -44,10 +44,11 @@ export interface SourceProvenanceEntry {
 }
 
 export interface SourceInlineMark {
-  type: 'strong' | 'emphasis' | 'inlineCode' | 'link' | 'strikethrough';
+  type: 'strong' | 'emphasis' | 'inlineCode' | 'link' | 'strikethrough' | 'footnoteReference';
   start: number;
   end: number;
   href?: string;
+  identifier?: string;
 }
 
 export interface SourceTextRun {
@@ -63,6 +64,8 @@ export interface SourceBlock {
   type: 'paragraph' | 'heading' | 'blockquote' | 'orderedList' | 'unorderedList' | 'table' | 'image' | 'codeBlock' | 'horizontalRule' | 'footnote' | 'footnoteReference';
   level?: number;
   text?: string;
+  /** Identifier shared by a footnote definition/reference. */
+  identifier?: string;
   runs?: SourceTextRun[];
   items?: SourceBlock[];
   rows?: string[][];
@@ -83,8 +86,17 @@ export interface CanonicalSourceDocument {
     encoding?: string;
     packageParts?: string[];
     presentation: 'rich' | 'semantic' | 'none';
+    footnotes?: FootnoteIntegrity;
   };
   provenance: Record<string, SourceProvenanceEntry>;
+}
+
+export interface FootnoteIntegrity {
+  referenceIdentifiers: string[];
+  definitionIdentifiers: string[];
+  missingDefinitions: string[];
+  orphanDefinitions: string[];
+  duplicateDefinitions: string[];
 }
 
 const RICH_CAPABILITIES: SourceCapabilities = {
@@ -207,7 +219,8 @@ export function summarizeSourceModel(model: CanonicalSourceDocument): SourceSema
     if (block.type === 'table') stats.tables += 1;
     if (block.type === 'image') stats.images += 1;
     if (block.type === 'codeBlock') stats.codeBlocks += 1;
-    if (block.type === 'footnote' || block.type === 'footnoteReference') stats.footnotes += 1;
+    // A reference and its definition are two projections of one logical note.
+    if (block.type === 'footnote') stats.footnotes += 1;
     for (const run of block.runs ?? []) stats.links += (run.semanticMarks ?? []).filter((mark) => mark.type === 'link').length;
     for (const child of block.items ?? []) visit(child);
   };
@@ -246,7 +259,7 @@ export function escapeSourceHtml(input: string) {
 function mdastText(node: Content): string {
   if ('value' in node && typeof node.value === 'string') return node.value;
   if (node.type === 'image') return node.alt ?? '';
-  if (node.type === 'footnoteReference') return `[^${node.identifier}]`;
+  if (node.type === 'footnoteReference') return node.identifier ?? node.label ?? '';
   if (node.type === 'break') return '\n';
   if ('children' in node) return node.children.map((child) => mdastText(child)).join('');
   return '';
@@ -272,6 +285,10 @@ function markdownRuns(children: PhrasingContent[]): SourceTextRun[] {
         textParts.push(text);
         offset += text.length;
         marks.push({ type: 'inlineCode', start, end: offset });
+      } else if (node.type === 'footnoteReference') {
+        textParts.push(text);
+        offset += text.length;
+        marks.push({ type: 'footnoteReference', start, end: offset, identifier: node.identifier ?? node.label ?? '' });
       } else {
         textParts.push(text);
         offset += text.length;
@@ -329,10 +346,10 @@ function markdownBlockFromAst(node: RootContent, index: number): SourceBlock | n
   if (node.type === 'image') return markdownBlock('image', index, node.alt ?? '', { src: node.url, alt: node.alt ?? undefined });
   if (node.type === 'footnoteDefinition') {
     const items = node.children.map((child, childIndex) => markdownBlockFromAst(child, childIndex)).filter((item): item is SourceBlock => Boolean(item));
-    return markdownBlock('footnote', index, items.map((item) => item.text ?? '').join('\n'), { items });
+    return markdownBlock('footnote', index, items.map((item) => item.text ?? '').join('\n'), { identifier: node.identifier, items });
   }
   if (node.type === 'footnoteReference') {
-    return markdownBlock('footnoteReference', index, node.identifier ?? node.label ?? '');
+    return markdownBlock('footnoteReference', index, node.identifier ?? node.label ?? '', { identifier: node.identifier ?? node.label ?? '' });
   }
   return null;
 }
@@ -355,6 +372,7 @@ function inlineSourceHtml(run: SourceTextRun): string {
         : mark.type === 'emphasis' ? `<em>${value}</em>`
           : mark.type === 'strikethrough' ? `<del>${value}</del>`
             : mark.type === 'inlineCode' ? `<code>${value}</code>`
+              : mark.type === 'footnoteReference' ? `<sup data-footnote-reference="${escapeSourceHtml(mark.identifier ?? '')}">${value}</sup>`
               : mark.href ? `<a href="${escapeSourceHtml(mark.href)}">${value}</a>` : value;
     }
     return value;
@@ -382,10 +400,45 @@ export function sourceModelToHtml(model: CanonicalSourceDocument): string {
     if (block.type === 'image') return block.src ? `<figure><img src="${escapeSourceHtml(block.src)}" alt="${escapeSourceHtml(block.alt ?? '')}" /></figure>` : '';
     if (block.type === 'codeBlock') return `<pre><code${block.language ? ` data-language="${escapeSourceHtml(block.language)}"` : ''}>${escapeSourceHtml(block.text ?? '')}</code></pre>`;
     if (block.type === 'horizontalRule') return '<hr />';
-    if (block.type === 'footnote') return `<p class="editorial-footnote" data-footnote="true">${escapeSourceHtml(block.text ?? '')}</p>`;
+    if (block.type === 'footnote') return `<p class="editorial-footnote" data-footnote="true" data-footnote-id="${escapeSourceHtml(block.identifier ?? '')}">${sourceBlockInlineHtml(block)}</p>`;
     return `<sup data-footnote-reference="${escapeSourceHtml(block.text ?? '')}">${escapeSourceHtml(block.text ?? '')}</sup>`;
   };
   return model.blocks.map(render).join('');
+}
+
+export function analyzeFootnoteIntegrity(blocks: SourceBlock[], rawMarkdown?: string): FootnoteIntegrity {
+  const references: string[] = [];
+  const definitions: string[] = [];
+
+  const visit = (block: SourceBlock) => {
+    if (block.type === 'footnote' && block.identifier) definitions.push(block.identifier);
+    for (const run of block.runs ?? []) {
+      for (const mark of run.semanticMarks ?? []) {
+        if (mark.type === 'footnoteReference' && mark.identifier) references.push(mark.identifier);
+      }
+    }
+    for (const child of block.items ?? []) visit(child);
+  };
+  blocks.forEach(visit);
+
+  if (rawMarkdown) {
+    for (const match of rawMarkdown.matchAll(/\[\^([^\]]+)\](?!:)/g)) {
+      if (match[1]) references.push(match[1]);
+    }
+  }
+
+  const unique = (values: string[]) => [...new Set(values)];
+  const referenceIdentifiers = unique(references);
+  const definitionIdentifiers = unique(definitions);
+  const duplicateDefinitions = unique(definitions.filter((id, index) => definitions.indexOf(id) !== index));
+
+  return {
+    referenceIdentifiers,
+    definitionIdentifiers,
+    missingDefinitions: referenceIdentifiers.filter((id) => !definitionIdentifiers.includes(id)),
+    orphanDefinitions: definitionIdentifiers.filter((id) => !referenceIdentifiers.includes(id)),
+    duplicateDefinitions,
+  };
 }
 
 export function parseMarkdownSource(input: string): CanonicalSourceDocument {
@@ -394,15 +447,16 @@ export function parseMarkdownSource(input: string): CanonicalSourceDocument {
     .map((node, index) => markdownBlockFromAst(node, index))
     .filter((block): block is SourceBlock => Boolean(block));
 
-  return {
+  const model: CanonicalSourceDocument = {
     version: 1,
     format: 'markdown',
     family: 'semantic',
     capabilities: getSourceCapabilities('markdown'),
     blocks,
-    sourceMetadata: { presentation: 'semantic', encoding: 'utf-8' },
+    sourceMetadata: { presentation: 'semantic', encoding: 'utf-8', footnotes: analyzeFootnoteIntegrity(blocks, input) },
     provenance: { source: provenance('SOURCE_SEMANTIC') },
   };
+  return model;
 }
 
 function inferTextHeading(line: string) {

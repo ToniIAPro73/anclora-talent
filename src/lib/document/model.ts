@@ -48,7 +48,12 @@ export interface RefInlineNode {
   fallback?: string;
 }
 
-export type InlineNode = TextInlineNode | RefInlineNode;
+export interface FootnoteInlineNode {
+  type: 'footnoteReference';
+  identifier: string;
+}
+
+export type InlineNode = TextInlineNode | RefInlineNode | FootnoteInlineNode;
 
 interface BlockBase {
   id: string;
@@ -63,6 +68,8 @@ export interface HeadingBlock extends BlockBase {
 export interface ParagraphBlock extends BlockBase {
   type: 'paragraph';
   content: InlineNode[];
+  editorialClass?: 'editorial-kicker' | 'editorial-footnote';
+  footnoteId?: string;
 }
 
 export interface ListBlock extends BlockBase {
@@ -171,7 +178,7 @@ export interface SemanticDocument {
 /** Extracts the plain text of an inline flow (ref tokens use their fallback). */
 export function inlineToPlainText(nodes: InlineNode[]): string {
   return nodes
-    .map((node) => (node.type === 'text' ? node.text : node.fallback ?? ''))
+    .map((node) => (node.type === 'text' ? node.text : node.type === 'ref' ? node.fallback ?? '' : node.identifier))
     .join('')
     .trim();
 }

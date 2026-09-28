@@ -36,6 +36,9 @@ function serializeInline(nodes: InlineNode[], refs?: ResolvedRefs): string {
           `${escapeHtml(label)}</span>`
         );
       }
+      if (node.type === 'footnoteReference') {
+        return `<sup data-footnote-reference="${escapeHtml(node.identifier)}">${escapeHtml(node.identifier)}</sup>`;
+      }
       let text = escapeHtml(node.text).replace(/\n/g, '<br/>');
       const marks = [...(node.marks ?? [])];
       // Deterministic mark nesting order: link outermost, then bold, then italic.
@@ -57,7 +60,7 @@ function serializeBlock(block: DocumentBlock, refs?: ResolvedRefs): string {
     case 'heading':
       return `<h${block.level}>${serializeInline(block.content, refs)}</h${block.level}>`;
     case 'paragraph':
-      return `<p>${serializeInline(block.content, refs)}</p>`;
+      return `<p${block.editorialClass ? ` class="${block.editorialClass}"` : ''}${block.footnoteId ? ` data-footnote-id="${escapeHtml(block.footnoteId)}"` : ''}>${serializeInline(block.content, refs)}</p>`;
     case 'list': {
       const tag = block.ordered ? 'ol' : 'ul';
       const items = block.items.map((item) => `<li>${serializeInline(item, refs)}</li>`).join('');
