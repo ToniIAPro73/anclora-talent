@@ -1,4 +1,8 @@
-import { getPaginationDomRuntime, paginateContent } from './content-paginator';
+import {
+  getPaginationDomRuntime,
+  hasRenderablePageContent,
+  paginateContent,
+} from './content-paginator';
 import { PaginationConfig } from './device-configs';
 import { removeAutoPageBreakMarkers } from './page-breaks';
 
@@ -13,7 +17,9 @@ export function splitHtmlIntoPageSegments(html: string): string[] {
   return stripAutoBreaks(html)
     .split(MANUAL_PAGE_BREAK_SPLIT)
     .map((segment) => segment.trim())
-    .filter(Boolean);
+    // A page break adjacent to an empty paragraph/container is not an
+    // intentional blank page. Drop that segment before recalculating pages.
+    .filter((segment) => hasRenderablePageContent(segment));
 }
 
 export function reconcileAutoBreakMarkup(

@@ -2164,8 +2164,50 @@ label:has(:is(input, select, textarea)[required]) > span:first-child::after {
    without an inner scrollbar in the common case; this is the fallback for
    genuinely oversized content, not the everyday behavior. */
 .document-data-modal-panel {
+  width: min(1280px, calc(100vw - 4rem));
   max-height: calc(100vh - 3rem);
   overflow-y: auto;
+}
+
+.document-data-modal-panel--project {
+  width: min(1280px, calc(100vw - 4rem));
+}
+
+.document-data-modal-panel--project .document-data-modal-body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 1rem;
+}
+
+.document-data-modal-panel--project .document-data-modal-section--source,
+.document-data-modal-panel--project .document-data-modal-section--composition,
+.document-data-modal-panel--project .document-data-modal-section--brand {
+  grid-column: 1 / -1;
+}
+
+.document-data-modal-panel--project .document-data-modal-section {
+  min-width: 0;
+}
+
+.document-data-modal-panel--project .document-data-modal-section--composition {
+  padding-bottom: 0.25rem;
+}
+
+@media (max-width: 900px) {
+  .document-data-modal-panel--project {
+    width: min(100%, calc(100vw - 2rem));
+  }
+
+  .document-data-modal-panel--project .document-data-modal-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .document-data-modal-panel--project .document-data-modal-section--source,
+  .document-data-modal-panel--project .document-data-modal-section--composition,
+  .document-data-modal-panel--project .document-data-modal-section--brand {
+    grid-column: auto;
+  }
 }
 
 /* The document-data modal is a compact decision surface. The shared surface

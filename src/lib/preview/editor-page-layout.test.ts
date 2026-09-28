@@ -55,4 +55,16 @@ describe('editor-page-layout', () => {
     expect(rawPages).toBeGreaterThan(1);
     expect(reconciledPages).toBe(rawPages);
   });
+
+  it('drops empty segments around a section break instead of emitting blank pages', () => {
+    const html = '<p>Antes</p><hr data-page-break="manual" /><p></p><hr data-page-break="manual" /><h2>Notas</h2><p>Nota.</p>';
+
+    expect(splitHtmlIntoPageSegments(html)).toEqual([
+      '<p>Antes</p>',
+      '<h2>Notas</h2><p>Nota.</p>',
+    ]);
+
+    const reconciled = reconcileOverflowBreaks(html, DEVICE_PAGINATION_CONFIGS.laptop);
+    expect(countRenderablePages(paginateContent(reconciled, DEVICE_PAGINATION_CONFIGS.laptop))).toBe(2);
+  });
 });

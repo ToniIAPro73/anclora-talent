@@ -393,7 +393,7 @@ function DocumentDataModalForm({
       <div
         ref={panelRef}
         data-testid="document-data-modal-panel"
-        className="document-data-modal-panel ac-modal__panel max-w-[1280px] rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-4 shadow-[var(--shadow-strong)] sm:p-5 lg:p-5"
+        className={`document-data-modal-panel ${mode === 'project' ? 'document-data-modal-panel--project' : 'document-data-modal-panel--pre-create'} ac-modal__panel max-w-[1280px] rounded-[24px] border border-[var(--border-subtle)] bg-[var(--page-surface)] p-4 shadow-[var(--shadow-strong)] sm:p-5 lg:p-6`}
       >
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -433,9 +433,9 @@ function DocumentDataModalForm({
           </div>
         </div>
 
-        <div className="mt-4 space-y-4">
+        <div className={`document-data-modal-body mt-4 ${mode === 'project' ? '' : 'space-y-4'}`}>
           {markdownSource && (
-            <section className="space-y-3" data-testid="markdown-import-data">
+            <section className="document-data-modal-section document-data-modal-section--source space-y-3" data-testid="markdown-import-data">
               <div className="ac-surface-panel ac-surface-panel--subtle space-y-2 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h4 className={labelClass}>{copy.markdownSourceHeading}</h4>
@@ -504,7 +504,7 @@ function DocumentDataModalForm({
             </section>
           )}
           {/* Composition */}
-          {(!markdownSource || mode === 'project') && <section className="space-y-4">
+          {(!markdownSource || mode === 'project') && <section className="document-data-modal-section document-data-modal-section--composition space-y-4">
             <div className="flex items-center justify-between">
               <h4 className={labelClass}>{copy.documentDataCompositionHeading}</h4>
               {hasAnyOverride && (
@@ -690,7 +690,7 @@ function DocumentDataModalForm({
           {mode === 'project' && !fixedPdf && (
             <>
               {/* Composition scope */}
-              <section className="space-y-3">
+              <section className="document-data-modal-section document-data-modal-section--scope space-y-3">
                 <h4 className={labelClass}>{copy.documentDataScopeHeading}</h4>
                 <div className="flex flex-wrap gap-4">
                   <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
@@ -729,7 +729,7 @@ function DocumentDataModalForm({
 
               {/* Detected structure (read-only) */}
               {structureSchema && (
-                <section className="space-y-3" data-testid="document-data-structure-section">
+                <section className="document-data-modal-section document-data-modal-section--structure space-y-3" data-testid="document-data-structure-section">
                   <h4 className={labelClass}>{copy.documentDataStructureHeading}</h4>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="ac-surface-panel ac-surface-panel--subtle gap-2 p-4">
@@ -766,10 +766,13 @@ function DocumentDataModalForm({
               )}
 
               {/* Brand */}
-              <section className="space-y-3">
+              <section className="document-data-modal-section document-data-modal-section--brand space-y-3">
                 <h4 className={labelClass}>{copy.documentDataBrandHeading} · {copy.brandComingSoonLabel}</h4>
-                <p className="text-xs text-[var(--text-secondary)]">{copy.brandComingSoonDescription}</p>
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="document-data-brand-disabled rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2.5" data-testid="document-data-brand-disabled">
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">{copy.brandComingSoonLabel}</p>
+                  <p className="mt-0.5 text-xs text-[var(--text-secondary)]">{copy.brandComingSoonDescription}</p>
+                </div>
+                {BRAND_IDENTITY_ENABLED && <div className="grid gap-4 sm:grid-cols-2">
                   <label className="flex flex-col gap-1.5">
                     <span className={labelClass}>{copy.documentDataBrandProfileLabel}</span>
                     <select
@@ -814,7 +817,7 @@ function DocumentDataModalForm({
                       </label>
                     </div>
                   </div>
-                </div>
+                </div>}
               </section>
             </>
           )}

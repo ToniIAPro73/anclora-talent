@@ -317,14 +317,10 @@ export async function createProjectAction(formData: FormData) {
       await projectRepository.saveDocumentExtras(userId, project.id, { metadata });
     }
 
-    // U6: when a manuscript was imported but the user did NOT review the
-    // composition pre-create (no `composition` field submitted), open the
-    // document-data modal right after landing in the editor.
-    const manuscriptImported =
-      !structureSeed &&
-      ((sourceDocument instanceof File && sourceDocument.size > 0) || Boolean(importSessionId));
-    const editorSuffix = manuscriptImported && !compositionRaw ? '?documentData=open' : '';
-    redirect(`/projects/${project.id}/editor${editorSuffix}`);
+    // The pre-create importer is the place where source data is reviewed.
+    // After confirmation, land in the normal editor; document data remains
+    // available through the explicit “Datos del documento” action.
+    redirect(`/projects/${project.id}/editor`);
   } catch (error) {
     console.error('[createProjectAction] failed', {
       userId,
@@ -381,7 +377,7 @@ export async function createEditableCopyAction(formData: FormData) {
     newProjectId: project.id,
   });
 
-  redirect(`/projects/${project.id}/editor?documentData=open`);
+  redirect(`/projects/${project.id}/editor`);
 }
 
 export async function saveProjectDocumentAction(formData: FormData) {

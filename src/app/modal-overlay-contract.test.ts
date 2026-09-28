@@ -30,11 +30,12 @@ describe('modal overlay contract (MODAL_CONTRACT, U6)', () => {
     expect(globalsCss).toMatch(/\.ac-modal__panel\s*\{\s*max-width: calc\(100vw - 2rem\)/);
   });
 
-  test('the document-data modal never stacks with the workspace onboarding', () => {
+  test('the document-data modal remains manually controlled alongside onboarding', () => {
     const workspace = readFileSync(
       resolve(process.cwd(), 'src/components/projects/ProjectWorkspace.tsx'),
       'utf8',
     );
-    expect(workspace).toContain('{!initialOpenDocumentData && <WorkspaceOnboarding');
+    expect(workspace).toContain('<WorkspaceOnboarding copy={copy} />');
+    expect(workspace).toContain('useState(false)');
   });
 });

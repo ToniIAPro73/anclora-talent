@@ -79,9 +79,13 @@ describe('source-aware import model', () => {
     expect(chapterTitles.filter((title) => title === 'índice')).toHaveLength(1);
     const notes = seed.chapters?.find((chapter) => chapter.title === 'Notas');
     expect(notes?.blocks).toHaveLength(6);
-    expect(notes?.blocks.slice(1).map((block) => block.content)).toEqual(
-      expect.arrayContaining(['<p class="editorial-footnote" data-footnote="true" data-footnote-id="1">Herbert A. Simon, “Designing Organizations for an Information-Rich World”, 1971. Simon formuló la relación entre abundancia de información y escasez de atención.</p>']),
-    );
+    expect(notes?.blocks.slice(1).map((block) => block.content)).toEqual([
+      '<p class="editorial-footnote" data-footnote="true" data-footnote-id="1">Herbert A. Simon, “Designing Organizations for an Information-Rich World”, 1971. Simon formuló la relación entre abundancia de información y escasez de atención.</p>',
+      '<p class="editorial-footnote" data-footnote="true" data-footnote-id="2">Daniel Kahneman, Thinking, Fast and Slow, Farrar, Straus and Giroux, 2011.</p>',
+      '<p class="editorial-footnote" data-footnote="true" data-footnote-id="3">Gloria Mark, Attention Span: A Groundbreaking Way to Restore Balance, Happiness and Productivity, Hanover Square Press, 2023.</p>',
+      '<p class="editorial-footnote" data-footnote="true" data-footnote-id="4">Cal Newport, Deep Work: Rules for Focused Success in a Distracted World, Grand Central Publishing, 2016.</p>',
+      '<p class="editorial-footnote" data-footnote="true" data-footnote-id="5">James Clear, Atomic Habits, Avery, 2018.</p>',
+    ]);
   });
 
   it('reports malformed footnote relationships without discarding source blocks', () => {

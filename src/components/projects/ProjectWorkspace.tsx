@@ -111,7 +111,6 @@ export function ProjectWorkspace({
   kdpDisclosure,
   collaboration,
   locale = 'es',
-  initialOpenDocumentData = false,
 }: {
   project: ProjectRecord;
   copy: AppMessages['project'];
@@ -146,8 +145,6 @@ export function ProjectWorkspace({
   };
   /** F3: UI locale forwarded to the governed-AI section of the health panel. */
   locale?: 'es' | 'en';
-  /** U6: open the document-data modal on mount (?documentData=open). */
-  initialOpenDocumentData?: boolean;
 }) {
   const router = useRouter();
   const { preferences } = useEditorPreferences();
@@ -173,7 +170,7 @@ export function ProjectWorkspace({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isReimportDialogOpen, setIsReimportDialogOpen] = useState(false);
-  const [isDocumentDataOpen, setIsDocumentDataOpen] = useState(initialOpenDocumentData);
+  const [isDocumentDataOpen, setIsDocumentDataOpen] = useState(false);
 
   const canonicalCoverSurface = useMemo(() => getCoverDesign(project), [project]);
   const canonicalBackCoverSurface = useMemo(() => getBackCoverDesign(project), [project]);
@@ -782,9 +779,7 @@ export function ProjectWorkspace({
           onClose={() => setIsDocumentDataOpen(false)}
         />
 
-        {/* The document-data modal (deep link or post-import) takes priority:
-            two overlays must never stack (MODAL_CONTRACT). */}
-        {!initialOpenDocumentData && <WorkspaceOnboarding copy={copy} />}
+        <WorkspaceOnboarding copy={copy} />
       </Portal>
     </div>
   );

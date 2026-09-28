@@ -100,4 +100,14 @@ describe('DocumentDataModal — composition scope (project mode)', () => {
     expect(screen.getByText(copy.markdownMaterializedOrigin)).toBeInTheDocument();
     expect(screen.getByTestId('markdown-semantic-stats')).toHaveTextContent('H1');
   });
+
+  test('project mode keeps the full data surface and uses the wide layout contract', () => {
+    render(<DocumentDataModal isOpen mode="project" copy={copy} onClose={() => {}} project={makeProject()} />);
+
+    const panel = screen.getByTestId('document-data-modal-panel');
+    expect(panel).toHaveClass('document-data-modal-panel--project');
+    expect(screen.getByTestId('document-data-brand-disabled')).toBeInTheDocument();
+    expect(screen.getByText(copy.documentDataCompositionHeading)).toBeInTheDocument();
+    expect(screen.getByText(copy.documentDataStructureHeading)).toBeInTheDocument();
+  });
 });
