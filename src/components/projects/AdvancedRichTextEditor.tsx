@@ -2302,6 +2302,11 @@ export function AdvancedRichTextEditor({
                 border-top: 1px solid var(--talent-footnote-color, var(--border-strong, rgba(0,0,0,0.3)));
                 max-width: 45%;
               }
+              .ProseMirror p.editorial-footnote::before,
+              .preview-page p.editorial-footnote::before {
+                content: '[' attr(data-footnote-id) '] ';
+                font-variant-numeric: tabular-nums;
+              }
               .ProseMirror h5,
               .preview-page h5,
               .ProseMirror h6,

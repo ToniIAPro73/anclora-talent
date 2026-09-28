@@ -65,10 +65,37 @@ export function MultipageFlow({
     ) as HTMLElement | null;
     if (!contentArea) return;
 
-    const measuredWidth = contentArea.scrollWidth;
+    const contentRect = contentArea.getBoundingClientRect();
+    const columnStride = contentWidth + columnGap;
+    let furthestOccupiedRight = 0;
+
+    // `scrollWidth` reports the full CSS multi-column overflow area. Chromium
+    // can keep an extra empty column in that area after absolutely positioning
+    // footnotes, which made the editor render a blank trailing page. Count
+    // only columns containing a visible direct child instead.
+    Array.from(contentArea.children).forEach((child) => {
+      const element = child as HTMLElement;
+      const hasRenderableContent =
+        Boolean(element.textContent?.trim()) ||
+        Boolean(
+          element.querySelector(
+            'img, video, canvas, svg, table, ul li, ol li, blockquote, pre, code',
+          ),
+        );
+      if (!hasRenderableContent) return;
+
+      Array.from(element.getClientRects()).forEach((rect) => {
+        if (rect.width <= 0 || rect.height <= 0) return;
+        furthestOccupiedRight = Math.max(
+          furthestOccupiedRight,
+          rect.right - contentRect.left,
+        );
+      });
+    });
+
     const pages = Math.max(
       1,
-      Math.ceil((measuredWidth + 1) / (contentWidth + columnGap)),
+      Math.ceil((furthestOccupiedRight + 1) / columnStride),
     );
 
     setMeasuredTotalPages(pages);
@@ -303,6 +330,10 @@ export function MultipageFlow({
           padding-top: 0.5rem;
           border-top: 1px solid var(--talent-footnote-color, var(--border-strong, rgba(0,0,0,0.3)));
           max-width: 45%;
+        }
+        .flow-content-root.ProseMirror p.editorial-footnote::before {
+          content: '[' attr(data-footnote-id) '] ';
+          font-variant-numeric: tabular-nums;
         }
         .flow-content-root.ProseMirror blockquote {
           font-family: var(--talent-quote-font, inherit);
