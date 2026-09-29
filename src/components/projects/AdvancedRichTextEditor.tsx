@@ -523,6 +523,7 @@ function getRoleTextStyle(
 function getCurrentTextStyleAttribute(editor: Editor, attribute: 'fontFamily' | 'fontSize') {
   const selection = editor.state?.selection;
   const values = new Set<string>();
+  const missing = '__missing__';
   const add = (value: unknown) => {
     if (typeof value === 'string' && value.trim()) values.add(value.trim());
   };
@@ -530,15 +531,26 @@ function getCurrentTextStyleAttribute(editor: Editor, attribute: 'fontFamily' | 
   if (selection && !selection.empty && typeof editor.state.doc?.nodesBetween === 'function') {
     editor.state.doc.nodesBetween(selection.from, selection.to, (node) => {
       if (!node.isText) return;
+      let found = false;
       for (const mark of node.marks ?? []) {
-        if (mark.type?.name === 'textStyle') add(mark.attrs?.[attribute]);
+        if (mark.type?.name === 'textStyle') {
+          const value = mark.attrs?.[attribute];
+          if (typeof value === 'string' && value.trim()) {
+            add(value);
+            found = true;
+          }
+        }
       }
+      if (!found) values.add(missing);
       return;
     });
   }
 
   if (values.size === 0) add(editor.getAttributes('textStyle')?.[attribute]);
-  return { value: values.size === 1 ? [...values][0] : undefined, mixed: values.size > 1 };
+  return {
+    value: values.size === 1 && !values.has(missing) ? [...values][0] : undefined,
+    mixed: values.size > 1,
+  };
 }
 
 // Advanced Font Selector using useGoogleFonts and EditorPopover

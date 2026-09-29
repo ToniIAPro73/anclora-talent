@@ -305,6 +305,10 @@ function buildPagesFromResult(
   measurer?: TextMeasurer,
 ): PreviewPage[] {
   const resolvedMeasurer = measurer ?? createHeuristicMeasurer();
+  // A source-defined ODT already contains its own front matter and terminal
+  // pages. Adding Talent's synthetic title/legal/back-cover pages would make
+  // SOURCE_FIDELITY previews diverge from the authoritative source pagination.
+  const sourceFidelity = project.document.source?.sourceFormat === 'odt';
   const blockById = new Map(document.blocks.map((block) => [block.id, block]));
   const contentWidth =
     template.pageWidth - template.margins.left - template.margins.right;
@@ -339,7 +343,7 @@ function buildPagesFromResult(
     project.document.metadata &&
       (metadata.subtitle || metadata.author || metadata.isbn || metadata.description),
   );
-  if (hasExtendedMetadata) {
+  if (hasExtendedMetadata && !sourceFidelity) {
     const titlePageParts = [
       `<h1>${escapeHtml(metadata.title)}</h1>`,
       metadata.subtitle ? `<p class="title-page-subtitle">${escapeHtml(metadata.subtitle)}</p>` : '',
@@ -416,7 +420,7 @@ function buildPagesFromResult(
   }
 
   // BACK COVER (contract-identical).
-  if (project.backCover) {
+  if (project.backCover && !sourceFidelity) {
     const backFields = createSurfaceSnapshotFromProject('back-cover', project).fields;
     pages.push({
       type: 'back-cover',

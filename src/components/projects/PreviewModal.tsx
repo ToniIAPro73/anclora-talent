@@ -127,6 +127,7 @@ export function PreviewModal({
     () => buildComposedFlowHtml(composed.pages),
     [composed],
   );
+  const composedContentPageCount = composed.pages.filter((page) => page.type === 'content').length;
 
   // LOGICAL PAGE INDEXING
   const firstContentIndex = 1;
@@ -326,6 +327,7 @@ export function PreviewModal({
                     styleVariables={sourceStyleVariables}
                     showPageNumbers
                     pageNumberOffset={2}
+                    pageCountHint={composedContentPageCount}
                     onPageCountChange={setTotalContentPages}
                   />
                 </div>

@@ -320,6 +320,29 @@ describe('composeProjectPreview — metadata injection (C7)', () => {
     expect(pages.some((p) => p.content?.includes('title-page'))).toBe(false);
     expect(pages.some((p) => p.content?.includes('legal-page'))).toBe(false);
   });
+
+  it('preserves ODT source fidelity without synthetic front or back matter', () => {
+    const project = createProject();
+    project.document.source = {
+      fileName: 'source.odt',
+      mimeType: 'application/vnd.oasis.opendocument.text',
+      importedAt: new Date().toISOString(),
+      mode: 'editable',
+      sourceFormat: 'odt',
+    };
+    project.document.metadata = {
+      title: 'Libro importado',
+      subtitle: 'Subtítulo fuente',
+      author: 'Autora',
+      language: 'es',
+    };
+
+    const { pages } = composeProjectPreview(project, config);
+    expect(pages[0].type).toBe('cover');
+    expect(pages.some((p) => p.content?.includes('title-page'))).toBe(false);
+    expect(pages.some((p) => p.content?.includes('legal-page'))).toBe(false);
+    expect(pages.at(-1)?.type).toBe('content');
+  });
 });
 
 describe('composeProjectPreviewIncremental (C5)', () => {

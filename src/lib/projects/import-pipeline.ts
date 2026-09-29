@@ -1,6 +1,7 @@
 import type { ImportedDocumentSeed, ImportFieldConfidence, SectionSemanticType, SectionStructureItem } from './types';
 import { createSourceModel, escapeSourceHtml, sourceModelToHtml, type CanonicalSourceDocument, detectSourceFormat } from './source-model';
 import type { ImportPresentationMode, PresentationProvenance } from './markdown-presentation';
+import type { OriginalDocumentStyleProfile } from './source-style-profile';
 
 const SUPPORTED_IMPORT_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'odt', 'txt', 'md', 'markdown']);
 const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote|table|pre|figure)[^>]*>[\s\S]*?<\/\1>/gi;
@@ -98,6 +99,27 @@ type ExtractedImportSource = {
 type TextImportMode = 'default' | 'preserve-lines' | 'pdf';
 
 type OutlineEntry = NonNullable<ImportedDocumentSeed['detectedOutline']>[number];
+
+function originalStyleProfileFromSourceModel(sourceModel: CanonicalSourceDocument): OriginalDocumentStyleProfile | null {
+  const profile = sourceModel.sourceMetadata.presentationProfile;
+  if (sourceModel.format !== 'odt' || !profile || profile.status !== 'extracted') return null;
+
+  return {
+    version: 1,
+    parserVersion: 'odt-source-v1',
+    page: {
+      ...(profile.pageWidthPt !== undefined ? { widthPt: profile.pageWidthPt } : {}),
+      ...(profile.pageHeightPt !== undefined ? { heightPt: profile.pageHeightPt } : {}),
+      ...(profile.orientation ? { orientation: profile.orientation } : {}),
+      ...(profile.marginsPt ? { marginsPt: profile.marginsPt } : {}),
+    },
+    body: {
+      ...(profile.fontFamily ? { fontFamily: profile.fontFamily } : {}),
+      ...(profile.fontSizePt !== undefined ? { fontSizePt: profile.fontSizePt } : {}),
+      ...(profile.lineHeight !== undefined ? { lineHeight: profile.lineHeight } : {}),
+    },
+  };
+}
 
 export function normalizeText(input: string) {
   return input
@@ -1941,6 +1963,7 @@ export function buildImportedDocumentSeed({
     sourceFamily: canonicalSourceModel.family,
     sourceCapabilities: canonicalSourceModel.capabilities,
     sourceModel: canonicalSourceModel,
+    originalDocumentStyleProfile: originalStyleProfileFromSourceModel(canonicalSourceModel),
     importPresentationMode: importPresentationMode ?? (detectSourceFormat(fileName, mimeType) === 'markdown' ? 'source-semantic' : undefined),
     presentationProvenance: presentationProvenance ?? (detectSourceFormat(fileName, mimeType) === 'markdown' ? 'TALENT_DEFAULT' : undefined),
     presentationProfileId,

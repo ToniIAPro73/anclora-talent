@@ -12,6 +12,8 @@ interface MultipageFlowProps {
   viewMode: 'single' | 'spread';
   margins: { top: number; bottom: number; left: number; right: number };
   onPageCountChange?: (pages: number) => void;
+  /** Minimum pages required by explicit source/composition page boundaries. */
+  pageCountHint?: number;
   showPageNumbers?: boolean;
   pageNumberOffset?: number;
   styleVariables?: Record<string, string>;
@@ -25,6 +27,7 @@ export function MultipageFlow({
   viewMode,
   margins,
   onPageCountChange,
+  pageCountHint,
   showPageNumbers = false,
   pageNumberOffset = 1,
   styleVariables = {},
@@ -96,13 +99,13 @@ export function MultipageFlow({
     });
 
     const pages = Math.max(
-      1,
+      pageCountHint ?? 1,
       Math.ceil((furthestOccupiedRight + 1) / columnStride),
     );
 
     setMeasuredTotalPages(pages);
     onPageCountChange?.(pages);
-  }, [columnGap, contentWidth, onPageCountChange]);
+  }, [columnGap, contentWidth, onPageCountChange, pageCountHint]);
 
   // See the identical helper in AdvancedRichTextEditor.tsx for the full
   // rationale: footnote paragraphs left in normal CSS-column flow consume

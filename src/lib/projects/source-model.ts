@@ -101,6 +101,9 @@ export interface SourcePresentationProfile {
   fontFamily?: string;
   fontSizePt?: number;
   lineHeight?: number;
+  pageWidthPt?: number;
+  pageHeightPt?: number;
+  orientation?: 'portrait' | 'landscape';
   marginsPt?: { top: number; bottom: number; left: number; right: number };
   provenance: SourceProvenanceKind;
 }
@@ -684,8 +687,11 @@ function odtPresentationProfile(styles: Map<string, OdtStyleDefinition>, documen
     left: odtLengthToPt(typeof pageProperties['margin-left'] === 'string' ? pageProperties['margin-left'] : undefined),
     right: odtLengthToPt(typeof pageProperties['margin-right'] === 'string' ? pageProperties['margin-right'] : undefined),
   };
+  const pageWidthPt = odtLengthToPt(typeof pageProperties['page-width'] === 'string' ? pageProperties['page-width'] : undefined);
+  const pageHeightPt = odtLengthToPt(typeof pageProperties['page-height'] === 'string' ? pageProperties['page-height'] : undefined);
+  const orientation = pageWidthPt !== undefined && pageHeightPt !== undefined && pageWidthPt > pageHeightPt ? 'landscape' as const : 'portrait' as const;
   const hasMargins = Object.values(marginsPt).every((value) => value !== undefined);
-  if (!fontFamily && fontSizePt === undefined && lineHeight === undefined && !hasMargins) {
+  if (!fontFamily && fontSizePt === undefined && lineHeight === undefined && !hasMargins && pageWidthPt === undefined && pageHeightPt === undefined) {
     return { status: 'not-available', provenance: 'REFERENCE' };
   }
   return {
@@ -693,6 +699,9 @@ function odtPresentationProfile(styles: Map<string, OdtStyleDefinition>, documen
     ...(fontFamily ? { fontFamily } : {}),
     ...(fontSizePt !== undefined ? { fontSizePt } : {}),
     ...(lineHeight !== undefined ? { lineHeight } : {}),
+    ...(pageWidthPt !== undefined ? { pageWidthPt } : {}),
+    ...(pageHeightPt !== undefined ? { pageHeightPt } : {}),
+    ...(pageWidthPt !== undefined && pageHeightPt !== undefined ? { orientation } : {}),
     ...(hasMargins ? { marginsPt: marginsPt as { top: number; bottom: number; left: number; right: number } } : {}),
     provenance: 'SOURCE_STYLE',
   };

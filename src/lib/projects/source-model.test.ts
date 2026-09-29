@@ -250,6 +250,13 @@ describe('source-aware import model', () => {
     expect(contents).toContain('font-style:italic');
     expect(contents).toContain('text-align:justify');
     expect(contents).toContain('data-source-style-id="H1"');
+    expect(seed.originalDocumentStyleProfile).toMatchObject({
+      parserVersion: 'odt-source-v1',
+      body: {
+        fontFamily: 'Liberation Serif',
+        fontSizePt: 11.5,
+      },
+    });
   });
 
   it('keeps ODT source and chapter HTML after project persistence round-trip', async () => {
