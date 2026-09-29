@@ -410,14 +410,21 @@ function extractFooterFromXml(xml: string): OriginalDocumentStyleProfile['footer
   const ppr = paragraph.match(/<w:pPr>([\s\S]*?)<\/w:pPr>/)?.[1] ?? '';
   const alignment = parseAlignment(ppr.match(/<w:jc\b[^>]*\bw:val="([^"]+)"/)?.[1]);
   const runs: NonNullable<OriginalDocumentStyleProfile['footer']>['runs'] = [];
+  let pageFieldOpen = false;
   for (const runMatch of paragraph.matchAll(/<w:r\b[^>]*>([\s\S]*?)<\/w:r>/g)) {
     const run = runMatch[1];
     const rpr = run.match(/<w:rPr>([\s\S]*?)<\/w:rPr>/)?.[1] ?? '';
     const style = { fontFamily: parseFontFamily(rpr), fontSizePt: parseFontSizePt(rpr), color: parseColor(rpr) };
     if (/<w:instrText\b[^>]*>\s*PAGE\s*<\/w:instrText>/i.test(run)) {
       runs.push({ type: 'page', ...style });
+      pageFieldOpen = !/<w:fldChar\b[^>]*\bw:fldCharType="end"/.test(run);
       continue;
     }
+    if (pageFieldOpen && /<w:fldChar\b[^>]*\bw:fldCharType="end"/.test(run)) {
+      pageFieldOpen = false;
+      continue;
+    }
+    if (pageFieldOpen) continue;
     const text = Array.from(run.matchAll(/<w:t\b[^>]*>([\s\S]*?)<\/w:t>/g)).map((m) => m[1]).join('');
     if (text) runs.push({ type: 'text', text: text.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>'), ...style });
   }

@@ -96,6 +96,8 @@ export interface OriginalDocumentStyleProfile {
     color?: string;
   };
 
+  toc?: { leaderStyle?: 'dots' | 'none' | 'custom'; leaderText?: string };
+
   provenance?: Record<string, PropertyProvenance>;
 }
 

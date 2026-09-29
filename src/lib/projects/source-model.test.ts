@@ -259,6 +259,18 @@ describe('source-aware import model', () => {
     });
   });
 
+  it('converges ODT TOC leaders and PAGE footer fields into source presentation metadata', async () => {
+    const zip = new JSZip();
+    zip.file('content.xml', `<office:document-content xmlns:office="urn:o" xmlns:text="urn:t" xmlns:style="urn:s" xmlns:fo="urn:f"><office:automatic-styles><style:style style:name="TOC" style:family="paragraph"><style:paragraph-properties><style:tab-stops><style:tab-stop style:position="6in" style:type="right" style:leader-style="dotted" style:leader-text="."/></style:tab-stops></style:paragraph-properties></style:style></office:automatic-styles><office:body><office:text><text:h text:outline-level="1">Índice</text:h><text:p text:style-name="TOC">Capítulo 1<text:tab/>6</text:p></office:text></office:body></office:document-content>`);
+    zip.file('styles.xml', `<office:document-styles xmlns:office="urn:o" xmlns:text="urn:t" xmlns:style="urn:s" xmlns:fo="urn:f"><office:styles><style:style style:name="Footer" style:family="paragraph"><style:text-properties fo:font-family="Liberation Serif" fo:font-size="9pt" fo:color="#737373"/></style:style><style:style style:name="MP" style:family="paragraph" style:parent-style-name="Footer"><style:paragraph-properties fo:text-align="center"/></style:style></office:styles><office:master-styles><style:master-page style:name="Standard"><style:footer><text:p text:style-name="MP"><text:page-number>1</text:page-number></text:p></style:footer></style:master-page></office:master-styles></office:document-styles>`);
+    const model = await parseOdtSource(await zip.generateAsync({ type: 'uint8array' }));
+    expect(model.sourceMetadata.presentationProfile?.toc).toEqual({ leaderStyle: 'dots', leaderText: '.' });
+    expect(model.sourceMetadata.presentationProfile?.footer).toMatchObject({ alignment: 'center', fontFamily: 'Liberation Serif', fontSizePt: 9, color: '#737373', runs: [{ type: 'page' }] });
+    const seed = buildImportedDocumentSeed({ fileName: 'toc.odt', mimeType: 'application/vnd.oasis.opendocument.text', text: model.blocks.map((block) => block.text ?? '').join('\n\n'), html: sourceModelToHtml(model), sourceModel: model });
+    expect(seed.chapters?.flatMap((chapter) => chapter.blocks.map((block) => block.content)).join('\n')).toContain('data-toc-page="6"');
+    expect(seed.originalDocumentStyleProfile?.footer?.runs).toEqual([{ type: 'page', fontFamily: 'Liberation Serif', fontSizePt: 9, color: '#737373' }]);
+  });
+
   it('keeps ODT source and chapter HTML after project persistence round-trip', async () => {
     const zip = new JSZip();
     zip.file('content.xml', '<office:document-content xmlns:office="urn:o" xmlns:text="urn:t" xmlns:style="urn:s" xmlns:fo="urn:f"><office:body><office:text><text:h text:outline-level="1" text:style-name="H1">Chapter</text:h><text:p text:style-name="Body">Body</text:p></office:text></office:body></office:document-content>');

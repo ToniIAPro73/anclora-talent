@@ -119,6 +119,8 @@ function originalStyleProfileFromSourceModel(sourceModel: CanonicalSourceDocumen
       ...(profile.fontSizePt !== undefined ? { fontSizePt: profile.fontSizePt } : {}),
       ...(profile.lineHeight !== undefined ? { lineHeight: profile.lineHeight } : {}),
     },
+    ...(profile.toc ? { toc: profile.toc } : {}),
+    ...(profile.footer ? { footer: profile.footer } : {}),
   };
 }
 
@@ -808,6 +810,7 @@ function stripImportedTocPageMarkup(fragment: string) {
         .replace(/<span\s+[^>]*data-toc-page="true"[^>]*>[\s\S]*?<\/span>/gi, '')
         .replace(/\t+[·._\-—~∿]*\s*\d{1,4}\s*$/u, '')
         .replace(/\s*[·._\-—~∿]{2,}\s*\d{1,4}\s*$/u, '')
+        .replace(/(?:\t|[·._\-—~∿]{2,})\s*\d{1,4}\s*(?=<\/span>)/u, '')
         .trim();
       if (tag.toLowerCase().startsWith('h')) {
         const textOnly = cleanedInner.replace(/<[^>]+>/g, '').trim();

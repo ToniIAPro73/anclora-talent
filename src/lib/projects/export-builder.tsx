@@ -206,10 +206,13 @@ function renderLegacyBackCoverPageHtml(page: PreviewPage) {
   `;
 }
 
-function renderContentPageHtml(page: PreviewPage, footerTitle?: string) {
+function renderContentPageHtml(page: PreviewPage, footerTitle?: string, sourceFooter?: import('./source-style-profile').OriginalDocumentStyleProfile['footer'] | null) {
   // C7: running footer injected from the product metadata (single source).
-  const footer = footerTitle
-    ? `<div class="export-page-footer"><span class="export-page-footer-title">${escapeHtml(footerTitle)}</span><span class="export-page-footer-number">${page.pageNumber}</span></div>`
+  const footerRuns = sourceFooter?.runs.map((run) => run.type === 'page' ? String(page.pageNumber) : escapeHtml(run.text ?? '')).join('');
+  const footer = sourceFooter
+    ? `<div class="export-page-footer source-footer" style="text-align:${sourceFooter.alignment ?? 'center'};${sourceFooter.fontFamily ? `font-family:${escapeHtml(sourceFooter.fontFamily)};` : ''}${sourceFooter.fontSizePt ? `font-size:${sourceFooter.fontSizePt}pt;` : ''}${sourceFooter.color ? `color:${escapeHtml(sourceFooter.color)};` : ''}">${footerRuns}</div>`
+    : footerTitle
+      ? `<div class="export-page-footer"><span class="export-page-footer-title">${escapeHtml(footerTitle)}</span><span class="export-page-footer-number">${page.pageNumber}</span></div>`
     : '';
   return `
     <section class="export-page export-content-page">
@@ -346,7 +349,7 @@ export async function renderProjectExportHtml(
           ? renderBackCoverPageHtml(backCoverImageUrl)
           : renderLegacyBackCoverPageHtml(page);
       }
-      return renderContentPageHtml(page, footerTitle);
+      return renderContentPageHtml(page, footerTitle, project.document.metadata?.originalDocumentStyleProfile?.footer);
     })
     .join('\n');
 

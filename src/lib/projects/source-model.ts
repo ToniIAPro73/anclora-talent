@@ -105,6 +105,14 @@ export interface SourcePresentationProfile {
   pageHeightPt?: number;
   orientation?: 'portrait' | 'landscape';
   marginsPt?: { top: number; bottom: number; left: number; right: number };
+  toc?: { leaderStyle?: 'dots' | 'none' | 'custom'; leaderText?: string };
+  footer?: {
+    alignment?: 'left' | 'center' | 'right' | 'justify';
+    runs: Array<{ type: 'text' | 'page'; text?: string; fontFamily?: string; fontSizePt?: number; color?: string }>;
+    fontFamily?: string;
+    fontSizePt?: number;
+    color?: string;
+  };
   provenance: SourceProvenanceKind;
 }
 
@@ -563,7 +571,7 @@ interface OdtStyleDefinition {
 function odtAttr(element: XmlElement, localName: string): string | undefined {
   for (let index = 0; index < element.attributes.length; index += 1) {
     const attribute = element.attributes.item(index);
-    if (attribute?.localName === localName || attribute?.name === localName) return attribute.value;
+    if (attribute?.localName === localName || attribute?.name === localName || attribute?.name?.endsWith(`:${localName}`)) return attribute.value;
   }
   return undefined;
 }
@@ -691,7 +699,40 @@ function odtPresentationProfile(styles: Map<string, OdtStyleDefinition>, documen
   const pageHeightPt = odtLengthToPt(typeof pageProperties['page-height'] === 'string' ? pageProperties['page-height'] : undefined);
   const orientation = pageWidthPt !== undefined && pageHeightPt !== undefined && pageWidthPt > pageHeightPt ? 'landscape' as const : 'portrait' as const;
   const hasMargins = Object.values(marginsPt).every((value) => value !== undefined);
-  if (!fontFamily && fontSizePt === undefined && lineHeight === undefined && !hasMargins && pageWidthPt === undefined && pageHeightPt === undefined) {
+  let leaderStyle: 'dots' | 'none' | 'custom' | undefined;
+  let leaderText: string | undefined;
+  odtWalk(document, (element) => {
+    if (leaderStyle || element.localName !== 'tab-stop') return;
+    const raw = odtAttr(element, 'leader-style');
+    if (!raw) return;
+    leaderStyle = raw === 'dotted' ? 'dots' : raw === 'none' ? 'none' : 'custom';
+    leaderText = odtAttr(element, 'leader-text');
+  });
+  let footer: SourcePresentationProfile['footer'];
+  odtWalk(document, (element) => {
+    if (footer || element.localName !== 'footer') return;
+    const paragraph = odtChildren(element).find((child) => child.localName === 'p');
+    if (!paragraph) return;
+    const paragraphStyle = resolveOdtStyle(styles, 'paragraph', odtAttr(paragraph, 'style-name'));
+    const alignmentValue = paragraphStyle.paragraph['text-align'];
+    const alignment = alignmentValue === 'center' ? 'center' : alignmentValue === 'end' || alignmentValue === 'right' ? 'right' : alignmentValue === 'justify' ? 'justify' : alignmentValue === 'start' || alignmentValue === 'left' ? 'left' : undefined;
+    const formatting = odtTextFormatting(paragraphStyle);
+    const styleFormatting = { fontFamily: typeof formatting.fontFamily === 'string' ? formatting.fontFamily : undefined, fontSizePt: typeof formatting.fontSizePt === 'number' ? formatting.fontSizePt : undefined, color: typeof formatting.color === 'string' ? formatting.color : undefined };
+    const runs: NonNullable<SourcePresentationProfile['footer']>['runs'] = [];
+    for (const child of Array.from(paragraph.childNodes)) {
+      const localName = (child as XmlElement).localName;
+      if (localName === 'page-number') runs.push({ type: 'page', ...styleFormatting });
+      else if (child.nodeType === 3 || child.nodeType === 4) {
+        const text = child.nodeValue ?? '';
+        if (text) runs.push({ type: 'text', text, ...styleFormatting });
+      } else if (localName === 'span') {
+        const text = child.textContent ?? '';
+        if (text) runs.push({ type: 'text', text, ...styleFormatting });
+      }
+    }
+    if (runs.length > 0) footer = { alignment, runs, ...styleFormatting };
+  });
+  if (!fontFamily && fontSizePt === undefined && lineHeight === undefined && !hasMargins && pageWidthPt === undefined && pageHeightPt === undefined && !leaderStyle && !footer) {
     return { status: 'not-available', provenance: 'REFERENCE' };
   }
   return {
@@ -703,6 +744,8 @@ function odtPresentationProfile(styles: Map<string, OdtStyleDefinition>, documen
     ...(pageHeightPt !== undefined ? { pageHeightPt } : {}),
     ...(pageWidthPt !== undefined && pageHeightPt !== undefined ? { orientation } : {}),
     ...(hasMargins ? { marginsPt: marginsPt as { top: number; bottom: number; left: number; right: number } } : {}),
+    ...(leaderStyle ? { toc: { leaderStyle, ...(leaderText ? { leaderText } : {}) } } : {}),
+    ...(footer ? { footer } : {}),
     provenance: 'SOURCE_STYLE',
   };
 }
@@ -912,6 +955,8 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
     }
   };
   parseChildren(root);
+  const presentationProfile = odtPresentationProfile(styleMap, styleDocument ?? contentDocument);
+  const contentPresentationProfile = odtPresentationProfile(styleMap, contentDocument);
   return {
     version: 1,
     format: 'odt',
@@ -920,7 +965,10 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
     blocks,
     sourceMetadata: {
       presentation: 'rich',
-      presentationProfile: odtPresentationProfile(styleMap, styleDocument ?? contentDocument),
+      presentationProfile: {
+        ...presentationProfile,
+        ...(contentPresentationProfile.toc ? { toc: contentPresentationProfile.toc } : {}),
+      },
       packageParts: Object.keys(zip.files).filter((name) => /^(content|styles|meta|settings)\.xml$|^Pictures\//.test(name)),
     },
     provenance: { source: provenance('SOURCE_EXPLICIT', 'content.xml') },
