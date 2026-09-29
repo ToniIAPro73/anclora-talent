@@ -40,7 +40,7 @@ describe('doc-normalizer and legacy .doc fidelity pipeline', () => {
     expect(styles.headings?.h1?.color).toBe('#1F3945');
 
     // Verify seed and chapter extraction
-    const file = new File([normalized!.docxBuffer], 'ANCLORA_TALENT_MANUSCRIPT_EXTENDED.docx', {
+    const file = new File([new Uint8Array(normalized!.docxBuffer)], 'ANCLORA_TALENT_MANUSCRIPT_EXTENDED.docx', {
       type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     });
     const seed = await extractImportedDocumentSeed(file);
@@ -92,7 +92,7 @@ describe('doc-normalizer and legacy .doc fidelity pipeline', () => {
     if (!hasSampleDoc) return;
 
     const { parseDocDirectly } = await import('./doc-normalizer');
-    const { buildImportedDocumentSeed, inferSectionSemantics } = await import('./import-pipeline');
+    const { buildImportedDocumentSeed } = await import('./import-pipeline');
     const { buildFontFamilyStack } = await import('@/lib/style-engine/font-stack');
     const { createProjectRecord } = await import('./factories');
 

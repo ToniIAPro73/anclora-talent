@@ -66,6 +66,16 @@ describe('htmlToBlocks', () => {
     expect(html).toContain('A note.');
   });
 
+  it('round-trips source typography and paragraph properties', () => {
+    const blocks = htmlToBlocks('<h1 data-source-style-id="H1" style="text-align:justify;margin-top:12pt"><span style="font-family:Calibri;font-size:24pt">Heading</span></h1>');
+    const heading = blocks[0];
+    expect(heading).toMatchObject({ type: 'heading', sourceStyleId: 'H1', paragraphProperties: { textAlign: 'justify', spacingBefore: 12 } });
+    if (heading.type !== 'heading') throw new Error('expected heading');
+    expect(heading.content[0]).toMatchObject({ type: 'text', marks: [{ type: 'textStyle', fontFamily: 'Calibri', fontSizePt: 24 }] });
+    expect(blocksToHtml(blocks)).toContain('font-family: Calibri');
+    expect(blocksToHtml(blocks)).toContain('font-size: 24pt');
+  });
+
   it('round-trips Markdown endnote definitions without changing their source order', () => {
     const blocks = htmlToBlocks(
       '<h2>Notas</h2>' +

@@ -68,11 +68,24 @@ function serializeInline(nodes: InlineNode[], refs?: ResolvedRefs): string {
 }
 
 function serializeBlock(block: DocumentBlock, refs?: ResolvedRefs): string {
+  const blockAttributes = (sourceStyleId?: string, paragraphProperties?: Record<string, string | number | boolean>) => {
+    const styles = Object.entries(paragraphProperties ?? {}).map(([key, value]) => {
+      const cssKey = {
+        textAlign: 'text-align', lineHeight: 'line-height', spacingBefore: 'margin-top',
+        spacingAfter: 'margin-bottom', firstLineIndent: 'text-indent', leftIndent: 'margin-left',
+        rightIndent: 'margin-right',
+      }[key];
+      if (!cssKey) return '';
+      const unit = ['lineHeight', 'textAlign'].includes(key) ? '' : typeof value === 'number' ? 'pt' : '';
+      return `${cssKey}:${escapeHtml(String(value))}${unit}`;
+    }).filter(Boolean).join(';');
+    return `${sourceStyleId ? ` data-source-style-id="${escapeHtml(sourceStyleId)}"` : ''}${styles ? ` style="${styles}"` : ''}`;
+  };
   switch (block.type) {
     case 'heading':
-      return `<h${block.level}>${serializeInline(block.content, refs)}</h${block.level}>`;
+      return `<h${block.level}${blockAttributes(block.sourceStyleId, block.paragraphProperties)}>${serializeInline(block.content, refs)}</h${block.level}>`;
     case 'paragraph':
-      return `<p${block.editorialClass ? ` class="${block.editorialClass}"` : ''}${block.footnoteId ? ` data-footnote-id="${escapeHtml(block.footnoteId)}"` : ''}>${serializeInline(block.content, refs)}</p>`;
+      return `<p${block.editorialClass ? ` class="${block.editorialClass}"` : ''}${block.footnoteId ? ` data-footnote-id="${escapeHtml(block.footnoteId)}"` : ''}${blockAttributes(block.sourceStyleId, block.paragraphProperties)}>${serializeInline(block.content, refs)}</p>`;
     case 'list': {
       const tag = block.ordered ? 'ol' : 'ul';
       const items = block.items.map((item) => `<li>${serializeInline(item, refs)}</li>`).join('');

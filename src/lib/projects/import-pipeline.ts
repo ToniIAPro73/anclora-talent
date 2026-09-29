@@ -216,10 +216,10 @@ function stripTags(input: string) {
   );
 }
 
-function normalizeHtmlFragment(input: string) {
+function normalizeHtmlFragment(input: string, options: { preserveStyles?: boolean } = {}) {
   return input
     .replace(/\r\n/g, '\n')
-    .replace(/\sstyle="[^"]*"/gi, '')
+    .replace(options.preserveStyles ? /$^/g : /\sstyle="[^"]*"/gi, '')
     .replace(/>\s+</g, '><')
     .trim();
 }
@@ -977,13 +977,13 @@ function inlineDocxFootnotes(html: string): string {
   });
 }
 
-function parseHtmlBlocks(input: string) {
-  const normalized = normalizeHtmlFragment(input);
+function parseHtmlBlocks(input: string, options: { preserveStyles?: boolean } = {}) {
+  const normalized = normalizeHtmlFragment(input, options);
   const matches = normalized.match(BLOCK_TAG_RE)?? [];
   const blocks: ParsedBlock[] = [];
 
   for (const fragment of matches) {
-    const clean = normalizeHtmlFragment(stripImportedTocPageMarkup(fragment));
+    const clean = normalizeHtmlFragment(stripImportedTocPageMarkup(fragment), options);
     const tag = clean.match(/^<(h[1-6]|p|ul|ol|blockquote|table|pre|figure)/i)?.[1]?.toLowerCase() ?? 'p';
     const text = textFromHtml(clean);
     const hasImage = /<img\b[^>]*>/i.test(clean);
@@ -1402,7 +1402,10 @@ function toDocumentBlock(block: ParsedBlock) {
     const cleanedText = cleanHeadingText(block.text);
     return {
       type: 'heading' as const,
-      content: preservesSourceLevel ? `<h${block.level}>${cleanedText}</h${block.level}>` : cleanedText,
+      // Keep the source fragment intact when the parser supplied a real HTML
+      // heading. This carries ODT inline marks and paragraph CSS into the
+      // project chapter instead of rebuilding a plain `<hN>` string.
+      content: preservesSourceLevel ? block.html : cleanedText,
     };
   }
 
@@ -1746,7 +1749,9 @@ export function buildImportedDocumentSeed({
   );
 
   const normalizedHtml = detectedSourceFormat === 'markdown' ? sourceModelToHtml(canonicalSourceModel) : html ? html : null;
-  const htmlBlocks = normalizedHtml? parseHtmlBlocks(normalizedHtml) : [];
+  const htmlBlocks = normalizedHtml
+    ? parseHtmlBlocks(normalizedHtml, { preserveStyles: canonicalSourceModel.format === 'odt' })
+    : [];
   const textBlocks = parseTextBlocks(contentText, textImportMode);
 
   // Usa siempre HTML cuando viene de DOCX (ya lleva el TOC fusionado en splitHtmlListBlocks)

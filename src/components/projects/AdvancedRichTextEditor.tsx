@@ -76,6 +76,7 @@ import { PAGE_BREAK_HTML } from '@/lib/preview/page-breaks';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { resolveEditorViewportLayout, calculateSpreadFitFactor } from './editor-viewport';
+import { cssPxToPt, formatPointSize, ptToCssPx } from '@/lib/document/units';
 
 type ChainedCommand = ReturnType<Editor['chain']>;
 type ApplyToSelectionTarget = (command: (chain: ChainedCommand) => ChainedCommand) => boolean;
@@ -519,6 +520,27 @@ function getRoleTextStyle(
   }
 }
 
+function getCurrentTextStyleAttribute(editor: Editor, attribute: 'fontFamily' | 'fontSize') {
+  const selection = editor.state?.selection;
+  const values = new Set<string>();
+  const add = (value: unknown) => {
+    if (typeof value === 'string' && value.trim()) values.add(value.trim());
+  };
+
+  if (selection && !selection.empty && typeof editor.state.doc?.nodesBetween === 'function') {
+    editor.state.doc.nodesBetween(selection.from, selection.to, (node) => {
+      if (!node.isText) return;
+      for (const mark of node.marks ?? []) {
+        if (mark.type?.name === 'textStyle') add(mark.attrs?.[attribute]);
+      }
+      return;
+    });
+  }
+
+  if (values.size === 0) add(editor.getAttributes('textStyle')?.[attribute]);
+  return { value: values.size === 1 ? [...values][0] : undefined, mixed: values.size > 1 };
+}
+
 // Advanced Font Selector using useGoogleFonts and EditorPopover
 const AdvancedFontSelector = ({
   editor,
@@ -573,7 +595,8 @@ const AdvancedFontSelector = ({
       .slice(0, 40);
   }, [fonts, searchQuery]);
 
-  const currentFont = editor.getAttributes('textStyle').fontFamily || effectiveFont;
+  const fontState = getCurrentTextStyleAttribute(editor, 'fontFamily');
+  const currentFont = fontState.mixed ? '—' : fontState.value || effectiveFont;
 
   const selectFont = (fontFamily: string) => {
     loadFont(fontFamily);
@@ -677,24 +700,15 @@ const FontSizeSelector = ({
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const sizes = [
-    { name: '10', value: '10px' },
-    { name: '11', value: '11px' },
-    { name: '12', value: '12px' },
-    { name: '14', value: '14px' },
-    { name: '16', value: '16px' },
-    { name: '18', value: '18px' },
-    { name: '20', value: '20px' },
-    { name: '24', value: '24px' },
-    { name: '28', value: '28px' },
-    { name: '32', value: '32px' },
-    { name: '36', value: '36px' },
-    { name: '48', value: '48px' },
-  ];
+  const sizes = [9, 10, 10.5, 11, 11.5, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48]
+    .map((points) => ({ name: formatPointSize(points), points, value: `${points}pt` }));
 
   const roleStyle = getRoleTextStyle(documentStyleMap, getCurrentBlockRole(editor));
-  const roleSize = roleStyle ? `${Math.round(roleStyle.fontSizePt * (96 / 72))}px` : '16px';
-  const currentSize = editor.getAttributes('textStyle')?.fontSize || roleSize;
+  const sizeState = getCurrentTextStyleAttribute(editor, 'fontSize');
+  const currentSizePt = sizeState.value
+    ? cssPxToPt(sizeState.value)
+    : roleStyle?.fontSizePt;
+  const currentSize = formatPointSize(currentSizePt);
 
   return (
     <>
@@ -705,7 +719,8 @@ const FontSizeSelector = ({
         dataTestId="editor-toolbar-font-size-button"
         title={isAvailable ? copy.fontSize : unavailableTitle}
       >
-        <Type className="h-4 w-4" />
+        <Type className="h-4 w-4 shrink-0" />
+        <span data-testid="editor-toolbar-font-size-value" className="text-xs font-semibold">{sizeState.mixed ? '—' : currentSize}</span>
       </ToolbarButton>
 
       <EditorPopover
@@ -722,7 +737,7 @@ const FontSizeSelector = ({
               key={size.value}
               onClick={() => {
                 applyToWordOrSelection((chain) => chain.setFontSize(size.value));
-                onFontSizeChange?.(size.value);
+                onFontSizeChange?.(`${ptToCssPx(size.points)}px`);
                 setIsOpen(false);
               }}
               data-testid={`font-size-option-${size.name}`}
@@ -733,7 +748,7 @@ const FontSizeSelector = ({
               }`}
               title={size.name}
             >
-              {size.name}px
+              {size.name}
             </button>
           ))}
         </div>
@@ -1438,16 +1453,16 @@ export function AdvancedRichTextEditor({
   }
 
   const initialFontSize = documentStyleMap?.body.fontSizePt
-    ? `${Math.round(documentStyleMap.body.fontSizePt * 1.333)}px`
+    ? `${ptToCssPx(documentStyleMap.body.fontSizePt)}px`
     : composition?.fontSizePt
-      ? `${Math.round(composition.fontSizePt * 1.333)}px`
+      ? `${ptToCssPx(composition.fontSizePt)}px`
       : (preferences.fontSize || '16px');
   const [prevCompositionFontSizePt, setPrevCompositionFontSizePt] = useState(composition?.fontSizePt);
   const [currentFontSize, setCurrentFontSize] = useState<string>(initialFontSize);
   if (composition?.fontSizePt !== prevCompositionFontSizePt) {
     setPrevCompositionFontSizePt(composition?.fontSizePt);
     if (composition?.fontSizePt) {
-      setCurrentFontSize(`${Math.round(composition.fontSizePt * 1.333)}px`);
+      setCurrentFontSize(`${ptToCssPx(composition.fontSizePt)}px`);
     }
   }
 
@@ -1773,6 +1788,20 @@ export function AdvancedRichTextEditor({
     },
     immediatelyRender: false,
   });
+
+  // TipTap does not make React re-render for selection changes. Keep toolbar
+  // state derived from the live editor selection, without polling.
+  const [, setToolbarRevision] = useState(0);
+  useEffect(() => {
+    if (!editor || typeof editor.on !== 'function' || typeof editor.off !== 'function') return;
+    const refreshToolbar = () => setToolbarRevision((revision) => revision + 1);
+    editor.on('selectionUpdate', refreshToolbar);
+    editor.on('transaction', refreshToolbar);
+    return () => {
+      editor.off('selectionUpdate', refreshToolbar);
+      editor.off('transaction', refreshToolbar);
+    };
+  }, [editor]);
 
   // Update editor content when defaultContent changes (e.g., when switching chapters)
   useEffect(() => {

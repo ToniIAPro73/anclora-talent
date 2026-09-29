@@ -74,6 +74,28 @@ function parseTextStyleMark(element: DomElement): InlineMark | null {
   };
 }
 
+function parseParagraphProperties(element: DomElement): Record<string, string | number | boolean> | undefined {
+  const style = element.getAttribute('style') ?? '';
+  const read = (property: string) => style.match(new RegExp(`${property}\\s*:\\s*([^;]+)`, 'i'))?.[1]?.trim();
+  const properties: Record<string, string | number | boolean> = {};
+  const mappings: Array<[string, string]> = [
+    ['text-align', 'textAlign'],
+    ['line-height', 'lineHeight'],
+    ['margin-top', 'spacingBefore'],
+    ['margin-bottom', 'spacingAfter'],
+    ['text-indent', 'firstLineIndent'],
+    ['margin-left', 'leftIndent'],
+    ['margin-right', 'rightIndent'],
+  ];
+  for (const [css, key] of mappings) {
+    const value = read(css);
+    if (value === undefined) continue;
+    const numeric = Number.parseFloat(value);
+    properties[key] = Number.isFinite(numeric) && /^-?\d/.test(value) ? numeric : value;
+  }
+  return Object.keys(properties).length > 0 ? properties : undefined;
+}
+
 function parseInlineChildren(element: DomElement, marks: InlineMark[]): InlineNode[] {
   const nodes: InlineNode[] = [];
   for (let i = 0; i < element.childNodes.length; i += 1) {
@@ -275,7 +297,14 @@ export function htmlToBlocks(html: string): DocumentBlock[] {
     const level = headingLevel(tag);
 
     if (level) {
-      push({ type: 'heading', level, content: parseInline(el), id: nextId(el, tag) });
+      push({
+        type: 'heading',
+        level,
+        content: parseInline(el),
+        id: nextId(el, tag),
+        ...(el.getAttribute('data-source-style-id') ? { sourceStyleId: el.getAttribute('data-source-style-id') ?? undefined } : {}),
+        ...(parseParagraphProperties(el) ? { paragraphProperties: parseParagraphProperties(el) } : {}),
+      });
     } else if (tag === 'p') {
       const editorialClass = el.getAttribute('class')?.match(/\beditorial-(kicker|footnote|endnote-definition)\b/)?.[0] as 'editorial-kicker' | 'editorial-footnote' | 'editorial-endnote-definition' | undefined;
       const footnoteId = el.getAttribute('data-footnote-id');
@@ -285,6 +314,8 @@ export function htmlToBlocks(html: string): DocumentBlock[] {
         id: nextId(el, tag),
         ...(editorialClass ? { editorialClass } : {}),
         ...(footnoteId ? { footnoteId } : {}),
+        ...(el.getAttribute('data-source-style-id') ? { sourceStyleId: el.getAttribute('data-source-style-id') ?? undefined } : {}),
+        ...(parseParagraphProperties(el) ? { paragraphProperties: parseParagraphProperties(el) } : {}),
       });
     } else if (tag === 'ul' || tag === 'ol') {
       push(parseList(el, tag === 'ol', nextId(el, tag)));

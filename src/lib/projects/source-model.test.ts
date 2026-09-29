@@ -218,4 +218,44 @@ describe('source-aware import model', () => {
     expect(sourceModelToHtml(model)).not.toMatch(/(?:text:span|text:style-name|office:|fo:|draw:|xlink:)/);
     expect(sourceModelToHtml(model)).toContain('Dos<br />Tres');
   });
+
+  it('keeps effective ODT typography and paragraph properties in project chapters', async () => {
+    const zip = new JSZip();
+    zip.file('content.xml', '<office:document-content xmlns:office="urn:o" xmlns:text="urn:t" xmlns:style="urn:s" xmlns:fo="urn:f"><office:body><office:text><text:h text:outline-level="1" text:style-name="H1">Heading</text:h><text:p text:style-name="Body">Body <text:span text:style-name="Emphasis">emphasis</text:span></text:p></office:text></office:body></office:document-content>');
+    zip.file('styles.xml', '<office:document-styles xmlns:office="urn:o" xmlns:style="urn:s" xmlns:fo="urn:f"><style:style style:name="Standard" style:family="paragraph"><style:text-properties fo:font-family="Liberation Serif" fo:font-size="11.5pt"/></style:style><style:style style:name="Body" style:family="paragraph" style:parent-style-name="Standard"><style:paragraph-properties fo:text-align="justify"/></style:style><style:style style:name="H1" style:family="paragraph"><style:text-properties fo:font-family="Calibri" fo:font-size="24pt" fo:font-weight="bold"/></style:style><style:style style:name="Emphasis" style:family="text"><style:text-properties fo:font-family="Liberation Sans" fo:font-size="12.5pt" fo:font-style="italic"/></style:style></office:document-styles>');
+    const model = await parseOdtSource(await zip.generateAsync({ type: 'uint8array' }));
+    const html = sourceModelToHtml(model);
+    const seed = buildImportedDocumentSeed({
+      fileName: 'fidelity.odt',
+      mimeType: 'application/vnd.oasis.opendocument.text',
+      text: model.blocks.map((block) => block.text ?? '').join('\n\n'),
+      html,
+      sourceModel: model,
+    });
+    const contents = (seed.chapters ?? []).flatMap((chapter) => chapter.blocks.map((block) => block.content)).join('\n');
+    expect(contents).toContain('font-family:Calibri;font-size:24pt');
+    expect(contents).toContain('font-family:Liberation Serif;font-size:11.5pt');
+    expect(contents).toContain('font-family:Liberation Sans;font-size:12.5pt');
+    expect(contents).toContain('text-align:justify');
+    expect(contents).toContain('data-source-style-id="H1"');
+  });
+
+  it('keeps ODT source and chapter HTML after project persistence round-trip', async () => {
+    const zip = new JSZip();
+    zip.file('content.xml', '<office:document-content xmlns:office="urn:o" xmlns:text="urn:t" xmlns:style="urn:s" xmlns:fo="urn:f"><office:body><office:text><text:h text:outline-level="1" text:style-name="H1">Chapter</text:h><text:p text:style-name="Body">Body</text:p></office:text></office:body></office:document-content>');
+    zip.file('styles.xml', '<office:document-styles xmlns:office="urn:o" xmlns:style="urn:s" xmlns:fo="urn:f"><style:style style:name="Body" style:family="paragraph"><style:text-properties fo:font-family="Liberation Serif" fo:font-size="11.5pt"/></style:style><style:style style:name="H1" style:family="paragraph"><style:text-properties fo:font-family="Calibri" fo:font-size="24pt"/></style:style></office:document-styles>');
+    const sourceModel = await parseOdtSource(await zip.generateAsync({ type: 'uint8array' }));
+    const seed = buildImportedDocumentSeed({
+      fileName: 'round-trip.odt',
+      mimeType: 'application/vnd.oasis.opendocument.text',
+      text: sourceModel.blocks.map((block) => block.text ?? '').join('\n\n'),
+      html: sourceModelToHtml(sourceModel),
+      sourceModel,
+    });
+    const project = createProjectRecord('qa-user', { title: 'Round trip', importedDocument: seed });
+    const reloaded = JSON.parse(JSON.stringify(project)) as typeof project;
+    expect(reloaded.document.metadata?.sourceModel?.format).toBe('odt');
+    expect(reloaded.document.metadata?.sourceModel?.blocks[0].runs?.[0].directFormatting).toMatchObject({ fontFamily: 'Calibri', fontSizePt: 24 });
+    expect(reloaded.document.chapters.flatMap((chapter) => chapter.blocks.map((block) => block.content)).join('\n')).toContain('font-size:24pt');
+  });
 });
