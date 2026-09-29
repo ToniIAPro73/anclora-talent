@@ -214,6 +214,36 @@ QA_DELETE_AFTER_TEST=false
 QA_CREATION_CONFIRMATION_REQUIRED=false
 QA_PERSISTENT_IDENTITY=e2e.auth@anclora-talent.test
 
+### Authenticated browser QA bootstrap
+
+This repository adopts the workspace browser bootstrap invariant:
+
+```text
+QA_BROWSER_BOOTSTRAP_REQUIRED=true
+QA_SESSION_BOOTSTRAP_REQUIRED=true
+QA_MISSING_EXISTING_SESSION_IS_NOT_BLOCKER=true
+QA_MISSING_RUNNING_BROWSER_IS_NOT_BLOCKER=true
+QA_BROWSER_INSTALL_ALLOWED=true
+QA_BROWSER_LAUNCH_ALLOWED=true
+QA_DEDICATED_IDENTITY_CREATE_IF_MISSING=true
+QA_ENV_FILE_ALLOWED=.env.local
+QA_CREDENTIAL_OUTPUT_FORBIDDEN=true
+QA_AUTOMATION_FALLBACK_ORDER=agent-browser,playwright-existing-browser,playwright-installed-chromium
+```
+
+When authenticated browser QA is required, an absent browser or session is a
+normal bootstrap condition. Attempt `agent-browser` first and reuse or create
+the deterministic session; then use the repository Playwright runtime and run
+`npx playwright install chromium` when the browser binary is missing. Launch
+Chromium through `playwright.config.ts` or a focused QA script, start the local
+production-backed app when targeting localhost, and authenticate through
+`/sign-in` with the dedicated identity from `.env.local`.
+
+Do not print credential values or session cookies. Persist reusable state only
+under a gitignored QA/temp path. Report `BROWSER_QA_ENVIRONMENT_BLOCKED` only
+after the applicable browser, session, dependency, Chromium, app, environment,
+identity, and login attempts have failed, with sanitized command-level evidence.
+
 For dedicated human QA: Use designated production test identity. Never use Toni's personal account or operational admins as QA accounts. Never delete test account after testing.
 
 ## 12. Git Workflow Contract
