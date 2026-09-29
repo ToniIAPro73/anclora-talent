@@ -19,6 +19,29 @@ import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
 import { blocksToHtml } from '@/lib/document/to-html';
 
 describe('source-aware import model', () => {
+  it('projects an ODT source page boundary as a canonical page-break block', () => {
+    const html = sourceModelToHtml({
+      version: 1,
+      format: 'odt',
+      family: 'rich',
+      capabilities: getSourceCapabilities('odt'),
+      blocks: [{
+        id: 'heading-1',
+        type: 'heading',
+        level: 1,
+        text: 'Prólogo',
+        runs: [{ text: 'Prólogo', provenance: { kind: 'SOURCE_SEMANTIC', sourcePath: 'content.xml' } }],
+        paragraphProperties: { pageBreakBefore: 'page' },
+        provenance: { kind: 'SOURCE_SEMANTIC', sourcePath: 'content.xml' },
+      }],
+      sourceMetadata: { presentation: 'rich' },
+      provenance: { source: { kind: 'SOURCE_EXPLICIT', sourcePath: 'content.xml' } },
+    });
+
+    expect(html).toContain('<hr data-page-break="source"/>');
+    expect(html.indexOf('data-page-break')).toBeLessThan(html.indexOf('Prólogo'));
+  });
+
   it('dispatches active formats by extension and MIME without treating PDF as active', () => {
     expect(detectSourceFormat('manuscrito.odt', 'application/octet-stream')).toBe('odt');
     expect(detectSourceFormat('readme.md', 'text/plain')).toBe('markdown');

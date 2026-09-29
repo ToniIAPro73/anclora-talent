@@ -16,7 +16,7 @@ import type { ImportPresentationMode, PresentationProvenance } from './markdown-
 
 export type ProjectStatus = 'draft' | 'active';
 
-export type DocumentBlockType = 'heading' | 'paragraph' | 'quote';
+export type DocumentBlockType = 'heading' | 'paragraph' | 'quote' | 'pageBreak';
 
 export interface DocumentBlock {
   id: string;

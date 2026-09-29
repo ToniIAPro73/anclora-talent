@@ -22,10 +22,10 @@ function slugify(input: string) {
 
 function buildChapterBlocks(
   blocks: Array<{
-    type: 'heading' | 'paragraph' | 'quote';
+    type: 'heading' | 'paragraph' | 'quote' | 'pageBreak';
     content: string;
   }>,
-): Array<{ id: string; type: 'heading' | 'paragraph' | 'quote'; order: number; content: string }> {
+): Array<{ id: string; type: 'heading' | 'paragraph' | 'quote' | 'pageBreak'; order: number; content: string }> {
   return blocks.map((block, index) => ({
     id: randomUUID(),
     type: block.type,

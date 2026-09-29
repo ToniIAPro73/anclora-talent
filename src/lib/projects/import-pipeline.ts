@@ -1,12 +1,13 @@
 import type { ImportedDocumentSeed, ImportFieldConfidence, SectionSemanticType, SectionStructureItem } from './types';
-import { createSourceModel, escapeSourceHtml, sourceModelToHtml, type CanonicalSourceDocument, detectSourceFormat } from './source-model';
+import JSZip from 'jszip';
+import { createSourceModel, sourceModelToHtml, type CanonicalSourceDocument, detectSourceFormat } from './source-model';
 import type { ImportPresentationMode, PresentationProvenance } from './markdown-presentation';
 import type { OriginalDocumentStyleProfile } from './source-style-profile';
 import { extractOriginalDocumentStyleProfile } from './docx-styles';
 import { normalizeFootnoteReferenceMarkup, parseDocxFootnotes, type CanonicalFootnoteSet } from './rich-footnotes';
 
 const SUPPORTED_IMPORT_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'odt', 'txt', 'md', 'markdown']);
-const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote|table|pre|figure)[^>]*>[\s\S]*?<\/\1>/gi;
+const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote|table|pre|figure)[^>]*>[\s\S]*?<\/\1>|<hr\b[^>]*\/?>(?:<\/hr>)?/gi;
 const ALL_CAPS_RE = /^(?=.{40,})[^a-z]*[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ0-9 .,·:;()\-–—]+$/;
 const MAJOR_HEADING_RE = /^(?:cap[ií]tulo|chapter|introducci[oó]n|pr[oó]logo|prologo|[íi]ndice|indice|fase\s+\d+|parte\s+\d+|secci[oó]n|ep[ií]logo|conclusi[oó]n|glosario|bibliograf[ií]a|cierre|despu[eé]s\s+de|recursos(?:\s+recomendados)?|anexos?|ap[eé]ndices?)(?:\b|:)/i;
 const MINOR_HEADING_RE = /^(?:d[ií]a\s+\d+|tema\s+\d+|idea\s+clave|reto\s+de\s+acci[oó]n|preguntas?\s+de\s+reflexi[oó]n|ejercicio|caso|las\s+cinco\s+claves|cierre\s+de\s+fase)(?:\b|:)/i;
@@ -82,7 +83,7 @@ function getExtension(fileName: string) {
   return parts.length > 1 ? parts.pop()! : '';
 }
 
-type ParsedBlockKind = 'heading' | 'paragraph' | 'list' | 'quote' | 'rule';
+type ParsedBlockKind = 'heading' | 'paragraph' | 'list' | 'quote' | 'rule' | 'pageBreak';
 
 type ParsedBlock = {
   kind: ParsedBlockKind;
@@ -1043,6 +1044,12 @@ function parseHtmlBlocks(input: string, options: { preserveStyles?: boolean } = 
 
   for (const fragment of matches) {
     const clean = normalizeHtmlFragment(stripImportedTocPageMarkup(fragment), options);
+    if (/^<hr\b/i.test(clean)) {
+      if (/data-page-break=/i.test(clean)) {
+        blocks.push({ kind: 'pageBreak', text: '', html: clean, level: null, structural: false });
+      }
+      continue;
+    }
     const tag = clean.match(/^<(h[1-6]|p|ul|ol|blockquote|table|pre|figure)/i)?.[1]?.toLowerCase() ?? 'p';
     const text = textFromHtml(clean);
     const hasImage = /<img\b[^>]*>/i.test(clean);
@@ -1452,6 +1459,10 @@ function detectSubtitleFromFrontMatter(
 }
 
 function toDocumentBlock(block: ParsedBlock) {
+  if (block.kind === 'pageBreak') {
+    return { type: 'pageBreak' as const, content: '' };
+  }
+
   if (block.kind === 'heading') {
     // Cuando el HTML fuente ya porta el nivel real del heading (tag <hN> con
     // N === block.level, p.ej. mammoth/DOCX), se conserva el tag intacto para
@@ -1524,7 +1535,7 @@ function buildChaptersFromBlocks(
     if (!currentTitle) return;
 
     const documentBlocks = currentBlocks
-      .filter((block) => block.text.trim().length > 0 || block.kind === 'rule')
+      .filter((block) => block.text.trim().length > 0 || block.kind === 'rule' || block.kind === 'pageBreak')
       .map(toDocumentBlock);
 
     // `currentBlocks` always starts with the chapter's own heading block
@@ -2147,15 +2158,7 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
   if (extension === 'odt') {
     const { parseOdtSource } = await import('./source-model');
     const source = await parseOdtSource(buffer);
-    const html = source.blocks
-      .filter((block) => block.text)
-      .map((block) => {
-        const text = block.text ?? '';
-        return block.type === 'heading'
-          ? `<h${Math.min(block.level ?? 1, 6)}>${escapeSourceHtml(text)}</h${Math.min(block.level ?? 1, 6)}>`
-          : `<p>${escapeSourceHtml(text)}</p>`;
-      })
-      .join('');
+    const html = sourceModelToHtml(source);
     return {
       text: source.blocks.map((block) => block.text ?? '').join('\n\n'),
       html,
@@ -2257,6 +2260,7 @@ async function extractDocxRichContent(buffer: Buffer): Promise<ExtractedImportSo
       // cannot be inspected; the fallback parser still handles its list.
     }
     let richHtml = inlineDocxFootnotes(normalizeHtmlFragment(result.value), footnoteSet).replace(/<p([^>]*)>(\s*[·._\-—]{3,}\s*\d+\s*)<\/p>/gi, '<p$1 class="toc-entry">$2</p>');
+    richHtml = await injectDocxSourcePageBreaks(richHtml, buffer);
     const headingRule = profile.paragraphBorders?.Heading1 ?? profile.paragraphBorders?.['heading 1'];
     if (headingRule?.bottom) {
       const border = headingRule.bottom;
@@ -2278,6 +2282,72 @@ async function extractDocxRichContent(buffer: Buffer): Promise<ExtractedImportSo
     // Fallback to WordExtractor below when Mammoth is unavailable or fails.
   }
   return null;
+}
+
+function decodeDocxXmlText(value: string): string {
+  return value
+    .replace(/<w:tab\s*\/?\s*>/g, '\t')
+    .replace(/<w:br\b[^>]*\/?\s*>/g, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#x([0-9a-f]+);/gi, (_, code: string) => String.fromCodePoint(Number.parseInt(code, 16)))
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number.parseInt(code, 10)))
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizedBoundaryText(value: string): string {
+  return value
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLocaleLowerCase('es');
+}
+
+/**
+ * Mammoth intentionally omits Word's pagination markers. Preserve explicit
+ * source boundaries before the matching block so chapter projection and both
+ * renderers receive the same canonical page-break node.
+ */
+export async function injectDocxSourcePageBreaks(html: string, buffer: Buffer | ArrayBuffer): Promise<string> {
+  const zip = await JSZip.loadAsync(buffer);
+  const entry = zip.file('word/document.xml');
+  if (!entry) return html;
+  const xml = await entry.async('string');
+  const boundaryTexts = new Set<string>();
+  let breakAfterPrevious = false;
+  for (const match of xml.matchAll(/<w:p\b[^>]*>[\s\S]*?<\/w:p>/g)) {
+    const paragraph = match[0];
+    const textMatches = [...paragraph.matchAll(/<w:t\b[^>]*>[\s\S]*?<\/w:t>/g)];
+    const text = decodeDocxXmlText(textMatches.map((item) => item[0]).join(''));
+    const firstTextOffset = textMatches[0]?.index ?? Number.POSITIVE_INFINITY;
+    const lastTextOffset = textMatches.at(-1)?.index ?? -1;
+    const breakMatches = [...paragraph.matchAll(/<w:(?:br\b[^>]*w:type="page"|lastRenderedPageBreak\b[^>]*)\/?\s*>/g)];
+    const hasPageBreak = breakMatches.length > 0;
+    if (!text) {
+      breakAfterPrevious = hasPageBreak;
+      continue;
+    }
+    const breakBeforeParagraph = /<w:pageBreakBefore\b/.test(paragraph) ||
+      breakAfterPrevious ||
+      breakMatches.some((item) => (item.index ?? Number.POSITIVE_INFINITY) < firstTextOffset);
+    if (breakBeforeParagraph) boundaryTexts.add(normalizedBoundaryText(text));
+    breakAfterPrevious = hasPageBreak && breakMatches.some((item) => (item.index ?? -1) >= lastTextOffset);
+  }
+
+  if (boundaryTexts.size === 0) return html;
+  return html.replace(/<(h[1-6]|p|ul|ol|blockquote|table|pre|figure)\b[^>]*>[\s\S]*?<\/\1>/gi, (block) => {
+    const text = normalizedBoundaryText(block);
+    return boundaryTexts.has(text) ? `<hr data-page-break="source"/>${block}` : block;
+  });
 }
 
 async function extractDocxPageCount(buffer: Buffer): Promise<number | undefined> {

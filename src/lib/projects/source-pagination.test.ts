@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { extractSourcePaginationBaseline, isSourcePaginationBaselineValid } from './source-pagination';
+import { injectDocxSourcePageBreaks } from './import-pipeline';
 import JSZip from 'jszip';
 
 async function docxWithManualBreak(): Promise<Buffer> {
@@ -12,6 +13,18 @@ async function docxWithManualBreak(): Promise<Buffer> {
 }
 
 describe('source pagination baseline', () => {
+  it('projects explicit DOCX page breaks before the matching source block', async () => {
+    const zip = new JSZip();
+    zip.file('word/document.xml', `<w:document xmlns:w="x"><w:body>
+      <w:p><w:r><w:t>Primera página</w:t></w:r><w:r><w:br w:type="page"/></w:r></w:p>
+      <w:p><w:r><w:t>Prólogo</w:t></w:r></w:p>
+    </w:body></w:document>`);
+    const buffer = await zip.generateAsync({ type: 'nodebuffer' });
+    const html = await injectDocxSourcePageBreaks('<h1>Prólogo</h1>', buffer);
+
+    expect(html).toBe('<hr data-page-break="source"/><h1>Prólogo</h1>');
+  });
+
   it('persists manual OOXML page boundaries as editable anchors', async () => {
     const blocks = [
       { type: 'paragraph', content: 'Primera página' },

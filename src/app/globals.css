@@ -2772,19 +2772,12 @@ ul.toc-list > li {
 .ac-text-editor__toolbar-section[data-toolbar-group],
 .ac-text-editor__toolbar-actions[data-toolbar-group] {
   position: relative;
-  gap: .35rem;
+  gap: .2rem;
+  padding-inline: 0;
 }
 .ac-text-editor__toolbar-section[data-toolbar-group]::before,
 .ac-text-editor__toolbar-actions[data-toolbar-group]::before {
-  content: attr(data-toolbar-group);
-  align-self: center;
-  color: var(--text-tertiary);
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: .12em;
-  line-height: 1;
-  text-transform: uppercase;
-  white-space: nowrap;
+  content: none;
 }
 .ac-text-editor__font-size-control {
   width: auto !important;
@@ -2793,9 +2786,13 @@ ul.toc-list > li {
   white-space: nowrap;
 }
 .chapter-editor-layout .ac-text-editor__toolbar-section[data-toolbar-group="typography"] > button:first-of-type {
-  min-width: 150px;
-  max-width: 180px;
+  min-width: 110px;
+  max-width: 132px;
   white-space: nowrap;
+}
+.chapter-editor-layout [data-testid="margin-selector-toggle"] {
+  min-width: 92px;
+  padding-inline: .45rem;
 }
 .chapter-editor-outline__heading {
   display: flex;
@@ -2960,10 +2957,10 @@ ul.toc-list > li {
   width: 12px;
   color: var(--success);
 }
-.chapter-editor-layout .ac-text-editor__toolbar { position: absolute; z-index: 4; inset: 0 0 auto; min-height: 52px; overflow-x: auto; border: 1px solid var(--border-subtle); border-radius: 5px; background: var(--surface-panel); box-shadow: none; scrollbar-width: thin; }
-.chapter-editor-layout .ac-text-editor__toolbar { flex-wrap: nowrap; gap: .25rem; padding: .45rem .6rem; }
-.chapter-editor-layout .ac-text-editor__toolbar-section { flex-shrink: 0; flex-wrap: nowrap; gap: .2rem; border-right-color: var(--border-subtle); }
-.chapter-editor-layout .ac-text-editor__toolbar-actions { display: flex; align-items: center; gap: .25rem; flex-shrink: 0; }
+.chapter-editor-layout .ac-text-editor__toolbar { position: absolute; z-index: 4; inset: 0 0 auto; min-height: 52px; overflow-x: hidden; border: 1px solid var(--border-subtle); border-radius: 5px; background: var(--surface-panel); box-shadow: none; scrollbar-width: none; }
+.chapter-editor-layout .ac-text-editor__toolbar { flex-wrap: nowrap; gap: 0; padding: .35rem .35rem; }
+.chapter-editor-layout .ac-text-editor__toolbar-section { flex-shrink: 0; flex-wrap: nowrap; gap: .1rem; border-right-color: var(--border-subtle); }
+.chapter-editor-layout .ac-text-editor__toolbar-actions { display: flex; align-items: center; gap: .15rem; flex-shrink: 0; }
 .chapter-editor-layout .ac-text-editor__toolbar-actions .ac-text-editor__button { width: 1.85rem; height: 1.85rem; padding: 0; }
 .chapter-editor-layout .ac-text-editor__button { width: 1.85rem; height: 1.85rem; border-radius: 4px; }
 .chapter-editor-layout .ac-text-editor__split-main { width: 1.85rem; height: 1.85rem; }
@@ -2971,6 +2968,31 @@ ul.toc-list > li {
 .chapter-editor-layout .ac-editor-shell__surface { min-width: 0; min-height: 0; }
 .chapter-editor-layout .ac-text-editor { height: 100%; }
 .chapter-editor-layout .ac-text-editor__content--scroll { padding: 16px 20px 24px; }
+.chapter-editor-layout .ac-text-editor__toolbar-section,
+.chapter-editor-layout .ac-text-editor__toolbar-actions {
+  min-width: 0;
+}
+@media (max-width: 1100px) {
+  .chapter-editor-layout .ac-text-editor__toolbar {
+    flex-wrap: wrap;
+    overflow: visible;
+    align-content: flex-start;
+  }
+  .chapter-editor-layout .ac-text-editor__toolbar-section,
+  .chapter-editor-layout .ac-text-editor__toolbar-actions {
+    flex: 0 1 auto;
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 767px) {
+  .chapter-editor-layout .ac-text-editor__toolbar-section,
+  .chapter-editor-layout .ac-text-editor__toolbar-actions {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+  }
+}
 .chapter-editor-nav-buttons { display: flex; align-items: center; gap: 4px; }
 .ac-editor-title-divider { width: 1px; height: 16px; background: var(--border-subtle); margin-inline: 4px; }
 .ac-editor-shell__titles { display: flex; align-items: center; gap: 10px; min-width: 0; }

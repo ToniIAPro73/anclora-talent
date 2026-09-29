@@ -438,7 +438,10 @@ function sourceBlockStyle(block: SourceBlock): string {
 export function sourceModelToHtml(model: CanonicalSourceDocument): string {
   const render = (block: SourceBlock): string => {
     const sourceAttribute = block.sourceStyleId ? ` data-source-style-id="${escapeSourceHtml(block.sourceStyleId)}"` : '';
-    if (block.type === 'heading') return `<h${Math.min(block.level ?? 1, 6)}${sourceAttribute}${sourceBlockStyle(block)}>${sourceBlockInlineHtml(block)}</h${Math.min(block.level ?? 1, 6)}>`;
+    const pageBreak = block.paragraphProperties?.pageBreakBefore === 'page' || block.paragraphProperties?.pageBreakBefore === true
+      ? '<hr data-page-break="source"/>'
+      : '';
+    if (block.type === 'heading') return `${pageBreak}<h${Math.min(block.level ?? 1, 6)}${sourceAttribute}${sourceBlockStyle(block)}>${sourceBlockInlineHtml(block)}</h${Math.min(block.level ?? 1, 6)}>`;
     if (block.type === 'paragraph') return `<p${sourceAttribute}${sourceBlockStyle(block)}>${sourceBlockInlineHtml(block).replace(/\n/g, '<br />')}</p>`;
     if (block.type === 'blockquote') return `<blockquote>${(block.items ?? []).map(render).join('')}</blockquote>`;
     if (block.type === 'orderedList' || block.type === 'unorderedList') return `<${block.type === 'orderedList' ? 'ol' : 'ul'}>${(block.items ?? []).map((item) => `<li>${sourceBlockInlineHtml(item)}${(item.items ?? []).map(render).join('')}</li>`).join('')}</${block.type === 'orderedList' ? 'ol' : 'ul'}>`;
