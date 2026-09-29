@@ -35,6 +35,7 @@ import {
 } from '@/lib/preview/device-configs';
 import { MultipageFlow } from '@/components/projects/MultipageFlow';
 import { compileDocument, generateCssVariables } from '@/lib/style-engine/document-compiler';
+import { buildPreviewPages } from '@/lib/preview/preview-builder';
 
 interface PreviewModalProps {
   project: ProjectRecord;
@@ -119,15 +120,20 @@ export function PreviewModal({
     return composeProjectPreview(project, paginationConfig, measurer);
   }, [paginationConfig, project, measurer]);
 
-  const metaPages = composed.pages;
-  const cover = useMemo(() => metaPages.find(p => p.type === 'cover'), [metaPages]);
-  const backCover = useMemo(() => metaPages.find(p => p.type === 'back-cover'), [metaPages]);
+  const sourceFidelity = project.document.source?.sourceFormat === 'odt' || project.document.source?.sourceFormat === 'docx';
+  const previewPages = useMemo(() => {
+    if (!sourceFidelity) return composed.pages;
+    return buildPreviewPages(project, paginationConfig).filter((page) => page.type !== 'back-cover');
+  }, [composed.pages, paginationConfig, project, sourceFidelity]);
+
+  const cover = useMemo(() => previewPages.find(p => p.type === 'cover'), [previewPages]);
+  const backCover = useMemo(() => previewPages.find(p => p.type === 'back-cover'), [previewPages]);
 
   const contentHtml = useMemo(
-    () => buildComposedFlowHtml(composed.pages),
-    [composed],
+    () => buildComposedFlowHtml(previewPages),
+    [previewPages],
   );
-  const composedContentPageCount = composed.pages.filter((page) => page.type === 'content').length;
+  const composedContentPageCount = previewPages.filter((page) => page.type === 'content').length;
 
   // LOGICAL PAGE INDEXING
   const firstContentIndex = 1;

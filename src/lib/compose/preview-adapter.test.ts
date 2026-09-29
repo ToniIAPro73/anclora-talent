@@ -321,14 +321,16 @@ describe('composeProjectPreview — metadata injection (C7)', () => {
     expect(pages.some((p) => p.content?.includes('legal-page'))).toBe(false);
   });
 
-  it('preserves ODT source fidelity without synthetic front or back matter', () => {
+  it.each(['odt', 'docx'] as const)('preserves %s source fidelity without synthetic front or back matter', (sourceFormat) => {
     const project = createProject();
     project.document.source = {
-      fileName: 'source.odt',
-      mimeType: 'application/vnd.oasis.opendocument.text',
+      fileName: `source.${sourceFormat}`,
+      mimeType: sourceFormat === 'odt'
+        ? 'application/vnd.oasis.opendocument.text'
+        : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       importedAt: new Date().toISOString(),
       mode: 'editable',
-      sourceFormat: 'odt',
+      sourceFormat,
     };
     project.document.metadata = {
       title: 'Libro importado',

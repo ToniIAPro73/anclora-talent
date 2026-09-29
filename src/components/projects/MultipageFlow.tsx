@@ -43,7 +43,7 @@ export function MultipageFlow({
   const columnGap = pageGap + margins.left + margins.right;
   const isEndnotesSection = /<h[1-6]\b[^>]*>\s*Notas\s*<\/h[1-6]>/i.test(html);
 
-  const [measuredTotalPages, setMeasuredTotalPages] = React.useState(1);
+  const [measuredTotalPages, setMeasuredTotalPages] = React.useState(() => Math.max(1, pageCountHint ?? 1));
 
   const spreadStartPage =
     viewMode === 'spread' ? Math.max(0, currentPage - (currentPage % 2)) : currentPage;
