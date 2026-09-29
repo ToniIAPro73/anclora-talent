@@ -408,16 +408,22 @@ function buildOutlineEntries(
   chapterSections: ChapterSection[],
   tocHtml: string,
 ) {
+  const isImportedSource = ['doc', 'docx', 'odt'].includes(project.document.source?.sourceFormat ?? '');
+  const isFrontMatter = (title: string) => {
+    const normalized = normalizeMatchKey(title);
+    return normalized === 'nota editorial' || normalized === 'indice';
+  };
+  const sourceOutlineEntries = project.document.source?.outline
+    ?.filter((entry) => !isTocChapter(entry.title))
+    .filter((entry) => !isImportedSource || entry.level <= 1);
+
   const visibleTocEntries = extractTocRenderableEntries(tocHtml);
   const currentChapters = chapterSections
-    .filter((chapter) => !isTocChapter(chapter.title))
+    .filter((chapter) => !isTocChapter(chapter.title) && (!isImportedSource || !isFrontMatter(chapter.title)))
     .map((chapter) => ({ title: chapter.title, level: 1 }));
 
   if (visibleTocEntries.length === 0) {
-    const sourceOutline = project.document.source?.outline?.filter(
-      (entry) => !isTocChapter(entry.title),
-    );
-    return sourceOutline && sourceOutline.length > 0 ? sourceOutline : currentChapters;
+    return sourceOutlineEntries && sourceOutlineEntries.length > 0 ? sourceOutlineEntries : currentChapters;
   }
 
   // MERGE: el índice visible es la fuente primaria. Suplementamos con:
@@ -438,9 +444,7 @@ function buildOutlineEntries(
     );
   };
 
-  const sourceOutline = project.document.source?.outline?.filter(
-    (entry) => !isTocChapter(entry.title),
-  );
+  const sourceOutline = sourceOutlineEntries;
 
   const supplementCandidates = [
     ...(sourceOutline ?? []),

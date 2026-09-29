@@ -316,6 +316,39 @@ function estimateNodeLines(
       return totalLines + 0.5 / config.lineHeight; // list bottom margin
     }
 
+    // Tables are laid out by row, not as the sum of every nested paragraph.
+    // Counting each cell paragraph independently overestimates compact source
+    // tables and creates a synthetic page break before a table that still fits.
+    if (tagName === 'TABLE') {
+      const rows = Array.from(element.querySelectorAll('tr'));
+      if (rows.length === 0) return 1;
+
+      const columnCount = Math.max(
+        1,
+        ...rows.map((row) =>
+          Array.from(row.children).reduce(
+            (count, cell) => count + (Number.parseInt(cell.getAttribute('colspan') ?? '1', 10) || 1),
+            0,
+          ),
+        ),
+      );
+      const cellWidth = Math.max(
+        config.fontSize * 4,
+        (config.pageWidth - config.marginLeft - config.marginRight) / columnCount,
+      );
+      const charsPerLine = Math.max(1, Math.floor(cellWidth / (config.fontSize * 0.45)));
+      const rowLines = rows.map((row) => {
+        const cells = Array.from(row.children);
+        return Math.max(
+          1,
+          ...cells.map((cell) =>
+            Math.ceil((cell.textContent?.trim().length || 0) / charsPerLine),
+          ),
+        );
+      });
+      return rowLines.reduce((total, lines) => total + lines * 1.35, 0) + 0.5;
+    }
+
     // Paragraphs — CSS: p{margin:0}, p+p{margin-top:0.8rem}
     if (tagName === 'P') {
       const text = element.textContent || '';

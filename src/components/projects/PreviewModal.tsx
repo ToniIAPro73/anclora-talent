@@ -120,7 +120,7 @@ export function PreviewModal({
     return composeProjectPreview(project, paginationConfig, measurer);
   }, [paginationConfig, project, measurer]);
 
-  const sourceFidelity = project.document.source?.sourceFormat === 'odt' || project.document.source?.sourceFormat === 'docx';
+  const sourceFidelity = project.document.source?.sourceFormat === 'odt' || project.document.source?.sourceFormat === 'docx' || project.document.source?.sourceFormat === 'doc';
   const previewPages = useMemo(() => {
     if (!sourceFidelity) return composed.pages;
     return buildPreviewPages(project, paginationConfig).filter((page) => page.type !== 'back-cover');

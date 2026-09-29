@@ -308,7 +308,7 @@ function buildPagesFromResult(
   // A source-defined ODT already contains its own front matter and terminal
   // pages. Adding Talent's synthetic title/legal/back-cover pages would make
   // SOURCE_FIDELITY previews diverge from the authoritative source pagination.
-  const sourceFidelity = project.document.source?.sourceFormat === 'odt' || project.document.source?.sourceFormat === 'docx';
+  const sourceFidelity = project.document.source?.sourceFormat === 'odt' || project.document.source?.sourceFormat === 'docx' || project.document.source?.sourceFormat === 'doc';
   const blockById = new Map(document.blocks.map((block) => [block.id, block]));
   const contentWidth =
     template.pageWidth - template.margins.left - template.margins.right;

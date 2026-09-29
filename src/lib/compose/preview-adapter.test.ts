@@ -321,7 +321,7 @@ describe('composeProjectPreview — metadata injection (C7)', () => {
     expect(pages.some((p) => p.content?.includes('legal-page'))).toBe(false);
   });
 
-  it.each(['odt', 'docx'] as const)('preserves %s source fidelity without synthetic front or back matter', (sourceFormat) => {
+  it.each(['odt', 'docx', 'doc'] as const)('preserves %s source fidelity without synthetic front or back matter', (sourceFormat) => {
     const project = createProject();
     project.document.source = {
       fileName: `source.${sourceFormat}`,

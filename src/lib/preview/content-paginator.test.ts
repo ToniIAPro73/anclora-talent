@@ -150,6 +150,20 @@ describe('content-paginator', () => {
       expect(chapterPages.length).toBeGreaterThan(0);
     });
 
+    it('estimates compact tables by rows instead of nested cell paragraphs', () => {
+      const table = `<h1>Decisiones</h1>
+        <p>${'Un criterio ayuda a comparar alternativas y revisar el proceso. '.repeat(5)}</p>
+        <h2>Matriz</h2>
+        <table><tbody>
+          <tr><th>Alternativa</th><th>Impacto</th><th>Reversibilidad</th><th>Evidencia</th><th>Siguiente acción</th></tr>
+          <tr><td>A</td><td>Alto</td><td>Alta</td><td>Media</td><td>Prototipo breve</td></tr>
+          <tr><td>B</td><td>Medio</td><td>Baja</td><td>Baja</td><td>Conseguir dato</td></tr>
+          <tr><td>C</td><td>Alto</td><td>Baja</td><td>Alta</td><td>Revisión</td></tr>
+        </tbody></table>`;
+
+      expect(paginateContent(table, DEVICE_PAGINATION_CONFIGS.laptop)).toHaveLength(1);
+    });
+
     it('should handle blockquotes', () => {
       const content = `
         <p>Regular paragraph</p>
