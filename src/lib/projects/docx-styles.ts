@@ -513,6 +513,25 @@ export async function extractOriginalDocumentStyleProfile(
       profile.footer = extractFooterFromXml(footerXml);
     }
 
+    const footnoteTextStyle = ['footnotetext', 'footnote text']
+      .map((alias) => stylesMap.get(alias))
+      .find(Boolean);
+    if (footnoteTextStyle) {
+      profile.footnote = {
+        ...(footnoteTextStyle.fontFamily ? { fontFamily: footnoteTextStyle.fontFamily } : {}),
+        ...(footnoteTextStyle.fontSizePt !== undefined ? { fontSizePt: footnoteTextStyle.fontSizePt } : {}),
+        ...(footnoteTextStyle.fontWeight ? { fontWeight: footnoteTextStyle.fontWeight } : {}),
+        ...(footnoteTextStyle.fontStyle ? { fontStyle: footnoteTextStyle.fontStyle } : {}),
+        ...(footnoteTextStyle.color ? { color: footnoteTextStyle.color } : {}),
+        ...(footnoteTextStyle.lineHeight !== undefined ? { lineHeight: footnoteTextStyle.lineHeight } : {}),
+        ...(footnoteTextStyle.textAlign ? { textAlign: footnoteTextStyle.textAlign } : {}),
+        ...(footnoteTextStyle.firstLineIndentPt !== undefined ? { firstLineIndentPt: footnoteTextStyle.firstLineIndentPt } : {}),
+        ...(footnoteTextStyle.spacingBeforePt !== undefined ? { spacingBeforePt: footnoteTextStyle.spacingBeforePt } : {}),
+        ...(footnoteTextStyle.spacingAfterPt !== undefined ? { spacingAfterPt: footnoteTextStyle.spacingAfterPt } : {}),
+        separator: { exists: Boolean(zip.file('word/footnotes.xml')) },
+      };
+    }
+
     // 3. Resolve Normal Body Style
     const normalResolved = resolveInheritedStyle('Normal', stylesMap, defaults);
 

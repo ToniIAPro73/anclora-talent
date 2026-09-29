@@ -404,6 +404,10 @@ export function resolveDocumentStyles({
     fontSizePt: Math.max(8, body.fontSizePt - 2),
     lineHeight: 1.3,
   };
+  if (sourceStyleProfile?.footnote) {
+    Object.assign(footnote, sourceStyleProfile.footnote);
+    delete (footnote as ResolvedTextStyle & { separator?: unknown }).separator;
+  }
 
   // 7b. Editorial kicker (small label above a heading, e.g. "INTRODUCCIÓN")
   const kickerFallback: ResolvedTextStyle = {

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { Extension } from '@tiptap/core';
+import { Extension, Mark } from '@tiptap/core';
 import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import { Selection, TextSelection } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
@@ -255,6 +255,29 @@ const SourceParagraphDecorationAttributes = Extension.create({
 // role, which is why a kicker or footnote looks just like body text.
 const EDITORIAL_PARAGRAPH_CLASS_RE = /\beditorial-(kicker|footnote|endnote-definition)\b/;
 
+const FootnoteReferenceMark = Mark.create({
+  name: 'footnoteReference',
+
+  addAttributes() {
+    return {
+      identifier: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.getAttribute('data-footnote-reference'),
+        renderHTML: (attributes: Record<string, unknown>) =>
+          attributes.identifier ? { 'data-footnote-reference': attributes.identifier } : {},
+      },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'sup[data-footnote-reference]' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ['sup', HTMLAttributes, 0];
+  },
+});
+
 const EditorialParagraphAttributes = Extension.create({
   name: 'editorialParagraphAttributes',
 
@@ -277,6 +300,12 @@ const EditorialParagraphAttributes = Extension.create({
             parseHTML: (element) => element.getAttribute('data-footnote-id'),
             renderHTML: (attributes) =>
               attributes.footnoteId ? { 'data-footnote-id': attributes.footnoteId } : {},
+          },
+          footnoteSource: {
+            default: null,
+            parseHTML: (element) => element.getAttribute('data-footnote-source'),
+            renderHTML: (attributes) =>
+              attributes.footnoteSource ? { 'data-footnote-source': attributes.footnoteSource } : {},
           },
         },
       },
@@ -615,7 +644,7 @@ const AdvancedFontSelector = ({
         : documentStyleMap.body.fontFamily)
     : effectiveFontFamily?.trim() || 'Liberation Serif';
 
-  const effectiveFont = roleFont;
+  const effectiveFont = roleFont?.replace(/^['"]|['"]$/g, '') || 'Liberation Serif';
 
   const filteredFonts = useMemo(() => {
     return fonts
@@ -746,9 +775,9 @@ const FontSizeSelector = ({
         disabled={!isAvailable}
         dataTestId="editor-toolbar-font-size-button"
         title={isAvailable ? copy.fontSize : unavailableTitle}
+        className="ac-text-editor__font-size-control"
       >
-        <Type className="h-4 w-4 shrink-0" />
-        <span data-testid="editor-toolbar-font-size-value" className="text-xs font-semibold">{sizeState.mixed ? '—' : currentSize}</span>
+        <span data-testid="editor-toolbar-font-size-value" className="whitespace-nowrap text-xs font-semibold">{sizeState.mixed ? '—' : currentSize}</span>
       </ToolbarButton>
 
       <EditorPopover
@@ -1098,7 +1127,7 @@ const MenuBar = ({
 
   return (
     <div className="ac-text-editor__toolbar">
-      <div className="ac-text-editor__toolbar-section">
+      <div className="ac-text-editor__toolbar-section" data-toolbar-group="view">
         <ToolbarButton onClick={() => setDevice('mobile')} active={device === 'mobile'} dataTestId="editor-toolbar-device-mobile-button" title={copy.deviceMobile}>
           <Smartphone className="h-4 w-4" />
         </ToolbarButton>
@@ -1129,7 +1158,7 @@ const MenuBar = ({
         </ToolbarButton>
       </div>
 
-      <div className="ac-text-editor__toolbar-section">
+      <div className="ac-text-editor__toolbar-section" data-toolbar-group="typography">
         <AdvancedFontSelector
           editor={editor}
           applyToWordOrSelection={applyToWordOrSelection}
@@ -1156,7 +1185,7 @@ const MenuBar = ({
         <MarginSelector margins={margins} onMarginsChange={onMarginsChange} wordsPerPage={wordsPerPage} />
       </div>
 
-      <div className="ac-text-editor__toolbar-section">
+      <div className="ac-text-editor__toolbar-section" data-toolbar-group="inline">
         <ToolbarButton
           onClick={() => applyToWordOrSelection((chain) => chain.toggleBold())}
           active={editor.isActive('bold')}
@@ -1186,7 +1215,7 @@ const MenuBar = ({
         </ToolbarButton>
       </div>
 
-      <div className="ac-text-editor__toolbar-section">
+      <div className="ac-text-editor__toolbar-section" data-toolbar-group="paragraph">
         <ToolbarButton
           onClick={() => applyToParagraphOrSelection((chain) => chain.setTextAlign('left'))}
           active={editor.isActive({ textAlign: 'left' })}
@@ -1225,7 +1254,7 @@ const MenuBar = ({
         </ToolbarButton>
       </div>
 
-      <div className="ac-text-editor__toolbar-section">
+      <div className="ac-text-editor__toolbar-section" data-toolbar-group="structure">
         <ToolbarButton
           onClick={() => applyToParagraphOrSelection((chain) => chain.toggleHeading({ level: 1 }))}
           active={editor.isActive('heading', { level: 1 })}
@@ -1387,7 +1416,7 @@ const MenuBar = ({
         </ToolbarButton>
       </div>
 
-      <div className="ac-text-editor__toolbar-actions">
+      <div className="ac-text-editor__toolbar-actions" data-toolbar-group="history">
         <ToolbarButton
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
@@ -1768,6 +1797,7 @@ export function AdvancedRichTextEditor({
       }),
       CharacterCount.configure({ limit: 1000000 }),
       TextStyle,
+      FootnoteReferenceMark,
       FontFamily,
       FontSize,
       Color,
@@ -1868,11 +1898,18 @@ export function AdvancedRichTextEditor({
   const viewportWidth = spreadNaturalWidth;
   const estimatedFallbackWidth = Math.max(
     320,
-    physicalWidth > 0 ? physicalWidth - 180 - 32 : 0,
+    physicalWidth > 0
+      ? physicalWidth - (viewportLayout.physicalDevice === 'mobile' ? 32 : 180) - 32
+      : 0,
   );
   const availableManuscriptWidth = containerInnerWidth > 0 ? containerInnerWidth : estimatedFallbackWidth;
   const spreadFitFactor = calculateSpreadFitFactor({
-    availableWidth: availableManuscriptWidth,
+    // resolveEditorViewportLayout already fits a physical mobile viewport to
+    // one canonical page. Applying the manuscript fit a second time would
+    // square the scale and crop the source page.
+    availableWidth: viewportLayout.physicalDevice === 'mobile'
+      ? spreadNaturalWidth
+      : availableManuscriptWidth,
     naturalWidth: spreadNaturalWidth,
   });
   const effectiveScale = zoomScale * viewportLayout.scale * spreadFitFactor;
@@ -1954,6 +1991,9 @@ export function AdvancedRichTextEditor({
     // ordinary top-to-bottom flow regardless of its persisted class.
     setFootnoteDecorations(editor.view, []);
     if (isEndnotesSection) return;
+    // Source-linked notes remain in normal flow so imported page membership is
+    // not replaced by this legacy absolute-positioning heuristic.
+    if (proseMirror.querySelector('[data-footnote-source]')) return;
 
     const footnotes: Array<{ pos: number; nodeSize: number }> = [];
     editor.state.doc.descendants((node, pos) => {
@@ -2374,7 +2414,9 @@ export function AdvancedRichTextEditor({
                 margin: 0.85rem 0 1rem 0 !important;
                 padding-top: 0.5rem;
                 border-top: 1px solid var(--talent-footnote-color, var(--border-strong, rgba(0,0,0,0.3)));
-                max-width: 45%;
+                max-width: 100%;
+                break-inside: avoid;
+                -webkit-column-break-inside: avoid;
               }
               .ProseMirror p.editorial-endnote-definition,
               .preview-page p.editorial-endnote-definition {
@@ -2390,12 +2432,12 @@ export function AdvancedRichTextEditor({
               }
               .ProseMirror p.editorial-footnote::before,
               .preview-page p.editorial-footnote::before {
-                content: '[' attr(data-footnote-id) '] ';
+                content: attr(data-footnote-id) ' ';
                 font-variant-numeric: tabular-nums;
               }
               .ProseMirror p.editorial-endnote-definition::before,
               .preview-page p.editorial-endnote-definition::before {
-                content: '[' attr(data-footnote-id) '] ';
+                content: attr(data-footnote-id) ' ';
                 font-variant-numeric: tabular-nums;
               }
               .multipage-editor-flow--endnotes .ProseMirror p.editorial-footnote::before,

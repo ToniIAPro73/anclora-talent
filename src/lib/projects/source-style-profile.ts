@@ -77,6 +77,11 @@ export interface OriginalDocumentStyleProfile {
     bodyFontSizePt?: number;
   };
 
+  /** Source-defined FootnoteText/FootnoteReference styling and separator semantics. */
+  footnote?: Partial<ResolvedTextStyle> & {
+    separator?: { exists: boolean; widthPercent?: number; thicknessPt?: number; color?: string };
+  };
+
   paragraphBorders?: Record<string, {
     bottom?: { style: string; widthPt?: number; color?: string; spacingPt?: number };
     left?: { style: string; widthPt?: number; color?: string; spacingPt?: number };

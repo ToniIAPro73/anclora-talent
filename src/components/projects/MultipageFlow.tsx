@@ -125,6 +125,9 @@ export function MultipageFlow({
     ) as HTMLElement | null;
     if (!contentArea) return;
     if (isEndnotesSection) return;
+    // Source-linked notes remain in normal flow; absolute positioning is only
+    // a fallback for legacy/recomposed documents without source metadata.
+    if (contentArea.querySelector('[data-footnote-source]')) return;
 
     const footnotes = Array.from(
       contentArea.querySelectorAll<HTMLElement>('p.editorial-footnote'),
@@ -339,7 +342,9 @@ export function MultipageFlow({
           margin: 0.85rem 0 1rem 0 !important;
           padding-top: 0.5rem;
           border-top: 1px solid var(--talent-footnote-color, var(--border-strong, rgba(0,0,0,0.3)));
-          max-width: 45%;
+          max-width: 100%;
+          break-inside: avoid;
+          -webkit-column-break-inside: avoid;
         }
         .flow-content-root.ProseMirror p.editorial-endnote-definition {
           max-width: 100%;
@@ -356,11 +361,11 @@ export function MultipageFlow({
           max-width: 100%;
         }
         .flow-content-root.ProseMirror p.editorial-footnote::before {
-          content: '[' attr(data-footnote-id) '] ';
+          content: attr(data-footnote-id) ' ';
           font-variant-numeric: tabular-nums;
         }
         .flow-content-root.ProseMirror p.editorial-endnote-definition::before {
-          content: '[' attr(data-footnote-id) '] ';
+          content: attr(data-footnote-id) ' ';
           font-variant-numeric: tabular-nums;
         }
         .multipage-flow--endnotes .flow-content-root.ProseMirror p.editorial-footnote::before,

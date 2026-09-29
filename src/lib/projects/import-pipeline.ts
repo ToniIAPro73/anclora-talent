@@ -3,6 +3,7 @@ import { createSourceModel, escapeSourceHtml, sourceModelToHtml, type CanonicalS
 import type { ImportPresentationMode, PresentationProvenance } from './markdown-presentation';
 import type { OriginalDocumentStyleProfile } from './source-style-profile';
 import { extractOriginalDocumentStyleProfile } from './docx-styles';
+import { normalizeFootnoteReferenceMarkup, parseDocxFootnotes, type CanonicalFootnoteSet } from './rich-footnotes';
 
 const SUPPORTED_IMPORT_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'odt', 'txt', 'md', 'markdown']);
 const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote|table|pre|figure)[^>]*>[\s\S]*?<\/\1>/gi;
@@ -982,7 +983,27 @@ function splitHtmlListBlocks(fragment: string, hasTocLeaderPattern = false): Par
  * right after the paragraph that references it, so the content survives
  * chapter segmentation and stays next to its reference.
  */
-function inlineDocxFootnotes(html: string): string {
+function inlineDocxFootnotes(html: string, footnoteSet?: CanonicalFootnoteSet): string {
+  if (footnoteSet?.definitions.length) {
+    const definitions = new Map(footnoteSet.definitions.map((definition) => [definition.id, definition]));
+    const normalized = normalizeFootnoteReferenceMarkup(html);
+    const body = normalized.replace(/<ol>((?:<li id="footnote-\d+">[\s\S]*?<\/li>)+)<\/ol>\s*$/i, '');
+
+    return body.replace(/<p([^>]*)>[\s\S]*?<\/p>/gi, (paragraph) => {
+      const ids = Array.from(paragraph.matchAll(/data-footnote-reference="(\d+)"/g)).map((match) => match[1]);
+      if (ids.length === 0) return paragraph;
+
+      const notes = ids
+        .map((id) => {
+          const definition = definitions.get(id);
+          if (!definition) return '';
+          return `<p class="editorial-footnote" data-footnote-id="${id}" data-footnote-display="${definition.displayNumber}" data-footnote-source="docx">${definition.html}</p>`;
+        })
+        .join('');
+      return paragraph + notes;
+    });
+  }
+
   const footnoteListRe = /<ol>((?:<li id="footnote-\d+">[\s\S]*?<\/li>)+)<\/ol>\s*$/;
   const listMatch = html.match(footnoteListRe);
   if (!listMatch) return html;
@@ -1002,13 +1023,13 @@ function inlineDocxFootnotes(html: string): string {
 
   if (footnotes.size === 0) return html;
 
-  const body = html.slice(0, listMatch.index);
+  const body = normalizeFootnoteReferenceMarkup(html.slice(0, listMatch.index));
   return body.replace(/<p[^>]*>[\s\S]*?<\/p>/g, (paragraph) => {
-    const refs = Array.from(paragraph.matchAll(/href="#footnote-(\d+)"/g)).map((m) => m[1]);
+    const refs = Array.from(paragraph.matchAll(/data-footnote-reference="(\d+)"/g)).map((m) => m[1]);
     if (refs.length === 0) return paragraph;
 
     const notes = refs
-      .map((id) => (footnotes.has(id) ? `<p class="editorial-footnote" data-footnote-id="${id}">[${id}] ${footnotes.get(id)}</p>` : ''))
+      .map((id) => (footnotes.has(id) ? `<p class="editorial-footnote" data-footnote-id="${id}" data-footnote-display="${id}">${footnotes.get(id)}</p>` : ''))
       .join('');
     return paragraph + notes;
   });
@@ -2220,7 +2241,21 @@ async function extractDocxRichContent(buffer: Buffer): Promise<ExtractedImportSo
       },
     );
     const profile = await extractOriginalDocumentStyleProfile(buffer);
-    let richHtml = inlineDocxFootnotes(normalizeHtmlFragment(result.value)).replace(/<p([^>]*)>(\s*[·._\-—]{3,}\s*\d+\s*)<\/p>/gi, '<p$1 class="toc-entry">$2</p>');
+    // Footnotes are an optional OOXML part. Keep Mammoth chapter extraction
+    // available for lightweight/partial DOCX buffers when that part is absent
+    // or the buffer is not a complete ZIP (as in parser isolation tests).
+    let footnoteSet: CanonicalFootnoteSet = {
+      definitions: [],
+      hasSeparator: false,
+      hasContinuationSeparator: false,
+    };
+    try {
+      footnoteSet = await parseDocxFootnotes(buffer);
+    } catch {
+      // The normal importer continues with Mammoth output when footnotes
+      // cannot be inspected; the fallback parser still handles its list.
+    }
+    let richHtml = inlineDocxFootnotes(normalizeHtmlFragment(result.value), footnoteSet).replace(/<p([^>]*)>(\s*[·._\-—]{3,}\s*\d+\s*)<\/p>/gi, '<p$1 class="toc-entry">$2</p>');
     const headingRule = profile.paragraphBorders?.Heading1 ?? profile.paragraphBorders?.['heading 1'];
     if (headingRule?.bottom) {
       const border = headingRule.bottom;
