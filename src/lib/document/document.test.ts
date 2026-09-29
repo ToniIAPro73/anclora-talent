@@ -66,6 +66,17 @@ describe('htmlToBlocks', () => {
     expect(html).toContain('A note.');
   });
 
+  it('round-trips Markdown endnote definitions without changing their source order', () => {
+    const blocks = htmlToBlocks(
+      '<h2>Notas</h2>' +
+        '<p class="editorial-endnote-definition" data-footnote-id="1">One.</p>' +
+        '<p class="editorial-endnote-definition" data-footnote-id="2">Two.</p>',
+    );
+    const html = blocksToHtml(blocks);
+    expect(html).toContain('class="editorial-endnote-definition"');
+    expect(html.indexOf('data-footnote-id="1"')).toBeLessThan(html.indexOf('data-footnote-id="2"'));
+  });
+
   it('assigns stable unique ids', () => {
     const blocks = htmlToBlocks('<p>a</p><p>a</p>');
     expect(new Set(blocks.map((b) => b.id)).size).toBe(2);

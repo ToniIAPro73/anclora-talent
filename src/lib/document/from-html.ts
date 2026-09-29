@@ -255,7 +255,7 @@ export function htmlToBlocks(html: string): DocumentBlock[] {
     if (level) {
       push({ type: 'heading', level, content: parseInline(el), id: nextId(el, tag) });
     } else if (tag === 'p') {
-      const editorialClass = el.getAttribute('class')?.match(/\beditorial-(kicker|footnote)\b/)?.[0] as 'editorial-kicker' | 'editorial-footnote' | undefined;
+      const editorialClass = el.getAttribute('class')?.match(/\beditorial-(kicker|footnote|endnote-definition)\b/)?.[0] as 'editorial-kicker' | 'editorial-footnote' | 'editorial-endnote-definition' | undefined;
       const footnoteId = el.getAttribute('data-footnote-id');
       push({
         type: 'paragraph',

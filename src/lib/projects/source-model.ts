@@ -400,7 +400,7 @@ export function sourceModelToHtml(model: CanonicalSourceDocument): string {
     if (block.type === 'image') return block.src ? `<figure><img src="${escapeSourceHtml(block.src)}" alt="${escapeSourceHtml(block.alt ?? '')}" /></figure>` : '';
     if (block.type === 'codeBlock') return `<pre><code${block.language ? ` data-language="${escapeSourceHtml(block.language)}"` : ''}>${escapeSourceHtml(block.text ?? '')}</code></pre>`;
     if (block.type === 'horizontalRule') return '<hr />';
-    if (block.type === 'footnote') return `<p class="editorial-footnote" data-footnote="true" data-footnote-id="${escapeSourceHtml(block.identifier ?? '')}">${sourceBlockInlineHtml(block)}</p>`;
+    if (block.type === 'footnote') return `<p class="editorial-endnote-definition" data-footnote="true" data-footnote-id="${escapeSourceHtml(block.identifier ?? '')}">${sourceBlockInlineHtml(block)}</p>`;
     return `<sup data-footnote-reference="${escapeSourceHtml(block.text ?? '')}">${escapeSourceHtml(block.text ?? '')}</sup>`;
   };
   return model.blocks.map(render).join('');

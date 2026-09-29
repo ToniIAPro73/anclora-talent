@@ -68,7 +68,7 @@ export interface HeadingBlock extends BlockBase {
 export interface ParagraphBlock extends BlockBase {
   type: 'paragraph';
   content: InlineNode[];
-  editorialClass?: 'editorial-kicker' | 'editorial-footnote';
+  editorialClass?: 'editorial-kicker' | 'editorial-footnote' | 'editorial-endnote-definition';
   footnoteId?: string;
 }
 

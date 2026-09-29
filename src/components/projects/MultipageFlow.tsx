@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 import type { PaginationConfig } from '@/lib/preview/device-configs';
+import { getPageContentHeight } from '@/lib/preview/page-layout';
 
 interface MultipageFlowProps {
   html: string;
@@ -35,7 +36,7 @@ export function MultipageFlow({
   const pageHeight = config.pageHeight;
   const pageGap = 32;
   const contentWidth = Math.max(120, pageWidth - margins.left - margins.right);
-  const contentHeight = Math.max(120, pageHeight - margins.top - margins.bottom);
+  const contentHeight = getPageContentHeight(pageHeight, margins);
   const columnGap = pageGap + margins.left + margins.right;
 
   const [measuredTotalPages, setMeasuredTotalPages] = React.useState(1);
@@ -321,7 +322,8 @@ export function MultipageFlow({
           text-transform: uppercase;
           margin: 0 0 0.25rem 0;
         }
-        .flow-content-root.ProseMirror p.editorial-footnote {
+        .flow-content-root.ProseMirror p.editorial-footnote,
+        .flow-content-root.ProseMirror p.editorial-endnote-definition {
           font-family: var(--talent-footnote-font, inherit);
           font-size: var(--talent-footnote-size, 0.8rem) !important;
           color: var(--talent-footnote-color, var(--text-tertiary));
@@ -331,7 +333,14 @@ export function MultipageFlow({
           border-top: 1px solid var(--talent-footnote-color, var(--border-strong, rgba(0,0,0,0.3)));
           max-width: 45%;
         }
+        .flow-content-root.ProseMirror p.editorial-endnote-definition {
+          max-width: 100%;
+        }
         .flow-content-root.ProseMirror p.editorial-footnote::before {
+          content: '[' attr(data-footnote-id) '] ';
+          font-variant-numeric: tabular-nums;
+        }
+        .flow-content-root.ProseMirror p.editorial-endnote-definition::before {
           content: '[' attr(data-footnote-id) '] ';
           font-variant-numeric: tabular-nums;
         }

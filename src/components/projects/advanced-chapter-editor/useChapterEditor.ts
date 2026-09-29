@@ -112,9 +112,10 @@ export function useChapterEditor({
 
   const totalPages = Math.max(
     1,
-    measuredTotalPages == null
-      ? estimatedTotalPages
-      : Math.max(estimatedTotalPages, measuredTotalPages),
+    // Once the live editor has measured its actual occupied columns, that
+    // geometry is the canonical page count. Keeping the larger estimate here
+    // turns a stale/overestimated trailing column into a numbered blank page.
+    measuredTotalPages ?? estimatedTotalPages,
   );
 
   // The source manuscript numbers pages continuously through the whole

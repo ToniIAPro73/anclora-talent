@@ -68,6 +68,7 @@ import {
   type PageCalculationConfig,
 } from '@/lib/projects/page-calculator';
 import { countRenderablePages, paginateContent } from '@/lib/preview/content-paginator';
+import { getPageContentHeight } from '@/lib/preview/page-layout';
 import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 import { reconcileOverflowBreaks } from '@/lib/preview/editor-page-layout';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
@@ -235,7 +236,7 @@ const TocBlockAttributes = Extension.create({
 // `class="editorial-footnote"` emitted by the DOCX importer. Without this,
 // every imported paragraph renders identically regardless of its editorial
 // role, which is why a kicker or footnote looks just like body text.
-const EDITORIAL_PARAGRAPH_CLASS_RE = /\beditorial-(kicker|footnote)\b/;
+const EDITORIAL_PARAGRAPH_CLASS_RE = /\beditorial-(kicker|footnote|endnote-definition)\b/;
 
 const EditorialParagraphAttributes = Extension.create({
   name: 'editorialParagraphAttributes',
@@ -482,7 +483,7 @@ function countMeaningfulTopLevelBlocks(html: string): number {
 // and a body paragraph. This resolves the block's editorial role under the
 // cursor so those indicators can fall back to the role's real style instead
 // of a hardcoded default.
-type EditorBlockRole = 'h1' | 'h2' | 'h3' | 'h4' | 'kicker' | 'footnote' | 'body';
+type EditorBlockRole = 'h1' | 'h2' | 'h3' | 'h4' | 'kicker' | 'footnote' | 'endnote' | 'body';
 
 function getCurrentBlockRole(editor: Editor): EditorBlockRole {
   if (editor.isActive('heading', { level: 1 })) return 'h1';
@@ -493,6 +494,7 @@ function getCurrentBlockRole(editor: Editor): EditorBlockRole {
   const editorialClass = editor.getAttributes('paragraph').editorialClass as string | null | undefined;
   if (editorialClass === 'editorial-kicker') return 'kicker';
   if (editorialClass === 'editorial-footnote') return 'footnote';
+  if (editorialClass === 'editorial-endnote-definition') return 'endnote';
   return 'body';
 }
 
@@ -508,6 +510,7 @@ function getRoleTextStyle(
     case 'h4': return documentStyleMap.headings.h4;
     case 'kicker': return documentStyleMap.kicker;
     case 'footnote': return documentStyleMap.footnote;
+    case 'endnote': return documentStyleMap.footnote;
     default: return documentStyleMap.body;
   }
 }
@@ -1544,7 +1547,8 @@ export function AdvancedRichTextEditor({
   );
   const spreadStartPage =
     layoutViewMode === 'double' ? Math.max(0, currentPage - (currentPage % 2)) : currentPage;
-  const showSecondPage = layoutViewMode === 'double';
+  const showSecondPage =
+    layoutViewMode === 'double' && spreadStartPage + 1 < totalRenderablePages;
   const lastPublishedContentRef = useRef(normalizeEditorHtml(defaultContent));
 
   const handleUpdate = useCallback(
@@ -1793,7 +1797,7 @@ export function AdvancedRichTextEditor({
   const zoomScale = Math.max(0.5, Math.min(1.5, contentZoom / 100));
   const pageGap = 32;
   const contentWidth = Math.max(120, pageWidth - margins.left - margins.right);
-  const contentHeight = Math.max(120, pageHeight - margins.top - margins.bottom);
+  const contentHeight = getPageContentHeight(pageHeight, margins);
   const columnGap = pageGap + margins.left + margins.right;
   const spreadNaturalWidth = showSecondPage ? pageWidth * 2 + pageGap : pageWidth;
   const viewportWidth = spreadNaturalWidth;
@@ -1925,7 +1929,7 @@ export function AdvancedRichTextEditor({
       // measurement must reflect this one already being out of flow.
       setFootnoteDecorations(editor.view, decorations);
     }
-  }, [columnGap, contentHeight, contentWidth, editor]);
+  }, [columnGap, contentWidth, editor]);
 
   const focusVisiblePage = useCallback(
     (pageIndex: number) => {
@@ -2292,7 +2296,9 @@ export function AdvancedRichTextEditor({
                 margin: 0 0 0.25rem 0;
               }
               .ProseMirror p.editorial-footnote,
-              .preview-page p.editorial-footnote {
+              .preview-page p.editorial-footnote,
+              .ProseMirror p.editorial-endnote-definition,
+              .preview-page p.editorial-endnote-definition {
                 font-family: var(--talent-footnote-font, inherit);
                 font-size: var(--talent-footnote-size, 0.8rem) !important;
                 color: var(--talent-footnote-color, var(--text-tertiary));
@@ -2302,8 +2308,17 @@ export function AdvancedRichTextEditor({
                 border-top: 1px solid var(--talent-footnote-color, var(--border-strong, rgba(0,0,0,0.3)));
                 max-width: 45%;
               }
+              .ProseMirror p.editorial-endnote-definition,
+              .preview-page p.editorial-endnote-definition {
+                max-width: 100%;
+              }
               .ProseMirror p.editorial-footnote::before,
               .preview-page p.editorial-footnote::before {
+                content: '[' attr(data-footnote-id) '] ';
+                font-variant-numeric: tabular-nums;
+              }
+              .ProseMirror p.editorial-endnote-definition::before,
+              .preview-page p.editorial-endnote-definition::before {
                 content: '[' attr(data-footnote-id) '] ';
                 font-variant-numeric: tabular-nums;
               }
