@@ -395,6 +395,8 @@ function inlineSourceHtml(run: SourceTextRun): string {
       direct.fontFamily ? `font-family:${escapeSourceHtml(String(direct.fontFamily))}` : '',
       direct.fontSizePt !== undefined ? `font-size:${escapeSourceHtml(String(direct.fontSizePt))}pt` : '',
       direct.color ? `color:${escapeSourceHtml(String(direct.color))}` : '',
+      direct.bold ? 'font-weight:700' : '',
+      direct.italic ? 'font-style:italic' : '',
       direct.highlight ? `background-color:${escapeSourceHtml(String(direct.highlight))}` : '',
       direct.underline ? 'text-decoration:underline' : '',
       direct.strike ? 'text-decoration:line-through' : '',
@@ -437,7 +439,7 @@ export function sourceModelToHtml(model: CanonicalSourceDocument): string {
       };
       return `<table><thead><tr>${(block.rows?.[0] ?? []).map((cell) => `<th>${renderCell(cell)}</th>`).join('')}</tr></thead><tbody>${(block.rows ?? []).slice(1).map((row) => `<tr>${row.map((cell) => `<td>${renderCell(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
     }
-    if (block.type === 'image') return block.src ? `<figure><img src="${escapeSourceHtml(block.src)}" alt="${escapeSourceHtml(block.alt ?? '')}" /></figure>` : '';
+    if (block.type === 'image') return block.src ? `<p><img src="${escapeSourceHtml(block.src)}" alt="${escapeSourceHtml(block.alt ?? '')}" /></p>` : '';
     if (block.type === 'codeBlock') return `<pre><code${block.language ? ` data-language="${escapeSourceHtml(block.language)}"` : ''}>${escapeSourceHtml(block.text ?? '')}</code></pre>`;
     if (block.type === 'horizontalRule') return '<hr />';
     if (block.type === 'footnote') return `<p class="editorial-endnote-definition" data-footnote="true" data-footnote-id="${escapeSourceHtml(block.identifier ?? '')}">${sourceBlockInlineHtml(block)}</p>`;
@@ -887,6 +889,17 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
     for (const element of odtChildren(parent)) {
       const parsed = element.localName === 'p' || element.localName === 'h' ? parseParagraph(element) : element.localName === 'list' ? parseList(element) : element.localName === 'table' ? parseTable(element) : element.localName === 'frame' ? parseImage(element) : element.localName === 'section' ? (parseChildren(element), null) : null;
       if (parsed) blocks.push(parsed);
+      // ODT commonly wraps an embedded image in an otherwise empty text:p.
+      // The paragraph parser intentionally ignores non-text content, so project
+      // the nested frame here instead of silently dropping the image block.
+      if (element.localName === 'p' || element.localName === 'h') {
+        for (const child of odtChildren(element)) {
+          if (child.localName === 'frame') {
+            const image = parseImage(child);
+            if (image) blocks.push(image);
+          }
+        }
+      }
     }
   };
   parseChildren(root);

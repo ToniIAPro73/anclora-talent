@@ -219,6 +219,17 @@ describe('source-aware import model', () => {
     expect(sourceModelToHtml(model)).toContain('Dos<br />Tres');
   });
 
+  it('keeps embedded ODT images when the frame is wrapped by an empty paragraph', async () => {
+    const zip = new JSZip();
+    zip.file('content.xml', '<office:document-content xmlns:office="urn:o" xmlns:text="urn:t" xmlns:draw="urn:d" xmlns:xlink="http://www.w3.org/1999/xlink"><office:body><office:text><text:p><draw:frame draw:name="Figure 1"><draw:image xlink:href="Pictures/figure.png" /></draw:frame></text:p><text:p>Caption</text:p></office:text></office:body></office:document-content>');
+    zip.file('styles.xml', '<office:document-styles xmlns:office="urn:o" />');
+    zip.file('Pictures/figure.png', Uint8Array.from([137, 80, 78, 71]));
+    const model = await parseOdtSource(await zip.generateAsync({ type: 'uint8array' }));
+    expect(model.blocks.map((block) => block.type)).toEqual(['image', 'paragraph']);
+    expect(model.blocks[0].src).toMatch(/^data:image\/png;base64,/);
+    expect(sourceModelToHtml(model)).toContain('<img src="data:image/png;base64,');
+  });
+
   it('keeps effective ODT typography and paragraph properties in project chapters', async () => {
     const zip = new JSZip();
     zip.file('content.xml', '<office:document-content xmlns:office="urn:o" xmlns:text="urn:t" xmlns:style="urn:s" xmlns:fo="urn:f"><office:body><office:text><text:h text:outline-level="1" text:style-name="H1">Heading</text:h><text:p text:style-name="Body">Body <text:span text:style-name="Emphasis">emphasis</text:span></text:p></office:text></office:body></office:document-content>');
@@ -236,6 +247,7 @@ describe('source-aware import model', () => {
     expect(contents).toContain('font-family:Calibri;font-size:24pt');
     expect(contents).toContain('font-family:Liberation Serif;font-size:11.5pt');
     expect(contents).toContain('font-family:Liberation Sans;font-size:12.5pt');
+    expect(contents).toContain('font-style:italic');
     expect(contents).toContain('text-align:justify');
     expect(contents).toContain('data-source-style-id="H1"');
   });
