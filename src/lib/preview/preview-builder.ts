@@ -419,7 +419,7 @@ function buildOutlineEntries(
     ?.filter((entry) => !isTocChapter(entry.title))
     .filter((entry) => !isImportedSource || entry.level <= 1);
 
-  const visibleTocEntries = extractTocRenderableEntries(tocHtml);
+  const visibleTocEntries = extractTocRenderableEntries(tocHtml, isImportedSource);
   const currentChapters = chapterSections
     .filter((chapter) => !isTocChapter(chapter.title) && (!isImportedSource || !isFrontMatter(chapter.title)))
     .map((chapter) => ({ title: chapter.title, level: 1 }));
@@ -466,13 +466,15 @@ function buildOutlineEntries(
   return [...visibleTocEntries, ...supplementary];
 }
 
-function extractTocRenderableEntries(html: string) {
+function extractTocRenderableEntries(html: string, preservePageNumbers = false) {
   const entries: Array<{ title: string; level: number; pageNumber?: number }> = [];
 
   html.replace(
     /<(p|li|h[1-6])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi,
     (_fullMatch, tagName: string, rawAttributes = '', innerHtml: string) => {
-      const pageNumber = Number(rawAttributes.match(/data-toc-page="(\d{1,4})"/i)?.[1] ?? innerHtml.match(/(?:[·.\-–—~∿]{2,}|\t)\s*(\d{1,4})\s*$/u)?.[1]);
+      const pageNumber = preservePageNumbers
+        ? Number(rawAttributes.match(/data-toc-page="(\d{1,4})"/i)?.[1])
+        : Number.NaN;
       const plainText = stripExistingTocSuffix(
         normalizeVisibleText(stripHtmlTags(stripExistingTocPageNumbers(innerHtml))),
       );
