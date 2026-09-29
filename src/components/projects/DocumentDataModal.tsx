@@ -29,7 +29,7 @@ import { FontSelector } from './cover-studio/FontSelector';
 import { BRAND_IDENTITY_ENABLED } from '@/lib/features/capabilities';
 import type { ImportPresentationMode } from '@/lib/projects/markdown-presentation';
 import { MARKDOWN_MATERIALIZED_PROFILE } from '@/lib/projects/markdown-presentation';
-import { summarizeSourceModel, type SourceSemanticStats } from '@/lib/projects/source-model';
+import { summarizeSourceModel, summarizeSourceText, type SourceCapabilities, type SourcePresentationProfile, type SourceSemanticStats, type SourceTextMetrics } from '@/lib/projects/source-model';
 
 type Copy = AppMessages['project'];
 
@@ -59,6 +59,10 @@ interface DocumentDataModalProps {
   documentMode?: 'fixed-pdf' | 'editable';
   sourceFormat?: string;
   sourceStats?: SourceSemanticStats;
+  sourceTextMetrics?: SourceTextMetrics;
+  sourcePresentationProfile?: SourcePresentationProfile;
+  sourceFamily?: string;
+  sourceCapabilities?: SourceCapabilities;
   importPresentationMode?: ImportPresentationMode;
   onImportPresentationModeChange?: (mode: ImportPresentationMode) => void;
 }
@@ -146,6 +150,10 @@ function DocumentDataModalForm({
   documentMode,
   sourceFormat,
   sourceStats,
+  sourceTextMetrics,
+  sourcePresentationProfile,
+  sourceFamily: sourceFamilyProp,
+  sourceCapabilities,
   importPresentationMode,
   onImportPresentationModeChange,
 }: DocumentDataModalProps) {
@@ -155,8 +163,12 @@ function DocumentDataModalForm({
     sourceFormat === 'markdown' ||
     project?.document.source?.sourceFormat === 'markdown' ||
     project?.document.metadata?.sourceFormat === 'markdown';
+  const sourceFamily = sourceFamilyProp ?? project?.document.metadata?.sourceFamily ?? project?.document.metadata?.sourceModel?.family;
+  const plainTextSource = sourceFamily === 'plain';
+  const sourceProfile = sourcePresentationProfile ?? project?.document.metadata?.sourceModel?.sourceMetadata.presentationProfile;
   const markdownMode = importPresentationMode ?? project?.document.metadata?.importPresentationMode ?? 'source-semantic';
   const effectiveMarkdownStats = sourceStats ?? (project?.document.metadata?.sourceModel ? summarizeSourceModel(project.document.metadata.sourceModel) : undefined);
+  const effectiveTextMetrics = sourceTextMetrics ?? (project?.document.metadata?.sourceModel ? summarizeSourceText(project.document.metadata.sourceModel) : undefined);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState('');
   const panelRef = useRef<HTMLDivElement>(null);
@@ -197,11 +209,11 @@ function DocumentDataModalForm({
   }, [onClose]);
 
   // Source style baseline extracted from original imported document
-  const sourceProfile = markdownSource ? undefined : project?.document.metadata?.originalDocumentStyleProfile;
-  const sourceFontFamily = sourceProfile?.body?.fontFamily ?? initialSettings?.fontFamily;
-  const sourceFontSizePt = sourceProfile?.body?.fontSizePt ?? initialSettings?.fontSizePt;
-  const sourceLineHeight = sourceProfile?.body?.lineHeight ?? initialSettings?.lineHeight;
-  const sourceMargins = sourceProfile?.page?.marginsPt ?? initialSettings?.margins;
+  const originalStyleProfile = markdownSource || plainTextSource ? undefined : project?.document.metadata?.originalDocumentStyleProfile;
+  const sourceFontFamily = sourceProfile?.fontFamily ?? originalStyleProfile?.body?.fontFamily;
+  const sourceFontSizePt = sourceProfile?.fontSizePt ?? originalStyleProfile?.body?.fontSizePt;
+  const sourceLineHeight = sourceProfile?.lineHeight ?? originalStyleProfile?.body?.lineHeight;
+  const sourceMargins = sourceProfile?.marginsPt ?? originalStyleProfile?.page?.marginsPt;
 
   // Active / effective initial state
   const base: CompositionSettings =
@@ -338,7 +350,7 @@ function DocumentDataModalForm({
   };
 
   const handlePreCreateConfirm = () => {
-    if (!markdownSource) onConfirm?.(buildSettings());
+    if (!markdownSource && !plainTextSource) onConfirm?.(buildSettings());
     onClose();
   };
 
@@ -411,14 +423,16 @@ function DocumentDataModalForm({
               <span
                 data-testid="document-data-source-badge"
                 className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${
-                  source === 'docx-styles'
+                  source === 'docx-styles' || source === 'odt-styles'
                     ? 'text-[var(--success)] border-[var(--success)]/40 bg-[var(--success)]/10'
                     : 'text-[var(--text-tertiary)] border-[var(--border-subtle)] bg-transparent'
                 }`}
               >
                 {source === 'docx-styles'
                   ? copy.documentDataSourceBadgeVerified
-                  : copy.documentDataSourceBadgeNotExtracted}
+                  : source === 'odt-styles'
+                    ? copy.documentDataSourceBadgeOdt
+                    : copy.documentDataSourceBadgeNotExtracted}
               </span>
             ) : null}
             <button
@@ -503,8 +517,34 @@ function DocumentDataModalForm({
               )}
             </section>
           )}
+          {plainTextSource && (
+            <section className="document-data-modal-section document-data-modal-section--source space-y-3" data-testid="plain-text-import-data">
+              <div className="ac-surface-panel ac-surface-panel--subtle space-y-2 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className={labelClass}>{copy.documentDataPlainTextHeading}</h4>
+                  <span className="inline-flex rounded-full border border-[var(--border-subtle)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">TXT</span>
+                </div>
+                <p className="text-xs leading-5 text-[var(--text-secondary)]">{copy.documentDataPlainTextDescription}</p>
+              </div>
+              {effectiveTextMetrics && (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="plain-text-metrics">
+                  {([
+                    [copy.documentDataLinesLabel, effectiveTextMetrics.lines],
+                    [copy.documentDataWordsLabel, effectiveTextMetrics.words],
+                    [copy.documentDataCharactersLabel, effectiveTextMetrics.characters],
+                    [copy.markdownStatParagraphs, effectiveMarkdownStats?.paragraphs ?? 0],
+                  ] as const).map(([label, value]) => <div key={label} className="ac-surface-panel ac-surface-panel--subtle p-2"><p className={labelClass}>{label}</p><p className="mt-0.5 text-base font-semibold text-[var(--text-primary)]">{value}</p></div>)}
+                </div>
+              )}
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="ac-surface-panel ac-surface-panel--subtle p-3"><p className={labelClass}>{copy.documentDataEncodingLabel}</p><p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{project?.document.metadata?.sourceModel?.sourceMetadata.encoding ?? 'UTF-8'}</p></div>
+                <div className="ac-surface-panel ac-surface-panel--subtle p-3"><p className={labelClass}>{copy.documentDataSourcePresentationHeading}</p><p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{copy.documentDataPlainTextPresentation}</p></div>
+              </div>
+              <div className="ac-surface-panel ac-surface-panel--subtle p-3"><p className={labelClass}>{copy.documentDataCurrentPresentationHeading}</p><p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{copy.documentDataTalentDefaultPresentation}</p></div>
+            </section>
+          )}
           {/* Composition */}
-          {(!markdownSource || mode === 'project') && <section className="document-data-modal-section document-data-modal-section--composition space-y-4">
+          {(!markdownSource && !plainTextSource || mode === 'project' && !plainTextSource) && <section className="document-data-modal-section document-data-modal-section--composition space-y-4">
             <div className="flex items-center justify-between">
               <h4 className={labelClass}>{copy.documentDataCompositionHeading}</h4>
               {hasAnyOverride && (

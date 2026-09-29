@@ -845,7 +845,18 @@ export type AppMessages = {
     documentDataModalDescriptionProject: string;
     documentDataCloseLabel: string;
     documentDataSourceBadgeVerified: string;
+    documentDataSourceBadgeOdt: string;
     documentDataSourceBadgeNotExtracted: string;
+    documentDataPlainTextHeading: string;
+    documentDataPlainTextDescription: string;
+    documentDataLinesLabel: string;
+    documentDataWordsLabel: string;
+    documentDataCharactersLabel: string;
+    documentDataEncodingLabel: string;
+    documentDataSourcePresentationHeading: string;
+    documentDataPlainTextPresentation: string;
+    documentDataCurrentPresentationHeading: string;
+    documentDataTalentDefaultPresentation: string;
     documentDataCompositionHeading: string;
     documentDataFontFamilyLabel: string;
     documentDataFontSizeLabel: string;
@@ -2463,7 +2474,18 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       documentDataModalDescriptionProject: 'Composición, estructura y marca de este documento.',
       documentDataCloseLabel: 'Cerrar',
       documentDataSourceBadgeVerified: 'Verificado en fuente',
+      documentDataSourceBadgeOdt: 'Extraído de ODT',
       documentDataSourceBadgeNotExtracted: 'No extraído',
+      documentDataPlainTextHeading: 'Contenido TXT',
+      documentDataPlainTextDescription: 'TXT aporta texto plano y estructura inferida; no define tipografía ni geometría de página.',
+      documentDataLinesLabel: 'Líneas',
+      documentDataWordsLabel: 'Palabras',
+      documentDataCharactersLabel: 'Caracteres',
+      documentDataEncodingLabel: 'Codificación',
+      documentDataSourcePresentationHeading: 'Presentación del archivo',
+      documentDataPlainTextPresentation: 'No definida por TXT',
+      documentDataCurrentPresentationHeading: 'Presentación actual',
+      documentDataTalentDefaultPresentation: 'Se aplican los valores efectivos de Anclora Talent. Origen: predeterminado de Anclora Talent.',
       documentDataCompositionHeading: 'Composición',
       documentDataFontFamilyLabel: 'Familia tipográfica',
       documentDataFontSizeLabel: 'Tamaño (pt)',
@@ -4081,7 +4103,18 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       documentDataModalDescriptionProject: 'Composition, structure and brand of this document.',
       documentDataCloseLabel: 'Close',
       documentDataSourceBadgeVerified: 'Verified in source',
+      documentDataSourceBadgeOdt: 'Extracted from ODT',
       documentDataSourceBadgeNotExtracted: 'Not extracted',
+      documentDataPlainTextHeading: 'TXT content',
+      documentDataPlainTextDescription: 'TXT provides plain text and inferred structure; it does not define typography or page geometry.',
+      documentDataLinesLabel: 'Lines',
+      documentDataWordsLabel: 'Words',
+      documentDataCharactersLabel: 'Characters',
+      documentDataEncodingLabel: 'Encoding',
+      documentDataSourcePresentationHeading: 'Source presentation',
+      documentDataPlainTextPresentation: 'Not defined by TXT',
+      documentDataCurrentPresentationHeading: 'Current presentation',
+      documentDataTalentDefaultPresentation: 'Effective Anclora Talent values are applied. Origin: Anclora Talent default.',
       documentDataCompositionHeading: 'Composition',
       documentDataFontFamilyLabel: 'Font family',
       documentDataFontSizeLabel: 'Size (pt)',

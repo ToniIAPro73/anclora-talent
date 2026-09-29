@@ -13,7 +13,7 @@ import {
   type CompositionSource,
 } from '@/lib/projects/composition';
 import type { ImportPresentationMode } from '@/lib/projects/markdown-presentation';
-import type { SourceSemanticStats } from '@/lib/projects/source-model';
+import type { SourceCapabilities, SourcePresentationProfile, SourceSemanticStats, SourceTextMetrics } from '@/lib/projects/source-model';
 
 type ImportState = 'idle' | 'analyzing' | 'ready' | 'error';
 
@@ -62,6 +62,8 @@ type AnalysisResult = {
     semanticHeadings: boolean | 'semanticMarksOnly' | 'inferred';
   };
   sourceStats?: SourceSemanticStats;
+  sourceTextMetrics?: SourceTextMetrics;
+  sourcePresentationProfile?: SourcePresentationProfile;
   importPresentationMode?: ImportPresentationMode;
 };
 
@@ -297,6 +299,8 @@ export function DocumentImporter({
         sourceFamily?: string;
         sourceCapabilities?: AnalysisResult['sourceCapabilities'];
         sourceStats?: SourceSemanticStats;
+        sourceTextMetrics?: SourceTextMetrics;
+        sourcePresentationProfile?: SourcePresentationProfile;
         importPresentationMode?: ImportPresentationMode;
       } = await response.json().catch(() => ({
         error: response.status === 413 ? 'FILE_TOO_LARGE' : 'IMPORT_FAILED',
@@ -348,6 +352,8 @@ export function DocumentImporter({
         sourceFamily: data.sourceFamily,
         sourceCapabilities: data.sourceCapabilities,
         sourceStats: data.sourceStats,
+        sourceTextMetrics: data.sourceTextMetrics,
+        sourcePresentationProfile: data.sourcePresentationProfile,
         importPresentationMode: data.importPresentationMode,
       };
       setAnalysis(nextAnalysis);
@@ -796,12 +802,18 @@ export function DocumentImporter({
           mode="pre-create"
           copy={copy}
           initialSettings={confirmedComposition ?? analysis?.composition?.settings}
-          source={analysis?.sourceFormat === 'markdown' ? undefined : analysis?.composition?.source ?? 'not-extracted'}
+          source={analysis?.sourceFamily === 'plain' || analysis?.sourceFormat === 'markdown'
+            ? undefined
+            : analysis?.composition?.source ?? 'not-extracted'}
           onConfirm={(settings) => setConfirmedComposition(settings)}
           onClose={() => setIsDocumentDataOpen(false)}
           documentMode={selectedFile && isPdfFile(selectedFile) ? documentMode : undefined}
           sourceFormat={analysis?.sourceFormat}
           sourceStats={analysis?.sourceStats}
+          sourceTextMetrics={analysis?.sourceTextMetrics}
+          sourcePresentationProfile={analysis?.sourcePresentationProfile}
+          sourceFamily={analysis?.sourceFamily}
+          sourceCapabilities={analysis?.sourceCapabilities as SourceCapabilities | undefined}
           importPresentationMode={analysis?.sourceFormat === 'markdown' ? importPresentationMode : undefined}
           onImportPresentationModeChange={setImportPresentationMode}
         />

@@ -11,7 +11,7 @@ import { importSessionRepository } from '@/lib/projects/import-session';
 import { uploadPrivateProjectDocument, fetchPrivateProjectDocument } from '@/lib/blob/client';
 import { sha256Buffer } from '@/lib/projects/hash';
 import type { DocumentMode, ManuscriptType, SourceDocumentAccessLevel } from '@/lib/projects/types';
-import { detectSourceFormat, isActiveImportFormat, summarizeSourceModel } from '@/lib/projects/source-model';
+import { detectSourceFormat, isActiveImportFormat, parseOdtSource, summarizeSourceModel, summarizeSourceText } from '@/lib/projects/source-model';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 const SUPPORTED_EXTENSIONS = new Set(['doc', 'docx', 'odt', 'txt', 'md', 'markdown']);
@@ -181,6 +181,7 @@ export async function POST(request: NextRequest) {
     source: 'not-extracted',
   };
   let effectiveDocxBuffer: Buffer | null = null;
+  let odtPresentationProfile: Awaited<ReturnType<typeof parseOdtSource>>['sourceMetadata']['presentationProfile'];
   if (extension === 'docx') {
     effectiveDocxBuffer = Buffer.from(await file.arrayBuffer());
   } else if (extension === 'doc') {
@@ -215,6 +216,28 @@ export async function POST(request: NextRequest) {
         fileName,
         normError,
       });
+    }
+  }
+
+  if (sourceFormat === 'odt') {
+    try {
+      const odtModel = await parseOdtSource(Buffer.from(await file.arrayBuffer()));
+      odtPresentationProfile = odtModel.sourceMetadata.presentationProfile;
+      const presentation = odtPresentationProfile;
+      if (presentation?.status === 'extracted') {
+        composition = {
+          settings: {
+            ...SYSTEM_COMPOSITION_DEFAULTS,
+            ...(presentation.fontFamily ? { fontFamily: presentation.fontFamily } : {}),
+            ...(presentation.fontSizePt !== undefined ? { fontSizePt: presentation.fontSizePt } : {}),
+            ...(presentation.lineHeight !== undefined ? { lineHeight: presentation.lineHeight } : {}),
+            ...(presentation.marginsPt ? { margins: presentation.marginsPt } : {}),
+          },
+          source: 'odt-styles',
+        };
+      }
+    } catch (odtStyleError) {
+      console.warn('[import-route] ODT presentation extraction unavailable', { fileName, odtStyleError });
     }
   }
 
@@ -302,6 +325,8 @@ export async function POST(request: NextRequest) {
       sourceFamily: seed.sourceFamily,
       sourceCapabilities: seed.sourceCapabilities,
       sourceStats: seed.sourceModel ? summarizeSourceModel(seed.sourceModel) : undefined,
+      sourceTextMetrics: seed.sourceModel ? summarizeSourceText(seed.sourceModel) : undefined,
+      sourcePresentationProfile: seed.sourceModel?.sourceMetadata.presentationProfile ?? odtPresentationProfile,
       importPresentationMode: seed.importPresentationMode,
       ocrAppliedMode: seed.ocrAppliedMode,
       parseWarning: Boolean(seed.parseFailed),

@@ -193,4 +193,18 @@ describe('source-aware import model', () => {
     expect(model.blocks.map((block) => block.type)).toEqual(['heading', 'paragraph']);
     expect(model.blocks[1].runs?.some((run) => run.sourceStyleId === 'Emphasis')).toBe(true);
   });
+
+  it('reports ODT presentation only when styles.xml actually provides it', async () => {
+    const zip = new JSZip();
+    zip.file('content.xml', '<office:document-content><office:body><office:text><text:p>Body</text:p></office:text></office:body></office:document-content>');
+    zip.file('styles.xml', '<office:document-styles><style:style style:name="Standard"><style:paragraph-properties fo:line-height="122%"/><style:text-properties fo:font-family="&apos;Liberation Serif&apos;, &apos;Times New Roman&apos;" fo:font-size="11.5pt"/></style:style></office:document-styles>');
+    const model = await parseOdtSource(await zip.generateAsync({ type: 'uint8array' }));
+    expect(model.sourceMetadata.presentationProfile).toMatchObject({
+      status: 'extracted',
+      fontFamily: 'Liberation Serif',
+      fontSizePt: 11.5,
+      lineHeight: 1.22,
+      provenance: 'SOURCE_STYLE',
+    });
+  });
 });

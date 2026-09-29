@@ -38,7 +38,7 @@ export interface CompositionSettings {
 export type ResolvedComposition = Required<CompositionSettings>;
 
 /** Provenance of an extracted composition (drives the modal source badge). */
-export type CompositionSource = 'docx-styles' | 'not-extracted';
+export type CompositionSource = 'docx-styles' | 'odt-styles' | 'not-extracted';
 
 export const SYSTEM_COMPOSITION_DEFAULTS: ResolvedComposition = {
   fontFamily: 'Georgia',

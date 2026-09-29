@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { DocumentDataModal } from './DocumentDataModal';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { ProjectRecord } from '@/lib/projects/types';
-import { parseMarkdownSource } from '@/lib/projects/source-model';
+import { parseMarkdownSource, parsePlainTextSource, summarizeSourceModel, summarizeSourceText } from '@/lib/projects/source-model';
 
 vi.mock('server-only', () => ({}));
 
@@ -99,6 +99,29 @@ describe('DocumentDataModal — composition scope (project mode)', () => {
     expect(screen.getByText(copy.markdownSourcePresentationNone)).toBeInTheDocument();
     expect(screen.getByText(copy.markdownMaterializedOrigin)).toBeInTheDocument();
     expect(screen.getByTestId('markdown-semantic-stats')).toHaveTextContent('H1');
+  });
+
+  test('TXT data is source-aware and never presents Talent defaults as imported typography', () => {
+    const sourceModel = parsePlainTextSource('Capítulo 1\n\nTexto plano.');
+    render(
+      <DocumentDataModal
+        isOpen
+        mode="pre-create"
+        copy={copy}
+        onClose={() => {}}
+        sourceFormat="txt"
+        sourceFamily="plain"
+        sourceStats={summarizeSourceModel(sourceModel)}
+        sourceTextMetrics={summarizeSourceText(sourceModel)}
+        initialSettings={{ fontFamily: 'Georgia', fontSizePt: 12, lineHeight: 1.5 }}
+      />,
+    );
+
+    expect(screen.getByTestId('plain-text-import-data')).toBeInTheDocument();
+    expect(screen.getByText(copy.documentDataPlainTextPresentation)).toBeInTheDocument();
+    expect(screen.getByText(copy.documentDataTalentDefaultPresentation)).toBeInTheDocument();
+    expect(screen.queryByTestId('document-data-font-family-input')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('document-data-source-badge')).not.toBeInTheDocument();
   });
 
   test('project mode keeps the full data surface and uses the wide layout contract', () => {

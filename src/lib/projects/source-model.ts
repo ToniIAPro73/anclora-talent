@@ -86,9 +86,20 @@ export interface CanonicalSourceDocument {
     encoding?: string;
     packageParts?: string[];
     presentation: 'rich' | 'semantic' | 'none';
+    presentationProfile?: SourcePresentationProfile;
     footnotes?: FootnoteIntegrity;
   };
   provenance: Record<string, SourceProvenanceEntry>;
+}
+
+/** Presentation facts extracted from the source, never a Talent fallback. */
+export interface SourcePresentationProfile {
+  status: 'extracted' | 'not-available' | 'none';
+  fontFamily?: string;
+  fontSizePt?: number;
+  lineHeight?: number;
+  marginsPt?: { top: number; bottom: number; left: number; right: number };
+  provenance: SourceProvenanceKind;
 }
 
 export interface FootnoteIntegrity {
@@ -203,6 +214,21 @@ export interface SourceSemanticStats {
   images: number;
   codeBlocks: number;
   footnotes: number;
+}
+
+export interface SourceTextMetrics {
+  lines: number;
+  words: number;
+  characters: number;
+}
+
+export function summarizeSourceText(model: CanonicalSourceDocument): SourceTextMetrics {
+  const text = model.blocks.map((block) => block.text ?? '').join('\n');
+  return {
+    lines: text ? text.split(/\r?\n/).length : 0,
+    words: text.trim() ? text.trim().split(/\s+/).length : 0,
+    characters: text.length,
+  };
 }
 
 export function summarizeSourceModel(model: CanonicalSourceDocument): SourceSemanticStats {
@@ -508,6 +534,52 @@ function odtRuns(fragment: string): SourceTextRun[] {
   return runs.length ? runs : [{ text: decodeXml(fragment), provenance: provenance('SOURCE_EXPLICIT', 'content.xml') }];
 }
 
+function xmlAttribute(fragment: string, name: string) {
+  const match = fragment.match(new RegExp(`${name}="([^"]+)"`));
+  return match?.[1]?.replace(/&apos;/g, "'").replace(/&quot;/g, '"');
+}
+
+function odtLengthToPt(value: string | undefined) {
+  if (!value) return undefined;
+  const amount = Number.parseFloat(value);
+  if (!Number.isFinite(amount)) return undefined;
+  if (value.endsWith('in')) return amount * 72;
+  if (value.endsWith('cm')) return amount * 72 / 2.54;
+  if (value.endsWith('mm')) return amount * 72 / 25.4;
+  if (value.endsWith('pt')) return amount;
+  return undefined;
+}
+
+function extractOdtPresentation(styles: string): SourcePresentationProfile {
+  const standard = styles.match(/<style:style\b[^>]*style:name="Standard"[\s\S]*?<\/style:style>/i)?.[0] ?? '';
+  const textProperties = standard.match(/<style:text-properties\b([^>]*)\/?\s*>/i)?.[1] ?? '';
+  const paragraphProperties = standard.match(/<style:paragraph-properties\b([^>]*)\/?\s*>/i)?.[1] ?? '';
+  const fontFamily = xmlAttribute(textProperties, 'fo:font-family')?.split(',')[0]?.trim().replace(/^'+|'+$/g, '');
+  const fontSizePt = odtLengthToPt(xmlAttribute(textProperties, 'fo:font-size'));
+  const lineHeightRaw = xmlAttribute(paragraphProperties, 'fo:line-height');
+  const lineHeight = lineHeightRaw?.endsWith('%') ? Number.parseFloat(lineHeightRaw) / 100 : undefined;
+  const pageLayout = styles.match(/<style:page-layout\b[\s\S]*?<\/style:page-layout>/i)?.[0] ?? '';
+  const pageProperties = pageLayout.match(/<style:page-layout-properties\b([^>]*)\/?\s*>/i)?.[1] ?? '';
+  const marginsPt = {
+    top: odtLengthToPt(xmlAttribute(pageProperties, 'fo:margin-top')),
+    bottom: odtLengthToPt(xmlAttribute(pageProperties, 'fo:margin-bottom')),
+    left: odtLengthToPt(xmlAttribute(pageProperties, 'fo:margin-left')),
+    right: odtLengthToPt(xmlAttribute(pageProperties, 'fo:margin-right')),
+  };
+  const hasMargins = Object.values(marginsPt).every((value) => value !== undefined);
+  if (!fontFamily && fontSizePt === undefined && lineHeight === undefined && !hasMargins) {
+    return { status: 'not-available', provenance: 'REFERENCE' };
+  }
+  return {
+    status: 'extracted',
+    ...(fontFamily ? { fontFamily } : {}),
+    ...(fontSizePt !== undefined ? { fontSizePt } : {}),
+    ...(lineHeight !== undefined ? { lineHeight } : {}),
+    ...(hasMargins ? { marginsPt: marginsPt as { top: number; bottom: number; left: number; right: number } } : {}),
+    provenance: 'SOURCE_STYLE',
+  };
+}
+
 function htmlText(input: string) {
   return input
     .replace(/<br\s*\/?>/gi, '\n')
@@ -570,6 +642,7 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
   const zip = await JSZip.loadAsync(buffer);
   const content = await zip.file('content.xml')?.async('text');
   if (!content) throw new Error('ODT content.xml is missing');
+  const styles = await zip.file('styles.xml')?.async('text');
   const blocks: SourceBlock[] = [];
   const blockPattern = /<text:(h|p)\b([^>]*)>([\s\S]*?)<\/text:\1>/gi;
   let match: RegExpExecArray | null;
@@ -597,6 +670,7 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
     blocks,
     sourceMetadata: {
       presentation: 'rich',
+      presentationProfile: styles ? extractOdtPresentation(styles) : { status: 'not-available', provenance: 'REFERENCE' },
       packageParts: Object.keys(zip.files).filter((name) => /^(content|styles|meta|settings)\.xml$|^Pictures\//.test(name)),
     },
     provenance: { source: provenance('SOURCE_EXPLICIT', 'content.xml') },
