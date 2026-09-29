@@ -344,7 +344,7 @@ describe('useChapterEditor', () => {
     expect(result.current.canNavigatePagePrev).toBe(true);
   });
 
-  test('uses the higher of measured or estimated page counts to prevent clipping', () => {
+  test('uses the measured page count once the live editor reports its layout', () => {
     const longChapter = [
       {
         id: 'chapter-measured',
@@ -373,13 +373,12 @@ describe('useChapterEditor', () => {
       result.current.setMeasuredTotalPages(2);
     });
 
-    // If estimate is higher (e.g. 9) and measure is lower (2), we use estimate
-    // to avoid clipping content that might be hidden from the measurement.
-    expect(result.current.totalPages).toBeGreaterThan(2);
+    // The live editor owns the final geometry once it reports a measurement;
+    // this avoids creating synthetic trailing pages from a stale estimate.
+    expect(result.current.totalPages).toBe(2);
 
     act(() => {
-      // Navigate to a page that exists in the estimate but might be "clipped"
-      // according to the initial (stale or limited) measurement.
+      // Navigate to the measured second page.
       result.current.goToPageNext();
     });
 

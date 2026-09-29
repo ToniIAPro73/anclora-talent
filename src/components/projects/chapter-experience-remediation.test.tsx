@@ -140,8 +140,8 @@ describe('ANCLORA TALENT — CHAPTER EXPERIENCE REMEDIATION', () => {
     test('Font size selector uses anchored EditorPopover with real editor values', () => {
       expect(advancedEditorCode).toContain('dataTestId="editor-toolbar-font-size-button"');
       expect(advancedEditorCode).toContain('data-testid={`font-size-option-${size.name}`}');
-      expect(advancedEditorCode).toContain("{ name: '16', value: '16px' }");
-      expect(advancedEditorCode).toContain("{ name: '24', value: '24px' }");
+      expect(advancedEditorCode).toContain('const sizes = [9, 10, 10.5, 11, 11.5, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48]');
+      expect(advancedEditorCode).toContain('value: `${points}pt`');
     });
 
     test('Text colour selector uses anchored EditorPopover with real color choices', () => {
@@ -176,7 +176,7 @@ describe('ANCLORA TALENT — CHAPTER EXPERIENCE REMEDIATION', () => {
     });
 
     test('double-page mode generates two distinct facing page surfaces', () => {
-      expect(advancedEditorCode).toContain("const showSecondPage = layoutViewMode === 'double';");
+      expect(advancedEditorCode).toContain("layoutViewMode === 'double' && spreadStartPage + 1 < totalRenderablePages");
       expect(advancedEditorCode).toContain('visiblePageIndices = Array.from');
       expect(advancedEditorCode).toContain('effectivePages = Math.max');
     });

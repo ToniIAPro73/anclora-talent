@@ -1314,6 +1314,7 @@ function findTitleCandidate(frontMatter: ParsedBlock[]) {
     return (
       text.length > 0 &&
       text.length <= 140 &&
+      text.toLocaleLowerCase() !== '[imagen]' &&
       !isDecorativeLine(text) &&
       !COPYRIGHT_RE.test(text) &&
       !isLikelyAuthorName(text)
