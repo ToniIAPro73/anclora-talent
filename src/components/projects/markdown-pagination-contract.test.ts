@@ -18,6 +18,9 @@ const chapterEditorSource = readFileSync(
 describe('Markdown pagination contract', () => {
   it('keeps Markdown endnotes in normal flow while reserving legacy page-footnote layout', () => {
     expect(editorSource).toContain('editorial-endnote-definition');
+    expect(editorSource).toContain('isEndnotesSectionHtml(defaultContent)');
+    expect(editorSource).toContain('if (isEndnotesSection) return;');
+    expect(editorSource).toContain('counter-reset: talent-endnote');
     expect(editorSource).toContain("node.attrs?.editorialClass === 'editorial-footnote'");
     expect(editorSource).not.toContain("node.attrs?.editorialClass === 'editorial-endnote-definition'");
     expect(previewSource).toContain("querySelectorAll<HTMLElement>('p.editorial-footnote')");

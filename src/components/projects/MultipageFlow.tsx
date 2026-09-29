@@ -38,6 +38,7 @@ export function MultipageFlow({
   const contentWidth = Math.max(120, pageWidth - margins.left - margins.right);
   const contentHeight = getPageContentHeight(pageHeight, margins);
   const columnGap = pageGap + margins.left + margins.right;
+  const isEndnotesSection = /<h[1-6]\b[^>]*>\s*Notas\s*<\/h[1-6]>/i.test(html);
 
   const [measuredTotalPages, setMeasuredTotalPages] = React.useState(1);
 
@@ -117,6 +118,7 @@ export function MultipageFlow({
       '.flow-content-root',
     ) as HTMLElement | null;
     if (!contentArea) return;
+    if (isEndnotesSection) return;
 
     const footnotes = Array.from(
       contentArea.querySelectorAll<HTMLElement>('p.editorial-footnote'),
@@ -151,7 +153,7 @@ export function MultipageFlow({
 
       stackedHeightByPage.set(pageIndex, stacked + height + 8);
     });
-  }, [columnGap, contentHeight, contentWidth]);
+  }, [columnGap, contentHeight, contentWidth, isEndnotesSection]);
 
   useEffect(() => {
     const runLayoutPass = () => {
@@ -336,6 +338,17 @@ export function MultipageFlow({
         .flow-content-root.ProseMirror p.editorial-endnote-definition {
           max-width: 100%;
         }
+        .multipage-flow--endnotes .flow-content-root.ProseMirror p.editorial-footnote {
+          max-width: 100%;
+        }
+        .multipage-flow--endnotes .flow-content-root.ProseMirror {
+          counter-reset: talent-endnote;
+        }
+        .multipage-flow--endnotes .flow-content-root.ProseMirror p.editorial-footnote,
+        .multipage-flow--endnotes .flow-content-root.ProseMirror p.editorial-endnote-definition {
+          counter-increment: talent-endnote;
+          max-width: 100%;
+        }
         .flow-content-root.ProseMirror p.editorial-footnote::before {
           content: '[' attr(data-footnote-id) '] ';
           font-variant-numeric: tabular-nums;
@@ -343,6 +356,10 @@ export function MultipageFlow({
         .flow-content-root.ProseMirror p.editorial-endnote-definition::before {
           content: '[' attr(data-footnote-id) '] ';
           font-variant-numeric: tabular-nums;
+        }
+        .multipage-flow--endnotes .flow-content-root.ProseMirror p.editorial-footnote::before,
+        .multipage-flow--endnotes .flow-content-root.ProseMirror p.editorial-endnote-definition::before {
+          content: '[' counter(talent-endnote) '] ';
         }
         .flow-content-root.ProseMirror blockquote {
           font-family: var(--talent-quote-font, inherit);
@@ -569,7 +586,7 @@ export function MultipageFlow({
       {/* Flujo de columnas real */}
       <div
         ref={multipageFlowRef}
-        className="multipage-flow-container prose prose-invert max-w-none prose-img:rounded-lg prose-img:shadow-md"
+        className={`multipage-flow-container prose prose-invert max-w-none prose-img:rounded-lg prose-img:shadow-md ${isEndnotesSection ? 'multipage-flow--endnotes' : ''}`}
         style={{ ['--column-width' as string]: `${contentWidth}px`, ...styleVariables }}
         lang={lang}
       >

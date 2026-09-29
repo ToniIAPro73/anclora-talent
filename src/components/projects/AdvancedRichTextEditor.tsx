@@ -474,6 +474,10 @@ function countMeaningfulTopLevelBlocks(html: string): number {
   }).length;
 }
 
+function isEndnotesSectionHtml(html: string): boolean {
+  return /<h[1-6]\b[^>]*>\s*Notas\s*<\/h[1-6]>/i.test(html);
+}
+
 // The toolbar's font-size and color indicators only ever read
 // `editor.getAttributes('textStyle')`, a TipTap *mark* created solely when a
 // user manually overrides size/color. Imported and role-styled content
@@ -1550,6 +1554,7 @@ export function AdvancedRichTextEditor({
   const showSecondPage =
     layoutViewMode === 'double' && spreadStartPage + 1 < totalRenderablePages;
   const lastPublishedContentRef = useRef(normalizeEditorHtml(defaultContent));
+  const isEndnotesSection = isEndnotesSectionHtml(defaultContent);
 
   const handleUpdate = useCallback(
     (html: string) => {
@@ -1883,6 +1888,13 @@ export function AdvancedRichTextEditor({
     const proseMirror = multipageFlowRef.current?.querySelector('.ProseMirror') as HTMLElement | null;
     if (!proseMirror) return;
 
+    // Legacy projects may still carry Markdown definitions with the old
+    // editorial-footnote class. Notes are endnotes by section semantics, so
+    // clear any previous page-footnote decorations and leave this chapter in
+    // ordinary top-to-bottom flow regardless of its persisted class.
+    setFootnoteDecorations(editor.view, []);
+    if (isEndnotesSection) return;
+
     const footnotes: Array<{ pos: number; nodeSize: number }> = [];
     editor.state.doc.descendants((node, pos) => {
       if (node.type.name === 'paragraph' && node.attrs?.editorialClass === 'editorial-footnote') {
@@ -1890,10 +1902,6 @@ export function AdvancedRichTextEditor({
       }
     });
     if (footnotes.length === 0) return;
-
-    // Clear existing decorations first so the first footnote's natural
-    // (in-flow) position can be measured against a fully in-flow document.
-    setFootnoteDecorations(editor.view, []);
 
     const proseMirrorRect = proseMirror.getBoundingClientRect();
     const columnStride = contentWidth + columnGap;
@@ -1929,7 +1937,7 @@ export function AdvancedRichTextEditor({
       // measurement must reflect this one already being out of flow.
       setFootnoteDecorations(editor.view, decorations);
     }
-  }, [columnGap, contentWidth, editor]);
+  }, [columnGap, contentWidth, editor, isEndnotesSection]);
 
   const focusVisiblePage = useCallback(
     (pageIndex: number) => {
@@ -2312,6 +2320,14 @@ export function AdvancedRichTextEditor({
               .preview-page p.editorial-endnote-definition {
                 max-width: 100%;
               }
+              .multipage-editor-flow--endnotes .ProseMirror {
+                counter-reset: talent-endnote;
+              }
+              .multipage-editor-flow--endnotes .ProseMirror p.editorial-footnote,
+              .multipage-editor-flow--endnotes .ProseMirror p.editorial-endnote-definition {
+                counter-increment: talent-endnote;
+                max-width: 100%;
+              }
               .ProseMirror p.editorial-footnote::before,
               .preview-page p.editorial-footnote::before {
                 content: '[' attr(data-footnote-id) '] ';
@@ -2321,6 +2337,10 @@ export function AdvancedRichTextEditor({
               .preview-page p.editorial-endnote-definition::before {
                 content: '[' attr(data-footnote-id) '] ';
                 font-variant-numeric: tabular-nums;
+              }
+              .multipage-editor-flow--endnotes .ProseMirror p.editorial-footnote::before,
+              .multipage-editor-flow--endnotes .ProseMirror p.editorial-endnote-definition::before {
+                content: '[' counter(talent-endnote) '] ';
               }
               .ProseMirror h5,
               .preview-page h5,
@@ -2603,7 +2623,7 @@ export function AdvancedRichTextEditor({
             </div>
             <div
               ref={multipageFlowRef}
-              className="multipage-editor-flow prose prose-invert max-w-none prose-img:rounded-lg prose-img:shadow-md"
+              className={`multipage-editor-flow prose prose-invert max-w-none prose-img:rounded-lg prose-img:shadow-md ${isEndnotesSection ? 'multipage-editor-flow--endnotes' : ''}`}
               lang={locale}
             >
               <div
