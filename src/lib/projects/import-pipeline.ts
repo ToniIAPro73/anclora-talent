@@ -2162,7 +2162,7 @@ export async function extractTextFromBuffer(fileName: string, mimeType: string, 
     return {
       text: source.blocks.map((block) => block.text ?? '').join('\n\n'),
       html,
-      pageCount: undefined,
+      pageCount: source.sourceMetadata.sourcePageCount,
     } satisfies ExtractedImportSource;
   }
 

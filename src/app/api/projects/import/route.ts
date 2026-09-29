@@ -12,6 +12,8 @@ import { uploadPrivateProjectDocument, fetchPrivateProjectDocument } from '@/lib
 import { sha256Buffer } from '@/lib/projects/hash';
 import type { DocumentMode, ManuscriptType, SourceDocumentAccessLevel } from '@/lib/projects/types';
 import { detectSourceFormat, isActiveImportFormat, parseOdtSource, summarizeSourceModel, summarizeSourceText } from '@/lib/projects/source-model';
+import { buildSourcePageMapFromRenderedPages } from '@/lib/projects/source-page-map';
+import { renderAuthoritativeSourcePages } from '@/lib/projects/source-page-map-renderer';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 const SUPPORTED_EXTENSIONS = new Set(['doc', 'docx', 'odt', 'txt', 'md', 'markdown']);
@@ -290,9 +292,34 @@ export async function POST(request: NextRequest) {
           sourceSha256 ?? '',
         )
       : null;
-    const seedWithSourceProfile = originalDocumentStyleProfile
-      ? { ...seed, originalDocumentStyleProfile, sourcePaginationBaseline }
-      : seed;
+    let sourcePageMap = seed.sourcePageMap ?? null;
+    const renderedSourcePages = await renderAuthoritativeSourcePages(fileName, Buffer.from(await file.arrayBuffer()));
+    if (renderedSourcePages && seed.chapters?.length && seed.chapters.every((chapter) => Array.isArray(chapter.blocks))) {
+      const renderChapters = seed.chapters.map((chapter, chapterIndex) => ({
+        id: `import-section-${chapterIndex}`,
+        order: chapterIndex + 1,
+        title: chapter.title,
+        blocks: chapter.blocks.map((block, blockIndex) => ({
+          id: `import-block-${seed.chapters!.slice(0, chapterIndex).reduce((count, item) => count + item.blocks.length, 0) + blockIndex}`,
+          order: blockIndex + 1,
+          type: block.type,
+          content: block.content,
+        })),
+      }));
+      sourcePageMap = buildSourcePageMapFromRenderedPages({
+        sourceFormat: seed.sourceFormat ?? sourceFormat,
+        pageTexts: renderedSourcePages,
+        chapters: renderChapters,
+        sourceHash: sourceSha256 ?? undefined,
+      });
+    }
+    const seedWithSourceProfile = {
+      ...seed,
+      ...(originalDocumentStyleProfile ? { originalDocumentStyleProfile } : {}),
+      sourcePaginationBaseline,
+      sourcePageMap,
+      sourcePageCount: renderedSourcePages?.length ?? seed.sourcePageCount,
+    };
 
     // Create import session in PostgreSQL to decouple parsing from final create
     const session = await importSessionRepository.createImportSession(user.id, {

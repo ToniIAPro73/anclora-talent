@@ -3,6 +3,7 @@ import { resolveDocumentRules } from '@/lib/compose/rules';
 import { getProductTemplate } from '@/lib/templates/product-templates';
 import { inferSectionSemantics } from './import-pipeline';
 import { createDefaultSurfaceState } from './cover-surface';
+import { buildSourcePageMapFromChapters, invalidateSourcePageMap, rebindSourcePageMapToChapters } from './source-page-map';
 import type {
   CreateProjectInput,
   ProjectRecord,
@@ -101,6 +102,16 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
             chapterNumber: inferSectionSemantics(chapterTitle).chapterNumber,
           },
         ];
+  const sourcePageMap = imported
+    ? (imported.sourcePageMap
+      ? rebindSourcePageMapToChapters(imported.sourcePageMap, chapters)
+      : buildSourcePageMapFromChapters({
+        sourceFormat: imported.sourceFormat ?? 'txt',
+        sourcePageCount: imported.sourcePageCount,
+        sourceHash: imported.sourceSha256,
+        chapters,
+      }))
+    : null;
 
   return {
     id: randomUUID(),
@@ -139,6 +150,7 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
             sourceFamily: imported.sourceFamily,
             capabilities: imported.sourceCapabilities,
             importPresentationMode: imported.importPresentationMode,
+            sourcePageMap,
             derivedFromProjectId: input.derivedFrom?.projectId,
             derivedFromSourceAssetId: input.derivedFrom?.sourceAssetId,
           }
@@ -159,8 +171,9 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
               sourceCapabilities: imported?.sourceCapabilities,
               importPresentationMode: imported?.importPresentationMode,
               presentationProvenance: imported?.presentationProvenance,
-              presentationProfileId: imported?.presentationProfileId,
-              referenceEditorialProfile: input.referenceEditorialProfile ?? null,
+            presentationProfileId: imported?.presentationProfileId,
+            sourcePageMap,
+            referenceEditorialProfile: input.referenceEditorialProfile ?? null,
             }
           : null,
     },
@@ -243,6 +256,9 @@ export function updateProjectDocument(project: ProjectRecord, input: UpdateDocum
     updatedAt: new Date().toISOString(),
     document: {
       ...project.document,
+      source: project.document.source
+        ? { ...project.document.source, sourcePageMap: input.blocks.length > 0 ? invalidateSourcePageMap(project.document.source.sourcePageMap) : project.document.source.sourcePageMap }
+        : project.document.source,
       title: input.title,
       subtitle: input.subtitle,
       author: input.author,
@@ -256,6 +272,9 @@ export function updateProjectDocument(project: ProjectRecord, input: UpdateDocum
             title: input.title,
             subtitle: input.subtitle || undefined,
             author: input.author || undefined,
+            sourcePageMap: input.blocks.length > 0
+              ? invalidateSourcePageMap(project.document.metadata.sourcePageMap)
+              : project.document.metadata.sourcePageMap,
           }
         : (project.document.metadata ?? null),
     },
@@ -292,10 +311,16 @@ export function moveProjectChapter(
     updatedAt: new Date().toISOString(),
     document: {
       ...project.document,
+      source: project.document.source
+        ? { ...project.document.source, sourcePageMap: invalidateSourcePageMap(project.document.source.sourcePageMap) }
+        : project.document.source,
       chapters: chapters.map((item, index) => ({
         ...item,
         order: index + 1,
       })),
+      metadata: project.document.metadata
+        ? { ...project.document.metadata, sourcePageMap: invalidateSourcePageMap(project.document.metadata.sourcePageMap) }
+        : project.document.metadata,
     },
   };
 }
@@ -347,10 +372,16 @@ export function addProjectChapter(
     updatedAt: new Date().toISOString(),
     document: {
       ...project.document,
+      source: project.document.source
+        ? { ...project.document.source, sourcePageMap: invalidateSourcePageMap(project.document.source.sourcePageMap) }
+        : project.document.source,
       chapters: chapters.map((chapter, index) => ({
         ...chapter,
         order: index + 1,
       })),
+      metadata: project.document.metadata
+        ? { ...project.document.metadata, sourcePageMap: invalidateSourcePageMap(project.document.metadata.sourcePageMap) }
+        : project.document.metadata,
     },
   };
 }
@@ -370,10 +401,16 @@ export function deleteProjectChapter(project: ProjectRecord, chapterId: string):
     updatedAt: new Date().toISOString(),
     document: {
       ...project.document,
+      source: project.document.source
+        ? { ...project.document.source, sourcePageMap: invalidateSourcePageMap(project.document.source.sourcePageMap) }
+        : project.document.source,
       chapters: chapters.map((chapter, index) => ({
         ...chapter,
         order: index + 1,
       })),
+      metadata: project.document.metadata
+        ? { ...project.document.metadata, sourcePageMap: invalidateSourcePageMap(project.document.metadata.sourcePageMap) }
+        : project.document.metadata,
     },
   };
 }

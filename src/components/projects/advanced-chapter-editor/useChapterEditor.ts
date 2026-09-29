@@ -11,6 +11,7 @@ import { countRenderablePages, paginateContent } from '@/lib/preview/content-pag
 import { buildPaginationConfig } from '@/lib/preview/device-configs';
 import { reconcileOverflowBreaks } from '@/lib/preview/editor-page-layout';
 import type { DocumentChapter } from '@/lib/projects/types';
+import type { SourcePageMap } from '@/lib/projects/source-page-map';
 
 export interface UseChapterEditorOptions {
   chapters: DocumentChapter[];
@@ -23,6 +24,7 @@ export interface UseChapterEditorOptions {
   pageWidth?: number;
   pageHeight?: number;
   lineHeight?: number;
+  sourcePageMap?: SourcePageMap | null;
 }
 
 function buildPreviewConfig(
@@ -59,6 +61,7 @@ export function useChapterEditor({
   pageWidth,
   pageHeight,
   lineHeight,
+  sourcePageMap,
 }: UseChapterEditorOptions) {
   const router = useRouter();
   const initialChapter = chapters[initialChapterIndex];
@@ -84,6 +87,13 @@ export function useChapterEditor({
   const savedBaselineRef = useRef(normalizeHtmlContent(initialHtmlContent));
 
   const currentChapter = localChapters[currentIndex];
+  const sourcePagesForChapter = useMemo(
+    () => sourcePageMap?.status === 'VALID'
+      ? sourcePageMap.pages.filter((page) => currentChapter && page.sectionIds.includes(currentChapter.id))
+      : [],
+    [currentChapter, sourcePageMap],
+  );
+  const usesSourcePageMap = sourcePagesForChapter.length > 0;
   const canNavigatePrev = currentIndex > 0;
   const canNavigateNext = currentIndex < localChapters.length - 1;
   const previewConfig = useMemo(
@@ -110,13 +120,15 @@ export function useChapterEditor({
     return estimateTotalPages(reconciledContent, pageConfig);
   }, [htmlContent, device, fontSize, margins, previewConfig]);
 
-  const totalPages = Math.max(
+  const totalPages = usesSourcePageMap
+    ? sourcePagesForChapter.length
+    : Math.max(
     1,
     // Once the live editor has measured its actual occupied columns, that
     // geometry is the canonical page count. Keeping the larger estimate here
     // turns a stale/overestimated trailing column into a numbered blank page.
     measuredTotalPages ?? estimatedTotalPages,
-  );
+      );
 
   // The source manuscript numbers pages continuously through the whole
   // book (chapter 5 starts on page 9, not page 1) — not per chapter. The
@@ -135,6 +147,7 @@ export function useChapterEditor({
   // the first chapter (typically the Índice) starts on page 2 in the
   // source manuscript, not page 1.
   const pageNumberOffset = useMemo(() => {
+    if (usesSourcePageMap) return Math.max(0, (sourcePagesForChapter[0]?.pageNumber ?? 1) - 1);
     const COVER_PAGE_COUNT = 1;
     let offset = COVER_PAGE_COUNT;
     for (let index = 0; index < currentIndex; index += 1) {
@@ -162,7 +175,7 @@ export function useChapterEditor({
       offset += Math.max(1, count);
     }
     return offset;
-  }, [currentIndex, localChapters, device, fontSize, margins, pageWidth, pageHeight, lineHeight, previewConfig]);
+  }, [currentIndex, localChapters, device, fontSize, margins, pageWidth, pageHeight, lineHeight, previewConfig, sourcePagesForChapter, usesSourcePageMap]);
 
   const layoutKey = `${currentIndex}-${htmlContent}-${device}-${fontSize}-${margins.bottom}-${margins.left}-${margins.right}-${margins.top}`;
   const [prevLayoutKey, setPrevLayoutKey] = useState(layoutKey);

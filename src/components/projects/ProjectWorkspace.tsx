@@ -633,6 +633,7 @@ export function ProjectWorkspace({
           documentStyleMap={compiledDocument.styleMap}
           compiledCssVariables={compiledDocument.cssVariables}
           sourceFooter={project.document.metadata?.originalDocumentStyleProfile?.footer ?? null}
+          sourcePageMap={project.document.metadata?.sourcePageMap ?? null}
         />
       </div>
     );

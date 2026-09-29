@@ -18,6 +18,7 @@ import type { CompositionSettings } from '@/lib/projects/composition';
 import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profile/model';
 import type { CanonicalSourceDocument, SourceCapabilities, SourceFamily, SourceFormat } from '@/lib/projects/source-model';
 import type { ImportPresentationMode, PresentationProvenance } from '@/lib/projects/markdown-presentation';
+import type { SourcePageMap } from '@/lib/projects/source-page-map';
 
 export type InlineMarkType = 'bold' | 'italic' | 'link' | 'textStyle';
 
@@ -178,6 +179,8 @@ export interface DocumentMetadata {
   importPresentationMode?: ImportPresentationMode;
   presentationProvenance?: PresentationProvenance;
   presentationProfileId?: string;
+  /** Document-global source page membership; absent for legacy/recomposed projects. */
+  sourcePageMap?: SourcePageMap | null;
 }
 
 export interface SemanticDocument {

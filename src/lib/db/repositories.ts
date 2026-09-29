@@ -328,6 +328,9 @@ export function mapRowsToProject(
               importPresentationMode: sourceMetadata.importPresentationMode === 'source-semantic' || sourceMetadata.importPresentationMode === 'materialized'
                 ? sourceMetadata.importPresentationMode
                 : undefined,
+              sourcePageMap: sourceMetadata.sourcePageMap && typeof sourceMetadata.sourcePageMap === 'object'
+                ? sourceMetadata.sourcePageMap as NonNullable<ProjectDocument['source']>['sourcePageMap']
+                : undefined,
             }
           : null,
     },

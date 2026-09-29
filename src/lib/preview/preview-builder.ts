@@ -19,6 +19,7 @@ import { PaginationConfig } from './device-configs';
 import { hasRenderablePageContent, paginateContent } from './content-paginator';
 import { reconcileOverflowBreaks, stripAutoBreaks } from './editor-page-layout';
 import { normalizeHtmlContent } from './html-normalize';
+import { projectCanonicalDocumentToPages } from '@/lib/projects/source-page-map';
 
 // ==================== TYPES ====================
 
@@ -103,6 +104,39 @@ export function buildPreviewPages(
     },
     pageNumber: 1,
   });
+
+  const sourcePageMap = project.document.metadata?.sourcePageMap;
+  if (sourcePageMap?.status === 'VALID' && sourcePageMap.pages.length > 0) {
+    const projectedPages = projectCanonicalDocumentToPages(project.document.chapters, sourcePageMap);
+    const blockHtml = new Map(
+      project.document.chapters.flatMap((chapter) => chapter.blocks.map((block) => [block.id, chapterBlocksToHtml([block])] as const)),
+    );
+    projectedPages.forEach((page) => {
+      const content = page.contentSlices.map((slice) => blockHtml.get(slice.blockId) ?? '').join('\n');
+      if (!content.trim()) return;
+      pages.push({
+        type: 'content',
+        content,
+        chapterId: page.sectionIds[0],
+        pageNumber: page.globalPageNumber,
+      });
+    });
+    if (project.backCover) {
+      pages.push({
+        type: 'back-cover',
+        content: null,
+        backCoverData: {
+          title: normalizedBackCover.fields.title?.value || project.backCover.title || project.document.title,
+          body: normalizedBackCover.fields.body?.visible ? normalizedBackCover.fields.body.value : '',
+          authorBio: normalizedBackCover.fields.authorBio?.visible ? normalizedBackCover.fields.authorBio.value : '',
+          renderedImageUrl: project.backCover.renderedImageUrl ?? null,
+          backgroundImageUrl: project.backCover.backgroundImageUrl ?? null,
+        },
+        pageNumber: sourcePageMap.sourcePageCount + 1,
+      });
+    }
+    return pages;
+  }
 
   // ─────────────────────────────────────────────────────────────
   // BUILD CHAPTER SECTIONS (for pagination and TOC)

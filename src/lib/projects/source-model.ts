@@ -87,6 +87,7 @@ export interface CanonicalSourceDocument {
   blocks: SourceBlock[];
   sourceMetadata: {
     encoding?: string;
+    sourcePageCount?: number;
     packageParts?: string[];
     presentation: 'rich' | 'semantic' | 'none';
     presentationProfile?: SourcePresentationProfile;
@@ -868,6 +869,8 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
   const content = await zip.file('content.xml')?.async('text');
   if (!content) throw new Error('ODT content.xml is missing');
   const styles = await zip.file('styles.xml')?.async('text');
+  const meta = await zip.file('meta.xml')?.async('text');
+  const sourcePageCount = Number.parseInt(meta?.match(/page-count=["'](\d+)["']/i)?.[1] ?? '', 10);
   const parser = new DOMParser({ onError: (level, message) => { if (level === 'error' || level === 'fatalError') throw new Error(`Invalid ODT XML: ${message}`); } });
   const contentDocument = parser.parseFromString(content, 'application/xml');
   const styleDocument = styles ? parser.parseFromString(styles, 'application/xml') : undefined;
@@ -968,6 +971,7 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
     blocks,
     sourceMetadata: {
       presentation: 'rich',
+      ...(Number.isFinite(sourcePageCount) && sourcePageCount > 0 ? { sourcePageCount } : {}),
       presentationProfile: {
         ...presentationProfile,
         ...(contentPresentationProfile.toc ? { toc: contentPresentationProfile.toc } : {}),

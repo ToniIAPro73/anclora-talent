@@ -11,6 +11,7 @@ import type { DocumentChapter } from '@/lib/projects/types';
 import type { CompositionSettings } from '@/lib/projects/composition';
 import type { DocumentStyleMap } from '@/lib/style-engine/model';
 import type { OriginalDocumentStyleProfile } from '@/lib/projects/source-style-profile';
+import type { SourcePageMap } from '@/lib/projects/source-page-map';
 
 interface ChapterEditorFullscreenProps {
   chapters: DocumentChapter[];
@@ -26,6 +27,7 @@ interface ChapterEditorFullscreenProps {
   documentStyleMap?: DocumentStyleMap | null;
   compiledCssVariables?: Record<string, string> | null;
   sourceFooter?: OriginalDocumentStyleProfile['footer'] | null;
+  sourcePageMap?: SourcePageMap | null;
 }
 
 export function ChapterEditorFullscreen({
@@ -42,6 +44,7 @@ export function ChapterEditorFullscreen({
   documentStyleMap,
   compiledCssVariables,
   sourceFooter,
+  sourcePageMap,
 }: ChapterEditorFullscreenProps) {
   const { locale } = useUiPreferences();
   const copy = resolveLocaleMessages(locale).editor;
@@ -81,6 +84,7 @@ export function ChapterEditorFullscreen({
     pageWidth: sourcePageWidth,
     pageHeight: sourcePageHeight,
     lineHeight: documentStyleMap?.body.lineHeight,
+    sourcePageMap,
   });
 
   // Handle close with unsaved changes check

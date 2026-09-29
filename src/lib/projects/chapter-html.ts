@@ -13,6 +13,7 @@ function escapeHtml(text: string) {
 }
 
 function wrapPlainBlock(block: DocumentBlock): string {
+  if (block.type === 'pageBreak') return '<hr data-page-break="source" />';
   const content = block.content.trim();
   if (!content) return '';
 
@@ -26,6 +27,7 @@ export function chapterBlocksToHtml(blocks: DocumentBlock[]): string {
   return blocks
     .map((block) => {
       const content = String(block.content || '');
+      if (block.type === 'pageBreak') return '<hr data-page-break="source" />';
       if (!content.trim()) return '';
       return content.trimStart().startsWith('<') ? content : wrapPlainBlock(block);
     })
