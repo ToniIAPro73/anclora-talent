@@ -54,6 +54,26 @@ function parseFootnoteReferenceNode(element: DomElement): InlineNode | null {
   return identifier ? { type: 'footnoteReference', identifier } : null;
 }
 
+function parseTextStyleMark(element: DomElement): InlineMark | null {
+  const style = element.getAttribute('style') ?? '';
+  const read = (property: string) => style.match(new RegExp(`${property}\\s*:\\s*([^;]+)`, 'i'))?.[1]?.trim();
+  const fontFamily = read('font-family')?.replace(/^['"]|['"]$/g, '');
+  const fontSizeRaw = read('font-size');
+  const fontSizePt = fontSizeRaw?.endsWith('pt') ? Number.parseFloat(fontSizeRaw) : undefined;
+  const color = read('color');
+  const highlight = read('background-color');
+  const textDecoration = read('text-decoration');
+  if (!fontFamily && fontSizePt === undefined && !color && !highlight && !textDecoration) return null;
+  return {
+    type: 'textStyle',
+    ...(fontFamily ? { fontFamily } : {}),
+    ...(fontSizePt !== undefined && Number.isFinite(fontSizePt) ? { fontSizePt } : {}),
+    ...(color ? { color } : {}),
+    ...(highlight ? { highlight } : {}),
+    ...(textDecoration ? { underline: /underline/i.test(textDecoration), strike: /line-through/i.test(textDecoration) } : {}),
+  };
+}
+
 function parseInlineChildren(element: DomElement, marks: InlineMark[]): InlineNode[] {
   const nodes: InlineNode[] = [];
   for (let i = 0; i < element.childNodes.length; i += 1) {
@@ -93,6 +113,8 @@ function parseInlineChildren(element: DomElement, marks: InlineMark[]): InlineNo
       const href = childEl.getAttribute('href') ?? undefined;
       nextMarks.push({ type: 'link', href });
     }
+    const textStyle = parseTextStyleMark(childEl);
+    if (textStyle) nextMarks.push(textStyle);
     nodes.push(...parseInlineChildren(childEl, nextMarks));
   }
   return mergeAdjacentText(nodes);

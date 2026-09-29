@@ -19,12 +19,18 @@ import type { ReferenceEditorialProfile } from '@/lib/reference-editorial-profil
 import type { CanonicalSourceDocument, SourceCapabilities, SourceFamily, SourceFormat } from '@/lib/projects/source-model';
 import type { ImportPresentationMode, PresentationProvenance } from '@/lib/projects/markdown-presentation';
 
-export type InlineMarkType = 'bold' | 'italic' | 'link';
+export type InlineMarkType = 'bold' | 'italic' | 'link' | 'textStyle';
 
 export interface InlineMark {
   type: InlineMarkType;
   /** Only for `link` marks. */
   href?: string;
+  fontFamily?: string;
+  fontSizePt?: number;
+  color?: string;
+  highlight?: string;
+  underline?: boolean;
+  strike?: boolean;
 }
 
 export interface TextInlineNode {
@@ -63,6 +69,8 @@ export interface HeadingBlock extends BlockBase {
   type: 'heading';
   level: 1 | 2 | 3 | 4 | 5 | 6;
   content: InlineNode[];
+  sourceStyleId?: string;
+  paragraphProperties?: Record<string, string | number | boolean>;
 }
 
 export interface ParagraphBlock extends BlockBase {
@@ -70,6 +78,8 @@ export interface ParagraphBlock extends BlockBase {
   content: InlineNode[];
   editorialClass?: 'editorial-kicker' | 'editorial-footnote' | 'editorial-endnote-definition';
   footnoteId?: string;
+  sourceStyleId?: string;
+  paragraphProperties?: Record<string, string | number | boolean>;
 }
 
 export interface ListBlock extends BlockBase {

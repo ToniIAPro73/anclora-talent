@@ -13,7 +13,7 @@ import {
   type CompositionSource,
 } from '@/lib/projects/composition';
 import type { ImportPresentationMode } from '@/lib/projects/markdown-presentation';
-import type { SourceCapabilities, SourcePresentationProfile, SourceSemanticStats, SourceTextMetrics } from '@/lib/projects/source-model';
+import type { SourcePresentationProfile, SourceSemanticStats, SourceTextMetrics } from '@/lib/projects/source-model';
 
 type ImportState = 'idle' | 'analyzing' | 'ready' | 'error';
 
@@ -813,7 +813,6 @@ export function DocumentImporter({
           sourceTextMetrics={analysis?.sourceTextMetrics}
           sourcePresentationProfile={analysis?.sourcePresentationProfile}
           sourceFamily={analysis?.sourceFamily}
-          sourceCapabilities={analysis?.sourceCapabilities as SourceCapabilities | undefined}
           importPresentationMode={analysis?.sourceFormat === 'markdown' ? importPresentationMode : undefined}
           onImportPresentationModeChange={setImportPresentationMode}
         />

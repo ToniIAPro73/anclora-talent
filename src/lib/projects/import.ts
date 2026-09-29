@@ -1,7 +1,7 @@
 import 'server-only';
 export { supportedImportAccept } from './import-config';
 import { buildImportedDocumentSeed, extractTextFromBuffer, isScannedPdfSource, normalizeText } from './import-pipeline';
-import { createSourceModel, detectSourceFormat, escapeSourceHtml, parseOdtSource, type CanonicalSourceDocument } from './source-model';
+import { createSourceModel, detectSourceFormat, parseOdtSource, sourceModelToHtml, type CanonicalSourceDocument } from './source-model';
 
 export { buildImportedDocumentSeed } from './import-pipeline';
 
@@ -37,18 +37,9 @@ export async function extractImportedDocumentSeed(
     const sourceFormat = detectSourceFormat(fileName, mimeType);
     if (sourceFormat === 'odt') {
       sourceModel = await parseOdtSource(buffer);
-      const odtBlocks = sourceModel.blocks
-        .filter((block) => block.text)
-        .map((block) => {
-          const text = block.text ?? '';
-          return block.type === 'heading'
-            ? `<h${Math.min(block.level ?? 1, 6)}>${escapeSourceHtml(text)}</h${Math.min(block.level ?? 1, 6)}>`
-            : `<p>${escapeSourceHtml(text)}</p>`;
-        })
-        .join('');
       extractedSource = {
         text: sourceModel.blocks.map((block) => block.text ?? '').join('\n\n'),
-        html: odtBlocks,
+        html: sourceModelToHtml(sourceModel),
         pageCount: undefined,
       };
     } else if (sourceFormat) {

@@ -37,6 +37,7 @@
     "@tiptap/starter-kit": "^3.22.2",
     "@types/react-color": "^3.0.13",
     "@vercel/blob": "^2.3.2",
+    "@xmldom/xmldom": "^0.9.12",
     "bcryptjs": "^3.0.3",
     "canvas": "^3.2.3",
     "clsx": "^2.1.1",

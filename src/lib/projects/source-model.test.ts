@@ -9,6 +9,7 @@ import {
   analyzeFootnoteIntegrity,
   parseOdtSource,
   parsePlainTextSource,
+  sourceModelToHtml,
   summarizeSourceModel,
 } from './source-model';
 import { MARKDOWN_MATERIALIZED_PROFILE, type ImportPresentationMode } from './markdown-presentation';
@@ -185,8 +186,8 @@ describe('source-aware import model', () => {
 
   it('parses ODT content.xml as a rich source instead of plain text', async () => {
     const zip = new JSZip();
-    zip.file('content.xml', '<office:document-content><office:body><office:text><text:h text:outline-level="1">Title</text:h><text:p text:style-name="Body">Body <text:span text:style-name="Emphasis">text</text:span>.</text:p></office:text></office:body></office:document-content>');
-    zip.file('styles.xml', '<office:document-styles />');
+    zip.file('content.xml', '<office:document-content xmlns:office="urn:o" xmlns:text="urn:t"><office:body><office:text><text:h text:outline-level="1">Title</text:h><text:p text:style-name="Body">Body <text:span text:style-name="Emphasis">text</text:span>.</text:p></office:text></office:body></office:document-content>');
+    zip.file('styles.xml', '<office:document-styles xmlns:office="urn:o" />');
     const model = await parseOdtSource(await zip.generateAsync({ type: 'uint8array' }));
     expect(model.format).toBe('odt');
     expect(model.family).toBe('rich');
@@ -196,8 +197,8 @@ describe('source-aware import model', () => {
 
   it('reports ODT presentation only when styles.xml actually provides it', async () => {
     const zip = new JSZip();
-    zip.file('content.xml', '<office:document-content><office:body><office:text><text:p>Body</text:p></office:text></office:body></office:document-content>');
-    zip.file('styles.xml', '<office:document-styles><style:style style:name="Standard"><style:paragraph-properties fo:line-height="122%"/><style:text-properties fo:font-family="&apos;Liberation Serif&apos;, &apos;Times New Roman&apos;" fo:font-size="11.5pt"/></style:style></office:document-styles>');
+    zip.file('content.xml', '<office:document-content xmlns:office="urn:o" xmlns:text="urn:t"><office:body><office:text><text:p>Body</text:p></office:text></office:body></office:document-content>');
+    zip.file('styles.xml', '<office:document-styles xmlns:office="urn:o" xmlns:style="urn:s" xmlns:fo="urn:f"><style:style style:name="Standard"><style:paragraph-properties fo:line-height="122%"/><style:text-properties fo:font-family="&apos;Liberation Serif&apos;, &apos;Times New Roman&apos;" fo:font-size="11.5pt"/></style:style></office:document-styles>');
     const model = await parseOdtSource(await zip.generateAsync({ type: 'uint8array' }));
     expect(model.sourceMetadata.presentationProfile).toMatchObject({
       status: 'extracted',
@@ -206,5 +207,15 @@ describe('source-aware import model', () => {
       lineHeight: 1.22,
       provenance: 'SOURCE_STYLE',
     });
+  });
+
+  it('parses ODT inline nodes without leaking XML and preserves whitespace semantics', async () => {
+    const zip = new JSZip();
+    zip.file('content.xml', '<office:document-content xmlns:office="urn:o" xmlns:text="urn:t"><office:body><office:text><text:p>Uno<text:s text:c="2"/><text:tab/>Dos<text:line-break/>Tres<text:span text:style-name="T4"> fuerte</text:span><text:a xlink:href="https://example.com" xmlns:xlink="http://www.w3.org/1999/xlink"> enlace</text:a></text:p></office:text></office:body></office:document-content>');
+    const model = await parseOdtSource(await zip.generateAsync({ type: 'uint8array' }));
+    const paragraph = model.blocks[0];
+    expect(paragraph.text).toBe('Uno  \tDos\nTres fuerte enlace');
+    expect(sourceModelToHtml(model)).not.toMatch(/(?:text:span|text:style-name|office:|fo:|draw:|xlink:)/);
+    expect(sourceModelToHtml(model)).toContain('Dos<br />Tres');
   });
 });

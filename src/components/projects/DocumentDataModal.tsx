@@ -29,7 +29,7 @@ import { FontSelector } from './cover-studio/FontSelector';
 import { BRAND_IDENTITY_ENABLED } from '@/lib/features/capabilities';
 import type { ImportPresentationMode } from '@/lib/projects/markdown-presentation';
 import { MARKDOWN_MATERIALIZED_PROFILE } from '@/lib/projects/markdown-presentation';
-import { summarizeSourceModel, summarizeSourceText, type SourceCapabilities, type SourcePresentationProfile, type SourceSemanticStats, type SourceTextMetrics } from '@/lib/projects/source-model';
+import { summarizeSourceModel, summarizeSourceText, type SourcePresentationProfile, type SourceSemanticStats, type SourceTextMetrics } from '@/lib/projects/source-model';
 
 type Copy = AppMessages['project'];
 
@@ -62,7 +62,6 @@ interface DocumentDataModalProps {
   sourceTextMetrics?: SourceTextMetrics;
   sourcePresentationProfile?: SourcePresentationProfile;
   sourceFamily?: string;
-  sourceCapabilities?: SourceCapabilities;
   importPresentationMode?: ImportPresentationMode;
   onImportPresentationModeChange?: (mode: ImportPresentationMode) => void;
 }
@@ -153,7 +152,6 @@ function DocumentDataModalForm({
   sourceTextMetrics,
   sourcePresentationProfile,
   sourceFamily: sourceFamilyProp,
-  sourceCapabilities,
   importPresentationMode,
   onImportPresentationModeChange,
 }: DocumentDataModalProps) {

@@ -45,11 +45,23 @@ function serializeInline(nodes: InlineNode[], refs?: ResolvedRefs): string {
       const applyMark = (mark: InlineMark, inner: string): string => {
         if (mark.type === 'bold') return `<strong>${inner}</strong>`;
         if (mark.type === 'italic') return `<em>${inner}</em>`;
+        if (mark.type === 'textStyle') {
+          const styles = [
+            mark.fontFamily ? `font-family: ${escapeHtml(mark.fontFamily)}` : '',
+            mark.fontSizePt !== undefined ? `font-size: ${mark.fontSizePt}pt` : '',
+            mark.color ? `color: ${escapeHtml(mark.color)}` : '',
+            mark.highlight ? `background-color: ${escapeHtml(mark.highlight)}` : '',
+            mark.underline ? 'text-decoration: underline' : '',
+            mark.strike ? 'text-decoration: line-through' : '',
+          ].filter(Boolean).join('; ');
+          return styles ? `<span style="${styles}">${inner}</span>` : inner;
+        }
         return `<a href="${escapeHtml(mark.href ?? '')}">${inner}</a>`;
       };
       for (const mark of marks.filter((m) => m.type === 'italic')) text = applyMark(mark, text);
       for (const mark of marks.filter((m) => m.type === 'bold')) text = applyMark(mark, text);
       for (const mark of marks.filter((m) => m.type === 'link')) text = applyMark(mark, text);
+      for (const mark of marks.filter((m) => m.type === 'textStyle')) text = applyMark(mark, text);
       return text;
     })
     .join('');

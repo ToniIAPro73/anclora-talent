@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { DOMParser, type Document as XmlDocument, type Element as XmlElement, type Node as XmlNode } from '@xmldom/xmldom';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
@@ -74,6 +75,8 @@ export interface SourceBlock {
   src?: string;
   alt?: string;
   provenance: SourceProvenanceEntry;
+  sourceStyleId?: string;
+  paragraphProperties?: Record<string, string | number | boolean>;
 }
 
 export interface CanonicalSourceDocument {
@@ -264,20 +267,6 @@ function provenance(kind: SourceProvenanceKind, sourcePath?: string, confidence?
   return { kind, ...(sourcePath ? { sourcePath } : {}), ...(confidence === undefined ? {} : { confidence }) };
 }
 
-function decodeXml(input: string) {
-  return input
-    .replace(/<[^>]+>/g, '')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&amp;/g, '&')
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-    .replace(/&#x([\da-f]+);/gi, (_, code) => String.fromCharCode(Number.parseInt(code, 16)))
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
 export function escapeSourceHtml(input: string) {
   return input.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
@@ -382,7 +371,7 @@ function markdownBlockFromAst(node: RootContent, index: number): SourceBlock | n
 
 function inlineSourceHtml(run: SourceTextRun): string {
   const marks = [...(run.semanticMarks ?? [])].filter((mark) => mark.end > mark.start).sort((a, b) => a.start - b.start || b.end - a.end);
-  if (marks.length === 0) return escapeSourceHtml(run.text);
+  if (marks.length === 0 && !run.directFormatting) return escapeSourceHtml(run.text);
   const boundaries = new Set([0, run.text.length]);
   for (const mark of marks) {
     boundaries.add(Math.max(0, Math.min(run.text.length, mark.start)));
@@ -401,6 +390,16 @@ function inlineSourceHtml(run: SourceTextRun): string {
               : mark.type === 'footnoteReference' ? `<sup data-footnote-reference="${escapeSourceHtml(mark.identifier ?? '')}">${value}</sup>`
               : mark.href ? `<a href="${escapeSourceHtml(mark.href)}">${value}</a>` : value;
     }
+    const direct = run.directFormatting ?? {};
+    const styles = [
+      direct.fontFamily ? `font-family:${escapeSourceHtml(String(direct.fontFamily))}` : '',
+      direct.fontSizePt !== undefined ? `font-size:${escapeSourceHtml(String(direct.fontSizePt))}pt` : '',
+      direct.color ? `color:${escapeSourceHtml(String(direct.color))}` : '',
+      direct.highlight ? `background-color:${escapeSourceHtml(String(direct.highlight))}` : '',
+      direct.underline ? 'text-decoration:underline' : '',
+      direct.strike ? 'text-decoration:line-through' : '',
+    ].filter(Boolean).join(';');
+    if (styles) value = `<span style="${styles}">${value}</span>`;
     return value;
   }).join('');
 }
@@ -409,12 +408,26 @@ function sourceBlockInlineHtml(block: SourceBlock): string {
   return (block.runs ?? [{ text: block.text ?? '', provenance: provenance('SOURCE_SEMANTIC') }]).map(inlineSourceHtml).join('');
 }
 
+function sourceBlockStyle(block: SourceBlock): string {
+  const properties = block.paragraphProperties ?? {};
+  const styles = [
+    properties.textAlign ? `text-align:${escapeSourceHtml(String(properties.textAlign))}` : '',
+    properties.lineHeight !== undefined ? `line-height:${escapeSourceHtml(String(properties.lineHeight))}` : '',
+    properties.spacingBefore !== undefined ? `margin-top:${escapeSourceHtml(String(properties.spacingBefore))}pt` : '',
+    properties.spacingAfter !== undefined ? `margin-bottom:${escapeSourceHtml(String(properties.spacingAfter))}pt` : '',
+    properties.firstLineIndent !== undefined ? `text-indent:${escapeSourceHtml(String(properties.firstLineIndent))}pt` : '',
+    properties.leftIndent !== undefined ? `margin-left:${escapeSourceHtml(String(properties.leftIndent))}pt` : '',
+    properties.rightIndent !== undefined ? `margin-right:${escapeSourceHtml(String(properties.rightIndent))}pt` : '',
+  ].filter(Boolean).join(';');
+  return styles ? ` style="${styles}"` : '';
+}
+
 export function sourceModelToHtml(model: CanonicalSourceDocument): string {
   const render = (block: SourceBlock): string => {
-    if (block.type === 'heading') return `<h${Math.min(block.level ?? 1, 6)}>${sourceBlockInlineHtml(block)}</h${Math.min(block.level ?? 1, 6)}>`;
-    if (block.type === 'paragraph') return `<p>${sourceBlockInlineHtml(block).replace(/\n/g, '<br />')}</p>`;
+    if (block.type === 'heading') return `<h${Math.min(block.level ?? 1, 6)}${sourceBlockStyle(block)}>${sourceBlockInlineHtml(block)}</h${Math.min(block.level ?? 1, 6)}>`;
+    if (block.type === 'paragraph') return `<p${sourceBlockStyle(block)}>${sourceBlockInlineHtml(block).replace(/\n/g, '<br />')}</p>`;
     if (block.type === 'blockquote') return `<blockquote>${(block.items ?? []).map(render).join('')}</blockquote>`;
-    if (block.type === 'orderedList' || block.type === 'unorderedList') return `<${block.type === 'orderedList' ? 'ol' : 'ul'}>${(block.items ?? []).map((item) => `<li>${sourceBlockInlineHtml(item)}</li>`).join('')}</${block.type === 'orderedList' ? 'ol' : 'ul'}>`;
+    if (block.type === 'orderedList' || block.type === 'unorderedList') return `<${block.type === 'orderedList' ? 'ol' : 'ul'}>${(block.items ?? []).map((item) => `<li>${sourceBlockInlineHtml(item)}${(item.items ?? []).map(render).join('')}</li>`).join('')}</${block.type === 'orderedList' ? 'ol' : 'ul'}>`;
     if (block.type === 'table') {
       let cellIndex = 0;
       const renderCell = (cell: string) => {
@@ -521,24 +534,6 @@ export function parsePlainTextSource(input: string, encoding = 'utf-8'): Canonic
   };
 }
 
-function odtRuns(fragment: string): SourceTextRun[] {
-  const runs: SourceTextRun[] = [];
-  const pattern = /<text:span\b([^>]*)>([\s\S]*?)<\/text:span>|([^<]+)/gi;
-  let match: RegExpExecArray | null;
-  while ((match = pattern.exec(fragment)) !== null) {
-    const text = decodeXml(match[2] ?? match[3] ?? '');
-    if (!text) continue;
-    const style = match[1]?.match(/text:style-name="([^"]+)"/)?.[1];
-    runs.push({ text, sourceStyleId: style, provenance: provenance(style ? 'SOURCE_STYLE' : 'SOURCE_EXPLICIT', 'content.xml') });
-  }
-  return runs.length ? runs : [{ text: decodeXml(fragment), provenance: provenance('SOURCE_EXPLICIT', 'content.xml') }];
-}
-
-function xmlAttribute(fragment: string, name: string) {
-  const match = fragment.match(new RegExp(`${name}="([^"]+)"`));
-  return match?.[1]?.replace(/&apos;/g, "'").replace(/&quot;/g, '"');
-}
-
 function odtLengthToPt(value: string | undefined) {
   if (!value) return undefined;
   const amount = Number.parseFloat(value);
@@ -550,21 +545,141 @@ function odtLengthToPt(value: string | undefined) {
   return undefined;
 }
 
-function extractOdtPresentation(styles: string): SourcePresentationProfile {
-  const standard = styles.match(/<style:style\b[^>]*style:name="Standard"[\s\S]*?<\/style:style>/i)?.[0] ?? '';
-  const textProperties = standard.match(/<style:text-properties\b([^>]*)\/?\s*>/i)?.[1] ?? '';
-  const paragraphProperties = standard.match(/<style:paragraph-properties\b([^>]*)\/?\s*>/i)?.[1] ?? '';
-  const fontFamily = xmlAttribute(textProperties, 'fo:font-family')?.split(',')[0]?.trim().replace(/^'+|'+$/g, '');
-  const fontSizePt = odtLengthToPt(xmlAttribute(textProperties, 'fo:font-size'));
-  const lineHeightRaw = xmlAttribute(paragraphProperties, 'fo:line-height');
-  const lineHeight = lineHeightRaw?.endsWith('%') ? Number.parseFloat(lineHeightRaw) / 100 : undefined;
-  const pageLayout = styles.match(/<style:page-layout\b[\s\S]*?<\/style:page-layout>/i)?.[0] ?? '';
-  const pageProperties = pageLayout.match(/<style:page-layout-properties\b([^>]*)\/?\s*>/i)?.[1] ?? '';
+type OdtScalar = string | number | boolean;
+interface OdtStyleDefinition {
+  name: string;
+  family: string;
+  parent?: string;
+  text: Record<string, OdtScalar>;
+  paragraph: Record<string, OdtScalar>;
+}
+
+function odtAttr(element: XmlElement, localName: string): string | undefined {
+  for (let index = 0; index < element.attributes.length; index += 1) {
+    const attribute = element.attributes.item(index);
+    if (attribute?.localName === localName || attribute?.name === localName) return attribute.value;
+  }
+  return undefined;
+}
+
+function odtChildren(node: XmlNode): XmlElement[] {
+  return Array.from(node.childNodes).filter((child): child is XmlElement => child.nodeType === 1);
+}
+
+function odtWalk(node: XmlNode, visit: (element: XmlElement) => void) {
+  for (const child of odtChildren(node)) {
+    visit(child);
+    odtWalk(child, visit);
+  }
+}
+
+function odtProperties(element: XmlElement | undefined): Record<string, OdtScalar> {
+  if (!element) return {};
+  const result: Record<string, OdtScalar> = {};
+  for (let index = 0; index < element.attributes.length; index += 1) {
+    const attribute = element.attributes.item(index);
+    if (!attribute?.localName) continue;
+    result[attribute.localName] = attribute.value;
+  }
+  return result;
+}
+
+function collectOdtStyles(document: XmlDocument): Map<string, OdtStyleDefinition> {
+  const styles = new Map<string, OdtStyleDefinition>();
+  odtWalk(document, (element) => {
+    if (element.localName === 'list-style') {
+      const name = odtAttr(element, 'name');
+      if (!name) return;
+      let ordered = false;
+      odtWalk(element, (child) => { if (child.localName === 'list-level-style-number') ordered = true; });
+      styles.set(`list:${name}`, { name, family: 'list', text: ordered ? { 'num-format': '1' } : { 'bullet-char': '•' }, paragraph: {} });
+      return;
+    }
+    if (element.localName !== 'style' && element.localName !== 'default-style') return;
+    const family = odtAttr(element, 'family') ?? 'paragraph';
+    const name = odtAttr(element, 'name') ?? `__default_${family}`;
+    const text = odtChildren(element).find((child) => child.localName === 'text-properties');
+    const paragraph = odtChildren(element).find((child) => child.localName === 'paragraph-properties');
+    styles.set(`${family}:${name}`, {
+      name,
+      family,
+      parent: odtAttr(element, 'parent-style-name'),
+      text: odtProperties(text),
+      paragraph: odtProperties(paragraph),
+    });
+  });
+  return styles;
+}
+
+function resolveOdtStyle(styles: Map<string, OdtStyleDefinition>, family: string, name?: string, seen = new Set<string>()): OdtStyleDefinition {
+  const key = name ? `${family}:${name}` : `${family}:__default_${family}`;
+  if (seen.has(key)) return { name: name ?? '', family, text: {}, paragraph: {} };
+  seen.add(key);
+  const current = styles.get(key);
+  if (!current) return { name: name ?? '', family, text: {}, paragraph: {} };
+  const parent = current.parent
+    ? resolveOdtStyle(styles, family, current.parent, seen)
+    : name && name !== `__default_${family}`
+      ? resolveOdtStyle(styles, family, undefined, seen)
+      : { name: '', family, text: {}, paragraph: {} };
+  return {
+    ...current,
+    text: { ...parent.text, ...current.text },
+    paragraph: { ...parent.paragraph, ...current.paragraph },
+  };
+}
+
+function odtFontFamily(value: OdtScalar | undefined) {
+  return typeof value === 'string' ? value.split(',')[0].trim().replace(/^'+|'+$/g, '') : undefined;
+}
+
+function odtTextFormatting(style: OdtStyleDefinition, href?: string): Record<string, OdtScalar> {
+  const result: Record<string, OdtScalar> = {};
+  const fontFamily = odtFontFamily(style.text['font-family']);
+  const fontSize = odtLengthToPt(typeof style.text['font-size'] === 'string' ? style.text['font-size'] : undefined);
+  if (fontFamily) result.fontFamily = fontFamily;
+  if (fontSize !== undefined) result.fontSizePt = fontSize;
+  if (style.text['font-weight']) result.bold = style.text['font-weight'] === 'bold';
+  if (style.text['font-style']) result.italic = style.text['font-style'] === 'italic';
+  if (style.text['text-underline-style']) result.underline = style.text['text-underline-style'] !== 'none';
+  if (style.text.color) result.color = style.text.color;
+  if (style.text['background-color']) result.highlight = style.text['background-color'];
+  if (href) result.href = href;
+  return result;
+}
+
+function odtParagraphFormatting(style: OdtStyleDefinition): Record<string, OdtScalar> {
+  const result: Record<string, OdtScalar> = {};
+  const map: Array<[string, string]> = [
+    ['text-align', 'textAlign'], ['line-height', 'lineHeight'], ['margin-top', 'spacingBefore'],
+    ['margin-bottom', 'spacingAfter'], ['text-indent', 'firstLineIndent'], ['margin-left', 'leftIndent'],
+    ['margin-right', 'rightIndent'], ['break-before', 'pageBreakBefore'], ['keep-with-next', 'keepNext'],
+  ];
+  for (const [from, to] of map) {
+    const value = style.paragraph[from];
+    if (value === undefined) continue;
+    if (typeof value === 'string' && value.endsWith('%')) result[to] = Number.parseFloat(value) / 100;
+    else if (['spacingBefore', 'spacingAfter', 'firstLineIndent', 'leftIndent', 'rightIndent'].includes(to)) result[to] = odtLengthToPt(typeof value === 'string' ? value : undefined) ?? value;
+    else result[to] = value;
+  }
+  return result;
+}
+
+function odtPresentationProfile(styles: Map<string, OdtStyleDefinition>, document: XmlDocument): SourcePresentationProfile {
+  const standard = resolveOdtStyle(styles, 'paragraph', 'Standard');
+  const fontFamily = odtFontFamily(standard.text['font-family']);
+  const fontSizePt = odtLengthToPt(typeof standard.text['font-size'] === 'string' ? standard.text['font-size'] : undefined);
+  const lineHeightRaw = standard.paragraph['line-height'];
+  const lineHeight = typeof lineHeightRaw === 'string' && lineHeightRaw.endsWith('%') ? Number.parseFloat(lineHeightRaw) / 100 : undefined;
+  let pageProperties: Record<string, OdtScalar> = {};
+  odtWalk(document, (element) => {
+    if (!pageProperties['margin-top'] && element.localName === 'page-layout-properties') pageProperties = odtProperties(element);
+  });
   const marginsPt = {
-    top: odtLengthToPt(xmlAttribute(pageProperties, 'fo:margin-top')),
-    bottom: odtLengthToPt(xmlAttribute(pageProperties, 'fo:margin-bottom')),
-    left: odtLengthToPt(xmlAttribute(pageProperties, 'fo:margin-left')),
-    right: odtLengthToPt(xmlAttribute(pageProperties, 'fo:margin-right')),
+    top: odtLengthToPt(typeof pageProperties['margin-top'] === 'string' ? pageProperties['margin-top'] : undefined),
+    bottom: odtLengthToPt(typeof pageProperties['margin-bottom'] === 'string' ? pageProperties['margin-bottom'] : undefined),
+    left: odtLengthToPt(typeof pageProperties['margin-left'] === 'string' ? pageProperties['margin-left'] : undefined),
+    right: odtLengthToPt(typeof pageProperties['margin-right'] === 'string' ? pageProperties['margin-right'] : undefined),
   };
   const hasMargins = Object.values(marginsPt).every((value) => value !== undefined);
   if (!fontFamily && fontSizePt === undefined && lineHeight === undefined && !hasMargins) {
@@ -578,6 +693,58 @@ function extractOdtPresentation(styles: string): SourcePresentationProfile {
     ...(hasMargins ? { marginsPt: marginsPt as { top: number; bottom: number; left: number; right: number } } : {}),
     provenance: 'SOURCE_STYLE',
   };
+}
+
+function odtRuns(element: XmlElement, styles: Map<string, OdtStyleDefinition>, inherited: Record<string, OdtScalar> = {}, inheritedStyle?: string): SourceTextRun[] {
+  const runs: SourceTextRun[] = [];
+  const append = (text: string, formatting: Record<string, OdtScalar>, styleId?: string) => {
+    if (!text) return;
+    const previous = runs.at(-1);
+    if (previous && JSON.stringify(previous.directFormatting ?? {}) === JSON.stringify(formatting) && previous.sourceStyleId === styleId) {
+      previous.text += text;
+      return;
+    }
+    const semanticMarks = formatting.href ? [{ type: 'link' as const, start: 0, end: text.length, href: String(formatting.href) }] : undefined;
+    const directFormatting = { ...formatting };
+    delete directFormatting.href;
+    runs.push({ text, ...(styleId ? { sourceStyleId: styleId } : {}), ...(Object.keys(directFormatting).length ? { directFormatting } : {}), ...(semanticMarks ? { semanticMarks } : {}), provenance: provenance(styleId ? 'SOURCE_STYLE' : 'SOURCE_EXPLICIT', 'content.xml') });
+  };
+  const visit = (node: XmlNode, formatting: Record<string, OdtScalar>, styleId?: string) => {
+    if (node.nodeType === 3 || node.nodeType === 4) {
+      append(node.nodeValue ?? '', formatting, styleId);
+      return;
+    }
+    if (node.nodeType !== 1) return;
+    const element = node as XmlElement;
+    const localName = element.localName;
+    if (localName === 's') {
+      const count = Number.parseInt(odtAttr(element, 'c') ?? '1', 10);
+      append(' '.repeat(Number.isFinite(count) ? Math.max(1, count) : 1), formatting, styleId);
+      return;
+    }
+    if (localName === 'tab') { append('\t', formatting, styleId); return; }
+    if (localName === 'line-break') { append('\n', formatting, styleId); return; }
+    if (localName === 'soft-page-break') { append('\f', formatting, styleId); return; }
+    if (localName === 'note') {
+      const citation = odtChildren(element).find((child) => child.localName === 'note-citation');
+      const identifier = odtAttr(element, 'id') ?? citation?.textContent?.trim() ?? '';
+      const value = citation?.textContent?.trim() ?? '';
+      if (value) {
+        append(value, formatting, styleId);
+        const run = runs.at(-1);
+        if (run) run.semanticMarks = [...(run.semanticMarks ?? []), { type: 'footnoteReference', start: Math.max(0, run.text.length - value.length), end: run.text.length, identifier }];
+      }
+      return;
+    }
+    const nextStyleId = localName === 'span' || localName === 'a' ? odtAttr(element, 'style-name') ?? styleId : styleId;
+    const family = localName === 'span' || localName === 'a' ? 'text' : 'paragraph';
+    const style = resolveOdtStyle(styles, family, nextStyleId);
+    const href = localName === 'a' ? odtAttr(element, 'href') : undefined;
+    const nextFormatting = { ...formatting, ...odtTextFormatting(style, href) };
+    for (const child of Array.from(element.childNodes)) visit(child, nextFormatting, nextStyleId);
+  };
+  for (const child of Array.from(element.childNodes)) visit(child, { ...inherited }, inheritedStyle);
+  return runs;
 }
 
 function htmlText(input: string) {
@@ -643,25 +810,85 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
   const content = await zip.file('content.xml')?.async('text');
   if (!content) throw new Error('ODT content.xml is missing');
   const styles = await zip.file('styles.xml')?.async('text');
+  const parser = new DOMParser({ onError: (level, message) => { if (level === 'error' || level === 'fatalError') throw new Error(`Invalid ODT XML: ${message}`); } });
+  const contentDocument = parser.parseFromString(content, 'application/xml');
+  const styleDocument = styles ? parser.parseFromString(styles, 'application/xml') : undefined;
+  const styleMap = new Map<string, OdtStyleDefinition>();
+  if (styleDocument) for (const [key, value] of collectOdtStyles(styleDocument)) styleMap.set(key, value);
+  for (const [key, value] of collectOdtStyles(contentDocument)) styleMap.set(key, value);
+  const root = (() => {
+    let found: XmlElement | undefined;
+    odtWalk(contentDocument, (element) => { if (!found && element.localName === 'text') found = element; });
+    return found;
+  })();
+  if (!root) throw new Error('ODT office:text is missing');
   const blocks: SourceBlock[] = [];
-  const blockPattern = /<text:(h|p)\b([^>]*)>([\s\S]*?)<\/text:\1>/gi;
-  let match: RegExpExecArray | null;
-  while ((match = blockPattern.exec(content)) !== null) {
-    const tag = match[1].toLowerCase();
-    const raw = match[3];
-    const runs = odtRuns(raw);
-    const text = runs.map((run) => run.text).join('').trim();
-    if (!text) continue;
-    const level = tag === 'h' ? Number(match[2].match(/text:outline-level="(\d+)"/)?.[1] ?? 1) : undefined;
-    blocks.push({
+  const media = new Map<string, string>();
+  const mimeFor = (path: string) => path.toLowerCase().endsWith('.png') ? 'image/png' : path.toLowerCase().endsWith('.jpg') || path.toLowerCase().endsWith('.jpeg') ? 'image/jpeg' : path.toLowerCase().endsWith('.svg') ? 'image/svg+xml' : 'application/octet-stream';
+  for (const [path, file] of Object.entries(zip.files)) {
+    if (!path.startsWith('Pictures/') || file.dir) continue;
+    media.set(path, `data:${mimeFor(path)};base64,${await file.async('base64')}`);
+  }
+  const parseParagraph = (element: XmlElement): SourceBlock | null => {
+    const styleId = odtAttr(element, 'style-name');
+    const style = resolveOdtStyle(styleMap, 'paragraph', styleId);
+    const runs = odtRuns(element, styleMap, odtTextFormatting(style), styleId);
+    const text = runs.map((run) => run.text).join('');
+    if (!text.trim()) return null;
+    const isHeading = element.localName === 'h';
+    const level = isHeading ? Number.parseInt(odtAttr(element, 'outline-level') ?? '1', 10) : undefined;
+    return {
       id: stableId('odt', blocks.length, text),
-      type: tag === 'h' ? 'heading' : 'paragraph',
+      type: isHeading ? 'heading' : 'paragraph',
       ...(level ? { level } : {}),
       text,
       runs,
-      provenance: provenance(tag === 'h' ? 'SOURCE_SEMANTIC' : 'SOURCE_EXPLICIT', 'content.xml'),
-    });
-  }
+      ...(styleId ? { sourceStyleId: styleId } : {}),
+      paragraphProperties: odtParagraphFormatting(style),
+      provenance: provenance(isHeading ? 'SOURCE_SEMANTIC' : styleId ? 'SOURCE_STYLE' : 'SOURCE_EXPLICIT', 'content.xml'),
+    };
+  };
+  const parseList = (element: XmlElement): SourceBlock => {
+    const listStyle = odtAttr(element, 'style-name');
+    const listDefinition = resolveOdtStyle(styleMap, 'list', listStyle);
+    const ordered = listDefinition.text['num-format'] !== undefined || /number|ordered|decimal/i.test(listStyle ?? '');
+    const items: SourceBlock[] = [];
+    for (const item of odtChildren(element).filter((child) => child.localName === 'list-item')) {
+      const paragraphs = odtChildren(item).flatMap((child) => child.localName === 'p' || child.localName === 'h' ? [parseParagraph(child)].filter((value): value is SourceBlock => Boolean(value)) : child.localName === 'list' ? [parseList(child)] : []);
+      if (paragraphs.length) items.push({ id: stableId('odt-item', items.length, paragraphs.map((block) => block.text ?? '').join('\n')), type: 'paragraph', text: paragraphs.map((block) => block.text ?? '').join('\n'), runs: paragraphs[0].runs, items: paragraphs.slice(1), provenance: provenance('SOURCE_SEMANTIC', 'content.xml') });
+    }
+    return { id: stableId('odt-list', blocks.length, items.map((item) => item.text ?? '').join('\n')), type: ordered ? 'orderedList' : 'unorderedList', text: items.map((item) => item.text ?? '').join('\n'), items, provenance: provenance('SOURCE_SEMANTIC', 'content.xml') };
+  };
+  const parseTable = (element: XmlElement): SourceBlock => {
+    const rows: string[][] = [];
+    const cellRuns: SourceTextRun[][] = [];
+    for (const row of odtChildren(element).filter((child) => child.localName === 'table-row')) {
+      const cells: string[] = [];
+      for (const cell of odtChildren(row).filter((child) => child.localName === 'table-cell')) {
+        const paragraphs = odtChildren(cell).filter((child) => child.localName === 'p' || child.localName === 'h');
+        const runs = paragraphs.flatMap((paragraph) => odtRuns(paragraph, styleMap, odtTextFormatting(resolveOdtStyle(styleMap, 'paragraph', odtAttr(paragraph, 'style-name'))), odtAttr(paragraph, 'style-name')));
+        cells.push(runs.map((run) => run.text).join('\n'));
+        cellRuns.push(runs);
+      }
+      if (cells.length) rows.push(cells);
+    }
+    return { id: stableId('odt-table', blocks.length, rows.flat().join('|')), type: 'table', text: rows.map((row) => row.join(' | ')).join('\n'), rows, cellRuns, provenance: provenance('SOURCE_EXPLICIT', 'content.xml') };
+  };
+  const parseImage = (element: XmlElement): SourceBlock | null => {
+    let image: XmlElement | undefined;
+    odtWalk(element, (child) => { if (!image && child.localName === 'image') image = child; });
+    const href = image ? odtAttr(image, 'href') : undefined;
+    if (!href) return null;
+    const source = media.get(href) ?? href;
+    return { id: stableId('odt-image', blocks.length, source), type: 'image', text: odtAttr(element, 'name') ?? '', src: source, alt: odtAttr(element, 'name'), provenance: provenance('SOURCE_EXPLICIT', 'content.xml') };
+  };
+  const parseChildren = (parent: XmlElement) => {
+    for (const element of odtChildren(parent)) {
+      const parsed = element.localName === 'p' || element.localName === 'h' ? parseParagraph(element) : element.localName === 'list' ? parseList(element) : element.localName === 'table' ? parseTable(element) : element.localName === 'frame' ? parseImage(element) : element.localName === 'section' ? (parseChildren(element), null) : null;
+      if (parsed) blocks.push(parsed);
+    }
+  };
+  parseChildren(root);
   return {
     version: 1,
     format: 'odt',
@@ -670,7 +897,7 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
     blocks,
     sourceMetadata: {
       presentation: 'rich',
-      presentationProfile: styles ? extractOdtPresentation(styles) : { status: 'not-available', provenance: 'REFERENCE' },
+      presentationProfile: odtPresentationProfile(styleMap, styleDocument ?? contentDocument),
       packageParts: Object.keys(zip.files).filter((name) => /^(content|styles|meta|settings)\.xml$|^Pictures\//.test(name)),
     },
     provenance: { source: provenance('SOURCE_EXPLICIT', 'content.xml') },
