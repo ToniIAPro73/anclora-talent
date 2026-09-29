@@ -374,7 +374,9 @@ function buildTocChapterHtml(
 
   const numberedEntries = outlineEntries
     .map((entry, index) => {
-      const firstPage = outlineMetrics.firstPages[index];
+      const firstPage = 'pageNumber' in entry && entry.pageNumber
+        ? entry.pageNumber
+        : outlineMetrics.firstPages[index];
       if (!firstPage) {
         return null;
       }
@@ -465,15 +467,14 @@ function buildOutlineEntries(
 }
 
 function extractTocRenderableEntries(html: string) {
-  const sanitizedHtml = stripExistingTocPageNumbers(html);
-  const entries: Array<{ title: string; level: number }> = [];
+  const entries: Array<{ title: string; level: number; pageNumber?: number }> = [];
 
-  sanitizedHtml.replace(
+  html.replace(
     /<(p|li|h[1-6])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- positional replace-callback arg required before innerHtml
-    (_fullMatch, tagName: string, _rawAttributes = '', innerHtml: string) => {
+    (_fullMatch, tagName: string, rawAttributes = '', innerHtml: string) => {
+      const pageNumber = Number(rawAttributes.match(/data-toc-page="(\d{1,4})"/i)?.[1] ?? innerHtml.match(/(?:[·.\-–—~∿]{2,}|\t)\s*(\d{1,4})\s*$/u)?.[1]);
       const plainText = stripExistingTocSuffix(
-        normalizeVisibleText(stripHtmlTags(innerHtml)),
+        normalizeVisibleText(stripHtmlTags(stripExistingTocPageNumbers(innerHtml))),
       );
 
       if (!plainText || isTocChapter(plainText) || !/[^\d\s·~∿.-]/u.test(plainText)) {
@@ -483,6 +484,7 @@ function extractTocRenderableEntries(html: string) {
       entries.push({
         title: plainText,
         level: resolveTocEntryLevel(tagName),
+        ...(Number.isFinite(pageNumber) && pageNumber > 0 ? { pageNumber } : {}),
       });
 
       return '';

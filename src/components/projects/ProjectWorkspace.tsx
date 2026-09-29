@@ -632,6 +632,7 @@ export function ProjectWorkspace({
           composition={project.document.metadata?.composition ?? null}
           documentStyleMap={compiledDocument.styleMap}
           compiledCssVariables={compiledDocument.cssVariables}
+          sourceFooter={project.document.metadata?.originalDocumentStyleProfile?.footer ?? null}
         />
       </div>
     );

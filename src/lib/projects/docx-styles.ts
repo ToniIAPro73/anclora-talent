@@ -38,6 +38,8 @@ interface ParsedXmlStyle {
   rightIndentPt?: number;
   spacingBeforePt?: number;
   spacingAfterPt?: number;
+  borderBottom?: { style: string; widthPt?: number; color?: string; spacingPt?: number };
+  borderLeft?: { style: string; widthPt?: number; color?: string; spacingPt?: number };
 }
 
 function parseAlignment(val: string | null | undefined): 'left' | 'center' | 'right' | 'justify' | undefined {
@@ -148,6 +150,28 @@ function parseParagraphProperties(ppr: string) {
 
     const right = attrs.match(/\bw:right="(\d+)"/);
     if (right) result.rightIndentPt = twipsToPoints(Number.parseInt(right[1], 10));
+  }
+
+  const borders = ppr.match(/<w:pBdr\b[^>]*>([\s\S]*?)<\/w:pBdr>/)?.[1];
+  if (borders) {
+    for (const side of ['bottom', 'left'] as const) {
+      const match = borders.match(new RegExp(`<w:${side}\\b([^>]*)\\/?>`));
+      if (!match) continue;
+      const attrs = match[1];
+      const style = attrs.match(/\bw:val="([^"]+)"/)?.[1];
+      if (!style || style === 'nil' || style === 'none') continue;
+      const size = attrs.match(/\bw:sz="(\d+)"/)?.[1];
+      const color = attrs.match(/\bw:color="([0-9a-fA-F]{6}|auto)"/)?.[1];
+      const space = attrs.match(/\bw:space="(\d+)"/)?.[1];
+      const border = {
+        style,
+        widthPt: size ? Number(size) / 8 : undefined,
+        color: color && color.toLowerCase() !== 'auto' ? `#${color.toUpperCase()}` : undefined,
+        spacingPt: space ? Number(space) : undefined,
+      };
+      if (side === 'bottom') result.borderBottom = border;
+      else result.borderLeft = border;
+    }
   }
 
   return result;
@@ -380,6 +404,28 @@ function extractTableStyleFromDocumentXml(documentXml: string): ExtractedTableSt
   return Object.keys(result).length > 0 ? result : null;
 }
 
+function extractFooterFromXml(xml: string): OriginalDocumentStyleProfile['footer'] {
+  const paragraph = xml.match(/<w:p\b[^>]*>([\s\S]*?)<\/w:p>/)?.[1];
+  if (!paragraph) return undefined;
+  const ppr = paragraph.match(/<w:pPr>([\s\S]*?)<\/w:pPr>/)?.[1] ?? '';
+  const alignment = parseAlignment(ppr.match(/<w:jc\b[^>]*\bw:val="([^"]+)"/)?.[1]);
+  const runs: NonNullable<OriginalDocumentStyleProfile['footer']>['runs'] = [];
+  for (const runMatch of paragraph.matchAll(/<w:r\b[^>]*>([\s\S]*?)<\/w:r>/g)) {
+    const run = runMatch[1];
+    const rpr = run.match(/<w:rPr>([\s\S]*?)<\/w:rPr>/)?.[1] ?? '';
+    const style = { fontFamily: parseFontFamily(rpr), fontSizePt: parseFontSizePt(rpr), color: parseColor(rpr) };
+    if (/<w:instrText\b[^>]*>\s*PAGE\s*<\/w:instrText>/i.test(run)) {
+      runs.push({ type: 'page', ...style });
+      continue;
+    }
+    const text = Array.from(run.matchAll(/<w:t\b[^>]*>([\s\S]*?)<\/w:t>/g)).map((m) => m[1]).join('');
+    if (text) runs.push({ type: 'text', text: text.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>'), ...style });
+  }
+  if (runs.length === 0) return undefined;
+  const firstStyled = runs.find((run) => run.fontFamily || run.fontSizePt || run.color);
+  return { alignment, runs, fontFamily: firstStyled?.fontFamily, fontSizePt: firstStyled?.fontSizePt, color: firstStyled?.color };
+}
+
 /**
  * Deep extraction of the complete original document style profile from a DOCX buffer.
  */
@@ -433,6 +479,32 @@ export async function extractOriginalDocumentStyleProfile(
     // 2. Parse Styles and docDefaults
     const defaults = parseDocDefaults(stylesXml);
     const stylesMap = parseAllStyles(stylesXml);
+
+    profile.paragraphBorders = {};
+    for (const [styleId, style] of stylesMap.entries()) {
+      if (styleId !== style.styleId || (!style.borderBottom && !style.borderLeft)) continue;
+      profile.paragraphBorders[styleId] = {
+        ...(style.borderBottom ? { bottom: style.borderBottom } : {}),
+        ...(style.borderLeft ? { left: style.borderLeft } : {}),
+      };
+    }
+    for (const paragraphMatch of documentXml.matchAll(/<w:p\b[^>]*>([\s\S]*?)<\/w:p>/g)) {
+      const ppr = paragraphMatch[1].match(/<w:pPr>([\s\S]*?)<\/w:pPr>/)?.[1];
+      if (!ppr) continue;
+      const styleId = ppr.match(/<w:pStyle\b[^>]*\bw:val="([^"]+)"/)?.[1];
+      if (!styleId) continue;
+      const direct = parseParagraphProperties(ppr);
+      if (!direct.borderBottom && !direct.borderLeft) continue;
+      profile.paragraphBorders[styleId] = {
+        ...(direct.borderBottom ? { bottom: direct.borderBottom } : {}),
+        ...(direct.borderLeft ? { left: direct.borderLeft } : {}),
+      };
+    }
+    const footerFile = Object.keys(zip.files).find((name) => /^word\/footer\d+\.xml$/i.test(name));
+    if (footerFile) {
+      const footerXml = await zip.file(footerFile)!.async('string');
+      profile.footer = extractFooterFromXml(footerXml);
+    }
 
     // 3. Resolve Normal Body Style
     const normalResolved = resolveInheritedStyle('Normal', stylesMap, defaults);

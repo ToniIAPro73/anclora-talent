@@ -335,6 +335,7 @@ export function PreviewModal({
                     pageNumberOffset={2}
                     pageCountHint={composedContentPageCount}
                     onPageCountChange={setTotalContentPages}
+                    sourceFooter={project.document.metadata?.originalDocumentStyleProfile?.footer ?? null}
                   />
                 </div>
 

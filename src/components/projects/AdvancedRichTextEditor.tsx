@@ -21,6 +21,7 @@ import { FootnoteLayout, setFootnoteDecorations, type FootnoteDecorationInput } 
 import { FontSize } from './font-size-extension';
 import type { CompositionSettings } from '@/lib/projects/composition';
 import type { DocumentStyleMap, ResolvedTextStyle } from '@/lib/style-engine/model';
+import type { OriginalDocumentStyleProfile } from '@/lib/projects/source-style-profile';
 import {
   Bold,
   Italic,
@@ -228,6 +229,21 @@ const TocBlockAttributes = Extension.create({
         },
       },
     ];
+  },
+});
+
+const SourceParagraphDecorationAttributes = Extension.create({
+  name: 'sourceParagraphDecorationAttributes',
+  addGlobalAttributes() {
+    return [{
+      types: ['paragraph', 'heading'],
+      attributes: {
+        sourceBorderBottomStyle: { default: null, parseHTML: (el: HTMLElement) => el.getAttribute('data-source-border-bottom-style'), renderHTML: (a: Record<string, unknown>) => a.sourceBorderBottomStyle ? { 'data-source-border-bottom-style': a.sourceBorderBottomStyle } : {} },
+        sourceBorderBottomWidth: { default: null, parseHTML: (el: HTMLElement) => el.getAttribute('data-source-border-bottom-width'), renderHTML: (a: Record<string, unknown>) => a.sourceBorderBottomWidth ? { 'data-source-border-bottom-width': a.sourceBorderBottomWidth } : {} },
+        sourceBorderBottomColor: { default: null, parseHTML: (el: HTMLElement) => el.getAttribute('data-source-border-bottom-color'), renderHTML: (a: Record<string, unknown>) => a.sourceBorderBottomColor ? { 'data-source-border-bottom-color': a.sourceBorderBottomColor } : {} },
+        sourceBorderBottomSpacing: { default: null, parseHTML: (el: HTMLElement) => el.getAttribute('data-source-border-bottom-spacing'), renderHTML: (a: Record<string, unknown>) => a.sourceBorderBottomSpacing ? { 'data-source-border-bottom-spacing': a.sourceBorderBottomSpacing, style: `border-bottom: ${a.sourceBorderBottomWidth || 1}pt ${a.sourceBorderBottomStyle || 'solid'} ${a.sourceBorderBottomColor || 'currentColor'}; padding-bottom: ${a.sourceBorderBottomSpacing}pt;` } : {} },
+      },
+    }];
   },
 });
 
@@ -1405,6 +1421,7 @@ export function AdvancedRichTextEditor({
   composition,
   documentStyleMap,
   compiledCssVariables,
+  sourceFooter,
 }: {
   defaultContent: string;
   onUpdate: (html: string) => void;
@@ -1419,6 +1436,7 @@ export function AdvancedRichTextEditor({
   composition?: CompositionSettings | null;
   documentStyleMap?: DocumentStyleMap | null;
   compiledCssVariables?: Record<string, string> | null;
+  sourceFooter?: OriginalDocumentStyleProfile['footer'] | null;
 }) {
   const { locale } = useUiPreferences();
   const { preferences, setPreferences } = useEditorPreferences();
@@ -1743,6 +1761,7 @@ export function AdvancedRichTextEditor({
       ParagraphIndent,
       EditorialParagraphAttributes,
       TocBlockAttributes,
+      SourceParagraphDecorationAttributes,
       TocInlineAttributes,
       Placeholder.configure({
         placeholder: resolveLocaleMessages(locale).editor.placeholder,
@@ -2653,10 +2672,12 @@ export function AdvancedRichTextEditor({
                 >
                   <div className="multipage-page-inner" style={pagePaddingStyle} />
                   <div className="pointer-events-none absolute inset-x-0 bottom-7 flex justify-center">
-                    <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(7,12,20,0.05)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[var(--text-tertiary)]">
-                      <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
-                      <span>{pageIndex + 1 + pageNumberOffset}</span>
-                      <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
+                    <span className={sourceFooter ? '' : 'inline-flex items-center gap-2 rounded-full bg-[rgba(7,12,20,0.05)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[var(--text-tertiary)]'} style={sourceFooter ? { textAlign: sourceFooter.alignment ?? 'center', fontFamily: sourceFooter.fontFamily, fontSize: sourceFooter.fontSizePt ? `${sourceFooter.fontSizePt}pt` : undefined, color: sourceFooter.color } : undefined} data-testid={sourceFooter ? 'source-footer' : undefined}>
+                      {sourceFooter ? sourceFooter.runs.map((run, runIndex) => <span key={runIndex}>{run.type === 'page' ? pageIndex + 1 + pageNumberOffset : run.text}</span>) : <>
+                        <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
+                        <span>{pageIndex + 1 + pageNumberOffset}</span>
+                        <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
+                      </>}
                     </span>
                   </div>
                 </div>

@@ -358,7 +358,8 @@ describe('document import parser isolation', () => {
 
     const indexHtml = result.chapters?.[0].blocks.map((block) => block.content).join('\n') ?? '';
     expect(indexHtml).toContain('data-toc-entry="true"');
-    expect(indexHtml).not.toContain('data-toc-page=');
+    expect(indexHtml).toContain('data-toc-page="5"');
+    expect(indexHtml).toContain('data-toc-page="9"');
     expect(indexHtml).not.toContain('····');
     expect(indexHtml).not.toContain('>5<');
     expect(indexHtml).not.toContain('>9<');

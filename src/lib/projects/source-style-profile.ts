@@ -77,6 +77,25 @@ export interface OriginalDocumentStyleProfile {
     bodyFontSizePt?: number;
   };
 
+  paragraphBorders?: Record<string, {
+    bottom?: { style: string; widthPt?: number; color?: string; spacingPt?: number };
+    left?: { style: string; widthPt?: number; color?: string; spacingPt?: number };
+  }>;
+
+  footer?: {
+    alignment?: 'left' | 'center' | 'right' | 'justify';
+    runs: Array<{
+      type: 'text' | 'page';
+      text?: string;
+      fontFamily?: string;
+      fontSizePt?: number;
+      color?: string;
+    }>;
+    fontFamily?: string;
+    fontSizePt?: number;
+    color?: string;
+  };
+
   provenance?: Record<string, PropertyProvenance>;
 }
 

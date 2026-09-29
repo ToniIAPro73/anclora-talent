@@ -2,6 +2,7 @@ import type { ImportedDocumentSeed, ImportFieldConfidence, SectionSemanticType, 
 import { createSourceModel, escapeSourceHtml, sourceModelToHtml, type CanonicalSourceDocument, detectSourceFormat } from './source-model';
 import type { ImportPresentationMode, PresentationProvenance } from './markdown-presentation';
 import type { OriginalDocumentStyleProfile } from './source-style-profile';
+import { extractOriginalDocumentStyleProfile } from './docx-styles';
 
 const SUPPORTED_IMPORT_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'odt', 'txt', 'md', 'markdown']);
 const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote|table|pre|figure)[^>]*>[\s\S]*?<\/\1>/gi;
@@ -794,12 +795,17 @@ function stripImportedTocPageMarkup(fragment: string) {
     .replace(/<span\s+[^>]*class="[^"]*\btoc-leader\b[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '')
     .replace(/<span\s+[^>]*class="[^"]*\btoc-page\b[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '')
     .replace(/<span\s+[^>]*class="[^"]*\btoc-title\b[^"]*"[^>]*>([\s\S]*?)<\/span>/gi, '$1')
-    .replace(/\sdata-toc-(entry|level|page)="[^"]*"/gi, '');
+    .replace(/\sdata-toc-(entry|level)="[^"]*"/gi, '');
 
   sanitized = sanitized.replace(
     /(<(p|li|h[1-6])(?:\s[^>]*)?>)([\s\S]*?)(<\/\2>)/gi,
     (_match, open: string, tag: string, inner: string, close: string) => {
+      const explicitPage = inner.match(/data-toc-page="(\d{1,4})"/i)?.[1];
+      const textBeforeCleanup = inner.replace(/<[^>]+>/g, ' ');
+      const pageMatch = textBeforeCleanup.match(/(?:\t|[·._\-—~∿]{2,}|\s{2,})\s*(\d{1,4})\s*$/u);
+      const page = explicitPage ?? pageMatch?.[1];
       let cleanedInner = inner
+        .replace(/<span\s+[^>]*data-toc-page="true"[^>]*>[\s\S]*?<\/span>/gi, '')
         .replace(/\t+[·._\-—~∿]*\s*\d{1,4}\s*$/u, '')
         .replace(/\s*[·._\-—~∿]{2,}\s*\d{1,4}\s*$/u, '')
         .trim();
@@ -809,7 +815,11 @@ function stripImportedTocPageMarkup(fragment: string) {
           cleanedInner = cleanedInner.replace(/[\t\s]+\d{1,4}\s*$/u, '').trim();
         }
       }
-      return `${open}${cleanedInner}${close}`;
+      const attrs = page
+        ? ' data-toc-entry="true" data-toc-level="2" data-toc-page="' + page + '"'
+        : '';
+      const decoratedOpen = attrs && !/data-toc-entry=/i.test(open) ? open.replace(/>$/, `${attrs}>`) : open;
+      return `${decoratedOpen}${cleanedInner}${close}`;
     },
   );
 
@@ -849,6 +859,7 @@ function splitHtmlListBlocks(fragment: string, hasTocLeaderPattern = false): Par
   )
     .map((m) => normalizeHtmlFragment(m[0]))
     .filter(Boolean);
+  const rawItemTexts = Array.from(fragment.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)).map((match) => textFromHtml(match[1]).trim());
 
   if (items.length === 0) {
     return [
@@ -894,12 +905,13 @@ function splitHtmlListBlocks(fragment: string, hasTocLeaderPattern = false): Par
   const merged: string[] = [];
   for (let i = 0; i < items.length; i++) {
     const currText = textFromHtml(items[i]).trim().replace(/\s+/g, ' ');
-    const nextText = items[i + 1] ? textFromHtml(items[i + 1]).trim() : '';
+    const nextText = rawItemTexts[i + 1] ?? (items[i + 1] ? textFromHtml(items[i + 1]).trim() : '');
     const isNextLeader = /^[·._\-—\s]{2,}\d+\s*$/.test(nextText);
 
     if (currText && isNextLeader && !/^\d+$/.test(currText)) {
+      const page = nextText.match(/(\d+)\s*$/)?.[1];
       merged.push(
-        `<li data-toc-entry="true" data-toc-level="2">${escapeHtml(currText)}</li>`,
+        `<li data-toc-entry="true" data-toc-level="2"${page ? ` data-toc-page="${page}"` : ''}>${escapeHtml(currText)}</li>`,
       );
       i++; // saltamos el líder
     } else if (!/^[·._\-—\s]{2,}\d+\s*$/.test(currText)) {
@@ -1025,7 +1037,7 @@ function parseHtmlBlocks(input: string, options: { preserveStyles?: boolean } = 
       // Leader-dot/tab-before-pagenum patterns (the actual TOC signal) get
       // stripped by stripImportedTocPageMarkup() above before `clean` is
       // built, so that signal has to be read from the RAW fragment here.
-      blocks.push(...splitHtmlListBlocks(clean, fragmentHasTocLeaderPattern(fragment)));
+      blocks.push(...splitHtmlListBlocks(fragment, fragmentHasTocLeaderPattern(fragment)));
     } else if (tag === 'blockquote') {
       blocks.push({ kind: 'quote', text: text || '[Cita]', html: clean, level: null, structural: true });
     } else {
@@ -2204,7 +2216,16 @@ async function extractDocxRichContent(buffer: Buffer): Promise<ExtractedImportSo
         ],
       },
     );
-    const richHtml = inlineDocxFootnotes(normalizeHtmlFragment(result.value)).replace(/<p([^>]*)>(\s*[·._\-—]{3,}\s*\d+\s*)<\/p>/gi, '<p$1 class="toc-entry">$2</p>');
+    const profile = await extractOriginalDocumentStyleProfile(buffer);
+    let richHtml = inlineDocxFootnotes(normalizeHtmlFragment(result.value)).replace(/<p([^>]*)>(\s*[·._\-—]{3,}\s*\d+\s*)<\/p>/gi, '<p$1 class="toc-entry">$2</p>');
+    const headingRule = profile.paragraphBorders?.Heading1 ?? profile.paragraphBorders?.['heading 1'];
+    if (headingRule?.bottom) {
+      const border = headingRule.bottom;
+      richHtml = richHtml.replace(/<h1(\s[^>]*)?>/gi, (full, attrs = '') => {
+        const extra = ` data-source-border-bottom-style="${border.style}" data-source-border-bottom-width="${border.widthPt ?? ''}" data-source-border-bottom-color="${border.color ?? ''}" data-source-border-bottom-spacing="${border.spacingPt ?? ''}"`;
+        return `<h1${attrs}${extra}>`;
+      });
+    }
     const richText = normalizeText(textFromHtml(richHtml));
 
     if (richText) {

@@ -72,6 +72,14 @@ describe('extractOriginalDocumentStyleProfile', () => {
     expect(profile.body.textAlign).toBe('justify');
     expect(profile.page.widthPt).toBeGreaterThan(0);
     expect(profile.page.marginsPt?.top).toBeGreaterThan(0);
+    expect(profile.footer?.alignment).toBe('center');
+    expect(profile.footer?.runs.map((run) => run.type)).toEqual(['text', 'page', 'text']);
+    expect(profile.footer?.fontFamily).toBe('Liberation Serif');
+    expect(profile.footer?.fontSizePt).toBe(9);
+    expect(profile.footer?.color).toBe('#737373');
+    expect(profile.paragraphBorders?.Heading1?.bottom).toMatchObject({
+      style: 'single', widthPt: 2.25, color: '#C46A2C', spacingPt: 6,
+    });
   });
 
   it('handles style inheritance with basedOn chain', async () => {

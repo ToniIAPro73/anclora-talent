@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 import type { PaginationConfig } from '@/lib/preview/device-configs';
 import { getPageContentHeight } from '@/lib/preview/page-layout';
+import type { OriginalDocumentStyleProfile } from '@/lib/projects/source-style-profile';
 
 interface MultipageFlowProps {
   html: string;
@@ -18,6 +19,7 @@ interface MultipageFlowProps {
   pageNumberOffset?: number;
   styleVariables?: Record<string, string>;
   lang?: string;
+  sourceFooter?: OriginalDocumentStyleProfile['footer'] | null;
 }
 
 export function MultipageFlow({
@@ -32,6 +34,7 @@ export function MultipageFlow({
   pageNumberOffset = 1,
   styleVariables = {},
   lang = 'es',
+  sourceFooter = null,
 }: MultipageFlowProps) {
   const multipageFlowRef = useRef<HTMLDivElement>(null);
 
@@ -575,10 +578,12 @@ export function MultipageFlow({
             <div className="h-full w-full" style={pagePaddingStyle} />
             {showPageNumbers ? (
               <div className="pointer-events-none absolute inset-x-0 bottom-7 flex justify-center">
-                <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(7,12,20,0.05)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[var(--text-tertiary)]">
-                  <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
-                  <span>{idx + pageNumberOffset}</span>
-                  <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
+                <span className={sourceFooter ? '' : 'inline-flex items-center gap-2 rounded-full bg-[rgba(7,12,20,0.05)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[var(--text-tertiary)]'} style={sourceFooter ? { textAlign: sourceFooter.alignment ?? 'center', fontFamily: sourceFooter.fontFamily, fontSize: sourceFooter.fontSizePt ? `${sourceFooter.fontSizePt}pt` : undefined, color: sourceFooter.color } : undefined} data-testid={sourceFooter ? 'source-footer' : undefined}>
+                  {sourceFooter ? sourceFooter.runs.map((run, runIndex) => <span key={runIndex}>{run.type === 'page' ? idx + pageNumberOffset : run.text}</span>) : <>
+                    <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
+                    <span>{idx + pageNumberOffset}</span>
+                    <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
+                  </>}
                 </span>
               </div>
             ) : null}

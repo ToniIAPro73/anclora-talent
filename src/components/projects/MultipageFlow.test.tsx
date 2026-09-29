@@ -4,6 +4,23 @@ import { MultipageFlow } from './MultipageFlow';
 import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 
 describe('MultipageFlow', () => {
+  test('renders source footer runs without Talent ornaments', () => {
+    const { container } = render(
+      <MultipageFlow
+        html="<p>Contenido</p>"
+        config={DEVICE_PAGINATION_CONFIGS.laptop}
+        currentPage={0}
+        viewMode="single"
+        margins={{ top: 24, bottom: 24, left: 24, right: 24 }}
+        showPageNumbers
+        pageNumberOffset={2}
+        sourceFooter={{ alignment: 'center', runs: [{ type: 'text', text: '— ' }, { type: 'page' }, { type: 'text', text: ' —' }] }}
+      />,
+    );
+    expect(screen.getByTestId('source-footer')).toHaveTextContent('— 2 —');
+    expect(container.textContent).not.toContain('∿∿');
+  });
+
   test('includes TOC-specific styles so preview pagination matches the chapter editor layout', () => {
     const { container } = render(
       <MultipageFlow

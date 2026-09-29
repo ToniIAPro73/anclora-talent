@@ -10,6 +10,7 @@ import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { DocumentChapter } from '@/lib/projects/types';
 import type { CompositionSettings } from '@/lib/projects/composition';
 import type { DocumentStyleMap } from '@/lib/style-engine/model';
+import type { OriginalDocumentStyleProfile } from '@/lib/projects/source-style-profile';
 
 interface ChapterEditorFullscreenProps {
   chapters: DocumentChapter[];
@@ -24,6 +25,7 @@ interface ChapterEditorFullscreenProps {
   composition?: CompositionSettings | null;
   documentStyleMap?: DocumentStyleMap | null;
   compiledCssVariables?: Record<string, string> | null;
+  sourceFooter?: OriginalDocumentStyleProfile['footer'] | null;
 }
 
 export function ChapterEditorFullscreen({
@@ -39,6 +41,7 @@ export function ChapterEditorFullscreen({
   composition,
   documentStyleMap,
   compiledCssVariables,
+  sourceFooter,
 }: ChapterEditorFullscreenProps) {
   const { locale } = useUiPreferences();
   const copy = resolveLocaleMessages(locale).editor;
@@ -402,6 +405,7 @@ export function ChapterEditorFullscreen({
               composition={composition}
               documentStyleMap={documentStyleMap}
               compiledCssVariables={compiledCssVariables}
+              sourceFooter={sourceFooter}
             />
           </div>
           <aside className="chapter-editor-inspector" style={focusMode || !showInspector ? { display: 'none' } : undefined}>
