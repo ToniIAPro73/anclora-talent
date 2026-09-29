@@ -5,6 +5,7 @@ export interface CanonicalFootnoteDefinition {
   displayNumber: string;
   html: string;
   sourceStyle?: string;
+  sourcePageNumber?: number;
 }
 
 export interface CanonicalFootnoteSet {
@@ -52,6 +53,64 @@ function paragraphHtml(paragraphXml: string) {
   return runs.trim();
 }
 
+function paragraphText(paragraphXml: string) {
+  return Array.from(paragraphXml.matchAll(/<w:t\b[^>]*>([\s\S]*?)<\/w:t>/g))
+    .map((match) => decodeXml(match[1]))
+    .join('')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function sourceFootnotePages(documentXml: string): Map<string, number> {
+  const paragraphs = Array.from(documentXml.matchAll(/<w:p\b[^>]*>[\s\S]*?<\/w:p>/g)).map((match) => match[0]);
+  const tocPages = paragraphs
+    .filter((paragraph) => /<w:tab\b|TOC/i.test(paragraph))
+    .map((paragraph) => paragraphText(paragraph).match(/(\d{1,4})\s*$/)?.[1])
+    .filter((page): page is string => Boolean(page))
+    .map(Number)
+    .filter((page, index, pages) => Number.isFinite(page) && pages.indexOf(page) === index);
+  if (tocPages.length === 0) return new Map();
+
+  const pagesById = new Map<string, number>();
+  let logicalPage = 1;
+  let contentSection = -1;
+  let afterToc = false;
+  let pageBreakPending = false;
+  let seenToc = false;
+  const isTocParagraph = (paragraph: string) => /<w:tab\b|TOC/i.test(paragraph);
+
+  for (const paragraph of paragraphs) {
+    const hasPageBreak = /<w:br\b[^>]*w:type="page"|<w:lastRenderedPageBreak\b/i.test(paragraph);
+    if (hasPageBreak) {
+      logicalPage += 1;
+      pageBreakPending = true;
+    }
+
+    const text = paragraphText(paragraph);
+    const refs = Array.from(paragraph.matchAll(/w:footnoteReference[^>]*w:id="(\d+)"/g)).map((match) => match[1]);
+    const isNonTocContent = Boolean(text) && !isTocParagraph(paragraph);
+    if (isTocParagraph(paragraph)) {
+      seenToc = true;
+    }
+    if (!afterToc && seenToc && isNonTocContent && (logicalPage > 2 || pageBreakPending)) {
+      afterToc = true;
+      contentSection = 0;
+    } else if (afterToc && pageBreakPending && isNonTocContent) {
+      contentSection += 1;
+    }
+
+    if (afterToc && isNonTocContent) {
+      pageBreakPending = false;
+    }
+    if (refs.length > 0 && afterToc) {
+      const sourcePageNumber = tocPages[contentSection] ?? logicalPage;
+      refs.forEach((id) => pagesById.set(id, sourcePageNumber));
+    }
+  }
+
+  return pagesById;
+}
+
 /** Parse the OOXML footnote part into the shared semantic model. */
 export async function parseDocxFootnotes(buffer: Buffer | ArrayBuffer): Promise<CanonicalFootnoteSet> {
   const zip = await JSZip.loadAsync(buffer);
@@ -59,6 +118,8 @@ export async function parseDocxFootnotes(buffer: Buffer | ArrayBuffer): Promise<
   if (!entry) return { definitions: [], hasSeparator: false, hasContinuationSeparator: false };
 
   const xml = await entry.async('string');
+  const documentEntry = zip.file('word/document.xml');
+  const sourcePages = documentEntry ? sourceFootnotePages(await documentEntry.async('string')) : new Map<string, number>();
   const definitions: CanonicalFootnoteDefinition[] = [];
   for (const match of xml.matchAll(/<w:footnote\b([^>]*)>([\s\S]*?)<\/w:footnote>/g)) {
     const attrs = match[1];
@@ -68,7 +129,14 @@ export async function parseDocxFootnotes(buffer: Buffer | ArrayBuffer): Promise<
       .map((paragraph) => paragraphHtml(paragraph[0]))
       .filter(Boolean);
     const html = paragraphs.join('');
-    if (html) definitions.push({ id, displayNumber: id, html });
+    if (html) {
+      definitions.push({
+        id,
+        displayNumber: id,
+        html,
+        ...(sourcePages.has(id) ? { sourcePageNumber: sourcePages.get(id) } : {}),
+      });
+    }
   }
 
   return {

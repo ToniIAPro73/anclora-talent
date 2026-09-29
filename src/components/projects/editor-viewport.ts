@@ -8,7 +8,13 @@ export type EditorViewportLayout = {
   layoutDevice: 'mobile' | 'tablet' | 'desktop';
   viewMode: 'single' | 'double';
   scale: number;
+  displayFrameWidth: number;
 };
+
+const SIMULATED_VIEWPORT_WIDTHS = {
+  mobile: 355,
+  tablet: 528,
+} as const;
 
 export function resolveEditorViewportLayout({
   physicalWidth,
@@ -24,11 +30,19 @@ export function resolveEditorViewportLayout({
   const isPhysicalMobile = physicalWidth > 0 && physicalWidth <= PHYSICAL_MOBILE_BREAKPOINT;
 
   if (!isPhysicalMobile) {
+    const simulatedWidth = publicationDevice === 'mobile'
+      ? SIMULATED_VIEWPORT_WIDTHS.mobile
+      : publicationDevice === 'tablet'
+        ? SIMULATED_VIEWPORT_WIDTHS.tablet
+        : pageWidth;
+    const isSimulatedNarrowView = publicationDevice === 'mobile' || publicationDevice === 'tablet';
+
     return {
       physicalDevice: 'wide',
       layoutDevice: publicationDevice === 'laptop' || publicationDevice === 'ereader' ? 'desktop' : publicationDevice,
-      viewMode: requestedViewMode,
-      scale: 1,
+      viewMode: isSimulatedNarrowView ? 'single' : requestedViewMode,
+      scale: Math.min(1, simulatedWidth / pageWidth),
+      displayFrameWidth: simulatedWidth,
     };
   }
 
@@ -39,13 +53,14 @@ export function resolveEditorViewportLayout({
     layoutDevice: 'mobile',
     viewMode: 'single',
     scale: Math.min(1, availableWidth / pageWidth),
+    displayFrameWidth: Math.min(pageWidth, availableWidth),
   };
 }
 
 export function calculateSpreadFitFactor({
   availableWidth,
   naturalWidth,
-  minScale = 0.5,
+  minScale = 0,
 }: {
   availableWidth: number;
   naturalWidth: number;

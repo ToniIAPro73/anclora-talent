@@ -6,6 +6,15 @@ describe('canonical rich footnotes', () => {
   it('parses OOXML definitions without importing the Word marker as body text', async () => {
     const zip = new JSZip();
     zip.file(
+      'word/document.xml',
+      '<w:document><w:body>' +
+        '<w:p><w:pPr><w:pStyle w:val="TOC1"/></w:pPr><w:r><w:tab/><w:t>Introducción</w:t><w:t>3</w:t></w:r></w:p>' +
+        '<w:p><w:br w:type="page"/></w:p>' +
+        '<w:p><w:r><w:t>Introducción</w:t></w:r></w:p>' +
+        '<w:p><w:r><w:t>Texto</w:t><w:footnoteReference w:id="2"/></w:r></w:p>' +
+        '</w:body></w:document>',
+    );
+    zip.file(
       'word/footnotes.xml',
       '<w:footnotes>' +
         '<w:footnote w:id="-1" w:type="separator"><w:p><w:r><w:separator/></w:r></w:p></w:footnote>' +
@@ -15,7 +24,7 @@ describe('canonical rich footnotes', () => {
 
     const parsed = await parseDocxFootnotes(await zip.generateAsync({ type: 'nodebuffer' }));
     expect(parsed.hasSeparator).toBe(true);
-    expect(parsed.definitions).toEqual([{ id: '2', displayNumber: '2', html: '<em> Daniel Kahneman</em>' }]);
+    expect(parsed.definitions).toEqual([{ id: '2', displayNumber: '2', html: '<em> Daniel Kahneman</em>', sourcePageNumber: 3 }]);
   });
 
   it('projects a single numeric superscript reference without brackets', () => {

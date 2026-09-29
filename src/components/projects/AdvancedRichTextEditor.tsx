@@ -307,6 +307,15 @@ const EditorialParagraphAttributes = Extension.create({
             renderHTML: (attributes) =>
               attributes.footnoteSource ? { 'data-footnote-source': attributes.footnoteSource } : {},
           },
+          sourcePageNumber: {
+            default: null,
+            parseHTML: (element) => {
+              const value = Number(element.getAttribute('data-footnote-source-page'));
+              return Number.isFinite(value) && value > 0 ? value : null;
+            },
+            renderHTML: (attributes) =>
+              attributes.sourcePageNumber ? { 'data-footnote-source-page': attributes.sourcePageNumber } : {},
+          },
         },
       },
     ];
@@ -1590,9 +1599,12 @@ export function AdvancedRichTextEditor({
   const layoutDevice = viewportLayout.layoutDevice;
   const layoutViewMode = viewportLayout.viewMode;
 
-  // Calculate words per page based on device, font size, and margins
+  const hasSourceDefinedGeometry = Boolean(sourcePageWidth && sourcePageHeight);
+
+  // Calculate words per page from the canonical source baseline. Device
+  // buttons change display framing, never source pagination.
   const pageConfig: PageCalculationConfig = {
-    device: layoutDevice,
+    device: hasSourceDefinedGeometry ? 'desktop' : layoutDevice,
     fontSize: currentFontSize,
     marginTop: margins.top,
     marginBottom: margins.bottom,
@@ -1601,7 +1613,11 @@ export function AdvancedRichTextEditor({
   };
 
   const wordsPerPage = calculateWordsPerPage(pageConfig);
-  const previewFormat = layoutDevice === 'desktop' ? 'laptop' : layoutDevice;
+  const previewFormat = hasSourceDefinedGeometry
+    ? 'laptop'
+    : layoutDevice === 'desktop'
+      ? 'laptop'
+      : layoutDevice;
   const previewConfig = useMemo(() => {
     const baseConfig = DEVICE_PAGINATION_CONFIGS[previewFormat];
     return {
@@ -1747,12 +1763,12 @@ export function AdvancedRichTextEditor({
     (newDevice: 'mobile' | 'tablet' | 'desktop') => {
       setDevice(newDevice);
       setPreferences({ device: newDevice });
-      // If switching to mobile, force single page mode
-      if (newDevice === 'mobile' && viewMode === 'double') {
+      // Narrow simulated viewports show one complete canonical source page.
+      if (newDevice !== 'desktop' && viewMode === 'double') {
         setViewMode('single');
       }
-      // If switching from mobile, allow double mode
-      if (newDevice !== 'mobile' && viewMode === 'single') {
+      // Desktop is the only default double-page presentation.
+      if (newDevice === 'desktop' && viewMode === 'single') {
         setViewMode('double');
       }
     },
@@ -1907,12 +1923,18 @@ export function AdvancedRichTextEditor({
     // resolveEditorViewportLayout already fits a physical mobile viewport to
     // one canonical page. Applying the manuscript fit a second time would
     // square the scale and crop the source page.
-    availableWidth: viewportLayout.physicalDevice === 'mobile'
+    availableWidth: device !== 'desktop' || viewportLayout.physicalDevice === 'mobile'
       ? spreadNaturalWidth
       : availableManuscriptWidth,
     naturalWidth: spreadNaturalWidth,
   });
-  const effectiveScale = zoomScale * viewportLayout.scale * spreadFitFactor;
+  const physicalCanvasWidth = viewportLayout.physicalDevice === 'mobile' && physicalWidth > 0
+    ? Math.max(1, physicalWidth - 76)
+    : availableManuscriptWidth;
+  const physicalViewportScale = viewportLayout.physicalDevice === 'mobile'
+    ? Math.min(viewportLayout.scale, physicalCanvasWidth / spreadNaturalWidth)
+    : viewportLayout.scale;
+  const effectiveScale = zoomScale * physicalViewportScale * spreadFitFactor;
   const effectivePages = Math.max(
     totalRenderablePages,
     showSecondPage ? spreadStartPage + 2 : spreadStartPage + 1,
@@ -1991,9 +2013,6 @@ export function AdvancedRichTextEditor({
     // ordinary top-to-bottom flow regardless of its persisted class.
     setFootnoteDecorations(editor.view, []);
     if (isEndnotesSection) return;
-    // Source-linked notes remain in normal flow so imported page membership is
-    // not replaced by this legacy absolute-positioning heuristic.
-    if (proseMirror.querySelector('[data-footnote-source]')) return;
 
     const footnotes: Array<{ pos: number; nodeSize: number }> = [];
     editor.state.doc.descendants((node, pos) => {
@@ -2005,39 +2024,37 @@ export function AdvancedRichTextEditor({
 
     const proseMirrorRect = proseMirror.getBoundingClientRect();
     const columnStride = contentWidth + columnGap;
-    const stackedHeightByPage = new Map<number, number>();
-    const decorations: FootnoteDecorationInput[] = [];
+    const measurements: Array<{ pos: number; nodeSize: number; pageIndex: number; height: number }> = [];
 
     for (const { pos, nodeSize } of footnotes) {
       const dom = editor.view.nodeDOM(pos) as HTMLElement | null;
       if (!dom || typeof dom.getBoundingClientRect !== 'function') continue;
 
       const rect = dom.getBoundingClientRect();
-      const pageIndex = Math.max(0, Math.floor((rect.left - proseMirrorRect.left + 1) / columnStride));
-      const stacked = stackedHeightByPage.get(pageIndex) ?? 0;
-      const height = rect.height;
+      const declaredPage = Number(dom.getAttribute('data-footnote-source-page'));
+      const sourcePageIndex = Number.isFinite(declaredPage) && declaredPage > 0
+        ? Math.max(0, declaredPage - 1 - pageNumberOffset)
+        : null;
+      const pageIndex = sourcePageIndex ?? Math.max(0, Math.floor((rect.left - proseMirrorRect.left + 1) / columnStride));
+      measurements.push({ pos, nodeSize, pageIndex, height: rect.height });
+    }
 
-      // Anchored from the bottom edge (not a computed `top`): if the
-      // measured height here (before max-width/line-height are fully
-      // settled) ends up slightly off from the actual rendered height, a
-      // `top` computed from it could push part of the note past
-      // contentHeight, where the page's `overflow: hidden` silently clips
-      // it — exactly the "note 1 cuts off mid-sentence" symptom. Anchoring
-      // the bottom edge instead means the box grows upward from a fixed
-      // point and is never clipped, regardless of any height mismatch.
-      decorations.push({
+    const totalHeightByPage = new Map<number, number>();
+    measurements.forEach(({ pageIndex, height }) => {
+      totalHeightByPage.set(pageIndex, (totalHeightByPage.get(pageIndex) ?? 0) + height + 8);
+    });
+    const cursorByPage = new Map<number, number>();
+    const decorations: FootnoteDecorationInput[] = measurements.map(({ pos, nodeSize, pageIndex, height }) => {
+      const cursor = cursorByPage.get(pageIndex) ?? Math.max(0, contentHeight - (totalHeightByPage.get(pageIndex) ?? height));
+      cursorByPage.set(pageIndex, cursor + height + 8);
+      return {
         pos,
         nodeSize,
-        style: `position:absolute;left:${pageIndex * columnStride}px;width:${contentWidth}px;bottom:${stacked}px;`,
-      });
-
-      stackedHeightByPage.set(pageIndex, stacked + height + 8);
-
-      // Apply immediately, before measuring the next footnote: its
-      // measurement must reflect this one already being out of flow.
-      setFootnoteDecorations(editor.view, decorations);
-    }
-  }, [columnGap, contentWidth, editor, isEndnotesSection]);
+        style: `position:absolute;left:${pageIndex * columnStride}px;width:${contentWidth}px;top:${cursor}px;`,
+      };
+    });
+    setFootnoteDecorations(editor.view, decorations);
+  }, [columnGap, contentHeight, contentWidth, editor, isEndnotesSection, pageNumberOffset]);
 
   const focusVisiblePage = useCallback(
     (pageIndex: number) => {
@@ -2176,6 +2193,11 @@ export function AdvancedRichTextEditor({
   return (
     <div
       className="ac-text-editor talent-chapter-editor-shell h-full shadow-2xl"
+      data-editor-device={device}
+      data-editor-layout-device={layoutDevice}
+      data-editor-view-mode={layoutViewMode}
+      data-editor-display-scale={effectiveScale}
+      data-editor-canonical-page-width={pageWidth}
       style={{
         '--editor-document-font': effectiveFont,
         ...(compiledCssVariables ?? {}),
@@ -2198,10 +2220,13 @@ export function AdvancedRichTextEditor({
 
       <div
         ref={contentScrollRef}
+        data-testid="editor-scroll-container"
         className="ac-text-editor__content ac-text-editor__content--scroll flex bg-[var(--background)] p-4 custom-scrollbar"
       >
         <div
           className={`transition-all duration-300 ease-in-out m-auto shrink-0 ${deviceClasses[layoutDevice]}`}
+          data-testid="editor-display-frame"
+          data-display-width={viewportWidth * effectiveScale}
           style={{
             width: `${viewportWidth * effectiveScale}px`,
             minHeight: `${pageHeight * effectiveScale}px`,
@@ -2209,6 +2234,7 @@ export function AdvancedRichTextEditor({
         >
           <div
             className="relative overflow-hidden origin-top-left"
+            data-testid="editor-scaled-canvas"
             style={{
               width: `${viewportWidth}px`,
               minHeight: `${pageHeight}px`,

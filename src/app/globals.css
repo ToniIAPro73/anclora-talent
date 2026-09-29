@@ -2740,6 +2740,22 @@ ul.toc-list > li {
 .chapter-editor-layout[data-has-outline="false"][data-has-inspector="true"] {
   grid-template-columns: minmax(0, 1fr) 240px;
 }
+/* Device buttons simulate the reading frame even when QA/editor runs in a
+   wide browser. Narrow frames must not leave the outline consuming their
+   display width. */
+.chapter-editor-layout:has([data-editor-device="mobile"]) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.chapter-editor-layout:has([data-editor-device="mobile"]) .chapter-editor-outline,
+.chapter-editor-layout:has([data-editor-device="mobile"]) .chapter-editor-inspector {
+  display: none;
+}
+.chapter-editor-layout:has([data-editor-device="tablet"]) {
+  grid-template-columns: 140px minmax(0, 1fr);
+}
+.chapter-editor-layout:has([data-editor-device="tablet"]) .chapter-editor-inspector {
+  display: none;
+}
 .chapter-editor-outline,
 .chapter-editor-inspector {
   min-width: 0;

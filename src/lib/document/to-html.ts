@@ -85,7 +85,7 @@ function serializeBlock(block: DocumentBlock, refs?: ResolvedRefs): string {
     case 'heading':
       return `<h${block.level}${blockAttributes(block.sourceStyleId, block.paragraphProperties)}>${serializeInline(block.content, refs)}</h${block.level}>`;
     case 'paragraph':
-      return `<p${block.editorialClass ? ` class="${block.editorialClass}"` : ''}${block.footnoteId ? ` data-footnote-id="${escapeHtml(block.footnoteId)}"` : ''}${blockAttributes(block.sourceStyleId, block.paragraphProperties)}>${serializeInline(block.content, refs)}</p>`;
+      return `<p${block.editorialClass ? ` class="${block.editorialClass}"` : ''}${block.footnoteId ? ` data-footnote-id="${escapeHtml(block.footnoteId)}"` : ''}${block.sourcePageNumber ? ` data-footnote-source-page="${block.sourcePageNumber}"` : ''}${blockAttributes(block.sourceStyleId, block.paragraphProperties)}>${serializeInline(block.content, refs)}</p>`;
     case 'list': {
       const tag = block.ordered ? 'ol' : 'ul';
       const items = block.items.map((item) => `<li>${serializeInline(item, refs)}</li>`).join('');

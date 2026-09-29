@@ -78,6 +78,7 @@ export interface ParagraphBlock extends BlockBase {
   content: InlineNode[];
   editorialClass?: 'editorial-kicker' | 'editorial-footnote' | 'editorial-endnote-definition';
   footnoteId?: string;
+  sourcePageNumber?: number;
   sourceStyleId?: string;
   paragraphProperties?: Record<string, string | number | boolean>;
 }

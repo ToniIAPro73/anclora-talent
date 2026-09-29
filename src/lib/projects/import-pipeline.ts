@@ -997,7 +997,8 @@ function inlineDocxFootnotes(html: string, footnoteSet?: CanonicalFootnoteSet): 
         .map((id) => {
           const definition = definitions.get(id);
           if (!definition) return '';
-          return `<p class="editorial-footnote" data-footnote-id="${id}" data-footnote-display="${definition.displayNumber}" data-footnote-source="docx">${definition.html}</p>`;
+          const sourcePage = definition.sourcePageNumber ? ` data-footnote-source-page="${definition.sourcePageNumber}"` : '';
+          return `<p class="editorial-footnote" data-footnote-id="${id}" data-footnote-display="${definition.displayNumber}" data-footnote-source="docx"${sourcePage}>${definition.html}</p>`;
         })
         .join('');
       return paragraph + notes;

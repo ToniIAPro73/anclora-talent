@@ -125,10 +125,6 @@ export function MultipageFlow({
     ) as HTMLElement | null;
     if (!contentArea) return;
     if (isEndnotesSection) return;
-    // Source-linked notes remain in normal flow; absolute positioning is only
-    // a fallback for legacy/recomposed documents without source metadata.
-    if (contentArea.querySelector('[data-footnote-source]')) return;
-
     const footnotes = Array.from(
       contentArea.querySelectorAll<HTMLElement>('p.editorial-footnote'),
     );
@@ -144,25 +140,32 @@ export function MultipageFlow({
 
     const contentAreaRect = contentArea.getBoundingClientRect();
     const columnStride = contentWidth + columnGap;
-    const stackedHeightByPage = new Map<number, number>();
-
-    footnotes.forEach((el) => {
+    const measurements = footnotes.map((el) => {
       const rect = el.getBoundingClientRect();
-      const pageIndex = Math.max(
+      const declaredPage = Number(el.getAttribute('data-footnote-source-page'));
+      const sourcePageIndex = Number.isFinite(declaredPage) && declaredPage > 0
+        ? Math.max(0, declaredPage - 1 - pageNumberOffset)
+        : null;
+      const pageIndex = sourcePageIndex ?? Math.max(
         0,
         Math.floor((rect.left - contentAreaRect.left + 1) / columnStride),
       );
-      const stacked = stackedHeightByPage.get(pageIndex) ?? 0;
-      const height = rect.height;
-
+      return { el, pageIndex, height: rect.height };
+    });
+    const totalHeightByPage = new Map<number, number>();
+    measurements.forEach(({ pageIndex, height }) => {
+      totalHeightByPage.set(pageIndex, (totalHeightByPage.get(pageIndex) ?? 0) + height + 8);
+    });
+    const cursorByPage = new Map<number, number>();
+    measurements.forEach(({ el, pageIndex, height }) => {
+      const cursor = cursorByPage.get(pageIndex) ?? Math.max(0, contentHeight - (totalHeightByPage.get(pageIndex) ?? height));
       el.style.position = 'absolute';
       el.style.left = `${pageIndex * columnStride}px`;
       el.style.width = `${contentWidth}px`;
-      el.style.top = `${Math.max(0, contentHeight - stacked - height)}px`;
-
-      stackedHeightByPage.set(pageIndex, stacked + height + 8);
+      el.style.top = `${cursor}px`;
+      cursorByPage.set(pageIndex, cursor + height + 8);
     });
-  }, [columnGap, contentHeight, contentWidth, isEndnotesSection]);
+  }, [columnGap, contentHeight, contentWidth, isEndnotesSection, pageNumberOffset]);
 
   useEffect(() => {
     const runLayoutPass = () => {

@@ -308,12 +308,14 @@ export function htmlToBlocks(html: string): DocumentBlock[] {
     } else if (tag === 'p') {
       const editorialClass = el.getAttribute('class')?.match(/\beditorial-(kicker|footnote|endnote-definition)\b/)?.[0] as 'editorial-kicker' | 'editorial-footnote' | 'editorial-endnote-definition' | undefined;
       const footnoteId = el.getAttribute('data-footnote-id');
+      const sourcePageNumber = Number(el.getAttribute('data-footnote-source-page'));
       push({
         type: 'paragraph',
         content: parseInline(el),
         id: nextId(el, tag),
         ...(editorialClass ? { editorialClass } : {}),
         ...(footnoteId ? { footnoteId } : {}),
+        ...(Number.isFinite(sourcePageNumber) && sourcePageNumber > 0 ? { sourcePageNumber } : {}),
         ...(el.getAttribute('data-source-style-id') ? { sourceStyleId: el.getAttribute('data-source-style-id') ?? undefined } : {}),
         ...(parseParagraphProperties(el) ? { paragraphProperties: parseParagraphProperties(el) } : {}),
       });

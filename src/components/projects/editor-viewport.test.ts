@@ -15,6 +15,7 @@ describe('editor physical viewport contract', () => {
       layoutDevice: 'mobile',
       viewMode: 'single',
       scale: 358 / 576,
+      displayFrameWidth: 358,
     });
   });
 
@@ -31,6 +32,7 @@ describe('editor physical viewport contract', () => {
       layoutDevice: 'desktop',
       viewMode: 'double',
       scale: 1,
+      displayFrameWidth: 576,
     });
   });
 
@@ -43,6 +45,28 @@ describe('editor physical viewport contract', () => {
         requestedViewMode: 'single',
       }).scale,
     ).toBe(1);
+  });
+
+  test('simulated mobile and tablet use distinct display scales without changing source page width', () => {
+    const mobile = resolveEditorViewportLayout({
+      physicalWidth: 1440,
+      publicationDevice: 'mobile',
+      pageWidth: 793,
+      requestedViewMode: 'double',
+    });
+    const tablet = resolveEditorViewportLayout({
+      physicalWidth: 1440,
+      publicationDevice: 'tablet',
+      pageWidth: 793,
+      requestedViewMode: 'double',
+    });
+
+    expect(mobile.viewMode).toBe('single');
+    expect(tablet.viewMode).toBe('single');
+    expect(mobile.displayFrameWidth).toBe(355);
+    expect(tablet.displayFrameWidth).toBe(528);
+    expect(mobile.scale).toBeLessThan(tablet.scale);
+    expect(mobile.scale).toBeLessThan(1);
   });
 
   test('calculateSpreadFitFactor scales down spread when wider than available viewport to prevent clipping', () => {
