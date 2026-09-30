@@ -1,9 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { resolveDocumentRules } from '@/lib/compose/rules';
+import { normalizeHtmlContent } from '@/lib/preview/html-normalize';
+import { stripAutoBreaks } from '@/lib/preview/editor-page-layout';
 import { getProductTemplate } from '@/lib/templates/product-templates';
 import { inferSectionSemantics } from './import-pipeline';
 import { createDefaultSurfaceState } from './cover-surface';
+import { chapterBlocksToHtml } from './chapter-html';
 import { buildSourcePageMapFromChapters, invalidateSourcePageMap, rebindSourcePageMapToChapters } from './source-page-map';
+import { classifySourcePageMapImpact, documentExtrasAffectSourcePageMap } from './source-page-map-impact';
 import type {
   CreateProjectInput,
   ProjectRecord,
@@ -19,6 +23,10 @@ function slugify(input: string) {
     .trim()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+function normalizeHtmlForImpact(content: string) {
+  return normalizeHtmlContent(stripAutoBreaks(content)).replace(/\s+/g, ' ').trim();
 }
 
 function buildChapterBlocks(
@@ -241,6 +249,7 @@ export function updateProjectDocument(project: ProjectRecord, input: UpdateDocum
               content: block.content,
               type: existing?.type || (bIdx === 0 && block.content.trimStart().startsWith('<h') ? 'heading' : 'paragraph'),
               order: bIdx,
+              ...(existing?.paragraphProperties ? { paragraphProperties: existing.paragraphProperties } : {}),
             };
           })
         : chapter.blocks,
@@ -249,34 +258,51 @@ export function updateProjectDocument(project: ProjectRecord, input: UpdateDocum
   const updatedChapters = project.document.chapters.map((ch, i) =>
     i === idx ? updatedChapter : ch,
   );
+  const semanticallyEquivalentChapter = normalizeHtmlForImpact(chapterBlocksToHtml(chapter.blocks))
+    === normalizeHtmlForImpact(chapterBlocksToHtml(updatedChapter.blocks));
+  const chaptersForPersistence = semanticallyEquivalentChapter
+    ? project.document.chapters
+    : updatedChapters;
+
+  const nextDocument = {
+    ...project.document,
+    title: input.title,
+    subtitle: input.subtitle,
+    author: input.author,
+    chapters: chaptersForPersistence,
+    // D.3: DocumentMetadata mirrors the document's main form; refresh the
+    // mirrored fields on every document save so the cover/back-cover
+    // metadata chain never goes stale.
+    metadata: project.document.metadata
+      ? {
+          ...project.document.metadata,
+          title: input.title,
+          subtitle: input.subtitle || undefined,
+          author: input.author || undefined,
+        }
+      : (project.document.metadata ?? null),
+  };
+  const impact = classifySourcePageMapImpact(project.document, nextDocument);
+  const existingMap = project.document.source?.sourcePageMap ?? project.document.metadata?.sourcePageMap;
+  const nextMap = impact === 'NO_CHANGE' || impact === 'METADATA_ONLY' || impact === 'NON_LAYOUT_CHANGE'
+    ? existingMap
+    : invalidateSourcePageMap(existingMap);
 
   return {
     ...project,
     title: input.title,
     updatedAt: new Date().toISOString(),
     document: {
-      ...project.document,
+      ...nextDocument,
       source: project.document.source
-        ? { ...project.document.source, sourcePageMap: input.blocks.length > 0 ? invalidateSourcePageMap(project.document.source.sourcePageMap) : project.document.source.sourcePageMap }
+        ? { ...project.document.source, sourcePageMap: nextMap }
         : project.document.source,
-      title: input.title,
-      subtitle: input.subtitle,
-      author: input.author,
-      chapters: updatedChapters,
-      // D.3: DocumentMetadata mirrors the document's main form; refresh the
-      // mirrored fields on every document save so the cover/back-cover
-      // metadata chain never goes stale.
       metadata: project.document.metadata
         ? {
-            ...project.document.metadata,
-            title: input.title,
-            subtitle: input.subtitle || undefined,
-            author: input.author || undefined,
-            sourcePageMap: input.blocks.length > 0
-              ? invalidateSourcePageMap(project.document.metadata.sourcePageMap)
-              : project.document.metadata.sourcePageMap,
+            ...nextDocument.metadata!,
+            sourcePageMap: nextMap,
           }
-        : (project.document.metadata ?? null),
+        : nextDocument.metadata,
     },
     cover: {
       ...project.cover,
@@ -461,22 +487,36 @@ export function updateProjectDocumentExtras(
   project: ProjectRecord,
   input: UpdateDocumentExtrasInput,
 ): ProjectRecord {
+  const nextDocument = {
+    ...project.document,
+    rules: input.rules !== undefined ? input.rules : (project.document.rules ?? null),
+    documentModel:
+      input.documentModel !== undefined
+        ? input.documentModel
+        : (project.document.documentModel ?? null),
+    metadata:
+      input.metadata !== undefined ? input.metadata : (project.document.metadata ?? null),
+    provenance:
+      input.provenance !== undefined
+        ? input.provenance
+        : (project.document.provenance ?? null),
+  };
+  const existingMap = project.document.source?.sourcePageMap ?? project.document.metadata?.sourcePageMap;
+  const nextMap = documentExtrasAffectSourcePageMap(project.document, nextDocument)
+    ? invalidateSourcePageMap(existingMap)
+    : existingMap;
+
   return {
     ...project,
     updatedAt: new Date().toISOString(),
     document: {
-      ...project.document,
-      rules: input.rules !== undefined ? input.rules : (project.document.rules ?? null),
-      documentModel:
-        input.documentModel !== undefined
-          ? input.documentModel
-          : (project.document.documentModel ?? null),
-      metadata:
-        input.metadata !== undefined ? input.metadata : (project.document.metadata ?? null),
-      provenance:
-        input.provenance !== undefined
-          ? input.provenance
-          : (project.document.provenance ?? null),
+      ...nextDocument,
+      source: project.document.source
+        ? { ...project.document.source, sourcePageMap: nextMap }
+        : project.document.source,
+      metadata: nextDocument.metadata
+        ? { ...nextDocument.metadata, sourcePageMap: nextMap }
+        : nextDocument.metadata,
     },
   };
 }

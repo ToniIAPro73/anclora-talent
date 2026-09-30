@@ -17,6 +17,8 @@ import {
   buildSyncedTocChapterContent,
 } from '@/lib/preview/preview-builder';
 import { chapterBlocksToHtml } from './chapter-html';
+import { normalizeHtmlContent } from '@/lib/preview/html-normalize';
+import { stripAutoBreaks } from '@/lib/preview/editor-page-layout';
 import { mergeReimportedSeed } from './reimport';
 import { deriveCompositionOverrides, parseCompositionSettings, SYSTEM_COMPOSITION_DEFAULTS } from './composition';
 import type { CoverDesign, UpdateBackCoverInput, UpdateCoverInput, UpdateDocumentInput } from './types';
@@ -428,6 +430,18 @@ export async function saveChapterContentAction(formData: FormData) {
 
   const chapter = project.document.chapters.find((ch) => ch.id === chapterId);
   if (!chapter) return;
+
+  // The editor submits the complete chapter as one HTML block, even when the
+  // persisted import contains many blocks. A save with the same normalized
+  // content and title is a true no-op: do not rewrite the block representation
+  // or invalidate a certified source page map.
+  if (
+    (chapterTitle || chapter.title) === chapter.title
+    && normalizeHtmlContent(stripAutoBreaks(chapterBlocksToHtml(chapter.blocks)))
+      === normalizeHtmlContent(stripAutoBreaks(htmlContent))
+  ) {
+    return;
+  }
 
   // Replace all blocks with a single block containing the complete HTML content
   // This prevents duplication when concatenating multiple blocks

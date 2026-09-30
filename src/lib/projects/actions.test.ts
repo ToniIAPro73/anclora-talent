@@ -1,6 +1,8 @@
 import { describe, expect, test, vi } from 'vitest';
 import { createProjectRecord, deleteProjectChapter, moveProjectChapter, updateProjectCover, updateProjectDocument } from './factories';
 import { buildImportedDocumentSeed } from './import';
+import { buildSourcePageMapFromChapters } from './source-page-map';
+import { chapterBlocksToHtml } from './chapter-html';
 
 vi.mock('server-only', () => ({}));
 
@@ -52,6 +54,57 @@ describe('project factories', () => {
 
     expect(updated.document.author).toBe('Nuevo autor');
     expect(updated.document.chapters[0].blocks).toEqual(chapter.blocks);
+  });
+
+  test('a no-op save preserves a valid source page map and both synchronized mirrors', () => {
+    const project = createProjectRecord('user_123', {
+      title: 'Manual importado',
+      importedDocument: {
+        title: 'Manual importado',
+        subtitle: 'Subtítulo',
+        author: 'Autor',
+        chapterTitle: 'Capítulo 1',
+        blocks: [
+          { type: 'heading', content: 'Contenido certificado.' },
+          { type: 'paragraph', content: 'Segundo bloque certificado.' },
+        ],
+        sourceFileName: 'manual.docx',
+        sourceMimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        sourceFormat: 'docx',
+        sourcePageCount: 1,
+      },
+    });
+    const sourcePageMap = buildSourcePageMapFromChapters({
+      sourceFormat: 'docx',
+      sourcePageCount: 1,
+      chapters: project.document.chapters,
+    });
+    const imported = {
+      ...project,
+      document: {
+        ...project.document,
+        source: { ...project.document.source!, sourcePageMap },
+        metadata: { ...project.document.metadata!, sourcePageMap },
+      },
+    };
+    const chapter = imported.document.chapters[0];
+
+    const updated = updateProjectDocument(imported, {
+      title: imported.document.title,
+      subtitle: imported.document.subtitle,
+      author: imported.document.author,
+      chapterTitle: chapter.title,
+      chapterId: chapter.id,
+      blocks: [
+        { id: chapter.blocks[0].id, content: chapterBlocksToHtml(chapter.blocks) },
+        ...chapter.blocks.slice(1).map(({ id }) => ({ id, content: '' })),
+      ],
+    });
+
+    expect(updated.document.source?.sourcePageMap).toEqual(sourcePageMap);
+    expect(updated.document.metadata?.sourcePageMap).toEqual(sourcePageMap);
+    expect(updated.document.source?.sourcePageMap?.status).toBe('VALID');
+    expect(updated.document.metadata?.sourcePageMap?.status).toBe('VALID');
   });
 
   test('updates cover metadata and background references', () => {
