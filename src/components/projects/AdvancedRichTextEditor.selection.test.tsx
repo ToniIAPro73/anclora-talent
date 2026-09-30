@@ -45,6 +45,9 @@ vi.mock('@tiptap/core', () => ({
   Extension: {
     create: vi.fn(() => ({})),
   },
+  Mark: {
+    create: vi.fn(() => ({})),
+  },
 }));
 
 vi.mock('@tiptap/extension-bullet-list', () => ({

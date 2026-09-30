@@ -2244,7 +2244,11 @@ async function extractDocxRichContent(buffer: Buffer): Promise<ExtractedImportSo
         ],
       },
     );
-    const profile = await extractOriginalDocumentStyleProfile(buffer);
+    // Mammoth can still recover useful chapter HTML from lightweight or
+    // partially mocked DOCX buffers even when the optional OOXML style
+    // profile cannot be extracted. Keep the rich import path alive in that
+    // case; complete DOCX sources still retain their source decorations.
+    const profile = await extractOriginalDocumentStyleProfile(buffer).catch(() => null);
     // Footnotes are an optional OOXML part. Keep Mammoth chapter extraction
     // available for lightweight/partial DOCX buffers when that part is absent
     // or the buffer is not a complete ZIP (as in parser isolation tests).
@@ -2260,8 +2264,11 @@ async function extractDocxRichContent(buffer: Buffer): Promise<ExtractedImportSo
       // cannot be inspected; the fallback parser still handles its list.
     }
     let richHtml = inlineDocxFootnotes(normalizeHtmlFragment(result.value), footnoteSet).replace(/<p([^>]*)>(\s*[·._\-—]{3,}\s*\d+\s*)<\/p>/gi, '<p$1 class="toc-entry">$2</p>');
-    richHtml = await injectDocxSourcePageBreaks(richHtml, buffer);
-    const headingRule = profile.paragraphBorders?.Heading1 ?? profile.paragraphBorders?.['heading 1'];
+    // Source page breaks are supplementary metadata. If the DOCX container
+    // is partial, keep Mammoth's recovered HTML instead of discarding the
+    // whole rich import and falling back to plain text extraction.
+    richHtml = await injectDocxSourcePageBreaks(richHtml, buffer).catch(() => richHtml);
+    const headingRule = profile?.paragraphBorders?.Heading1 ?? profile?.paragraphBorders?.['heading 1'];
     if (headingRule?.bottom) {
       const border = headingRule.bottom;
       richHtml = richHtml.replace(/<h1(\s[^>]*)?>/gi, (full, attrs = '') => {
