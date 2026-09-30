@@ -98,40 +98,14 @@ export function useChapterEditor({
   const usesSourcePageMap = sourcePagesForChapter.length > 0;
   const canonicalPagesForChapter = useMemo<RenderedCanonicalPage[]>(() => {
     if (!usesSourcePageMap || !sourcePageMap || !currentChapter) return [];
-    const chapterBlockIds = new Set(currentChapter.blocks.map((block) => block.id));
-    const sectionBoundaryLabels = new Set([
-      'prólogo', 'prologo', 'introducción', 'introduccion', 'epílogo', 'epilogo', 'apéndice', 'apendice', 'glosario', 'bibliografía', 'bibliografia',
-      ...localChapters
-        .filter((chapter) => chapter.id !== currentChapter.id)
-        .flatMap((chapter) => [chapter.title, chapter.title.replace(/^(?:capítulo|capitulo|sección|seccion)\s+\d+\s*[:.\-]?\s*/i, '')])
-        .map((value) => value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().toLocaleLowerCase('es')),
-    ]);
-    const currentChapterTitle = currentChapter.title.replace(/\s+/g, ' ').trim().toLocaleLowerCase('es');
-    const currentIsBoundarySection = /^(?:prólogo|prologo|introducción|introduccion|epílogo|epilogo|apéndice|apendice|glosario|bibliografía|bibliografia)$/i.test(currentChapterTitle);
+    // Canonical pages are document-global. Once a page intersects the active
+    // section, render the complete certified page; never rebuild it from the
+    // chapter-local block subset or trim it by visible title text.
+    const relevantPageNumbers = new Set(sourcePagesForChapter.map((page) => page.pageNumber));
     const pages = projectCanonicalDocumentToPages(localChapters, sourcePageMap)
-      .filter((page) => page.sectionIds.includes(currentChapter.id) || page.contentSlices.some((slice) => chapterBlockIds.has(slice.blockId)))
-      .map((page) => ({
-        ...page,
-        contentSlices: page.contentSlices.filter((slice) => {
-          if (!chapterBlockIds.has(slice.blockId)) return false;
-          const block = currentChapter.blocks.find((candidate) => candidate.id === slice.blockId);
-          const blockText = block?.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().toLocaleLowerCase('es');
-          // A certified page may end at the first heading of the next
-          // section. Do not let that heading leak into the current chapter
-          // projection when the importer kept it as a leading marker block.
-          return !blockText || blockText === currentChapterTitle || !sectionBoundaryLabels.has(blockText);
-        }),
-      }));
-    return renderCanonicalDocumentPages(localChapters, pages).map((page) => ({
-      ...page,
-      // Some legacy ODT imports keep the next section marker in the same
-      // synthetic TOC block. Trim that marker and everything after it from
-      // the current section projection; the following certified page owns it.
-      html: !currentIsBoundarySection
-        ? page.html.replace(/<p\b[^>]*>(?:\s*<[^>]+>)*\s*(?:PRÓLOGO|PROLOGO|INTRODUCCIÓN|INTRODUCCION|EPÍLOGO|EPILOGO|APÉNDICE|APENDICE|GLOSARIO|BIBLIOGRAFÍA|BIBLIOGRAFIA)\s*(?:<\/[^>]+>\s*)*<\/p>[\s\S]*$/i, '')
-        : page.html,
-    }));
-  }, [currentChapter, localChapters, sourcePageMap, usesSourcePageMap]);
+      .filter((page) => relevantPageNumbers.has(page.globalPageNumber));
+    return renderCanonicalDocumentPages(localChapters, pages);
+  }, [currentChapter, localChapters, sourcePageMap, sourcePagesForChapter, usesSourcePageMap]);
   const canNavigatePrev = currentIndex > 0;
   const canNavigateNext = currentIndex < localChapters.length - 1;
   const previewConfig = useMemo(
@@ -213,7 +187,7 @@ export function useChapterEditor({
       offset += Math.max(1, count);
     }
     return offset;
-  }, [currentIndex, localChapters, device, fontSize, margins, pageWidth, pageHeight, lineHeight, previewConfig, sourcePagesForChapter, usesSourcePageMap]);
+  }, [currentIndex, localChapters, device, fontSize, margins, pageWidth, pageHeight, lineHeight, previewConfig, usesSourcePageMap]);
 
   const layoutKey = `${currentIndex}-${htmlContent}-${device}-${fontSize}-${margins.bottom}-${margins.left}-${margins.right}-${margins.top}`;
   const [prevLayoutKey, setPrevLayoutKey] = useState(layoutKey);

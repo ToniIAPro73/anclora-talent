@@ -5,6 +5,7 @@ import {
   buildSourcePageMapFromRenderedPages,
   certifySourcePageMembership,
   invalidateSourcePageMap,
+  normalizedPageTextHash,
   projectCanonicalDocumentToPages,
 } from './source-page-map';
 
@@ -91,5 +92,55 @@ describe('canonical source page map', () => {
     expect(map.pages).toHaveLength(2);
     expect(map.pages[0].footnoteIds).toEqual(['1']);
     expect(map.pages[1].startAnchor.textOffset).toBe(0);
+  });
+
+  test('CERTIFY-01..05 require content, sections, footnotes and anchors', () => {
+    const sourcePageMap = buildSourcePageMapFromChapters({ sourceFormat: 'docx', sourcePageCount: 2, chapters: chapters() })!;
+    const canonicalPages = projectCanonicalDocumentToPages(chapters(), sourcePageMap);
+
+    const wrongContent = structuredClone(sourcePageMap);
+    wrongContent.pages[0].normalizedTextHash = 'wrong-content';
+    expect(certifySourcePageMembership({ sourcePageMap: wrongContent, canonicalPages })[0].result).toBe(false);
+
+    const wrongSections = structuredClone(sourcePageMap);
+    wrongSections.pages[0].sectionIds = ['other-section'];
+    expect(certifySourcePageMembership({ sourcePageMap: wrongSections, canonicalPages })[0].result).toBe(false);
+
+    const wrongFootnotes = structuredClone(sourcePageMap);
+    wrongFootnotes.pages[0].footnoteIds = ['missing-footnote'];
+    expect(certifySourcePageMembership({ sourcePageMap: wrongFootnotes, canonicalPages })[0].result).toBe(false);
+
+    const missingEvidence = structuredClone(sourcePageMap);
+    missingEvidence.pages[0].normalizedTextHash = undefined;
+    expect(certifySourcePageMembership({ sourcePageMap: missingEvidence, canonicalPages })[0].result).toBe(false);
+
+    const wrongAnchorProjection = canonicalPages.map((page, index) => index === 0
+      ? { ...page, contentSlices: page.contentSlices.map((slice, sliceIndex) => sliceIndex === 0 ? { ...slice, fromOffset: 1 } : slice) }
+      : page);
+    expect(certifySourcePageMembership({ sourcePageMap, canonicalPages: wrongAnchorProjection })[0].result).toBe(false);
+  });
+
+  test('BOUNDARY-01..02 keep a chapter kicker and title on the certified page', () => {
+    const sourceChapters: DocumentChapter[] = [
+      { id: 'previous', order: 1, title: 'Anterior', blocks: [{ id: 'previous-body', type: 'paragraph', order: 1, content: 'Último contenido de la sección anterior.' }] },
+      { id: 'chapter-1', order: 2, title: 'Capítulo 1. Título', blocks: [
+        { id: 'chapter-1-kicker', type: 'paragraph', order: 1, content: '<p class="editorial-kicker">CAPÍTULO 1</p>' },
+        { id: 'chapter-1-title', type: 'heading', order: 2, content: '<h1>Título</h1>' },
+      ] },
+    ];
+    const map = {
+      version: 1 as const,
+      sourceFormat: 'odt' as const,
+      sourcePageCount: 2,
+      status: 'VALID' as const,
+      pages: [
+        { pageNumber: 1, startAnchor: { blockId: 'previous-body', textOffset: 0 }, endAnchor: { blockId: 'previous-body', textOffset: 42 }, sectionIds: ['previous'], footnoteIds: [], normalizedTextHash: normalizedPageTextHash('<p>Último contenido de la sección anterior.</p>'), mappingStatus: 'EXACT' as const },
+        { pageNumber: 2, startAnchor: { blockId: 'chapter-1-kicker', textOffset: 0 }, endAnchor: { blockId: 'chapter-1-title', textOffset: 14 }, sectionIds: ['chapter-1'], footnoteIds: [], normalizedTextHash: normalizedPageTextHash('<p class="editorial-kicker">CAPÍTULO 1</p>\n<h1>Título</h1>'), mappingStatus: 'EXACT' as const },
+      ],
+      provenance: { kind: 'authoritative-pdf' as const, createdAt: new Date().toISOString() },
+    };
+    const pages = projectCanonicalDocumentToPages(sourceChapters, map);
+    expect(pages[0].contentSlices.map((slice) => slice.blockId)).toEqual(['previous-body']);
+    expect(pages[1].contentSlices.map((slice) => slice.blockId)).toEqual(['chapter-1-kicker', 'chapter-1-title']);
   });
 });

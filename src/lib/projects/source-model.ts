@@ -76,6 +76,8 @@ export interface SourceBlock {
   alt?: string;
   provenance: SourceProvenanceEntry;
   sourceStyleId?: string;
+  /** Semantic role normalized from source styles (for example an opener kicker). */
+  semanticRole?: 'chapter-opener-kicker';
   paragraphProperties?: Record<string, string | number | boolean>;
 }
 
@@ -439,11 +441,12 @@ function sourceBlockStyle(block: SourceBlock): string {
 export function sourceModelToHtml(model: CanonicalSourceDocument): string {
   const render = (block: SourceBlock): string => {
     const sourceAttribute = block.sourceStyleId ? ` data-source-style-id="${escapeSourceHtml(block.sourceStyleId)}"` : '';
+    const semanticClass = block.semanticRole === 'chapter-opener-kicker' ? ' class="editorial-kicker"' : '';
     const pageBreak = block.paragraphProperties?.pageBreakBefore === 'page' || block.paragraphProperties?.pageBreakBefore === true
       ? '<hr data-page-break="source"/>'
       : '';
     if (block.type === 'heading') return `${pageBreak}<h${Math.min(block.level ?? 1, 6)}${sourceAttribute}${sourceBlockStyle(block)}>${sourceBlockInlineHtml(block)}</h${Math.min(block.level ?? 1, 6)}>`;
-    if (block.type === 'paragraph') return `<p${sourceAttribute}${sourceBlockStyle(block)}>${sourceBlockInlineHtml(block).replace(/\n/g, '<br />')}</p>`;
+    if (block.type === 'paragraph') return `<p${sourceAttribute}${semanticClass}${sourceBlockStyle(block)}>${sourceBlockInlineHtml(block).replace(/\n/g, '<br />')}</p>`;
     if (block.type === 'blockquote') return `<blockquote>${(block.items ?? []).map(render).join('')}</blockquote>`;
     if (block.type === 'orderedList' || block.type === 'unorderedList') return `<${block.type === 'orderedList' ? 'ol' : 'ul'}>${(block.items ?? []).map((item) => `<li>${sourceBlockInlineHtml(item)}${(item.items ?? []).map(render).join('')}</li>`).join('')}</${block.type === 'orderedList' ? 'ol' : 'ul'}>`;
     if (block.type === 'table') {
@@ -905,6 +908,7 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
       text,
       runs,
       ...(styleId ? { sourceStyleId: styleId } : {}),
+      ...(style.parent && /kicker/i.test(style.parent) ? { semanticRole: 'chapter-opener-kicker' as const } : {}),
       paragraphProperties: odtParagraphFormatting(style),
       provenance: provenance(isHeading ? 'SOURCE_SEMANTIC' : styleId ? 'SOURCE_STYLE' : 'SOURCE_EXPLICIT', 'content.xml'),
     };

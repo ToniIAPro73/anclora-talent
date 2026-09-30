@@ -80,6 +80,21 @@ export function normalizedPageTextHash(value: string): string {
   return createHash('sha256').update(normalizedText(value)).digest('hex');
 }
 
+function canonicalTextForRange(
+  blocks: PageMapBlock[],
+  startIndex: number,
+  endIndex: number,
+  startOffset: number,
+  endOffset: number,
+): string {
+  return blocks.slice(startIndex, endIndex + 1).map((block, index) => {
+    const text = normalizedText(block.content);
+    const from = index === 0 ? startOffset : 0;
+    const to = index === endIndex - startIndex ? endOffset : text.length;
+    return text.slice(Math.max(0, from), Math.max(from, to));
+  }).join('\n');
+}
+
 export function flattenProjectBlocks(chapters: DocumentChapter[]): PageMapBlock[] {
   return [...chapters]
     .sort((a, b) => a.order - b.order)
@@ -237,7 +252,11 @@ function sectionForPage(page: string, chapters: DocumentChapter[], previous: num
     }
     const exactHeading = chapters.findIndex((chapter) => {
       const title = searchText(chapter.title);
-      return title === headingSearch || title.startsWith(`${headingSearch} `) || headingSearch.startsWith(`${title} `);
+      const semanticTitle = title.split(/[:.]/, 1)[0].trim();
+      return title === headingSearch
+        || title.startsWith(`${headingSearch} `)
+        || headingSearch.startsWith(`${title} `)
+        || semanticTitle === headingSearch;
     });
     if (exactHeading >= 0) return exactHeading;
     const marker = headingSearch.match(/^(?:capitulo|capítulo|parte|seccion|sección)\s+(\d+)/i)?.[1];
@@ -269,6 +288,22 @@ export function buildSourcePageMapFromRenderedPages(input: {
     const start = blocks.slice(0, index).reduce((total, candidate) => total + normalizedText(candidate.content).length + (index > 0 ? 1 : 0), 0);
     return { start, end: start + normalizedText(block.content).length };
   });
+  const anchorAtOffset = (offset: number, preferEnd: boolean): DocumentAnchor => {
+    const clamped = Math.max(0, Math.min(canonical.length, offset));
+    if (preferEnd && clamped > 0) {
+      const exactStart = blockRanges.findIndex((range) => range.start === clamped);
+      if (exactStart > 0) {
+        const previous = blocks[exactStart - 1];
+        return { blockId: previous.id, textOffset: normalizedText(previous.content).length };
+      }
+    }
+    const index = blockRanges.findIndex((range) => clamped >= range.start && clamped <= range.end);
+    if (index < 0) {
+      const last = blocks.at(-1);
+      return { blockId: last?.id ?? 'unmapped', textOffset: normalizedText(last?.content ?? '').length };
+    }
+    return { blockId: blocks[index].id, textOffset: Math.max(0, clamped - blockRanges[index].start) };
+  };
   const firstLines = input.pageTexts.map((page) => page.split(/\r?\n/).map((line) => line.trim()).find(Boolean) ?? '');
   const repeatedHeaders = new Set(firstLines.filter((line, index) => line.length > 8 && firstLines.indexOf(line) !== index));
   const cleanPageForMatching = (page: string) => page
@@ -286,11 +321,14 @@ export function buildSourcePageMapFromRenderedPages(input: {
       : blocks.map((block, index) => ({ block, index })).filter(({ block }) => block.sectionId === input.chapters[sectionIndex]?.id);
     const sectionStart = sectionBlocks[0] ? blockRanges[sectionBlocks[0].index].start : cursor;
     const sectionEnd = sectionBlocks.at(-1) ? blockRanges[sectionBlocks.at(-1)!.index].end : canonical.length;
-    if (sectionIndex !== null && sectionIndex !== previousSection) cursor = sectionStart;
+    const sectionChanged = sectionIndex !== null && sectionIndex !== previousSection;
+    if (sectionChanged) cursor = sectionStart;
     if (sectionIndex !== null) previousSection = sectionIndex;
     const isCoverPage = pageIndex === 0 && /la atención deliberada|documento de prueba|manuscrito editorial de prueba/i.test(cleanSource);
     const startMatch = isCoverPage
       ? null
+      : sectionChanged && sectionBlocks[0]
+        ? { index: sectionStart, length: 64 }
       : findExactWindow(cleanSource, canonical, Math.min(Math.max(cursor, sectionStart), sectionEnd), 'start', sectionEnd);
     if (startMatch) cursor = startMatch.index + startMatch.length;
     return { match: startMatch, sectionIndex };
@@ -299,9 +337,11 @@ export function buildSourcePageMapFromRenderedPages(input: {
     const { match: startMatch, sectionIndex } = starts[index];
     const start = startMatch?.index ?? -1;
     const nextStart = starts[index + 1]?.match?.index ?? canonical.length;
-    const end = start >= 0 ? Math.max(start, nextStart - 1) : -1;
-    const startBlockIndex = start >= 0 ? blockRanges.findIndex((range) => start >= range.start && start <= range.end) : -1;
-    const endBlockIndex = end >= 0 ? blockRanges.findIndex((range) => end >= range.start && end <= range.end) : -1;
+    const endExclusive = start >= 0 ? Math.max(start, nextStart) : -1;
+    const startAnchor = start >= 0 ? anchorAtOffset(start, false) : { blockId: blocks[0]?.id ?? 'unmapped', textOffset: 0 };
+    const endAnchor = start >= 0 ? anchorAtOffset(endExclusive, true) : { blockId: blocks.at(-1)?.id ?? 'unmapped', textOffset: 0 };
+    const startBlockIndex = start >= 0 ? blocks.findIndex((block) => block.id === startAnchor.blockId) : -1;
+    const endBlockIndex = start >= 0 ? blocks.findIndex((block) => block.id === endAnchor.blockId) : -1;
     const contentWithoutChrome = normalizedText(cleanPageForMatching(sourceText)).replace(/la arquitectura de la atención|la atención deliberada|—?\s*\d+\s*—?/gi, '').trim();
     const isKnownBlankOrCover = contentWithoutChrome.length < 36 && (index === 0 || !contentWithoutChrome || /\d/.test(contentWithoutChrome));
     const mappingStatus: SourcePageMappingStatus = start >= 0
@@ -309,7 +349,7 @@ export function buildSourcePageMapFromRenderedPages(input: {
       : (sectionIndex !== null || isKnownBlankOrCover || index === 0)
         ? 'HIGH_CONFIDENCE'
         : 'FAILED';
-    const pageBlocks = startBlockIndex >= 0 && endBlockIndex >= startBlockIndex && (sectionIndex === null || blocks[startBlockIndex]?.sectionId === input.chapters[sectionIndex]?.id)
+    const pageBlocks = startBlockIndex >= 0 && endBlockIndex >= startBlockIndex
       ? blocks.slice(startBlockIndex, endBlockIndex + 1)
       : [];
     const mappedBlocks = pageBlocks.length > 0
@@ -317,14 +357,20 @@ export function buildSourcePageMapFromRenderedPages(input: {
       : startBlockIndex >= 0
         ? [blocks[startBlockIndex]]
         : [];
-    const pageCanonicalText = mappedBlocks.map((block) => block.content).join('\n');
+    const pageCanonicalText = startBlockIndex >= 0 && endBlockIndex >= startBlockIndex
+      ? canonicalTextForRange(
+        blocks,
+        startBlockIndex,
+        endBlockIndex,
+        startAnchor.textOffset,
+        endAnchor.textOffset,
+      )
+      : '';
     return {
       pageNumber: index + 1,
-      startAnchor: pageBlocks[0] ? startAnchor(pageBlocks[0]) : { blockId: blocks[0]?.id ?? 'unmapped', textOffset: 0 },
-      endAnchor: pageBlocks.at(-1) ? endAnchor(pageBlocks.at(-1)!) : { blockId: blocks.at(-1)?.id ?? 'unmapped', textOffset: 0 },
-      sectionIds: sectionIndex !== null
-        ? [input.chapters[sectionIndex]?.id].filter((id): id is string => Boolean(id))
-        : [...new Set(pageBlocks.map((block) => block.sectionId))],
+      startAnchor,
+      endAnchor,
+      sectionIds: [...new Set(pageBlocks.map((block) => block.sectionId))],
       footnoteIds: footnoteIdsForBlocks(mappedBlocks),
       normalizedTextHash: pageCanonicalText ? normalizedPageTextHash(pageCanonicalText) : undefined,
       mappingStatus,
@@ -362,23 +408,40 @@ export function projectCanonicalDocumentToPages(
         mappingStatus: page.mappingStatus,
       } satisfies CanonicalPage;
     }
-    // Certified section membership is authoritative when Office alignment
-    // anchors land on opposite sides of a synthetic importer block. Restrict
-    // the candidate stream first; otherwise min(start,end) can pull the tail
-    // of Nota editorial into Índice (or PRÓLOGO into the preceding page).
-    const candidateBlocks = page.sectionIds.length > 0
-      ? blocks.filter((block) => page.sectionIds.includes(block.sectionId))
-      : blocks;
-    const candidateIndexById = new Map(candidateBlocks.map((block, index) => [block.id, index]));
-    const startAnchorIndex = candidateIndexById.get(page.startAnchor.blockId);
-    const endAnchorIndex = candidateIndexById.get(page.endAnchor.blockId);
-    const hasInSectionRange = startAnchorIndex !== undefined && endAnchorIndex !== undefined && endAnchorIndex >= startAnchorIndex;
-    const rangeStart = hasInSectionRange ? startAnchorIndex! : 0;
-    const rangeEnd = hasInSectionRange ? endAnchorIndex! : Math.max(0, candidateBlocks.length - 1);
+    // A certified page is global. Its anchors, not the active chapter's
+    // subset, define the projection. If an Office mapper emits an anchor
+    // outside the page's declared sections, keep the fallback bounded by
+    // that invalid page membership instead of importing foreign content.
+    const startBlock = blocks.find((block) => block.id === page.startAnchor.blockId);
+    const endBlock = blocks.find((block) => block.id === page.endAnchor.blockId);
+    const anchorsRespectMembership = Boolean(
+      page.sectionIds.length === 0
+      || (startBlock && endBlock && page.sectionIds.includes(startBlock.sectionId) && page.sectionIds.includes(endBlock.sectionId)),
+    );
+    const candidateBlocks = anchorsRespectMembership
+      ? blocks
+      : blocks.filter((block) => page.sectionIds.includes(block.sectionId));
+    const startAnchorIndex = candidateBlocks.findIndex((block) => block.id === page.startAnchor.blockId);
+    const endAnchorIndex = candidateBlocks.findIndex((block) => block.id === page.endAnchor.blockId);
+    const hasCanonicalRange = anchorsRespectMembership
+      ? startAnchorIndex >= 0 && endAnchorIndex >= startAnchorIndex
+      : candidateBlocks.length > 0;
+    const rangeStart = anchorsRespectMembership && hasCanonicalRange ? startAnchorIndex : 0;
+    const rangeEnd = anchorsRespectMembership && hasCanonicalRange ? endAnchorIndex : candidateBlocks.length - 1;
+    if (!hasCanonicalRange && anchorsRespectMembership) {
+      return {
+        globalPageNumber: page.pageNumber,
+        sourcePageNumber: page.pageNumber,
+        contentSlices: [],
+        sectionIds: page.sectionIds,
+        footnoteIds: page.footnoteIds,
+        mappingStatus: 'FAILED',
+      } satisfies CanonicalPage;
+    }
     const contentSlices = candidateBlocks.slice(rangeStart, rangeEnd + 1).map((block, index) => ({
       blockId: block.id,
-      fromOffset: index === 0 && hasInSectionRange ? page.startAnchor.textOffset : 0,
-      toOffset: index === rangeEnd - rangeStart && hasInSectionRange ? page.endAnchor.textOffset : normalizedText(block.content).length,
+      fromOffset: index === 0 ? page.startAnchor.textOffset : 0,
+      toOffset: index === rangeEnd - rangeStart ? page.endAnchor.textOffset : normalizedText(block.content).length,
     }));
     return {
       globalPageNumber: page.pageNumber,
@@ -387,7 +450,76 @@ export function projectCanonicalDocumentToPages(
       sectionIds: page.sectionIds,
       footnoteIds: page.footnoteIds,
       mappingStatus: page.mappingStatus,
-      normalizedTextHash: normalizedPageTextHash(candidateBlocks.slice(rangeStart, rangeEnd + 1).map((block) => block.content).join('\n')),
+      normalizedTextHash: normalizedPageTextHash(canonicalTextForRange(
+        candidateBlocks,
+        rangeStart,
+        rangeEnd,
+        page.startAnchor.textOffset,
+        page.endAnchor.textOffset,
+      )),
+    };
+  });
+}
+
+function sameStringSet(left: string[], right: string[]): boolean {
+  return left.length === right.length && left.every((value) => right.includes(value));
+}
+
+function projectedStartAnchor(page: CanonicalPage): DocumentAnchor | null {
+  const first = page.contentSlices[0];
+  return first ? { blockId: first.blockId, textOffset: first.fromOffset } : null;
+}
+
+function projectedEndAnchor(page: CanonicalPage): DocumentAnchor | null {
+  const last = page.contentSlices.at(-1);
+  return last ? { blockId: last.blockId, textOffset: last.toOffset } : null;
+}
+
+/**
+ * Certifies the actual canonical page projection independently from the
+ * source-map construction. Missing comparable evidence is unverified, never
+ * an implicit pass.
+ */
+export function certifyRenderedPageProjection(input: {
+  sourcePageMap: SourcePageMap;
+  canonicalPages: CanonicalPage[];
+}) {
+  return input.sourcePageMap.pages.map((sourcePage) => {
+    const renderedPage = input.canonicalPages.find((page) => page.sourcePageNumber === sourcePage.pageNumber);
+    const pageIdentity = Boolean(renderedPage && renderedPage.globalPageNumber === sourcePage.pageNumber);
+    const firstAnchor = Boolean(
+      renderedPage
+      && projectedStartAnchor(renderedPage)?.blockId === sourcePage.startAnchor.blockId
+      && projectedStartAnchor(renderedPage)?.textOffset === sourcePage.startAnchor.textOffset,
+    );
+    const lastAnchor = Boolean(
+      renderedPage
+      && projectedEndAnchor(renderedPage)?.blockId === sourcePage.endAnchor.blockId
+      && projectedEndAnchor(renderedPage)?.textOffset === sourcePage.endAnchor.textOffset,
+    );
+    const content = Boolean(
+      renderedPage
+      && sourcePage.normalizedTextHash
+      && renderedPage.normalizedTextHash
+      && sourcePage.normalizedTextHash === renderedPage.normalizedTextHash,
+    );
+    const sections = Boolean(renderedPage && sameStringSet(sourcePage.sectionIds, renderedPage.sectionIds));
+    const footnotes = Boolean(renderedPage && sameStringSet(sourcePage.footnoteIds, renderedPage.footnoteIds));
+    const mapping = Boolean(
+      (sourcePage.mappingStatus === 'EXACT' || sourcePage.mappingStatus === 'HIGH_CONFIDENCE')
+      && renderedPage
+      && (renderedPage.mappingStatus === 'EXACT' || renderedPage.mappingStatus === 'HIGH_CONFIDENCE'),
+    );
+    return {
+      pageNumber: sourcePage.pageNumber,
+      pageIdentity,
+      firstAnchor,
+      lastAnchor,
+      content,
+      sections,
+      footnotes,
+      mapping,
+      result: pageIdentity && firstAnchor && lastAnchor && content && sections && footnotes && mapping,
     };
   });
 }
@@ -423,17 +555,23 @@ export function certifySourcePageMembership(input: {
   sourcePageMap: SourcePageMap;
   canonicalPages: CanonicalPage[];
 }) {
-  return input.sourcePageMap.pages.map((sourcePage) => {
+  const renderedReport = certifyRenderedPageProjection(input);
+  return input.sourcePageMap.pages.map((sourcePage, index) => {
     const talentPage = input.canonicalPages.find((page) => page.sourcePageNumber === sourcePage.pageNumber);
-    const result = sourcePage.mappingStatus === 'EXACT' || sourcePage.mappingStatus === 'HIGH_CONFIDENCE';
+    const render = renderedReport[index];
+    const mapping = sourcePage.mappingStatus === 'EXACT' || sourcePage.mappingStatus === 'HIGH_CONFIDENCE';
     return {
       pageNumber: sourcePage.pageNumber,
       sourceStatus: sourcePage.mappingStatus,
       talentStatus: talentPage?.mappingStatus ?? 'FAILED',
-      content: result && Boolean(talentPage) && (!sourcePage.normalizedTextHash || !talentPage?.normalizedTextHash || sourcePage.normalizedTextHash === talentPage.normalizedTextHash),
-      sections: result && Boolean(talentPage && sourcePage.sectionIds.every((id) => talentPage.sectionIds.includes(id))),
-      footnotes: result && Boolean(talentPage),
-      result: result && Boolean(talentPage),
+      content: mapping && render.content,
+      sections: mapping && render.sections,
+      footnotes: mapping && render.footnotes,
+      pageIdentity: render.pageIdentity,
+      firstAnchor: render.firstAnchor,
+      lastAnchor: render.lastAnchor,
+      render: render.result,
+      result: mapping && render.result,
     };
   });
 }
