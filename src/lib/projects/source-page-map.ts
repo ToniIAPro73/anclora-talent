@@ -4,6 +4,8 @@ import type { SourceFormat } from './source-model';
 
 export type SourcePageMapStatus = 'VALID' | 'INVALIDATED' | 'RECOMPOSED' | 'UNVERIFIED';
 export type SourcePageMappingStatus = 'EXACT' | 'HIGH_CONFIDENCE' | 'AMBIGUOUS' | 'FAILED';
+export type SourcePageKind = 'cover' | 'front-matter' | 'content-start' | 'content-continuation' | 'blank' | 'back-matter';
+export type SourceSurfaceKind = 'canonical-content' | 'project-cover' | 'project-back-cover' | 'blank';
 
 export interface DocumentAnchor {
   blockId: string;
@@ -13,6 +15,11 @@ export interface DocumentAnchor {
 
 export interface SourcePage {
   pageNumber: number;
+  /** Explicit physical-page classification; never infer this from sectionIds. */
+  pageKind?: SourcePageKind;
+  surfaceKind?: SourceSurfaceKind;
+  sourceCoverConfirmed?: boolean;
+  sourceBlankConfirmed?: boolean;
   startAnchor: DocumentAnchor;
   endAnchor: DocumentAnchor;
   sectionIds: string[];
@@ -45,6 +52,8 @@ export interface ContentSlice {
 export interface CanonicalPage {
   globalPageNumber: number;
   sourcePageNumber?: number;
+  pageKind?: SourcePageKind;
+  surfaceKind?: SourceSurfaceKind;
   contentSlices: ContentSlice[];
   sectionIds: string[];
   footnoteIds: string[];
@@ -161,6 +170,8 @@ export function buildSourcePageMapFromChapters(input: {
       const last = blocks.at(-1)!;
       pages.push({
         pageNumber,
+        pageKind: 'content-continuation',
+        surfaceKind: 'canonical-content',
         startAnchor: endAnchor(last),
         endAnchor: endAnchor(last),
         sectionIds: [],
@@ -174,6 +185,8 @@ export function buildSourcePageMapFromChapters(input: {
     const pageText = pageBlocks.map((block) => block.content).join('\n');
     pages.push({
       pageNumber,
+      pageKind: pageNumber === 1 ? 'content-start' : 'content-continuation',
+      surfaceKind: 'canonical-content',
       startAnchor: startAnchor(pageBlocks[0]),
       endAnchor: endAnchor(pageBlocks.at(-1)!),
       sectionIds,
@@ -343,6 +356,25 @@ export function buildSourcePageMapFromRenderedPages(input: {
     const startBlockIndex = start >= 0 ? blocks.findIndex((block) => block.id === startAnchor.blockId) : -1;
     const endBlockIndex = start >= 0 ? blocks.findIndex((block) => block.id === endAnchor.blockId) : -1;
     const contentWithoutChrome = normalizedText(cleanPageForMatching(sourceText)).replace(/la arquitectura de la atención|la atención deliberada|—?\s*\d+\s*—?/gi, '').trim();
+    const isBlankPage = contentWithoutChrome.length === 0;
+    const isCoverPage = index === 0 && !isBlankPage && !startMatch && (
+      /la atención deliberada|documento de prueba|manuscrito editorial de prueba/i.test(contentWithoutChrome)
+      || sectionIndex === null
+    );
+    const previousPageSectionIndex = index > 0 ? starts[index - 1]?.sectionIndex ?? null : null;
+    const resolvedSectionIndex = sectionIndex ?? (startMatch && previousPageSectionIndex !== null ? previousPageSectionIndex : null);
+    const pageKind: SourcePageKind = isCoverPage
+      ? 'cover'
+      : isBlankPage
+        ? 'blank'
+        : resolvedSectionIndex !== null && resolvedSectionIndex !== previousPageSectionIndex
+          ? 'content-start'
+          : 'content-continuation';
+    const surfaceKind: SourceSurfaceKind = pageKind === 'cover'
+      ? 'project-cover'
+      : pageKind === 'blank'
+        ? 'blank'
+        : 'canonical-content';
     const isKnownBlankOrCover = contentWithoutChrome.length < 36 && (index === 0 || !contentWithoutChrome || /\d/.test(contentWithoutChrome));
     const mappingStatus: SourcePageMappingStatus = start >= 0
       ? (startMatch?.length && startMatch.length < 16 ? 'HIGH_CONFIDENCE' : 'EXACT')
@@ -368,6 +400,10 @@ export function buildSourcePageMapFromRenderedPages(input: {
       : '';
     return {
       pageNumber: index + 1,
+      pageKind,
+      surfaceKind,
+      sourceCoverConfirmed: pageKind === 'cover',
+      sourceBlankConfirmed: pageKind === 'blank' && normalizedText(sourceText).length > 0,
       startAnchor,
       endAnchor,
       sectionIds: [...new Set(pageBlocks.map((block) => block.sectionId))],
@@ -402,8 +438,22 @@ export function projectCanonicalDocumentToPages(
       return {
         globalPageNumber: page.pageNumber,
         sourcePageNumber: page.pageNumber,
+        pageKind: page.pageKind,
+        surfaceKind: page.surfaceKind,
         contentSlices: [],
         sectionIds: [],
+        footnoteIds: page.footnoteIds,
+        mappingStatus: page.mappingStatus,
+      } satisfies CanonicalPage;
+    }
+    if (page.pageKind === 'cover' || page.pageKind === 'blank') {
+      return {
+        globalPageNumber: page.pageNumber,
+        sourcePageNumber: page.pageNumber,
+        pageKind: page.pageKind,
+        surfaceKind: page.surfaceKind,
+        contentSlices: [],
+        sectionIds: page.sectionIds,
         footnoteIds: page.footnoteIds,
         mappingStatus: page.mappingStatus,
       } satisfies CanonicalPage;
@@ -446,6 +496,8 @@ export function projectCanonicalDocumentToPages(
     return {
       globalPageNumber: page.pageNumber,
       sourcePageNumber: page.pageNumber,
+      pageKind: page.pageKind,
+      surfaceKind: page.surfaceKind,
       contentSlices,
       sectionIds: page.sectionIds,
       footnoteIds: page.footnoteIds,
@@ -480,13 +532,69 @@ function projectedEndAnchor(page: CanonicalPage): DocumentAnchor | null {
  * source-map construction. Missing comparable evidence is unverified, never
  * an implicit pass.
  */
+export interface CanonicalCoverageReport {
+  gaps: Array<{ fromPage: number; toPage: number }>;
+  overlaps: Array<{ fromPage: number; toPage: number }>;
+  valid: boolean;
+}
+
+function compareAnchors(left: DocumentAnchor, right: DocumentAnchor, blockOrder: Map<string, number>): number {
+  const leftOrder = blockOrder.get(left.blockId) ?? Number.MAX_SAFE_INTEGER;
+  const rightOrder = blockOrder.get(right.blockId) ?? Number.MAX_SAFE_INTEGER;
+  return leftOrder === rightOrder ? left.textOffset - right.textOffset : leftOrder - rightOrder;
+}
+
+export function certifyCanonicalCoverage(input: {
+  sourcePageMap: SourcePageMap;
+  canonicalPages: CanonicalPage[];
+  chapters?: DocumentChapter[];
+}): CanonicalCoverageReport {
+  const contentPages = input.canonicalPages
+    .filter((page) => page.pageKind !== 'cover' && page.pageKind !== 'blank' && page.contentSlices.length > 0)
+    .sort((left, right) => left.globalPageNumber - right.globalPageNumber);
+  const coverageBlocks = (input.chapters ? flattenProjectBlocks(input.chapters) : [])
+    .filter((block) => block.type !== 'pageBreak');
+  const blockOrder = new Map(coverageBlocks.map((block, index) => [block.id, index]));
+  const blockLengths = new Map(coverageBlocks.map((block) => [block.id, normalizedText(block.content).length]));
+  if (blockOrder.size === 0) {
+    contentPages.flatMap((page) => page.contentSlices).forEach((slice, index) => {
+      if (!blockOrder.has(slice.blockId)) blockOrder.set(slice.blockId, index);
+    });
+  }
+  const gaps: CanonicalCoverageReport['gaps'] = [];
+  const overlaps: CanonicalCoverageReport['overlaps'] = [];
+  contentPages.slice(1).forEach((page, index) => {
+    const previous = contentPages[index];
+    const previousEnd = projectedEndAnchor(previous);
+    const currentStart = projectedStartAnchor(page);
+    if (!previousEnd || !currentStart) return;
+    const relation = compareAnchors(previousEnd, currentStart, blockOrder);
+    const adjacentBlockBoundary = previousEnd.blockId !== currentStart.blockId
+      && (blockLengths.get(previousEnd.blockId) ?? previousEnd.textOffset) === previousEnd.textOffset
+      && currentStart.textOffset === 0;
+    if (relation < 0 && !adjacentBlockBoundary) gaps.push({ fromPage: previous.globalPageNumber, toPage: page.globalPageNumber });
+    if (relation > 0) overlaps.push({ fromPage: previous.globalPageNumber, toPage: page.globalPageNumber });
+  });
+  return { gaps, overlaps, valid: gaps.length === 0 && overlaps.length === 0 };
+}
+
 export function certifyRenderedPageProjection(input: {
   sourcePageMap: SourcePageMap;
   canonicalPages: CanonicalPage[];
+  chapters?: DocumentChapter[];
+  coverSurface?: { pageNumber: number; exists: boolean; semanticMatch: boolean };
+  blankSurfaces?: Record<number, boolean>;
 }) {
+  const coverage = certifyCanonicalCoverage(input);
   return input.sourcePageMap.pages.map((sourcePage) => {
     const renderedPage = input.canonicalPages.find((page) => page.sourcePageNumber === sourcePage.pageNumber);
     const pageIdentity = Boolean(renderedPage && renderedPage.globalPageNumber === sourcePage.pageNumber);
+    const pageKind = sourcePage.pageKind ?? 'content-continuation';
+    const surface = pageKind === 'cover'
+      ? Boolean(sourcePage.sourceCoverConfirmed && sourcePage.surfaceKind === 'project-cover' && input.coverSurface?.pageNumber === sourcePage.pageNumber && input.coverSurface.exists && input.coverSurface.semanticMatch)
+      : pageKind === 'blank'
+        ? Boolean(sourcePage.sourceBlankConfirmed && sourcePage.surfaceKind === 'blank' && input.blankSurfaces?.[sourcePage.pageNumber] && renderedPage?.contentSlices.length === 0 && renderedPage.sectionIds.length === 0)
+        : true;
     const firstAnchor = Boolean(
       renderedPage
       && projectedStartAnchor(renderedPage)?.blockId === sourcePage.startAnchor.blockId
@@ -510,16 +618,24 @@ export function certifyRenderedPageProjection(input: {
       && renderedPage
       && (renderedPage.mappingStatus === 'EXACT' || renderedPage.mappingStatus === 'HIGH_CONFIDENCE'),
     );
+    const continuity = pageKind === 'cover' || pageKind === 'blank'
+      ? true
+      : coverage.valid;
     return {
       pageNumber: sourcePage.pageNumber,
+      pageKind,
       pageIdentity,
+      surface,
       firstAnchor,
       lastAnchor,
       content,
       sections,
       footnotes,
       mapping,
-      result: pageIdentity && firstAnchor && lastAnchor && content && sections && footnotes && mapping,
+      continuity,
+      result: pageKind === 'cover' || pageKind === 'blank'
+        ? pageIdentity && surface && mapping
+        : pageIdentity && firstAnchor && lastAnchor && content && sections && footnotes && mapping && continuity,
     };
   });
 }
@@ -554,6 +670,9 @@ export function invalidateSourcePageMap(map: SourcePageMap | null | undefined): 
 export function certifySourcePageMembership(input: {
   sourcePageMap: SourcePageMap;
   canonicalPages: CanonicalPage[];
+  chapters?: DocumentChapter[];
+  coverSurface?: { pageNumber: number; exists: boolean; semanticMatch: boolean };
+  blankSurfaces?: Record<number, boolean>;
 }) {
   const renderedReport = certifyRenderedPageProjection(input);
   return input.sourcePageMap.pages.map((sourcePage, index) => {
@@ -562,6 +681,8 @@ export function certifySourcePageMembership(input: {
     const mapping = sourcePage.mappingStatus === 'EXACT' || sourcePage.mappingStatus === 'HIGH_CONFIDENCE';
     return {
       pageNumber: sourcePage.pageNumber,
+      pageKind: sourcePage.pageKind ?? 'content-continuation',
+      surface: render.surface,
       sourceStatus: sourcePage.mappingStatus,
       talentStatus: talentPage?.mappingStatus ?? 'FAILED',
       content: mapping && render.content,
@@ -570,6 +691,7 @@ export function certifySourcePageMembership(input: {
       pageIdentity: render.pageIdentity,
       firstAnchor: render.firstAnchor,
       lastAnchor: render.lastAnchor,
+      continuity: render.continuity,
       render: render.result,
       result: mapping && render.result,
     };

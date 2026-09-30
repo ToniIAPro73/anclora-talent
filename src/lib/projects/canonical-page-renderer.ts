@@ -2,12 +2,14 @@ import type { DocumentChapter } from './types';
 import {
   chapterBlocksToHtml,
   } from './chapter-html';
-import type { CanonicalPage, ContentSlice } from './source-page-map';
+import type { CanonicalPage, ContentSlice, SourcePageKind, SourceSurfaceKind } from './source-page-map';
 import { flattenProjectBlocks } from './source-page-map';
 
 export interface RenderedCanonicalPage {
   globalPageNumber: number;
   sourcePageNumber?: number;
+  pageKind?: SourcePageKind;
+  surfaceKind?: SourceSurfaceKind;
   sectionIds: string[];
   footnoteIds: string[];
   mappingStatus: CanonicalPage['mappingStatus'];

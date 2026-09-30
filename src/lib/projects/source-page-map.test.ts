@@ -3,6 +3,7 @@ import type { DocumentChapter } from './types';
 import {
   buildSourcePageMapFromChapters,
   buildSourcePageMapFromRenderedPages,
+  certifyCanonicalCoverage,
   certifySourcePageMembership,
   invalidateSourcePageMap,
   normalizedPageTextHash,
@@ -142,5 +143,56 @@ describe('canonical source page map', () => {
     const pages = projectCanonicalDocumentToPages(sourceChapters, map);
     expect(pages[0].contentSlices.map((slice) => slice.blockId)).toEqual(['previous-body']);
     expect(pages[1].contentSlices.map((slice) => slice.blockId)).toEqual(['chapter-1-kicker', 'chapter-1-title']);
+  });
+
+  test('PHYSICAL-PAGE-01..05 classify cover and positively verified blank pages', () => {
+    const sourceChapters: DocumentChapter[] = [{
+      id: 'note', order: 1, title: 'Nota editorial', blocks: [
+        { id: 'note-body', type: 'paragraph', order: 1, content: 'Una nota editorial suficientemente larga para alinear.' },
+      ],
+    }];
+    const map = buildSourcePageMapFromRenderedPages({
+      sourceFormat: 'odt',
+      pageTexts: ['La atención deliberada\nDocumento de prueba', 'Nota editorial\nUna nota editorial suficientemente larga para alinear.', '— 3 —'],
+      chapters: sourceChapters,
+    });
+    expect(map.pages.map((page) => page.pageKind)).toEqual(['cover', 'content-start', 'blank']);
+    expect(map.pages[0].surfaceKind).toBe('project-cover');
+    expect(map.pages[2].sourceBlankConfirmed).toBe(true);
+    const pages = projectCanonicalDocumentToPages(sourceChapters, map);
+    const report = certifySourcePageMembership({
+      sourcePageMap: map,
+      canonicalPages: pages,
+      chapters: sourceChapters,
+      coverSurface: { pageNumber: 1, exists: true, semanticMatch: true },
+      blankSurfaces: { 3: true },
+    });
+    expect(report.map((page) => page.result)).toEqual([true, true, true]);
+  });
+
+  test('CONTINUATION-01..05 preserve ownership and reject gaps/overlaps', () => {
+    const sourceChapters: DocumentChapter[] = [{
+      id: 'chapter', order: 1, title: 'Capítulo 1', blocks: [
+        { id: 'body', type: 'paragraph', order: 1, content: 'abcdefghij' },
+      ],
+    }];
+    const map = {
+      version: 1 as const, sourceFormat: 'docx' as const, sourcePageCount: 2, status: 'VALID' as const,
+      pages: [
+        { pageNumber: 1, pageKind: 'content-start' as const, surfaceKind: 'canonical-content' as const, startAnchor: { blockId: 'body', textOffset: 0 }, endAnchor: { blockId: 'body', textOffset: 5 }, sectionIds: ['chapter'], footnoteIds: [], normalizedTextHash: normalizedPageTextHash('abcde'), mappingStatus: 'EXACT' as const },
+        { pageNumber: 2, pageKind: 'content-continuation' as const, surfaceKind: 'canonical-content' as const, startAnchor: { blockId: 'body', textOffset: 5 }, endAnchor: { blockId: 'body', textOffset: 10 }, sectionIds: ['chapter'], footnoteIds: [], normalizedTextHash: normalizedPageTextHash('fghij'), mappingStatus: 'EXACT' as const },
+      ],
+      provenance: { kind: 'authoritative-pdf' as const, createdAt: new Date().toISOString() },
+    };
+    const pages = projectCanonicalDocumentToPages(sourceChapters, map);
+    expect(pages[0].contentSlices[0]).toEqual({ blockId: 'body', fromOffset: 0, toOffset: 5 });
+    expect(pages[1].contentSlices[0]).toEqual({ blockId: 'body', fromOffset: 5, toOffset: 10 });
+    expect(certifyCanonicalCoverage({ sourcePageMap: map, canonicalPages: pages, chapters: sourceChapters }).valid).toBe(true);
+    const gapMap = structuredClone(map);
+    gapMap.pages[1].startAnchor.textOffset = 7;
+    expect(certifyCanonicalCoverage({ sourcePageMap: gapMap, canonicalPages: projectCanonicalDocumentToPages(sourceChapters, gapMap), chapters: sourceChapters }).gaps).toHaveLength(1);
+    const overlapMap = structuredClone(map);
+    overlapMap.pages[1].startAnchor.textOffset = 3;
+    expect(certifyCanonicalCoverage({ sourcePageMap: overlapMap, canonicalPages: projectCanonicalDocumentToPages(sourceChapters, overlapMap), chapters: sourceChapters }).overlaps).toHaveLength(1);
   });
 });

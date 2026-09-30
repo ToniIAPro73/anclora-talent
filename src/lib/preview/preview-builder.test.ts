@@ -10,6 +10,7 @@ import { createDefaultSurfaceState } from '@/lib/projects/cover-surface';
 import { chapterBlocksToHtml } from '@/lib/projects/chapter-html';
 import { paginateContent } from './content-paginator';
 import { reconcileOverflowBreaks } from './editor-page-layout';
+import { normalizedPageTextHash } from '@/lib/projects/source-page-map';
 
 // Helper to create a mock project
 function createMockProject(overrides?: Partial<ProjectRecord>): ProjectRecord {
@@ -99,6 +100,36 @@ describe('preview-builder', () => {
 
       // Last page should be back cover
       expect(pages[pages.length - 1].type).toBe('back-cover');
+    });
+
+    it('PREVIEW-01..03 emits a mapped source cover exactly once and preserves physical order', () => {
+      const base = createMockProject();
+      const project = createMockProject({
+        document: {
+          ...base.document,
+          chapters: [{
+            id: 'ch1', order: 1, title: 'Chapter 1', blocks: [{
+              id: 'block1', type: 'paragraph', order: 1, content: '<p>Contenido físico.</p>',
+            }],
+          }],
+          metadata: {
+            title: 'Test Document', structureModel: null, originalDocumentStyleProfile: null,
+            sourcePaginationBaseline: null, sourceModel: null, sourceFormat: 'odt',
+            sourcePageMap: {
+              version: 1, sourceFormat: 'odt', sourcePageCount: 2, status: 'VALID',
+              pages: [
+                { pageNumber: 1, pageKind: 'cover', surfaceKind: 'project-cover', sourceCoverConfirmed: true, startAnchor: { blockId: 'unmapped', textOffset: 0 }, endAnchor: { blockId: 'unmapped', textOffset: 0 }, sectionIds: [], footnoteIds: [], mappingStatus: 'HIGH_CONFIDENCE' },
+                { pageNumber: 2, pageKind: 'content-start', surfaceKind: 'canonical-content', startAnchor: { blockId: 'block1', textOffset: 0 }, endAnchor: { blockId: 'block1', textOffset: 17 }, sectionIds: ['ch1'], footnoteIds: [], normalizedTextHash: normalizedPageTextHash('<p>Contenido físico.</p>'), mappingStatus: 'EXACT' },
+              ],
+              provenance: { kind: 'authoritative-pdf', createdAt: new Date().toISOString() },
+            },
+          },
+        },
+      });
+      const pages = buildPreviewPages(project, DEVICE_PAGINATION_CONFIGS.laptop);
+      expect(pages.filter((page) => page.type === 'cover')).toHaveLength(1);
+      expect(pages.map((page) => page.pageNumber)).toEqual([1, 2, 3]);
+      expect(pages[1].type).toBe('content');
     });
 
     it('should assign sequential page numbers', () => {

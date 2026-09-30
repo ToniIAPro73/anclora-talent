@@ -109,7 +109,9 @@ export function buildPreviewPages(
   const sourcePageMap = project.document.metadata?.sourcePageMap;
   if (sourcePageMap?.status === 'VALID' && sourcePageMap.pages.length > 0) {
     const projectedPages = projectCanonicalDocumentToPages(project.document.chapters, sourcePageMap);
-    renderCanonicalDocumentPages(project.document.chapters, projectedPages).forEach((page) => {
+    renderCanonicalDocumentPages(project.document.chapters, projectedPages)
+      .filter((page) => page.pageKind !== 'cover')
+      .forEach((page) => {
       pages.push({
         type: 'content',
         // Keep canonical blank/front pages in the page list. Their identity is
@@ -118,7 +120,7 @@ export function buildPreviewPages(
         chapterId: page.sectionIds[0],
         pageNumber: page.globalPageNumber,
       });
-    });
+      });
     if (project.backCover) {
       pages.push({
         type: 'back-cover',
