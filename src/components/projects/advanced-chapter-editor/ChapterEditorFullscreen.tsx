@@ -249,7 +249,7 @@ export function ChapterEditorFullscreen({
               </button>
 
               <span className="ac-preview-control-value">
-                P.{editor.currentPage + 1 + editor.pageNumberOffset}
+                P.{editor.currentPageNumber}
               </span>
 
               <button
@@ -410,6 +410,7 @@ export function ChapterEditorFullscreen({
               documentStyleMap={documentStyleMap}
               compiledCssVariables={compiledCssVariables}
               sourceFooter={sourceFooter}
+              canonicalPages={editor.canonicalPages}
             />
           </div>
           <aside className="chapter-editor-inspector" style={focusMode || !showInspector ? { display: 'none' } : undefined}>

@@ -20,6 +20,7 @@ import { hasRenderablePageContent, paginateContent } from './content-paginator';
 import { reconcileOverflowBreaks, stripAutoBreaks } from './editor-page-layout';
 import { normalizeHtmlContent } from './html-normalize';
 import { projectCanonicalDocumentToPages } from '@/lib/projects/source-page-map';
+import { renderCanonicalDocumentPages } from '@/lib/projects/canonical-page-renderer';
 
 // ==================== TYPES ====================
 
@@ -108,15 +109,12 @@ export function buildPreviewPages(
   const sourcePageMap = project.document.metadata?.sourcePageMap;
   if (sourcePageMap?.status === 'VALID' && sourcePageMap.pages.length > 0) {
     const projectedPages = projectCanonicalDocumentToPages(project.document.chapters, sourcePageMap);
-    const blockHtml = new Map(
-      project.document.chapters.flatMap((chapter) => chapter.blocks.map((block) => [block.id, chapterBlocksToHtml([block])] as const)),
-    );
-    projectedPages.forEach((page) => {
-      const content = page.contentSlices.map((slice) => blockHtml.get(slice.blockId) ?? '').join('\n');
-      if (!content.trim()) return;
+    renderCanonicalDocumentPages(project.document.chapters, projectedPages).forEach((page) => {
       pages.push({
         type: 'content',
-        content,
+        // Keep canonical blank/front pages in the page list. Their identity is
+        // part of the certified source map even when no editable block exists.
+        content: page.html || null,
         chapterId: page.sectionIds[0],
         pageNumber: page.globalPageNumber,
       });

@@ -24,6 +24,7 @@ export interface DocumentBlock {
   type: DocumentBlockType;
   order: number;
   content: string;
+  paragraphProperties?: Record<string, string | number | boolean>;
 }
 
 export interface ChapterImage {

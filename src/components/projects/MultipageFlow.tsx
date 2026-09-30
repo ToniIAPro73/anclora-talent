@@ -20,6 +20,8 @@ interface MultipageFlowProps {
   styleVariables?: Record<string, string>;
   lang?: string;
   sourceFooter?: OriginalDocumentStyleProfile['footer'] | null;
+  /** Certified source pages. When present, CSS reflow is not authoritative. */
+  canonicalPages?: Array<{ pageNumber: number; html: string | null }>;
 }
 
 export function MultipageFlow({
@@ -35,6 +37,7 @@ export function MultipageFlow({
   styleVariables = {},
   lang = 'es',
   sourceFooter = null,
+  canonicalPages,
 }: MultipageFlowProps) {
   const multipageFlowRef = useRef<HTMLDivElement>(null);
 
@@ -47,23 +50,30 @@ export function MultipageFlow({
   const isEndnotesSection = /<h[1-6]\b[^>]*>\s*Notas\s*<\/h[1-6]>/i.test(html);
 
   const [measuredTotalPages, setMeasuredTotalPages] = React.useState(() => Math.max(1, pageCountHint ?? 1));
+  const usesCanonicalPages = Boolean(canonicalPages && canonicalPages.length > 0);
+  const effectiveTotalPages = usesCanonicalPages ? canonicalPages!.length : measuredTotalPages;
+
+  useEffect(() => {
+    if (!usesCanonicalPages || !canonicalPages) return;
+    onPageCountChange?.(canonicalPages.length);
+  }, [canonicalPages, onPageCountChange, usesCanonicalPages]);
 
   const spreadStartPage =
     viewMode === 'spread' ? Math.max(0, currentPage - (currentPage % 2)) : currentPage;
 
-  const showSecondPage = viewMode === 'spread' && spreadStartPage + 1 < measuredTotalPages;
+  const showSecondPage = viewMode === 'spread' && spreadStartPage + 1 < effectiveTotalPages;
   const viewportWidth = showSecondPage ? pageWidth * 2 + pageGap : pageWidth;
 
   const flowWidth =
-    contentWidth * measuredTotalPages +
-    columnGap * Math.max(measuredTotalPages - 1, 0);
+    contentWidth * effectiveTotalPages +
+    columnGap * Math.max(effectiveTotalPages - 1, 0);
 
   const flowOffset = spreadStartPage * (pageWidth + pageGap);
 
   const visiblePageIndices = Array.from(
     { length: showSecondPage ? 2 : 1 },
     (_, index) => spreadStartPage + index,
-  ).filter((pageIndex) => pageIndex < measuredTotalPages);
+  ).filter((pageIndex) => pageIndex < effectiveTotalPages);
 
   const measureRenderablePages = useCallback(() => {
     if (!multipageFlowRef.current) return;
@@ -587,9 +597,9 @@ export function MultipageFlow({
             {showPageNumbers ? (
               <div className="pointer-events-none absolute inset-x-0 bottom-7 flex justify-center">
                 <span className={sourceFooter ? '' : 'inline-flex items-center gap-2 rounded-full bg-[rgba(7,12,20,0.05)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[var(--text-tertiary)]'} style={sourceFooter ? { textAlign: sourceFooter.alignment ?? 'center', fontFamily: sourceFooter.fontFamily, fontSize: sourceFooter.fontSizePt ? `${sourceFooter.fontSizePt}pt` : undefined, color: sourceFooter.color } : undefined} data-testid={sourceFooter ? 'source-footer' : undefined}>
-                  {sourceFooter ? sourceFooter.runs.map((run, runIndex) => <span key={runIndex}>{run.type === 'page' ? idx + pageNumberOffset : run.text}</span>) : <>
+                  {sourceFooter ? sourceFooter.runs.map((run, runIndex) => <span key={runIndex}>{run.type === 'page' ? (canonicalPages?.[idx]?.pageNumber ?? idx + pageNumberOffset) : run.text}</span>) : <>
                     <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
-                    <span>{idx + pageNumberOffset}</span>
+                    <span>{canonicalPages?.[idx]?.pageNumber ?? idx + pageNumberOffset}</span>
                     <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
                   </>}
                 </span>
@@ -600,7 +610,15 @@ export function MultipageFlow({
       </div>
 
       {/* Flujo de columnas real */}
-      <div
+      {usesCanonicalPages ? (
+        <div className="absolute inset-0 grid pointer-events-none" style={{ gridTemplateColumns: `repeat(${visiblePageIndices.length}, minmax(0, 1fr))`, gap: `${pageGap}px` }}>
+          {visiblePageIndices.map((idx) => (
+            <div key={`canonical-content-${idx}`} className="relative" style={pagePaddingStyle}>
+              <div className="flow-content-root ProseMirror h-full overflow-hidden" dangerouslySetInnerHTML={{ __html: canonicalPages?.[idx]?.html ?? '' }} />
+            </div>
+          ))}
+        </div>
+      ) : <div
         ref={multipageFlowRef}
         className={`multipage-flow-container prose prose-invert max-w-none prose-img:rounded-lg prose-img:shadow-md ${isEndnotesSection ? 'multipage-flow--endnotes' : ''}`}
         style={{ ['--column-width' as string]: `${contentWidth}px`, ...styleVariables }}
@@ -615,7 +633,7 @@ export function MultipageFlow({
             dangerouslySetInnerHTML={{ __html: html }}
           />
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

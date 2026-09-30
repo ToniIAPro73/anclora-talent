@@ -54,9 +54,11 @@ export interface CanonicalPage {
 
 export interface PageMapBlock {
   id: string;
+  order: number;
   content: string;
   sectionId: string;
   type: DocumentBlock['type'];
+  paragraphProperties?: DocumentBlock['paragraphProperties'];
 }
 
 function normalizedText(value: string): string {
@@ -86,9 +88,11 @@ export function flattenProjectBlocks(chapters: DocumentChapter[]): PageMapBlock[
       .sort((a, b) => a.order - b.order)
       .map((block) => ({
         id: block.id,
+        order: block.order,
         content: block.content,
         sectionId: chapter.id,
         type: block.type,
+        paragraphProperties: block.paragraphProperties,
       })));
 }
 
@@ -347,7 +351,6 @@ export function projectCanonicalDocumentToPages(
   sourcePageMap: SourcePageMap,
 ): CanonicalPage[] {
   const blocks = flattenProjectBlocks(chapters).filter((block) => block.type !== 'pageBreak');
-  const indexById = new Map(blocks.map((block, index) => [block.id, index]));
   return sourcePageMap.pages.map((page) => {
     if (page.sectionIds.length === 0) {
       return {
@@ -359,12 +362,23 @@ export function projectCanonicalDocumentToPages(
         mappingStatus: page.mappingStatus,
       } satisfies CanonicalPage;
     }
-    const start = indexById.get(page.startAnchor.blockId) ?? 0;
-    const end = indexById.get(page.endAnchor.blockId) ?? start;
-    const contentSlices = blocks.slice(Math.min(start, end), Math.max(start, end) + 1).map((block, index) => ({
+    // Certified section membership is authoritative when Office alignment
+    // anchors land on opposite sides of a synthetic importer block. Restrict
+    // the candidate stream first; otherwise min(start,end) can pull the tail
+    // of Nota editorial into Índice (or PRÓLOGO into the preceding page).
+    const candidateBlocks = page.sectionIds.length > 0
+      ? blocks.filter((block) => page.sectionIds.includes(block.sectionId))
+      : blocks;
+    const candidateIndexById = new Map(candidateBlocks.map((block, index) => [block.id, index]));
+    const startAnchorIndex = candidateIndexById.get(page.startAnchor.blockId);
+    const endAnchorIndex = candidateIndexById.get(page.endAnchor.blockId);
+    const hasInSectionRange = startAnchorIndex !== undefined && endAnchorIndex !== undefined && endAnchorIndex >= startAnchorIndex;
+    const rangeStart = hasInSectionRange ? startAnchorIndex! : 0;
+    const rangeEnd = hasInSectionRange ? endAnchorIndex! : Math.max(0, candidateBlocks.length - 1);
+    const contentSlices = candidateBlocks.slice(rangeStart, rangeEnd + 1).map((block, index) => ({
       blockId: block.id,
-      fromOffset: index === 0 ? page.startAnchor.textOffset : 0,
-      toOffset: index === Math.abs(end - start) ? page.endAnchor.textOffset : normalizedText(block.content).length,
+      fromOffset: index === 0 && hasInSectionRange ? page.startAnchor.textOffset : 0,
+      toOffset: index === rangeEnd - rangeStart && hasInSectionRange ? page.endAnchor.textOffset : normalizedText(block.content).length,
     }));
     return {
       globalPageNumber: page.pageNumber,
@@ -373,7 +387,7 @@ export function projectCanonicalDocumentToPages(
       sectionIds: page.sectionIds,
       footnoteIds: page.footnoteIds,
       mappingStatus: page.mappingStatus,
-      normalizedTextHash: normalizedPageTextHash(blocks.slice(Math.min(start, end), Math.max(start, end) + 1).map((block) => block.content).join('\n')),
+      normalizedTextHash: normalizedPageTextHash(candidateBlocks.slice(rangeStart, rangeEnd + 1).map((block) => block.content).join('\n')),
     };
   });
 }

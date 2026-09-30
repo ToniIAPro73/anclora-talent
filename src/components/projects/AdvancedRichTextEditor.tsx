@@ -78,9 +78,23 @@ import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { resolveEditorViewportLayout, calculateSpreadFitFactor } from './editor-viewport';
 import { cssPxToPt, formatPointSize, ptToCssPx } from '@/lib/document/units';
+import type { RenderedCanonicalPage } from '@/lib/projects/canonical-page-renderer';
 
 type ChainedCommand = ReturnType<Editor['chain']>;
 type ApplyToSelectionTarget = (command: (chain: ChainedCommand) => ChainedCommand) => boolean;
+
+function applyIndentToEditor(targetEditor: Editor, delta: number) {
+  const blockType = targetEditor.state.selection.$from.parent.type.name;
+  if (blockType === 'listItem') {
+    return delta > 0
+      ? targetEditor.chain().focus().sinkListItem('listItem').run()
+      : targetEditor.chain().focus().liftListItem('listItem').run();
+  }
+  if (blockType !== 'paragraph' && blockType !== 'heading') return false;
+  const currentIndent = Number(targetEditor.state.selection.$from.parent.attrs.indent ?? 0);
+  const nextIndent = Math.max(0, Math.min(6, currentIndent + delta));
+  return targetEditor.chain().focus().updateAttributes(blockType, { indent: nextIndent }).run();
+}
 
 type ToolbarButtonProps = {
   onClick: () => void;
@@ -1096,21 +1110,7 @@ const MenuBar = ({
   };
 
   const updateBlockIndent = (delta: number) => {
-    const blockType = editor.state.selection.$from.parent.type.name;
-    if (blockType === 'listItem') {
-      return delta > 0
-        ? editor.chain().focus().sinkListItem('listItem').run()
-        : editor.chain().focus().liftListItem('listItem').run();
-    }
-
-    if (blockType !== 'paragraph' && blockType !== 'heading') {
-      return false;
-    }
-
-    const currentIndent = Number(editor.state.selection.$from.parent.attrs.indent ?? 0);
-    const nextIndent = Math.max(0, Math.min(6, currentIndent + delta));
-
-    return editor.chain().focus().updateAttributes(blockType, { indent: nextIndent }).run();
+    return applyIndentToEditor(editor, delta);
   };
 
   const indentListItem = () => updateBlockIndent(1);
@@ -1460,6 +1460,7 @@ export function AdvancedRichTextEditor({
   documentStyleMap,
   compiledCssVariables,
   sourceFooter,
+  canonicalPages,
 }: {
   defaultContent: string;
   onUpdate: (html: string) => void;
@@ -1475,12 +1476,14 @@ export function AdvancedRichTextEditor({
   documentStyleMap?: DocumentStyleMap | null;
   compiledCssVariables?: Record<string, string> | null;
   sourceFooter?: OriginalDocumentStyleProfile['footer'] | null;
+  canonicalPages?: RenderedCanonicalPage[];
 }) {
   const { locale } = useUiPreferences();
   const { preferences, setPreferences } = useEditorPreferences();
   const [physicalWidth, setPhysicalWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 0));
   const [containerInnerWidth, setContainerInnerWidth] = useState(0);
   const isSyncingExternalContentRef = useRef(false);
+  const editorInstanceRef = useRef<Editor | null>(null);
   const lastFocusedCurrentPageRef = useRef<number | null>(null);
   const multipageFlowRef = useRef<HTMLDivElement>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
@@ -1830,6 +1833,17 @@ export function AdvancedRichTextEditor({
       FootnoteLayout,
     ],
     content: defaultContent,
+    editorProps: {
+      handleKeyDown: (_view, event) => {
+        // Tab belongs to the editor only. Keeping this handler on the
+        // ProseMirror view prevents cookie banners and other page controls
+        // from losing their normal keyboard navigation.
+        if (event.key !== 'Tab') return false;
+        event.preventDefault();
+        const targetEditor = editorInstanceRef.current;
+        return targetEditor ? applyIndentToEditor(targetEditor, event.shiftKey ? -1 : 1) : false;
+      },
+    },
       onUpdate: ({ editor: ed }) => {
         if (isSyncingExternalContentRef.current) {
           isSyncingExternalContentRef.current = false;
@@ -1865,6 +1879,12 @@ export function AdvancedRichTextEditor({
     },
     immediatelyRender: false,
   });
+  useEffect(() => {
+    editorInstanceRef.current = editor;
+    return () => {
+      editorInstanceRef.current = null;
+    };
+  }, [editor]);
 
   // TipTap does not make React re-render for selection changes. Keep toolbar
   // state derived from the live editor selection, without polling.
@@ -2741,9 +2761,9 @@ export function AdvancedRichTextEditor({
                   <div className="multipage-page-inner" style={pagePaddingStyle} />
                   <div className="pointer-events-none absolute inset-x-0 bottom-7 flex justify-center">
                     <span className={sourceFooter ? '' : 'inline-flex items-center gap-2 rounded-full bg-[rgba(7,12,20,0.05)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[var(--text-tertiary)]'} style={sourceFooter ? { textAlign: sourceFooter.alignment ?? 'center', fontFamily: sourceFooter.fontFamily, fontSize: sourceFooter.fontSizePt ? `${sourceFooter.fontSizePt}pt` : undefined, color: sourceFooter.color } : undefined} data-testid={sourceFooter ? 'source-footer' : undefined}>
-                      {sourceFooter ? sourceFooter.runs.map((run, runIndex) => <span key={runIndex}>{run.type === 'page' ? pageIndex + 1 + pageNumberOffset : run.text}</span>) : <>
+                        {sourceFooter ? sourceFooter.runs.map((run, runIndex) => <span key={runIndex}>{run.type === 'page' ? (canonicalPages?.[pageIndex]?.globalPageNumber ?? pageIndex + 1 + pageNumberOffset) : run.text}</span>) : <>
                         <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
-                        <span>{pageIndex + 1 + pageNumberOffset}</span>
+                        <span>{canonicalPages?.[pageIndex]?.globalPageNumber ?? pageIndex + 1 + pageNumberOffset}</span>
                         <span aria-hidden="true" className="text-[10px] tracking-[0.08em] opacity-70">∿∿</span>
                       </>}
                     </span>
@@ -2751,7 +2771,18 @@ export function AdvancedRichTextEditor({
                 </div>
               ))}
             </div>
-            <div
+            {canonicalPages && canonicalPages.length > 0 ? (
+              <div className="absolute inset-0 grid pointer-events-none" style={{ gridTemplateColumns: `repeat(${visiblePageIndices.length}, minmax(0, 1fr))`, gap: `${pageGap}px` }} data-testid="canonical-editor-page-projection">
+                {visiblePageIndices.map((pageIndex) => (
+                  <div key={`canonical-editor-content-${pageIndex}`} className="relative" style={pagePaddingStyle}>
+                    <div className="flow-content-root ProseMirror h-full overflow-hidden" dangerouslySetInnerHTML={{ __html: canonicalPages[pageIndex]?.html ?? '' }} />
+                  </div>
+                ))}
+                <div className="absolute inset-0 opacity-0 pointer-events-auto" aria-hidden="true">
+                  <EditorContent editor={editor} />
+                </div>
+              </div>
+            ) : <div
               ref={multipageFlowRef}
               className={`multipage-editor-flow prose prose-invert max-w-none prose-img:rounded-lg prose-img:shadow-md ${isEndnotesSection ? 'multipage-editor-flow--endnotes' : ''}`}
               lang={locale}
@@ -2762,7 +2793,7 @@ export function AdvancedRichTextEditor({
               >
                 <EditorContent editor={editor} />
               </div>
-            </div>
+            </div>}
           </div>
         </div>
       </div>

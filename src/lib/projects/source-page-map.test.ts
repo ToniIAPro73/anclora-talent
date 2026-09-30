@@ -35,6 +35,26 @@ describe('canonical source page map', () => {
     expect(pages[1].contentSlices).toEqual([{ blockId: 'paragraph-2', fromOffset: 0, toOffset: 'Texto de la página siguiente.'.length }]);
   });
 
+  test('PAGE-MAP-13 keeps inverted Office anchors inside certified section membership', () => {
+    const sourceChapters: DocumentChapter[] = [
+      { id: 'note', order: 0, title: 'Nota editorial', blocks: [{ id: 'note-1', type: 'paragraph', order: 0, content: 'Nota' }] },
+      { id: 'toc', order: 1, title: 'Índice', blocks: [
+        { id: 'toc-1', type: 'paragraph', order: 0, content: 'Índice' },
+        { id: 'toc-2', type: 'paragraph', order: 1, content: 'Prólogo' },
+      ] },
+      { id: 'prologue', order: 2, title: 'Prólogo', blocks: [{ id: 'prologue-1', type: 'paragraph', order: 0, content: 'Contenido del prólogo' }] },
+    ];
+    const map = {
+      version: 1 as const, sourceFormat: 'odt' as const, sourcePageCount: 1,
+      status: 'VALID' as const, pages: [{
+        pageNumber: 3, startAnchor: { blockId: 'toc-2', textOffset: 0 },
+        endAnchor: { blockId: 'prologue-1', textOffset: 0 }, sectionIds: ['toc'], footnoteIds: [], mappingStatus: 'EXACT' as const,
+      }], provenance: { kind: 'authoritative-pdf' as const, createdAt: new Date().toISOString() },
+    };
+    const page = projectCanonicalDocumentToPages(sourceChapters, map)[0];
+    expect(page.contentSlices.map((slice) => slice.blockId)).toEqual(['toc-1', 'toc-2']);
+  });
+
   test('PAGE-MAP-07 and CERTIFY-01..03 certify every explicit page', () => {
     const map = buildSourcePageMapFromChapters({ sourceFormat: 'doc', sourcePageCount: 2, chapters: chapters() });
     const report = certifySourcePageMembership({ sourcePageMap: map!, canonicalPages: projectCanonicalDocumentToPages(chapters(), map!) });

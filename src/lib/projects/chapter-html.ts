@@ -18,9 +18,16 @@ function wrapPlainBlock(block: DocumentBlock): string {
   if (!content) return '';
 
   const escaped = escapeHtml(content);
-  if (block.type === 'heading') return `<h2>${escaped}</h2>`;
-  if (block.type === 'quote') return `<blockquote><p>${escaped}</p></blockquote>`;
-  return `<p>${escaped}</p>`;
+  const properties = block.paragraphProperties ?? {};
+  const styles = [
+    properties.firstLineIndent !== undefined ? `text-indent:${String(properties.firstLineIndent)}${typeof properties.firstLineIndent === 'number' ? 'pt' : ''}` : '',
+    properties.leftIndent !== undefined ? `margin-left:${String(properties.leftIndent)}${typeof properties.leftIndent === 'number' ? 'pt' : ''}` : '',
+    properties.rightIndent !== undefined ? `margin-right:${String(properties.rightIndent)}${typeof properties.rightIndent === 'number' ? 'pt' : ''}` : '',
+  ].filter(Boolean).join(';');
+  const attrs = styles ? ` style="${styles}"` : '';
+  if (block.type === 'heading') return `<h2${attrs}>${escaped}</h2>`;
+  if (block.type === 'quote') return `<blockquote><p${attrs}>${escaped}</p></blockquote>`;
+  return `<p${attrs}>${escaped}</p>`;
 }
 
 export function chapterBlocksToHtml(blocks: DocumentBlock[]): string {

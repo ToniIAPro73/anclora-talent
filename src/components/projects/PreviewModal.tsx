@@ -120,7 +120,10 @@ export function PreviewModal({
     return composeProjectPreview(project, paginationConfig, measurer);
   }, [paginationConfig, project, measurer]);
 
-  const sourceFidelity = project.document.source?.sourceFormat === 'odt' || project.document.source?.sourceFormat === 'docx' || project.document.source?.sourceFormat === 'doc';
+  const sourceFidelity = Boolean(
+    project.document.metadata?.sourcePageMap?.status === 'VALID' &&
+    project.document.metadata.sourcePageMap.pages.length > 0,
+  );
   const previewPages = useMemo(() => {
     if (!sourceFidelity) return composed.pages;
     return buildPreviewPages(project, paginationConfig).filter((page) => page.type !== 'back-cover');
@@ -134,6 +137,12 @@ export function PreviewModal({
     [previewPages],
   );
   const composedContentPageCount = previewPages.filter((page) => page.type === 'content').length;
+  const canonicalPreviewPages = useMemo(
+    () => previewPages
+      .filter((page) => page.type === 'content')
+      .map((page) => ({ pageNumber: page.pageNumber, html: page.content })),
+    [previewPages],
+  );
 
   // LOGICAL PAGE INDEXING
   const firstContentIndex = 1;
@@ -336,6 +345,7 @@ export function PreviewModal({
                     pageCountHint={composedContentPageCount}
                     onPageCountChange={setTotalContentPages}
                     sourceFooter={project.document.metadata?.originalDocumentStyleProfile?.footer ?? null}
+                    canonicalPages={sourceFidelity ? canonicalPreviewPages : undefined}
                   />
                 </div>
 

@@ -12,6 +12,8 @@ import { buildPaginationConfig } from '@/lib/preview/device-configs';
 import { reconcileOverflowBreaks } from '@/lib/preview/editor-page-layout';
 import type { DocumentChapter } from '@/lib/projects/types';
 import type { SourcePageMap } from '@/lib/projects/source-page-map';
+import { projectCanonicalDocumentToPages } from '@/lib/projects/source-page-map';
+import { renderCanonicalDocumentPages, type RenderedCanonicalPage } from '@/lib/projects/canonical-page-renderer';
 
 export interface UseChapterEditorOptions {
   chapters: DocumentChapter[];
@@ -94,6 +96,42 @@ export function useChapterEditor({
     [currentChapter, sourcePageMap],
   );
   const usesSourcePageMap = sourcePagesForChapter.length > 0;
+  const canonicalPagesForChapter = useMemo<RenderedCanonicalPage[]>(() => {
+    if (!usesSourcePageMap || !sourcePageMap || !currentChapter) return [];
+    const chapterBlockIds = new Set(currentChapter.blocks.map((block) => block.id));
+    const sectionBoundaryLabels = new Set([
+      'prólogo', 'prologo', 'introducción', 'introduccion', 'epílogo', 'epilogo', 'apéndice', 'apendice', 'glosario', 'bibliografía', 'bibliografia',
+      ...localChapters
+        .filter((chapter) => chapter.id !== currentChapter.id)
+        .flatMap((chapter) => [chapter.title, chapter.title.replace(/^(?:capítulo|capitulo|sección|seccion)\s+\d+\s*[:.\-]?\s*/i, '')])
+        .map((value) => value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().toLocaleLowerCase('es')),
+    ]);
+    const currentChapterTitle = currentChapter.title.replace(/\s+/g, ' ').trim().toLocaleLowerCase('es');
+    const currentIsBoundarySection = /^(?:prólogo|prologo|introducción|introduccion|epílogo|epilogo|apéndice|apendice|glosario|bibliografía|bibliografia)$/i.test(currentChapterTitle);
+    const pages = projectCanonicalDocumentToPages(localChapters, sourcePageMap)
+      .filter((page) => page.sectionIds.includes(currentChapter.id) || page.contentSlices.some((slice) => chapterBlockIds.has(slice.blockId)))
+      .map((page) => ({
+        ...page,
+        contentSlices: page.contentSlices.filter((slice) => {
+          if (!chapterBlockIds.has(slice.blockId)) return false;
+          const block = currentChapter.blocks.find((candidate) => candidate.id === slice.blockId);
+          const blockText = block?.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().toLocaleLowerCase('es');
+          // A certified page may end at the first heading of the next
+          // section. Do not let that heading leak into the current chapter
+          // projection when the importer kept it as a leading marker block.
+          return !blockText || blockText === currentChapterTitle || !sectionBoundaryLabels.has(blockText);
+        }),
+      }));
+    return renderCanonicalDocumentPages(localChapters, pages).map((page) => ({
+      ...page,
+      // Some legacy ODT imports keep the next section marker in the same
+      // synthetic TOC block. Trim that marker and everything after it from
+      // the current section projection; the following certified page owns it.
+      html: !currentIsBoundarySection
+        ? page.html.replace(/<p\b[^>]*>(?:\s*<[^>]+>)*\s*(?:PRÓLOGO|PROLOGO|INTRODUCCIÓN|INTRODUCCION|EPÍLOGO|EPILOGO|APÉNDICE|APENDICE|GLOSARIO|BIBLIOGRAFÍA|BIBLIOGRAFIA)\s*(?:<\/[^>]+>\s*)*<\/p>[\s\S]*$/i, '')
+        : page.html,
+    }));
+  }, [currentChapter, localChapters, sourcePageMap, usesSourcePageMap]);
   const canNavigatePrev = currentIndex > 0;
   const canNavigateNext = currentIndex < localChapters.length - 1;
   const previewConfig = useMemo(
@@ -147,7 +185,7 @@ export function useChapterEditor({
   // the first chapter (typically the Índice) starts on page 2 in the
   // source manuscript, not page 1.
   const pageNumberOffset = useMemo(() => {
-    if (usesSourcePageMap) return Math.max(0, (sourcePagesForChapter[0]?.pageNumber ?? 1) - 1);
+    if (usesSourcePageMap) return 0;
     const COVER_PAGE_COUNT = 1;
     let offset = COVER_PAGE_COUNT;
     for (let index = 0; index < currentIndex; index += 1) {
@@ -200,6 +238,9 @@ export function useChapterEditor({
 
   const canNavigatePagePrev = currentPage > 0;
   const canNavigatePageNext = currentPage < totalPages - 1;
+  const currentPageNumber = usesSourcePageMap
+    ? (sourcePagesForChapter[currentPage]?.pageNumber ?? sourcePagesForChapter[0]?.pageNumber ?? 1)
+    : currentPage + 1 + pageNumberOffset;
 
   const handleTitleChange = useCallback((newTitle: string) => {
     setTitle(newTitle);
@@ -349,8 +390,10 @@ export function useChapterEditor({
 
     // Page state
     currentPage,
+    currentPageNumber,
     totalPages,
     pageNumberOffset,
+    canonicalPages: canonicalPagesForChapter,
     canNavigatePagePrev,
     canNavigatePageNext,
 
