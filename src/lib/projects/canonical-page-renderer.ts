@@ -13,6 +13,7 @@ export interface RenderedCanonicalPage {
   sectionIds: string[];
   footnoteIds: string[];
   mappingStatus: CanonicalPage['mappingStatus'];
+  contentSlices: ContentSlice[];
   html: string;
 }
 
@@ -81,6 +82,17 @@ function textLength(html: string): number {
   return (html.replace(/<[^>]*>/g, ' ').replace(/&(?:nbsp|amp|lt|gt|quot);|&#039;/g, decodeEntity)).length;
 }
 
+function escapeAttribute(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function annotateRenderedBlock(html: string, slice: ContentSlice): string {
+  const attributes = ` data-block-id="${escapeAttribute(slice.blockId)}" data-source-from-offset="${slice.fromOffset}" data-source-to-offset="${slice.toOffset}"`;
+  return html.replace(/^\s*<([a-z][^\s/>]*)(\s[^>]*)?>/i, (match, tag: string, existing = '') => {
+    return `<${tag}${existing}${attributes}>`;
+  });
+}
+
 export function renderCanonicalPageSlices(
   chapters: DocumentChapter[],
   page: CanonicalPage,
@@ -97,7 +109,7 @@ export function renderCanonicalPageSlices(
     .map((slice: ContentSlice) => {
       const blockHtml = htmlByBlock.get(slice.blockId);
       if (!blockHtml) return '';
-      return sliceRichHtml(blockHtml, slice.fromOffset, slice.toOffset);
+      return annotateRenderedBlock(sliceRichHtml(blockHtml, slice.fromOffset, slice.toOffset), slice);
     })
     .filter(Boolean)
     .join('\n');

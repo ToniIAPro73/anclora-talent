@@ -140,7 +140,7 @@ export function PreviewModal({
   const canonicalPreviewPages = useMemo(
     () => previewPages
       .filter((page) => page.type === 'content')
-      .map((page) => ({ pageNumber: page.pageNumber, html: page.content })),
+      .map((page) => ({ pageNumber: page.pageNumber, html: page.content, pageKind: page.pageKind, contentSlices: page.contentSlices })),
     [previewPages],
   );
 

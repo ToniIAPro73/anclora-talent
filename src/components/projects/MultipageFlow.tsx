@@ -21,7 +21,7 @@ interface MultipageFlowProps {
   lang?: string;
   sourceFooter?: OriginalDocumentStyleProfile['footer'] | null;
   /** Certified source pages. When present, CSS reflow is not authoritative. */
-  canonicalPages?: Array<{ pageNumber: number; html: string | null }>;
+  canonicalPages?: Array<{ pageNumber: number; html: string | null; pageKind?: string; contentSlices?: Array<{ blockId: string; fromOffset: number; toOffset: number }> }>;
 }
 
 export function MultipageFlow({
@@ -592,6 +592,9 @@ export function MultipageFlow({
             key={`frame-${idx}`}
             className="relative bg-[var(--preview-paper)] rounded-[8px] shadow-[var(--shadow-strong)] border border-[var(--preview-paper-border)]"
             style={{ height: `${pageHeight}px` }}
+            data-canonical-page-frame={usesCanonicalPages ? 'true' : undefined}
+            data-source-page={canonicalPages?.[idx]?.pageNumber}
+            data-page-kind={canonicalPages?.[idx]?.pageKind}
           >
             <div className="h-full w-full" style={pagePaddingStyle} />
             {showPageNumbers ? (
@@ -613,7 +616,19 @@ export function MultipageFlow({
       {usesCanonicalPages ? (
         <div className="absolute inset-0 grid pointer-events-none" style={{ gridTemplateColumns: `repeat(${visiblePageIndices.length}, minmax(0, 1fr))`, gap: `${pageGap}px` }}>
           {visiblePageIndices.map((idx) => (
-            <div key={`canonical-content-${idx}`} className="relative" style={pagePaddingStyle}>
+            <div
+              key={`canonical-content-${idx}`}
+              className="relative"
+              style={pagePaddingStyle}
+              data-canonical-page="true"
+              data-local-page-index={idx}
+              data-source-page={canonicalPages?.[idx]?.pageNumber}
+              data-page-kind={canonicalPages?.[idx]?.pageKind}
+              data-page-start-block={canonicalPages?.[idx]?.contentSlices?.[0]?.blockId}
+              data-page-start-offset={canonicalPages?.[idx]?.contentSlices?.[0]?.fromOffset}
+              data-page-end-block={canonicalPages?.[idx]?.contentSlices?.at(-1)?.blockId}
+              data-page-end-offset={canonicalPages?.[idx]?.contentSlices?.at(-1)?.toOffset}
+            >
               <div className="flow-content-root ProseMirror h-full overflow-hidden" dangerouslySetInnerHTML={{ __html: canonicalPages?.[idx]?.html ?? '' }} />
             </div>
           ))}

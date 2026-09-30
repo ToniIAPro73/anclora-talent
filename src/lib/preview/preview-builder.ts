@@ -21,6 +21,7 @@ import { reconcileOverflowBreaks, stripAutoBreaks } from './editor-page-layout';
 import { normalizeHtmlContent } from './html-normalize';
 import { projectCanonicalDocumentToPages } from '@/lib/projects/source-page-map';
 import { renderCanonicalDocumentPages } from '@/lib/projects/canonical-page-renderer';
+import type { ContentSlice, SourcePageKind } from '@/lib/projects/source-page-map';
 
 // ==================== TYPES ====================
 
@@ -45,6 +46,8 @@ export interface PreviewPage {
   };
   chapterTitle?: string;
   chapterId?: string;
+  pageKind?: SourcePageKind;
+  contentSlices?: ContentSlice[];
   pageNumber: number;
 }
 
@@ -118,6 +121,8 @@ export function buildPreviewPages(
         // part of the certified source map even when no editable block exists.
         content: page.html || null,
         chapterId: page.sectionIds[0],
+        pageKind: page.pageKind,
+        contentSlices: page.contentSlices,
         pageNumber: page.globalPageNumber,
       });
       });

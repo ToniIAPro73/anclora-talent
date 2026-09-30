@@ -2752,6 +2752,9 @@ export function AdvancedRichTextEditor({
                   key={pageIndex}
                   data-testid="editable-page-surface"
                   data-page-index={pageIndex}
+                  data-canonical-page-frame={canonicalPages ? 'true' : undefined}
+                  data-source-page={canonicalPages?.[pageIndex]?.globalPageNumber}
+                  data-page-kind={canonicalPages?.[pageIndex]?.pageKind}
                   className="multipage-page-frame relative"
                   onMouseDown={(event) => {
                     event.preventDefault();
@@ -2774,7 +2777,19 @@ export function AdvancedRichTextEditor({
             {canonicalPages && canonicalPages.length > 0 ? (
               <div className="absolute inset-0 grid pointer-events-none" style={{ gridTemplateColumns: `repeat(${visiblePageIndices.length}, minmax(0, 1fr))`, gap: `${pageGap}px` }} data-testid="canonical-editor-page-projection">
                 {visiblePageIndices.map((pageIndex) => (
-                  <div key={`canonical-editor-content-${pageIndex}`} className="relative" style={pagePaddingStyle}>
+                  <div
+                    key={`canonical-editor-content-${pageIndex}`}
+                    className="relative"
+                    style={pagePaddingStyle}
+                    data-canonical-page="true"
+                    data-local-page-index={pageIndex}
+                    data-source-page={canonicalPages[pageIndex]?.globalPageNumber}
+                    data-page-kind={canonicalPages[pageIndex]?.pageKind}
+                    data-page-start-block={canonicalPages[pageIndex]?.contentSlices[0]?.blockId}
+                    data-page-start-offset={canonicalPages[pageIndex]?.contentSlices[0]?.fromOffset}
+                    data-page-end-block={canonicalPages[pageIndex]?.contentSlices.at(-1)?.blockId}
+                    data-page-end-offset={canonicalPages[pageIndex]?.contentSlices.at(-1)?.toOffset}
+                  >
                     <div className="flow-content-root ProseMirror h-full overflow-hidden" dangerouslySetInnerHTML={{ __html: canonicalPages[pageIndex]?.html ?? '' }} />
                   </div>
                 ))}
