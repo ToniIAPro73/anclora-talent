@@ -410,6 +410,27 @@ describe('AdvancedRichTextEditor selection behavior', () => {
     expect(screen.getAllByTestId('editable-page-surface')).toHaveLength(2);
   });
 
+  test('uses certified canonical pages even when local chapter pagination is shorter', () => {
+    const editor = createMockEditor(createSelection('Hello', 0));
+    useEditorMock.mockReturnValue(editor);
+
+    render(
+      <AdvancedRichTextEditor
+        defaultContent="<p>Shared boundary content</p>"
+        onUpdate={vi.fn()}
+        currentPage={0}
+        totalPages={1}
+        canonicalPages={[
+          { globalPageNumber: 10, sectionIds: [], footnoteIds: [], contentSlices: [], mappingStatus: 'EXACT', html: '<p>Page 10</p>' },
+          { globalPageNumber: 14, sectionIds: [], footnoteIds: [], contentSlices: [], mappingStatus: 'EXACT', html: '<p>Page 14</p>' },
+        ]}
+      />,
+    );
+
+    expect(screen.getAllByTestId('editable-page-surface').map((page) => page.getAttribute('data-source-page')))
+      .toEqual(['10', '14']);
+  });
+
   test('does not render later visible pages as preview-only placeholders', () => {
     const editor = createMockEditor(createSelection('Hello', 0));
     useEditorMock.mockReturnValue(editor);

@@ -1638,10 +1638,16 @@ export function AdvancedRichTextEditor({
     const reconciledHtml = reconcileOverflowBreaks(defaultContent, previewConfig);
     return countRenderablePages(paginateContent(reconciledHtml, previewConfig));
   }, [defaultContent, previewConfig]);
-  const totalRenderablePages = Math.max(
-    1,
-    Math.min(totalPages ?? actualRenderablePages, actualRenderablePages),
-  );
+  // A certified source map is authoritative for physical page accounting.
+  // The chapter-local editor content may intentionally be a projection of a
+  // shared source page (or contain fewer blocks than the complete physical
+  // spread), so clamping it with local pagination can hide certified pages.
+  const totalRenderablePages = canonicalPages && canonicalPages.length > 0
+    ? canonicalPages.length
+    : Math.max(
+      1,
+      Math.min(totalPages ?? actualRenderablePages, actualRenderablePages),
+    );
   const spreadStartPage =
     layoutViewMode === 'double' ? Math.max(0, currentPage - (currentPage % 2)) : currentPage;
   const showSecondPage =
