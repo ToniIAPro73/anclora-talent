@@ -431,7 +431,7 @@ describe('AdvancedRichTextEditor selection behavior', () => {
       .toEqual(['10', '14']);
   });
 
-  test('keeps caret and selection feedback visible on the canonical edit surface', () => {
+  test('renders a single visible editable surface and no duplicated canonical text projection', () => {
     const editor = createMockEditor(createSelection('Hello', 0));
     useEditorMock.mockReturnValue(editor);
 
@@ -445,9 +445,17 @@ describe('AdvancedRichTextEditor selection behavior', () => {
       />,
     );
 
-    const editSurface = screen.getByTestId('advanced-tiptap-content').parentElement;
-    expect(editSurface).not.toHaveClass('opacity-0');
-    expect(editSurface).toHaveAttribute('data-editor-node', 'live-edit-surface');
+    // TipTap content is rendered directly inside the single visible flow track
+    const tiptapContent = screen.getByTestId('advanced-tiptap-content');
+    const flowContainer = tiptapContent.closest('.multipage-editor-flow');
+    expect(flowContainer).toBeInTheDocument();
+    expect(flowContainer).toHaveAttribute('data-editor-surface', 'single-visible');
+    expect(flowContainer).not.toHaveClass('opacity-0');
+
+    // Certified absence of duplicated static text projections or transparent live edit surfaces
+    expect(screen.queryByTestId('canonical-editor-page-projection')).not.toBeInTheDocument();
+    expect(document.querySelector('[data-editor-node="live-edit-surface"]')).not.toBeInTheDocument();
+    expect(document.querySelector('.canonical-editor-live-edit-surface')).not.toBeInTheDocument();
   });
 
   test('does not render later visible pages as preview-only placeholders', () => {

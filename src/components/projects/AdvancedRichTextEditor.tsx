@@ -1688,16 +1688,14 @@ export function AdvancedRichTextEditor({
     const reconciledHtml = reconcileOverflowBreaks(defaultContent, previewConfig);
     return countRenderablePages(paginateContent(reconciledHtml, previewConfig));
   }, [defaultContent, previewConfig]);
-  // A certified source map is authoritative for physical page accounting.
-  // The chapter-local editor content may intentionally be a projection of a
-  // shared source page (or contain fewer blocks than the complete physical
-  // spread), so clamping it with local pagination can hide certified pages.
-  const totalRenderablePages = canonicalPages && canonicalPages.length > 0
-    ? canonicalPages.length
-    : Math.max(
-      1,
-      Math.min(totalPages ?? actualRenderablePages, actualRenderablePages),
-    );
+  // A certified source map provides a baseline for physical page frames,
+  // but the live editable surface dynamically reflows and expands as content is edited.
+  const totalRenderablePages = Math.max(
+    1,
+    canonicalPages?.length ?? 1,
+    totalPages ?? 1,
+    actualRenderablePages,
+  );
   const spreadStartPage =
     layoutViewMode === 'double' ? Math.max(0, currentPage - (currentPage % 2)) : currentPage;
   const showSecondPage =
@@ -2780,7 +2778,21 @@ export function AdvancedRichTextEditor({
                 column-fill: auto;
                 outline: none;
               }
-              .multipage-editor-flow .ProseMirror > * {
+              .multipage-editor-flow .ProseMirror {
+                caret-color: var(--accent, #0ea5e9);
+              }
+              .multipage-editor-flow .ProseMirror ::selection {
+                background: color-mix(in srgb, var(--accent, #0ea5e9) 36%, transparent);
+              }
+              .multipage-editor-flow .ProseMirror > h1,
+              .multipage-editor-flow .ProseMirror > h2,
+              .multipage-editor-flow .ProseMirror > h3,
+              .multipage-editor-flow .ProseMirror > h4,
+              .multipage-editor-flow .ProseMirror > h5,
+              .multipage-editor-flow .ProseMirror > h6,
+              .multipage-editor-flow .ProseMirror > figure,
+              .multipage-editor-flow .ProseMirror > table,
+              .multipage-editor-flow .ProseMirror > .resizable-image {
                 break-inside: avoid;
                 page-break-inside: avoid;
               }
@@ -2796,32 +2808,6 @@ export function AdvancedRichTextEditor({
                 height: 100%;
                 overflow: hidden;
               }
-              /*
-               * Canonical pages are the visual projection for imported documents. The live
-               * TipTap surface still owns browser selection and commands, but must not paint a
-               * second copy of the document over that projection. Keep its glyphs transparent
-               * while exposing the browser caret and selection highlight to the writer.
-               */
-              .canonical-editor-live-edit-surface {
-                color: transparent;
-                caret-color: var(--accent, #0ea5e9);
-                -webkit-text-fill-color: transparent;
-              }
-              .canonical-editor-live-edit-surface .ProseMirror,
-              .canonical-editor-live-edit-surface .ProseMirror * {
-                color: transparent !important;
-                background-color: transparent !important;
-                -webkit-text-fill-color: transparent !important;
-                text-shadow: none !important;
-              }
-              .canonical-editor-live-edit-surface .ProseMirror img {
-                visibility: hidden;
-              }
-              .canonical-editor-live-edit-surface .ProseMirror ::selection {
-                background: color-mix(in srgb, var(--accent, #0ea5e9) 36%, transparent);
-                color: transparent;
-                -webkit-text-fill-color: transparent;
-              }
             `}</style>
             <div
               className="grid"
@@ -2836,7 +2822,7 @@ export function AdvancedRichTextEditor({
                   data-testid="editable-page-surface"
                   data-page-index={pageIndex}
                   data-canonical-page-frame={canonicalPages ? 'true' : undefined}
-                  data-source-page={canonicalPages?.[pageIndex]?.globalPageNumber}
+                  data-source-page={canonicalPages?.[pageIndex]?.globalPageNumber ?? pageIndex + 1 + pageNumberOffset}
                   data-page-kind={canonicalPages?.[pageIndex]?.pageKind}
                   className="multipage-page-frame relative"
                   onMouseDown={(event) => {
@@ -2857,33 +2843,11 @@ export function AdvancedRichTextEditor({
                 </div>
               ))}
             </div>
-            {canonicalPages && canonicalPages.length > 0 ? (
-              <div className="absolute inset-0 grid pointer-events-none" style={{ gridTemplateColumns: `repeat(${visiblePageIndices.length}, minmax(0, 1fr))`, gap: `${pageGap}px` }} data-testid="canonical-editor-page-projection">
-                {visiblePageIndices.map((pageIndex) => (
-                  <div
-                    key={`canonical-editor-content-${pageIndex}`}
-                    className="relative"
-                    style={pagePaddingStyle}
-                    data-canonical-page="true"
-                    data-local-page-index={pageIndex}
-                    data-source-page={canonicalPages[pageIndex]?.globalPageNumber}
-                    data-page-kind={canonicalPages[pageIndex]?.pageKind}
-                    data-page-start-block={canonicalPages[pageIndex]?.contentSlices[0]?.blockId}
-                    data-page-start-offset={canonicalPages[pageIndex]?.contentSlices[0]?.fromOffset}
-                    data-page-end-block={canonicalPages[pageIndex]?.contentSlices.at(-1)?.blockId}
-                    data-page-end-offset={canonicalPages[pageIndex]?.contentSlices.at(-1)?.toOffset}
-                  >
-                    <div className="flow-content-root ProseMirror h-full overflow-hidden" dangerouslySetInnerHTML={{ __html: canonicalPages[pageIndex]?.html ?? '' }} />
-                  </div>
-                ))}
-                <div className="canonical-editor-live-edit-surface absolute inset-0 pointer-events-auto" data-editor-node="live-edit-surface">
-                  <EditorContent editor={editor} />
-                </div>
-              </div>
-            ) : <div
+            <div
               ref={multipageFlowRef}
               className={`multipage-editor-flow prose prose-invert max-w-none prose-img:rounded-lg prose-img:shadow-md ${isEndnotesSection ? 'multipage-editor-flow--endnotes' : ''}`}
               lang={locale}
+              data-editor-surface="single-visible"
             >
               <div
                 className="multipage-editor-flow-track"
@@ -2891,7 +2855,7 @@ export function AdvancedRichTextEditor({
               >
                 <EditorContent editor={editor} />
               </div>
-            </div>}
+            </div>
           </div>
         </div>
       </div>
