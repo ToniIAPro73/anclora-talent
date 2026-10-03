@@ -426,12 +426,13 @@ function sourceBlockInlineHtml(block: SourceBlock): string {
 
 function sourceBlockStyle(block: SourceBlock): string {
   const properties = block.paragraphProperties ?? {};
+  const isHeading = block.type === 'heading';
   const styles = [
     properties.textAlign ? `text-align:${escapeSourceHtml(String(properties.textAlign))}` : '',
     properties.lineHeight !== undefined ? `line-height:${escapeSourceHtml(String(properties.lineHeight))}` : '',
     properties.spacingBefore !== undefined ? `margin-top:${escapeSourceHtml(String(properties.spacingBefore))}pt` : '',
     properties.spacingAfter !== undefined ? `margin-bottom:${escapeSourceHtml(String(properties.spacingAfter))}pt` : '',
-    properties.firstLineIndent !== undefined ? `text-indent:${escapeSourceHtml(String(properties.firstLineIndent))}pt` : '',
+    !isHeading && properties.firstLineIndent !== undefined ? `text-indent:${escapeSourceHtml(String(properties.firstLineIndent))}pt` : '',
     properties.leftIndent !== undefined ? `margin-left:${escapeSourceHtml(String(properties.leftIndent))}pt` : '',
     properties.rightIndent !== undefined ? `margin-right:${escapeSourceHtml(String(properties.rightIndent))}pt` : '',
   ].filter(Boolean).join(';');

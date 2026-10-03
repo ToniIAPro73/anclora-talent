@@ -294,7 +294,19 @@ const FootnoteReferenceMark = Mark.create({
   },
 });
 
-const EditorialParagraphAttributes = Extension.create({
+export function parseIndentValue(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return /^-?\d+(\.\d+)?$/.test(trimmed) ? `${trimmed}pt` : trimmed;
+}
+
+export function parseLengthStyle(style: string, property: string): string | null {
+  const match = style.match(new RegExp(`${property}\\s*:\\s*([^;]+)`, 'i'));
+  return match ? parseIndentValue(match[1]) : null;
+}
+
+export const EditorialParagraphAttributes = Extension.create({
   name: 'editorialParagraphAttributes',
 
   addGlobalAttributes() {
@@ -331,6 +343,75 @@ const EditorialParagraphAttributes = Extension.create({
             },
             renderHTML: (attributes) =>
               attributes.sourcePageNumber ? { 'data-footnote-source-page': attributes.sourcePageNumber } : {},
+          },
+          sourceStyleId: {
+            default: null,
+            parseHTML: (element) => element.getAttribute('data-source-style-id') || null,
+            renderHTML: (attributes) =>
+              attributes.sourceStyleId ? { 'data-source-style-id': attributes.sourceStyleId } : {},
+          },
+          firstLineIndent: {
+            default: null,
+            parseHTML: (element) => {
+              const dataAttr = element.getAttribute('data-first-line-indent');
+              if (dataAttr) return parseIndentValue(dataAttr);
+              const styleAttr = element.getAttribute('style') || (element as HTMLElement).style?.cssText || '';
+              return parseLengthStyle(styleAttr, 'text-indent');
+            },
+            renderHTML: (attributes) => {
+              if (attributes.firstLineIndent == null) return {};
+              const formatted = parseIndentValue(String(attributes.firstLineIndent));
+              if (!formatted) return {};
+              return {
+                'data-first-line-indent': formatted,
+                style: `text-indent: ${formatted};`,
+              };
+            },
+          },
+          leftIndent: {
+            default: null,
+            parseHTML: (element) => {
+              const dataAttr = element.getAttribute('data-left-indent');
+              if (dataAttr) return parseIndentValue(dataAttr);
+              if (element.hasAttribute('data-indent')) return null;
+              const styleAttr = element.getAttribute('style') || (element as HTMLElement).style?.cssText || '';
+              const val = parseLengthStyle(styleAttr, 'margin-left');
+              if (val && val !== '0' && val !== '0pt' && val !== '0px' && val !== '0in') {
+                return val;
+              }
+              return null;
+            },
+            renderHTML: (attributes) => {
+              if (attributes.leftIndent == null) return {};
+              const formatted = parseIndentValue(String(attributes.leftIndent));
+              if (!formatted || formatted === '0' || formatted === '0pt' || formatted === '0px' || formatted === '0in') return {};
+              return {
+                'data-left-indent': formatted,
+                style: `margin-left: ${formatted};`,
+              };
+            },
+          },
+          rightIndent: {
+            default: null,
+            parseHTML: (element) => {
+              const dataAttr = element.getAttribute('data-right-indent');
+              if (dataAttr) return parseIndentValue(dataAttr);
+              const styleAttr = element.getAttribute('style') || (element as HTMLElement).style?.cssText || '';
+              const val = parseLengthStyle(styleAttr, 'margin-right');
+              if (val && val !== '0' && val !== '0pt' && val !== '0px' && val !== '0in') {
+                return val;
+              }
+              return null;
+            },
+            renderHTML: (attributes) => {
+              if (attributes.rightIndent == null) return {};
+              const formatted = parseIndentValue(String(attributes.rightIndent));
+              if (!formatted || formatted === '0' || formatted === '0pt' || formatted === '0px' || formatted === '0in') return {};
+              return {
+                'data-right-indent': formatted,
+                style: `margin-right: ${formatted};`,
+              };
+            },
           },
         },
       },
@@ -2430,6 +2511,14 @@ export function AdvancedRichTextEditor({
                 margin-left: 0;
                 padding-left: 0;
               }
+              .ProseMirror ul,
+              .ProseMirror ol,
+              .ProseMirror li,
+              .preview-page ul,
+              .preview-page ol,
+              .preview-page li {
+                text-indent: 0;
+              }
               .ProseMirror ul.toc-list,
               .preview-page ul.toc-list {
                 list-style: none;
@@ -2444,6 +2533,7 @@ export function AdvancedRichTextEditor({
                 font-weight: var(--talent-h1-weight, 800);
                 margin: var(--talent-h1-spacing-before, 0) 0 var(--talent-h1-spacing-after, 1rem) 0;
                 color: var(--talent-h1-color, var(--text-primary));
+                text-indent: 0;
               }
               .ProseMirror h2,
               .preview-page h2 {
@@ -2453,6 +2543,7 @@ export function AdvancedRichTextEditor({
                 font-weight: var(--talent-h2-weight, 750);
                 margin: var(--talent-h2-spacing-before, 0) 0 var(--talent-h2-spacing-after, 0.85rem) 0;
                 color: var(--talent-h2-color, var(--text-primary));
+                text-indent: 0;
               }
               .ProseMirror h3,
               .preview-page h3 {
@@ -2462,6 +2553,7 @@ export function AdvancedRichTextEditor({
                 font-weight: var(--talent-h3-weight, 700);
                 margin: var(--talent-h3-spacing-before, 0) 0 var(--talent-h3-spacing-after, 0.75rem) 0;
                 color: var(--talent-h3-color, var(--text-primary));
+                text-indent: 0;
               }
               .ProseMirror h4,
               .preview-page h4 {
@@ -2471,6 +2563,7 @@ export function AdvancedRichTextEditor({
                 font-weight: var(--talent-h4-weight, 700);
                 margin: var(--talent-h4-spacing-before, 0) 0 var(--talent-h4-spacing-after, 0.65rem) 0;
                 color: var(--talent-h4-color, var(--text-primary));
+                text-indent: 0;
               }
               .ProseMirror blockquote,
               .preview-page blockquote {
@@ -2482,9 +2575,11 @@ export function AdvancedRichTextEditor({
                 border-left-width: var(--talent-quote-border-width, 3px);
                 margin: 1rem 1.5rem 1rem 0;
                 padding: 0.15rem 0 0.15rem 1rem;
+                text-indent: 0;
               }
               .ProseMirror table,
               .preview-page table {
+                text-indent: 0;
                 /* !important: imported .docx tables carry an inline width
                    (from the source Word column widths) that otherwise wins
                    by specificity and lets the table bleed past the column

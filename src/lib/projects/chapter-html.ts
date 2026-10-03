@@ -19,8 +19,9 @@ function wrapPlainBlock(block: DocumentBlock): string {
 
   const escaped = escapeHtml(content);
   const properties = block.paragraphProperties ?? {};
+  const isHeading = block.type === 'heading';
   const styles = [
-    properties.firstLineIndent !== undefined ? `text-indent:${String(properties.firstLineIndent)}${typeof properties.firstLineIndent === 'number' ? 'pt' : ''}` : '',
+    !isHeading && properties.firstLineIndent !== undefined ? `text-indent:${String(properties.firstLineIndent)}${typeof properties.firstLineIndent === 'number' ? 'pt' : ''}` : '',
     properties.leftIndent !== undefined ? `margin-left:${String(properties.leftIndent)}${typeof properties.leftIndent === 'number' ? 'pt' : ''}` : '',
     properties.rightIndent !== undefined ? `margin-right:${String(properties.rightIndent)}${typeof properties.rightIndent === 'number' ? 'pt' : ''}` : '',
   ].filter(Boolean).join(';');

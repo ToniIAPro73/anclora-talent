@@ -307,6 +307,7 @@ export function MultipageFlow({
           line-height: var(--talent-h1-line-height, 1.1);
           font-weight: var(--talent-h1-weight, 800);
           text-align: var(--talent-h1-align, left);
+          text-indent: 0;
           margin: var(--talent-h1-spacing-before, 0) 0 var(--talent-h1-spacing-after, 1rem);
           color: var(--talent-h1-color, var(--text-primary));
         }
@@ -316,6 +317,7 @@ export function MultipageFlow({
           line-height: var(--talent-h2-line-height, 1.2);
           font-weight: var(--talent-h2-weight, 750);
           text-align: var(--talent-h2-align, left);
+          text-indent: 0;
           margin: var(--talent-h2-spacing-before, 0) 0 var(--talent-h2-spacing-after, 0.85rem);
           color: var(--talent-h2-color, var(--text-primary));
         }
@@ -325,6 +327,7 @@ export function MultipageFlow({
           line-height: var(--talent-h3-line-height, 1.3);
           font-weight: var(--talent-h3-weight, 700);
           text-align: var(--talent-h3-align, left);
+          text-indent: 0;
           margin: var(--talent-h3-spacing-before, 0) 0 var(--talent-h3-spacing-after, 0.75rem);
           color: var(--talent-h3-color, var(--text-primary));
         }
@@ -334,6 +337,7 @@ export function MultipageFlow({
           line-height: var(--talent-h4-line-height, 1.35);
           font-weight: var(--talent-h4-weight, 700);
           text-align: var(--talent-h4-align, left);
+          text-indent: 0;
           margin: var(--talent-h4-spacing-before, 0) 0 var(--talent-h4-spacing-after, 0.65rem);
           color: var(--talent-h4-color, var(--text-primary));
         }
@@ -344,6 +348,7 @@ export function MultipageFlow({
           color: var(--talent-kicker-color, var(--text-secondary));
           letter-spacing: 0.08em;
           text-transform: uppercase;
+          text-indent: 0;
           margin: 0 0 0.25rem 0;
         }
         .flow-content-root.ProseMirror p.editorial-footnote,
@@ -392,6 +397,7 @@ export function MultipageFlow({
           border-left-style: solid;
           border-left-color: var(--talent-quote-border-color, #d97706);
           border-left-width: var(--talent-quote-border-width, 3px);
+          text-indent: 0;
           margin: 1rem 1.5rem 1rem 0;
           padding: 0.15rem 0 0.15rem 1rem;
         }
@@ -421,6 +427,7 @@ export function MultipageFlow({
           max-width: var(--column-width) !important;
           table-layout: fixed;
           border-collapse: collapse;
+          text-indent: 0;
           margin: 0 0 1rem 0;
           /* Tables taller than the remaining column space must move whole to
              the next column — a mid-table split makes Chromium bleed the
@@ -435,12 +442,14 @@ export function MultipageFlow({
           font-size: var(--talent-table-header-size, inherit);
           font-weight: 700;
           text-align: left;
+          text-indent: 0;
         }
         .flow-content-root.ProseMirror td {
           background: transparent;
           color: var(--talent-table-cell-color, inherit);
           font-family: var(--talent-table-cell-font, inherit);
           font-size: var(--talent-table-cell-size, inherit);
+          text-indent: 0;
         }
         .flow-content-root.ProseMirror tbody tr:nth-child(even) td {
           background: var(--talent-table-band-bg, transparent);
@@ -456,8 +465,12 @@ export function MultipageFlow({
 
         .flow-content-root.ProseMirror ul,
         .flow-content-root.ProseMirror ol {
+          text-indent: 0;
           margin: 0 0 1rem 1.5rem;
           padding: 0;
+        }
+        .flow-content-root.ProseMirror li {
+          text-indent: 0;
         }
         .flow-content-root.ProseMirror ul:not([data-bullet-style]) {
           list-style-type: disc;
