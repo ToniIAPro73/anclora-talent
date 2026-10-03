@@ -82,5 +82,8 @@ validation/
 tmp/manual-pdf/
 tmp/
 
+# Local manuscript fixtures used for import testing; keep them outside version control.
+docs/manuscritos/*
+
 # Local Claude Code settings (per-user, never versioned)
 .claude/settings.local.json
