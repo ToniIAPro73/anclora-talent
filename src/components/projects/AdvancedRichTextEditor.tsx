@@ -695,7 +695,7 @@ const AdvancedFontSelector = ({
         title={isAvailable ? copy.fontFamily : unavailableTitle}
         className="flex h-9 min-w-[140px] items-center justify-between gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors disabled:pointer-events-none disabled:opacity-30"
       >
-        <span className="truncate">{currentFont}</span>
+        <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{currentFont}</span>
         <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 

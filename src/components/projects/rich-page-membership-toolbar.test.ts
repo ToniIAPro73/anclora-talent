@@ -35,8 +35,9 @@ describe('rich page membership and compact toolbar contracts', () => {
     ]) {
       expect(editor).toContain(testId);
     }
-    expect(css).toContain('min-width: 110px;');
-    expect(css).toContain('max-width: 132px;');
+    expect(css).toContain('width: clamp(132px, 14vw, 170px);');
+    expect(css).toContain('max-width: 170px;');
+    expect(css).toContain('text-overflow: ellipsis;');
     expect(css).toContain('overflow-x: hidden;');
   });
 });
