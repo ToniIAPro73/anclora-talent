@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { findLibreOfficeBinary } from './doc-normalizer';
+import { findLibreOfficeBinary } from './libreoffice-binary';
 
 const execFileAsync = promisify(execFile);
 

@@ -5,6 +5,9 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { pathToFileURL } from 'url';
 import type { OriginalDocumentStyleProfile } from './source-style-profile';
+import { findLibreOfficeBinary } from './libreoffice-binary';
+
+export { findLibreOfficeBinary } from './libreoffice-binary';
 
 const execFileAsync = promisify(execFile);
 
@@ -13,61 +16,6 @@ function escapeHtml(str: string): string {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
-}
-
-/**
- * Platform-aware discovery of LibreOffice/soffice binary.
- * macOS: check standard Applications bundle and PATH.
- * Linux: check PATH (libreoffice, soffice).
- * Windows: check local tools or PATH.
- */
-export function findLibreOfficeBinary(): string | null {
-  const isMac = process.platform === 'darwin';
-  const isWin = process.platform === 'win32';
-
-  if (isMac) {
-    const candidates = [
-      '/Applications/LibreOffice.app/Contents/MacOS/soffice',
-      path.join(os.homedir(), 'Applications', 'LibreOffice.app', 'Contents', 'MacOS', 'soffice'),
-      '/opt/homebrew/bin/soffice',
-      '/usr/local/bin/soffice',
-    ];
-    for (const candidate of candidates) {
-      if (fs.existsSync(candidate)) return candidate;
-    }
-  }
-
-  if (isWin) {
-    const cwd = /* turbopackIgnore: true */ process.cwd();
-    const candidates = [
-      path.resolve(cwd, 'tools', 'libreoffice', 'program', 'soffice.exe'),
-      path.resolve(cwd, 'tools', 'LibreOffice', 'program', 'soffice.exe'),
-      'C:\\Program Files\\LibreOffice\\program\\soffice.exe',
-      'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe',
-    ];
-    for (const candidate of candidates) {
-      if (fs.existsSync(candidate)) return candidate;
-    }
-  }
-
-  // Generic PATH check via environment
-  const pathEnv = process.env.PATH || '';
-  const pathSeparator = isWin ? ';' : ':';
-  const binNames = isWin ? ['soffice.exe', 'soffice.com'] : ['soffice', 'libreoffice'];
-
-  for (const dir of pathEnv.split(pathSeparator)) {
-    if (!dir) continue;
-    for (const bin of binNames) {
-      const fullPath = path.join(dir, bin);
-      try {
-        if (fs.existsSync(fullPath)) return fullPath;
-      } catch {
-        // ignore access errors on unreadable directories
-      }
-    }
-  }
-
-  return null;
 }
 
 /**
