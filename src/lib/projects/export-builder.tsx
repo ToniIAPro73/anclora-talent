@@ -40,6 +40,7 @@ import {
 import { isTocChapter } from '@/lib/preview/preview-builder';
 import { chapterBlocksToHtml } from './chapter-html';
 import { htmlToBlocks } from '@/lib/document/from-html';
+import { exportCategoryForFamily } from '@/lib/style-engine/font-registry';
 
 const DEFAULT_EXPORT_CONFIG = DEVICE_PAGINATION_CONFIGS.laptop;
 const PDF_SCALE = 0.75;
@@ -565,26 +566,12 @@ export async function renderProjectExportHtml(
 </html>`;
 }
 
-/**
- * Maps a declared brand family to the closest PDF base-14 font.
- *
- * Font decision (F2): Libre Baskerville / Inter TTFs are not vendored in this
- * repo nor in `pdfjs-dist/standard_fonts` (only Liberation Sans ships there),
- * so `Font.register` is skipped for now and brand families map to base-14:
- * serif display (e.g. Libre Baskerville) → Times, sans body (e.g. Inter) →
- * Helvetica. The EPUB export instead declares the brand families first in the
- * CSS stack with the embedded Liberation Sans as fallback, and the HTML
- * export declares them with system fallbacks.
- */
+/** Maps a family to a PDF base-14 font using the canonical registry category; PDF embedding of registry fonts is not implemented. */
 function toBase14Font(family: string, bold: boolean): string {
-  if (/mono|courier|code/i.test(family)) return bold ? 'Courier-Bold' : 'Courier';
-  if (/sans|inter|helvetica|arial|roboto|verdana/i.test(family)) {
-    return bold ? 'Helvetica-Bold' : 'Helvetica';
-  }
-  if (/baskerville|georgia|garamond|playfair|times|serif|libre/i.test(family)) {
-    return bold ? 'Times-Bold' : 'Times-Roman';
-  }
-  return bold ? 'Helvetica-Bold' : 'Helvetica';
+  const category = exportCategoryForFamily(family);
+  if (category === 'monospace') return bold ? 'Courier-Bold' : 'Courier';
+  if (category === 'sans-serif') return bold ? 'Helvetica-Bold' : 'Helvetica';
+  return bold ? 'Times-Bold' : 'Times-Roman';
 }
 
 /** Resolved PDF theme from composer template overrides (defaults = current styles). */

@@ -21,7 +21,7 @@ import { FootnoteLayout, setFootnoteDecorations, type FootnoteDecorationInput } 
 import { FontSize } from './font-size-extension';
 import { detectMarginPreset, type CompositionSettings } from '@/lib/projects/composition';
 import type { DocumentStyleMap, ResolvedTextStyle } from '@/lib/style-engine/model';
-import { resolveFont } from '@/lib/style-engine/font-registry';
+import { cssFontFamily, resolveFont } from '@/lib/style-engine/font-registry';
 import type { ProjectFontAsset } from '@/lib/style-engine/project-font-assets';
 import type { OriginalDocumentStyleProfile } from '@/lib/projects/source-style-profile';
 import {
@@ -676,7 +676,7 @@ function getCurrentTextStyleAttribute(editor: Editor, attribute: 'fontFamily' | 
   const values = new Set<string>();
   const missing = '__missing__';
   const add = (value: unknown) => {
-    if (typeof value === 'string' && value.trim()) values.add(value.trim());
+    if (typeof value === 'string' && value.trim()) values.add(value.trim().replace(/^['"]|['"]$/g, ''));
   };
 
   if (selection && !selection.empty && typeof editor.state.doc?.nodesBetween === 'function') {
@@ -780,7 +780,7 @@ const AdvancedFontSelector = ({
 
   const selectFont = (fontFamily: string) => {
     loadFont(fontFamily);
-    applyToWordOrSelection((chain) => chain.setFontFamily(fontFamily));
+    applyToWordOrSelection((chain) => chain.setFontFamily(cssFontFamily(fontFamily)));
     setIsOpen(false);
   };
 

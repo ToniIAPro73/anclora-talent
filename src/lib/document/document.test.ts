@@ -74,7 +74,7 @@ describe('htmlToBlocks', () => {
     expect(heading.content[0]).toMatchObject({ type: 'text', marks: [{ type: 'textStyle', fontFamily: 'Calibri', resolvedFontFamily: 'Carlito', fontSizePt: 24 }] });
     const savedHtml = blocksToHtml(blocks);
     expect(savedHtml).toContain('data-source-font-family="Calibri"');
-    expect(savedHtml).toContain('font-family: Carlito');
+    expect(savedHtml).toContain("font-family: 'Carlito'");
     expect(savedHtml).toContain('font-size: 24pt');
     const reloaded = htmlToBlocks(savedHtml);
     expect(reloaded[0]).toMatchObject({ content: [{ marks: [{ type: 'textStyle', fontFamily: 'Calibri', resolvedFontFamily: 'Carlito' }] }] });

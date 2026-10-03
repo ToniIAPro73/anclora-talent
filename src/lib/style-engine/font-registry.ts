@@ -1,8 +1,14 @@
 import { findProjectFontAsset, type ProjectFontAsset } from './project-font-assets';
 
 export type FontCategory = 'serif' | 'sans-serif' | 'monospace' | 'display';
-export type FontLoadingStrategy = 'bundled' | 'google-webfont' | 'system';
+export type FontLoadingStrategy = 'google-webfont' | 'bundled' | 'system';
 export type FontResolutionStatus = 'exact' | 'embedded-exact' | 'embedded-restricted' | 'embedded-invalid' | 'compatible-substitute' | 'fallback' | 'talent-default';
+
+export interface BundledFontFile {
+  weight: '400' | '700';
+  style: 'normal' | 'italic';
+  url: string;
+}
 
 export interface FontCatalogEntry {
   family: string;
@@ -12,6 +18,9 @@ export interface FontCatalogEntry {
   kind: 'webfont' | 'system';
   loadingStrategy: FontLoadingStrategy;
   selectable: boolean;
+  license: string;
+  upstream: string;
+  bundledFiles?: BundledFontFile[];
 }
 
 export interface FontResolution {
@@ -21,41 +30,98 @@ export interface FontResolution {
   available: boolean;
   category: FontCategory;
   reason: string;
+  delivery?: FontLoadingStrategy;
   projectFontAssetId?: string;
 }
 
-/** The single controlled catalog shared by the editor and document resolver. */
+const OFL = 'SIL-OFL-1.1';
+const googleUpstream = (family: string) => `https://fonts.google.com/specimen/${family.replace(/ /g, '+')}`;
+const LIBERATION_UPSTREAM = 'https://github.com/liberationfonts/liberation-fonts/releases/tag/2.1.5';
+
+function googleEntry(
+  family: string,
+  category: FontCategory,
+  variants: string[] = ['400', '700'],
+  aliases?: string[],
+): FontCatalogEntry {
+  return { family, aliases, category, variants, kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true, license: OFL, upstream: googleUpstream(family) };
+}
+
+function liberationEntry(family: string, category: FontCategory, base: string): FontCatalogEntry {
+  const files: BundledFontFile[] = [
+    { weight: '400', style: 'normal', url: `/fonts/liberation/${base}-Regular.woff2` },
+    { weight: '400', style: 'italic', url: `/fonts/liberation/${base}-Italic.woff2` },
+    { weight: '700', style: 'normal', url: `/fonts/liberation/${base}-Bold.woff2` },
+    { weight: '700', style: 'italic', url: `/fonts/liberation/${base}-BoldItalic.woff2` },
+  ];
+  return { family, category, variants: ['400', '700'], kind: 'webfont', loadingStrategy: 'bundled', selectable: true, license: OFL, upstream: LIBERATION_UPSTREAM, bundledFiles: files };
+}
+
+/** The single controlled catalog shared by the editor, selector, normalization, resolver and export classification. */
 export const CONTROLLED_FONT_CATALOG: FontCatalogEntry[] = [
-  { family: 'Inter', variants: ['400', '500', '600', '700'], category: 'sans-serif', kind: 'webfont', loadingStrategy: 'bundled', selectable: true },
-  { family: 'DM Sans', variants: ['400', '500', '600', '700'], category: 'sans-serif', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Fraunces', variants: ['400', '600', '700'], category: 'serif', kind: 'webfont', loadingStrategy: 'bundled', selectable: true },
-  { family: 'Noto Sans', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Noto Serif', variants: ['400', '700'], category: 'serif', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Libre Baskerville', variants: ['400', '700'], category: 'serif', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'EB Garamond', variants: ['400', '700'], category: 'serif', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Playfair Display', variants: ['400', '700', '900'], category: 'serif', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Lora', variants: ['400', '700'], category: 'serif', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Merriweather', variants: ['400', '700'], category: 'serif', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Crimson Text', variants: ['400', '700'], category: 'serif', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Cormorant Garamond', variants: ['400', '700'], category: 'serif', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Carlito', aliases: ['Calibri'], variants: ['400', '700'], category: 'sans-serif', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Caladea', aliases: ['Cambria'], variants: ['400', '700'], category: 'serif', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Roboto', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Open Sans', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Lato', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Montserrat', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Poppins', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'JetBrains Mono', variants: ['400', '700'], category: 'monospace', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'IBM Plex Mono', variants: ['400', '700'], category: 'monospace', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Roboto Mono', variants: ['400', '700'], category: 'monospace', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Bebas Neue', variants: ['400'], category: 'display', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Cinzel', variants: ['400', '700'], category: 'display', kind: 'webfont', loadingStrategy: 'google-webfont', selectable: true },
-  { family: 'Georgia', variants: ['400', '700'], category: 'serif', kind: 'system', loadingStrategy: 'system', selectable: true },
+  // Serif
+  googleEntry('Libre Baskerville', 'serif'),
+  googleEntry('EB Garamond', 'serif'),
+  googleEntry('Crimson Pro', 'serif'),
+  googleEntry('Crimson Text', 'serif'),
+  googleEntry('Cormorant Garamond', 'serif'),
+  googleEntry('Lora', 'serif'),
+  googleEntry('Merriweather', 'serif'),
+  googleEntry('Bitter', 'serif'),
+  googleEntry('Vollkorn', 'serif'),
+  googleEntry('Literata', 'serif'),
+  googleEntry('Alegreya', 'serif'),
+  googleEntry('Spectral', 'serif'),
+  googleEntry('Gentium Plus', 'serif'),
+  googleEntry('Charis SIL', 'serif'),
+  googleEntry('PT Serif', 'serif'),
+  googleEntry('Noto Serif', 'serif'),
+  googleEntry('Source Serif 4', 'serif'),
+  googleEntry('Playfair Display', 'serif'),
+  googleEntry('DM Serif Display', 'serif', ['400']),
+  googleEntry('Fraunces', 'serif', ['400', '600', '700']),
+  googleEntry('Caladea', 'serif'),
+  liberationEntry('Liberation Serif', 'serif', 'LiberationSerif'),
+  // Sans serif
+  googleEntry('Inter', 'sans-serif', ['400', '500', '600', '700']),
+  googleEntry('DM Sans', 'sans-serif', ['400', '500', '600', '700']),
+  googleEntry('Noto Sans', 'sans-serif'),
+  googleEntry('Roboto', 'sans-serif'),
+  googleEntry('Open Sans', 'sans-serif'),
+  googleEntry('Lato', 'sans-serif'),
+  googleEntry('Montserrat', 'sans-serif'),
+  googleEntry('Poppins', 'sans-serif'),
+  googleEntry('Carlito', 'sans-serif'),
+  googleEntry('Manrope', 'sans-serif'),
+  googleEntry('IBM Plex Sans', 'sans-serif'),
+  googleEntry('Fira Sans', 'sans-serif'),
+  googleEntry('Source Sans 3', 'sans-serif'),
+  googleEntry('Alegreya Sans', 'sans-serif'),
+  googleEntry('PT Sans', 'sans-serif'),
+  googleEntry('Arimo', 'sans-serif'),
+  liberationEntry('Liberation Sans', 'sans-serif', 'LiberationSans'),
+  // Monospace
+  googleEntry('JetBrains Mono', 'monospace'),
+  googleEntry('IBM Plex Mono', 'monospace'),
+  googleEntry('Roboto Mono', 'monospace'),
+  googleEntry('Noto Sans Mono', 'monospace'),
+  googleEntry('Source Code Pro', 'monospace'),
+  googleEntry('Fira Mono', 'monospace'),
+  googleEntry('Cousine', 'monospace'),
+  liberationEntry('Liberation Mono', 'monospace', 'LiberationMono'),
+  // Display
+  googleEntry('Bebas Neue', 'display', ['400']),
+  googleEntry('Cinzel', 'display'),
+  // System
+  { family: 'Georgia', category: 'serif', variants: ['400', '700'], kind: 'system', loadingStrategy: 'system', selectable: true, license: 'proprietary-microsoft', upstream: 'system-installed; not distributed by Talent' },
 ];
 
+/** Proprietary source families resolved to an approved compatible family. Source name is always preserved. */
 const COMPATIBLE_SUBSTITUTES: Record<string, string> = {
   calibri: 'Carlito',
   cambria: 'Caladea',
+  arial: 'Arimo',
+  'courier new': 'Cousine',
 };
 
 const normalizeFamily = (family: string) => family.trim().replace(/^['"]|['"]$/g, '').toLowerCase();
@@ -75,8 +141,21 @@ function catalogEntry(family: string): FontCatalogEntry | undefined {
   );
 }
 
+/** Quoted CSS value: unquoted names containing digits (e.g. "Source Serif 4") are dropped by the browser. */
+export function cssFontFamily(family: string): string {
+  return `'${family.trim().replace(/^['"]|['"]$/g, '')}'`;
+}
+
+export function findCatalogEntry(family: string): FontCatalogEntry | undefined {
+  return catalogEntry(family);
+}
+
 export function getSelectableFontCatalog(): FontCatalogEntry[] {
   return CONTROLLED_FONT_CATALOG.filter((entry) => entry.selectable);
+}
+
+export function exportCategoryForFamily(sourceFontFamily: string | null | undefined): FontCategory {
+  return resolveFont(sourceFontFamily).category;
 }
 
 export function resolveFont(sourceFontFamily: string | null | undefined, projectFontAssets?: ProjectFontAsset[]): FontResolution {
@@ -108,6 +187,7 @@ export function resolveFont(sourceFontFamily: string | null | undefined, project
       status: 'exact',
       available: true,
       category: entry.category,
+      delivery: entry.loadingStrategy,
       reason: `The family is present in Talent's controlled catalog (${entry.loadingStrategy}).`,
     };
   }
@@ -121,6 +201,7 @@ export function resolveFont(sourceFontFamily: string | null | undefined, project
       status: 'compatible-substitute',
       available: false,
       category: compatibleEntry.category,
+      delivery: compatibleEntry.loadingStrategy,
       reason: `The source family is not available; ${compatibleEntry.family} is the controlled compatible substitute.`,
     };
   }

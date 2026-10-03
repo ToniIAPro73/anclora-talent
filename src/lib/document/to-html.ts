@@ -14,6 +14,7 @@ import {
   InlineNode,
   SemanticDocument,
 } from './model';
+import { cssFontFamily } from '@/lib/style-engine/font-registry';
 
 function escapeHtml(text: string): string {
   return text
@@ -51,7 +52,7 @@ function serializeInline(nodes: InlineNode[], refs?: ResolvedRefs): string {
             ? ` data-source-font-family="${escapeHtml(mark.fontFamily)}"`
             : '';
           const styles = [
-            renderedFontFamily ? `font-family: ${escapeHtml(renderedFontFamily)}` : '',
+            renderedFontFamily ? `font-family: ${escapeHtml(cssFontFamily(renderedFontFamily))}` : '',
             mark.fontSizePt !== undefined ? `font-size: ${mark.fontSizePt}pt` : '',
             mark.color ? `color: ${escapeHtml(mark.color)}` : '',
             mark.highlight ? `background-color: ${escapeHtml(mark.highlight)}` : '',

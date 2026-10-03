@@ -1,4 +1,5 @@
 import type { EditorialFontWeight } from './model';
+import { getSelectableFontCatalog } from '@/lib/style-engine/font-registry';
 
 export interface NormalizedPdfFont {
   family: string;
@@ -54,26 +55,7 @@ export function normalizePdfFontName(rawName: string): NormalizedPdfFont {
   return { family: cleanFamily(raw), variant, weight, italic };
 }
 
-export const DEFAULT_AVAILABLE_EDITORIAL_FONTS = [
-  'Noto Serif',
-  'Noto Sans',
-  'EB Garamond',
-  'Cormorant Garamond',
-  'Libre Baskerville',
-  'Playfair Display',
-  'Lora',
-  'Merriweather',
-  'Inter',
-  'Montserrat',
-  'DM Sans',
-  'DM Serif Display',
-  'Fraunces',
-  'Cinzel',
-  'Roboto',
-  'Open Sans',
-  'Lato',
-  'Georgia',
-];
+export const DEFAULT_AVAILABLE_EDITORIAL_FONTS: string[] = getSelectableFontCatalog().map((entry) => entry.family);
 
 export function resolveEditorialFont(
   detectedFontFamily: string,

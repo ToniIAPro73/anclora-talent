@@ -1,10 +1,10 @@
 /* stylelint-disable at-rule-no-unknown */
 
-/* Google Fonts for the design-system tokens (Manrope, DM Sans, JetBrains Mono,
-   Montserrat, Cormorant Garamond, Allura). Must stay the first rule in this
-   file: Lightning CSS rejects `@import url(...)` that follows any other rule,
-   and the inlined `tailwindcss` import below expands to thousands of rules. */
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Montserrat:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&family=Allura&display=swap');
+/* Google Fonts for the UI design-system tokens (DM Sans, JetBrains Mono,
+   Montserrat, Cormorant Garamond). Must stay the first rule in this file:
+   Lightning CSS rejects `@import url(...)` that follows any other rule, and
+   the inlined `tailwindcss` import below expands to thousands of rules. */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Montserrat:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap');
 
 @import "tailwindcss";
 
