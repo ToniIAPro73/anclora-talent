@@ -2210,8 +2210,11 @@ async function extractDocxRichContent(buffer: Buffer): Promise<ExtractedImportSo
       { buffer },
       {
         styleMap: [
-          "p[style-name='Title'] => h1:fresh",
-          "p[style-name='Subtitle'] => h2:fresh",
+          // Title and Subtitle are front matter, not chapter boundaries. Keep
+          // them as paragraphs so the structural splitter can detect the
+          // document identity before it processes real Heading 1 chapters.
+          "p[style-name='Title'] => p.docx-title:fresh",
+          "p[style-name='Subtitle'] => p.docx-subtitle:fresh",
           "p[style-name='Heading 1'] => h1:fresh",
           "p[style-name='Heading 2'] => h2:fresh",
           "p[style-name='Heading 3'] => h3:fresh",
@@ -2225,8 +2228,8 @@ async function extractDocxRichContent(buffer: Buffer): Promise<ExtractedImportSo
           "p[style-name='Encabezado 1'] => h1:fresh",
           "p[style-name='Encabezado 2'] => h2:fresh",
           "p[style-name='Encabezado 3'] => h3:fresh",
-          "p[style-name='Título'] => h1:fresh",
-          "p[style-name='Subtítulo'] => h2:fresh",
+          "p[style-name='Título'] => p.docx-title:fresh",
+          "p[style-name='Subtítulo'] => p.docx-subtitle:fresh",
           "p[style-name='TOC Entry'] => p.toc-entry:fresh",
           "p[style-name='TOCEntry'] => p.toc-entry:fresh",
           "p[style-name='TOC 1'] => p.toc-entry:fresh",

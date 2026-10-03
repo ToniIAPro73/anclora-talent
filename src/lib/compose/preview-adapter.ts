@@ -78,6 +78,7 @@ export function projectToSemanticDocument(project: ProjectRecord): {
   document: SemanticDocument;
   chapterStartIds: string[];
   chapterById: Map<string, ProjectChapterInfo>;
+  tocBlockIds: Set<string>;
 } {
   // `document.metadata` is an optional, progressively-enriched object. A
   // project may already have style/reference metadata without carrying the
@@ -104,6 +105,7 @@ export function projectToSemanticDocument(project: ProjectRecord): {
       document: project.document.documentModel,
       chapterStartIds: [],
       chapterById,
+      tocBlockIds: new Set<string>(),
     };
   }
 
@@ -123,11 +125,15 @@ export function projectToSemanticDocument(project: ProjectRecord): {
   // generated ids like `h-1-p` would otherwise collide).
   const blocks = ensureBlockIds(parsedChapters.flat());
   const chapterStartIds: string[] = [];
+  const tocBlockIds = new Set<string>();
   let offset = 0;
   parsedChapters.forEach((chapterBlocks, index) => {
     const firstId = blocks[offset].id;
     chapterStartIds.push(firstId);
     chapterById.set(firstId, chapterInfos[index]);
+    if (chapterInfos[index].isToc) {
+      chapterBlocks.forEach((block) => tocBlockIds.add(block.id));
+    }
     offset += chapterBlocks.length;
   });
 
@@ -135,6 +141,15 @@ export function projectToSemanticDocument(project: ProjectRecord): {
     document: { version: 1, metadata, blocks },
     chapterStartIds,
     chapterById,
+    tocBlockIds,
+  };
+}
+
+function excludeTocChapterEntries(result: ComposeResult, tocBlockIds: Set<string>): ComposeResult {
+  if (tocBlockIds.size === 0) return result;
+  return {
+    ...result,
+    toc: result.toc.filter((entry) => !tocBlockIds.has(entry.blockId)),
   };
 }
 
@@ -242,12 +257,13 @@ export function composeProjectPreview(
   templateOverrides?: Partial<ComposeTemplate>,
 ): ComposedPreview {
   const template = resolveComposeTemplate(project, config, templateOverrides);
-  const { document, chapterStartIds, chapterById } = projectToSemanticDocument(project);
-  const result = compose(document, project.document.rules, template, measurer, {
+  const { document, chapterStartIds, chapterById, tocBlockIds } = projectToSemanticDocument(project);
+  const composedResult = compose(document, project.document.rules, template, measurer, {
     ...(chapterStartIds.length > 0 ? { chapterStartIds } : {}),
     // Printed page numbers include the cover (page 1).
     pageIndexOffset: 1,
   });
+  const result = excludeTocChapterEntries(composedResult, tocBlockIds);
 
   return {
     pages: buildPagesFromResult(project, document, chapterById, result, template, measurer),
@@ -271,8 +287,8 @@ export function composeProjectPreviewIncremental(
   templateOverrides?: Partial<ComposeTemplate>,
 ): ComposedPreview {
   const template = resolveComposeTemplate(project, config, templateOverrides);
-  const { document, chapterStartIds, chapterById } = projectToSemanticDocument(project);
-  const result = composeIncremental(
+  const { document, chapterStartIds, chapterById, tocBlockIds } = projectToSemanticDocument(project);
+  const composedResult = composeIncremental(
     previous.result,
     document,
     changedBlockId,
@@ -284,6 +300,7 @@ export function composeProjectPreviewIncremental(
       pageIndexOffset: 1,
     },
   );
+  const result = excludeTocChapterEntries(composedResult, tocBlockIds);
 
   const changedChapter = result.chapters.find((chapter) => chapter.id === changedBlockId);
   const recomposedFromPage = changedChapter ? changedChapter.startPage + 1 : undefined;

@@ -138,6 +138,32 @@ describe('composeProjectPreview — PreviewPage[] contract', () => {
     expect(result.toc.length).toBeGreaterThan(0);
   });
 
+  it('does not include generated index headings in the rendered TOC', () => {
+    const project = createProject({
+      chapters: [
+        {
+          id: 'toc',
+          order: 1,
+          title: 'Índice',
+          blocks: [{ id: 'btoc', type: 'heading', order: 1, content: '<h1>Índice</h1><h1>Capítulo 1</h1><h1>Capítulo 2</h1>' }],
+        },
+        {
+          id: 'ch1',
+          order: 2,
+          title: 'Capítulo 1',
+          blocks: [{ id: 'b1', type: 'paragraph', order: 1, content: '<h1>Capítulo 1</h1><p>Texto.</p>' }],
+        },
+      ],
+    });
+
+    const { pages } = composeProjectPreview(project, config);
+    const tocPage = pages.find((page) => page.chapterId === 'toc');
+    expect(tocPage?.content).toContain('<span class="toc-title">Capítulo 1</span>');
+    expect(tocPage?.content).not.toContain('<span class="toc-title">Índice</span>');
+    expect(tocPage?.content).not.toContain('<span class="toc-title">Capítulo 2</span>');
+    expect(tocPage?.content?.match(/class="toc-title"/g)).toHaveLength(1);
+  });
+
   it('applies project rules: a table never splits across pages', () => {
     const rows = Array.from({ length: 40 }, (_, i) => `<tr><td>fila ${i}</td></tr>`).join('');
     const filler = `<p>${'palabra '.repeat(400)}</p>`;

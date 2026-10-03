@@ -147,6 +147,29 @@ describe('document import parser isolation', () => {
     expect(result.blocks.length).toBeGreaterThan(0);
   }, 20000);
 
+  test('keeps a DOCX Title paragraph as front matter instead of a chapter', async () => {
+    vi.doMock('server-only', () => ({}));
+    vi.doUnmock('mammoth');
+    vi.doUnmock('word-extractor');
+
+    const { extractImportedDocumentSeed } = await import('./import');
+    const bytes = readFileSync(resolve(process.cwd(), 'fixtures/anclora-talent-early-manuscript.docx'));
+    const file = new File([new Uint8Array(bytes)], 'anclora-talent-early-manuscript.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    });
+
+    const result = await extractImportedDocumentSeed(file);
+
+    expect(result.title).toBe('La casa de las mareas');
+    expect(result.chapters?.map((chapter) => chapter.title)).toEqual([
+      'Índice',
+      'Capítulo uno — La casa de las mareas',
+      'Capítulo dos — El mapa bajo la pintura',
+      'Capítulo tres — La estación del viento',
+      'Capítulo cuatro — La habitación de los nombres',
+    ]);
+  }, 20000);
+
   test('pdf parse failure degrades to an empty shell document instead of aborting', async () => {
     vi.doMock('server-only', () => ({}));
     vi.doMock('pdf-parse', () => ({
