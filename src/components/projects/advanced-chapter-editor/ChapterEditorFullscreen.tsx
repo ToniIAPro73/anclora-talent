@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, Loader2, Save, ZoomIn, ZoomOut, Maximize2, FileText, Clock3, SlidersHorizontal, X } from 'lucide-react';
 import { AdvancedRichTextEditor } from '../AdvancedRichTextEditor';
 import { useChapterEditor } from './useChapterEditor';
@@ -8,12 +8,13 @@ import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { DocumentChapter } from '@/lib/projects/types';
-import type { CompositionSettings } from '@/lib/projects/composition';
+import { type CompositionSettings, detectMarginPreset } from '@/lib/projects/composition';
 import type { DocumentStyleMap } from '@/lib/style-engine/model';
 import type { OriginalDocumentStyleProfile } from '@/lib/projects/source-style-profile';
 import type { SourcePageMap } from '@/lib/projects/source-page-map';
 import type { ProjectFontAsset } from '@/lib/style-engine/project-font-assets';
 import { resolveEditorMargins } from '../editor-margins';
+import { saveProjectCompositionAction } from '@/lib/projects/actions';
 
 interface ChapterEditorFullscreenProps {
   chapters: DocumentChapter[];
@@ -43,7 +44,7 @@ export function ChapterEditorFullscreen({
   defaultFontSize = '16px',
   defaultMargins = { top: 24, bottom: 24, left: 24, right: 24 },
   effectiveFontFamily,
-  composition,
+  composition: initialComposition,
   documentStyleMap,
   compiledCssVariables,
   sourceFooter,
@@ -76,12 +77,40 @@ export function ChapterEditorFullscreen({
   const fontSize = documentStyleMap?.body.fontSizePt
     ? `${documentStyleMap.body.fontSizePt * (96 / 72)}px`
     : preferences.fontSize || defaultFontSize;
+  const [composition, setComposition] = useState<CompositionSettings | null | undefined>(initialComposition);
+  useEffect(() => {
+    setComposition(initialComposition);
+  }, [initialComposition]);
+
+  const customSnapshotMargins = composition?.customSnapshot?.margins ?? (sourceMargins && detectMarginPreset(sourceMargins) === 'custom' ? sourceMargins : null);
+
   const margins = resolveEditorMargins({
     compositionMargins: composition?.margins,
+    customSnapshotMargins,
     sourceMargins,
     userMargins: preferences.margins,
     fallback: defaultMargins,
   });
+
+  const savingCompositionPromiseRef = useRef<Promise<unknown> | null>(null);
+
+  const handleCompositionChange = useCallback((newComp: CompositionSettings) => {
+    setComposition(newComp);
+    const promise = (async () => {
+      try {
+        const formData = new FormData();
+        formData.set('projectId', projectId);
+        formData.set('composition', JSON.stringify(newComp));
+        if (newComp.preset) {
+          formData.set('preset', newComp.preset);
+        }
+        await saveProjectCompositionAction(formData);
+      } catch (err) {
+        console.error('[ChapterEditorFullscreen] failed to save project composition', err);
+      }
+    })();
+    savingCompositionPromiseRef.current = promise;
+  }, [projectId]);
 
   const editor = useChapterEditor({
     chapters,
@@ -98,6 +127,9 @@ export function ChapterEditorFullscreen({
 
   // Handle close with unsaved changes check
   const handleClose = useCallback(async () => {
+    if (savingCompositionPromiseRef.current) {
+      await savingCompositionPromiseRef.current;
+    }
     if (editor.hasChanges) {
       const response = confirm(
         `⚠️ ${copy.unsavedChanges}`
@@ -416,6 +448,7 @@ export function ChapterEditorFullscreen({
               contentZoom={zoom}
               effectiveFontFamily={effectiveFontFamily}
               composition={composition}
+              onCompositionChange={handleCompositionChange}
               documentStyleMap={documentStyleMap}
               projectFontAssets={projectFontAssets}
               compiledCssVariables={compiledCssVariables}

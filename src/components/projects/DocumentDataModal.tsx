@@ -241,7 +241,12 @@ function DocumentDataModalForm({
         : '',
   );
   const [margins, setMargins] = useState<CompositionMargins>(() => baseMargins);
-  const [marginPreset, setMarginPreset] = useState<MarginPresetKey>(() => detectPreset(baseMargins));
+  const detectedMarginPreset = detectPreset(baseMargins);
+  const initialPreset =
+    (project?.document.metadata?.compositionPreset as MarginPresetKey | undefined) ??
+    (base.preset && (base.preset !== 'normal' || detectedMarginPreset === 'normal') ? (base.preset as MarginPresetKey) : undefined) ??
+    detectedMarginPreset;
+  const [marginPreset, setMarginPreset] = useState<MarginPresetKey>(() => initialPreset);
   const [scope, setScope] = useState<'project' | 'global'>('project');
   const [overwriteCustom, setOverwriteCustom] = useState(false);
   const [brandProfileId, setBrandProfileId] = useState(() => project?.brandProfileId ?? '');
@@ -331,6 +336,20 @@ function DocumentDataModalForm({
       settings.lineHeight = parsedHeight;
     }
     settings.margins = margins;
+    settings.preset = marginPreset;
+
+    const existingSnapshot = project?.document.metadata?.customCompositionSnapshot ?? base.customSnapshot;
+    if (marginPreset === 'custom') {
+      settings.customSnapshot = {
+        fontFamily: settings.fontFamily || existingSnapshot?.fontFamily,
+        fontSizePt: settings.fontSizePt ?? existingSnapshot?.fontSizePt,
+        lineHeight: settings.lineHeight ?? existingSnapshot?.lineHeight,
+        margins: settings.margins,
+      };
+    } else if (existingSnapshot) {
+      settings.customSnapshot = existingSnapshot;
+    }
+
     return settings;
   };
 
@@ -338,6 +357,11 @@ function DocumentDataModalForm({
     setMarginPreset(key);
     if (key !== 'custom') {
       setMargins({ ...MARGIN_PRESETS[key] });
+    } else {
+      const restored = project?.document.metadata?.customCompositionSnapshot?.margins ?? sourceMargins;
+      if (restored) {
+        setMargins({ ...restored });
+      }
     }
   };
 
@@ -362,6 +386,7 @@ function DocumentDataModalForm({
           formData.set('projectId', project.id);
           if (scope === 'project') {
             formData.set('composition', serializeCompositionSettings(buildSettings()));
+            formData.set('preset', marginPreset);
           }
           if (brandScope === 'product') {
             formData.set('brandChoice', brandProfileId === '' ? 'none' : 'clear');

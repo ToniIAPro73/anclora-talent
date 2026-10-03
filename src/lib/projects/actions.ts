@@ -20,7 +20,13 @@ import { chapterBlocksToHtml } from './chapter-html';
 import { normalizeHtmlContent } from '@/lib/preview/html-normalize';
 import { stripAutoBreaks } from '@/lib/preview/editor-page-layout';
 import { mergeReimportedSeed } from './reimport';
-import { deriveCompositionOverrides, parseCompositionSettings, SYSTEM_COMPOSITION_DEFAULTS } from './composition';
+import {
+  deriveCompositionOverrides,
+  detectMarginPreset,
+  parseCompositionSettings,
+  SYSTEM_COMPOSITION_DEFAULTS,
+  type CompositionSettings,
+} from './composition';
 import type { CoverDesign, UpdateBackCoverInput, UpdateCoverInput, UpdateDocumentInput } from './types';
 import { defaultEditorPreferences, type EditorPreferences } from '@/lib/ui-preferences/preferences';
 import type { DesignLayer, DesignSurface } from './design-surface';
@@ -260,14 +266,49 @@ export async function createProjectAction(formData: FormData) {
 
     // U6: a composition confirmed in the pre-create modal is persisted into
     // the new project's metadata (merged, never blocking creation).
-    if (compositionRaw) {
+    if (compositionRaw || sessionComposition) {
       try {
-        const composition = parseCompositionSettings(JSON.parse(compositionRaw));
+        const rawSettings = compositionRaw ? JSON.parse(compositionRaw) : sessionComposition;
+        const composition = parseCompositionSettings(rawSettings);
         if (composition) {
           const current = await projectRepository.getProjectById(userId, project.id);
-            const metadata = {
+          const sourceProfile = current?.document.metadata?.originalDocumentStyleProfile;
+          const sourceMarginsPt = sourceProfile?.page.marginsPt;
+          const sourceMarginsPx = sourceMarginsPt
+            ? {
+                top: Math.round(sourceMarginsPt.top * (96 / 72)),
+                bottom: Math.round(sourceMarginsPt.bottom * (96 / 72)),
+                left: Math.round(sourceMarginsPt.left * (96 / 72)),
+                right: Math.round(sourceMarginsPt.right * (96 / 72)),
+              }
+            : undefined;
+
+          const effectiveMargins = composition.margins ?? sourceMarginsPx;
+          const activePreset = composition.preset ?? detectMarginPreset(effectiveMargins);
+
+          let customSnapshot = composition.customSnapshot ?? null;
+          if (!customSnapshot && effectiveMargins) {
+            customSnapshot = {
+              fontFamily: sourceProfile?.body.fontFamily || composition.fontFamily || 'Liberation Serif',
+              fontSizePt: sourceProfile?.body.fontSizePt ?? composition.fontSizePt ?? 11.5,
+              lineHeight: sourceProfile?.body.lineHeight ?? composition.lineHeight ?? 1.22,
+              margins: effectiveMargins,
+            };
+          }
+
+          const derivedComp = deriveCompositionOverrides(composition, sourceProfile);
+          const finalComposition: CompositionSettings = {
+            ...(derivedComp ?? {}),
+            margins: composition.margins ?? effectiveMargins,
+            preset: activePreset,
+            customSnapshot,
+          };
+
+          const metadata = {
             ...(current?.document.metadata ?? { title: project.title }),
-            composition: deriveCompositionOverrides(composition, current?.document.metadata?.originalDocumentStyleProfile),
+            composition: finalComposition,
+            compositionPreset: activePreset,
+            customCompositionSnapshot: customSnapshot,
             ...(current?.document.metadata?.sourceFormat === 'markdown' || current?.document.source?.sourceFormat === 'markdown'
               ? { presentationProvenance: 'USER_OVERRIDE' as const }
               : {}),
@@ -276,6 +317,7 @@ export async function createProjectAction(formData: FormData) {
           console.info('[createProjectAction] composition persisted', {
             userId,
             projectId: project.id,
+            activePreset,
           });
         }
       } catch (compositionError) {
@@ -285,27 +327,38 @@ export async function createProjectAction(formData: FormData) {
           compositionError,
         });
       }
-    } else if (sessionComposition) {
+    } else {
       try {
-        const composition = parseCompositionSettings(sessionComposition);
-        if (composition) {
-          const current = await projectRepository.getProjectById(userId, project.id);
+        const current = await projectRepository.getProjectById(userId, project.id);
+        const sourceProfile = current?.document.metadata?.originalDocumentStyleProfile;
+        if (sourceProfile?.page.marginsPt) {
+          const sourceMarginsPx = {
+            top: Math.round(sourceProfile.page.marginsPt.top * (96 / 72)),
+            bottom: Math.round(sourceProfile.page.marginsPt.bottom * (96 / 72)),
+            left: Math.round(sourceProfile.page.marginsPt.left * (96 / 72)),
+            right: Math.round(sourceProfile.page.marginsPt.right * (96 / 72)),
+          };
+          const preset = detectMarginPreset(sourceMarginsPx);
+          const customSnapshot: CompositionSettings = {
+            fontFamily: sourceProfile.body.fontFamily || 'Liberation Serif',
+            fontSizePt: sourceProfile.body.fontSizePt ?? 11.5,
+            lineHeight: sourceProfile.body.lineHeight ?? 1.22,
+            margins: sourceMarginsPx,
+          };
           const metadata = {
             ...(current?.document.metadata ?? { title: project.title }),
-            composition: deriveCompositionOverrides(composition, current?.document.metadata?.originalDocumentStyleProfile),
+            composition: {
+              margins: sourceMarginsPx,
+              preset,
+              customSnapshot,
+            },
+            compositionPreset: preset,
+            customCompositionSnapshot: customSnapshot,
           };
           await projectRepository.saveDocumentExtras(userId, project.id, { metadata });
-          console.info('[createProjectAction] session composition persisted', {
-            userId,
-            projectId: project.id,
-          });
         }
-      } catch (compositionError) {
-        console.error('[createProjectAction] session composition persistence failed; project kept', {
-          userId,
-          projectId: project.id,
-          compositionError,
-        });
+      } catch (err) {
+        console.error('[createProjectAction] default source composition persistence failed', err);
       }
     }
 
@@ -1048,7 +1101,25 @@ export async function saveProjectCompositionAction(formData: FormData) {
 
   const metadata = { ...(project.document.metadata ?? { title: project.title }) };
   if (hasCompositionField) {
-    metadata.composition = deriveCompositionOverrides(composition, project.document.metadata?.originalDocumentStyleProfile);
+    const rawPreset = String(formData.get('preset') ?? '').trim();
+    const activePreset = rawPreset || composition?.preset || (composition?.margins ? detectMarginPreset(composition.margins) : metadata.compositionPreset || 'normal');
+
+    let customSnapshot = composition?.customSnapshot ?? metadata.customCompositionSnapshot ?? null;
+    if (activePreset === 'custom' && composition?.margins) {
+      customSnapshot = {
+        fontFamily: composition.fontFamily ?? customSnapshot?.fontFamily ?? project.document.metadata?.originalDocumentStyleProfile?.body.fontFamily ?? 'Liberation Serif',
+        fontSizePt: composition.fontSizePt ?? customSnapshot?.fontSizePt ?? project.document.metadata?.originalDocumentStyleProfile?.body.fontSizePt ?? 11.5,
+        lineHeight: composition.lineHeight ?? customSnapshot?.lineHeight ?? project.document.metadata?.originalDocumentStyleProfile?.body.lineHeight ?? 1.22,
+        margins: composition.margins,
+      };
+    }
+    metadata.customCompositionSnapshot = customSnapshot;
+    metadata.compositionPreset = activePreset;
+    metadata.composition = {
+      ...(composition ?? {}),
+      preset: activePreset,
+      customSnapshot,
+    };
     if (project.document.metadata?.sourceFormat === 'markdown') {
       const baseline = project.document.metadata.importPresentationMode === 'materialized'
         ? materializedMarkdownComposition()

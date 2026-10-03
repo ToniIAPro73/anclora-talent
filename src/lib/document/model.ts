@@ -161,6 +161,10 @@ export interface DocumentMetadata {
   language?: string;
   /** U6: per-project composition overrides (hierarchy: project > user > system). */
   composition?: CompositionSettings | null;
+  /** Active layout/margin preset (e.g. 'custom' | 'bookStyle' | 'normal'...). */
+  compositionPreset?: string | null;
+  /** Preserved project-scoped custom composition snapshot. */
+  customCompositionSnapshot?: CompositionSettings | null;
   /** Original immutable manuscript style profile extracted from imported source. */
   originalDocumentStyleProfile?: import('@/lib/projects/source-style-profile').OriginalDocumentStyleProfile | null;
   /** Durable pagination baseline extracted from original source document. */

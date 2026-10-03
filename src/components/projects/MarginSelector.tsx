@@ -10,6 +10,7 @@ const MARGIN_PRESET_LABELS: Record<string, string> = {
   spacious: 'Espacioso',
   bookStyle: 'Estilo libro',
   minimal: 'Mínimo',
+  custom: 'Personalizado',
 };
 
 export interface MarginConfig {
@@ -21,36 +22,47 @@ export interface MarginConfig {
 
 interface MarginSelectorProps {
   margins: MarginConfig;
-  onMarginsChange: (margins: MarginConfig) => void;
+  onMarginsChange: (margins: MarginConfig, presetKey?: string) => void;
+  activePreset?: string;
+  customSnapshot?: MarginConfig | null;
   wordsPerPage?: number;
 }
 
-export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: MarginSelectorProps) {
+export function MarginSelector({
+  margins,
+  onMarginsChange,
+  activePreset,
+  customSnapshot,
+  wordsPerPage,
+}: MarginSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [customMargins, setCustomMargins] = useState(margins);
+  const [customMargins, setCustomMargins] = useState<MarginConfig>(() => customSnapshot ?? margins);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const isCustom = !Object.entries(MARGIN_PRESETS).some(
-    ([, preset]) =>
-      preset.top === margins.top &&
-      preset.bottom === margins.bottom &&
-      preset.left === margins.left &&
-      preset.right === margins.right,
-  );
-  const activePresetKey = Object.entries(MARGIN_PRESETS).find(
+
+  const matchedPresetKey = Object.entries(MARGIN_PRESETS).find(
     ([, preset]) =>
       preset.top === margins.top &&
       preset.bottom === margins.bottom &&
       preset.left === margins.left &&
       preset.right === margins.right,
   )?.[0];
-  const activePresetLabel = activePresetKey
-    ? (MARGIN_PRESET_LABELS[activePresetKey] ?? activePresetKey)
-    : 'Custom';
+
+  const effectiveActivePresetKey = activePreset || (matchedPresetKey ?? 'custom');
+  const isCustom = effectiveActivePresetKey === 'custom';
+  const activePresetLabel = MARGIN_PRESET_LABELS[effectiveActivePresetKey] ?? effectiveActivePresetKey;
 
   const [prevMargins, setPrevMargins] = useState(margins);
   if (margins !== prevMargins) {
     setPrevMargins(margins);
-    setCustomMargins(margins);
+    if (isCustom) {
+      setCustomMargins(margins);
+    }
+  }
+
+  const [prevCustomSnapshot, setPrevCustomSnapshot] = useState(customSnapshot);
+  if (customSnapshot && customSnapshot !== prevCustomSnapshot) {
+    setPrevCustomSnapshot(customSnapshot);
+    setCustomMargins(customSnapshot);
   }
 
   useEffect(() => {
@@ -63,17 +75,18 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const applyPreset = (preset: MarginConfig) => {
-    onMarginsChange(preset);
-    setCustomMargins(preset);
+  const applyPreset = (presetKey: string, preset: MarginConfig) => {
+    onMarginsChange(preset, presetKey);
     setIsOpen(false);
   };
 
   const handleCustomChange = (key: keyof MarginConfig, value: number) => {
     const updated = { ...customMargins, [key]: Math.max(0, value) };
     setCustomMargins(updated);
-    onMarginsChange(updated);
+    onMarginsChange(updated, 'custom');
   };
+
+  const effectiveCustom = customSnapshot ?? customMargins;
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -81,13 +94,13 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
         type="button"
         data-testid="margin-selector-toggle"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex h-9 min-w-[100px] items-center justify-between gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors"
+        className="flex h-9 min-w-[124px] max-w-[160px] items-center justify-between gap-1.5 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] px-2.5 text-xs font-semibold text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors"
         aria-label="Configuración de márgenes"
-        title="Configuración de márgenes"
+        title={`Configuración de márgenes: ${activePresetLabel}`}
       >
-        <Settings className="h-3.5 w-3.5" />
-        <span className="text-[10px]">{isCustom ? 'Custom' : activePresetLabel}</span>
-        <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <Settings className="h-3.5 w-3.5 flex-shrink-0" />
+        <span className="min-w-0 flex-1 truncate text-left text-[11px] font-medium">{activePresetLabel}</span>
+        <ChevronDown className={`h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
@@ -97,23 +110,37 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
             <div className="px-2 text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)]">
               Presets
             </div>
+
+            {/* Custom Preset Option */}
+            <button
+              type="button"
+              data-testid="margin-preset-custom-button"
+              onClick={() => applyPreset('custom', effectiveCustom)}
+              className={`text-left px-3 py-2 rounded-lg text-xs transition-colors ${
+                effectiveActivePresetKey === 'custom'
+                  ? 'bg-[var(--accent)]/20 text-[var(--accent-text)] font-semibold'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <div className="font-semibold">Personalizado</div>
+              <div className="text-[9px] opacity-70">
+                {effectiveCustom.top}px / {effectiveCustom.bottom}px / {effectiveCustom.left}px / {effectiveCustom.right}px
+              </div>
+            </button>
+
             {Object.entries(MARGIN_PRESETS).map(([key, preset]) => (
               <button
                 key={key}
                 type="button"
                 data-testid={`margin-preset-${key.replace(/([A-Z])/g, (m) => `-${m.toLowerCase()}`)}-button`}
-                onClick={() => applyPreset(preset)}
+                onClick={() => applyPreset(key, preset)}
                 className={`text-left px-3 py-2 rounded-lg text-xs transition-colors ${
-                  !isCustom &&
-                  margins.top === preset.top &&
-                  margins.bottom === preset.bottom &&
-                  margins.left === preset.left &&
-                  margins.right === preset.right
+                  effectiveActivePresetKey === key
                     ? 'bg-[var(--accent)]/20 text-[var(--accent-text)] font-semibold'
                     : 'text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]'
                 }`}
               >
-                <div className="font-semibold capitalize">{key}</div>
+                <div className="font-semibold">{MARGIN_PRESET_LABELS[key] ?? key}</div>
                 <div className="text-[9px] opacity-70">
                   {preset.top}px / {preset.bottom}px / {preset.left}px / {preset.right}px
                 </div>

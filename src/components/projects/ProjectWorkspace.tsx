@@ -619,6 +619,7 @@ export function ProjectWorkspace({
       compiledDocument.styleMap.body.fontFamily ||
       (project.document.metadata?.composition?.fontFamily ??
       'Liberation Serif');
+
     return (
       <div
         className="chapter-editor-route"
@@ -629,7 +630,10 @@ export function ProjectWorkspace({
           chapters={project.document.chapters}
           initialChapterIndex={editingChapterIndex}
           projectId={project.id}
-          onClose={() => setEditingChapterId(null)}
+          onClose={() => {
+            setEditingChapterId(null);
+            router.refresh();
+          }}
           effectiveFontFamily={effectiveFontFamily}
           composition={project.document.metadata?.composition ?? null}
           documentStyleMap={compiledDocument.styleMap}

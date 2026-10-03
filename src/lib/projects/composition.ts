@@ -33,9 +33,16 @@ export interface CompositionSettings {
   /** Unitless line-height multiplier (step 0.05). */
   lineHeight?: number;
   margins?: CompositionMargins;
+  /** Active layout/margin preset key (e.g. 'custom' | 'bookStyle' | 'normal'...). */
+  preset?: string;
+  /** Preserved project-scoped custom composition snapshot. */
+  customSnapshot?: CompositionSettings | null;
 }
 
-export type ResolvedComposition = Required<CompositionSettings>;
+export type ResolvedComposition = Required<Omit<CompositionSettings, 'preset' | 'customSnapshot'>> & {
+  preset?: string;
+  customSnapshot?: CompositionSettings | null;
+};
 
 /** Provenance of an extracted composition (drives the modal source badge). */
 export type CompositionSource = 'docx-styles' | 'odt-styles' | 'not-extracted';
@@ -47,6 +54,8 @@ export const SYSTEM_COMPOSITION_DEFAULTS: ResolvedComposition = {
   // Mirrors MARGIN_PRESETS.normal (kept inline so this module stays pure and
   // dependency-free).
   margins: { top: 24, bottom: 24, left: 24, right: 24 },
+  preset: 'normal',
+  customSnapshot: null,
 };
 
 function isFiniteNumber(value: unknown): value is number {
@@ -90,6 +99,15 @@ export function parseCompositionSettings(value: unknown): CompositionSettings | 
   if (margins) {
     settings.margins = margins;
   }
+  if (typeof raw.preset === 'string' && raw.preset.trim()) {
+    settings.preset = raw.preset.trim();
+  }
+  if (raw.customSnapshot && typeof raw.customSnapshot === 'object') {
+    const parsedSnapshot = parseCompositionSettings(raw.customSnapshot);
+    if (parsedSnapshot) {
+      settings.customSnapshot = parsedSnapshot;
+    }
+  }
 
   return Object.keys(settings).length > 0 ? settings : null;
 }
@@ -112,10 +130,14 @@ export function mergeCompositionSettings(
   const fontSizePt = projectComposition?.fontSizePt ?? userDefaults?.fontSizePt;
   const lineHeight = projectComposition?.lineHeight ?? userDefaults?.lineHeight;
   const margins = projectComposition?.margins ?? userDefaults?.margins;
+  const preset = projectComposition?.preset ?? userDefaults?.preset;
+  const customSnapshot = projectComposition?.customSnapshot ?? userDefaults?.customSnapshot;
   if (fontFamily) merged.fontFamily = fontFamily;
   if (fontSizePt !== undefined) merged.fontSizePt = fontSizePt;
   if (lineHeight !== undefined) merged.lineHeight = lineHeight;
   if (margins) merged.margins = margins;
+  if (preset) merged.preset = preset;
+  if (customSnapshot) merged.customSnapshot = customSnapshot;
   return merged;
 }
 
@@ -133,7 +155,35 @@ export function resolveComposition(
     fontSizePt: merged.fontSizePt ?? SYSTEM_COMPOSITION_DEFAULTS.fontSizePt,
     lineHeight: merged.lineHeight ?? SYSTEM_COMPOSITION_DEFAULTS.lineHeight,
     margins: merged.margins ?? SYSTEM_COMPOSITION_DEFAULTS.margins,
+    preset: merged.preset ?? (merged.margins ? detectMarginPreset(merged.margins) : SYSTEM_COMPOSITION_DEFAULTS.preset),
+    customSnapshot: merged.customSnapshot ?? null,
   };
+}
+
+/**
+ * Margin presets in standard pixel space (mirrors MARGIN_PRESETS in page-calculator).
+ */
+export const MARGIN_PRESETS_PX: Record<string, CompositionMargins> = {
+  compact: { top: 12, bottom: 12, left: 16, right: 16 },
+  normal: { top: 24, bottom: 24, left: 24, right: 24 },
+  spacious: { top: 32, bottom: 32, left: 32, right: 32 },
+  bookStyle: { top: 36, bottom: 36, left: 48, right: 36 },
+  minimal: { top: 8, bottom: 8, left: 12, right: 12 },
+};
+
+export function detectMarginPreset(margins?: CompositionMargins | null): string {
+  if (!margins) return 'normal';
+  for (const [key, preset] of Object.entries(MARGIN_PRESETS_PX)) {
+    if (
+      preset.top === margins.top &&
+      preset.bottom === margins.bottom &&
+      preset.left === margins.left &&
+      preset.right === margins.right
+    ) {
+      return key;
+    }
+  }
+  return 'custom';
 }
 
 /**
@@ -162,6 +212,8 @@ export function deriveCompositionOverrides(
   )) {
     result.margins = parsed.margins;
   }
+  if (parsed.preset) result.preset = parsed.preset;
+  if (parsed.customSnapshot) result.customSnapshot = parsed.customSnapshot;
 
   return Object.keys(result).length > 0 ? result : null;
 }

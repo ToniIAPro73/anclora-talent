@@ -2779,29 +2779,39 @@ ul.toc-list > li {
 .ac-text-editor__toolbar-actions[data-toolbar-group]::before {
   content: none;
 }
-.ac-text-editor__font-size-control {
-  width: auto !important;
-  min-width: 64px;
-  padding-inline: .55rem !important;
-  white-space: nowrap;
-}
-.chapter-editor-layout .ac-text-editor__toolbar-section[data-toolbar-group="typography"] > button:first-of-type {
+.ac-text-editor__toolbar-section[data-toolbar-group="typography"] > [data-testid="editor-toolbar-font-family-button"] {
   width: clamp(132px, 14vw, 170px);
-  min-width: 132px;
   max-width: 170px;
-  flex: 0 1 clamp(132px, 14vw, 170px);
+}
+.chapter-editor-layout [data-testid="editor-toolbar-font-family-button"] {
+  width: clamp(124px, 11vw, 146px);
+  min-width: 120px;
+  max-width: 150px;
+  flex: 0 1 clamp(120px, 11vw, 150px);
   white-space: nowrap;
 }
-.chapter-editor-layout .ac-text-editor__toolbar-section[data-toolbar-group="typography"] > [data-testid="editor-toolbar-font-family-button"] > span:first-child {
+.chapter-editor-layout [data-testid="editor-toolbar-font-family-button"] > span:first-child {
   min-width: 0;
   flex: 1 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.chapter-editor-layout .ac-text-editor__font-size-control,
+.chapter-editor-layout [data-testid="editor-toolbar-font-size-button"] {
+  width: auto !important;
+  min-width: 50px !important;
+  max-width: 64px !important;
+  flex: 0 0 auto !important;
+  padding-inline: 0.35rem !important;
+  white-space: nowrap !important;
+}
 .chapter-editor-layout [data-testid="margin-selector-toggle"] {
-  min-width: 92px;
-  padding-inline: .45rem;
+  min-width: 120px;
+  max-width: 142px;
+  flex: 0 1 auto;
+  padding-inline: 0.4rem;
+  white-space: nowrap;
 }
 .chapter-editor-outline__heading {
   display: flex;
@@ -2981,7 +2991,7 @@ ul.toc-list > li {
 .chapter-editor-layout .ac-text-editor__toolbar-actions {
   min-width: 0;
 }
-@media (max-width: 1100px) {
+@media (max-width: 1360px) and (max-width: 1040px) {
   .chapter-editor-layout .ac-text-editor__toolbar {
     flex-wrap: wrap;
     overflow: visible;
@@ -2998,7 +3008,7 @@ ul.toc-list > li {
     max-width: 100%;
   }
 }
-@media (max-width: 1360px) and (min-width: 1101px) {
+@media (max-width: 1100px) {
   .chapter-editor-layout .ac-text-editor__toolbar {
     flex-wrap: wrap;
     overflow: visible;

@@ -19,7 +19,7 @@ import { ResizableImage } from './resizable-image-extension';
 import { PageBreak } from './page-break-extension';
 import { FootnoteLayout, setFootnoteDecorations, type FootnoteDecorationInput } from './footnote-layout-extension';
 import { FontSize } from './font-size-extension';
-import type { CompositionSettings } from '@/lib/projects/composition';
+import { detectMarginPreset, type CompositionSettings } from '@/lib/projects/composition';
 import type { DocumentStyleMap, ResolvedTextStyle } from '@/lib/style-engine/model';
 import { resolveFont } from '@/lib/style-engine/font-registry';
 import type { ProjectFontAsset } from '@/lib/style-engine/project-font-assets';
@@ -993,6 +993,8 @@ const MenuBar = ({
   setDevice,
   isPhysicalMobile,
   margins,
+  activePreset,
+  customSnapshot,
   onMarginsChange,
   onFontSizeChange,
   wordsPerPage,
@@ -1007,7 +1009,9 @@ const MenuBar = ({
   isPhysicalMobile: boolean;
   setDevice: (device: 'mobile' | 'tablet' | 'desktop') => void;
   margins: MarginConfig;
-  onMarginsChange: (margins: MarginConfig) => void;
+  activePreset?: string;
+  customSnapshot?: MarginConfig | null;
+  onMarginsChange: (margins: MarginConfig, presetKey?: string) => void;
   onFontSizeChange: (size: string) => void;
   wordsPerPage?: number;
   effectiveFontFamily?: string;
@@ -1226,7 +1230,13 @@ const MenuBar = ({
           unavailableTitle={inlineUnavailableTitle}
           documentStyleMap={documentStyleMap}
         />
-        <MarginSelector margins={margins} onMarginsChange={onMarginsChange} wordsPerPage={wordsPerPage} />
+        <MarginSelector
+          margins={margins}
+          activePreset={activePreset}
+          customSnapshot={customSnapshot}
+          onMarginsChange={onMarginsChange}
+          wordsPerPage={wordsPerPage}
+        />
       </div>
 
       <div className="ac-text-editor__toolbar-section" data-toolbar-group="inline">
@@ -1492,6 +1502,7 @@ export function AdvancedRichTextEditor({
   contentZoom = 100,
   effectiveFontFamily,
   composition,
+  onCompositionChange,
   documentStyleMap,
   projectFontAssets = [],
   compiledCssVariables,
@@ -1509,6 +1520,7 @@ export function AdvancedRichTextEditor({
   contentZoom?: number;
   effectiveFontFamily?: string;
   composition?: CompositionSettings | null;
+  onCompositionChange?: (composition: CompositionSettings) => void;
   documentStyleMap?: DocumentStyleMap | null;
   projectFontAssets?: ProjectFontAsset[];
   compiledCssVariables?: Record<string, string> | null;
@@ -1552,17 +1564,24 @@ export function AdvancedRichTextEditor({
         right: documentStyleMap.page.marginsPt.right * (96 / 72),
       }
     : undefined;
+  const customSnapshotMargins = composition?.customSnapshot?.margins ?? sourceMargins ?? null;
   const initialMargins = resolveEditorMargins({
     compositionMargins: composition?.margins,
+    customSnapshotMargins,
     sourceMargins,
     userMargins: preferences.margins,
   });
   const [prevCompositionMargins, setPrevCompositionMargins] = useState(composition?.margins);
   const [prevPreferencesLoaded, setPrevPreferencesLoaded] = useState(arePreferencesLoaded);
   const [margins, setMargins] = useState<MarginConfig>(initialMargins);
+
+  const initialPreset = composition?.preset || (sourceMargins ? 'custom' : detectMarginPreset(initialMargins) || 'normal');
+  const [activePreset, setActivePreset] = useState<string>(initialPreset);
+  const [prevCompositionPreset, setPrevCompositionPreset] = useState(composition?.preset);
+
   if (arePreferencesLoaded !== prevPreferencesLoaded) {
     setPrevPreferencesLoaded(arePreferencesLoaded);
-    if (arePreferencesLoaded && !composition?.margins) {
+    if (arePreferencesLoaded && !composition?.margins && !sourceMargins) {
       setMargins(initialMargins);
     }
   }
@@ -1570,6 +1589,12 @@ export function AdvancedRichTextEditor({
     setPrevCompositionMargins(composition?.margins);
     if (composition?.margins) {
       setMargins(composition.margins);
+    }
+  }
+  if (composition?.preset !== prevCompositionPreset) {
+    setPrevCompositionPreset(composition?.preset);
+    if (composition?.preset) {
+      setActivePreset(composition.preset);
     }
   }
 
@@ -1832,13 +1857,24 @@ export function AdvancedRichTextEditor({
     [setPreferences, viewMode]
   );
 
-  // Save preferences when margins change
+  // Save composition when margins change (project-scoped, not global preferences)
   const handleMarginsChange = useCallback(
-    (newMargins: MarginConfig) => {
+    (newMargins: MarginConfig, newPresetKey?: string) => {
       setMargins(newMargins);
-      setPreferences({ margins: newMargins });
+      const effectivePreset = newPresetKey || detectMarginPreset(newMargins) || 'custom';
+      setActivePreset(effectivePreset);
+      if (onCompositionChange) {
+        const nextCustomSnapshot = composition?.customSnapshot ?? (customSnapshotMargins ? { margins: customSnapshotMargins } : null);
+        const nextComp: CompositionSettings = {
+          ...(composition ?? {}),
+          margins: newMargins,
+          preset: effectivePreset,
+          customSnapshot: nextCustomSnapshot,
+        };
+        onCompositionChange(nextComp);
+      }
     },
-    [setPreferences]
+    [composition, customSnapshotMargins, onCompositionChange]
   );
 
   // Save preferences when font size changes
@@ -2285,6 +2321,8 @@ export function AdvancedRichTextEditor({
         isPhysicalMobile={viewportLayout.physicalDevice === 'mobile'}
         setDevice={handleDeviceChange}
         margins={margins}
+        activePreset={activePreset}
+        customSnapshot={customSnapshotMargins}
         onMarginsChange={handleMarginsChange}
         onFontSizeChange={handleFontSizeChange}
         wordsPerPage={wordsPerPage}

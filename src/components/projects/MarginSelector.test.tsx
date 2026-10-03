@@ -73,4 +73,65 @@ describe('MarginSelector', () => {
 
     expect(onSubmit).not.toHaveBeenCalled();
   });
+
+  test('displays Personalizado label and provides selectable Personalizado preset button', () => {
+    const onMarginsChange = vi.fn();
+    const customSnapshot = { top: 38, bottom: 38, left: 94, right: 83 };
+
+    const { rerender } = render(
+      <MarginSelector
+        margins={customSnapshot}
+        customSnapshot={customSnapshot}
+        activePreset="custom"
+        onMarginsChange={onMarginsChange}
+      />,
+    );
+
+    // Button shows Personalizado
+    const toggle = screen.getByTestId('margin-selector-toggle');
+    expect(toggle).toHaveTextContent('Personalizado');
+
+    // Open dropdown
+    fireEvent.click(toggle);
+
+    // Personalizado option exists
+    const customOption = screen.getByTestId('margin-preset-custom-button');
+    expect(customOption).toBeInTheDocument();
+    expect(customOption).toHaveTextContent('Personalizado');
+    expect(customOption).toHaveTextContent('38px / 38px / 94px / 83px');
+
+    // Select Estilo libro
+    const bookOption = screen.getByTestId('margin-preset-book-style-button');
+    expect(bookOption).toBeInTheDocument();
+    fireEvent.click(bookOption);
+
+    expect(onMarginsChange).toHaveBeenCalledWith(
+      { top: 36, bottom: 36, left: 48, right: 36 },
+      'bookStyle',
+    );
+
+    // Now re-render with bookStyle active, but retaining customSnapshot
+    rerender(
+      <MarginSelector
+        margins={{ top: 36, bottom: 36, left: 48, right: 36 }}
+        customSnapshot={customSnapshot}
+        activePreset="bookStyle"
+        onMarginsChange={onMarginsChange}
+      />,
+    );
+
+    // Toggle shows Estilo libro
+    expect(screen.getByTestId('margin-selector-toggle')).toHaveTextContent('Estilo libro');
+
+    // Open dropdown again
+    fireEvent.click(screen.getByTestId('margin-selector-toggle'));
+
+    // Personalizado still exists!
+    const customOptionAgain = screen.getByTestId('margin-preset-custom-button');
+    expect(customOptionAgain).toBeInTheDocument();
+
+    // Select Personalizado to restore original custom snapshot
+    fireEvent.click(customOptionAgain);
+    expect(onMarginsChange).toHaveBeenLastCalledWith(customSnapshot, 'custom');
+  });
 });
