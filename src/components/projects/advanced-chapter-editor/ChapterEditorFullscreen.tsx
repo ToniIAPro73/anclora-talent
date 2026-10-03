@@ -12,6 +12,7 @@ import type { CompositionSettings } from '@/lib/projects/composition';
 import type { DocumentStyleMap } from '@/lib/style-engine/model';
 import type { OriginalDocumentStyleProfile } from '@/lib/projects/source-style-profile';
 import type { SourcePageMap } from '@/lib/projects/source-page-map';
+import type { ProjectFontAsset } from '@/lib/style-engine/project-font-assets';
 
 interface ChapterEditorFullscreenProps {
   chapters: DocumentChapter[];
@@ -28,6 +29,7 @@ interface ChapterEditorFullscreenProps {
   compiledCssVariables?: Record<string, string> | null;
   sourceFooter?: OriginalDocumentStyleProfile['footer'] | null;
   sourcePageMap?: SourcePageMap | null;
+  projectFontAssets?: ProjectFontAsset[];
 }
 
 export function ChapterEditorFullscreen({
@@ -45,6 +47,7 @@ export function ChapterEditorFullscreen({
   compiledCssVariables,
   sourceFooter,
   sourcePageMap,
+  projectFontAssets = [],
 }: ChapterEditorFullscreenProps) {
   const { locale } = useUiPreferences();
   const copy = resolveLocaleMessages(locale).editor;
@@ -408,6 +411,7 @@ export function ChapterEditorFullscreen({
               effectiveFontFamily={effectiveFontFamily}
               composition={composition}
               documentStyleMap={documentStyleMap}
+              projectFontAssets={projectFontAssets}
               compiledCssVariables={compiledCssVariables}
               sourceFooter={sourceFooter}
               canonicalPages={editor.canonicalPages}

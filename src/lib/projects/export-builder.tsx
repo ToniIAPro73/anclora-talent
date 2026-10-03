@@ -338,6 +338,7 @@ export async function renderProjectExportHtml(
     brandProfile: project.brandProfile,
     userOverrides: project.document.metadata?.userOverrides,
     composition: templateOverrides,
+    projectFontAssets: project.document.metadata?.projectFontAssets ?? [],
   });
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);
@@ -988,6 +989,7 @@ export async function buildProjectPdfWithConfig(
     brandProfile: project.brandProfile,
     userOverrides: project.document.metadata?.userOverrides,
     composition: templateOverrides,
+    projectFontAssets: project.document.metadata?.projectFontAssets ?? [],
   });
   const theme = resolvePdfBrandTheme(templateOverrides, profile, styleMap);
   const palette = COVER_PALETTE_COLORS[project.cover.palette] ?? COVER_PALETTE_COLORS.obsidian;
@@ -1287,6 +1289,7 @@ export async function buildProjectDocxBuffer(
     brandProfile: project.brandProfile,
     userOverrides: project.document.metadata?.userOverrides,
     composition: templateOverrides,
+    projectFontAssets: project.document.metadata?.projectFontAssets ?? [],
   });
   const coverImageUrl = await buildCoverExportImageDataUrl(project);
   const backCoverImageUrl = await buildBackCoverExportImageDataUrl(project);

@@ -2,6 +2,7 @@ import 'server-only';
 export { supportedImportAccept } from './import-config';
 import { buildImportedDocumentSeed, extractTextFromBuffer, isScannedPdfSource, normalizeText } from './import-pipeline';
 import { createSourceModel, detectSourceFormat, parseOdtSource, sourceModelToHtml, type CanonicalSourceDocument } from './source-model';
+import { extractProjectFontAssets } from '@/lib/style-engine/project-font-assets';
 
 export { buildImportedDocumentSeed } from './import-pipeline';
 
@@ -25,6 +26,8 @@ export async function extractImportedDocumentSeed(
   const mimeType = file.type || 'application/octet-stream';
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
+  const sourceFormat = detectSourceFormat(fileName, mimeType);
+  const projectFontAssets = await extractProjectFontAssets(sourceFormat ?? undefined, buffer);
 
   // U4: a parser failure (corrupt docx/pdf, mammoth/pdf-parse error) must
   // never abort the import. Degrade to an empty shell document and flag the
@@ -34,7 +37,6 @@ export async function extractImportedDocumentSeed(
   let parseFailed = false;
   try {
     extractedSource = await extractTextFromBuffer(fileName, mimeType, buffer);
-    const sourceFormat = detectSourceFormat(fileName, mimeType);
     if (sourceFormat === 'odt') {
       sourceModel = await parseOdtSource(buffer);
       extractedSource = {
@@ -101,5 +103,5 @@ export async function extractImportedDocumentSeed(
     manuscriptTypeOverride: options.manuscriptTypeOverride,
   });
 
-  return { ...seed, ocrAppliedMode, parseFailed };
+  return { ...seed, projectFontAssets, ocrAppliedMode, parseFailed };
 }

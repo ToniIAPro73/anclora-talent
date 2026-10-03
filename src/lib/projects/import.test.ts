@@ -170,6 +170,19 @@ describe('document import parser isolation', () => {
     ]);
   }, 20000);
 
+  test('ingests embedded DOCX fonts as project-scoped assets and keeps references separate', async () => {
+    vi.doUnmock('mammoth');
+    vi.doUnmock('word-extractor');
+    const { extractImportedDocumentSeed } = await import('./import');
+    const embeddedBytes = readFileSync(resolve(process.cwd(), 'fixtures/anclora-talent-embedded-font.docx'));
+    const missingBytes = readFileSync(resolve(process.cwd(), 'fixtures/anclora-talent-missing-font.docx'));
+    const embedded = await extractImportedDocumentSeed(new File([embeddedBytes], 'embedded.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }));
+    const missing = await extractImportedDocumentSeed(new File([missingBytes], 'missing.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }));
+    expect(embedded.projectFontAssets).toHaveLength(1);
+    expect(embedded.projectFontAssets?.[0].sourceFamily).toBe('Anclora QA Serif');
+    expect(missing.projectFontAssets).toEqual([]);
+  }, 30000);
+
   test('pdf parse failure degrades to an empty shell document instead of aborting', async () => {
     vi.doMock('server-only', () => ({}));
     vi.doMock('pdf-parse', () => ({

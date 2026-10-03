@@ -228,6 +228,7 @@ function resolveComposeTemplate(
     brandProfile: project.brandProfile ?? null,
     userOverrides: metadata?.userOverrides ?? [],
     composition: metadata?.composition ?? null,
+    projectFontAssets: metadata?.projectFontAssets ?? [],
   });
 
   const referenceTemplate: Partial<ComposeTemplate> = {

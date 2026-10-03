@@ -22,6 +22,7 @@ import { FontSize } from './font-size-extension';
 import type { CompositionSettings } from '@/lib/projects/composition';
 import type { DocumentStyleMap, ResolvedTextStyle } from '@/lib/style-engine/model';
 import { resolveFont } from '@/lib/style-engine/font-registry';
+import type { ProjectFontAsset } from '@/lib/style-engine/project-font-assets';
 import type { OriginalDocumentStyleProfile } from '@/lib/projects/source-style-profile';
 import {
   Bold,
@@ -630,6 +631,7 @@ const AdvancedFontSelector = ({
   unavailableTitle,
   effectiveFontFamily,
   documentStyleMap,
+  projectFontAssets = [],
 }: {
   editor: Editor;
   applyToWordOrSelection: ApplyToSelectionTarget;
@@ -637,10 +639,11 @@ const AdvancedFontSelector = ({
   unavailableTitle: string;
   effectiveFontFamily?: string;
   documentStyleMap?: DocumentStyleMap | null;
+  projectFontAssets?: ProjectFontAsset[];
 }) => {
   const { locale } = useUiPreferences();
   const copy = resolveLocaleMessages(locale).editor;
-  const { fonts, loadFont } = useGoogleFonts();
+  const { fonts, loadFont } = useGoogleFonts(projectFontAssets);
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -689,10 +692,10 @@ const AdvancedFontSelector = ({
           ? documentStyleMap.headings.h3.fontResolution
           : blockType === 'h4'
           ? documentStyleMap.headings.h4.fontResolution
-          : documentStyleMap.body.fontResolution) ?? resolveFont(inspectedSourceFont)
-      : resolveFont(inspectedSourceFont)
+          : documentStyleMap.body.fontResolution) ?? resolveFont(inspectedSourceFont, projectFontAssets)
+      : resolveFont(inspectedSourceFont, projectFontAssets)
     : null;
-  const isFontSubstituted = Boolean(inspectedResolution && inspectedResolution.status !== 'exact' && inspectedResolution.sourceFamily);
+  const isFontSubstituted = Boolean(inspectedResolution && ['compatible-substitute', 'fallback', 'embedded-restricted', 'embedded-invalid'].includes(inspectedResolution.status) && inspectedResolution.sourceFamily);
 
   const selectFont = (fontFamily: string) => {
     loadFont(fontFamily);
@@ -702,7 +705,7 @@ const AdvancedFontSelector = ({
 
   return (
     <>
-      <div className="min-w-0">
+      <div className="flex min-w-0 items-center gap-1">
         <button
         ref={buttonRef}
         type="button"
@@ -716,13 +719,15 @@ const AdvancedFontSelector = ({
         <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
         </button>
         {isFontSubstituted && inspectedResolution && (
-          <div
-            className="mt-1 max-w-[240px] text-[10px] leading-3 text-[var(--text-secondary)]"
-            data-testid="editor-font-resolution-warning"
-            role="note"
+          <button
+            type="button"
+            className="inline-flex h-9 w-7 items-center justify-center rounded-[10px] text-xs text-[var(--text-secondary)] hover:bg-[var(--hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+            data-testid="editor-font-resolution-indicator"
+            aria-label={`${inspectedResolution.sourceFamily} no está disponible. Talent utiliza ${inspectedResolution.resolvedFamily || 'la fuente alternativa'}.`}
+            title={`Fuente original: ${inspectedResolution.sourceFamily}\nVisualización en Talent: ${inspectedResolution.resolvedFamily || 'fallback'}`}
           >
-            {inspectedResolution.sourceFamily} no está disponible. Se muestra con {inspectedResolution.resolvedFamily}.
-          </div>
+            ⚠
+          </button>
         )}
       </div>
 
@@ -993,6 +998,7 @@ const MenuBar = ({
   wordsPerPage,
   effectiveFontFamily,
   documentStyleMap,
+  projectFontAssets = [],
 }: {
   editor: Editor;
   viewMode: string;
@@ -1006,6 +1012,7 @@ const MenuBar = ({
   wordsPerPage?: number;
   effectiveFontFamily?: string;
   documentStyleMap?: DocumentStyleMap | null;
+  projectFontAssets?: ProjectFontAsset[];
 }) => {
   const { locale } = useUiPreferences();
   const copy = resolveLocaleMessages(locale).editor;
@@ -1202,6 +1209,7 @@ const MenuBar = ({
           unavailableTitle={inlineUnavailableTitle}
           effectiveFontFamily={effectiveFontFamily}
           documentStyleMap={documentStyleMap}
+          projectFontAssets={projectFontAssets}
         />
         <FontSizeSelector
           editor={editor}
@@ -1485,6 +1493,7 @@ export function AdvancedRichTextEditor({
   effectiveFontFamily,
   composition,
   documentStyleMap,
+  projectFontAssets = [],
   compiledCssVariables,
   sourceFooter,
   canonicalPages,
@@ -1501,6 +1510,7 @@ export function AdvancedRichTextEditor({
   effectiveFontFamily?: string;
   composition?: CompositionSettings | null;
   documentStyleMap?: DocumentStyleMap | null;
+  projectFontAssets?: ProjectFontAsset[];
   compiledCssVariables?: Record<string, string> | null;
   sourceFooter?: OriginalDocumentStyleProfile['footer'] | null;
   canonicalPages?: RenderedCanonicalPage[];
@@ -1527,6 +1537,7 @@ export function AdvancedRichTextEditor({
     effectiveFontFamily?.trim() ||
     composition?.fontFamily?.trim() ||
     'Liberation Serif';
+  useGoogleFonts(projectFontAssets);
   const sourcePageWidth = documentStyleMap?.page.widthPt
     ? documentStyleMap.page.widthPt * (96 / 72)
     : undefined;
@@ -2270,6 +2281,7 @@ export function AdvancedRichTextEditor({
         wordsPerPage={wordsPerPage}
         effectiveFontFamily={effectiveFont}
         documentStyleMap={documentStyleMap}
+        projectFontAssets={projectFontAssets}
       />
 
       <div

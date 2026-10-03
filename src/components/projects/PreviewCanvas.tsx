@@ -16,6 +16,7 @@ import { PageRenderer } from './PreviewModal';
 import { createCanvasMeasurer } from '@/lib/compose/measure';
 import { composeProjectPreview } from '@/lib/compose/preview-adapter';
 import { buildPaginationConfig } from '@/lib/preview/device-configs';
+import { resolveDocumentStyles } from '@/lib/style-engine/cascade-resolver';
 
 export function PreviewCanvas({
   copy,
@@ -33,6 +34,14 @@ export function PreviewCanvas({
   );
   const cover = composed.pages.find((page) => page.type === 'cover');
   const firstContent = composed.pages.find((page) => page.type === 'content');
+  const previewStyleMap = useMemo(() => resolveDocumentStyles({
+    sourceStyleProfile: project.document.metadata?.originalDocumentStyleProfile ?? null,
+    referenceProfile: project.document.metadata?.referenceEditorialProfile ?? null,
+    brandProfile: project.brandProfile ?? null,
+    userOverrides: project.document.metadata?.userOverrides ?? [],
+    composition: project.document.metadata?.composition ?? null,
+    projectFontAssets: project.document.metadata?.projectFontAssets ?? [],
+  }), [project]);
 
   // Show modal when requested
   if (showModal) {
@@ -75,6 +84,7 @@ export function PreviewCanvas({
         <article
           className="preview-page-content min-h-[320px] overflow-hidden rounded-lg border border-[var(--border-subtle)] bg-[var(--page-surface)] p-6 text-[var(--text-primary)]"
           data-testid="preview-inline-content"
+          style={{ fontFamily: previewStyleMap.body.resolvedFontFamily ?? previewStyleMap.body.fontFamily }}
         >
           {firstContent?.content ? (
             <div dangerouslySetInnerHTML={{ __html: firstContent.content }} />

@@ -180,6 +180,7 @@ export function createProjectRecord(userId: string, input: CreateProjectInput): 
               importPresentationMode: imported?.importPresentationMode,
               presentationProvenance: imported?.presentationProvenance,
             presentationProfileId: imported?.presentationProfileId,
+            projectFontAssets: imported?.projectFontAssets ?? [],
             sourcePageMap,
             referenceEditorialProfile: input.referenceEditorialProfile ?? null,
             }

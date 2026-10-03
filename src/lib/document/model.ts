@@ -183,6 +183,8 @@ export interface DocumentMetadata {
   presentationProfileId?: string;
   /** Document-global source page membership; absent for legacy/recomposed projects. */
   sourcePageMap?: SourcePageMap | null;
+  /** Fonts embedded by the source document and scoped to this project. */
+  projectFontAssets?: import('@/lib/style-engine/project-font-assets').ProjectFontAsset[];
 }
 
 export interface SemanticDocument {

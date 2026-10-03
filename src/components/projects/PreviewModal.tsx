@@ -72,6 +72,7 @@ export function PreviewModal({
       referenceProfile: project.document.metadata?.referenceEditorialProfile ?? null,
       brandProfile: project.brandProfile ?? null,
       userOverrides: project.document.metadata?.userOverrides ?? [],
+      projectFontAssets: project.document.metadata?.projectFontAssets ?? [],
     });
   }, [project]);
 

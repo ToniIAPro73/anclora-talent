@@ -5,6 +5,7 @@ import type { OriginalDocumentStyleProfile } from '@/lib/projects/source-style-p
 import { resolveDocumentStyles } from './cascade-resolver';
 import { buildFontFamilyStack } from './font-stack';
 import type { CompiledDocument, DocumentStyleMap, UserStyleOverride } from './model';
+import type { ProjectFontAsset } from './project-font-assets';
 
 const renderFamily = (style: { fontFamily: string; resolvedFontFamily?: string }) => style.resolvedFontFamily ?? style.fontFamily;
 
@@ -17,6 +18,7 @@ export interface CompileDocumentOptions {
   referenceProfile?: ReferenceEditorialProfile | null;
   brandProfile?: BrandProfile | null;
   userOverrides?: UserStyleOverride[];
+  projectFontAssets?: ProjectFontAsset[];
 }
 
 export function generateCssVariables(styleMap: DocumentStyleMap): Record<string, string> {
@@ -124,6 +126,7 @@ export function compileDocument({
   referenceProfile,
   brandProfile,
   userOverrides = [],
+  projectFontAssets = [],
 }: CompileDocumentOptions): CompiledDocument {
   const effectiveDoc: SemanticDocument = document ?? semanticDoc ?? {
     version: 1,
@@ -136,6 +139,7 @@ export function compileDocument({
     referenceProfile,
     brandProfile,
     userOverrides,
+    projectFontAssets,
   });
 
   const cssVariables = generateCssVariables(styleMap);

@@ -11,6 +11,7 @@ import type {
   UserStyleOverride,
 } from './model';
 import { resolveFont } from './font-registry';
+import type { ProjectFontAsset } from './project-font-assets';
 
 export const SYSTEM_DEFAULTS = {
   page: {
@@ -112,6 +113,7 @@ function resolveTextStyle(
   brandFamily?: string | null,
   brandColor?: string | null,
   userOverride?: Partial<ResolvedTextStyle> | null,
+  projectFontAssets?: ProjectFontAsset[],
 ): ResolvedTextStyle {
   const result: ResolvedTextStyle = { ...fallback };
 
@@ -164,7 +166,7 @@ function resolveTextStyle(
   }
 
   const sourceFontFamily = sourceStyle?.sourceFontFamily ?? sourceStyle?.fontFamily ?? fallback.fontFamily;
-  const fontResolution = resolveFont(result.fontFamily);
+  const fontResolution = resolveFont(result.fontFamily, projectFontAssets);
   return {
     ...result,
     sourceFontFamily,
@@ -173,8 +175,8 @@ function resolveTextStyle(
   };
 }
 
-function withFontResolution<T extends ResolvedTextStyle>(style: T, sourceFontFamily = style.sourceFontFamily ?? style.fontFamily): T {
-  const fontResolution = resolveFont(style.fontFamily);
+function withFontResolution<T extends ResolvedTextStyle>(style: T, sourceFontFamily = style.sourceFontFamily ?? style.fontFamily, projectFontAssets?: ProjectFontAsset[]): T {
+  const fontResolution = resolveFont(style.fontFamily, projectFontAssets);
   return {
     ...style,
     sourceFontFamily,
@@ -208,12 +210,14 @@ export function resolveDocumentStyles({
   brandProfile,
   userOverrides = [],
   composition,
+  projectFontAssets = [],
 }: {
   sourceStyleProfile?: OriginalDocumentStyleProfile | null;
   referenceProfile?: ReferenceEditorialProfile | null;
   brandProfile?: BrandProfile | null;
   userOverrides?: UserStyleOverride[];
   composition?: LegacyCompositionSettings | null;
+  projectFontAssets?: ProjectFontAsset[];
 }): DocumentStyleMap {
   // Extract Legacy Composition fallbacks
   const legacyBodyFont = composition?.bodyFontFamily || composition?.fontFamily || null;
@@ -310,6 +314,7 @@ export function resolveDocumentStyles({
     brandBodyFont,
     brandInk,
     { ...compositionBodyOverride, ...roleOverrides.get('body') },
+    projectFontAssets,
   );
 
   if (sourceStyleProfile && composition?.margins) {
@@ -333,6 +338,7 @@ export function resolveDocumentStyles({
     brandDisplayFont,
     headingColor,
     roleOverrides.get('h1'),
+    projectFontAssets,
   );
 
   const h2 = resolveTextStyle(
@@ -343,6 +349,7 @@ export function resolveDocumentStyles({
     brandDisplayFont,
     brandAccent ?? brandInk,
     roleOverrides.get('h2'),
+    projectFontAssets,
   );
 
   const h3 = resolveTextStyle(
@@ -353,6 +360,7 @@ export function resolveDocumentStyles({
     brandDisplayFont,
     brandInk,
     roleOverrides.get('h3'),
+    projectFontAssets,
   );
 
   const h4 = resolveTextStyle(
@@ -363,6 +371,7 @@ export function resolveDocumentStyles({
     brandDisplayFont,
     brandInk,
     roleOverrides.get('h4'),
+    projectFontAssets,
   );
 
   // 4. Quotes & Callouts
@@ -374,6 +383,7 @@ export function resolveDocumentStyles({
     brandBodyFont,
     brandInk,
     roleOverrides.get('quote'),
+    projectFontAssets,
   );
   const quote = {
     ...baseQuote,
@@ -396,7 +406,7 @@ export function resolveDocumentStyles({
   const sourceTable = sourceStyleProfile?.table;
   const table = {
     header: {
-      ...withFontResolution(body),
+      ...withFontResolution(body, undefined, projectFontAssets),
       fontFamily: sourceTable?.headerFontFamily ?? body.fontFamily,
       fontSizePt: sourceTable?.headerFontSizePt ?? body.fontSizePt,
       color: sourceTable?.headerColor ?? body.color,
@@ -406,7 +416,7 @@ export function resolveDocumentStyles({
         (brandProfile ? getBrandColor(brandProfile, 'paper')?.hex ?? '#F9FAFB' : '#F9FAFB'),
     },
     cell: {
-      ...withFontResolution(body),
+      ...withFontResolution(body, undefined, projectFontAssets),
       fontFamily: sourceTable?.bodyFontFamily ?? body.fontFamily,
       fontSizePt: sourceTable?.bodyFontSizePt ?? body.fontSizePt,
       color: sourceTable?.bodyColor ?? body.color,
@@ -415,12 +425,12 @@ export function resolveDocumentStyles({
     borderWidthPt: 1,
     bandBackgroundColor: sourceTable?.bandBackground,
   };
-  table.header = withFontResolution(table.header, sourceTable?.headerFontFamily ?? body.sourceFontFamily ?? body.fontFamily);
-  table.cell = withFontResolution(table.cell, sourceTable?.bodyFontFamily ?? body.sourceFontFamily ?? body.fontFamily);
+  table.header = withFontResolution(table.header, sourceTable?.headerFontFamily ?? body.sourceFontFamily ?? body.fontFamily, projectFontAssets);
+  table.cell = withFontResolution(table.cell, sourceTable?.bodyFontFamily ?? body.sourceFontFamily ?? body.fontFamily, projectFontAssets);
 
   // 7. Footnotes
   const footnote: ResolvedTextStyle = {
-    ...withFontResolution(body),
+    ...withFontResolution(body, undefined, projectFontAssets),
     fontSizePt: Math.max(8, body.fontSizePt - 2),
     lineHeight: 1.3,
   };
@@ -428,7 +438,7 @@ export function resolveDocumentStyles({
     Object.assign(footnote, sourceStyleProfile.footnote);
     delete (footnote as ResolvedTextStyle & { separator?: unknown }).separator;
   }
-  Object.assign(footnote, withFontResolution(footnote));
+  Object.assign(footnote, withFontResolution(footnote, undefined, projectFontAssets));
 
   // 7b. Editorial kicker (small label above a heading, e.g. "INTRODUCCIÓN")
   const kickerFallback: ResolvedTextStyle = {
@@ -447,18 +457,19 @@ export function resolveDocumentStyles({
     null,
     null,
     roleOverrides.get('kicker'),
+    projectFontAssets,
   );
 
   // 8. Headers & Footers
   const header: ResolvedTextStyle & { borderBottom?: boolean } = {
-    ...withFontResolution(body),
+    ...withFontResolution(body, undefined, projectFontAssets),
     fontSizePt: 8.5,
     color: '#6B7280',
     borderBottom: referenceProfile?.header?.enabled,
   };
 
   const footer: ResolvedTextStyle & { borderTop?: boolean } = {
-    ...withFontResolution(body),
+    ...withFontResolution(body, undefined, projectFontAssets),
     fontSizePt: 8.5,
     color: '#6B7280',
     borderTop: referenceProfile?.footer?.enabled,

@@ -306,6 +306,7 @@ export interface ImportedDocumentSeed {
   sourcePageMap?: SourcePageMap | null;
   originalDocumentStyleProfile?: import('./source-style-profile').OriginalDocumentStyleProfile | null;
   sourcePaginationBaseline?: import('./source-style-profile').SourcePaginationBaseline | null;
+  projectFontAssets?: import('@/lib/style-engine/project-font-assets').ProjectFontAsset[];
 }
 
 export interface CreateProjectInput {

@@ -1792,6 +1792,7 @@ export function buildImportedDocumentSeed({
   importPresentationMode,
   presentationProvenance,
   presentationProfileId,
+  projectFontAssets,
   manuscriptTypeOverride,
 }: {
   fileName: string;
@@ -1803,6 +1804,7 @@ export function buildImportedDocumentSeed({
   importPresentationMode?: ImportPresentationMode;
   presentationProvenance?: PresentationProvenance;
   presentationProfileId?: string;
+  projectFontAssets?: import('@/lib/style-engine/project-font-assets').ProjectFontAsset[];
   /** M5 — explicit preset from the analysis panel selector; leave unset to
    *  keep today's auto-detected chapter-splitting behavior unchanged. */
   manuscriptTypeOverride?: ManuscriptType;
@@ -2016,6 +2018,7 @@ export function buildImportedDocumentSeed({
     importPresentationMode: importPresentationMode ?? (detectSourceFormat(fileName, mimeType) === 'markdown' ? 'source-semantic' : undefined),
     presentationProvenance: presentationProvenance ?? (detectSourceFormat(fileName, mimeType) === 'markdown' ? 'TALENT_DEFAULT' : undefined),
     presentationProfileId,
+    projectFontAssets,
   };
 }
 

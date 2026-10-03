@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { isLocallySubstitutedFont } from '@/lib/style-engine/font-stack';
 import { getSelectableFontCatalog, type FontCatalogEntry } from '@/lib/style-engine/font-registry';
+import type { ProjectFontAsset } from '@/lib/style-engine/project-font-assets';
 
 export type GoogleFont = FontCatalogEntry;
 
@@ -14,11 +15,36 @@ const GOOGLE_FONTS_API_KEY_PATTERN = /^AIza[0-9A-Za-z\-_]{20,}$/;
 
 const DEFAULT_FONTS: GoogleFont[] = getSelectableFontCatalog();
 
-export function useGoogleFonts() {
+export function useGoogleFonts(projectFontAssets: ProjectFontAsset[] = []) {
   const [fonts, setFonts] = useState<GoogleFont[]>(DEFAULT_FONTS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadedFontFamilies, setLoadedFontFamilies] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (typeof FontFace === 'undefined') return;
+    let cancelled = false;
+    const loadEmbedded = async () => {
+      for (const asset of projectFontAssets.filter((item) => item.usable && item.dataBase64)) {
+        const source = `url(data:font/${asset.format};base64,${asset.dataBase64})`;
+        const face = new FontFace(asset.sourceFamily, source, {
+          weight: asset.variant === 'bold' || asset.variant === 'bold-italic' ? '700' : '400',
+          style: asset.variant === 'italic' || asset.variant === 'bold-italic' ? 'italic' : 'normal',
+        });
+        try {
+          await face.load();
+          if (!cancelled) {
+            document.fonts.add(face);
+            setLoadedFontFamilies((prev) => new Set([...prev, asset.sourceFamily]));
+          }
+        } catch (error) {
+          console.warn('[useGoogleFonts] Embedded project font failed to load', { family: asset.sourceFamily, error });
+        }
+      }
+    };
+    void loadEmbedded();
+    return () => { cancelled = true; };
+  }, [projectFontAssets]);
 
   // Fetch fuentes de Google Fonts API (opcional, usa defaults si no está configurado)
   useEffect(() => {

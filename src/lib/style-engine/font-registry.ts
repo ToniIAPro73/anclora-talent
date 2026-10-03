@@ -1,6 +1,8 @@
+import { findProjectFontAsset, type ProjectFontAsset } from './project-font-assets';
+
 export type FontCategory = 'serif' | 'sans-serif' | 'monospace' | 'display';
 export type FontLoadingStrategy = 'bundled' | 'google-webfont' | 'system';
-export type FontResolutionStatus = 'exact' | 'compatible-substitute' | 'fallback' | 'talent-default';
+export type FontResolutionStatus = 'exact' | 'embedded-exact' | 'embedded-restricted' | 'embedded-invalid' | 'compatible-substitute' | 'fallback' | 'talent-default';
 
 export interface FontCatalogEntry {
   family: string;
@@ -19,6 +21,7 @@ export interface FontResolution {
   available: boolean;
   category: FontCategory;
   reason: string;
+  projectFontAssetId?: string;
 }
 
 /** The single controlled catalog shared by the editor and document resolver. */
@@ -76,7 +79,7 @@ export function getSelectableFontCatalog(): FontCatalogEntry[] {
   return CONTROLLED_FONT_CATALOG.filter((entry) => entry.selectable);
 }
 
-export function resolveFont(sourceFontFamily: string | null | undefined): FontResolution {
+export function resolveFont(sourceFontFamily: string | null | undefined, projectFontAssets?: ProjectFontAsset[]): FontResolution {
   const sourceFamily = sourceFontFamily?.trim() || '';
   if (!sourceFamily) {
     return {
@@ -87,6 +90,14 @@ export function resolveFont(sourceFontFamily: string | null | undefined): FontRe
       category: 'serif',
       reason: 'No source family was provided; Talent default applies.',
     };
+  }
+
+  const embedded = projectFontAssets?.find((asset) => normalizeFamily(asset.sourceFamily) === normalizeFamily(sourceFamily));
+  if (embedded) {
+    if (embedded.usable && findProjectFontAsset(projectFontAssets, sourceFamily)) {
+      return { sourceFamily, resolvedFamily: embedded.sourceFamily, status: 'embedded-exact', available: true, category: categoryForFamily(sourceFamily), reason: 'The source font was validated and loaded from a project-scoped embedded asset.', projectFontAssetId: embedded.id };
+    }
+    return { sourceFamily, resolvedFamily: '', status: embedded.permission === 'restricted' ? 'embedded-restricted' : 'embedded-invalid', available: false, category: categoryForFamily(sourceFamily), reason: `The embedded source font is not usable (${embedded.permission}/${embedded.validation}).` };
   }
 
   const entry = catalogEntry(sourceFamily);

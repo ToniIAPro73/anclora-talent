@@ -253,6 +253,7 @@ export function ProjectWorkspace({
       referenceProfile: project.document.metadata?.referenceEditorialProfile ?? null,
       brandProfile: project.brandProfile ?? null,
       userOverrides: project.document.metadata?.userOverrides ?? [],
+      projectFontAssets: project.document.metadata?.projectFontAssets ?? [],
     });
   }, [project.id, project.title, project.document.documentModel, project.document.metadata, project.brandProfile]);
 
@@ -635,6 +636,7 @@ export function ProjectWorkspace({
           compiledCssVariables={compiledDocument.cssVariables}
           sourceFooter={project.document.metadata?.originalDocumentStyleProfile?.footer ?? null}
           sourcePageMap={project.document.metadata?.sourcePageMap ?? null}
+          projectFontAssets={project.document.metadata?.projectFontAssets ?? []}
         />
       </div>
     );
