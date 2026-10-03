@@ -132,7 +132,10 @@ export function projectToSemanticDocument(project: ProjectRecord): {
     chapterStartIds.push(firstId);
     chapterById.set(firstId, chapterInfos[index]);
     if (chapterInfos[index].isToc) {
-      chapterBlocks.forEach((block) => tocBlockIds.add(block.id));
+      // `htmlToBlocks` parses each chapter independently, so its generated
+      // ids can collide across chapters. Use the deduplicated flat slice,
+      // not the pre-normalization chapter blocks, when excluding TOC data.
+      blocks.slice(offset, offset + chapterBlocks.length).forEach((block) => tocBlockIds.add(block.id));
     }
     offset += chapterBlocks.length;
   });

@@ -15,8 +15,11 @@ describe('template seeds — time to first draft (F2)', () => {
       const tocTexts = result.toc.map((entry) => entry.text);
 
       expect(result.pages.length).toBeGreaterThan(0);
-      // Every chapter's guide heading lands in the generated TOC.
+      // Every content chapter's guide heading lands in the generated TOC. The
+      // Índice chapter is the generated TOC container and is intentionally not
+      // listed inside itself.
       for (const chapter of template.chapters) {
+        if (chapter.title === 'Índice') continue;
         expect(tocTexts).toContain(chapter.title);
       }
     }
