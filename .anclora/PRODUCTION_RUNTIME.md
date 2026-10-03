@@ -45,14 +45,19 @@ DATABASE_REGION=eu-central-1 (AWS c-3.eu-central-1.aws.neon.tech)
 DATABASE_ENDPOINT=ep-old-lake-aldzrl3x-pooler.c-3.eu-central-1.aws.neon.tech
 DATABASE_ENDPOINT_UNPOOLED=ep-old-lake-aldzrl3x.c-3.eu-central-1.aws.neon.tech
 DATABASE_RUNTIME_SCOPE=production
-LOCAL_DATABASE_SCOPE=production
+LOCAL_DATABASE_SCOPE=qa-e2e
 
-Local development intentionally connects to the Production database.
+PRODUCTION  -> Neon production project (neon-anclora-talent, branch main)
+PREVIEW/STAGING -> endpoint audit pending (see Preview section)
+LOCAL/E2E   -> Neon project anclora-talent-qa (separate project, isolated quota)
 
-This is the Anclora operating model.
+LOCAL/E2E MUST NOT USE PRODUCTION DATABASE FOR AUTOMATED QA.
+Automated E2E suites run against anclora-talent-qa only. Production data
+and the production endpoint are never used by local QA or test runs.
 
-Do not create or switch to a Development, Preview, Staging, ephemeral,
-local or alternate database unless Toni explicitly requests it.
+Creating the separate QA project was explicitly authorized by Toni after the
+production Neon project reached its monthly network-transfer limit (project-scoped).
+Do not add branches inside neon-anclora-talent as a QA workaround.
 
 ## 4. Database Migration Contract
 
