@@ -32,7 +32,7 @@ editorial publications, covers, and books.
 When starting work in this repository, agents must read sources in this exact order:
 
 1. Current explicit instruction from Toni (highest operational priority).
-2. Workspace agent policy (`../../ANCLORA_WORKSPACE_AGENT_POLICY.md` — currently `WORKSPACE_POLICY_STATUS=PENDING_GLOBAL_INSTALLATION`, with `../../AGENTS.md` as interim workspace guidance).
+2. Workspace agent policy (`../../ANCLORA_WORKSPACE_AGENT_POLICY.md`, canonical and active; `../../AGENTS.md` is only its workspace adapter).
 3. Repository agent rules (`../AGENTS.md`).
 4. `.anclora/AGENT_PROJECT_CONTEXT.md` (this file — bootstrap, index, routing, and authority map).
 5. `.anclora/PRODUCTION_RUNTIME.md` (canonical runtime contract: topology, database, migrations, QA, Git).
@@ -200,7 +200,7 @@ Essential operational invariants:
 - **Runtime & DB**: Read [`.anclora/PRODUCTION_RUNTIME.md`](PRODUCTION_RUNTIME.md). Local development connects to the Production database. Do not create development or ephemeral databases.
 - **Migrations**: Schema changes are authorized via `npm run db:push` (`SCHEMA_PUSH` strategy). Confirmations are not required; backward compatibility is preferred.
 - **QA Testing**: Locate, reuse, or create the persistent production QA user. Never delete it after testing.
-- **Git Flow**: Work directly on `development`. Do not create feature branches by default. Commit after validation and push to `origin/development`, then STOP. Do not promote without explicit approval.
+- **Git Flow**: Work directly on `development`. Do not create feature branches by default. Commit after validation and push to `origin/development`, then STOP by default. If the current user explicitly requests promotion, evaluate that new release operation under the workspace `Canonical Promotion Policy`; do not treat a prior mission-scoped `No promotion` instruction as permanent.
 - **Governance**: Elevation to AOS is required for multi-repo or constitutional changes.
 
 ## 9. Machine-Readable Bootstrap
@@ -237,5 +237,5 @@ MEMORY_CLASSIFICATION=HISTORICAL_NON_NORMATIVE
 INFRASTRUCTURE_INFERENCE_ALLOWED=false
 CROSS_PRODUCT_INFRASTRUCTURE_ASSUMPTION_ALLOWED=false
 
-WORKSPACE_POLICY_STATUS=PENDING_GLOBAL_INSTALLATION
+WORKSPACE_POLICY_STATUS=ACTIVE
 ```

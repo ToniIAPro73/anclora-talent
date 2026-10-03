@@ -31,7 +31,7 @@ Todo desarrollo en este repo sigue la metodología SDD unificada del ecosistema 
 - Rama base de desarrollo: **`development`**
 - Los agentes crean ramas desde `development`: `feat/<agente>-<descripcion>`, `fix/...`, `chore/...`
 - Las ramas se mergean de vuelta a `development` via PR
-- Promoción manual: `development → staging → production → main`
+- Promoción manual y explícitamente autorizada: `development → staging → production → main`; por defecto no se promueve.
 - Nunca commitear directamente en `main`, `staging` ni `production`
 
 ### Principios de desarrollo (Specboot)
