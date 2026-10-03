@@ -13,6 +13,7 @@ import type { DocumentStyleMap } from '@/lib/style-engine/model';
 import type { OriginalDocumentStyleProfile } from '@/lib/projects/source-style-profile';
 import type { SourcePageMap } from '@/lib/projects/source-page-map';
 import type { ProjectFontAsset } from '@/lib/style-engine/project-font-assets';
+import { resolveEditorMargins } from '../editor-margins';
 
 interface ChapterEditorFullscreenProps {
   chapters: DocumentChapter[];
@@ -75,7 +76,12 @@ export function ChapterEditorFullscreen({
   const fontSize = documentStyleMap?.body.fontSizePt
     ? `${documentStyleMap.body.fontSizePt * (96 / 72)}px`
     : preferences.fontSize || defaultFontSize;
-  const margins = sourceMargins || preferences.margins || defaultMargins;
+  const margins = resolveEditorMargins({
+    compositionMargins: composition?.margins,
+    sourceMargins,
+    userMargins: preferences.margins,
+    fallback: defaultMargins,
+  });
 
   const editor = useChapterEditor({
     chapters,
@@ -119,7 +125,7 @@ export function ChapterEditorFullscreen({
 
   const handleZoomChange = useCallback((nextZoom: number) => {
     setZoom(Math.max(50, Math.min(150, nextZoom)));
-  }, []);
+  }, [setZoom]);
 
   // Handle keyboard shortcuts
   useEffect(() => {

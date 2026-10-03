@@ -4,6 +4,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Settings, ChevronDown } from 'lucide-react';
 import { MARGIN_PRESETS } from '@/lib/projects/page-calculator';
 
+const MARGIN_PRESET_LABELS: Record<string, string> = {
+  compact: 'Compacto',
+  normal: 'Normal',
+  spacious: 'Espacioso',
+  bookStyle: 'Estilo libro',
+  minimal: 'Mínimo',
+};
+
 export interface MarginConfig {
   top: number;
   bottom: number;
@@ -28,6 +36,16 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
       preset.left === margins.left &&
       preset.right === margins.right,
   );
+  const activePresetKey = Object.entries(MARGIN_PRESETS).find(
+    ([, preset]) =>
+      preset.top === margins.top &&
+      preset.bottom === margins.bottom &&
+      preset.left === margins.left &&
+      preset.right === margins.right,
+  )?.[0];
+  const activePresetLabel = activePresetKey
+    ? (MARGIN_PRESET_LABELS[activePresetKey] ?? activePresetKey)
+    : 'Custom';
 
   const [prevMargins, setPrevMargins] = useState(margins);
   if (margins !== prevMargins) {
@@ -68,7 +86,7 @@ export function MarginSelector({ margins, onMarginsChange, wordsPerPage }: Margi
         title="Configuración de márgenes"
       >
         <Settings className="h-3.5 w-3.5" />
-        <span className="text-[10px]">{isCustom ? 'Custom' : 'Normal'}</span>
+        <span className="text-[10px]">{isCustom ? 'Custom' : activePresetLabel}</span>
         <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 

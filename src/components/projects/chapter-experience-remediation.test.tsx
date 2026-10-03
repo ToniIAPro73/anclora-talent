@@ -165,6 +165,11 @@ describe('ANCLORA TALENT — CHAPTER EXPERIENCE REMEDIATION', () => {
       expect(globalsCss).toContain('.chapter-editor-layout .ac-text-editor__toolbar-actions .ac-text-editor__button');
       expect(globalsCss).toMatch(/width:\s*1\.85rem/);
     });
+
+    test('toolbar reflows before desktop widths clip the trailing controls', () => {
+      expect(globalsCss).toContain('@media (max-width: 1360px)');
+      expect(globalsCss).toMatch(/@media \(max-width: 1360px\)[\s\S]*?\.chapter-editor-layout \.ac-text-editor__toolbar[\s\S]*?flex-wrap:\s*wrap/);
+    });
   });
 
   describe('Objective D: Two-Page / Facing-Pages Mode', () => {

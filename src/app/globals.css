@@ -2998,6 +2998,23 @@ ul.toc-list > li {
     max-width: 100%;
   }
 }
+@media (max-width: 1360px) and (min-width: 1101px) {
+  .chapter-editor-layout .ac-text-editor__toolbar {
+    flex-wrap: wrap;
+    overflow: visible;
+    align-content: flex-start;
+  }
+  .chapter-editor-layout .ac-text-editor__toolbar-section,
+  .chapter-editor-layout .ac-text-editor__toolbar-actions {
+    flex: 0 1 auto;
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+  .chapter-editor-layout .ac-text-editor__toolbar-section[data-toolbar-group="typography"] > [data-testid="editor-toolbar-font-family-button"] {
+    width: min(170px, 100%);
+    max-width: 100%;
+  }
+}
 @media (max-width: 767px) {
   .chapter-editor-layout .ac-text-editor__toolbar-section,
   .chapter-editor-layout .ac-text-editor__toolbar-actions {

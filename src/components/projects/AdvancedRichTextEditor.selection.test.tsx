@@ -431,6 +431,25 @@ describe('AdvancedRichTextEditor selection behavior', () => {
       .toEqual(['10', '14']);
   });
 
+  test('keeps caret and selection feedback visible on the canonical edit surface', () => {
+    const editor = createMockEditor(createSelection('Hello', 0));
+    useEditorMock.mockReturnValue(editor);
+
+    render(
+      <AdvancedRichTextEditor
+        defaultContent="<p>Shared boundary content</p>"
+        onUpdate={vi.fn()}
+        canonicalPages={[
+          { globalPageNumber: 10, sectionIds: [], footnoteIds: [], contentSlices: [], mappingStatus: 'EXACT', html: '<p>Page 10</p>' },
+        ]}
+      />,
+    );
+
+    const editSurface = screen.getByTestId('advanced-tiptap-content').parentElement;
+    expect(editSurface).not.toHaveClass('opacity-0');
+    expect(editSurface).toHaveAttribute('data-editor-node', 'live-edit-surface');
+  });
+
   test('does not render later visible pages as preview-only placeholders', () => {
     const editor = createMockEditor(createSelection('Hello', 0));
     useEditorMock.mockReturnValue(editor);

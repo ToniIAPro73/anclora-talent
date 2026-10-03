@@ -4,6 +4,19 @@ import { describe, expect, test, vi } from 'vitest';
 import { MarginSelector } from './MarginSelector';
 
 describe('MarginSelector', () => {
+  test('shows the active non-normal preset instead of a generic Normal label', () => {
+    const onMarginsChange = vi.fn();
+
+    render(
+      <MarginSelector
+        margins={{ top: 36, bottom: 36, left: 48, right: 36 }}
+        onMarginsChange={onMarginsChange}
+      />,
+    );
+
+    expect(screen.getByTestId('margin-selector-toggle')).toHaveTextContent('Estilo libro');
+  });
+
   test('syncs controlled margins and keeps dropdown actions non-submitting', () => {
     const onMarginsChange = vi.fn();
     const onSubmit = vi.fn((event: React.FormEvent<HTMLFormElement>) => event.preventDefault());

@@ -67,7 +67,6 @@ import {
 } from './editor-selection-utils';
 import {
   calculateWordsPerPage,
-  MARGIN_PRESETS,
   type PageCalculationConfig,
 } from '@/lib/projects/page-calculator';
 import { countRenderablePages, paginateContent } from '@/lib/preview/content-paginator';
@@ -81,6 +80,7 @@ import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { resolveEditorViewportLayout, calculateSpreadFitFactor } from './editor-viewport';
 import { cssPxToPt, formatPointSize, ptToCssPx } from '@/lib/document/units';
 import type { RenderedCanonicalPage } from '@/lib/projects/canonical-page-renderer';
+import { resolveEditorMargins } from './editor-margins';
 
 type ChainedCommand = ReturnType<Editor['chain']>;
 type ApplyToSelectionTarget = (command: (chain: ChainedCommand) => ChainedCommand) => boolean;
@@ -1516,7 +1516,7 @@ export function AdvancedRichTextEditor({
   canonicalPages?: RenderedCanonicalPage[];
 }) {
   const { locale } = useUiPreferences();
-  const { preferences, setPreferences } = useEditorPreferences();
+  const { preferences, isLoaded: arePreferencesLoaded, setPreferences } = useEditorPreferences();
   const [physicalWidth, setPhysicalWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 0));
   const [containerInnerWidth, setContainerInnerWidth] = useState(0);
   const isSyncingExternalContentRef = useRef(false);
@@ -1552,9 +1552,20 @@ export function AdvancedRichTextEditor({
         right: documentStyleMap.page.marginsPt.right * (96 / 72),
       }
     : undefined;
-  const initialMargins = composition?.margins ?? sourceMargins ?? preferences.margins ?? MARGIN_PRESETS.normal;
+  const initialMargins = resolveEditorMargins({
+    compositionMargins: composition?.margins,
+    sourceMargins,
+    userMargins: preferences.margins,
+  });
   const [prevCompositionMargins, setPrevCompositionMargins] = useState(composition?.margins);
+  const [prevPreferencesLoaded, setPrevPreferencesLoaded] = useState(arePreferencesLoaded);
   const [margins, setMargins] = useState<MarginConfig>(initialMargins);
+  if (arePreferencesLoaded !== prevPreferencesLoaded) {
+    setPrevPreferencesLoaded(arePreferencesLoaded);
+    if (arePreferencesLoaded && !composition?.margins) {
+      setMargins(initialMargins);
+    }
+  }
   if (composition?.margins !== prevCompositionMargins) {
     setPrevCompositionMargins(composition?.margins);
     if (composition?.margins) {
@@ -2785,6 +2796,32 @@ export function AdvancedRichTextEditor({
                 height: 100%;
                 overflow: hidden;
               }
+              /*
+               * Canonical pages are the visual projection for imported documents. The live
+               * TipTap surface still owns browser selection and commands, but must not paint a
+               * second copy of the document over that projection. Keep its glyphs transparent
+               * while exposing the browser caret and selection highlight to the writer.
+               */
+              .canonical-editor-live-edit-surface {
+                color: transparent;
+                caret-color: var(--accent, #0ea5e9);
+                -webkit-text-fill-color: transparent;
+              }
+              .canonical-editor-live-edit-surface .ProseMirror,
+              .canonical-editor-live-edit-surface .ProseMirror * {
+                color: transparent !important;
+                background-color: transparent !important;
+                -webkit-text-fill-color: transparent !important;
+                text-shadow: none !important;
+              }
+              .canonical-editor-live-edit-surface .ProseMirror img {
+                visibility: hidden;
+              }
+              .canonical-editor-live-edit-surface .ProseMirror ::selection {
+                background: color-mix(in srgb, var(--accent, #0ea5e9) 36%, transparent);
+                color: transparent;
+                -webkit-text-fill-color: transparent;
+              }
             `}</style>
             <div
               className="grid"
@@ -2839,7 +2876,7 @@ export function AdvancedRichTextEditor({
                     <div className="flow-content-root ProseMirror h-full overflow-hidden" dangerouslySetInnerHTML={{ __html: canonicalPages[pageIndex]?.html ?? '' }} />
                   </div>
                 ))}
-                <div className="absolute inset-0 opacity-0 pointer-events-auto" aria-hidden="true">
+                <div className="canonical-editor-live-edit-surface absolute inset-0 pointer-events-auto" data-editor-node="live-edit-surface">
                   <EditorContent editor={editor} />
                 </div>
               </div>
