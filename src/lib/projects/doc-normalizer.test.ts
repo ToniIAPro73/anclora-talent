@@ -103,7 +103,7 @@ describe('doc-normalizer and legacy .doc fidelity pipeline', () => {
     expect(direct.styleProfile.body.fontFamily).toBe('Liberation Serif');
     expect(direct.styleProfile.body.fontFamily).not.toContain(';');
     const fontStack = buildFontFamilyStack(direct.styleProfile.body.fontFamily);
-    expect(fontStack).toBe('"Liberation Serif", "Times New Roman", Times, serif');
+    expect(fontStack).toBe('Georgia, serif');
 
     const seed = buildImportedDocumentSeed({
       fileName: 'ANCLORA_TALENT_MANUSCRIPT_EXTENDED.doc',

@@ -21,6 +21,7 @@ import { FootnoteLayout, setFootnoteDecorations, type FootnoteDecorationInput } 
 import { FontSize } from './font-size-extension';
 import type { CompositionSettings } from '@/lib/projects/composition';
 import type { DocumentStyleMap, ResolvedTextStyle } from '@/lib/style-engine/model';
+import { resolveFont } from '@/lib/style-engine/font-registry';
 import type { OriginalDocumentStyleProfile } from '@/lib/projects/source-style-profile';
 import {
   Bold,
@@ -677,6 +678,21 @@ const AdvancedFontSelector = ({
 
   const fontState = getCurrentTextStyleAttribute(editor, 'fontFamily');
   const currentFont = fontState.mixed ? '—' : fontState.value || effectiveFont;
+  const inspectedSourceFont = fontState.mixed ? '' : fontState.value || roleFont;
+  const inspectedResolution = inspectedSourceFont
+    ? documentStyleMap && !fontState.value
+      ? (blockType === 'h1'
+          ? documentStyleMap.headings.h1.fontResolution
+          : blockType === 'h2'
+          ? documentStyleMap.headings.h2.fontResolution
+          : blockType === 'h3'
+          ? documentStyleMap.headings.h3.fontResolution
+          : blockType === 'h4'
+          ? documentStyleMap.headings.h4.fontResolution
+          : documentStyleMap.body.fontResolution) ?? resolveFont(inspectedSourceFont)
+      : resolveFont(inspectedSourceFont)
+    : null;
+  const isFontSubstituted = Boolean(inspectedResolution && inspectedResolution.status !== 'exact' && inspectedResolution.sourceFamily);
 
   const selectFont = (fontFamily: string) => {
     loadFont(fontFamily);
@@ -686,7 +702,8 @@ const AdvancedFontSelector = ({
 
   return (
     <>
-      <button
+      <div className="min-w-0">
+        <button
         ref={buttonRef}
         type="button"
         onClick={() => isAvailable && setIsOpen(!isOpen)}
@@ -697,7 +714,17 @@ const AdvancedFontSelector = ({
       >
         <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{currentFont}</span>
         <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
+        </button>
+        {isFontSubstituted && inspectedResolution && (
+          <div
+            className="mt-1 max-w-[240px] text-[10px] leading-3 text-[var(--text-secondary)]"
+            data-testid="editor-font-resolution-warning"
+            role="note"
+          >
+            {inspectedResolution.sourceFamily} no está disponible. Se muestra con {inspectedResolution.resolvedFamily}.
+          </div>
+        )}
+      </div>
 
       <EditorPopover
         anchorRef={buttonRef}
@@ -1495,6 +1522,7 @@ export function AdvancedRichTextEditor({
     device === 'mobile' ? 'single' : 'double'
   );
   const effectiveFont =
+    documentStyleMap?.body.resolvedFontFamily ||
     documentStyleMap?.body.fontFamily ||
     effectiveFontFamily?.trim() ||
     composition?.fontFamily?.trim() ||

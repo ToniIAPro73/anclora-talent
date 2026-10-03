@@ -17,6 +17,7 @@ import {
   SemanticDocument,
   ensureBlockIds,
 } from './model';
+import { resolveFont } from '@/lib/style-engine/font-registry';
 
 const REF_KINDS: RefKind[] = ['chapter', 'figure', 'table'];
 
@@ -57,16 +58,19 @@ function parseFootnoteReferenceNode(element: DomElement): InlineNode | null {
 function parseTextStyleMark(element: DomElement): InlineMark | null {
   const style = element.getAttribute('style') ?? '';
   const read = (property: string) => style.match(new RegExp(`${property}\\s*:\\s*([^;]+)`, 'i'))?.[1]?.trim();
-  const fontFamily = read('font-family')?.replace(/^['"]|['"]$/g, '');
+  const renderedFontFamily = read('font-family')?.replace(/^['"]|['"]$/g, '');
+  const sourceFontFamily = element.getAttribute('data-source-font-family')?.trim() || renderedFontFamily;
   const fontSizeRaw = read('font-size');
   const fontSizePt = fontSizeRaw?.endsWith('pt') ? Number.parseFloat(fontSizeRaw) : undefined;
   const color = read('color');
   const highlight = read('background-color');
   const textDecoration = read('text-decoration');
-  if (!fontFamily && fontSizePt === undefined && !color && !highlight && !textDecoration) return null;
+  if (!renderedFontFamily && !sourceFontFamily && fontSizePt === undefined && !color && !highlight && !textDecoration) return null;
+  const resolution = sourceFontFamily ? resolveFont(sourceFontFamily) : null;
   return {
     type: 'textStyle',
-    ...(fontFamily ? { fontFamily } : {}),
+    ...(sourceFontFamily ? { fontFamily: sourceFontFamily } : {}),
+    ...(resolution ? { resolvedFontFamily: resolution.resolvedFamily, fontResolution: resolution } : {}),
     ...(fontSizePt !== undefined && Number.isFinite(fontSizePt) ? { fontSizePt } : {}),
     ...(color ? { color } : {}),
     ...(highlight ? { highlight } : {}),

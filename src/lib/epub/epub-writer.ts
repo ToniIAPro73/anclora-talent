@@ -311,8 +311,9 @@ function buildStylesheet(
   const bodyFont = fonts.length > 0 ? "'Liberation Sans', Georgia, serif" : 'Georgia, serif';
   // F2 brand theme: declared families lead the stack; the embedded/system
   // fonts remain as fallback so the EPUB stays self-contained (EPUBCheck).
-  const brandBodyFont = styleMap?.body.fontFamily
-    ? `${cssFontFamily(styleMap.body.fontFamily)}, ${bodyFont}`
+  const resolvedBodyFont = styleMap?.body.resolvedFontFamily ?? styleMap?.body.fontFamily;
+  const brandBodyFont = resolvedBodyFont
+    ? `${cssFontFamily(resolvedBodyFont)}, ${bodyFont}`
     : template?.bodyFontFamily
       ? `${cssFontFamily(template.bodyFontFamily)}, ${bodyFont}`
       : bodyFont;
@@ -341,11 +342,11 @@ function buildStylesheet(
   ].filter(([, css]) => css).map(([selector, css]) => `${selector} { ${css}; }`).join('\n') : '';
 
   const compiledRules = styleMap ? [
-    `body, p, li { font-family: ${cssFontFamily(styleMap.body.fontFamily)}, ${bodyFont}; font-size: ${styleMap.body.fontSizePt}pt; color: ${styleMap.body.color}; line-height: ${styleMap.body.lineHeight}; }`,
-    `h1 { font-family: ${cssFontFamily(styleMap.headings.h1.fontFamily)}, Georgia, serif; font-size: ${styleMap.headings.h1.fontSizePt}pt; color: ${styleMap.headings.h1.color}; }`,
-    `h2 { font-family: ${cssFontFamily(styleMap.headings.h2.fontFamily)}, Georgia, serif; font-size: ${styleMap.headings.h2.fontSizePt}pt; color: ${styleMap.headings.h2.color}; }`,
-    `h3 { font-family: ${cssFontFamily(styleMap.headings.h3.fontFamily)}, Georgia, serif; font-size: ${styleMap.headings.h3.fontSizePt}pt; color: ${styleMap.headings.h3.color}; }`,
-    `blockquote { font-family: ${cssFontFamily(styleMap.quote.fontFamily)}, Georgia, serif; border-left-color: ${styleMap.palette?.accent ?? styleMap.decorations?.accentColor ?? '#d4af37'}; color: ${styleMap.quote.color}; }`,
+    `body, p, li { font-family: ${cssFontFamily(resolvedBodyFont ?? bodyFont)}, ${bodyFont}; font-size: ${styleMap.body.fontSizePt}pt; color: ${styleMap.body.color}; line-height: ${styleMap.body.lineHeight}; }`,
+    `h1 { font-family: ${cssFontFamily(styleMap.headings.h1.resolvedFontFamily ?? styleMap.headings.h1.fontFamily)}, Georgia, serif; font-size: ${styleMap.headings.h1.fontSizePt}pt; color: ${styleMap.headings.h1.color}; }`,
+    `h2 { font-family: ${cssFontFamily(styleMap.headings.h2.resolvedFontFamily ?? styleMap.headings.h2.fontFamily)}, Georgia, serif; font-size: ${styleMap.headings.h2.fontSizePt}pt; color: ${styleMap.headings.h2.color}; }`,
+    `h3 { font-family: ${cssFontFamily(styleMap.headings.h3.resolvedFontFamily ?? styleMap.headings.h3.fontFamily)}, Georgia, serif; font-size: ${styleMap.headings.h3.fontSizePt}pt; color: ${styleMap.headings.h3.color}; }`,
+    `blockquote { font-family: ${cssFontFamily(styleMap.quote.resolvedFontFamily ?? styleMap.quote.fontFamily)}, Georgia, serif; border-left-color: ${styleMap.palette?.accent ?? styleMap.decorations?.accentColor ?? '#d4af37'}; color: ${styleMap.quote.color}; }`,
   ].join('\n') : '';
 
   return `${fontFaces}

@@ -614,6 +614,7 @@ export function ProjectWorkspace({
 
   if (editingChapterId !== null && editingChapterIndex >= 0) {
     const effectiveFontFamily =
+      compiledDocument.styleMap.body.resolvedFontFamily ||
       compiledDocument.styleMap.body.fontFamily ||
       (project.document.metadata?.composition?.fontFamily ??
       'Liberation Serif');

@@ -310,13 +310,18 @@ export function buildCompiledDocumentCss(styleMap?: DocumentStyleMap | null): st
   if (!styleMap) return '';
   const paper = styleMap.palette?.paper ?? '#ffffff';
   const accent = styleMap.palette?.accent ?? styleMap.decorations?.accentColor ?? '#d4af37';
+  const bodyFont = styleMap.body.resolvedFontFamily ?? styleMap.body.fontFamily;
+  const h1Font = styleMap.headings.h1.resolvedFontFamily ?? styleMap.headings.h1.fontFamily;
+  const h2Font = styleMap.headings.h2.resolvedFontFamily ?? styleMap.headings.h2.fontFamily;
+  const h3Font = styleMap.headings.h3.resolvedFontFamily ?? styleMap.headings.h3.fontFamily;
+  const quoteFont = styleMap.quote.resolvedFontFamily ?? styleMap.quote.fontFamily;
   return [
-    `body { font-family: ${cssFontFamily(styleMap.body.fontFamily)}, Georgia, serif; color: ${styleMap.body.color}; background-color: ${paper}; }`,
-    `.export-content-inner p, .export-content-inner li { font-family: ${cssFontFamily(styleMap.body.fontFamily)}, Georgia, serif; font-size: ${styleMap.body.fontSizePt}pt; color: ${styleMap.body.color}; line-height: ${styleMap.body.lineHeight}; }`,
-    `.export-content-inner h1 { font-family: ${cssFontFamily(styleMap.headings.h1.fontFamily)}, Georgia, serif; font-size: ${styleMap.headings.h1.fontSizePt}pt; color: ${styleMap.headings.h1.color}; }`,
-    `.export-content-inner h2 { font-family: ${cssFontFamily(styleMap.headings.h2.fontFamily)}, Georgia, serif; font-size: ${styleMap.headings.h2.fontSizePt}pt; color: ${styleMap.headings.h2.color}; }`,
-    `.export-content-inner h3 { font-family: ${cssFontFamily(styleMap.headings.h3.fontFamily)}, Georgia, serif; font-size: ${styleMap.headings.h3.fontSizePt}pt; color: ${styleMap.headings.h3.color}; }`,
-    `.export-content-inner blockquote { font-family: ${cssFontFamily(styleMap.quote.fontFamily)}, Georgia, serif; border-left-color: ${accent}; color: ${styleMap.quote.color}; }`,
+    `body { font-family: ${cssFontFamily(bodyFont)}, Georgia, serif; color: ${styleMap.body.color}; background-color: ${paper}; }`,
+    `.export-content-inner p, .export-content-inner li { font-family: ${cssFontFamily(bodyFont)}, Georgia, serif; font-size: ${styleMap.body.fontSizePt}pt; color: ${styleMap.body.color}; line-height: ${styleMap.body.lineHeight}; }`,
+    `.export-content-inner h1 { font-family: ${cssFontFamily(h1Font)}, Georgia, serif; font-size: ${styleMap.headings.h1.fontSizePt}pt; color: ${styleMap.headings.h1.color}; }`,
+    `.export-content-inner h2 { font-family: ${cssFontFamily(h2Font)}, Georgia, serif; font-size: ${styleMap.headings.h2.fontSizePt}pt; color: ${styleMap.headings.h2.color}; }`,
+    `.export-content-inner h3 { font-family: ${cssFontFamily(h3Font)}, Georgia, serif; font-size: ${styleMap.headings.h3.fontSizePt}pt; color: ${styleMap.headings.h3.color}; }`,
+    `.export-content-inner blockquote { font-family: ${cssFontFamily(quoteFont)}, Georgia, serif; border-left-color: ${accent}; color: ${styleMap.quote.color}; }`,
   ].join('\n    ');
 }
 
@@ -628,9 +633,9 @@ export function resolvePdfBrandTheme(
 
   if (styleMap) {
     return {
-      headingFont: toBase14Font(styleMap.headings.h1.fontFamily, true),
-      bodyFont: toBase14Font(styleMap.body.fontFamily, false),
-      quoteFont: toBase14Font(styleMap.quote.fontFamily, false),
+      headingFont: toBase14Font(styleMap.headings.h1.resolvedFontFamily ?? styleMap.headings.h1.fontFamily, true),
+      bodyFont: toBase14Font(styleMap.body.resolvedFontFamily ?? styleMap.body.fontFamily, false),
+      quoteFont: toBase14Font(styleMap.quote.resolvedFontFamily ?? styleMap.quote.fontFamily, false),
       headingColor: styleMap.headings.h1.color,
       bodyColor: styleMap.body.color,
       mutedColor: styleMap.palette?.accentMuted ?? styleMap.decorations?.dividerColor ?? '#5f6b7a',
@@ -1156,7 +1161,7 @@ function buildDocxPageChildren(page: PreviewPage, styleMap?: DocumentStyleMap | 
         : block.level === 2
           ? styleMap?.headings.h2
           : styleMap?.headings.h3;
-      const font = headingStyle?.fontFamily ? { name: headingStyle.fontFamily } : undefined;
+      const font = headingStyle?.fontFamily ? { name: headingStyle.resolvedFontFamily ?? headingStyle.fontFamily } : undefined;
       const color = headingStyle?.color ? headingStyle.color.replace('#', '') : undefined;
       const size = headingStyle?.fontSizePt ? Math.round(headingStyle.fontSizePt * 2) : undefined;
       return new Paragraph({
@@ -1174,7 +1179,7 @@ function buildDocxPageChildren(page: PreviewPage, styleMap?: DocumentStyleMap | 
       });
     }
     if (block.type === 'quote') {
-      const quoteFont = styleMap?.quote.fontFamily ? { name: styleMap.quote.fontFamily } : undefined;
+      const quoteFont = styleMap?.quote.fontFamily ? { name: styleMap.quote.resolvedFontFamily ?? styleMap.quote.fontFamily } : undefined;
       const quoteColor = styleMap?.quote.color ? styleMap.quote.color.replace('#', '') : undefined;
       const accentColor = styleMap?.palette.accent ? styleMap.palette.accent.replace('#', '') : 'D4AF37';
       return new Paragraph({
@@ -1187,7 +1192,7 @@ function buildDocxPageChildren(page: PreviewPage, styleMap?: DocumentStyleMap | 
       });
     }
     if (block.type === 'list-item') {
-      const bodyFont = styleMap?.body.fontFamily ? { name: styleMap.body.fontFamily } : undefined;
+      const bodyFont = styleMap?.body.fontFamily ? { name: styleMap.body.resolvedFontFamily ?? styleMap.body.fontFamily } : undefined;
       const bodyColor = styleMap?.body.color ? styleMap.body.color.replace('#', '') : undefined;
       return new Paragraph({
         children: [new TextRun({ text: block.text, font: bodyFont, color: bodyColor })],
@@ -1195,7 +1200,7 @@ function buildDocxPageChildren(page: PreviewPage, styleMap?: DocumentStyleMap | 
         spacing: { after: 80 },
       });
     }
-    const bodyFont = styleMap?.body.fontFamily ? { name: styleMap.body.fontFamily } : undefined;
+    const bodyFont = styleMap?.body.fontFamily ? { name: styleMap.body.resolvedFontFamily ?? styleMap.body.fontFamily } : undefined;
     const bodyColor = styleMap?.body.color ? styleMap.body.color.replace('#', '') : undefined;
     const bodySize = styleMap?.body.fontSizePt ? Math.round(styleMap.body.fontSizePt * 2) : undefined;
     return new Paragraph({

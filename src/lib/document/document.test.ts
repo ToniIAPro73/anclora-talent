@@ -71,9 +71,13 @@ describe('htmlToBlocks', () => {
     const heading = blocks[0];
     expect(heading).toMatchObject({ type: 'heading', sourceStyleId: 'H1', paragraphProperties: { textAlign: 'justify', spacingBefore: 12 } });
     if (heading.type !== 'heading') throw new Error('expected heading');
-    expect(heading.content[0]).toMatchObject({ type: 'text', marks: [{ type: 'textStyle', fontFamily: 'Calibri', fontSizePt: 24 }] });
-    expect(blocksToHtml(blocks)).toContain('font-family: Calibri');
-    expect(blocksToHtml(blocks)).toContain('font-size: 24pt');
+    expect(heading.content[0]).toMatchObject({ type: 'text', marks: [{ type: 'textStyle', fontFamily: 'Calibri', resolvedFontFamily: 'Carlito', fontSizePt: 24 }] });
+    const savedHtml = blocksToHtml(blocks);
+    expect(savedHtml).toContain('data-source-font-family="Calibri"');
+    expect(savedHtml).toContain('font-family: Carlito');
+    expect(savedHtml).toContain('font-size: 24pt');
+    const reloaded = htmlToBlocks(savedHtml);
+    expect(reloaded[0]).toMatchObject({ content: [{ marks: [{ type: 'textStyle', fontFamily: 'Calibri', resolvedFontFamily: 'Carlito' }] }] });
   });
 
   it('round-trips Markdown endnote definitions without changing their source order', () => {

@@ -1,4 +1,5 @@
 import type { SemanticDocument } from '@/lib/document/model';
+import type { FontResolution } from './font-registry';
 
 export type EditorialRole =
   | 'body'
@@ -16,6 +17,11 @@ export type EditorialRole =
 
 export interface ResolvedTextStyle {
   fontFamily: string;
+  /** The source/effective family shown to the user and retained for provenance. */
+  sourceFontFamily?: string;
+  /** The controlled family actually used by Editor, Preview and export. */
+  resolvedFontFamily?: string;
+  fontResolution?: FontResolution;
   fontSizePt: number;
   fontWeight: 'normal' | 'medium' | 'semibold' | 'bold';
   fontStyle: 'normal' | 'italic';

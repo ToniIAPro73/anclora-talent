@@ -10,6 +10,7 @@ import type {
   ResolvedTextStyle,
   UserStyleOverride,
 } from './model';
+import { resolveFont } from './font-registry';
 
 export const SYSTEM_DEFAULTS = {
   page: {
@@ -162,7 +163,24 @@ function resolveTextStyle(
     Object.assign(result, userOverride);
   }
 
-  return result;
+  const sourceFontFamily = sourceStyle?.sourceFontFamily ?? sourceStyle?.fontFamily ?? fallback.fontFamily;
+  const fontResolution = resolveFont(result.fontFamily);
+  return {
+    ...result,
+    sourceFontFamily,
+    resolvedFontFamily: fontResolution.resolvedFamily,
+    fontResolution,
+  };
+}
+
+function withFontResolution<T extends ResolvedTextStyle>(style: T, sourceFontFamily = style.sourceFontFamily ?? style.fontFamily): T {
+  const fontResolution = resolveFont(style.fontFamily);
+  return {
+    ...style,
+    sourceFontFamily,
+    resolvedFontFamily: fontResolution.resolvedFamily,
+    fontResolution,
+  } as T;
 }
 
 export interface LegacyCompositionSettings {
@@ -378,7 +396,7 @@ export function resolveDocumentStyles({
   const sourceTable = sourceStyleProfile?.table;
   const table = {
     header: {
-      ...body,
+      ...withFontResolution(body),
       fontFamily: sourceTable?.headerFontFamily ?? body.fontFamily,
       fontSizePt: sourceTable?.headerFontSizePt ?? body.fontSizePt,
       color: sourceTable?.headerColor ?? body.color,
@@ -388,7 +406,7 @@ export function resolveDocumentStyles({
         (brandProfile ? getBrandColor(brandProfile, 'paper')?.hex ?? '#F9FAFB' : '#F9FAFB'),
     },
     cell: {
-      ...body,
+      ...withFontResolution(body),
       fontFamily: sourceTable?.bodyFontFamily ?? body.fontFamily,
       fontSizePt: sourceTable?.bodyFontSizePt ?? body.fontSizePt,
       color: sourceTable?.bodyColor ?? body.color,
@@ -397,10 +415,12 @@ export function resolveDocumentStyles({
     borderWidthPt: 1,
     bandBackgroundColor: sourceTable?.bandBackground,
   };
+  table.header = withFontResolution(table.header, sourceTable?.headerFontFamily ?? body.sourceFontFamily ?? body.fontFamily);
+  table.cell = withFontResolution(table.cell, sourceTable?.bodyFontFamily ?? body.sourceFontFamily ?? body.fontFamily);
 
   // 7. Footnotes
   const footnote: ResolvedTextStyle = {
-    ...body,
+    ...withFontResolution(body),
     fontSizePt: Math.max(8, body.fontSizePt - 2),
     lineHeight: 1.3,
   };
@@ -408,6 +428,7 @@ export function resolveDocumentStyles({
     Object.assign(footnote, sourceStyleProfile.footnote);
     delete (footnote as ResolvedTextStyle & { separator?: unknown }).separator;
   }
+  Object.assign(footnote, withFontResolution(footnote));
 
   // 7b. Editorial kicker (small label above a heading, e.g. "INTRODUCCIÓN")
   const kickerFallback: ResolvedTextStyle = {
@@ -430,14 +451,14 @@ export function resolveDocumentStyles({
 
   // 8. Headers & Footers
   const header: ResolvedTextStyle & { borderBottom?: boolean } = {
-    ...body,
+    ...withFontResolution(body),
     fontSizePt: 8.5,
     color: '#6B7280',
     borderBottom: referenceProfile?.header?.enabled,
   };
 
   const footer: ResolvedTextStyle & { borderTop?: boolean } = {
-    ...body,
+    ...withFontResolution(body),
     fontSizePt: 8.5,
     color: '#6B7280',
     borderTop: referenceProfile?.footer?.enabled,

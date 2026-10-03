@@ -46,15 +46,19 @@ function serializeInline(nodes: InlineNode[], refs?: ResolvedRefs): string {
         if (mark.type === 'bold') return `<strong>${inner}</strong>`;
         if (mark.type === 'italic') return `<em>${inner}</em>`;
         if (mark.type === 'textStyle') {
+          const renderedFontFamily = mark.resolvedFontFamily ?? mark.fontFamily;
+          const sourceFontAttribute = mark.fontFamily && mark.fontFamily !== renderedFontFamily
+            ? ` data-source-font-family="${escapeHtml(mark.fontFamily)}"`
+            : '';
           const styles = [
-            mark.fontFamily ? `font-family: ${escapeHtml(mark.fontFamily)}` : '',
+            renderedFontFamily ? `font-family: ${escapeHtml(renderedFontFamily)}` : '',
             mark.fontSizePt !== undefined ? `font-size: ${mark.fontSizePt}pt` : '',
             mark.color ? `color: ${escapeHtml(mark.color)}` : '',
             mark.highlight ? `background-color: ${escapeHtml(mark.highlight)}` : '',
             mark.underline ? 'text-decoration: underline' : '',
             mark.strike ? 'text-decoration: line-through' : '',
           ].filter(Boolean).join('; ');
-          return styles ? `<span style="${styles}">${inner}</span>` : inner;
+          return styles ? `<span${sourceFontAttribute} style="${styles}">${inner}</span>` : inner;
         }
         return `<a href="${escapeHtml(mark.href ?? '')}">${inner}</a>`;
       };

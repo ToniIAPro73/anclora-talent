@@ -5,61 +5,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { isLocallySubstitutedFont } from '@/lib/style-engine/font-stack';
+import { getSelectableFontCatalog, type FontCatalogEntry } from '@/lib/style-engine/font-registry';
 
-export interface GoogleFont {
-  family: string;
-  variants: string[];
-  category: string;
-  kind: string;
-}
+export type GoogleFont = FontCatalogEntry;
 
 const GOOGLE_FONTS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_FONTS_API_KEY || '';
 const GOOGLE_FONTS_API_KEY_PATTERN = /^AIza[0-9A-Za-z\-_]{20,}$/;
 
-// Fuentes predeterminadas si la API no está disponible
-const DEFAULT_FONTS: GoogleFont[] = [
-  // Serif
-  { family: 'Libre Baskerville', variants: ['400', '700'], category: 'serif', kind: 'webfont' },
-  { family: 'Playfair Display', variants: ['400', '700', '900'], category: 'serif', kind: 'webfont' },
-  { family: 'Lora', variants: ['400', '700'], category: 'serif', kind: 'webfont' },
-  { family: 'Merriweather', variants: ['400', '700'], category: 'serif', kind: 'webfont' },
-  { family: 'Crimson Text', variants: ['400', '700'], category: 'serif', kind: 'webfont' },
-  { family: 'Cormorant Garamond', variants: ['400', '700'], category: 'serif', kind: 'webfont' },
-  { family: 'EB Garamond', variants: ['400', '700'], category: 'serif', kind: 'webfont' },
-  { family: 'Dosis', variants: ['400', '700'], category: 'serif', kind: 'webfont' },
-  { family: 'Bodoni Moda', variants: ['400', '700'], category: 'serif', kind: 'webfont' },
-  { family: 'Abril Fatface', variants: ['400'], category: 'serif', kind: 'webfont' },
-
-  // Sans-Serif
-  { family: 'Inter', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont' },
-  { family: 'Poppins', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont' },
-  { family: 'Raleway', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont' },
-  { family: 'Roboto', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont' },
-  { family: 'Montserrat', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont' },
-  { family: 'Oswald', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont' },
-  { family: 'Open Sans', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont' },
-  { family: 'Lato', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont' },
-  { family: 'Nunito', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont' },
-  { family: 'Quicksand', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont' },
-  { family: 'Source Sans Pro', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont' },
-  { family: 'Work Sans', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont' },
-  { family: 'Urbanist', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont' },
-  { family: 'Space Mono', variants: ['400', '700'], category: 'sans-serif', kind: 'webfont' },
-
-  // Display
-  { family: 'Bebas Neue', variants: ['400'], category: 'display', kind: 'webfont' },
-  { family: 'Pacifico', variants: ['400'], category: 'display', kind: 'webfont' },
-  { family: 'Great Vibes', variants: ['400'], category: 'display', kind: 'webfont' },
-  { family: 'Caveat', variants: ['400', '700'], category: 'display', kind: 'webfont' },
-  { family: 'Fredoka One', variants: ['400'], category: 'display', kind: 'webfont' },
-  { family: 'Righteous', variants: ['400'], category: 'display', kind: 'webfont' },
-
-  // Monospace
-  { family: 'JetBrains Mono', variants: ['400', '700'], category: 'monospace', kind: 'webfont' },
-  { family: 'IBM Plex Mono', variants: ['400', '700'], category: 'monospace', kind: 'webfont' },
-  { family: 'Roboto Mono', variants: ['400', '700'], category: 'monospace', kind: 'webfont' },
-  { family: 'Courier Prime', variants: ['400', '700'], category: 'monospace', kind: 'webfont' },
-];
+const DEFAULT_FONTS: GoogleFont[] = getSelectableFontCatalog();
 
 export function useGoogleFonts() {
   const [fonts, setFonts] = useState<GoogleFont[]>(DEFAULT_FONTS);
@@ -83,7 +36,18 @@ export function useGoogleFonts() {
         if (!response.ok) throw new Error('Failed to fetch fonts');
 
         const data = await response.json();
-        setFonts(data.items || DEFAULT_FONTS);
+        setFonts(
+          Array.isArray(data.items)
+            ? data.items.map((font: Partial<GoogleFont>) => ({
+                family: font.family ?? '',
+                variants: font.variants ?? ['400'],
+                category: (font.category as GoogleFont['category']) ?? 'sans-serif',
+                kind: 'webfont' as const,
+                loadingStrategy: 'google-webfont' as const,
+                selectable: true,
+              })).filter((font: GoogleFont) => font.family)
+            : DEFAULT_FONTS,
+        );
         setError(null);
       } catch (err) {
         console.warn('[useGoogleFonts] Failed to fetch from API, using defaults', err);

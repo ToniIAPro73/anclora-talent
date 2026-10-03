@@ -1,4 +1,5 @@
 import type { ResolvedTextStyle } from '@/lib/style-engine/model';
+import type { FontResolution } from '@/lib/style-engine/font-registry';
 
 export type PropertyProvenanceSource =
   | 'docx-styles'
@@ -39,6 +40,8 @@ export interface OriginalDocumentStyleProfile {
 
   body: {
     fontFamily?: string;
+    resolvedFontFamily?: string;
+    fontResolution?: FontResolution;
     fontSizePt?: number;
     fontWeight?: 'normal' | 'medium' | 'semibold' | 'bold';
     fontStyle?: 'normal' | 'italic';

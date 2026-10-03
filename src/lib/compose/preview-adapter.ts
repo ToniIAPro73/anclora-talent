@@ -216,7 +216,7 @@ function resolveComposeTemplate(
   });
 
   const referenceTemplate: Partial<ComposeTemplate> = {
-    fontFamily: styleMap.body.fontFamily,
+    fontFamily: styleMap.body.resolvedFontFamily ?? styleMap.body.fontFamily,
     baseFontSize: styleMap.body.fontSizePt,
     lineHeight: styleMap.body.lineHeight,
     margins: {

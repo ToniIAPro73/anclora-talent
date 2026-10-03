@@ -1,66 +1,22 @@
-/**
- * Font family substitution for fonts extracted from source documents that
- * are not available as web fonts (e.g. LibreOffice's Liberation family,
- * bundled with every ODF/DOCX export from Linux, or MS Office's Calibri/
- * Cambria on machines without the proprietary font files installed).
- *
- * These are metric-compatible substitutes: the original font's designer
- * built it to share the exact glyph widths of the target, so substituting
- * one for the other never reflows text.
- */
-const METRIC_COMPATIBLE_FALLBACKS: Record<string, string[]> = {
-  'liberation serif': ['Times New Roman', 'Times', 'serif'],
-  'liberation sans': ['Arial', 'Helvetica', 'sans-serif'],
-  'liberation sans narrow': ['Arial Narrow', 'Arial', 'sans-serif'],
-  'liberation mono': ['Courier New', 'Courier', 'monospace'],
-  'dejavu serif': ['Georgia', 'serif'],
-  'dejavu sans': ['Verdana', 'sans-serif'],
-  'dejavu sans mono': ['Courier New', 'monospace'],
-  calibri: ['Carlito', 'Arial', 'sans-serif'],
-  cambria: ['Caladea', 'Georgia', 'serif'],
-};
+import { resolveFont } from './font-registry';
 
 function quoteIfNeeded(fontFamily: string): string {
   return /\s/.test(fontFamily) ? `"${fontFamily}"` : fontFamily;
 }
 
-/**
- * Builds a CSS font-family stack: the extracted font first (so it is used
- * whenever it happens to be installed), followed by its metric-compatible
- * substitutes when known, so the browser never falls through to an
- * unrelated default font.
- *
- * Only fonts with a known substitute get the quoted "font, fallback, ..."
- * treatment — every other font is returned exactly as extracted (no quotes,
- * no appended fallback), since other callers compare this value verbatim
- * (e.g. as a CSS variable read back and compared in tests, or fed into a
- * web font loader) and would break on an unexpected quoted string.
- */
+/** Builds a CSS stack from the controlled resolved family, never the source name. */
 export function buildFontFamilyStack(fontFamily: string | undefined | null): string {
-  let trimmed = fontFamily?.trim();
-  if (!trimmed) return 'Georgia, "Times New Roman", serif';
-
-  // Sanitize any semicolons or concatenated font names from source extraction
-  if (trimmed.includes(';')) {
-    trimmed = trimmed.split(';')[0].trim();
-  }
-
-  const fallbacks = METRIC_COMPATIBLE_FALLBACKS[trimmed.toLowerCase()];
-  if (!fallbacks || fallbacks.length === 0) return trimmed;
-
-  return [quoteIfNeeded(trimmed), ...fallbacks.map(quoteIfNeeded)].join(', ');
+  const resolution = resolveFont(fontFamily);
+  if (resolution.status === 'exact') return resolution.resolvedFamily;
+  const categoryFallback = resolution.category === 'monospace'
+    ? 'monospace'
+    : resolution.category === 'sans-serif'
+      ? 'sans-serif'
+      : 'serif';
+  return `${quoteIfNeeded(resolution.resolvedFamily)}, ${categoryFallback}`;
 }
 
-/**
- * True when `fontFamily` is a known non-web font we substitute locally —
- * callers should skip requesting it from a web font service (e.g. Google
- * Fonts, which does not host the Liberation family at all).
- */
+/** True when a source family is not an exact controlled Talent family. */
 export function isLocallySubstitutedFont(fontFamily: string | undefined | null): boolean {
-  let trimmed = fontFamily?.trim().toLowerCase();
-  if (!trimmed) return false;
-  if (trimmed.includes(';')) {
-    trimmed = trimmed.split(';')[0].trim().toLowerCase();
-  }
-  return trimmed in METRIC_COMPATIBLE_FALLBACKS;
+  return resolveFont(fontFamily).status !== 'exact';
 }

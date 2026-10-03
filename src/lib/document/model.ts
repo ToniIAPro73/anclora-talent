@@ -27,6 +27,8 @@ export interface InlineMark {
   /** Only for `link` marks. */
   href?: string;
   fontFamily?: string;
+  resolvedFontFamily?: string;
+  fontResolution?: import('@/lib/style-engine/font-registry').FontResolution;
   fontSizePt?: number;
   color?: string;
   highlight?: string;

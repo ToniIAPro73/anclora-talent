@@ -112,7 +112,7 @@ export function ChapterRepresentativePreview({
     <div
       className="chapter-rep-preview relative"
       data-testid="chapter-representative-preview"
-      style={styleMap?.body.fontFamily ? { fontFamily: styleMap.body.fontFamily, color: styleMap.body.color } : undefined}
+      style={styleMap?.body.fontFamily ? { fontFamily: styleMap.body.resolvedFontFamily ?? styleMap.body.fontFamily, color: styleMap.body.color } : undefined}
     >
       <div
         className="chapter-rep-preview__body"

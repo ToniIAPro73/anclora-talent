@@ -6,6 +6,8 @@ import { resolveDocumentStyles } from './cascade-resolver';
 import { buildFontFamilyStack } from './font-stack';
 import type { CompiledDocument, DocumentStyleMap, UserStyleOverride } from './model';
 
+const renderFamily = (style: { fontFamily: string; resolvedFontFamily?: string }) => style.resolvedFontFamily ?? style.fontFamily;
+
 export interface CompileDocumentOptions {
   projectId: string;
   document?: SemanticDocument;
@@ -28,7 +30,7 @@ export function generateCssVariables(styleMap: DocumentStyleMap): Record<string,
     '--talent-page-margin-right': `${styleMap.page.marginsPt.right}pt`,
 
     // Body
-    '--talent-body-font': buildFontFamilyStack(styleMap.body.fontFamily),
+    '--talent-body-font': buildFontFamilyStack(renderFamily(styleMap.body)),
     '--talent-body-size': `${styleMap.body.fontSizePt}pt`,
     '--talent-body-color': styleMap.body.color,
     '--talent-body-line-height': `${styleMap.body.lineHeight}`,
@@ -37,7 +39,7 @@ export function generateCssVariables(styleMap: DocumentStyleMap): Record<string,
     '--talent-body-spacing-after': `${styleMap.body.spacingAfterPt ?? 0}pt`,
 
     // Headings
-    '--talent-h1-font': buildFontFamilyStack(styleMap.headings.h1.fontFamily),
+    '--talent-h1-font': buildFontFamilyStack(renderFamily(styleMap.headings.h1)),
     '--talent-h1-size': `${styleMap.headings.h1.fontSizePt}pt`,
     '--talent-h1-color': styleMap.headings.h1.color,
     '--talent-h1-weight': styleMap.headings.h1.fontWeight,
@@ -46,7 +48,7 @@ export function generateCssVariables(styleMap: DocumentStyleMap): Record<string,
     '--talent-h1-spacing-before': `${styleMap.headings.h1.spacingBeforePt ?? 0}pt`,
     '--talent-h1-spacing-after': `${styleMap.headings.h1.spacingAfterPt ?? 0}pt`,
 
-    '--talent-h2-font': buildFontFamilyStack(styleMap.headings.h2.fontFamily),
+    '--talent-h2-font': buildFontFamilyStack(renderFamily(styleMap.headings.h2)),
     '--talent-h2-size': `${styleMap.headings.h2.fontSizePt}pt`,
     '--talent-h2-color': styleMap.headings.h2.color,
     '--talent-h2-weight': styleMap.headings.h2.fontWeight,
@@ -55,7 +57,7 @@ export function generateCssVariables(styleMap: DocumentStyleMap): Record<string,
     '--talent-h2-spacing-before': `${styleMap.headings.h2.spacingBeforePt ?? 0}pt`,
     '--talent-h2-spacing-after': `${styleMap.headings.h2.spacingAfterPt ?? 0}pt`,
 
-    '--talent-h3-font': buildFontFamilyStack(styleMap.headings.h3.fontFamily),
+    '--talent-h3-font': buildFontFamilyStack(renderFamily(styleMap.headings.h3)),
     '--talent-h3-size': `${styleMap.headings.h3.fontSizePt}pt`,
     '--talent-h3-color': styleMap.headings.h3.color,
     '--talent-h3-weight': styleMap.headings.h3.fontWeight,
@@ -64,7 +66,7 @@ export function generateCssVariables(styleMap: DocumentStyleMap): Record<string,
     '--talent-h3-spacing-before': `${styleMap.headings.h3.spacingBeforePt ?? 0}pt`,
     '--talent-h3-spacing-after': `${styleMap.headings.h3.spacingAfterPt ?? 0}pt`,
 
-    '--talent-h4-font': buildFontFamilyStack(styleMap.headings.h4.fontFamily),
+    '--talent-h4-font': buildFontFamilyStack(renderFamily(styleMap.headings.h4)),
     '--talent-h4-size': `${styleMap.headings.h4.fontSizePt}pt`,
     '--talent-h4-color': styleMap.headings.h4.color,
     '--talent-h4-weight': styleMap.headings.h4.fontWeight,
@@ -74,7 +76,7 @@ export function generateCssVariables(styleMap: DocumentStyleMap): Record<string,
     '--talent-h4-spacing-after': `${styleMap.headings.h4.spacingAfterPt ?? 0}pt`,
 
     // Quotes
-    '--talent-quote-font': buildFontFamilyStack(styleMap.quote.fontFamily),
+    '--talent-quote-font': buildFontFamilyStack(renderFamily(styleMap.quote)),
     '--talent-quote-size': `${styleMap.quote.fontSizePt}pt`,
     '--talent-quote-color': styleMap.quote.color,
     '--talent-quote-border-color': styleMap.quote.borderLeftColor,
@@ -88,9 +90,9 @@ export function generateCssVariables(styleMap: DocumentStyleMap): Record<string,
     '--talent-table-border-color': styleMap.table.borderColor,
     '--talent-table-header-bg': styleMap.table.header.backgroundColor,
     '--talent-table-header-color': styleMap.table.header.color,
-    '--talent-table-header-font': buildFontFamilyStack(styleMap.table.header.fontFamily),
+    '--talent-table-header-font': buildFontFamilyStack(renderFamily(styleMap.table.header)),
     '--talent-table-header-size': `${styleMap.table.header.fontSizePt}pt`,
-    '--talent-table-cell-font': buildFontFamilyStack(styleMap.table.cell.fontFamily),
+    '--talent-table-cell-font': buildFontFamilyStack(renderFamily(styleMap.table.cell)),
     '--talent-table-cell-size': `${styleMap.table.cell.fontSizePt}pt`,
     '--talent-table-cell-color': styleMap.table.cell.color,
     '--talent-table-band-bg': styleMap.table.bandBackgroundColor ?? 'transparent',
@@ -98,10 +100,10 @@ export function generateCssVariables(styleMap: DocumentStyleMap): Record<string,
     // Footnotes
     '--talent-footnote-size': `${styleMap.footnote.fontSizePt}pt`,
     '--talent-footnote-color': styleMap.footnote.color,
-    '--talent-footnote-font': buildFontFamilyStack(styleMap.footnote.fontFamily),
+    '--talent-footnote-font': buildFontFamilyStack(renderFamily(styleMap.footnote)),
 
     // Editorial kicker (small label above a heading)
-    '--talent-kicker-font': buildFontFamilyStack(styleMap.kicker.fontFamily),
+    '--talent-kicker-font': buildFontFamilyStack(renderFamily(styleMap.kicker)),
     '--talent-kicker-size': `${styleMap.kicker.fontSizePt}pt`,
     '--talent-kicker-color': styleMap.kicker.color,
     '--talent-kicker-weight': styleMap.kicker.fontWeight,
