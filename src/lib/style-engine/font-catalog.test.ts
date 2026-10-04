@@ -44,15 +44,17 @@ describe('compatibility resolution keeps source provenance', () => {
     ['Cambria', 'Caladea'],
     ['Arial', 'Arimo'],
     ['Courier New', 'Cousine'],
+    ['Times New Roman', 'Liberation Serif'],
   ])('maps %s to %s as compatible-substitute', (source, resolved) => {
     expect(resolveFont(source)).toMatchObject({ sourceFamily: source, resolvedFamily: resolved, status: 'compatible-substitute', available: false });
   });
 
-  it('does not invent a Times New Roman substitute and reports a non-exact fallback', () => {
+  it('keeps the Times New Roman source name while rendering the upstream-declared Liberation Serif substitute', () => {
     const resolution = resolveFont('Times New Roman');
     expect(resolution.sourceFamily).toBe('Times New Roman');
-    expect(resolution.status).toBe('fallback');
-    expect(resolution.resolvedFamily).not.toBe('Liberation Serif');
+    expect(resolution.resolvedFamily).toBe('Liberation Serif');
+    expect(resolution.status).toBe('compatible-substitute');
+    expect(resolution.delivery).toBe('bundled');
   });
 
   it('keeps Georgia as a system family with system delivery', () => {

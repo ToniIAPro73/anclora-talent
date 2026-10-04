@@ -122,6 +122,7 @@ const COMPATIBLE_SUBSTITUTES: Record<string, string> = {
   cambria: 'Caladea',
   arial: 'Arimo',
   'courier new': 'Cousine',
+  'times new roman': 'Liberation Serif',
 };
 
 const normalizeFamily = (family: string) => family.trim().replace(/^['"]|['"]$/g, '').toLowerCase();
