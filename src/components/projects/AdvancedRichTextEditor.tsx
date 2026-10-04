@@ -671,6 +671,36 @@ function getRoleTextStyle(
   }
 }
 
+const ResolvedFontFamily = Extension.create({
+  name: 'resolvedFontFamily',
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['textStyle'],
+        attributes: {
+          fontFamily: {
+            default: null,
+            parseHTML: (element: HTMLElement) =>
+              element.getAttribute('data-source-font-family')?.trim()
+              || element.style.fontFamily?.replace(/^['"]|['"]$/g, '')
+              || null,
+            renderHTML: (attributes: { fontFamily?: string | null }) => {
+              if (!attributes.fontFamily) return {};
+              const resolution = resolveFont(attributes.fontFamily);
+              const renderable = resolution.status === 'exact' || resolution.status === 'compatible-substitute';
+              const rendered = renderable ? resolution.resolvedFamily : attributes.fontFamily;
+              return {
+                style: `font-family: ${cssFontFamily(rendered)}`,
+                ...(rendered !== attributes.fontFamily ? { 'data-source-font-family': attributes.fontFamily } : {}),
+              };
+            },
+          },
+        },
+      },
+    ];
+  },
+});
+
 function getCurrentTextStyleAttribute(editor: Editor, attribute: 'fontFamily' | 'fontSize') {
   const selection = editor.state?.selection;
   const values = new Set<string>();
@@ -1989,6 +2019,7 @@ export function AdvancedRichTextEditor({
       TextStyle,
       FootnoteReferenceMark,
       FontFamily,
+      ResolvedFontFamily,
       FontSize,
       Color,
       TextAlign.configure({
