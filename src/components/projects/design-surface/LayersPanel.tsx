@@ -27,9 +27,12 @@ import {
   Unlock,
 } from 'lucide-react';
 import type { AppMessages } from '@/lib/i18n/messages';
-import type { DesignLayer } from '@/lib/projects/design-surface';
+import type { DesignLayer, DesignSurface } from '@/lib/projects/design-surface';
+import { resolveLayerLabel, type LayerLabelCopy } from './layer-labels';
 
-export interface LayersPanelCopy {
+export interface LayersPanelCopy extends LayerLabelCopy {
+  dragLabel?: string;
+  moreOptionsLabel?: string;
   title: string;
   emptyLabel: string;
   renameLabel: string;
@@ -43,13 +46,12 @@ export interface LayersPanelCopy {
   moveDownLabel: string;
   bringToFrontLabel: string;
   sendToBackLabel: string;
-  untitledText: string;
-  untitledImage: string;
-  untitledShape: string;
 }
 
 export interface LayersPanelProps {
   layers: DesignLayer[];
+  /** Used to tell a full-bleed background image from an ordinary picture. */
+  surfaceSize?: Pick<DesignSurface, 'width' | 'height'>;
   selectedLayerIds: string[];
   copy: LayersPanelCopy;
   onSelect: (layerId: string, options?: { additive?: boolean }) => void;
@@ -67,15 +69,9 @@ function layerIcon(layer: DesignLayer) {
   return Shapes;
 }
 
-function layerDefaultName(layer: DesignLayer, copy: LayersPanelCopy): string {
-  if (layer.name) return layer.name;
-  if (layer.type === 'text') return layer.content.trim() || copy.untitledText;
-  if (layer.type === 'image') return copy.untitledImage;
-  return copy.untitledShape;
-}
-
 export function LayersPanel({
   layers,
+  surfaceSize,
   selectedLayerIds,
   copy,
   onSelect,
@@ -88,6 +84,7 @@ export function LayersPanel({
 }: LayersPanelProps) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const sorted = [...layers].sort((a, b) => b.zIndex - a.zIndex);
+  const labelOf = (layer: DesignLayer) => resolveLayerLabel(layer, layers, copy, surfaceSize);
 
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
@@ -100,7 +97,7 @@ export function LayersPanel({
   }
 
   return (
-    <div data-testid="layers-panel" role="list" aria-label={copy.title} className="space-y-1">
+    <div data-testid="layers-panel" role="list" aria-label={copy.title} className="cover-layers-list">
       {sorted.map((layer, index) => {
         const Icon = layerIcon(layer);
         const isSelected = selectedLayerIds.includes(layer.id);
@@ -114,9 +111,8 @@ export function LayersPanel({
             role="listitem"
             data-testid={`layer-row-${layer.id}`}
             data-selected={isSelected ? 'true' : 'false'}
-            className={`group relative flex items-center gap-1.5 rounded-md border px-2 py-1.5 transition-colors ${
-              isSelected ? 'border-[var(--accent)] bg-[#0b2b40]' : 'border-[#1b3b4f] bg-[#092131] hover:bg-[#0e2c40]'
-            }`}
+            className="cover-layer-row group"
+            data-hidden={layer.visible ? 'false' : 'true'}
           >
             {/* Visibility toggle (08A left) */}
             <button
@@ -140,12 +136,12 @@ export function LayersPanel({
               onClick={(event) => onSelect(layer.id, { additive: event.shiftKey })}
               className="flex min-w-0 flex-1 items-center gap-2 text-left"
             >
-              <Icon className="h-3.5 w-3.5 shrink-0 text-[#55c7ff]" aria-hidden="true" />
+              <Icon className="cover-layer-row__icon h-4 w-4 shrink-0" aria-hidden="true" />
               {renamingId === layer.id ? (
                 <input
                   autoFocus
                   data-testid={`layer-rename-input-${layer.id}`}
-                  defaultValue={layerDefaultName(layer, copy)}
+                  defaultValue={labelOf(layer)}
                   onBlur={(event) => {
                     onRename(layer.id, event.target.value);
                     setRenamingId(null);
@@ -159,12 +155,12 @@ export function LayersPanel({
                 />
               ) : (
                 <span
-                  className="min-w-0 flex-1 truncate text-xs text-[#dbeaf5] select-none"
+                  className="cover-layer-row__name select-none"
                   data-testid={`layer-name-${layer.id}`}
                   onDoubleClick={() => setRenamingId(layer.id)}
                   title={copy.renameLabel}
                 >
-                  {layerDefaultName(layer, copy)}
+                  {labelOf(layer)}
                 </span>
               )}
             </button>
@@ -187,7 +183,7 @@ export function LayersPanel({
             )}
 
             {/* Drag grip handle (08A) */}
-            <span className="p-1 text-[var(--text-tertiary)] opacity-40 group-hover:opacity-80 cursor-grab" title="Arrastrar">
+            <span className="cover-layer-row__grip" title={copy.dragLabel ?? 'Arrastrar'}>
               <GripVertical className="h-3.5 w-3.5" />
             </span>
 
@@ -200,8 +196,8 @@ export function LayersPanel({
                 setMenuOpenId(isMenuOpen ? null : layer.id);
               }}
               className="p-1 text-[var(--text-tertiary)] hover:text-white rounded"
-              title="Opciones de capa"
-              aria-label="Opciones de capa"
+              title={copy.moreOptionsLabel ?? 'Opciones de capa'}
+              aria-label={copy.moreOptionsLabel ?? 'Opciones de capa'}
             >
               <MoreVertical className="h-3.5 w-3.5" />
             </button>
@@ -358,5 +354,16 @@ export function buildLayersPanelCopy(copy: AppMessages['coverDesignSurface']): L
     untitledText: copy.layers.untitledText,
     untitledImage: copy.layers.untitledImage,
     untitledShape: copy.layers.untitledShape,
+    roleTitle: copy.layers.roleTitle,
+    roleSubtitle: copy.layers.roleSubtitle,
+    roleAuthor: copy.layers.roleAuthor,
+    roleBody: copy.layers.roleBody,
+    roleAuthorBio: copy.layers.roleAuthorBio,
+    backgroundImage: copy.layers.backgroundImage,
+    lineLabel: copy.layers.lineLabel,
+    iconLabel: copy.layers.iconLabel,
+    overlayLabel: copy.layers.overlayLabel,
+    dragLabel: copy.workspace.drag,
+    moreOptionsLabel: copy.workspace.moreOptions,
   };
 }

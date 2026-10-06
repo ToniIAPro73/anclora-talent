@@ -147,7 +147,7 @@ describe('AdvancedCoverEditor', () => {
     expect(screen.getByTestId('advanced-editor-layers-column')).toBeInTheDocument();
     expect(screen.getByTestId('advanced-editor-canvas-column')).toBeInTheDocument();
     expect(screen.getByTestId('advanced-editor-properties-column')).toBeInTheDocument();
-    expect(screen.getByTestId('advanced-editor-status-bar')).toBeInTheDocument();
+    expect(screen.getByTestId('advanced-editor-layer-count')).toBeInTheDocument();
     await waitFor(() => expect(mocks.state.objects).toHaveLength(1));
   });
 
@@ -194,12 +194,14 @@ describe('AdvancedCoverEditor', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ layers: [expect.objectContaining({ x: 125 })] }));
   });
 
-  it('can add a semi-transparent overlay shape from Advanced', () => {
+  it('the Shapes tool adds a centred rectangle (not a full-bleed overlay)', () => {
     const onChange = vi.fn();
     render(<AdvancedCoverEditor surface={createEmptyDesignSurface('cover')} onChange={onChange} copy={copy} />);
 
-    fireEvent.click(screen.getByTestId('advanced-editor-add-shape-button'));
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ layers: [expect.objectContaining({ type: 'shape', opacity: 0.35 })] }));
+    fireEvent.click(screen.getByTestId('cover-tool-button-shapes'));
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ layers: [expect.objectContaining({ type: 'shape', shape: 'rect', width: 180, height: 110 })] }),
+    );
   });
 
   it('the snap toggle button reflects its active state', () => {

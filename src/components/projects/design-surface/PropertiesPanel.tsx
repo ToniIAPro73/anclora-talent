@@ -9,6 +9,7 @@
  * rather than editing only the first layer silently).
  */
 
+import { MousePointer2 } from 'lucide-react';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { DesignLayer, ImageLayerProps, TextLayerProps } from '@/lib/projects/design-surface';
 import { TextLayerProperties } from './TextLayerProperties';
@@ -28,8 +29,12 @@ export interface PropertiesPanelProps {
 export function PropertiesPanel({ selectedLayers, copy, brandColors, onLayerChange, onReplaceImage, metadataValues }: PropertiesPanelProps) {
   if (selectedLayers.length === 0) {
     return (
-      <div className="ac-editor-inspector__empty" data-testid="properties-panel-empty">
-        <p className="text-xs text-[var(--text-secondary)]">{copy.noSelection}</p>
+      <div className="cover-properties-empty" data-testid="properties-panel-empty">
+        <span className="cover-properties-empty__icon" aria-hidden="true">
+          <MousePointer2 className="h-5 w-5" />
+        </span>
+        <strong>{copy.workspace.emptyTitle}</strong>
+        <p>{copy.workspace.emptyHint}</p>
       </div>
     );
   }

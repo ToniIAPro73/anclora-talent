@@ -77,6 +77,10 @@ export interface DesignSurfaceCanvasProps {
   onZoomChange?: (zoom: number) => void;
   /** Fires after every history push/undo/redo — the only render-safe way for a toolbar to know canUndo/canRedo (reading the imperative handle's ref during render is not allowed). */
   onHistoryChange?: (state: { canUndo: boolean; canRedo: boolean }) => void;
+  /** Fires once the Fabric canvas has hydrated the surface (lets the editor fit the cover to its area). */
+  onReady?: () => void;
+  /** Upper bound for zoom-to-fit (default 1 = never upscale). The 08A workspace lets the cover grow to fill its area. */
+  maxFitZoom?: number;
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -87,7 +91,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 
 export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignSurfaceCanvasProps>(
   function DesignSurfaceCanvas(
-    { surface, onLayerChange, onLayersChange, onSelectionChange, viewportSize, snapEnabled = true, onZoomChange, onHistoryChange },
+    { surface, onLayerChange, onLayersChange, onSelectionChange, viewportSize, snapEnabled = true, onZoomChange, onHistoryChange, onReady, maxFitZoom = 1 },
     ref,
   ) {
     const canvasElRef = useRef<HTMLCanvasElement>(null);
@@ -104,6 +108,10 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
     const [, forceRender] = useState(0);
     const [activeObjectIds, setActiveObjectIds] = useState<string[]>([]);
     const [canvasReady, setCanvasReady] = useState(false);
+    const onReadyRef = useRef(onReady);
+    useEffect(() => {
+      onReadyRef.current = onReady;
+    }, [onReady]);
     const [zoom, setZoomState] = useState(1);
     const suppressHistoryRef = useRef(false);
 
@@ -170,6 +178,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
         }
         canvas.renderAll();
         setCanvasReady(true);
+        onReadyRef.current?.();
 
         historyRef.current = [JSON.stringify(surfaceRef.current.layers)];
         historyIndexRef.current = 0;
@@ -420,7 +429,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
         },
         zoomToFit() {
           if (!viewportSize) return;
-          const factor = Math.min(viewportSize.width / surface.width, viewportSize.height / surface.height, 1);
+          const factor = Math.max(0.1, Math.min(viewportSize.width / surface.width, viewportSize.height / surface.height, maxFitZoom));
           const canvas = fabricRef.current;
           if (!canvas) return;
           canvas.setZoom(factor);
@@ -458,7 +467,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           renderCanvas(canvas);
         },
       }),
-      [applyHistorySnapshot, onLayersChange, onSelectionChange, onZoomChange, pushHistory, surface.layers, viewportSize, surface.width, surface.height],
+      [applyHistorySnapshot, maxFitZoom, onLayersChange, onSelectionChange, onZoomChange, pushHistory, surface.layers, viewportSize, surface.width, surface.height],
     );
 
     // Keyboard: arrow move / Shift+arrow larger step / Delete / Cmd-Ctrl+D

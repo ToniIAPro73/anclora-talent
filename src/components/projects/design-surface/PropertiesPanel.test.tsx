@@ -9,7 +9,7 @@ const copy = resolveLocaleMessages('es').coverDesignSurface;
 describe('PropertiesPanel', () => {
   test('no selection shows the empty state', () => {
     render(<PropertiesPanel selectedLayers={[]} copy={copy} onLayerChange={vi.fn()} onReplaceImage={vi.fn()} />);
-    expect(screen.getByTestId('properties-panel-empty')).toHaveTextContent(copy.noSelection);
+    expect(screen.getByTestId('properties-panel-empty')).toHaveTextContent(copy.workspace.emptyHint);
   });
 
   test('multiple layers selected shows the multi-selection state, not the first layer editor', () => {

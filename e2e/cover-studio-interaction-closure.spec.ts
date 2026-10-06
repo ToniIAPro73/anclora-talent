@@ -160,7 +160,7 @@ test('Cover Studio — exact canvas ↔ layers identity for title, subtitle, aut
     await clickLayer(page, id);
     await assertSelected(page, id);
   }
-  await page.getByTestId('advanced-editor-add-text-button').click();
+  await page.getByTestId('cover-tool-button-text').click();
   await expect.poll(() => ids(page)).toHaveLength(before.length + 1);
   const addedId = (await ids(page)).find((id) => !before.includes(id));
   if (!addedId) throw new Error('Added text layer ID was not exposed');
@@ -188,7 +188,7 @@ test('Cover Studio — real text editing, exact deletes, no ghost or duplicate I
     await page.waitForTimeout(1_500);
     await saved(page);
   }
-  await page.getByTestId('advanced-editor-add-text-button').click();
+  await page.getByTestId('cover-tool-button-text').click();
   const withAdded = await ids(page);
   const canvasDeleteId = withAdded.find((id) => !initialIds.includes(id));
   if (!canvasDeleteId) throw new Error('No canvas-delete layer ID');
@@ -199,7 +199,7 @@ test('Cover Studio — real text editing, exact deletes, no ghost or duplicate I
   await page.keyboard.press('Delete');
   await expect.poll(() => ids(page)).toHaveLength(countBeforeCanvasDelete - 1);
   await expect(page.getByTestId(`layer-row-${canvasDeleteId}`)).toHaveCount(0);
-  await page.getByTestId('advanced-editor-add-text-button').click();
+  await page.getByTestId('cover-tool-button-text').click();
   const withSecond = await ids(page);
   const layerDeleteId = withSecond.find((id) => !initialIds.includes(id));
   if (!layerDeleteId) throw new Error('No layer-delete layer ID');

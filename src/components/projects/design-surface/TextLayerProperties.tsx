@@ -185,8 +185,8 @@ export function TextLayerProperties({ layer, copy, brandColors, onChange, metada
       </div>
 
       <div className="space-y-2">
-        <Label className="text-xs font-semibold">{t.verticalAlignTopLabel}</Label>
-        <div className="ac-editor-inspector__segmented" role="group" aria-label={t.verticalAlignTopLabel}>
+        <Label className="text-xs font-semibold">{t.verticalAlignLabel}</Label>
+        <div className="ac-editor-inspector__segmented" role="group" aria-label={t.verticalAlignLabel}>
           <button
             type="button"
             onClick={() => onChange({ verticalAlign: 'top' })}

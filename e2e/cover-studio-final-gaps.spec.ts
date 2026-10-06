@@ -167,7 +167,7 @@ test('undo redo covers text, move, add and delete with exact IDs', async ({ page
   await page.getByTestId('advanced-editor-redo-button').click();
   await expect.poll(() => geometry(page, id)).toMatchObject({ x: 120 });
   const initial = await surfaceIds(page);
-  await page.getByTestId('advanced-editor-add-text-button').click();
+  await page.getByTestId('cover-tool-button-text').click();
   const added = (await surfaceIds(page)).find((candidate) => !initial.includes(candidate))!;
   await page.getByTestId('advanced-editor-undo-button').click();
   await expect(page.getByTestId(`layer-row-${added}`)).toHaveCount(0);
@@ -218,7 +218,7 @@ test('layer actions and keyboard editing preserve the object identity contract',
   await page.keyboard.press('Escape');
   await expect(page.getByTestId(`layer-row-${id}`)).toHaveCount(1);
   const beforeAdd = await surfaceIds(page);
-  await page.getByTestId('advanced-editor-add-text-button').click();
+  await page.getByTestId('cover-tool-button-text').click();
   const addedId = (await surfaceIds(page)).find((candidate) => !beforeAdd.includes(candidate))!;
   await canvasClick(page, addedId);
   await expectSelected(page, addedId);

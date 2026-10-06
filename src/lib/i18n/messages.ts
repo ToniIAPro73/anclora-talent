@@ -1277,6 +1277,7 @@ export type AppMessages = {
       alignCenterLabel: string;
       alignRightLabel: string;
       alignJustifyLabel: string;
+      verticalAlignLabel: string;
       verticalAlignTopLabel: string;
       verticalAlignMiddleLabel: string;
       verticalAlignBottomLabel: string;
@@ -1361,6 +1362,44 @@ export type AppMessages = {
       untitledText: string;
       untitledImage: string;
       untitledShape: string;
+      roleTitle: string;
+      roleSubtitle: string;
+      roleAuthor: string;
+      roleBody: string;
+      roleAuthorBio: string;
+      backgroundImage: string;
+      lineLabel: string;
+      iconLabel: string;
+      overlayLabel: string;
+    };
+    workspace: {
+      elements: string;
+      text: string;
+      images: string;
+      shapes: string;
+      lines: string;
+      icons: string;
+      backgrounds: string;
+      templates: string;
+      viewAllTemplates: string;
+      importCover: string;
+      templateLabel: string;
+      selectTemplate: string;
+      canvasLabel: string;
+      properties: string;
+      layers: string;
+      emptyTitle: string;
+      emptyHint: string;
+      preview: string;
+      backToEditor: string;
+      save: string;
+      fitToArea: string;
+      zoomOut: string;
+      zoomIn: string;
+      layerCount: string;
+      layerCountOne: string;
+      moreOptions: string;
+      drag: string;
     };
     origin: {
       promptTitle: string;
@@ -2908,6 +2947,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         alignCenterLabel: 'Centrar',
         alignRightLabel: 'Alinear a la derecha',
         alignJustifyLabel: 'Justificar',
+        verticalAlignLabel: 'Alineación vertical',
         verticalAlignTopLabel: 'Arriba',
         verticalAlignMiddleLabel: 'Centro',
         verticalAlignBottomLabel: 'Abajo',
@@ -2992,6 +3032,44 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         untitledText: 'Texto',
         untitledImage: 'Imagen',
         untitledShape: 'Forma',
+        roleTitle: 'Título',
+        roleSubtitle: 'Subtítulo',
+        roleAuthor: 'Autor',
+        roleBody: 'Cuerpo',
+        roleAuthorBio: 'Biografía del autor',
+        backgroundImage: 'Imagen de fondo',
+        lineLabel: 'Línea',
+        iconLabel: 'Icono',
+        overlayLabel: 'Superposición',
+      },
+      workspace: {
+        elements: 'Elementos',
+        text: 'Texto',
+        images: 'Imágenes',
+        shapes: 'Formas',
+        lines: 'Líneas',
+        icons: 'Iconos',
+        backgrounds: 'Fondos',
+        templates: 'Plantillas',
+        viewAllTemplates: 'Ver todas',
+        importCover: 'Importar portada',
+        templateLabel: 'Plantilla editorial',
+        selectTemplate: 'Seleccionar plantilla',
+        canvasLabel: 'Lienzo de portada',
+        properties: 'Propiedades',
+        layers: 'Capas',
+        emptyTitle: 'Nada seleccionado',
+        emptyHint: 'Selecciona un elemento del lienzo o de la lista de capas para editar sus propiedades.',
+        preview: 'Vista previa',
+        backToEditor: 'Volver al editor',
+        save: 'Guardar',
+        fitToArea: 'Ajustar al área',
+        zoomOut: 'Alejar',
+        zoomIn: 'Acercar',
+        layerCount: '{count} capas',
+        layerCountOne: '1 capa',
+        moreOptions: 'Opciones de capa',
+        drag: 'Arrastrar',
       },
       origin: {
         promptTitle: '¿Cómo quieres empezar?',
@@ -4536,6 +4614,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         alignCenterLabel: 'Center',
         alignRightLabel: 'Align right',
         alignJustifyLabel: 'Justify',
+        verticalAlignLabel: 'Vertical alignment',
         verticalAlignTopLabel: 'Top',
         verticalAlignMiddleLabel: 'Middle',
         verticalAlignBottomLabel: 'Bottom',
@@ -4620,6 +4699,44 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         untitledText: 'Text',
         untitledImage: 'Image',
         untitledShape: 'Shape',
+        roleTitle: 'Title',
+        roleSubtitle: 'Subtitle',
+        roleAuthor: 'Author',
+        roleBody: 'Body',
+        roleAuthorBio: 'Author bio',
+        backgroundImage: 'Background image',
+        lineLabel: 'Line',
+        iconLabel: 'Icon',
+        overlayLabel: 'Overlay',
+      },
+      workspace: {
+        elements: 'Elements',
+        text: 'Text',
+        images: 'Images',
+        shapes: 'Shapes',
+        lines: 'Lines',
+        icons: 'Icons',
+        backgrounds: 'Backgrounds',
+        templates: 'Templates',
+        viewAllTemplates: 'View all',
+        importCover: 'Import cover',
+        templateLabel: 'Editorial template',
+        selectTemplate: 'Select template',
+        canvasLabel: 'Cover canvas',
+        properties: 'Properties',
+        layers: 'Layers',
+        emptyTitle: 'Nothing selected',
+        emptyHint: 'Select an element on the canvas or in the layer list to edit its properties.',
+        preview: 'Preview',
+        backToEditor: 'Back to editor',
+        save: 'Save',
+        fitToArea: 'Fit to area',
+        zoomOut: 'Zoom out',
+        zoomIn: 'Zoom in',
+        layerCount: '{count} layers',
+        layerCountOne: '1 layer',
+        moreOptions: 'Layer options',
+        drag: 'Drag',
       },
       origin: {
         promptTitle: 'How do you want to start?',

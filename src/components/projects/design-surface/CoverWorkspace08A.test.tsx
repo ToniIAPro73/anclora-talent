@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
 import { ProjectWorkspace } from '../ProjectWorkspace';
 import { AdvancedCoverEditor } from './AdvancedCoverEditor';
@@ -165,5 +165,53 @@ describe('COVER_EDITOR_08A Architectural Contract Gates', () => {
     expect(screen.getByTestId('advanced-editor-redo-button')).toBeInTheDocument();
     expect(screen.getByTestId('cover-editor-preview-button')).toBeInTheDocument();
     expect(screen.getByTestId('studio-save-final-button')).toBeInTheDocument();
+  });
+
+  test('COVER_UI_11: layer names are clean and semantic, never raw content or editor residue', () => {
+    const surface = createEmptyDesignSurface('cover');
+    surface.layers = [
+      createDesignLayer({ type: 'text', content: 'La arquitectura del silencio y otras cosas muy largas', role: 'title', name: 'Text' }, 1),
+      createDesignLayer({ type: 'text', content: 'Sistemas para pensar, decidir y crear en un mundo de interrupciones', role: 'subtitle' }, 2),
+      createDesignLayer({ type: 'text', content: '', role: 'author', name: 'Texto', visible: false }, 3),
+      createDesignLayer({ type: 'image', src: 'https://example.com/cover.jpg', x: 0, y: 0, width: surface.width, height: surface.height }, 4),
+    ];
+
+    render(<AdvancedCoverEditor surface={surface} onChange={vi.fn()} copy={coverCopy} />);
+
+    const names = screen.getAllByTestId(/^layer-name-/).map((node) => node.textContent);
+    expect(names).toEqual(['Imagen de fondo', 'Autor', 'Subtítulo', 'Título']);
+    expect(names).not.toContain('Text');
+    expect(names).not.toContain('Texto');
+  });
+
+  test('COVER_UI_12: with no selection the properties panel shows an intentional empty state', () => {
+    render(<AdvancedCoverEditor surface={createEmptyDesignSurface('cover')} onChange={vi.fn()} copy={coverCopy} />);
+
+    const empty = screen.getByTestId('properties-panel-empty');
+    expect(empty).toHaveTextContent(coverCopy.workspace.emptyTitle);
+    expect(empty).toHaveTextContent(coverCopy.workspace.emptyHint);
+    expect(screen.queryByTestId('cover-properties-selection')).not.toBeInTheDocument();
+  });
+
+  test('COVER_UI_13: one toolbar, one zoom readout in the toolbar, guide buttons live in the canvas header', () => {
+    const { container } = render(<AdvancedCoverEditor surface={createEmptyDesignSurface('cover')} onChange={vi.fn()} copy={coverCopy} />);
+
+    expect(container.querySelectorAll('[data-testid="cover-workspace-toolbar"]')).toHaveLength(1);
+    expect(screen.getByTestId('advanced-editor-zoom-select')).toBeInTheDocument();
+    // the add-guide controls are part of the canvas header, not floating over the paper
+    const header = container.querySelector('.cover-canvas-header') as HTMLElement;
+    expect(header).toContainElement(screen.getByTestId('add-vertical-guide-button'));
+    expect(header).toContainElement(screen.getByTestId('add-horizontal-guide-button'));
+  });
+
+  test('COVER_UI_14: templates render real miniatures and "Ver todas" reveals the full catalogue', () => {
+    render(<AdvancedCoverEditor surface={createEmptyDesignSurface('cover')} onChange={vi.fn()} copy={coverCopy} />);
+
+    const initial = screen.getAllByTestId(/^cover-template-card-/);
+    expect(initial.length).toBe(3);
+    expect(screen.getAllByTestId(/^cover-template-thumb-/).length).toBe(3);
+
+    fireEvent.click(screen.getByTestId('cover-templates-view-all-button'));
+    expect(screen.getAllByTestId(/^cover-template-card-/).length).toBeGreaterThan(3);
   });
 });

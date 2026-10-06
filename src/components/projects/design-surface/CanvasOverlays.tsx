@@ -38,6 +38,8 @@ export interface CanvasOverlaysProps {
   isbnArea?: DesignSurface['isbnArea'];
   grid: GridDensity;
   copy: CanvasOverlaysCopy;
+  /** Render the add/clear-guide buttons floating above the canvas (default). The 08A workspace hosts them in its own header instead. */
+  showControls?: boolean;
 }
 
 function GuideLine({
@@ -118,7 +120,7 @@ function GuideLine({
   );
 }
 
-export function CanvasOverlays({ width, height, zoom, guides, onGuidesChange, safeArea, showSafeArea, isbnArea, grid, copy }: CanvasOverlaysProps) {
+export function CanvasOverlays({ width, height, zoom, guides, onGuidesChange, safeArea, showSafeArea, isbnArea, grid, copy, showControls = true }: CanvasOverlaysProps) {
   const addGuide = (axis: 'x' | 'y') => {
     const id = `guide-${axis}-${Date.now()}`;
     const position = axis === 'x' ? Math.round(width / 2) : Math.round(height / 2);
@@ -189,6 +191,7 @@ export function CanvasOverlays({ width, height, zoom, guides, onGuidesChange, sa
         ))}
       </div>
 
+      {showControls && (
       <div className="pointer-events-auto absolute -top-9 right-0 flex items-center gap-1.5">
         {guides.length > 0 && (
           <button
@@ -224,6 +227,7 @@ export function CanvasOverlays({ width, height, zoom, guides, onGuidesChange, sa
           <Plus className="h-3.5 w-3.5" />—
         </button>
       </div>
+      )}
     </div>
   );
 }
