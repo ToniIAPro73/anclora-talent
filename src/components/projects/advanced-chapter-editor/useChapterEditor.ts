@@ -353,6 +353,7 @@ export function useChapterEditor({
     currentIndex,
     currentChapter,
     totalChapters: localChapters.length,
+    setCurrentPage,
     title,
     htmlContent,
     hasChanges,

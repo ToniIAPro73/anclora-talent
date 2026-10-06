@@ -7,18 +7,44 @@ import { X, AlignLeft, AlignCenter, AlignRight, Move, ArrowUp, ArrowDown, Anchor
 import {
   alignedFloatingX,
   clampFloatingPosition,
+  columnIndexAt,
   moveSelectedImage,
+  pageCrossingFor,
+  reanchorImageAcrossPages,
   type FloatingBox,
   type ImageAlign,
 } from './image-position';
 
+type MeasuredBox = FloatingBox & { stride: number; flowLeft: number; column: number; scale: number };
+
+/** Space the context controls need above the image (h-9 bar + gap). */
+const CONTROLS_CLEARANCE_PX = 48;
+
 export const ImageNodeView = ({
   node,
   updateAttributes,
-  selected,
   deleteNode,
   editor,
+  getPos,
 }: NodeViewProps) => {
+  // ProseMirror may reuse a node view for another image after a move/re-sync
+  // without calling deselectNode, which leaves the `selected` prop stale (two
+  // images showing controls). Derive it from the live editor selection.
+  const readSelected = useCallback(() => {
+    const position = typeof getPos === 'function' ? getPos() : undefined;
+    const selection = editor.state.selection as unknown as { node?: unknown; from: number };
+    return typeof position === 'number' && Boolean(selection.node) && selection.from === position;
+  }, [editor, getPos]);
+  const [selected, setSelected] = useState(readSelected);
+  React.useEffect(() => {
+    const refresh = () => setSelected(readSelected());
+    refresh();
+    editor.on('transaction', refresh);
+    return () => {
+      editor.off('transaction', refresh);
+    };
+  }, [editor, readSelected]);
+
   const [isResizing, setIsResizing] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
   // Live values while a gesture is in progress; committed once on release so
@@ -29,31 +55,56 @@ export const ImageNodeView = ({
   const rootRef = useRef<HTMLDivElement>(null);
   const startPosRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
   const moveStartRef = useRef({ pointerX: 0, pointerY: 0, x: 0, y: 0 });
+  const moveBoxRef = useRef<MeasuredBox | null>(null);
+  // Unclamped drag offset: decides whether the drop crosses to another page.
+  const rawPosRef = useRef<{ x: number; y: number } | null>(null);
+  const [controlsBelow, setControlsBelow] = useState(false);
 
   const mode = node.attrs.mode === 'floating' ? 'floating' : 'inline';
   const floating = mode === 'floating';
-  const width = liveSize?.width ?? node.attrs.width ?? '100%';
-  const height = liveSize?.height ?? node.attrs.height ?? 'auto';
+  const asSize = (value: unknown): number | string | null => {
+    if (value == null || value === '') return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : String(value);
+  };
+  const width = liveSize?.width ?? asSize(node.attrs.width) ?? '100%';
+  const height = liveSize?.height ?? asSize(node.attrs.height) ?? 'auto';
   const align = (node.attrs.align || 'center') as ImageAlign;
   const x = livePos?.x ?? Number(node.attrs.x ?? 0);
   const y = livePos?.y ?? Number(node.attrs.y ?? 0);
 
-  const measureBox = useCallback((): FloatingBox | null => {
+  // Page geometry comes from the one ProseMirror surface: it is laid out in
+  // CSS columns, one column per page, so bounds and the natural slot are
+  // expressed per column (never against the width of the whole flow).
+  const measureBox = useCallback((): MeasuredBox | null => {
     const root = rootRef.current;
     const box = containerRef.current;
     const surface = root?.closest('.ProseMirror') as HTMLElement | null;
     if (!root || !box || !surface) return null;
     const surfaceRect = surface.getBoundingClientRect();
     const rootRect = root.getBoundingClientRect();
+    const styles = window.getComputedStyle(surface);
+    const columnWidth = Number.parseFloat(styles.columnWidth) || surface.clientWidth;
+    const gap = Number.parseFloat(styles.columnGap) || 0;
+    const stride = columnWidth + gap;
+    // The page canvas is CSS-scaled (zoom / fit): screen deltas must be divided
+    // by the scale to be comparable with layout (offsetWidth/columnWidth) px.
+    const scale = surface.offsetWidth > 0 ? surfaceRect.width / surface.offsetWidth : 1;
+    const relativeLeft = (rootRect.left - surfaceRect.left) / scale;
+    const column = columnIndexAt(relativeLeft, stride);
     return {
-      containerWidth: surface.clientWidth,
+      containerWidth: columnWidth,
       containerHeight: surface.clientHeight,
       width: box.offsetWidth,
       height: box.offsetHeight,
       // The offset is applied to the inner box, so this wrapper always sits
       // at the image's natural (anchor) slot.
-      naturalLeft: rootRect.left - surfaceRect.left,
-      naturalTop: rootRect.top - surfaceRect.top,
+      naturalLeft: relativeLeft - column * stride,
+      naturalTop: (rootRect.top - surfaceRect.top) / scale,
+      stride,
+      flowLeft: surfaceRect.left,
+      column,
+      scale,
     };
   }, []);
 
@@ -72,6 +123,8 @@ export const ImageNodeView = ({
 
   const handleMoveStart = useCallback((e: React.PointerEvent) => {
     if (!floating) return;
+    moveBoxRef.current = measureBox();
+    rawPosRef.current = null;
     setIsMoving(true);
     moveStartRef.current = {
       pointerX: e.clientX,
@@ -81,7 +134,7 @@ export const ImageNodeView = ({
     };
     e.preventDefault();
     e.stopPropagation();
-  }, [floating, node.attrs.x, node.attrs.y]);
+  }, [floating, measureBox, node.attrs.x, node.attrs.y]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (isResizing) {
@@ -90,23 +143,42 @@ export const ImageNodeView = ({
       const newWidth = Math.max(100, startPosRef.current.width + deltaX);
       setLiveSize({ width: newWidth, height: newWidth / aspectRatio });
     } else if (isMoving) {
-      const box = measureBox();
+      const box = moveBoxRef.current;
+      const scale = box?.scale || 1;
       const next = {
-        x: moveStartRef.current.x + (e.clientX - moveStartRef.current.pointerX),
-        y: moveStartRef.current.y + (e.clientY - moveStartRef.current.pointerY),
+        x: moveStartRef.current.x + (e.clientX - moveStartRef.current.pointerX) / scale,
+        y: moveStartRef.current.y + (e.clientY - moveStartRef.current.pointerY) / scale,
       };
+      rawPosRef.current = next;
       setLivePos(box ? clampFloatingPosition(next.x, next.y, box) : next);
     }
-  }, [isResizing, isMoving, measureBox]);
+  }, [isResizing, isMoving]);
 
   const handleMouseUp = useCallback(() => {
     if (isResizing && liveSize) updateAttributes(liveSize);
-    if (isMoving && livePos) updateAttributes(livePos);
+    if (isMoving) {
+      const box = moveBoxRef.current;
+      const raw = rawPosRef.current;
+      const crossing = box && raw ? pageCrossingFor(raw.x, raw.y, box) : 0;
+      if (box && crossing !== 0) {
+        // Dragged past its page: re-anchor to the neighbouring page (one
+        // transaction); the columns open a new page when there is none.
+        const moved = reanchorImageAcrossPages(editor, crossing, {
+          stride: box.stride,
+          flowLeft: box.flowLeft,
+          scale: box.scale,
+          currentColumn: box.column,
+        });
+        if (!moved && livePos) updateAttributes(livePos);
+      } else if (livePos) {
+        updateAttributes(livePos);
+      }
+    }
     setLiveSize(null);
     setLivePos(null);
     setIsResizing(false);
     setIsMoving(false);
-  }, [isResizing, isMoving, liveSize, livePos, updateAttributes]);
+  }, [isResizing, isMoving, liveSize, livePos, updateAttributes, editor]);
 
   React.useEffect(() => {
     if (isResizing || isMoving) {
@@ -123,6 +195,47 @@ export const ImageNodeView = ({
       };
     }
   }, [isResizing, isMoving, handleMouseMove, handleMouseUp]);
+
+  // Context controls follow the image's *current* DOM position. Above the
+  // image they would sit outside the page column when the image is at the top
+  // of a page (clipped, or visually on the previous page), so flip below.
+  React.useLayoutEffect(() => {
+    if (!selected) return;
+    const root = rootRef.current;
+    const surface = root?.closest('.ProseMirror') as HTMLElement | null;
+    if (!root || !surface) return;
+    const place = () => {
+      const surfaceRect = surface.getBoundingClientRect();
+      const scale = surface.offsetWidth > 0 ? surfaceRect.width / surface.offsetWidth : 1;
+      const boxTop = containerRef.current?.getBoundingClientRect().top ?? root.getBoundingClientRect().top;
+      const below = (boxTop - surfaceRect.top) / scale < CONTROLS_CLEARANCE_PX;
+      setControlsBelow((current) => (current === below ? current : below));
+    };
+    place();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(place);
+    observer?.observe(surface);
+    window.addEventListener('resize', place);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', place);
+    };
+  }, [selected, x, y, width, height, mode, align]);
+
+  // The native drag ghost must be the image only, never the wrapper (which in
+  // a float/column layout can include neighbouring content).
+  React.useEffect(() => {
+    const onDragStart = (event: DragEvent) => {
+      const target = event.target as HTMLElement | null;
+      const handle = containerRef.current?.querySelector('[data-drag-handle]');
+      const image = containerRef.current?.querySelector('img');
+      if (!target || !handle || !image || !handle.contains(target)) return;
+      event.dataTransfer?.setDragImage(image, 16, 16);
+    };
+    // Bubble phase on document runs after TipTap's own dragstart handler, so
+    // this is the last setDragImage call and wins.
+    document.addEventListener('dragstart', onDragStart);
+    return () => document.removeEventListener('dragstart', onDragStart);
+  }, []);
 
   const setAlign = (next: ImageAlign) => {
     if (!floating) {
@@ -167,6 +280,11 @@ export const ImageNodeView = ({
           ...(floating ? { position: 'relative', left: `${x}px`, top: `${y}px`, zIndex: 1 } : {}),
         }}
         onMouseDown={handleMouseDown}
+        onDragStart={(event) => {
+          // Floating images move with the pointer handle only; a native
+          // drag would re-order the node instead (two semantics mixed).
+          if (floating) event.preventDefault();
+        }}
         data-testid="image-node-box"
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- tiptap node view with dynamic data URLs and manual resize; next/image is not applicable here */}
@@ -208,7 +326,13 @@ export const ImageNodeView = ({
 
         {/* Controls - visible when selected */}
         {selected && (
-          <div className="absolute -top-10 left-0 right-0 flex items-center gap-1 bg-[#111C28] rounded-[6px] border border-[var(--border-subtle)] px-2 py-1.5 flex-wrap z-10">
+          <div
+            className={`absolute left-0 right-0 flex items-center gap-1 bg-[#111C28] rounded-[6px] border border-[var(--border-subtle)] px-2 py-1.5 flex-wrap z-10 ${
+              controlsBelow ? 'top-full mt-1' : '-top-10'
+            }`}
+            data-testid="image-node-controls"
+            data-placement={controlsBelow ? 'below' : 'above'}
+          >
             <button
               className={`p-1 rounded-[4px] transition text-sm ${
                 align === 'left'

@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Extension, Mark } from '@tiptap/core';
 import { useEditor, EditorContent, type Editor } from '@tiptap/react';
-import { Selection, TextSelection } from '@tiptap/pm/state';
+import { NodeSelection, Selection, TextSelection } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import BulletList from '@tiptap/extension-bullet-list';
 import OrderedList from '@tiptap/extension-ordered-list';
@@ -1605,6 +1605,7 @@ export function AdvancedRichTextEditor({
   defaultContent,
   onUpdate,
   currentPage = 0,
+  onCurrentPageChange,
   totalPages,
   pageNumberOffset = 0,
   onPageCountChange,
@@ -1621,6 +1622,8 @@ export function AdvancedRichTextEditor({
   defaultContent: string;
   onUpdate: (html: string) => void;
   currentPage?: number;
+  /** Lets the editor bring a page into view (e.g. the one holding a moved image). */
+  onCurrentPageChange?: (page: number) => void;
   totalPages?: number;
   /** Pages occupied by preceding chapters, so page badges number
    *  continuously through the whole book instead of restarting at 1. */
@@ -1877,11 +1880,46 @@ export function AdvancedRichTextEditor({
             })()
           : null;
 
+      // A selected image (NodeSelection) must survive the content re-sync that
+      // follows every auto page-break reconciliation: remember which image it
+      // is by document order and re-select it, instead of degrading to a text
+      // selection (which deselects it and detaches its controls).
+      const selectedImageIndex = (() => {
+        const node = (previousSelection as unknown as { node?: { type: { name: string } } } | null)?.node;
+        if (!previousSelection || node?.type.name !== 'image') return null;
+        let index = -1;
+        let found: number | null = null;
+        targetEditor.state.doc.descendants((child, pos) => {
+          if (child.type.name !== 'image') return true;
+          index += 1;
+          if (pos === previousSelection.from) found = index;
+          return true;
+        });
+        return found;
+      })();
+
       isSyncingExternalContentRef.current = true;
       targetEditor.commands.setContent(nextHtml, { emitUpdate: false });
 
       if (!previousSelection || typeof targetEditor.view?.dispatch !== 'function') {
         return;
+      }
+
+      if (selectedImageIndex !== null) {
+        let seen = -1;
+        let imagePos: number | null = null;
+        targetEditor.state.doc.descendants((child, pos) => {
+          if (child.type.name !== 'image') return true;
+          seen += 1;
+          if (seen === selectedImageIndex) imagePos = pos;
+          return true;
+        });
+        if (imagePos !== null) {
+          targetEditor.view.dispatch(
+            targetEditor.state.tr.setSelection(NodeSelection.create(targetEditor.state.doc, imagePos)),
+          );
+          return;
+        }
       }
 
       if (previousAnchorCoords && posAtCoords) {
@@ -2401,6 +2439,38 @@ export function AdvancedRichTextEditor({
     lastFocusedCurrentPageRef.current = currentPage;
     focusVisiblePage(currentPage);
   }, [currentPage, editor, focusVisiblePage, totalRenderablePages]);
+
+  // An image that crosses to another page must stay on screen: its controls,
+  // selection and caret are only meaningful on the page that is displayed.
+  useEffect(() => {
+    if (!editor || !onCurrentPageChange) return;
+    let frame = 0;
+    const follow = () => {
+      const selection = editor.state.selection as unknown as { node?: { type: { name: string } }; from: number };
+      if (selection.node?.type.name !== 'image') return;
+      const proseMirror = multipageFlowRef.current?.querySelector('.ProseMirror') as HTMLElement | null;
+      const wrapper = editor.view.nodeDOM(selection.from) as HTMLElement | null;
+      const box = (wrapper?.querySelector('[data-testid="image-node-box"]') ?? wrapper) as HTMLElement | null;
+      if (!proseMirror || !box) return;
+      const styles = window.getComputedStyle(proseMirror);
+      const stride = (Number.parseFloat(styles.columnWidth) || contentWidth) + (Number.parseFloat(styles.columnGap) || 0);
+      const rect = box.getBoundingClientRect();
+      const centerX = (rect.left + rect.width / 2 - proseMirror.getBoundingClientRect().left) / effectiveScale;
+      const page = Math.max(0, Math.floor(centerX / stride));
+      if (visiblePageIndices.includes(page)) return;
+      lastFocusedCurrentPageRef.current = page; // do not let page-focus move the selection
+      onCurrentPageChange(page);
+    };
+    const schedule = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(follow);
+    };
+    editor.on('transaction', schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      editor.off('transaction', schedule);
+    };
+  }, [editor, onCurrentPageChange, contentWidth, effectiveScale, visiblePageIndices]);
 
   if (!editor) return null;
 
@@ -2942,6 +3012,28 @@ export function AdvancedRichTextEditor({
               }
               .multipage-editor-flow .ProseMirror {
                 caret-color: var(--accent, #0ea5e9);
+              }
+              /* Gap cursor: the caret for block positions around atom nodes
+                 (images). The extension ships no CSS, so it was invisible. */
+              .ProseMirror .ProseMirror-gapcursor {
+                display: none;
+                pointer-events: none;
+                position: absolute;
+              }
+              .ProseMirror .ProseMirror-gapcursor:after {
+                content: "";
+                display: block;
+                position: absolute;
+                top: -2px;
+                width: 20px;
+                border-top: 1px solid var(--accent, #0ea5e9);
+                animation: ProseMirror-cursor-blink 1.1s steps(2, start) infinite;
+              }
+              @keyframes ProseMirror-cursor-blink {
+                to { visibility: hidden; }
+              }
+              .ProseMirror.ProseMirror-focused .ProseMirror-gapcursor {
+                display: block;
               }
               .multipage-editor-flow .ProseMirror ::selection {
                 background: color-mix(in srgb, var(--accent, #0ea5e9) 36%, transparent);

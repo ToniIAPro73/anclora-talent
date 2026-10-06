@@ -442,6 +442,7 @@ export function ChapterEditorFullscreen({
               defaultContent={editor.htmlContent}
               onUpdate={editor.setHtmlContent}
               currentPage={editor.currentPage}
+              onCurrentPageChange={editor.setCurrentPage}
               totalPages={editor.totalPages}
               pageNumberOffset={editor.pageNumberOffset}
               onPageCountChange={editor.setMeasuredTotalPages}

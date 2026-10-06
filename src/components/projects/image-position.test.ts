@@ -1,13 +1,16 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
-import { NodeSelection } from '@tiptap/pm/state';
+import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 import { closeHistory } from '@tiptap/pm/history';
-import { ResizableImage } from './resizable-image-extension';
+import { ResizableImage, moveCaretAroundImage } from './resizable-image-extension';
 import {
   alignedFloatingX,
   clampFloatingPosition,
+  columnIndexAt,
   moveSelectedImage,
+  pageCrossingFor,
+  reanchorImageAcrossPages,
   type FloatingBox,
 } from './image-position';
 
@@ -72,7 +75,9 @@ describe('image node attrs', () => {
     const reloaded = makeEditor(html);
     const attrs = reloaded.getJSON().content?.find((n) => n.type === 'image')?.attrs;
     expect(attrs).toMatchObject({ mode: 'floating', x: 42, y: -7, anchor: 'block', align: 'right' });
-    expect(String(attrs?.width)).toBe('220');
+    // sizes stay numeric across the HTML round trip (a string width collapsed the node view)
+    expect(attrs?.width).toBe(220);
+    expect(attrs?.height).toBe(110);
     editor.destroy();
     reloaded.destroy();
   });
@@ -130,6 +135,131 @@ describe('inline reorder and undo', () => {
     expect(editor.getJSON().content?.[1]?.attrs).toMatchObject({ x: 0, y: 0 });
     editor.commands.redo();
     expect(editor.getJSON().content?.[1]?.attrs).toMatchObject({ x: 30, y: 20 });
+    editor.destroy();
+  });
+});
+
+describe('page-column geometry', () => {
+  it('resolves the page column from the flow-relative x', () => {
+    expect(columnIndexAt(0, 700)).toBe(0);
+    expect(columnIndexAt(698, 700)).toBe(0);
+    expect(columnIndexAt(700, 700)).toBe(1);
+    expect(columnIndexAt(1500, 700)).toBe(2);
+  });
+
+  it('bounds an image on page 3 inside its own column instead of snapping to page 1', () => {
+    // naturalLeft is per column now: an image on any page behaves like page 1.
+    const pageThree = { ...box, naturalLeft: 40 };
+    expect(clampFloatingPosition(10, 20, pageThree)).toEqual({ x: 10, y: 20 });
+    expect(clampFloatingPosition(5000, 0, pageThree).x).toBe(360);
+  });
+
+  it('requests a page change only when dragged well past the column edge', () => {
+    expect(pageCrossingFor(0, 0, box)).toBe(0);
+    expect(pageCrossingFor(0, 210, box)).toBe(0); // touches the bottom edge
+    expect(pageCrossingFor(0, 260, box)).toBe(1);
+    expect(pageCrossingFor(0, -140, box)).toBe(-1);
+    expect(pageCrossingFor(500, 0, box)).toBe(1);
+  });
+});
+
+describe('positioned drag isolation', () => {
+  it('changes only image attrs; sibling blocks stay identical', () => {
+    const editor = makeEditor(`<p>uno</p><img src="${SRC}"><p>dos</p>`);
+    const siblingsBefore = JSON.stringify((editor.getJSON().content ?? []).filter((n) => n.type !== 'image'));
+    editor.commands.setNodeSelection(imagePos(editor));
+    editor.commands.updateAttributes('image', { mode: 'floating', x: 120, y: 80 });
+    const content = editor.getJSON().content ?? [];
+    expect(content.map((n) => n.type)).toEqual(['paragraph', 'image', 'paragraph']);
+    expect(JSON.stringify(content.filter((n) => n.type !== 'image'))).toBe(siblingsBefore);
+    expect(content[1].attrs).toMatchObject({ mode: 'floating', x: 120, y: 80 });
+    editor.destroy();
+  });
+});
+
+describe('cross-page re-anchor', () => {
+  function layoutEditor(columns: number[]) {
+    // jsdom has no layout: fake each top-level block's first client rect.
+    const editor = makeEditor(`<p>a</p><p>b</p><img src="${SRC}"><p>c</p><p>d</p>`);
+    const dom = new Map<number, { getClientRects: () => Array<{ left: number }> }>();
+    let index = 0;
+    editor.state.doc.forEach((_node, offset) => {
+      const left = columns[index] * 700;
+      dom.set(offset, { getClientRects: () => [{ left }] });
+      index += 1;
+    });
+    vi.spyOn(editor.view, 'nodeDOM').mockImplementation((pos: number) => (dom.get(pos) ?? null) as unknown as Node);
+    return editor;
+  }
+
+  it('moves the image to the top of the next page in one transaction', () => {
+    // a,b,image on page 1; c,d on page 2
+    const editor = layoutEditor([0, 0, 0, 1, 1]);
+    editor.commands.setNodeSelection(imagePos(editor));
+    editor.commands.updateAttributes('image', { mode: 'floating', x: 30, y: 90 });
+    expect(reanchorImageAcrossPages(editor, 1, { stride: 700, flowLeft: 0, currentColumn: 0 })).toBe(true);
+
+    expect(order(editor)).toEqual(['paragraph', 'paragraph', 'paragraph', 'image', 'paragraph']);
+    // offsets reset: the image sits at the top-left of its new page
+    expect(editor.getJSON().content?.[3]?.attrs).toMatchObject({ mode: 'floating', x: 0, y: 0 });
+    const sel = editor.state.selection as unknown as { node?: { type: { name: string } } };
+    expect(sel.node?.type.name).toBe('image');
+    editor.destroy();
+  });
+
+  it('lands at the end of the document when the next page has no content yet', () => {
+    const editor = layoutEditor([0, 0, 0, 0, 0]);
+    editor.commands.setNodeSelection(imagePos(editor));
+    expect(reanchorImageAcrossPages(editor, 1, { stride: 700, flowLeft: 0, currentColumn: 0 })).toBe(true);
+    // image moved last; the trailing-paragraph guard keeps a place to type
+    expect(order(editor).slice(-2)).toEqual(['image', 'paragraph']);
+    editor.destroy();
+  });
+
+  it('refuses to go before the first page', () => {
+    const editor = layoutEditor([0, 0, 0, 1, 1]);
+    editor.commands.setNodeSelection(imagePos(editor));
+    expect(reanchorImageAcrossPages(editor, -1, { stride: 700, flowLeft: 0, currentColumn: 0 })).toBe(false);
+    editor.destroy();
+  });
+});
+
+describe('caret around image', () => {
+  it('keeps a paragraph after a trailing image so there is somewhere to type', async () => {
+    const editor = makeEditor(`<p>uno</p><img src="${SRC}">`);
+    await new Promise((resolve) => setTimeout(resolve, 0)); // TipTap emits `create` asynchronously
+    expect(order(editor)).toEqual(['paragraph', 'image', 'paragraph']);
+    editor.destroy();
+  });
+
+  it('NodeSelection(image) -> TextSelection after the image, typing lands after it', () => {
+    const editor = makeEditor(`<p>uno</p><img src="${SRC}"><p>dos</p>`);
+    const imageAt = imagePos(editor);
+    editor.commands.setNodeSelection(imageAt);
+    expect(moveCaretAroundImage(editor, 'after')).toBe(true);
+    expect(editor.state.selection instanceof TextSelection).toBe(true);
+    expect(editor.state.selection.from).toBeGreaterThan(imageAt);
+    editor.commands.insertContent('Texto después de imagen');
+    const blocks = editor.getJSON().content ?? [];
+    expect(blocks.map((n) => n.type)).toEqual(['paragraph', 'image', 'paragraph']);
+    expect(JSON.stringify(blocks[2])).toContain('Texto después de imagen');
+    editor.destroy();
+  });
+
+  it('creates the paragraph before an image that is the first block', () => {
+    const editor = makeEditor(`<img src="${SRC}"><p>dos</p>`);
+    editor.commands.setNodeSelection(imagePos(editor));
+    expect(moveCaretAroundImage(editor, 'before')).toBe(true);
+    expect(order(editor)[0]).toBe('paragraph');
+    expect(editor.state.selection instanceof TextSelection).toBe(true);
+    expect(editor.state.selection.from).toBeLessThan(imagePos(editor));
+    editor.destroy();
+  });
+
+  it('does nothing when the selection is plain text', () => {
+    const editor = makeEditor(`<p>uno</p><img src="${SRC}">`);
+    editor.commands.setTextSelection(2);
+    expect(moveCaretAroundImage(editor, 'after')).toBe(false);
     editor.destroy();
   });
 });
