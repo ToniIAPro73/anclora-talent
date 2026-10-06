@@ -435,7 +435,7 @@ export function ProjectWorkspace({
       case 3: // Cover
         if (fixedPdf) return renderFixedPdfIncludedPanel(copy.stepCover);
         return (
-          <div className="mx-auto max-w-6xl space-y-6">
+          <div className="cover-workspace-host w-full">
             <CoverStudioV2
               key={project.updatedAt}
               surfaceKind="cover"
@@ -712,47 +712,53 @@ export function ProjectWorkspace({
       </div>
 
       {/* Step Layout */}
-      <div className="ac-workflow-shell talent-workflow-shell">
-        <div className={`ac-workflow-shell__layout${activeStep <= 2 ? ' talent-workflow-shell__layout--full' : ''}`}>
-        {activeStep > 2 && (
-          <aside className="ac-workflow-shell__rail xl:sticky xl:top-8 xl:self-start">
-             <div className="ac-workflow-shell__panel ac-surface-panel ac-surface-panel--subtle p-5">
-                <h4 className="ac-workflow-shell__panel-meta">Progreso</h4>
-                <div className="ac-workflow-shell__panel-value mt-3">
-                   <strong>{activeStep}</strong>
-                   <span>de {steps.length} pasos</span>
-                </div>
-                <p className="ac-workflow-shell__panel-summary mt-4 text-xs leading-5">
-                   {steps[activeStep - 1]?.description || 'Sigue el flujo editorial para completar tu publicación premium.'}
-                </p>
-             </div>
-
-             <div className="ac-workflow-shell__actions">
-                <button
-                  data-testid="previous-step-button"
-                  onClick={() => setActiveStep(prev => Math.max(1, prev - 1))}
-                  disabled={activeStep === 1}
-                  className={`${premiumSecondaryLightButton} w-full py-3 text-xs disabled:opacity-30 disabled:cursor-default cursor-pointer`}
-                >
-                   Paso anterior
-                </button>
-                <button
-                  data-testid="next-step-button"
-                  onClick={() => setActiveStep(prev => Math.min(steps.length, prev + 1))}
-                  disabled={activeStep === steps.length}
-                  className={`${premiumPrimaryDarkButton} w-full py-3 text-xs disabled:opacity-30 disabled:cursor-default cursor-pointer`}
-                >
-                   Siguiente paso
-                </button>
-             </div>
-          </aside>
-        )}
-
-        <main className="ac-workflow-shell__content">
+      {activeStep === 3 && !fixedPdf ? (
+        <div className="cover-workspace-stage w-full" data-testid="cover-step-workspace">
           {renderStepContent()}
-        </main>
         </div>
-      </div>
+      ) : (
+        <div className="ac-workflow-shell talent-workflow-shell">
+          <div className={`ac-workflow-shell__layout${activeStep <= 2 ? ' talent-workflow-shell__layout--full' : ''}`}>
+          {activeStep > 2 && (
+            <aside className="ac-workflow-shell__rail xl:sticky xl:top-8 xl:self-start">
+               <div className="ac-workflow-shell__panel ac-surface-panel ac-surface-panel--subtle p-5">
+                  <h4 className="ac-workflow-shell__panel-meta">Progreso</h4>
+                  <div className="ac-workflow-shell__panel-value mt-3">
+                     <strong>{activeStep}</strong>
+                     <span>de {steps.length} pasos</span>
+                  </div>
+                  <p className="ac-workflow-shell__panel-summary mt-4 text-xs leading-5">
+                     {steps[activeStep - 1]?.description || 'Sigue el flujo editorial para completar tu publicación premium.'}
+                  </p>
+               </div>
+
+               <div className="ac-workflow-shell__actions">
+                  <button
+                    data-testid="previous-step-button"
+                    onClick={() => setActiveStep(prev => Math.max(1, prev - 1))}
+                    disabled={activeStep === 1}
+                    className={`${premiumSecondaryLightButton} w-full py-3 text-xs disabled:opacity-30 disabled:cursor-default cursor-pointer`}
+                  >
+                     Paso anterior
+                  </button>
+                  <button
+                    data-testid="next-step-button"
+                    onClick={() => setActiveStep(prev => Math.min(steps.length, prev + 1))}
+                    disabled={activeStep === steps.length}
+                    className={`${premiumPrimaryDarkButton} w-full py-3 text-xs disabled:opacity-30 disabled:cursor-default cursor-pointer`}
+                  >
+                     Siguiente paso
+                  </button>
+               </div>
+            </aside>
+          )}
+
+          <main className="ac-workflow-shell__content">
+            {renderStepContent()}
+          </main>
+          </div>
+        </div>
+      )}
 
       {/* Dialogs remain portalled; the chapter editor is a workspace state, not
           an overlay, so the management screen is unmounted while editing. */}

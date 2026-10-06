@@ -145,7 +145,7 @@ export function CoverStudioV2({
   }, [sourceDocumentAssetId, projectId, originPageNumber, surface, handleChange]);
 
   return (
-    <div className="space-y-4" data-testid="cover-studio-v2">
+    <div className="cover-studio-v2 w-full h-full" data-testid="cover-studio-v2" data-surface-kind={surfaceKind}>
       {showOriginPrompt ? (
         <CoverOriginPrompt
           copy={copy.origin}

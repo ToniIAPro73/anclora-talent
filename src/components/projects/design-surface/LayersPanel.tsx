@@ -10,11 +10,17 @@
 
 import { useState } from 'react';
 import {
+  ArrowDown,
+  ArrowUp,
+  ChevronsDown,
+  ChevronsUp,
   Copy,
   Eye,
   EyeOff,
+  GripVertical,
   ImageIcon,
   Lock,
+  MoreVertical,
   Shapes,
   Trash2,
   Type,
@@ -83,6 +89,8 @@ export function LayersPanel({
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const sorted = [...layers].sort((a, b) => b.zIndex - a.zIndex);
 
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+
   if (sorted.length === 0) {
     return (
       <div className="ac-editor-inspector__empty" data-testid="layers-panel-empty">
@@ -98,6 +106,7 @@ export function LayersPanel({
         const isSelected = selectedLayerIds.includes(layer.id);
         const isFirst = index === 0;
         const isLast = index === sorted.length - 1;
+        const isMenuOpen = menuOpenId === layer.id;
 
         return (
           <div
@@ -105,17 +114,33 @@ export function LayersPanel({
             role="listitem"
             data-testid={`layer-row-${layer.id}`}
             data-selected={isSelected ? 'true' : 'false'}
-            className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 ${
-              isSelected ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-transparent hover:bg-[var(--surface-soft)]'
+            className={`group relative flex items-center gap-1.5 rounded-md border px-2 py-1.5 transition-colors ${
+              isSelected ? 'border-[var(--accent)] bg-[#0b2b40]' : 'border-[#1b3b4f] bg-[#092131] hover:bg-[#0e2c40]'
             }`}
           >
+            {/* Visibility toggle (08A left) */}
+            <button
+              type="button"
+              data-testid={`layer-visibility-${layer.id}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleVisibility(layer.id);
+              }}
+              title={layer.visible ? copy.hideLabel : copy.showLabel}
+              aria-label={layer.visible ? copy.hideLabel : copy.showLabel}
+              className="p-1 text-[var(--text-tertiary)] hover:text-white rounded transition-colors"
+            >
+              {layer.visible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5 opacity-50" />}
+            </button>
+
+            {/* Type icon & Layer name */}
             <button
               type="button"
               data-testid={`layer-select-${layer.id}`}
               onClick={(event) => onSelect(layer.id, { additive: event.shiftKey })}
               className="flex min-w-0 flex-1 items-center gap-2 text-left"
             >
-              <Icon className="h-4 w-4 shrink-0 text-[var(--text-tertiary)]" aria-hidden="true" />
+              <Icon className="h-3.5 w-3.5 shrink-0 text-[#55c7ff]" aria-hidden="true" />
               {renamingId === layer.id ? (
                 <input
                   autoFocus
@@ -130,11 +155,11 @@ export function LayersPanel({
                     if (event.key === 'Escape') setRenamingId(null);
                   }}
                   onClick={(event) => event.stopPropagation()}
-                  className="min-w-0 flex-1 rounded border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-1 text-xs"
+                  className="min-w-0 flex-1 rounded border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-1 text-xs text-white"
                 />
               ) : (
                 <span
-                  className="min-w-0 flex-1 truncate text-xs"
+                  className="min-w-0 flex-1 truncate text-xs text-[#dbeaf5] select-none"
                   data-testid={`layer-name-${layer.id}`}
                   onDoubleClick={() => setRenamingId(layer.id)}
                   title={copy.renameLabel}
@@ -144,90 +169,155 @@ export function LayersPanel({
               )}
             </button>
 
+            {/* Optional lock indicator */}
+            {layer.locked && (
+              <button
+                type="button"
+                data-testid={`layer-lock-${layer.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleLock(layer.id);
+                }}
+                title={copy.unlockLabel}
+                aria-label={copy.unlockLabel}
+                className="p-1 text-amber-400 hover:text-amber-300 rounded"
+              >
+                <Lock className="h-3.5 w-3.5" />
+              </button>
+            )}
+
+            {/* Drag grip handle (08A) */}
+            <span className="p-1 text-[var(--text-tertiary)] opacity-40 group-hover:opacity-80 cursor-grab" title="Arrastrar">
+              <GripVertical className="h-3.5 w-3.5" />
+            </span>
+
+            {/* Actions menu trigger (08A) */}
             <button
               type="button"
-              data-testid={`layer-visibility-${layer.id}`}
-              onClick={() => onToggleVisibility(layer.id)}
-              title={layer.visible ? copy.hideLabel : copy.showLabel}
-              aria-label={layer.visible ? copy.hideLabel : copy.showLabel}
-              className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
+              data-testid={`layer-menu-${layer.id}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setMenuOpenId(isMenuOpen ? null : layer.id);
+              }}
+              className="p-1 text-[var(--text-tertiary)] hover:text-white rounded"
+              title="Opciones de capa"
+              aria-label="Opciones de capa"
             >
-              {layer.visible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+              <MoreVertical className="h-3.5 w-3.5" />
             </button>
-            <button
-              type="button"
-              data-testid={`layer-lock-${layer.id}`}
-              onClick={() => onToggleLock(layer.id)}
-              title={layer.locked ? copy.unlockLabel : copy.lockLabel}
-              aria-label={layer.locked ? copy.unlockLabel : copy.lockLabel}
-              className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
+
+            {/* Action buttons (rendered cleanly, visible on hover or menu open, accessible to tests) */}
+            <div
+              className={`cover-layer-actions ${
+                isMenuOpen
+                  ? 'flex absolute right-0 top-full z-20 mt-1 bg-[#071d2b] border border-[#2d5870] rounded-md p-1 shadow-xl'
+                  : 'hidden group-hover:flex items-center gap-0.5'
+              }`}
             >
-              {layer.locked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
-            </button>
-            <button
-              type="button"
-              data-testid={`layer-duplicate-${layer.id}`}
-              onClick={() => onDuplicate(layer.id)}
-              title={copy.duplicateLabel}
-              aria-label={copy.duplicateLabel}
-              className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
-            >
-              <Copy className="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              data-testid={`layer-move-up-${layer.id}`}
-              onClick={() => onReorder(layer.id, 'up')}
-              disabled={isFirst}
-              title={copy.moveUpLabel}
-              aria-label={copy.moveUpLabel}
-              className="ac-button ac-button--ghost ac-button--compact text-[10px] px-1.5 disabled:opacity-30"
-            >
-              {copy.moveUpLabel}
-            </button>
-            <button
-              type="button"
-              data-testid={`layer-move-down-${layer.id}`}
-              onClick={() => onReorder(layer.id, 'down')}
-              disabled={isLast}
-              title={copy.moveDownLabel}
-              aria-label={copy.moveDownLabel}
-              className="ac-button ac-button--ghost ac-button--compact text-[10px] px-1.5 disabled:opacity-30"
-            >
-              {copy.moveDownLabel}
-            </button>
-            <button
-              type="button"
-              data-testid={`layer-front-${layer.id}`}
-              onClick={() => onReorder(layer.id, 'front')}
-              disabled={isFirst}
-              title={copy.bringToFrontLabel}
-              aria-label={copy.bringToFrontLabel}
-              className="ac-button ac-button--ghost ac-button--compact text-[10px] px-1.5 disabled:opacity-30"
-            >
-              {copy.bringToFrontLabel}
-            </button>
-            <button
-              type="button"
-              data-testid={`layer-back-${layer.id}`}
-              onClick={() => onReorder(layer.id, 'back')}
-              disabled={isLast}
-              title={copy.sendToBackLabel}
-              aria-label={copy.sendToBackLabel}
-              className="ac-button ac-button--ghost ac-button--compact text-[10px] px-1.5 disabled:opacity-30"
-            >
-              {copy.sendToBackLabel}
-            </button>
-            <button
-              type="button"
-              data-testid={`layer-delete-${layer.id}`}
-              onClick={() => onDelete(layer.id)}
-              title={copy.deleteLabel}
-              aria-label={copy.deleteLabel}
-              className="ac-button ac-button--ghost ac-button--icon ac-button--sm"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
+              {!layer.locked && (
+                <button
+                  type="button"
+                  data-testid={`layer-lock-${layer.id}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleLock(layer.id);
+                  }}
+                  title={copy.lockLabel}
+                  aria-label={copy.lockLabel}
+                  className="p-1 text-[var(--text-tertiary)] hover:text-white hover:bg-[#12364c] rounded transition-colors"
+                >
+                  <Unlock className="h-3.5 w-3.5" />
+                </button>
+              )}
+              <button
+                type="button"
+                data-testid={`layer-duplicate-${layer.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDuplicate(layer.id);
+                  setMenuOpenId(null);
+                }}
+                title={copy.duplicateLabel}
+                aria-label={copy.duplicateLabel}
+                className="p-1 text-[var(--text-tertiary)] hover:text-white hover:bg-[#12364c] rounded transition-colors"
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                data-testid={`layer-front-${layer.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReorder(layer.id, 'front');
+                  setMenuOpenId(null);
+                }}
+                disabled={isFirst}
+                title={copy.bringToFrontLabel}
+                aria-label={copy.bringToFrontLabel}
+                className="p-1 text-[var(--text-tertiary)] hover:text-white hover:bg-[#12364c] rounded transition-colors disabled:opacity-20"
+              >
+                <ChevronsUp className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                data-testid={`layer-move-up-${layer.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReorder(layer.id, 'up');
+                  setMenuOpenId(null);
+                }}
+                disabled={isFirst}
+                title={copy.moveUpLabel}
+                aria-label={copy.moveUpLabel}
+                className="p-1 text-[var(--text-tertiary)] hover:text-white hover:bg-[#12364c] rounded transition-colors disabled:opacity-20"
+              >
+                <ArrowUp className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                data-testid={`layer-move-down-${layer.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReorder(layer.id, 'down');
+                  setMenuOpenId(null);
+                }}
+                disabled={isLast}
+                title={copy.moveDownLabel}
+                aria-label={copy.moveDownLabel}
+                className="p-1 text-[var(--text-tertiary)] hover:text-white hover:bg-[#12364c] rounded transition-colors disabled:opacity-20"
+              >
+                <ArrowDown className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                data-testid={`layer-back-${layer.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReorder(layer.id, 'back');
+                  setMenuOpenId(null);
+                }}
+                disabled={isLast}
+                title={copy.sendToBackLabel}
+                aria-label={copy.sendToBackLabel}
+                className="p-1 text-[var(--text-tertiary)] hover:text-white hover:bg-[#12364c] rounded transition-colors disabled:opacity-20"
+              >
+                <ChevronsDown className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                data-testid={`layer-delete-${layer.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(layer.id);
+                  setMenuOpenId(null);
+                }}
+                title={copy.deleteLabel}
+                aria-label={copy.deleteLabel}
+                className="p-1 text-red-400 hover:text-red-300 hover:bg-[#12364c] rounded transition-colors"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         );
       })}
