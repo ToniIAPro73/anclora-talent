@@ -235,6 +235,10 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
     appendLayer(createDesignLayer({ type: 'shape', shape: 'line', x: surface.width * 0.18, y: surface.height * 0.5, width: surface.width * 0.64, height: 2, stroke: '#55c7ff', strokeWidth: 2, name: 'Line' }, surface.layers.length + 1));
   }, [appendLayer, surface.height, surface.layers.length, surface.width]);
 
+  const addIcon = useCallback(() => {
+    appendLayer(createDesignLayer({ type: 'shape', shape: 'ellipse', fill: '#55c7ff', x: surface.width / 2 - 18, y: surface.height / 2 - 18, width: 36, height: 36, name: 'Icon' }, surface.layers.length + 1));
+  }, [appendLayer, surface.height, surface.layers.length, surface.width]);
+
   const canResetToOriginal = Boolean(surface.originAssetId && originalBackgroundSrc);
   const handleResetToOriginal = useCallback(() => {
     if (!surface.originAssetId || !originalBackgroundSrc) return;
@@ -426,7 +430,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
           <div className="cover-editor-tool-list">
             {([
               ['elements', Grid2X2, 'Elementos'], ['text', Type, 'Texto'], ['images', ImageIcon, 'Imágenes'], ['shapes', Shapes, 'Formas'], ['lines', Minus, 'Líneas'], ['icons', MoreVertical, 'Iconos'], ['background', Grid3x3, 'Fondos'],
-            ] as const).map(([tool, Icon, label]) => <button key={tool} type="button" className="cover-editor-tool" data-active={activeTool === tool ? 'true' : 'false'} onClick={() => { setActiveTool(tool); if (tool === 'text') addTextLayer(); if (tool === 'images') imageInputRef.current?.click(); if (tool === 'shapes') addShapeLayer(); if (tool === 'lines') addLine(); if (tool === 'background') setSelectedLayerIds([]); }}><Icon className="h-5 w-5" /><span>{label}</span></button>)}
+            ] as const).map(([tool, Icon, label]) => <button key={tool} type="button" className="cover-editor-tool" data-active={activeTool === tool ? 'true' : 'false'} onClick={() => { setActiveTool(tool); if (tool === 'text') addTextLayer(); if (tool === 'images') imageInputRef.current?.click(); if (tool === 'shapes') addShapeLayer(); if (tool === 'lines') addLine(); if (tool === 'icons') addIcon(); if (tool === 'background') setSelectedLayerIds([]); }}><Icon className="h-5 w-5" /><span>{label}</span></button>)}
           </div>
           <div className="cover-editor-templates"><div className="cover-editor-section-heading"><strong>Plantillas</strong><button type="button" className="cover-editor-link" onClick={() => document.querySelector('[data-testid="cover-template-grid"]')?.scrollIntoView({ behavior: 'smooth' })}>Ver todas <ChevronDown className="h-3 w-3" /></button></div><div className="cover-template-grid" data-testid="cover-template-grid">{templates.slice(0, 3).map((template, index) => <button key={template.id} type="button" className="cover-template-card" data-active={selectedTemplateId === template.id ? 'true' : 'false'} onClick={() => applyTemplate(template)} title={template.description}><img src={['/landing/features/cover-studio-dark.png', '/landing/features/cover-studio-light.png', '/landing/hero/cover-preview-dark.png'][index]} alt="" /><span>{template.name}</span></button>)}</div></div>
           <input ref={imageInputRef} type="file" accept="image/png,image/jpeg,image/webp" data-testid="advanced-editor-image-file-input" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void handleAddImage(file); event.target.value = ''; }} />
