@@ -1,8 +1,6 @@
 import { notFound } from 'next/navigation';
 import { CoverOptimizePanel } from '@/components/filestudio/CoverOptimizePanel';
 import { CoverStudioV2 } from '@/components/projects/design-surface/CoverStudioV2';
-import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
-import { NavigatingLink } from '@/components/ui/NavigatingLink';
 import { requireUserId } from '@/lib/auth/guards';
 import { hasDatabase } from '@/lib/db';
 import { projectRepository } from '@/lib/db/repositories';
@@ -20,7 +18,6 @@ export default async function ProjectCoverPage({
   const userId = await requireUserId();
   const { projectId } = await params;
   const { locale } = await readUiPreferences();
-  const copy = resolveLocaleMessages(locale).project;
   const project = await projectRepository.getProjectById(userId, projectId);
 
   if (!project) {
@@ -40,24 +37,7 @@ export default async function ProjectCoverPage({
   const pageCount = project.document.source?.pageCount ?? null;
 
   return (
-    <div className="ac-workspace-stage talent-workspace-stage">
-      <div className="ac-workspace-stage__header ac-workspace-stage__header--split">
-        <div className="ac-section-heading">
-          <p className="ac-section-heading__eyebrow">{copy.coverEyebrow}</p>
-          <h2 className="ac-section-heading__title mt-2 text-4xl">{copy.coverTitle}</h2>
-        </div>
-        <div className="ac-workspace-stage__actions">
-          <NavigatingLink href={`/projects/${project.id}/editor`} pendingLabel={copy.coverBackEditor} className={`${premiumSecondaryLightButton} px-5`}>
-            {copy.coverBackEditor}
-          </NavigatingLink>
-          <NavigatingLink href={`/projects/${project.id}/back-cover`} pendingLabel={copy.coverOpenBackCover} className={`${premiumSecondaryLightButton} px-5`}>
-            {copy.coverOpenBackCover}
-          </NavigatingLink>
-          <NavigatingLink href={`/projects/${project.id}/preview`} pendingLabel={copy.coverBackPreview} className={`${premiumPrimaryDarkButton} px-5`}>
-            {copy.coverBackPreview}
-          </NavigatingLink>
-        </div>
-      </div>
+    <div className="ac-workspace-stage talent-workspace-stage cover-route-stage">
       <CoverStudioV2
         surfaceKind="cover"
         projectId={project.id}
