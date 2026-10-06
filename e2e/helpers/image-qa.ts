@@ -104,7 +104,16 @@ export async function flowGeometry(page: Page) {
     const p = pm.getBoundingClientRect();
     // The canvas is CSS-scaled (zoom / fit-to-width); rects are screen px.
     const scale = pm.offsetWidth > 0 ? p.width / pm.offsetWidth : 1;
-    return { flow: { x: f.left, y: f.top, w: f.width, h: f.height }, pmLeft: p.left, stride: stride * scale, scale };
+    const columnWidth = (parseFloat(cs.columnWidth) || pm.clientWidth) * scale;
+    return {
+      flow: { x: f.left, y: f.top, w: f.width, h: f.height },
+      pmLeft: p.left,
+      pmTop: p.top,
+      pmHeight: pm.clientHeight * scale,
+      columnWidth,
+      stride: stride * scale,
+      scale,
+    };
   });
 }
 
@@ -228,4 +237,45 @@ export async function openChapterReady(page: Page, projectId: string, chapter: R
   // The editor re-syncs content right after mount; interacting earlier loses the caret.
   await page.waitForTimeout(2500);
   return editor;
+}
+
+export const GUIDE_V = '[data-testid="image-guide-vertical"]';
+export const GUIDE_H = '[data-testid="image-guide-horizontal"]';
+
+/** Centre of the editable content box of page column `column`, in screen px. */
+export async function pageCenter(page: Page, column: number) {
+  const g = await flowGeometry(page);
+  return { x: g.pmLeft + column * g.stride + g.columnWidth / 2, y: g.pmTop + g.pmHeight / 2 };
+}
+
+export async function imageCenter(page: Page) {
+  const box = (await rectOf(page, BOX))!;
+  return { x: box.x + box.w / 2, y: box.y + box.h / 2 };
+}
+
+export async function guideCount(page: Page) {
+  return { v: await page.locator(GUIDE_V).count(), h: await page.locator(GUIDE_H).count() };
+}
+
+/**
+ * Hold the drag handle and walk the image centre to `target` (screen px, either
+ * axis optional). Returns after the last move; the caller releases the mouse.
+ */
+export async function dragCenterTo(page: Page, target: { x?: number; y?: number }, grab: { x: number; y: number }) {
+  const center = await imageCenter(page);
+  const dx = target.x === undefined ? 0 : target.x - center.x;
+  const dy = target.y === undefined ? 0 : target.y - center.y;
+  const steps = 5;
+  for (let i = 1; i <= steps; i += 1) {
+    await page.mouse.move(grab.x + (dx * i) / steps, grab.y + (dy * i) / steps);
+  }
+}
+
+export async function grabHandle(page: Page) {
+  const handle = await rectOf(page, HANDLE);
+  expect(handle, 'drag handle visible').not.toBeNull();
+  const grab = { x: handle!.x + 6, y: handle!.y + 6 };
+  await page.mouse.move(grab.x, grab.y);
+  await page.mouse.down();
+  return grab;
 }
