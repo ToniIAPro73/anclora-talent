@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { neon } from '@neondatabase/serverless';
+import { sql } from 'drizzle-orm';
+import { getDb } from '@/lib/db';
 
 function maskUrl(url: string | undefined) {
   if (!url) return null;
@@ -39,28 +40,28 @@ export async function GET() {
   }
 
   try {
-    const sql = neon(databaseUrl);
-
     // Get all existing tables in public schema
-    const tableRows = await sql`
+    const tableResult = await getDb().execute(sql`
       SELECT table_name
       FROM information_schema.tables
       WHERE table_schema = 'public'
         AND table_type = 'BASE TABLE'
       ORDER BY table_name
-    `;
-    const existingTables = new Set(tableRows.map((r: Record<string, string>) => r.table_name as string));
+    `);
+    const tableRows = tableResult.rows as Array<Record<string, string>>;
+    const existingTables = new Set(tableRows.map((r) => r.table_name));
 
     // Get all columns for those tables
-    const columnRows = await sql`
+    const columnResult = await getDb().execute(sql`
       SELECT table_name, column_name, data_type, is_nullable, column_default
       FROM information_schema.columns
       WHERE table_schema = 'public'
       ORDER BY table_name, ordinal_position
-    `;
+    `);
+    const columnRows = columnResult.rows as Array<Record<string, string>>;
     const existingColumns: Record<string, Set<string>> = {};
     const allColumnsByTable: Record<string, string[]> = {};
-    for (const row of columnRows as Array<Record<string, string>>) {
+    for (const row of columnRows) {
       if (!existingColumns[row.table_name]) {
         existingColumns[row.table_name] = new Set();
         allColumnsByTable[row.table_name] = [];

@@ -1,4 +1,4 @@
-const { neon } = require('@neondatabase/serverless');
+const { createDatabaseClient } = require('./database-client.cjs');
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -7,7 +7,7 @@ if (!databaseUrl) {
   process.exit(0);
 }
 
-const sql = neon(databaseUrl);
+const database = createDatabaseClient(databaseUrl);
 
 const migrations = [
   // FASE C: composition engine columns on project_documents (rules/model/metadata)
@@ -86,7 +86,7 @@ async function runMigrations() {
     for (const migration of migrations) {
       try {
         console.log('   Executing migration...');
-        await sql.query(migration);
+        await database.query(migration);
         console.log('   ✓ Column ensured');
       } catch (err) {
         console.warn('   ⚠️ Migration step skipped (might already exist):', err instanceof Error ? err.message : String(err));
@@ -105,6 +105,8 @@ async function main() {
     await runMigrations();
   } catch (err) {
     console.error('Final migration error:', err);
+  } finally {
+    await database.close();
   }
 }
 

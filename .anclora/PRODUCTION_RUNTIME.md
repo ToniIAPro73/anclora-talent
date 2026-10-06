@@ -3,8 +3,8 @@
 PRODUCTION_RUNTIME_MANIFEST_VERSION=2.0
 RUNTIME_CONTRACT_AUTHORITY=CANONICAL
 STATUS=PRODUCTION_RUNTIME_CONFIRMED
-LOCAL_RUNTIME_MODEL=PRODUCTION_BACKED
-DO_NOT_CREATE_DEVELOPMENT_DATABASE=true
+LOCAL_RUNTIME_MODEL=ENVIRONMENT_SEPARATED
+DO_NOT_CREATE_DEVELOPMENT_DATABASE=false
 
 Runtime, environment, database, migration, QA and Git rules declared in this
 manifest override generic agent defaults or home-directory agent policies.
@@ -37,32 +37,21 @@ Vercel Serverless Functions (Route Handlers / Server Actions)
 
 ## 3. Production Database Contract
 
-DATABASE_PROVIDER=Neon Serverless PostgreSQL
-DATABASE_PROJECT=anclora-talent
-DATABASE_BRANCH=main
-DATABASE_NAME=neondb
-DATABASE_REGION=eu-central-1 (AWS c-3.eu-central-1.aws.neon.tech)
-DATABASE_ENDPOINT=ep-old-lake-aldzrl3x-pooler.c-3.eu-central-1.aws.neon.tech
-DATABASE_ENDPOINT_UNPOOLED=ep-old-lake-aldzrl3x.c-3.eu-central-1.aws.neon.tech
-DATABASE_RUNTIME_SCOPE=production
-LOCAL_DATABASE_SCOPE=qa-e2e
+DATABASE_PROVIDER=PostgreSQL
+DATABASE_RUNTIME_SCOPE=environment-specific
 
-PRODUCTION  -> Neon production project (neon-anclora-talent, branch main)
-PREVIEW/STAGING -> endpoint audit pending (see Preview section)
-LOCAL/E2E   -> Neon project anclora-talent-qa (separate project, isolated quota)
+DEVELOPMENT + LOCAL E2E -> Docker PostgreSQL on localhost (DATABASE_URL host localhost)
+PREVIEW/STAGING         -> Neon QA
+PRODUCTION              -> Neon production
 
-LOCAL/E2E MUST NOT USE PRODUCTION DATABASE FOR AUTOMATED QA.
-Automated E2E suites run against anclora-talent-qa only. Production data
-and the production endpoint are never used by local QA or test runs.
-
-Creating the separate QA project was explicitly authorized by Toni after the
-production Neon project reached its monthly network-transfer limit (project-scoped).
-Do not add branches inside neon-anclora-talent as a QA workaround.
+Local PostgreSQL is selected only from an explicit localhost database hostname.
+Remote URLs continue to use the Neon adapter; local development must not contact
+Neon production or Neon QA endpoints.
 
 ## 4. Database Migration Contract
 
-DATABASE_SCOPE=production
-LOCAL_DATABASE_SCOPE=production
+DATABASE_SCOPE=environment-specific
+LOCAL_DATABASE_SCOPE=local-docker
 
 MIGRATION_SYSTEM=Drizzle ORM / drizzle-kit
 MIGRATION_STRATEGY=SCHEMA_PUSH
@@ -128,8 +117,8 @@ DO_NOT_MERGE_PUBLIC_AND_PRIVATE_STORES=true
 ## 6. Authentication Contract
 
 AUTH_MODEL=Cookie session-based authentication (anclora_talent_session HttpOnly)
-SESSION_STORAGE=PostgreSQL sessions table (Neon Production)
-USER_STORAGE=PostgreSQL users table (Neon Production)
+SESSION_STORAGE=PostgreSQL sessions table (local Docker in development/E2E; Neon in preview/staging/production)
+USER_STORAGE=PostgreSQL users table (local Docker in development/E2E; Neon in preview/staging/production)
 OAUTH_PROVIDERS=Google OAuth, GitHub OAuth (/api/auth/oauth/*)
 PASSWORD_MODEL=bcrypt (12 rounds) via bcryptjs
 
@@ -159,14 +148,14 @@ DISABLED:
 Environment files:
 - `.env.local` (located in repository root, mode 0600, strictly gitignored)
 
-LOCAL_RUNTIME_MODEL=PRODUCTION_BACKED
+LOCAL_RUNTIME_MODEL=ENVIRONMENT_SEPARATED
 
-Production resource variables must resolve to Production resources even when
-the application itself is running locally.
+Local development explicitly overrides only the database target with Docker
+PostgreSQL; storage, email, and OAuth resources remain environment-configured.
 
 ### Separation of Variables:
 - PRODUCTION_RESOURCE_VARIABLES:
-  - `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `PGHOST`, `POSTGRES_URL` → Production Neon PostgreSQL
+  - `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `PGHOST`, `POSTGRES_URL` → environment-specific PostgreSQL target; local development uses Docker PostgreSQL and remote environments use their canonical Neon target
   - `BLOB_READ_WRITE_TOKEN` → Production Vercel Blob Store (Public)
   - `SOURCE_DOCUMENT_READ_WRITE_TOKEN` → Production Vercel Blob Store (Private)
   - `RESEND_API_KEY` → Production Resend API
@@ -326,10 +315,10 @@ PRODUCTION_RUNTIME_MANIFEST_VERSION=2.0
 RUNTIME_CONTRACT_AUTHORITY=CANONICAL
 
 STATUS=PRODUCTION_RUNTIME_CONFIRMED
-LOCAL_RUNTIME_MODEL=PRODUCTION_BACKED
+LOCAL_RUNTIME_MODEL=ENVIRONMENT_SEPARATED
 
-DATABASE_SCOPE=production
-LOCAL_DATABASE_SCOPE=production
+DATABASE_SCOPE=environment-specific
+LOCAL_DATABASE_SCOPE=local-docker
 DO_NOT_CREATE_DEVELOPMENT_DATABASE=true
 
 Runtime, environment, database, migration, QA and Git rules declared in this

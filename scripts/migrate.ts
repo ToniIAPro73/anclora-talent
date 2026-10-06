@@ -1,6 +1,9 @@
-import { migrate } from 'drizzle-orm/neon-http/migrator';
-import { drizzle } from 'drizzle-orm/neon-http';
+import { migrate as migrateNeon } from 'drizzle-orm/neon-http/migrator';
+import { drizzle as drizzleNeon } from 'drizzle-orm/neon-http';
+import { migrate as migrateNodePostgres } from 'drizzle-orm/node-postgres/migrator';
+import { drizzle as drizzleNodePostgres } from 'drizzle-orm/node-postgres';
 import { neon } from '@neondatabase/serverless';
+import { Pool } from 'pg';
 
 /**
  * Database Migration Script
@@ -33,13 +36,27 @@ if (process.env.ALLOW_MIGRATE !== 'true') {
   process.exit(1);
 }
 
-const sql = neon(databaseUrl);
-const db = drizzle(sql);
+function isLocalDatabaseUrl(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname.replace(/^\[|\]$/g, '');
+    return new Set(['localhost', '127.0.0.1', '::1']).has(hostname);
+  } catch {
+    return false;
+  }
+}
+
+const db = isLocalDatabaseUrl(databaseUrl)
+  ? drizzleNodePostgres(new Pool({ connectionString: databaseUrl }))
+  : drizzleNeon(neon(databaseUrl));
 
 async function runMigrations() {
   try {
     console.log('Running database migrations...');
-    await migrate(db, { migrationsFolder: './src/db/migrations' });
+    if (isLocalDatabaseUrl(databaseUrl)) {
+      await migrateNodePostgres(db as never, { migrationsFolder: './src/db/migrations' });
+    } else {
+      await migrateNeon(db as never, { migrationsFolder: './src/db/migrations' });
+    }
     console.log('✓ Migrations completed successfully');
     process.exit(0);
   } catch (error) {
