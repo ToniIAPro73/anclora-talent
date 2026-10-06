@@ -79,6 +79,11 @@ const CANVAS_STAGE_PADDING = 20;
 const ZOOM_BAR_CLEARANCE = 52;
 const ZOOM_OPTIONS = [0.5, 0.75, 1, 1.5, 2] as const;
 
+/** Returns a new layer array where only `layerId` is patched; every other layer keeps its identity and values. */
+export function patchLayerById(layers: DesignLayer[], layerId: string, patch: Partial<DesignLayer>): DesignLayer[] {
+  return layers.map((layer) => (layer.id === layerId ? ({ ...layer, ...patch } as DesignLayer) : layer));
+}
+
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -144,21 +149,35 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
   }, []);
   const selectedLayers = surface.layers.filter((layer) => selectedLayerIds.includes(layer.id));
 
+  // Every edit is applied to the LATEST surface (not to whatever render a caller closed over),
+  // and recorded immediately so two edits in the same tick compose instead of overwriting each
+  // other. One layer changes per edit; siblings are never rebuilt from older values.
+  const latestSurfaceRef = useRef(surface);
+  useEffect(() => {
+    latestSurfaceRef.current = surface;
+  }, [surface]);
+
+  const commitSurface = useCallback(
+    (next: DesignSurface) => {
+      latestSurfaceRef.current = next;
+      onChange(next);
+    },
+    [onChange],
+  );
+
   const patchLayer = useCallback(
     (layerId: string, patch: Partial<DesignLayer>) => {
-      onChange({
-        ...surface,
-        layers: surface.layers.map((layer) => (layer.id === layerId ? ({ ...layer, ...patch } as DesignLayer) : layer)),
-      });
+      const current = latestSurfaceRef.current;
+      commitSurface({ ...current, layers: patchLayerById(current.layers, layerId, patch) });
     },
-    [onChange, surface],
+    [commitSurface],
   );
 
   const setLayers = useCallback(
     (layers: DesignLayer[]) => {
-      onChange({ ...surface, layers });
+      commitSurface({ ...latestSurfaceRef.current, layers });
     },
-    [onChange, surface],
+    [commitSurface],
   );
 
   const handleReplaceImage = useCallback(

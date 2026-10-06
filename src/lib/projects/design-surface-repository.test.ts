@@ -122,3 +122,30 @@ describe('getBackCoverDesign', () => {
     expect(surface.surface).toBe('back-cover');
   });
 });
+
+describe('getCoverDesign keeps user positions', () => {
+  it('metadata hydration refreshes content/visibility but never repositions a moved layer', () => {
+    const surface = createEmptyDesignSurface('cover');
+    surface.layers = [
+      createDesignLayer({ type: 'text', role: 'title', source: 'metadata', content: 'viejo', x: -70, y: 100, width: 352, height: 76 }, 1),
+      createDesignLayer({ type: 'text', role: 'subtitle', source: 'metadata', content: 'viejo', x: 82, y: 262, width: 328, height: 32 }, 2),
+      createDesignLayer({ type: 'text', role: 'author', source: 'metadata', content: '', x: 5, y: 580, width: 328, height: 23 }, 3),
+    ];
+    const project = makeProject({ cover: { id: 'cov-1', title: '', subtitle: '', palette: 'obsidian', backgroundImageUrl: null, thumbnailUrl: null, surfaceState: surface } as never });
+
+    const hydrated = getCoverDesign(project);
+    const at = (role: string) => hydrated.layers.find((l) => l.type === 'text' && l.role === role);
+
+    expect(at('title')).toMatchObject({ x: -70, y: 100 });
+    expect(at('subtitle')).toMatchObject({ x: 82, y: 262 });
+    expect(at('author')).toMatchObject({ x: 5, y: 580 });
+    expect(titleLayer(hydrated)?.content).toBe('El Plan de Escape de la Mediana Edad'); // content still hydrated
+  });
+
+  it('x/y survive JSON serialization (what save/reload does) with sub-pixel precision', () => {
+    const surface = createEmptyDesignSurface('cover');
+    surface.layers = [createDesignLayer({ type: 'text', content: 'x', x: -30.99615912240978, y: 143.36 }, 1)];
+    const roundTripped = JSON.parse(JSON.stringify(surface));
+    expect(roundTripped.layers[0]).toMatchObject({ x: -30.99615912240978, y: 143.36 });
+  });
+});

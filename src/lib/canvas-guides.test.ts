@@ -179,4 +179,66 @@ describe('CanvasGuideManager', () => {
     expect(moving.top).toBe(200);
     expect(mocks.TextMock.mock.calls.filter(([text]) => text === '60 px').length).toBeGreaterThanOrEqual(2);
   });
+
+  it('measures a dragged object from fresh coordinates, so it never snaps back to where the drag started', async () => {
+    // Fabric derives getBoundingRect() from cached corner coordinates that are only
+    // refreshed by setCoords(); mid-drag the cache still holds the drag-start value.
+    const cache = { left: 0, top: 143 };
+    const moving: MockCanvasObject & { setCoords(): void; getBoundingRect(): { left: number; top: number; width: number; height: number } } = {
+      id: 'moving',
+      left: 0,
+      top: 143,
+      width: 352,
+      height: 76,
+      scaleX: 1,
+      scaleY: 1,
+      originX: 'left',
+      originY: 'top',
+      set(props: Record<string, unknown>) {
+        Object.assign(moving, props);
+      },
+      setCoords() {
+        cache.left = moving.left;
+        cache.top = moving.top;
+      },
+      getBoundingRect() {
+        return { left: cache.left, top: cache.top, width: moving.width, height: moving.height };
+      },
+    };
+    const canvas = makeCanvas([moving]);
+    const manager = createGuideManager(canvas);
+
+    // The user has dragged the box 60px to the right; the cache still says left = 0.
+    moving.left = 60;
+
+    await manager.showGuides(moving);
+    manager.snapToGuides(moving);
+
+    expect(moving.left).toBe(60);
+  });
+
+  it('snapping one axis never changes the other', async () => {
+    const moving = makeObject({ left: 196, top: 77, width: 100, height: 40, originX: 'left', originY: 'top' });
+    const canvas = makeCanvas([moving]);
+    const manager = createGuideManager(canvas);
+
+    await manager.showGuides(moving);
+    manager.snapToGuides(moving);
+
+    expect(moving.top).toBe(77); // far from any horizontal target: Y untouched
+  });
+
+  it('derives the canvas centre from the surface, not from the zoomed canvas element', async () => {
+    // surface 400x600 shown at 50%: the canvas element is 200x300 screen px
+    const moving = makeObject({ left: 146, top: 300, width: 100, height: 40, originX: 'left', originY: 'top' });
+    const canvas = { ...makeCanvas([moving]), width: 200, height: 300 };
+    const manager = createGuideManager(canvas);
+    manager.setZoom(0.5);
+
+    await manager.showGuides(moving);
+    manager.snapToGuides(moving);
+
+    // centre of a 400px surface is 200: a 100px-wide box snaps to left = 150
+    expect(moving.left).toBe(150);
+  });
 });

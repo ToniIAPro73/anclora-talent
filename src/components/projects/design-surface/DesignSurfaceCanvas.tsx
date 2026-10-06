@@ -136,14 +136,20 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
       queueMicrotask(() => onHistoryChange?.({ canUndo: historyIndexRef.current > 0, canRedo: false }));
     }, [onHistoryChange]);
 
-    const reportLayerChange = useCallback(
-      (object: FabricObject) => {
-        if (!object?.id) return;
-        normalizeFabricObjectScale(object);
-        onLayerChange(object.id, readLayerPatchFromFabricObject(object));
-      },
-      [onLayerChange],
-    );
+    // The Fabric event handlers below are registered once, when the canvas mounts. They must
+    // therefore reach the parent's callbacks through a ref: a captured `onLayerChange` closes
+    // over the surface of the FIRST render, so every later drag would rebuild the surface from
+    // that stale copy and snap every other layer back to its initial position.
+    const onLayerChangeRef = useRef(onLayerChange);
+    useEffect(() => {
+      onLayerChangeRef.current = onLayerChange;
+    }, [onLayerChange]);
+
+    const reportLayerChange = useCallback((object: FabricObject) => {
+      if (!object?.id) return;
+      normalizeFabricObjectScale(object);
+      onLayerChangeRef.current(object.id, readLayerPatchFromFabricObject(object));
+    }, []);
 
     // Mount once: build the canvas, hydrate the initial surface, wire events.
     useEffect(() => {

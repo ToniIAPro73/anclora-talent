@@ -55,6 +55,7 @@ interface GuideObject {
   excludeFromExport?: boolean;
   visible?: boolean;
   getBoundingRect?(absolute?: boolean, calculate?: boolean): FabricRect;
+  setCoords?(): void;
   set(props: Record<string, unknown>): void;
 }
 
@@ -100,6 +101,11 @@ interface EqualSpacingFeedback {
 
 function getBounds(object: GuideObject): Bounds {
   if (typeof object?.getBoundingRect === 'function') {
+    // Fabric computes getBoundingRect() from cached corner coordinates, which are only
+    // refreshed after the interaction step. While an object is being dragged they are
+    // still the drag-start values, so the moving object would always look aligned with
+    // wherever it started and snap straight back to it (locking its X/Y axis). Refresh first.
+    object.setCoords?.();
     const rect = object.getBoundingRect(true, true);
     return {
       left: rect.left,
@@ -208,6 +214,19 @@ export class CanvasGuideManager {
     this.zoom = Math.max(0.01, zoom);
   }
 
+  /**
+   * Size of the design surface in SCENE units. The Fabric canvas element is resized to
+   * `surface * zoom`, so its `width`/`height` are screen pixels; every guide target and every
+   * measured bound lives in scene units, so the centre/edges must be derived from the unzoomed size
+   * (otherwise "centre" is only right at 100% zoom).
+   */
+  private getSceneSize(): { width: number; height: number } {
+    return {
+      width: (this.canvas!.width || 800) / this.zoom,
+      height: (this.canvas!.height || 600) / this.zoom,
+    };
+  }
+
   private getSnapThreshold(): number {
     return SNAP_THRESHOLD_SCREEN_PX / this.zoom;
   }
@@ -310,8 +329,7 @@ export class CanvasGuideManager {
   }
 
   private findBestSnapTarget(movingObject: GuideObject, bounds: Bounds) {
-    const canvasWidth = this.canvas!.width || 800;
-    const canvasHeight = this.canvas!.height || 600;
+    const { width: canvasWidth, height: canvasHeight } = this.getSceneSize();
     const canvasTargets = this.getCanvasAlignmentTargets(canvasWidth, canvasHeight);
     let bestX: SnapTarget | null = null;
     let bestY: SnapTarget | null = null;
@@ -438,8 +456,7 @@ export class CanvasGuideManager {
   }
 
   private drawSnapGuides() {
-    const canvasWidth = this.canvas!.width || 800;
-    const canvasHeight = this.canvas!.height || 600;
+    const { width: canvasWidth, height: canvasHeight } = this.getSceneSize();
 
     const xSnap = this.snapTargets.x;
     if (xSnap) {
@@ -579,6 +596,7 @@ export class CanvasGuideManager {
       object.set({
         left: calculateOriginCoordinate(object, bounds, 'x', xSnap.anchor, xSnap.position),
       });
+      object.setCoords?.();
     }
 
     const updatedBounds = getBounds(object);
@@ -587,6 +605,7 @@ export class CanvasGuideManager {
       object.set({
         top: calculateOriginCoordinate(object, updatedBounds, 'y', ySnap.anchor, ySnap.position),
       });
+      object.setCoords?.();
     }
   }
 
