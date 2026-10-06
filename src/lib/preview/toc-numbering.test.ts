@@ -266,4 +266,41 @@ describe('stripExistingTocPageNumbers', () => {
     const stripped = stripExistingTocPageNumbers(html);
     expect(stripped).toBe('<p>Introducción</p>');
   });
+
+  test('audit: a chapter that grows to extra pages shifts every later TOC page number', () => {
+    // Documents the current (heuristic content-paginator) behaviour that a future
+    // real-layout page map must preserve: 1 page -> N pages pushes the next ones.
+    const base = makeProject();
+    const grown = makeProject({
+      document: {
+        ...base.document,
+        chapters: base.document.chapters.map((chapter) =>
+          chapter.id === 'intro'
+            ? {
+                ...chapter,
+                blocks: [
+                  {
+                    id: 'i-b1',
+                    type: 'paragraph' as const,
+                    order: 0,
+                    content:
+                      '<h2>Introducción</h2>' +
+                      Array.from({ length: 40 }, () => `<p>${'palabra '.repeat(120)}</p>`).join(''),
+                  },
+                ],
+              }
+            : chapter,
+        ),
+      },
+    });
+
+    const pageOf = (html: string | undefined, title: string) =>
+      Number(html?.match(new RegExp(`data-toc-page="(\\d+)"[^>]*><span class="toc-title">${title}</span>`))?.[1]);
+
+    const before = buildSyncedTocChapterContent(base, DEVICE_PAGINATION_CONFIGS.laptop)?.html;
+    const after = buildSyncedTocChapterContent(grown, DEVICE_PAGINATION_CONFIGS.laptop)?.html;
+
+    expect(pageOf(before, 'Introducción')).toBe(pageOf(after, 'Introducción'));
+    expect(pageOf(after, 'Capítulo 1')).toBeGreaterThan(pageOf(before, 'Capítulo 1'));
+  });
 });
