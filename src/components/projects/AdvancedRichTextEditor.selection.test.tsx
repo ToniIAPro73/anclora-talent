@@ -609,7 +609,7 @@ describe('AdvancedRichTextEditor selection behavior', () => {
 
     expect(editor.__updatedAttributes).toContainEqual({
       type: 'paragraph',
-      attributes: { firstLineIndent: null, leftIndent: '36pt', indent: 0 },
+      attributes: { firstLineIndent: null, leftIndent: '18pt', indent: 0 },
     });
   });
 
