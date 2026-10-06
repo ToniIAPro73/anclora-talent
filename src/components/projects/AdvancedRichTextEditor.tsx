@@ -81,21 +81,13 @@ import { resolveEditorViewportLayout, calculateSpreadFitFactor } from './editor-
 import { cssPxToPt, formatPointSize, ptToCssPx } from '@/lib/document/units';
 import type { RenderedCanonicalPage } from '@/lib/projects/canonical-page-renderer';
 import { resolveEditorMargins } from './editor-margins';
+import { applyParagraphIndent, canChangeParagraphIndent } from './paragraph-indent-command';
 
 type ChainedCommand = ReturnType<Editor['chain']>;
 type ApplyToSelectionTarget = (command: (chain: ChainedCommand) => ChainedCommand) => boolean;
 
 function applyIndentToEditor(targetEditor: Editor, delta: number) {
-  const blockType = targetEditor.state.selection.$from.parent.type.name;
-  if (blockType === 'listItem') {
-    return delta > 0
-      ? targetEditor.chain().focus().sinkListItem('listItem').run()
-      : targetEditor.chain().focus().liftListItem('listItem').run();
-  }
-  if (blockType !== 'paragraph' && blockType !== 'heading') return false;
-  const currentIndent = Number(targetEditor.state.selection.$from.parent.attrs.indent ?? 0);
-  const nextIndent = Math.max(0, Math.min(6, currentIndent + delta));
-  return targetEditor.chain().focus().updateAttributes(blockType, { indent: nextIndent }).run();
+  return applyParagraphIndent(targetEditor, delta > 0 ? 1 : -1);
 }
 
 type ToolbarButtonProps = {
@@ -1262,6 +1254,11 @@ const MenuBar = ({
     return applyIndentToEditor(editor, delta);
   };
 
+  const activeBlock = editor.state.selection.$from.parent;
+  const canOutdent =
+    activeBlock.type.name === 'paragraph'
+      ? canChangeParagraphIndent(activeBlock.attrs, -1)
+      : true;
   const indentListItem = () => updateBlockIndent(1);
   const outdentListItem = () => updateBlockIndent(-1);
 
@@ -1476,6 +1473,7 @@ const MenuBar = ({
         </ToolbarButton>
         <ToolbarButton
           onClick={outdentListItem}
+          disabled={!canOutdent}
           dataTestId="editor-toolbar-outdent-button"
           title="Tabular a la izquierda"
         >
