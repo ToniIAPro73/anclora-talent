@@ -6,16 +6,19 @@ import type { NodeViewProps } from '@tiptap/react';
 import { X, AlignLeft, AlignCenter, AlignRight, Move, ArrowUp, ArrowDown, Anchor } from 'lucide-react';
 import {
   alignedFloatingX,
-  clampFloatingPosition,
   columnIndexAt,
   moveSelectedImage,
   pageCrossingFor,
+  placeCaretBesideImage,
+  SNAP_THRESHOLD_SCREEN_PX,
+  snapFloatingPosition,
+  type SnapResult,
   reanchorImageAcrossPages,
   type FloatingBox,
   type ImageAlign,
 } from './image-position';
 
-type MeasuredBox = FloatingBox & { stride: number; flowLeft: number; column: number; scale: number };
+type MeasuredBox = FloatingBox & { stride: number; flowLeft: number; flowTop: number; column: number; scale: number };
 
 /** Space the context controls need above the image (h-9 bar + gap). */
 const CONTROLS_CLEARANCE_PX = 48;
@@ -59,6 +62,9 @@ export const ImageNodeView = ({
   // Unclamped drag offset: decides whether the drop crosses to another page.
   const rawPosRef = useRef<{ x: number; y: number } | null>(null);
   const [controlsBelow, setControlsBelow] = useState(false);
+  // Transient alignment guides (never persisted, never part of the document).
+  const [guides, setGuides] = useState<SnapResult['guides'] | null>(null);
+  const [guideBox, setGuideBox] = useState<FloatingBox | null>(null);
 
   const mode = node.attrs.mode === 'floating' ? 'floating' : 'inline';
   const floating = mode === 'floating';
@@ -103,6 +109,7 @@ export const ImageNodeView = ({
       naturalTop: (rootRect.top - surfaceRect.top) / scale,
       stride,
       flowLeft: surfaceRect.left,
+      flowTop: surfaceRect.top,
       column,
       scale,
     };
@@ -124,6 +131,7 @@ export const ImageNodeView = ({
   const handleMoveStart = useCallback((e: React.PointerEvent) => {
     if (!floating) return;
     moveBoxRef.current = measureBox();
+    setGuideBox(moveBoxRef.current);
     rawPosRef.current = null;
     setIsMoving(true);
     moveStartRef.current = {
@@ -150,7 +158,14 @@ export const ImageNodeView = ({
         y: moveStartRef.current.y + (e.clientY - moveStartRef.current.pointerY) / scale,
       };
       rawPosRef.current = next;
-      setLivePos(box ? clampFloatingPosition(next.x, next.y, box) : next);
+      if (box) {
+        // Page-local, scale-aware: the screen-px threshold is converted to layout px.
+        const snapped = snapFloatingPosition(next.x, next.y, box, SNAP_THRESHOLD_SCREEN_PX / scale);
+        setLivePos({ x: snapped.x, y: snapped.y });
+        setGuides(snapped.guides.x || snapped.guides.y ? snapped.guides : null);
+      } else {
+        setLivePos(next);
+      }
     }
   }, [isResizing, isMoving]);
 
@@ -166,6 +181,9 @@ export const ImageNodeView = ({
         const moved = reanchorImageAcrossPages(editor, crossing, {
           stride: box.stride,
           flowLeft: box.flowLeft,
+          flowTop: box.flowTop,
+          columnHeight: box.containerHeight,
+          imageHeight: box.height,
           scale: box.scale,
           currentColumn: box.column,
         });
@@ -174,6 +192,7 @@ export const ImageNodeView = ({
         updateAttributes(livePos);
       }
     }
+    setGuides(null);
     setLiveSize(null);
     setLivePos(null);
     setIsResizing(false);
@@ -195,6 +214,10 @@ export const ImageNodeView = ({
       };
     }
   }, [isResizing, isMoving, handleMouseMove, handleMouseUp]);
+
+  React.useEffect(() => {
+    if (!selected || !floating) setGuides(null);
+  }, [selected, floating]);
 
   // Context controls follow the image's *current* DOM position. Above the
   // image they would sit outside the page column when the image is at the top
@@ -237,6 +260,28 @@ export const ImageNodeView = ({
     return () => document.removeEventListener('dragstart', onDragStart);
   }, []);
 
+  // Clicking the blank slot of the image (e.g. the empty area above a
+  // positioned image that was dragged down) must give a real caret before/after
+  // the image. Native capture listener: it has to run before ProseMirror's own
+  // mousedown handling on the (ancestor) editor element.
+  React.useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const onMouseDown = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      if (!target || containerRef.current?.contains(target) || event.button !== 0) return;
+      const position = typeof getPos === 'function' ? getPos() : undefined;
+      const imageRect = containerRef.current?.getBoundingClientRect();
+      if (typeof position !== 'number' || !imageRect) return;
+      const side = event.clientY < imageRect.top + imageRect.height / 2 ? 'before' : 'after';
+      event.preventDefault();
+      event.stopPropagation();
+      placeCaretBesideImage(editor, position, side);
+    };
+    root.addEventListener('mousedown', onMouseDown, true);
+    return () => root.removeEventListener('mousedown', onMouseDown, true);
+  }, [editor, getPos]);
+
   const setAlign = (next: ImageAlign) => {
     if (!floating) {
       updateAttributes({ align: next });
@@ -268,6 +313,34 @@ export const ImageNodeView = ({
       data-image-y={floating ? y : undefined}
     >
       <div ref={rootRef} className="relative">
+      {isMoving && guides && guideBox && (
+        <>
+          {guides.x && (
+            <div
+              aria-hidden="true"
+              data-testid="image-guide-vertical"
+              className="pointer-events-none absolute z-20 w-px bg-[var(--accent)]"
+              style={{
+                left: `${guides.x.value - guideBox.naturalLeft}px`,
+                top: `${-guideBox.naturalTop}px`,
+                height: `${guideBox.containerHeight}px`,
+              }}
+            />
+          )}
+          {guides.y && (
+            <div
+              aria-hidden="true"
+              data-testid="image-guide-horizontal"
+              className="pointer-events-none absolute z-20 h-px bg-[var(--accent)]"
+              style={{
+                top: `${guides.y.value - guideBox.naturalTop}px`,
+                left: `${-guideBox.naturalLeft}px`,
+                width: `${guideBox.containerWidth}px`,
+              }}
+            />
+          )}
+        </>
+      )}
       <div
         ref={containerRef}
         className={`relative inline-block group ${

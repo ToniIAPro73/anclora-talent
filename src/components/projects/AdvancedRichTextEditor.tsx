@@ -82,6 +82,7 @@ import { cssPxToPt, formatPointSize, ptToCssPx } from '@/lib/document/units';
 import type { RenderedCanonicalPage } from '@/lib/projects/canonical-page-renderer';
 import { resolveEditorMargins } from './editor-margins';
 import { applyParagraphIndent, canChangeParagraphIndent } from './paragraph-indent-command';
+import { revealVertically } from './image-position';
 
 type ChainedCommand = ReturnType<Editor['chain']>;
 type ApplyToSelectionTarget = (command: (chain: ChainedCommand) => ChainedCommand) => boolean;
@@ -2459,7 +2460,10 @@ export function AdvancedRichTextEditor({
       const page = Math.max(0, Math.floor(centerX / stride));
       if (visiblePageIndices.includes(page)) return;
       lastFocusedCurrentPageRef.current = page; // do not let page-focus move the selection
+      scheduleLayoutPass(); // a page created by the image must be counted before we show it
       onCurrentPageChange(page);
+      // After the page switch renders, keep the image (and its drag handle) inside the scroller.
+      requestAnimationFrame(() => requestAnimationFrame(() => revealVertically(box)));
     };
     const schedule = () => {
       cancelAnimationFrame(frame);
@@ -2470,7 +2474,7 @@ export function AdvancedRichTextEditor({
       cancelAnimationFrame(frame);
       editor.off('transaction', schedule);
     };
-  }, [editor, onCurrentPageChange, contentWidth, effectiveScale, visiblePageIndices]);
+  }, [editor, onCurrentPageChange, contentWidth, effectiveScale, visiblePageIndices, scheduleLayoutPass]);
 
   if (!editor) return null;
 

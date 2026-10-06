@@ -10,6 +10,10 @@ import {
   columnIndexAt,
   moveSelectedImage,
   pageCrossingFor,
+  placeCaretBesideImage,
+  SNAP_THRESHOLD_SCREEN_PX,
+  alignmentTargets,
+  snapFloatingPosition,
   reanchorImageAcrossPages,
   type FloatingBox,
 } from './image-position';
@@ -178,14 +182,15 @@ describe('positioned drag isolation', () => {
 });
 
 describe('cross-page re-anchor', () => {
-  function layoutEditor(columns: number[]) {
+  function layoutEditor(columns: number[], tops: number[] = []) {
     // jsdom has no layout: fake each top-level block's first client rect.
     const editor = makeEditor(`<p>a</p><p>b</p><img src="${SRC}"><p>c</p><p>d</p>`);
-    const dom = new Map<number, { getClientRects: () => Array<{ left: number }> }>();
+    const dom = new Map<number, { getClientRects: () => Array<{ left: number; top: number; bottom: number }> }>();
     let index = 0;
     editor.state.doc.forEach((_node, offset) => {
       const left = columns[index] * 700;
-      dom.set(offset, { getClientRects: () => [{ left }] });
+      const top = tops[index] ?? 0;
+      dom.set(offset, { getClientRects: () => [{ left, top, bottom: top + 50 }] });
       index += 1;
     });
     vi.spyOn(editor.view, 'nodeDOM').mockImplementation((pos: number) => (dom.get(pos) ?? null) as unknown as Node);
@@ -213,6 +218,42 @@ describe('cross-page re-anchor', () => {
     expect(reanchorImageAcrossPages(editor, 1, { stride: 700, flowLeft: 0, currentColumn: 0 })).toBe(true);
     // image moved last; the trailing-paragraph guard keeps a place to type
     expect(order(editor).slice(-2)).toEqual(['image', 'paragraph']);
+    editor.destroy();
+  });
+
+  it('going back lands before the lowest block of the previous page that still leaves room', () => {
+    // page 1: a(top 0) b(100) c(300) d(450); image + e on page 2. Column 500 high, image 150 + 16.
+    const editor = makeEditor(`<p>a</p><p>b</p><p>c</p><p>d</p><img src="${SRC}"><p>e</p>`);
+    const columns = [0, 0, 0, 0, 1, 1];
+    const tops = [0, 100, 300, 450, 40, 200];
+    const dom = new Map<number, { getClientRects: () => Array<{ left: number; top: number; bottom: number }> }>();
+    let i = 0;
+    editor.state.doc.forEach((_n, offset) => {
+      const left = columns[i] * 700;
+      const top = tops[i];
+      dom.set(offset, { getClientRects: () => [{ left, top, bottom: top + 50 }] });
+      i += 1;
+    });
+    vi.spyOn(editor.view, 'nodeDOM').mockImplementation((pos: number) => (dom.get(pos) ?? null) as unknown as Node);
+    editor.commands.setNodeSelection(imagePos(editor));
+    editor.commands.updateAttributes('image', { mode: 'floating', x: 12, y: -300 });
+
+    expect(
+      reanchorImageAcrossPages(editor, -1, {
+        stride: 700,
+        flowLeft: 0,
+        currentColumn: 1,
+        flowTop: 0,
+        columnHeight: 500,
+        imageHeight: 150,
+      }),
+    ).toBe(true);
+    // boundaries: before a (0 used), b (50), c (150), d (350): 350 + 166 > 500, so the
+    // lowest boundary with room is before c -> [a, b, image, c, d, e]
+    expect(order(editor)).toEqual(['paragraph', 'paragraph', 'image', 'paragraph', 'paragraph', 'paragraph']);
+    expect(editor.getJSON().content?.[2]?.attrs).toMatchObject({ x: 0, y: 0 });
+    editor.commands.undo();
+    expect(order(editor)).toEqual(['paragraph', 'paragraph', 'paragraph', 'paragraph', 'image', 'paragraph']);
     editor.destroy();
   });
 
@@ -261,5 +302,97 @@ describe('caret around image', () => {
     editor.commands.setTextSelection(2);
     expect(moveCaretAroundImage(editor, 'after')).toBe(false);
     editor.destroy();
+  });
+});
+
+describe('click-intent caret beside an image', () => {
+  it('materializes a paragraph before the image, typing lands before it, undo removes it', () => {
+    const editor = makeEditor(`<p>uno</p><img src="${SRC}"><p>dos</p>`);
+    const before = order(editor);
+    expect(placeCaretBesideImage(editor, imagePos(editor), 'before')).toBe(true);
+    expect(order(editor)).toEqual(['paragraph', 'paragraph', 'image', 'paragraph']);
+    expect(editor.state.selection instanceof TextSelection).toBe(true);
+    editor.commands.insertContent('Texto antes de imagen');
+    const blocks = editor.getJSON().content ?? [];
+    expect(JSON.stringify(blocks[1])).toContain('Texto antes de imagen');
+    expect(blocks[2].type).toBe('image');
+    editor.commands.undo();
+    editor.commands.undo();
+    expect(order(editor)).toEqual(before);
+    editor.destroy();
+  });
+
+  it('reuses an adjacent empty paragraph instead of stacking new ones', () => {
+    const editor = makeEditor(`<p>uno</p><p></p><img src="${SRC}"><p>dos</p>`);
+    const count = order(editor).length;
+    expect(placeCaretBesideImage(editor, imagePos(editor), 'before')).toBe(true);
+    expect(order(editor).length).toBe(count);
+    editor.destroy();
+  });
+
+  it('after: caret goes to the paragraph that follows the image', () => {
+    const editor = makeEditor(`<p>uno</p><img src="${SRC}"><p>dos</p>`);
+    expect(placeCaretBesideImage(editor, imagePos(editor), 'after')).toBe(true);
+    expect(order(editor).length).toBe(3); // nothing materialized: "dos" is right there
+    expect(editor.state.selection.from).toBeGreaterThan(imagePos(editor));
+    editor.destroy();
+  });
+});
+
+describe('alignment guides / centre snap', () => {
+  // column 600x400, image 200x100 whose natural slot is at (40, 100)
+  const center = { x: (600 - 200) / 2 - 40, y: (400 - 100) / 2 - 100 }; // offsets that centre the image
+
+  it('targets are the centre of the page content box', () => {
+    expect(alignmentTargets(box)).toEqual([
+      { axis: 'x', value: 300, kind: 'page-center' },
+      { axis: 'y', value: 200, kind: 'page-center' },
+    ]);
+  });
+
+  it('snaps horizontally and exposes only the vertical guide', () => {
+    const result = snapFloatingPosition(center.x + 5, 20, box, 8);
+    expect(result.x).toBe(center.x);
+    expect(result.guides.x?.axis).toBe('x');
+    expect(result.guides.y).toBeNull();
+    expect(result.y).toBe(20);
+  });
+
+  it('snaps vertically and exposes only the horizontal guide', () => {
+    const result = snapFloatingPosition(10, center.y - 6, box, 8);
+    expect(result.y).toBe(center.y);
+    expect(result.guides.y?.axis).toBe('y');
+    expect(result.guides.x).toBeNull();
+  });
+
+  it('snaps to the exact page centre when both axes are close', () => {
+    const result = snapFloatingPosition(center.x - 4, center.y + 3, box, 8);
+    expect(result).toMatchObject({ x: center.x, y: center.y });
+    expect(result.guides.x && result.guides.y).toBeTruthy();
+  });
+
+  it('does nothing outside the threshold (no guides, no pull)', () => {
+    const result = snapFloatingPosition(center.x + 40, center.y + 40, box, 8);
+    expect(result.guides).toEqual({ x: null, y: null });
+    expect(result.x).toBe(center.x + 40);
+  });
+
+  it('threshold is screen px divided by zoom, so it feels the same at any scale', () => {
+    const scale = 0.66;
+    const threshold = SNAP_THRESHOLD_SCREEN_PX / scale; // ~12.1 layout px
+    expect(snapFloatingPosition(center.x + 11, 0, box, threshold).guides.x).not.toBeNull();
+    expect(snapFloatingPosition(center.x + 13, 0, box, threshold).guides.x).toBeNull();
+  });
+
+  it('never snaps to a centre that lies outside the page bounds', () => {
+    const wide = { ...box, width: 590, naturalLeft: 5 };
+    const result = snapFloatingPosition(0, 0, wide, 1000);
+    expect(result.x).toBeGreaterThanOrEqual(-wide.naturalLeft);
+  });
+
+  it('leaves sub-pixel exactness for snapped axes (centre equals page centre)', () => {
+    const odd = { ...box, containerWidth: 661.3, width: 351 };
+    const result = snapFloatingPosition(0, 0, { ...odd, naturalLeft: 0 }, 400);
+    expect(odd.containerWidth / 2 - (result.x + 0 + odd.width / 2)).toBeCloseTo(0, 1);
   });
 });
