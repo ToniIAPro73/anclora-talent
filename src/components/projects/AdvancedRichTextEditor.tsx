@@ -1602,6 +1602,23 @@ const MenuBar = ({
   );
 };
 
+/**
+ * Where the automatic page breaks sit, as the count of content blocks before each.
+ * Two documents with the same signature paginate identically, whatever else
+ * differs in their serialization.
+ */
+export function autoBreakSignature(html: string): string {
+  if (typeof DOMParser === 'undefined') return html;
+  const body = new DOMParser().parseFromString(html, 'text/html').body;
+  const positions: number[] = [];
+  let blocks = 0;
+  for (const child of Array.from(body.children)) {
+    if (child.matches('hr[data-page-break="auto"]')) positions.push(blocks);
+    else blocks += 1;
+  }
+  return positions.join(',');
+}
+
 export function AdvancedRichTextEditor({
   defaultContent,
   onUpdate,
@@ -2108,7 +2125,13 @@ export function AdvancedRichTextEditor({
           return;
         }
 
-        if (normalizeEditorHtml(reconciledHtml) !== normalizeEditorHtml(currentHtml)) {
+        // Typing must be a local editor update. Only replace the whole document when the
+        // pagination itself changes (an automatic break appears, moves or disappears);
+        // serialization noise alone must never reset the content under the caret.
+        if (
+          normalizeEditorHtml(reconciledHtml) !== normalizeEditorHtml(currentHtml) &&
+          autoBreakSignature(reconciledHtml) !== autoBreakSignature(currentHtml)
+        ) {
           syncEditorContent(ed, reconciledHtml);
           handleUpdate(reconciledHtml);
         return;
@@ -2260,6 +2283,7 @@ export function AdvancedRichTextEditor({
   // bottom margin can still overlap the last line of body text — a fully
   // correct fix would need the column layout itself to reserve space for
   // it, which CSS multi-column cannot express.
+  const footnoteDecorationsActiveRef = useRef(true); // unknown at mount: clear once
   const positionFootnotes = useCallback(() => {
     if (!editor?.view || typeof editor.state?.doc?.descendants !== 'function') return;
 
@@ -2270,7 +2294,14 @@ export function AdvancedRichTextEditor({
     // editorial-footnote class. Notes are endnotes by section semantics, so
     // clear any previous page-footnote decorations and leave this chapter in
     // ordinary top-to-bottom flow regardless of its persisted class.
-    setFootnoteDecorations(editor.view, []);
+    const clearFootnoteDecorations = () => {
+      // Dispatching even an empty decoration set is a transaction (toolbar
+      // refresh, listeners): only do it when something was decorated before.
+      if (!footnoteDecorationsActiveRef.current) return;
+      footnoteDecorationsActiveRef.current = false;
+      setFootnoteDecorations(editor.view, []);
+    };
+    clearFootnoteDecorations();
     if (isEndnotesSection) return;
 
     const footnotes: Array<{ pos: number; nodeSize: number }> = [];
@@ -2312,6 +2343,7 @@ export function AdvancedRichTextEditor({
         style: `position:absolute;left:${pageIndex * columnStride}px;width:${contentWidth}px;top:${cursor}px;`,
       };
     });
+    footnoteDecorationsActiveRef.current = decorations.length > 0;
     setFootnoteDecorations(editor.view, decorations);
   }, [columnGap, contentHeight, contentWidth, editor, isEndnotesSection, pageNumberOffset]);
 
@@ -2388,7 +2420,12 @@ export function AdvancedRichTextEditor({
     [editor, effectiveScale, pageGap, pageWidth, spreadStartPage],
   );
 
+  // One layout pass per frame burst: typing fires `update` and the content-prop
+  // effect for the same keystroke, and each pass reads layout and may dispatch.
+  const layoutPassPendingRef = useRef(false);
   const scheduleLayoutPass = useCallback(() => {
+    if (layoutPassPendingRef.current) return;
+    layoutPassPendingRef.current = true;
     requestAnimationFrame(() => {
       // positionFootnotes() now measures and decorates footnotes one at a
       // time in document order, so a single pass is self-consistent (each
@@ -2397,6 +2434,7 @@ export function AdvancedRichTextEditor({
       // any layout not having fully settled on the first frame.
       positionFootnotes();
       requestAnimationFrame(() => {
+        layoutPassPendingRef.current = false;
         positionFootnotes();
         measureRenderablePages();
       });
