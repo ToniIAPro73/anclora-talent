@@ -75,8 +75,8 @@ export function ColorPickerField({ label, value, onChange, copy, brandColors, te
   };
 
   return (
-    <div className="space-y-2">
-      <span className="text-xs font-semibold text-[var(--text-primary)]">{label}</span>
+    <div className="cover-prop-color">
+      <span className="cover-prop-color__label">{label}</span>
       <div className="relative">
         <button
           type="button"
@@ -84,9 +84,9 @@ export function ColorPickerField({ label, value, onChange, copy, brandColors, te
           onClick={() => setIsOpen((open) => !open)}
           aria-haspopup="true"
           aria-expanded={isOpen}
-          className="flex h-10 w-full items-center gap-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3"
+          className="cover-prop-color__trigger"
         >
-          <span className="h-5 w-5 rounded-md border border-black/10" style={{ backgroundColor: value }} />
+          <span className="cover-prop-color__chip" style={{ backgroundColor: value }} />
           <span className="font-mono text-xs uppercase">{value}</span>
         </button>
 

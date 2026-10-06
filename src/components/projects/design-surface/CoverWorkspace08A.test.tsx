@@ -214,4 +214,45 @@ describe('COVER_EDITOR_08A Architectural Contract Gates', () => {
     fireEvent.click(screen.getByTestId('cover-templates-view-all-button'));
     expect(screen.getAllByTestId(/^cover-template-card-/).length).toBeGreaterThan(3);
   });
+
+  test('COVER_PROPS_01: the text properties form is compact (icon buttons, readable case control, internal scroll)', () => {
+    const surface = createEmptyDesignSurface('cover');
+    const title = createDesignLayer({ type: 'text', content: 'Título', role: 'title' }, 1);
+    surface.layers = [title];
+    const { container } = render(<AdvancedCoverEditor surface={surface} onChange={vi.fn()} copy={coverCopy} />);
+
+    fireEvent.click(screen.getByTestId(`layer-select-${title.id}`));
+
+    // alignment / vertical alignment / style controls are 28px icon buttons, not large blocks
+    for (const id of ['text-layer-align-left-button', 'text-layer-vertical-top-button', 'text-layer-bold-button', 'text-layer-italic-button']) {
+      expect(screen.getByTestId(id)).toHaveClass('cover-prop-icon');
+    }
+    // the case control keeps all three words readable in one segmented row
+    const labels = ['none', 'uppercase', 'lowercase'].map((t) => screen.getByTestId(`text-layer-transform-${t}-button`).textContent);
+    expect(labels).toEqual(['Normal', 'MAYÚSCULAS', 'minúsculas']);
+    expect(screen.getByTestId('text-layer-transform-none-button').parentElement).toHaveClass('cover-prop-segmented');
+    // size shares the font row, X/Y/W/H are compact fields
+    expect(screen.getByTestId('text-layer-font-size-input').closest('.cover-prop-row--font')).not.toBeNull();
+    for (const id of ['x', 'y', 'width', 'height']) {
+      expect(screen.getByTestId(`text-layer-${id}-input`)).toHaveClass('cover-prop-input');
+    }
+    // the properties form scrolls inside its own region
+    expect(container.querySelector('.cover-properties-body')).toContainElement(screen.getByTestId('text-layer-properties'));
+  });
+
+  test('COVER_PROPS_02: editing X in the form changes only that layer', () => {
+    const surface = createEmptyDesignSurface('cover');
+    const title = createDesignLayer({ type: 'text', content: 'Título', role: 'title', x: 24, y: 143 }, 1);
+    const subtitle = createDesignLayer({ type: 'text', content: 'Sub', role: 'subtitle', x: 36, y: 284 }, 2);
+    surface.layers = [title, subtitle];
+    const onChange = vi.fn();
+    render(<AdvancedCoverEditor surface={surface} onChange={onChange} copy={coverCopy} />);
+
+    fireEvent.click(screen.getByTestId(`layer-select-${title.id}`));
+    fireEvent.change(screen.getByTestId('text-layer-x-input'), { target: { value: '-40' } });
+
+    const next = onChange.mock.calls.at(-1)?.[0];
+    expect(next.layers.find((l: { id: string }) => l.id === title.id)).toMatchObject({ x: -40, y: 143 });
+    expect(next.layers.find((l: { id: string }) => l.id === subtitle.id)).toBe(subtitle);
+  });
 });

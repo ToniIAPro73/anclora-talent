@@ -13,7 +13,7 @@ function makeLayer(overrides: Partial<ShapeLayerProps> & Partial<Pick<DesignLaye
 describe('ShapeLayerProperties', () => {
   it('edits fill and position independently', () => {
     const onChange = vi.fn();
-    render(<ShapeLayerProperties layer={makeLayer({ x: 12 })} copy={copy.shape} onChange={onChange} />);
+    render(<ShapeLayerProperties layer={makeLayer({ x: 12 })} copy={copy.shape} workspace={copy.workspace} onChange={onChange} />);
 
     fireEvent.click(screen.getByTestId('shape-layer-fill-toggle'));
     fireEvent.click(screen.getByTestId('shape-layer-fill-swatch-f2f2f2'));

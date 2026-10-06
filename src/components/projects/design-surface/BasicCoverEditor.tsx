@@ -387,7 +387,7 @@ export function BasicCoverEditor({ surface, onChange, copy, palette, onPaletteCh
         <Label className="text-xs font-semibold">{copy.image.uploadLabel}</Label>
         {imageLayer ? (
           <div className="space-y-2">
-            <ImageLayerProperties layer={imageLayer} copy={copy.image} onChange={patchImage} onReplaceFile={handleReplaceImage} />
+            <ImageLayerProperties layer={imageLayer} copy={copy.image} workspace={copy.workspace} onChange={patchImage} onReplaceFile={handleReplaceImage} />
             <button
               type="button"
               data-testid="basic-image-remove-button"

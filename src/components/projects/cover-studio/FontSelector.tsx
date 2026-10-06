@@ -8,11 +8,14 @@ import { Input } from '@/components/ui/input';
 interface FontSelectorProps {
   selectedFont: string;
   onFontSelect: (fontFamily: string) => void;
+  /** Dense trigger (28-32px) for the 08A properties panel. */
+  compact?: boolean;
 }
 
 export function FontSelector({
   selectedFont,
   onFontSelect,
+  compact = false,
 }: FontSelectorProps) {
   const { fonts, loadFont } = useGoogleFonts();
   const [isOpen, setIsOpen] = useState(false);
@@ -123,7 +126,7 @@ export function FontSelector({
         type="button"
         onClick={() => (isOpen ? setIsOpen(false) : handleOpenDropdown())}
         data-testid="font-selector-toggle"
-        className="w-full h-10 px-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-primary)] text-sm flex items-center justify-between hover:bg-[var(--surface-highlight)] transition-colors"
+        className={`w-full ${compact ? 'h-8 px-2.5 rounded-md text-xs' : 'h-10 px-3 rounded-lg text-sm'} border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-primary)] flex items-center justify-between hover:bg-[var(--surface-highlight)] transition-colors`}
       >
         <span className="truncate" style={{ fontFamily: selectedFont }}>{selectedFont}</span>
         <ChevronDown

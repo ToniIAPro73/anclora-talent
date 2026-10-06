@@ -10,11 +10,9 @@
  */
 
 import { useRef } from 'react';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { DesignLayer, ImageLayerFilters, ImageLayerProps } from '@/lib/projects/design-surface';
+import { CompactNumberField, CompactSlider, PropertySection, SegmentedGroup } from './PropertyControls';
 
 type ImgLayer = DesignLayer & ImageLayerProps;
 type Copy = AppMessages['coverDesignSurface']['image'];
@@ -22,6 +20,7 @@ type Copy = AppMessages['coverDesignSurface']['image'];
 export interface ImageLayerPropertiesProps {
   layer: ImgLayer;
   copy: Copy;
+  workspace: AppMessages['coverDesignSurface']['workspace'];
   onChange: (patch: Partial<ImageLayerProps> & Partial<Pick<DesignLayer, 'x' | 'y' | 'width' | 'height' | 'rotation' | 'opacity'>>) => void;
   onReplaceFile: (file: File) => void;
 }
@@ -30,18 +29,29 @@ function setFilter(filters: ImageLayerFilters | undefined, patch: Partial<ImageL
   return { ...filters, ...patch };
 }
 
-export function ImageLayerProperties({ layer, copy, onChange, onReplaceFile }: ImageLayerPropertiesProps) {
+export function ImageLayerProperties({ layer, copy, workspace: ws, onChange, onReplaceFile }: ImageLayerPropertiesProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const filters = layer.filters ?? {};
+  const filterSlider = (label: string, key: 'brightness' | 'contrast' | 'saturation') => (
+    <CompactSlider
+      label={label}
+      value={Math.round((filters[key] ?? 0) * 100)}
+      min={-100}
+      max={100}
+      step={1}
+      onChange={(value) => onChange({ filters: setFilter(filters, { [key]: value / 100 }) })}
+      testId={`image-layer-${key}-slider`}
+    />
+  );
 
   return (
-    <div className="space-y-5" data-testid="image-layer-properties">
-      <div className="space-y-2">
+    <div className="cover-prop-stack" data-testid="image-layer-properties">
+      <PropertySection title={ws.images}>
         <button
           type="button"
           data-testid="image-layer-replace-button"
           onClick={() => fileInputRef.current?.click()}
-          className="ac-button ac-button--secondary w-full"
+          className="ac-button ac-button--secondary cover-prop-button"
         >
           {copy.replaceLabel}
         </button>
@@ -57,44 +67,39 @@ export function ImageLayerProperties({ layer, copy, onChange, onReplaceFile }: I
             event.target.value = '';
           }}
         />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3" data-testid="image-layer-transform-fields">
-        <NumericField label={copy.xLabel} value={layer.x} onChange={(x) => onChange({ x })} testId="image-layer-x-input" />
-        <NumericField label={copy.yLabel} value={layer.y} onChange={(y) => onChange({ y })} testId="image-layer-y-input" />
-        <NumericField label={copy.widthLabel} value={layer.width} onChange={(width) => onChange({ width })} testId="image-layer-width-input" />
-        <NumericField label={copy.heightLabel} value={layer.height} onChange={(height) => onChange({ height })} testId="image-layer-height-input" />
-        <NumericField label={copy.rotationLabel} value={layer.rotation} onChange={(rotation) => onChange({ rotation })} testId="image-layer-rotation-input" />
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs font-semibold">{copy.fitLabel}</Label>
-        <div className="ac-editor-inspector__segmented" role="group" aria-label={copy.fitLabel}>
+        <SegmentedGroup label={copy.fitLabel}>
           {(['cover', 'contain', 'fill'] as const).map((fit) => (
             <button
               key={fit}
               type="button"
               data-testid={`image-layer-fit-${fit}-button`}
               onClick={() => onChange({ fit })}
-              className="ac-button ac-button--ghost ac-button--sm"
+              className="cover-prop-text-button"
               data-active={layer.fit === fit ? 'true' : 'false'}
+              aria-pressed={layer.fit === fit}
             >
               {fit === 'cover' ? copy.fitCover : fit === 'contain' ? copy.fitContain : copy.fitFill}
             </button>
           ))}
-        </div>
-      </div>
+        </SegmentedGroup>
+      </PropertySection>
 
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs font-semibold">{copy.opacityLabel}</Label>
-          <span className="font-mono text-[10px] text-[var(--text-tertiary)]">{Math.round(layer.opacity * 100)}%</span>
+      <PropertySection title={ws.sectionPosition}>
+        <div className="cover-prop-grid" data-testid="image-layer-transform-fields">
+          <CompactNumberField label={copy.xLabel} value={layer.x} onChange={(x) => onChange({ x })} testId="image-layer-x-input" />
+          <CompactNumberField label={copy.yLabel} value={layer.y} onChange={(y) => onChange({ y })} testId="image-layer-y-input" />
+          <CompactNumberField label={copy.widthLabel} value={layer.width} onChange={(width) => onChange({ width })} testId="image-layer-width-input" />
+          <CompactNumberField label={copy.heightLabel} value={layer.height} onChange={(height) => onChange({ height })} testId="image-layer-height-input" />
+          <CompactNumberField label={copy.rotationLabel} value={layer.rotation} onChange={(rotation) => onChange({ rotation })} testId="image-layer-rotation-input" suffix="°" />
         </div>
-        <Slider value={[Math.round(layer.opacity * 100)]} min={0} max={100} step={1} onValueChange={(val) => onChange({ opacity: val[0] / 100 })} />
-      </div>
+      </PropertySection>
 
-      <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
+      <PropertySection title={ws.sectionAppearance}>
+        <CompactSlider label={copy.opacityLabel} value={Math.round(layer.opacity * 100)} min={0} max={100} step={1} onChange={(value) => onChange({ opacity: value / 100 })} display={(value) => `${value}%`} />
+        {filterSlider(copy.brightnessLabel, 'brightness')}
+        {filterSlider(copy.contrastLabel, 'contrast')}
+        {filterSlider(copy.saturationLabel, 'saturation')}
+        <label className="cover-prop-check">
           <input
             type="checkbox"
             data-testid="image-layer-grayscale-checkbox"
@@ -103,79 +108,10 @@ export function ImageLayerProperties({ layer, copy, onChange, onReplaceFile }: I
           />
           {copy.grayscaleLabel}
         </label>
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs font-semibold">{copy.brightnessLabel}</Label>
-          <span className="font-mono text-[10px] text-[var(--text-tertiary)]">{Math.round((filters.brightness ?? 0) * 100)}</span>
-        </div>
-        <Slider
-          value={[Math.round((filters.brightness ?? 0) * 100)]}
-          min={-100}
-          max={100}
-          step={1}
-          onValueChange={(val) => onChange({ filters: setFilter(filters, { brightness: val[0] / 100 }) })}
-          data-testid="image-layer-brightness-slider"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs font-semibold">{copy.contrastLabel}</Label>
-          <span className="font-mono text-[10px] text-[var(--text-tertiary)]">{Math.round((filters.contrast ?? 0) * 100)}</span>
-        </div>
-        <Slider
-          value={[Math.round((filters.contrast ?? 0) * 100)]}
-          min={-100}
-          max={100}
-          step={1}
-          onValueChange={(val) => onChange({ filters: setFilter(filters, { contrast: val[0] / 100 }) })}
-          data-testid="image-layer-contrast-slider"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs font-semibold">{copy.saturationLabel}</Label>
-          <span className="font-mono text-[10px] text-[var(--text-tertiary)]">{Math.round((filters.saturation ?? 0) * 100)}</span>
-        </div>
-        <Slider
-          value={[Math.round((filters.saturation ?? 0) * 100)]}
-          min={-100}
-          max={100}
-          step={1}
-          onValueChange={(val) => onChange({ filters: setFilter(filters, { saturation: val[0] / 100 }) })}
-          data-testid="image-layer-saturation-slider"
-        />
-      </div>
-
-      <button
-        type="button"
-        data-testid="image-layer-reset-filters-button"
-        onClick={() => onChange({ filters: {} })}
-        className="ac-button ac-button--ghost ac-button--sm w-full"
-      >
-        {copy.resetFiltersLabel}
-      </button>
+        <button type="button" data-testid="image-layer-reset-filters-button" onClick={() => onChange({ filters: {} })} className="cover-prop-link">
+          {copy.resetFiltersLabel}
+        </button>
+      </PropertySection>
     </div>
-  );
-}
-
-function NumericField({ label, value, onChange, testId }: { label: string; value: number; onChange: (value: number) => void; testId: string }) {
-  return (
-    <label className="space-y-1.5">
-      <span className="text-xs font-semibold text-[var(--text-primary)]">{label}</span>
-      <Input
-        type="number"
-        data-testid={testId}
-        value={Math.round(value)}
-        onChange={(event) => {
-          const parsed = Number(event.target.value);
-          if (Number.isFinite(parsed)) onChange(parsed);
-        }}
-        className="h-9 border-[var(--border-subtle)] bg-[var(--surface-soft)] text-sm"
-      />
-    </label>
   );
 }

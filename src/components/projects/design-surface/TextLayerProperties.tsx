@@ -21,14 +21,12 @@ import {
   RefreshCw,
   Underline,
 } from 'lucide-react';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { DesignLayer, TextLayerProps } from '@/lib/projects/design-surface';
 import { FontSelector } from '../cover-studio/FontSelector';
 import { ColorPickerField } from './ColorPickerField';
+import { CompactNumberField, CompactSlider, PropertySection, SegmentedGroup } from './PropertyControls';
 
 type TextLayer = DesignLayer & TextLayerProps;
 type Copy = AppMessages['coverDesignSurface'];
@@ -50,10 +48,6 @@ export interface TextLayerPropertiesProps {
   onSyncFromMetadata?: () => void;
 }
 
-function segmentButtonClass(active: boolean) {
-  return `ac-button ac-button--ghost ac-button--icon ac-button--sm${active ? '' : ''}`;
-}
-
 export function TextLayerProperties({ layer, copy, brandColors, onChange, metadataValue, onSyncFromMetadata }: TextLayerPropertiesProps) {
   const t = copy.text;
   const isBold = layer.fontWeight === 'bold' || (typeof layer.fontWeight === 'number' && layer.fontWeight >= 700);
@@ -68,256 +62,141 @@ export function TextLayerProperties({ layer, copy, brandColors, onChange, metada
     onSyncFromMetadata();
   };
 
+  const ws = copy.workspace;
+  const alignButton = (align: TextLayerProps['textAlign'], Icon: typeof AlignLeft, label: string) => (
+    <button
+      key={align}
+      type="button"
+      onClick={() => onChange({ textAlign: align })}
+      data-testid={`text-layer-align-${align}-button`}
+      className="cover-prop-icon"
+      data-active={layer.textAlign === align ? 'true' : 'false'}
+      title={label}
+      aria-label={label}
+      aria-pressed={layer.textAlign === align}
+    >
+      <Icon className="h-4 w-4" />
+    </button>
+  );
+  const verticalButton = (value: TextLayerProps['verticalAlign'], Icon: typeof AlignLeft, label: string) => (
+    <button
+      key={value}
+      type="button"
+      onClick={() => onChange({ verticalAlign: value })}
+      data-testid={`text-layer-vertical-${value}-button`}
+      className="cover-prop-icon"
+      data-active={layer.verticalAlign === value ? 'true' : 'false'}
+      title={label}
+      aria-label={label}
+      aria-pressed={layer.verticalAlign === value}
+    >
+      <Icon className="h-4 w-4" />
+    </button>
+  );
+
   return (
-    <div className="space-y-5" data-testid="text-layer-properties">
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs font-semibold">{t.contentLabel}</Label>
-          {canSyncFromMetadata && (
-            <button
-              type="button"
-              data-testid="text-layer-sync-from-metadata-button"
-              onClick={handleSyncFromMetadata}
-              className="ac-button ac-button--ghost ac-button--sm inline-flex items-center gap-1"
-              title={copy.origin.syncFromMetadataLabel}
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-              {copy.origin.syncFromMetadataLabel}
-            </button>
-          )}
-        </div>
+    <div className="cover-prop-stack" data-testid="text-layer-properties">
+      <PropertySection title={t.contentLabel}>
+        {canSyncFromMetadata && (
+          <button
+            type="button"
+            data-testid="text-layer-sync-from-metadata-button"
+            onClick={handleSyncFromMetadata}
+            className="cover-prop-link"
+            title={copy.origin.syncFromMetadataLabel}
+          >
+            <RefreshCw className="h-3 w-3" />
+            {copy.origin.syncFromMetadataLabel}
+          </button>
+        )}
         <Textarea
           aria-label={t.contentLabel}
           data-testid="text-layer-content-input"
           value={layer.content}
+          rows={2}
           onChange={(event) => onChange({ content: event.target.value })}
-          className="min-h-20 border-[var(--border-subtle)] bg-[var(--surface-soft)] text-sm focus:border-[var(--accent)]"
+          className="cover-prop-textarea"
         />
-      </div>
+      </PropertySection>
 
-      <div className="space-y-2">
-        <Label className="text-xs font-semibold">{t.fontFamilyLabel}</Label>
-        <FontSelector selectedFont={layer.fontFamily} onFontSelect={(fontFamily) => onChange({ fontFamily })} />
-      </div>
-
-      <div className="ac-editor-inspector__segmented" role="group" aria-label={t.fontFamilyLabel}>
-        <button
-          type="button"
-          onClick={() => onChange({ textAlign: 'left' })}
-          data-testid="text-layer-align-left-button"
-          className={segmentButtonClass(layer.textAlign === 'left')}
-          data-active={layer.textAlign === 'left' ? 'true' : 'false'}
-          title={t.alignLeftLabel}
-          aria-label={t.alignLeftLabel}
-          aria-pressed={layer.textAlign === 'left'}
-        >
-          <AlignLeft className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onChange({ textAlign: 'center' })}
-          data-testid="text-layer-align-center-button"
-          className={segmentButtonClass(layer.textAlign === 'center')}
-          data-active={layer.textAlign === 'center' ? 'true' : 'false'}
-          title={t.alignCenterLabel}
-          aria-label={t.alignCenterLabel}
-          aria-pressed={layer.textAlign === 'center'}
-        >
-          <AlignCenter className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onChange({ textAlign: 'right' })}
-          data-testid="text-layer-align-right-button"
-          className={segmentButtonClass(layer.textAlign === 'right')}
-          data-active={layer.textAlign === 'right' ? 'true' : 'false'}
-          title={t.alignRightLabel}
-          aria-label={t.alignRightLabel}
-          aria-pressed={layer.textAlign === 'right'}
-        >
-          <AlignRight className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onChange({ textAlign: 'justify' })}
-          data-testid="text-layer-align-justify-button"
-          className={segmentButtonClass(layer.textAlign === 'justify')}
-          data-active={layer.textAlign === 'justify' ? 'true' : 'false'}
-          title={t.alignJustifyLabel}
-          aria-label={t.alignJustifyLabel}
-          aria-pressed={layer.textAlign === 'justify'}
-        >
-          <AlignJustify className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onChange({ fontWeight: isBold ? 400 : 700 })}
-          data-testid="text-layer-bold-button"
-          className={segmentButtonClass(isBold)}
-          data-active={isBold ? 'true' : 'false'}
-          title={t.boldLabel}
-          aria-label={t.boldLabel}
-        >
-          <Bold className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onChange({ fontStyle: isItalic ? 'normal' : 'italic' })}
-          data-testid="text-layer-italic-button"
-          className={segmentButtonClass(isItalic)}
-          data-active={isItalic ? 'true' : 'false'}
-          title={t.italicLabel}
-          aria-label={t.italicLabel}
-        >
-          <Italic className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onChange({ textDecoration: isUnderline ? 'none' : 'underline' })}
-          data-testid="text-layer-underline-button"
-          className={segmentButtonClass(isUnderline)}
-          data-active={isUnderline ? 'true' : 'false'}
-          title={t.underlineLabel}
-          aria-label={t.underlineLabel}
-        >
-          <Underline className="h-4 w-4" />
-        </button>
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs font-semibold">{t.verticalAlignLabel}</Label>
-        <div className="ac-editor-inspector__segmented" role="group" aria-label={t.verticalAlignLabel}>
-          <button
-            type="button"
-            onClick={() => onChange({ verticalAlign: 'top' })}
-            data-testid="text-layer-vertical-top-button"
-            className={segmentButtonClass(layer.verticalAlign === 'top')}
-            data-active={layer.verticalAlign === 'top' ? 'true' : 'false'}
-            title={t.verticalAlignTopLabel}
-            aria-label={t.verticalAlignTopLabel}
-          >
-            <AlignStartVertical className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onChange({ verticalAlign: 'middle' })}
-            data-testid="text-layer-vertical-middle-button"
-            className={segmentButtonClass(layer.verticalAlign === 'middle')}
-            data-active={layer.verticalAlign === 'middle' ? 'true' : 'false'}
-            title={t.verticalAlignMiddleLabel}
-            aria-label={t.verticalAlignMiddleLabel}
-          >
-            <AlignVerticalSpaceAround className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onChange({ verticalAlign: 'bottom' })}
-            data-testid="text-layer-vertical-bottom-button"
-            className={segmentButtonClass(layer.verticalAlign === 'bottom')}
-            data-active={layer.verticalAlign === 'bottom' ? 'true' : 'false'}
-            title={t.verticalAlignBottomLabel}
-            aria-label={t.verticalAlignBottomLabel}
-          >
-            <AlignEndVertical className="h-4 w-4" />
-          </button>
+      <PropertySection title={t.fontFamilyLabel}>
+        <div className="cover-prop-row cover-prop-row--font">
+          <FontSelector selectedFont={layer.fontFamily} onFontSelect={(fontFamily) => onChange({ fontFamily })} compact />
+          <CompactNumberField
+            label="Aa"
+            value={layer.fontSize}
+            min={8}
+            max={160}
+            suffix="px"
+            onChange={(fontSize) => onChange({ fontSize: Math.min(160, Math.max(8, fontSize)) })}
+            testId="text-layer-font-size-input"
+          />
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label className="text-xs font-semibold">{t.textTransformLabel}</Label>
-        <div className="ac-editor-inspector__segmented" role="group" aria-label={t.textTransformLabel}>
+        <div className="cover-prop-row">
+          <SegmentedGroup label={t.boldLabel}>
+            <button type="button" onClick={() => onChange({ fontWeight: isBold ? 400 : 700 })} data-testid="text-layer-bold-button" className="cover-prop-icon" data-active={isBold ? 'true' : 'false'} title={t.boldLabel} aria-label={t.boldLabel} aria-pressed={isBold}>
+              <Bold className="h-4 w-4" />
+            </button>
+            <button type="button" onClick={() => onChange({ fontStyle: isItalic ? 'normal' : 'italic' })} data-testid="text-layer-italic-button" className="cover-prop-icon" data-active={isItalic ? 'true' : 'false'} title={t.italicLabel} aria-label={t.italicLabel} aria-pressed={isItalic}>
+              <Italic className="h-4 w-4" />
+            </button>
+            <button type="button" onClick={() => onChange({ textDecoration: isUnderline ? 'none' : 'underline' })} data-testid="text-layer-underline-button" className="cover-prop-icon" data-active={isUnderline ? 'true' : 'false'} title={t.underlineLabel} aria-label={t.underlineLabel} aria-pressed={isUnderline}>
+              <Underline className="h-4 w-4" />
+            </button>
+          </SegmentedGroup>
+          <SegmentedGroup label={t.alignLeftLabel}>
+            {alignButton('left', AlignLeft, t.alignLeftLabel)}
+            {alignButton('center', AlignCenter, t.alignCenterLabel)}
+            {alignButton('right', AlignRight, t.alignRightLabel)}
+            {alignButton('justify', AlignJustify, t.alignJustifyLabel)}
+          </SegmentedGroup>
+        </div>
+
+        <div className="cover-prop-row">
+          <SegmentedGroup label={t.verticalAlignLabel}>
+            {verticalButton('top', AlignStartVertical, t.verticalAlignTopLabel)}
+            {verticalButton('middle', AlignVerticalSpaceAround, t.verticalAlignMiddleLabel)}
+            {verticalButton('bottom', AlignEndVertical, t.verticalAlignBottomLabel)}
+          </SegmentedGroup>
+        </div>
+
+        <SegmentedGroup label={t.textTransformLabel}>
           {(['none', 'uppercase', 'lowercase'] as const).map((transform) => (
             <button
               key={transform}
               type="button"
               onClick={() => onChange({ textTransform: transform })}
               data-testid={`text-layer-transform-${transform}-button`}
-              className={`ac-button ac-button--ghost ac-button--sm`}
+              className="cover-prop-text-button"
               data-active={layer.textTransform === transform ? 'true' : 'false'}
+              aria-pressed={layer.textTransform === transform}
             >
               {transform === 'none' ? t.textTransformNone : transform === 'uppercase' ? t.textTransformUppercase : t.textTransformLowercase}
             </button>
           ))}
-        </div>
-      </div>
+        </SegmentedGroup>
+      </PropertySection>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs font-semibold">{t.fontSizeLabel}</Label>
-            <span className="font-mono text-[10px] text-[var(--text-tertiary)]">{layer.fontSize}px</span>
-          </div>
-          <Slider value={[layer.fontSize]} min={8} max={160} step={1} onValueChange={(val) => onChange({ fontSize: val[0] })} />
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs font-semibold">{t.lineHeightLabel}</Label>
-            <span className="font-mono text-[10px] text-[var(--text-tertiary)]">{layer.lineHeight.toFixed(2)}</span>
-          </div>
-          <Slider value={[layer.lineHeight]} min={0.8} max={3} step={0.05} onValueChange={(val) => onChange({ lineHeight: val[0] })} />
-        </div>
-      </div>
+      <PropertySection title={ws.sectionSpacing} defaultOpen={false}>
+        <CompactSlider label={t.lineHeightLabel} value={layer.lineHeight} min={0.8} max={3} step={0.05} onChange={(lineHeight) => onChange({ lineHeight })} display={(value) => value.toFixed(2)} testId="text-layer-line-height-slider" />
+        <CompactSlider label={t.letterSpacingLabel} value={layer.letterSpacing} min={-100} max={1000} step={10} onChange={(letterSpacing) => onChange({ letterSpacing })} testId="text-layer-letter-spacing-slider" />
+      </PropertySection>
 
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs font-semibold">{t.letterSpacingLabel}</Label>
-          <span className="font-mono text-[10px] text-[var(--text-tertiary)]">{layer.letterSpacing}</span>
+      <PropertySection title={ws.sectionAppearance} defaultOpen={false}>
+        <ColorPickerField label={t.colorLabel} value={layer.color} onChange={(color) => onChange({ color })} copy={copy.colorPicker} brandColors={brandColors} testId="text-layer-color" />
+        <CompactSlider label={t.opacityLabel} value={Math.round(layer.opacity * 100)} min={0} max={100} step={1} onChange={(value) => onChange({ opacity: value / 100 })} display={(value) => `${value}%`} testId="text-layer-opacity-slider" />
+      </PropertySection>
+
+      <PropertySection title={ws.sectionPosition}>
+        <div className="cover-prop-grid">
+          <CompactNumberField label={t.xLabel} value={layer.x} onChange={(x) => onChange({ x })} testId="text-layer-x-input" />
+          <CompactNumberField label={t.yLabel} value={layer.y} onChange={(y) => onChange({ y })} testId="text-layer-y-input" />
+          <CompactNumberField label={t.widthLabel} value={layer.width} onChange={(width) => onChange({ width })} testId="text-layer-width-input" />
+          <CompactNumberField label={t.heightLabel} value={layer.height} onChange={(height) => onChange({ height })} testId="text-layer-height-input" />
+          <CompactNumberField label={t.rotationLabel} value={layer.rotation} onChange={(rotation) => onChange({ rotation })} testId="text-layer-rotation-input" suffix="°" />
         </div>
-        <Slider value={[layer.letterSpacing]} min={-100} max={1000} step={10} onValueChange={(val) => onChange({ letterSpacing: val[0] })} />
-      </div>
-
-      <ColorPickerField
-        label={t.colorLabel}
-        value={layer.color}
-        onChange={(color) => onChange({ color })}
-        copy={copy.colorPicker}
-        brandColors={brandColors}
-        testId="text-layer-color"
-      />
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs font-semibold">{t.opacityLabel}</Label>
-          <span className="font-mono text-[10px] text-[var(--text-tertiary)]">{Math.round(layer.opacity * 100)}%</span>
-        </div>
-        <Slider value={[Math.round(layer.opacity * 100)]} min={0} max={100} step={1} onValueChange={(val) => onChange({ opacity: val[0] / 100 })} />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <NumericField label={t.xLabel} value={layer.x} onChange={(x) => onChange({ x })} testId="text-layer-x-input" />
-        <NumericField label={t.yLabel} value={layer.y} onChange={(y) => onChange({ y })} testId="text-layer-y-input" />
-        <NumericField label={t.widthLabel} value={layer.width} onChange={(width) => onChange({ width })} testId="text-layer-width-input" />
-        <NumericField label={t.heightLabel} value={layer.height} onChange={(height) => onChange({ height })} testId="text-layer-height-input" />
-        <NumericField label={t.rotationLabel} value={layer.rotation} onChange={(rotation) => onChange({ rotation })} testId="text-layer-rotation-input" />
-      </div>
+      </PropertySection>
     </div>
-  );
-}
-
-function NumericField({
-  label,
-  value,
-  onChange,
-  testId,
-}: {
-  label: string;
-  value: number;
-  onChange: (value: number) => void;
-  testId: string;
-}) {
-  return (
-    <label className="space-y-1.5">
-      <span className="text-xs font-semibold text-[var(--text-primary)]">{label}</span>
-      <Input
-        type="number"
-        data-testid={testId}
-        value={Math.round(value)}
-        onChange={(event) => {
-          const parsed = Number(event.target.value);
-          if (Number.isFinite(parsed)) onChange(parsed);
-        }}
-        className="h-9 border-[var(--border-subtle)] bg-[var(--surface-soft)] text-sm"
-      />
-    </label>
   );
 }

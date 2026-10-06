@@ -5,6 +5,7 @@ import { createDesignLayer, type DesignLayer, type ImageLayerProps } from '@/lib
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 
 const copy = resolveLocaleMessages('es').coverDesignSurface.image;
+const ws = resolveLocaleMessages('es').coverDesignSurface.workspace;
 
 function makeLayer(overrides: Partial<ImageLayerProps> & Partial<Pick<DesignLayer, 'x' | 'y' | 'width' | 'height' | 'rotation'>> = {}) {
   return createDesignLayer({ type: 'image', src: 'https://blob.example/a.png', fit: 'cover', ...overrides }, 1) as DesignLayer & ImageLayerProps;
@@ -13,7 +14,7 @@ function makeLayer(overrides: Partial<ImageLayerProps> & Partial<Pick<DesignLaye
 describe('ImageLayerProperties', () => {
   test('switching fit fires onChange', () => {
     const onChange = vi.fn();
-    render(<ImageLayerProperties layer={makeLayer()} copy={copy} onChange={onChange} onReplaceFile={vi.fn()} />);
+    render(<ImageLayerProperties layer={makeLayer()} copy={copy} workspace={ws} onChange={onChange} onReplaceFile={vi.fn()} />);
 
     fireEvent.click(screen.getByTestId('image-layer-fit-contain-button'));
     expect(onChange).toHaveBeenCalledWith({ fit: 'contain' });
@@ -22,7 +23,7 @@ describe('ImageLayerProperties', () => {
   test('toggling grayscale sets the filter without touching other filters', () => {
     const onChange = vi.fn();
     const layer = makeLayer({ filters: { brightness: 0.2 } });
-    render(<ImageLayerProperties layer={layer} copy={copy} onChange={onChange} onReplaceFile={vi.fn()} />);
+    render(<ImageLayerProperties layer={layer} copy={copy} workspace={ws} onChange={onChange} onReplaceFile={vi.fn()} />);
 
     fireEvent.click(screen.getByTestId('image-layer-grayscale-checkbox'));
     expect(onChange).toHaveBeenCalledWith({ filters: { brightness: 0.2, grayscale: true } });
@@ -31,7 +32,7 @@ describe('ImageLayerProperties', () => {
   test('reset filters clears every filter at once', () => {
     const onChange = vi.fn();
     const layer = makeLayer({ filters: { grayscale: true, brightness: 0.5, contrast: 0.3 } });
-    render(<ImageLayerProperties layer={layer} copy={copy} onChange={onChange} onReplaceFile={vi.fn()} />);
+    render(<ImageLayerProperties layer={layer} copy={copy} workspace={ws} onChange={onChange} onReplaceFile={vi.fn()} />);
 
     fireEvent.click(screen.getByTestId('image-layer-reset-filters-button'));
     expect(onChange).toHaveBeenCalledWith({ filters: {} });
@@ -39,7 +40,7 @@ describe('ImageLayerProperties', () => {
 
   test('selecting a replacement file calls onReplaceFile', () => {
     const onReplaceFile = vi.fn();
-    render(<ImageLayerProperties layer={makeLayer()} copy={copy} onChange={vi.fn()} onReplaceFile={onReplaceFile} />);
+    render(<ImageLayerProperties layer={makeLayer()} copy={copy} workspace={ws} onChange={vi.fn()} onReplaceFile={onReplaceFile} />);
 
     const file = new File(['x'], 'nueva.png', { type: 'image/png' });
     fireEvent.change(screen.getByTestId('image-layer-file-input'), { target: { files: [file] } });
@@ -48,7 +49,7 @@ describe('ImageLayerProperties', () => {
 
   test('exposes editable free-position transform fields', () => {
     const onChange = vi.fn();
-    render(<ImageLayerProperties layer={makeLayer({ x: -24, y: 18, width: 520, height: 340, rotation: 7 })} copy={copy} onChange={onChange} onReplaceFile={vi.fn()} />);
+    render(<ImageLayerProperties layer={makeLayer({ x: -24, y: 18, width: 520, height: 340, rotation: 7 })} copy={copy} workspace={ws} onChange={onChange} onReplaceFile={vi.fn()} />);
 
     expect(screen.getByTestId('image-layer-x-input')).toHaveValue(-24);
     expect(screen.getByTestId('image-layer-width-input')).toHaveValue(520);

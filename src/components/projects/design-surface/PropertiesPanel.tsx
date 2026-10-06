@@ -73,11 +73,12 @@ export function PropertiesPanel({ selectedLayers, copy, brandColors, onLayerChan
       <ImageLayerProperties
         layer={layer as DesignLayer & ImageLayerProps}
         copy={copy.image}
+        workspace={copy.workspace}
         onChange={(patch) => onLayerChange(layer.id, patch)}
         onReplaceFile={(file) => onReplaceImage(layer.id, file)}
       />
     );
   }
 
-  return <ShapeLayerProperties layer={layer} copy={copy.shape} onChange={(patch) => onLayerChange(layer.id, patch)} />;
+  return <ShapeLayerProperties layer={layer} copy={copy.shape} workspace={copy.workspace} onChange={(patch) => onLayerChange(layer.id, patch)} />;
 }

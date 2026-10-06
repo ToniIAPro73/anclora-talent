@@ -1400,6 +1400,9 @@ export type AppMessages = {
       layerCountOne: string;
       moreOptions: string;
       drag: string;
+      sectionSpacing: string;
+      sectionAppearance: string;
+      sectionPosition: string;
     };
     origin: {
       promptTitle: string;
@@ -3070,6 +3073,9 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         layerCountOne: '1 capa',
         moreOptions: 'Opciones de capa',
         drag: 'Arrastrar',
+        sectionSpacing: 'Espaciado',
+        sectionAppearance: 'Aspecto',
+        sectionPosition: 'Posición y tamaño',
       },
       origin: {
         promptTitle: '¿Cómo quieres empezar?',
@@ -4737,6 +4743,9 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         layerCountOne: '1 layer',
         moreOptions: 'Layer options',
         drag: 'Drag',
+        sectionSpacing: 'Spacing',
+        sectionAppearance: 'Appearance',
+        sectionPosition: 'Position & size',
       },
       origin: {
         promptTitle: 'How do you want to start?',
