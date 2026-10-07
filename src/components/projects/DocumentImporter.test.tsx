@@ -21,6 +21,11 @@ vi.mock('@/lib/brand/actions', () => ({
   setProjectBrandProfileAction: vi.fn(),
 }));
 
+// Direct-to-Blob upload that never completes: it reports one initial progress event and then stalls (what a
+// CORS-blocked or unreachable store looks like while the Blob client keeps retrying internally).
+const stalledUpload = vi.hoisted(() => vi.fn());
+vi.mock('@vercel/blob/client', () => ({ upload: stalledUpload }));
+
 vi.mock('mammoth', () => ({
   convertToHtml: vi.fn(async () => ({
     value: '<h1>Éxito sin compañía</h1><h2>Introducción</h2><h2>Concepto 1</h2>',
@@ -340,5 +345,38 @@ describe('DocumentImporter', () => {
     expect(screen.getByTestId('markdown-import-mode-materialized')).toBeChecked();
     expect(screen.getByTestId('markdown-materialized-presentation')).toBeInTheDocument();
     expect(screen.getByTestId('import-presentation-mode-input')).toHaveValue('materialized');
+  });
+
+  test('a big file whose direct Blob upload stalls falls back to the normal upload after a few seconds, not minutes', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      stalledUpload.mockImplementation((_name: string, _file: File, options: { onUploadProgress?: (event: { loaded: number }) => void }) => {
+        options.onUploadProgress?.({ loaded: 1 });
+        return new Promise(() => undefined);
+      });
+      mockFetchSuccess(3);
+      render(<DocumentImporter copy={copy} />);
+      const big = new File(['x'], 'grande.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      Object.defineProperty(big, 'size', { value: 5 * 1024 * 1024 });
+
+      fireEvent.change(screen.getByTestId('source-document-input'), { target: { files: [big] } });
+      const fetchMock = vi.mocked(globalThis.fetch);
+      expect(fetchMock).not.toHaveBeenCalled(); // still inside the direct-upload window
+
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe('/api/projects/import');
+      expect(init.body).toBeInstanceOf(FormData); // multipart, not the blob-url JSON path
+
+      // the next big file does not wait again
+      stalledUpload.mockClear();
+      fireEvent.change(screen.getByTestId('source-document-input'), { target: { files: [big] } });
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+      expect(stalledUpload).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

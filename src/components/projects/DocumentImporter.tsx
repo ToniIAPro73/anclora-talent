@@ -87,6 +87,10 @@ function ConfidenceBadge({ level, copy, testId }: { level: FieldConfidence; copy
 }
 
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
+/** How long the direct Blob upload may go without moving a single new byte before the multipart fallback takes over. */
+const DIRECT_UPLOAD_STALL_MS = 8_000;
+/** Set once the direct upload proved unreachable, so the next big file goes straight to multipart. */
+let directUploadUnavailable = false;
 
 function isDocxFile(file: File) {
   return (
@@ -238,16 +242,51 @@ export function DocumentImporter({
     try {
       let response: Response;
       let blobUrl: string | null = null;
-      if (file.size > 4 * 1024 * 1024) {
+      if (file.size > 4 * 1024 * 1024 && !directUploadUnavailable) {
+        // Direct-to-Blob upload is only an optimisation. When the browser cannot reach it (CORS from localhost, a
+        // blocker, a flaky network) the Blob client retries with growing waits for MORE THAN TWO MINUTES before it
+        // throws, and its retry loop ignores `abort()`. So it is raced against a stall detector: if no new byte has
+        // moved for a few seconds, the import continues through the multipart path right away and direct upload is not tried
+        // again in this session.
+        const controller = new AbortController();
+        let stallTimer: ReturnType<typeof setInterval> | undefined;
+        let lastLoaded = 0;
+        let lastChangeAt = Date.now();
+        // "Stalled" = the transferred byte count has not grown for the whole window (a request that is failing and
+        // being retried reports no new bytes), which also covers a connection that dies half-way.
+        const stalled = new Promise<'timeout'>((resolve) => {
+          stallTimer = setInterval(() => {
+            if (Date.now() - lastChangeAt > DIRECT_UPLOAD_STALL_MS) resolve('timeout');
+          }, 1_000);
+        });
         try {
           const { upload } = await import('@vercel/blob/client');
-          const blob = await upload(file.name, file, {
+          const direct = upload(file.name, file, {
             access: 'public',
             handleUploadUrl: '/api/blob/upload',
+            abortSignal: controller.signal,
+            // A healthy upload keeps growing, however long it takes.
+            onUploadProgress: ({ loaded }) => {
+              if (loaded > lastLoaded) {
+                lastLoaded = loaded;
+                lastChangeAt = Date.now();
+              }
+            },
           });
-          blobUrl = blob.url;
+          direct.catch(() => undefined); // an abandoned attempt must not surface as an unhandled rejection
+          const outcome = await Promise.race([direct, stalled]);
+          if (outcome === 'timeout') {
+            controller.abort();
+            directUploadUnavailable = true;
+            console.warn('[DocumentImporter] direct blob upload did not start in time; using multipart');
+          } else {
+            blobUrl = outcome.url;
+          }
         } catch (blobErr) {
+          directUploadUnavailable = true;
           console.warn('[DocumentImporter] direct blob upload failed or skipped, falling back to multipart', blobErr);
+        } finally {
+          clearInterval(stallTimer);
         }
       }
 
