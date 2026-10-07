@@ -348,7 +348,20 @@ function normalizeHtmlFragment(input: string, options: { preserveStyles?: boolea
   return input
     .replace(/\r\n/g, '\n')
     .replace(options.preserveStyles ? /$^/g : /\sstyle="[^"]*"/gi, '')
-    .replace(/>\s+</g, '><')
+    // Collapses whitespace sitting directly between two tags down to a
+    // single space, never to nothing. That whitespace is usually pure
+    // source formatting/indentation between BLOCK tags (harmless either
+    // way — parseHtmlBlocks' block regex only captures each <tag>...</tag>
+    // span itself, so inter-block whitespace is discarded regardless) but
+    // it is sometimes a REAL word-boundary space between two adjacent
+    // same-paragraph INLINE <span> runs — exactly the shape a joined
+    // multi-line paragraph renders as (see sourceModelToHtml / odtRuns: a
+    // lone-space run between two text runs becomes its own <span> or bare
+    // text node). Collapsing that to '' silently glues two words together
+    // ("día a día" + "como" -> "díacomo"); collapsing to a single space
+    // preserves the word boundary while still normalizing any amount of
+    // incidental formatting whitespace (tabs, newlines, repeated spaces).
+    .replace(/>\s+</g, '> <')
     .trim();
 }
 
@@ -1157,7 +1170,19 @@ function parseHtmlBlocks(input: string, options: { preserveStyles?: boolean } = 
     const tag = clean.match(/^<(h[1-6]|p|ul|ol|blockquote|table|pre|figure)/i)?.[1]?.toLowerCase() ?? 'p';
     const text = textFromHtml(clean);
     const hasImage = /<img\b[^>]*>/i.test(clean);
-    if ((!text && !hasImage) || (text && isDecorativeLine(text))) continue;
+    if (!text && !hasImage) continue;
+    // A decorative-only line (a run of dashes/dots/etc, no letters or
+    // digits) is usually PDF-extraction noise (a stray rule artifact) and
+    // gets dropped — but a short, isolated one ("———") is also exactly how
+    // editorial typography marks an intentional scene/section break within
+    // the body text (confirmed real case: "— Fin —" followed by its own
+    // "———" separator paragraph, both present in the source). Dropping it
+    // unconditionally silently deletes real authored content. Keep it as
+    // an ordinary paragraph instead of discarding it; nothing downstream
+    // currently renders a dedicated horizontal-rule block type (`'rule'`
+    // exists in `ParsedBlockKind` but nothing ever constructs one here),
+    // so a plain paragraph is the minimal fix that preserves the content.
+    if (text && isDecorativeLine(text) && text.length > 12) continue;
 
     const isLeader = /^[·._\-—\s]{2,}\d+\s*$/.test(text.trim());
 
