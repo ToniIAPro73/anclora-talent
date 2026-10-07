@@ -2454,12 +2454,23 @@ async function extractDocxRichContent(buffer: Buffer): Promise<ExtractedImportSo
     // is partial, keep Mammoth's recovered HTML instead of discarding the
     // whole rich import and falling back to plain text extraction.
     richHtml = await injectDocxSourcePageBreaks(richHtml, buffer).catch(() => richHtml);
-    const headingRule = profile?.paragraphBorders?.Heading1 ?? profile?.paragraphBorders?.['heading 1'];
-    if (headingRule?.bottom) {
+    // Part titles use Heading 1, but chapter/introduction/conclusion
+    // titles use Heading 2 (see promoteDocxChapterMarkerParagraphs /
+    // determineChapterBoundaryLevel) — a heading-underline rule defined
+    // only on Heading 1 would silently disappear from every chapter title
+    // while still showing on part titles. Apply the same lookup to both
+    // levels independently; either, both or neither may carry a rule.
+    for (const [tag, styleKeys] of [
+      ['h1', ['Heading1', 'heading 1']],
+      ['h2', ['Heading2', 'heading 2']],
+    ] as const) {
+      const headingRule = styleKeys.map((key) => profile?.paragraphBorders?.[key]).find(Boolean);
+      if (!headingRule?.bottom) continue;
       const border = headingRule.bottom;
-      richHtml = richHtml.replace(/<h1(\s[^>]*)?>/gi, (full, attrs = '') => {
+      const tagRe = new RegExp(`<${tag}(\\s[^>]*)?>`, 'gi');
+      richHtml = richHtml.replace(tagRe, (full, attrs = '') => {
         const extra = ` data-source-border-bottom-style="${border.style}" data-source-border-bottom-width="${border.widthPt ?? ''}" data-source-border-bottom-color="${border.color ?? ''}" data-source-border-bottom-spacing="${border.spacingPt ?? ''}"`;
-        return `<h1${attrs}${extra}>`;
+        return `<${tag}${attrs}${extra}>`;
       });
     }
     const richText = normalizeText(textFromHtml(richHtml));
