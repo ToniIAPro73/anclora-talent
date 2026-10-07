@@ -10,6 +10,7 @@
  */
 
 import { useRef } from 'react';
+import { FlipHorizontal2, FlipVertical2 } from 'lucide-react';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { DesignLayer, ImageLayerFilters, ImageLayerProps } from '@/lib/projects/design-surface';
 import { CompactNumberField, CompactSlider, PropertySection, SegmentedGroup } from './PropertyControls';
@@ -21,7 +22,7 @@ export interface ImageLayerPropertiesProps {
   layer: ImgLayer;
   copy: Copy;
   workspace: AppMessages['coverDesignSurface']['workspace'];
-  onChange: (patch: Partial<ImageLayerProps> & Partial<Pick<DesignLayer, 'x' | 'y' | 'width' | 'height' | 'rotation' | 'opacity'>>) => void;
+  onChange: (patch: Partial<ImageLayerProps> & Partial<Pick<DesignLayer, 'x' | 'y' | 'width' | 'height' | 'rotation' | 'opacity' | 'flipX' | 'flipY'>>) => void;
   onReplaceFile: (file: File) => void;
   onReorder?: (direction: 'up' | 'down' | 'front' | 'back') => void;
   onUseAsBackground?: () => void;
@@ -118,6 +119,15 @@ export function ImageLayerProperties({ layer, copy, workspace: ws, onChange, onR
           <CompactNumberField label={copy.heightLabel} value={layer.height} onChange={(height) => onChange({ height })} testId="image-layer-height-input" />
           <CompactNumberField label={copy.rotationLabel} value={layer.rotation} onChange={(rotation) => onChange({ rotation })} testId="image-layer-rotation-input" suffix="°" />
         </div>
+        <SegmentedGroup label={ws.flipHorizontalLabel}>
+          <button type="button" className="cover-prop-icon" data-testid="image-layer-flip-x-button" data-active={layer.flipX ? 'true' : 'false'} aria-pressed={Boolean(layer.flipX)} onClick={() => onChange({ flipX: !layer.flipX })} title={ws.flipHorizontalLabel} aria-label={ws.flipHorizontalLabel}>
+            <FlipHorizontal2 className="h-4 w-4" />
+          </button>
+          <button type="button" className="cover-prop-icon" data-testid="image-layer-flip-y-button" data-active={layer.flipY ? 'true' : 'false'} aria-pressed={Boolean(layer.flipY)} onClick={() => onChange({ flipY: !layer.flipY })} title={ws.flipVerticalLabel} aria-label={ws.flipVerticalLabel}>
+            <FlipVertical2 className="h-4 w-4" />
+          </button>
+        </SegmentedGroup>
+
       </PropertySection>
 
       <PropertySection title={ws.sectionAppearance}>

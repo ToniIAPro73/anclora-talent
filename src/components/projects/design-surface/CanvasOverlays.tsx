@@ -34,6 +34,8 @@ export interface CanvasOverlaysProps {
   onGuidesChange: (guides: DesignGuide[]) => void;
   safeArea?: SafeAreaSpec;
   showSafeArea: boolean;
+  /** Trim line inset (surface px) when the bleed overlay is on; null/undefined = hidden. View-only, never exported. */
+  bleedInset?: number | null;
   /** Back-cover only, helper (mission §39) — never rendered on export. */
   isbnArea?: DesignSurface['isbnArea'];
   grid: GridDensity;
@@ -120,7 +122,7 @@ function GuideLine({
   );
 }
 
-export function CanvasOverlays({ width, height, zoom, guides, onGuidesChange, safeArea, showSafeArea, isbnArea, grid, copy, showControls = true }: CanvasOverlaysProps) {
+export function CanvasOverlays({ width, height, zoom, guides, onGuidesChange, safeArea, showSafeArea, bleedInset, isbnArea, grid, copy, showControls = true }: CanvasOverlaysProps) {
   const addGuide = (axis: 'x' | 'y') => {
     const id = `guide-${axis}-${Date.now()}`;
     const position = axis === 'x' ? Math.round(width / 2) : Math.round(height / 2);
@@ -147,6 +149,22 @@ export function CanvasOverlays({ width, height, zoom, guides, onGuidesChange, sa
               'linear-gradient(to right, color-mix(in srgb, var(--border-subtle) 60%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--border-subtle) 60%, transparent) 1px, transparent 1px)',
           }}
         />
+      )}
+
+      {bleedInset != null && bleedInset > 0 && (
+        <>
+          {/* Band between the outer (bleed) edge and the trim line, then the trim line itself. */}
+          <div
+            data-testid="canvas-bleed-band"
+            className="absolute inset-0"
+            style={{ boxShadow: `inset 0 0 0 ${bleedInset * zoom}px rgba(239, 68, 68, 0.16)` }}
+          />
+          <div
+            data-testid="canvas-bleed-trim"
+            className="absolute border border-dashed border-[#ef4444]"
+            style={{ left: bleedInset * zoom, top: bleedInset * zoom, right: bleedInset * zoom, bottom: bleedInset * zoom }}
+          />
+        </>
       )}
 
       {showSafeArea && safeArea && (

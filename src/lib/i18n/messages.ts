@@ -1415,6 +1415,16 @@ export type AppMessages = {
       sectionSpacing: string;
       sectionAppearance: string;
       sectionLayering: string;
+      groupLabel: string;
+      ungroupLabel: string;
+      distributeHorizontalLabel: string;
+      distributeVerticalLabel: string;
+      selectionCountLabel: string;
+      flipHorizontalLabel: string;
+      flipVerticalLabel: string;
+      groupDefaultName: string;
+      sectionArrange: string;
+      sectionGroup: string;
       sectionPosition: string;
     };
     origin: {
@@ -1439,6 +1449,8 @@ export type AppMessages = {
       redoLabel: string;
       snappingLabel: string;
       safeAreaLabel: string;
+      rulersLabel: string;
+      bleedLabel: string;
       gridLabel: string;
       objectAlignmentLabel: string;
       objectAlignLeftLabel: string;
@@ -3101,6 +3113,16 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         sectionSpacing: 'Espaciado',
         sectionAppearance: 'Aspecto',
         sectionLayering: 'Orden',
+        groupLabel: 'Agrupar',
+        ungroupLabel: 'Desagrupar',
+        distributeHorizontalLabel: 'Distribuir horizontalmente',
+        distributeVerticalLabel: 'Distribuir verticalmente',
+        selectionCountLabel: 'objetos seleccionados',
+        flipHorizontalLabel: 'Voltear horizontalmente',
+        flipVerticalLabel: 'Voltear verticalmente',
+        groupDefaultName: 'Grupo',
+        sectionArrange: 'Alinear',
+        sectionGroup: 'Grupo',
         sectionPosition: 'Posición y tamaño',
       },
       origin: {
@@ -3125,6 +3147,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         redoLabel: 'Rehacer',
         snappingLabel: 'Ajuste automático',
         safeAreaLabel: 'Área segura',
+        rulersLabel: 'Reglas',
+        bleedLabel: 'Sangrado (3 mm)',
         gridLabel: 'Cuadrícula',
         objectAlignmentLabel: 'Alineación del objeto',
         objectAlignLeftLabel: 'Alinear objeto a la izquierda',
@@ -4784,6 +4808,16 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         sectionSpacing: 'Spacing',
         sectionAppearance: 'Appearance',
         sectionLayering: 'Order',
+        groupLabel: 'Group',
+        ungroupLabel: 'Ungroup',
+        distributeHorizontalLabel: 'Distribute horizontally',
+        distributeVerticalLabel: 'Distribute vertically',
+        selectionCountLabel: 'objects selected',
+        flipHorizontalLabel: 'Flip horizontally',
+        flipVerticalLabel: 'Flip vertically',
+        groupDefaultName: 'Group',
+        sectionArrange: 'Align',
+        sectionGroup: 'Group',
         sectionPosition: 'Position & size',
       },
       origin: {
@@ -4808,6 +4842,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         redoLabel: 'Redo',
         snappingLabel: 'Snapping',
         safeAreaLabel: 'Safe area',
+        rulersLabel: 'Rulers',
+        bleedLabel: 'Bleed (3 mm)',
         gridLabel: 'Grid',
         objectAlignmentLabel: 'Object alignment',
         objectAlignLeftLabel: 'Align object left',

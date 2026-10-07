@@ -22,6 +22,9 @@ const designLayerBaseSchema = z.object({
   visible: z.boolean(),
   locked: z.boolean(),
   name: z.string().optional(),
+  groupId: z.string().min(1).optional(),
+  flipX: z.boolean().optional(),
+  flipY: z.boolean().optional(),
 });
 
 const textLayerRoleSchema = z.enum(['title', 'subtitle', 'author', 'body', 'authorBio', 'free']);

@@ -8,7 +8,7 @@
  * are unconditionally stable and fully keyboard-accessible, mission §54).
  */
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
@@ -18,6 +18,7 @@ import {
   Eye,
   EyeOff,
   GripVertical,
+  FolderClosed,
   ImageIcon,
   Lock,
   MoreVertical,
@@ -48,6 +49,7 @@ export interface LayersPanelCopy extends LayerLabelCopy {
   bringToFrontLabel: string;
   sendToBackLabel: string;
   coverBackgroundLabel?: string;
+  groupLabel?: string;
 }
 
 export interface LayersPanelProps {
@@ -147,12 +149,31 @@ export function LayersPanel({
         const isLast = index === sorted.length - 1;
         const isMenuOpen = menuOpenId === layer.id;
 
+        // A group is shown by a header above its top-most member; members are indented under it.
+        const startsGroup = Boolean(layer.groupId) && sorted.findIndex((candidate) => candidate.groupId === layer.groupId) === index;
+        const groupSize = layer.groupId ? sorted.filter((candidate) => candidate.groupId === layer.groupId).length : 0;
+        const groupSelected = layer.groupId ? sorted.filter((candidate) => candidate.groupId === layer.groupId).every((candidate) => selectedLayerIds.includes(candidate.id)) : false;
+
         return (
+          <React.Fragment key={layer.id}>
+          {startsGroup && (
+            <div
+              role="listitem"
+              data-testid={`layer-group-${layer.groupId}`}
+              data-selected={groupSelected ? 'true' : 'false'}
+              className="cover-layer-row cover-layer-row--group"
+            >
+              <button type="button" data-testid={`layer-group-select-${layer.groupId}`} onClick={() => onSelect(layer.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                <FolderClosed className="cover-layer-row__icon h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="cover-layer-row__name select-none">{copy.groupLabel ?? 'Grupo'} · {groupSize}</span>
+              </button>
+            </div>
+          )}
           <div
-            key={layer.id}
             role="listitem"
             data-testid={`layer-row-${layer.id}`}
             data-selected={isSelected ? 'true' : 'false'}
+            data-grouped={layer.groupId ? 'true' : 'false'}
             className="cover-layer-row group"
             data-hidden={layer.visible ? 'false' : 'true'}
           >
@@ -351,6 +372,7 @@ export function LayersPanel({
               </button>
             </div>
           </div>
+          </React.Fragment>
         );
       })}
       {backgroundRow}
@@ -389,6 +411,7 @@ export function buildLayersPanelCopy(copy: AppMessages['coverDesignSurface']): L
     bringToFrontLabel: copy.layers.bringToFrontLabel,
     sendToBackLabel: copy.layers.sendToBackLabel,
     coverBackgroundLabel: copy.layers.coverBackgroundLabel,
+    groupLabel: copy.workspace.groupDefaultName,
     untitledText: copy.layers.untitledText,
     untitledImage: copy.layers.untitledImage,
     untitledShape: copy.layers.untitledShape,

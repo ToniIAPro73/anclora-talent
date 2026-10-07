@@ -19,7 +19,7 @@ const STAGE_MARGIN = 32;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type FabricCanvas = any;
 
-export function DesignSurfaceStaticPreview({ surface }: { surface: DesignSurface }) {
+export function DesignSurfaceStaticPreview({ surface, margin = STAGE_MARGIN }: { surface: DesignSurface; /** Breathing room around the cover inside its container (0 = fill the container exactly). */ margin?: number }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasElRef = useRef<HTMLCanvasElement>(null);
   const canvasRef = useRef<FabricCanvas | null>(null);
@@ -39,7 +39,7 @@ export function DesignSurfaceStaticPreview({ surface }: { surface: DesignSurface
   }, []);
 
   // One uniform scale for the whole cover: aspect ratio preserved, never a per-object adjustment.
-  const scale = area ? Math.max(0.05, Math.min((area.width - STAGE_MARGIN * 2) / surface.width, (area.height - STAGE_MARGIN * 2) / surface.height)) : 0;
+  const scale = area ? Math.max(0.05, Math.min((area.width - margin * 2) / surface.width, (area.height - margin * 2) / surface.height)) : 0;
 
   useEffect(() => {
     if (!scale || !canvasElRef.current) return;

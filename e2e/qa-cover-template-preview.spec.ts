@@ -52,12 +52,19 @@ async function chooseTemplate(page: Page, index: number, accept = true) {
 type Live = Record<string, { x: number; y: number; width: number; height: number; rotation: number; fontSize?: number; fontFamily?: string; lines?: number }>;
 const editorLive = async (page: Page): Promise<Live> => JSON.parse((await page.getByTestId('design-surface-canvas').getAttribute('data-live-geometry')) ?? '{}');
 async function previewLive(page: Page): Promise<Live> {
-  await expect.poll(async () => Object.keys(JSON.parse((await page.getByTestId('cover-preview-paper').getAttribute('data-preview-geometry')) ?? '{}')).length).toBeGreaterThan(0);
-  return JSON.parse((await page.getByTestId('cover-preview-paper').getAttribute('data-preview-geometry')) ?? '{}');
+  await expect.poll(async () => Object.keys(JSON.parse((await page.getByTestId('cover-preview-paper').first().getAttribute('data-preview-geometry')) ?? '{}')).length).toBeGreaterThan(0);
+  return JSON.parse((await page.getByTestId('cover-preview-paper').first().getAttribute('data-preview-geometry')) ?? '{}');
 }
+// "Vista previa" is workflow step 5: the single editorial preview (the editor itself is edit-only).
 async function enterPreview(page: Page) {
-  await page.getByTestId('cover-editor-preview-button').click();
-  await expect(page.getByTestId('cover-preview-paper')).toBeVisible();
+  // let the debounced autosave (1.2s) fire and finish before leaving the editor
+  await page.waitForTimeout(1600);
+  // 'saved' once the pending edit is stored; an untouched design simply stays idle.
+  await expect(page.getByTestId('studio-save-status')).toHaveAttribute('data-status', /saved|idle/, { timeout: 20_000 });
+  const triggers = page.locator('.ac-stepper__trigger');
+  for (let i = 3; i <= 4 && (await triggers.nth(4).isDisabled()); i += 1) await triggers.nth(i).click();
+  await triggers.nth(4).click();
+  await expect(page.getByTestId('cover-preview-paper').first().first()).toBeVisible({ timeout: 30_000 });
   await page.waitForTimeout(600);
 }
 const textIds = (live: Live) => Object.keys(live).filter((id) => live[id].fontSize !== undefined);
@@ -106,19 +113,26 @@ test('A/B/C. sidebar shows only the applied template; the top select drives it; 
   expect(await editorLive(page)).toEqual(before);
 });
 
-test('D/E/F/I. preview renders the same objects as the editor (geometry, wrap, fonts), is large and centred, and ignores editor zoom', async ({ page }) => {
+test('D/E/F/I. preview renders the same objects as the editor (geometry, wrap, fonts), is large and centred, and is independent of editor zoom', async ({ page }) => {
   test.setTimeout(180_000);
   await openCover(page);
   await chooseTemplate(page, 0);
 
   const editor100 = await editorLive(page);
   expect(textIds(editor100).length).toBeGreaterThanOrEqual(2); // visible text layers (this template hides the author)
+  // Editor zoom is view state, never an input of the design.
+  await page.getByTestId('cover-canvas-zoom-out').click();
+  await page.waitForTimeout(400);
+  expect(await editorLive(page)).toEqual(editor100);
   await enterPreview(page);
 
-  const paper = (await page.getByTestId('cover-preview-paper').boundingBox())!;
+  const paper = (await page.getByTestId('cover-preview-paper').first().boundingBox())!;
   expect(paper.width / paper.height).toBeCloseTo(400 / 600, 2); // uniform scale, 2:3
-  expect(paper.height).toBeGreaterThanOrEqual(430); // fills the stage instead of a 380px thumbnail
-  const stage = (await page.getByTestId('cover-preview-surface').boundingBox())!;
+  const stage = (await page.getByTestId('cover-preview-surface').first().boundingBox())!;
+  // fits inside its page frame and touches it on the limiting side (uniform scale)
+  expect(paper.width).toBeLessThanOrEqual(stage.width + 1);
+  expect(paper.height).toBeLessThanOrEqual(stage.height + 1);
+  expect(Math.min(stage.width - paper.width, stage.height - paper.height)).toBeLessThanOrEqual(2);
   expect(Math.abs(paper.x + paper.width / 2 - (stage.x + stage.width / 2))).toBeLessThanOrEqual(2);
 
   const preview = await previewLive(page);
@@ -134,17 +148,9 @@ test('D/E/F/I. preview renders the same objects as the editor (geometry, wrap, f
     expect(previewOverlaps).toBe(editorOverlaps);
   }
 
-  // Editor zoom is view state: change it, preview geometry is identical.
-  await page.getByTestId('cover-editor-preview-exit-button').click();
-  await expect(page.locator('[data-testid="design-surface-canvas"][data-canvas-ready="true"]')).toBeVisible();
-  await page.getByTestId('cover-canvas-zoom-out').click();
-  await page.waitForTimeout(400);
-  const editorZoomed = await editorLive(page);
-  await enterPreview(page);
-  const previewZoomed = await previewLive(page);
-  await expectParity(editorZoomed, previewZoomed);
-  expect(previewZoomed).toEqual(preview);
+  expect(preview).toEqual(editor100);
 });
+
 
 test('G/image. a positioned image and a framed background image keep their geometry and framing in the preview', async ({ page }) => {
   test.setTimeout(180_000);
@@ -178,7 +184,7 @@ test('G/image. a positioned image and a framed background image keep their geome
   expect(preview[imageId]).toMatchObject({ x: 140, y: 330, width: 120, height: 160 });
   console.log('IMAGE editor', JSON.stringify(editor[imageId]), 'preview', JSON.stringify(preview[imageId]));
 
-  const previewBackground = JSON.parse((await page.getByTestId('cover-preview-paper').getAttribute('data-background')) ?? '{}');
+  const previewBackground = JSON.parse((await page.getByTestId('cover-preview-paper').first().getAttribute('data-background')) ?? '{}');
   const edBackground = JSON.parse(editorBackground ?? '{}');
   expect(previewBackground.kind).toBe('image');
   expect(previewBackground.frame).toEqual(edBackground.frame);

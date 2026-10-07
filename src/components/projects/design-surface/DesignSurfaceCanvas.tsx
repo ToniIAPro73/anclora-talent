@@ -187,7 +187,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
       containerRef.current.setAttribute('data-live-geometry', JSON.stringify(readLiveGeometry(canvas.getObjects?.() ?? [])));
     }, []);
 
-    const reportLayerChange = useCallback((object: FabricObject) => {
+    const reportOne = useCallback((object: FabricObject) => {
       if (!object?.id) return;
       if (object.id === BACKGROUND_OBJECT_ID) {
         onBackgroundFrameChangeRef.current?.(readBackgroundFrameFromFabricObject(object));
@@ -196,6 +196,28 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
       normalizeFabricObjectScale(object);
       onLayerChangeRef.current(object.id, readLayerPatchFromFabricObject(object));
     }, []);
+
+    // A multi-selection (or a group) is a Fabric ActiveSelection: its members carry coordinates relative to the
+    // selection until it is discarded. Discard it so every member returns to absolute coordinates, report each
+    // member as an ordinary layer change, and re-select the same members once the surface has been applied.
+    const reportLayerChange = useCallback((object: FabricObject) => {
+      if (!object) return;
+      if (!object.id && typeof object.getObjects === 'function') {
+        const canvas = fabricRef.current;
+        const members: FabricObject[] = object.getObjects();
+        if (!canvas || members.length === 0) return;
+        rebuildingRef.current = true;
+        try {
+          canvas.discardActiveObject?.();
+        } finally {
+          rebuildingRef.current = false;
+        }
+        pendingSelectionRef.current = members.map((member) => member.id).filter(Boolean);
+        for (const member of members) reportOne(member);
+        return;
+      }
+      reportOne(object);
+    }, [reportOne]);
 
     // Mount once: build the canvas, hydrate the initial surface, wire events.
     useEffect(() => {
@@ -238,7 +260,9 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
 
         const emitSelection = (event: FabricEvent) => {
           if (rebuildingRef.current) return;
-          const selected: FabricObject[] = event.selected ?? (event.target ? [event.target] : []);
+          // `event.selected` on a selection update lists only the objects ADDED (shift-click): the full set is the canvas'.
+          const activeSet: FabricObject[] = canvas.getActiveObjects?.() ?? [];
+          const selected: FabricObject[] = activeSet.length > 0 ? activeSet : (event.selected ?? (event.target ? [event.target] : []));
           const all = selected.map((object) => object.id).filter(Boolean);
           const onlyBackground = all.length > 0 && all.every((id: string) => id === BACKGROUND_OBJECT_ID);
           const ids = all.filter((id: string) => id !== BACKGROUND_OBJECT_ID);
@@ -331,6 +355,19 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
         const fabric = await getFabric();
         if (cancelled) return;
 
+        // Applying values to members that live inside an ActiveSelection would corrupt their coordinates:
+        // dissolve the selection first and restore it at the end.
+        const activeNow = canvas.getActiveObject?.();
+        if (activeNow && !activeNow.id && typeof activeNow.getObjects === 'function') {
+          pendingSelectionRef.current = activeNow.getObjects().map((member: FabricObject) => member.id).filter(Boolean);
+          rebuildingRef.current = true;
+          try {
+            canvas.discardActiveObject?.();
+          } finally {
+            rebuildingRef.current = false;
+          }
+        }
+
         const currentIds = new Set(surface.layers.map((layer) => layer.id));
         for (const [id, object] of [...objectsByIdRef.current.entries()]) {
           if (!currentIds.has(id)) {
@@ -396,6 +433,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           pendingSelectionRef.current = null;
           const objects = pending.map((id) => objectsByIdRef.current.get(id)).filter(Boolean);
           if (objects.length === 1 && pending.length === 1) canvas.setActiveObject?.(objects[0]);
+          else if (objects.length > 1 && fabric.ActiveSelection) canvas.setActiveObject?.(new fabric.ActiveSelection(objects, { canvas }));
         }
 
         renderCanvas(canvas);
@@ -689,6 +727,8 @@ function fabricPatchFromLayer(layer: DesignLayer): Record<string, unknown> {
   const patch: Record<string, unknown> = {
     opacity: layer.opacity,
     visible: layer.visible,
+    flipX: Boolean(layer.flipX),
+    flipY: Boolean(layer.flipY),
     selectable: !layer.locked,
     evented: !layer.locked,
     left: layer.x,

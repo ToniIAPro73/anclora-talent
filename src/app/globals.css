@@ -3356,6 +3356,16 @@ body:has([data-testid="cover-step-workspace"]) .talent-legal-footer { display: n
   padding: 20px 20px 72px;
   box-sizing: border-box;
 }
+.cover-canvas-viewport[data-rulers="true"] { padding: 40px 20px 72px 40px; }
+.cover-ruler { position: absolute; overflow: hidden; background: var(--cover-panel-strong); color: var(--text-tertiary); }
+.cover-ruler--horizontal { top: 0; border-bottom: 1px solid var(--cover-line); }
+.cover-ruler--vertical { left: 0; border-right: 1px solid var(--cover-line); }
+.cover-ruler__tick { position: absolute; border-color: var(--cover-line); }
+.cover-ruler--horizontal .cover-ruler__tick { bottom: 0; border-left: 1px solid; }
+.cover-ruler--vertical .cover-ruler__tick { right: 0; border-top: 1px solid; }
+.cover-ruler__label { position: absolute; font-size: 9px; line-height: 1; font-variant-numeric: tabular-nums; }
+.cover-ruler--horizontal .cover-ruler__label { top: 2px; left: 3px; }
+.cover-ruler__label--vertical { left: 2px; top: 3px; writing-mode: vertical-rl; }
 .cover-canvas-paper { box-shadow: 0 24px 60px rgb(0 0 0 / 55%), 0 0 0 1px rgb(255 255 255 / 6%); }
 .cover-editor-bottom-zoom {
   position: absolute;
@@ -3388,10 +3398,8 @@ body:has([data-testid="cover-step-workspace"]) .talent-legal-footer { display: n
 .cover-editor-bottom-zoom span { cursor: default; min-width: 56px; }
 .cover-editor-bottom-zoom button:hover { background: var(--hover); }
 .cover-editor-bottom-zoom > :last-child { border-right: 0; }
-.cover-editor-preview-stage { display: flex; flex: 1; flex-direction: column; align-items: center; gap: 8px; min-height: 0; padding: 8px 16px 16px; background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--accent) 16%, var(--cover-stage)) 0%, var(--cover-stage) 70%); }
-.cover-editor-preview-stage > button { flex: 0 0 auto; }
 /* The preview fills the stage; the cover inside keeps its exact aspect ratio (uniform scale only). */
-.cover-preview-surface { position: relative; display: grid; flex: 1 1 0; width: 100%; min-height: 0; place-items: center; }
+.cover-preview-surface { position: relative; display: grid; width: 100%; height: 100%; min-height: 0; place-items: center; }
 .cover-preview-paper { box-shadow: 0 24px 60px rgb(0 0 0 / 55%), 0 0 0 1px rgb(255 255 255 / 6%); }
 .cover-preview-paper canvas { display: block; }
 
@@ -3454,6 +3462,10 @@ body:has([data-testid="cover-step-workspace"]) .talent-legal-footer { display: n
 .cover-layer-row[data-hidden="true"] .cover-layer-row__name { opacity: 0.5; }
 .cover-layer-row { height: 30px; min-height: 30px; overflow: hidden; }
 .cover-layer-row__icon { color: var(--accent-text); }
+.cover-layer-row[data-grouped="true"] { margin-left: 14px; }
+.cover-layer-row--group { color: var(--text-secondary); font-weight: 600; }
+.cover-layer-row--group[data-selected="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.cover-prop-count { margin: 4px 0 2px; color: var(--text-secondary); font-size: 12px; font-weight: 600; }
 /* Rename happens inside the row: same height, nothing is pushed. */
 .cover-layer-row__rename { min-width: 0; flex: 1; height: 24px; padding: 0 6px; border: 1px solid var(--accent); border-radius: 4px; outline: none; background: var(--surface); color: var(--text-primary); font-size: 12px; }
 /* Row actions float over the row (they never take part in its layout), so opening the menu

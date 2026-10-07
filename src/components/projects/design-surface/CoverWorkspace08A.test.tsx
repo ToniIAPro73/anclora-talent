@@ -164,7 +164,8 @@ describe('COVER_EDITOR_08A Architectural Contract Gates', () => {
     expect(screen.getByTestId('cover-workspace-toolbar')).toBeInTheDocument();
     expect(screen.getByTestId('advanced-editor-undo-button')).toBeInTheDocument();
     expect(screen.getByTestId('advanced-editor-redo-button')).toBeInTheDocument();
-    expect(screen.getByTestId('cover-editor-preview-button')).toBeInTheDocument();
+    // The editor is edit-only: the one editorial preview is workflow step 5.
+    expect(screen.queryByTestId('cover-editor-preview-button')).not.toBeInTheDocument();
     expect(screen.getByTestId('studio-save-final-button')).toBeInTheDocument();
   });
 
@@ -263,5 +264,45 @@ describe('COVER_EDITOR_08A Architectural Contract Gates', () => {
     const next = onChange.mock.calls.at(-1)?.[0];
     expect(next.layers.find((l: { id: string }) => l.id === title.id)).toMatchObject({ x: -40, y: 143 });
     expect(next.layers.find((l: { id: string }) => l.id === subtitle.id)).toBe(subtitle);
+  });
+
+  test('COVER_REDUNDANT_PREVIEW_REMOVED: neither Portada nor Contraportada has an editor preview action', () => {
+    for (const kind of ['cover', 'back-cover'] as const) {
+      const { unmount } = render(<AdvancedCoverEditor surface={createEmptyDesignSurface(kind)} onChange={vi.fn()} copy={coverCopy} />);
+      expect(screen.queryByTestId('cover-editor-preview-button')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('cover-editor-preview-stage')).not.toBeInTheDocument();
+      expect(screen.queryByText(coverCopy.workspace.preview)).not.toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  test('COVER_08C: rulers, bleed and safe area are compact toolbar toggles that only add view-only overlays', () => {
+    const surface = createEmptyDesignSurface('cover');
+    surface.layers = [createDesignLayer({ type: 'text', content: 'T', role: 'title', x: 24, y: 143 }, 1)];
+    const onChange = vi.fn();
+    render(<AdvancedCoverEditor surface={surface} onChange={onChange} copy={coverCopy} />);
+
+    for (const id of ['advanced-editor-rulers-toggle', 'advanced-editor-bleed-toggle', 'advanced-editor-safe-area-toggle']) {
+      expect(screen.getByTestId(id)).toHaveClass('cover-toolbar-icon');
+      expect(screen.getByTestId(id)).toHaveAttribute('aria-pressed', 'false');
+    }
+    expect(screen.queryByTestId('canvas-rulers')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('canvas-bleed-trim')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('canvas-safe-area')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('advanced-editor-rulers-toggle'));
+    fireEvent.click(screen.getByTestId('advanced-editor-bleed-toggle'));
+    fireEvent.click(screen.getByTestId('advanced-editor-safe-area-toggle'));
+    expect(screen.getByTestId('canvas-rulers')).toBeInTheDocument();
+    expect(screen.getByTestId('canvas-bleed-trim')).toBeInTheDocument();
+    // The safe area works on a surface that never defined one (derived default), inside the trim line.
+    const safe = screen.getByTestId('canvas-safe-area');
+    const trim = screen.getByTestId('canvas-bleed-trim');
+    expect(parseFloat(safe.style.left)).toBeGreaterThan(parseFloat(trim.style.left));
+
+    // Toggling is view state: nothing was written to the surface.
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId('advanced-editor-rulers-toggle'));
+    expect(screen.queryByTestId('canvas-rulers')).not.toBeInTheDocument();
   });
 });

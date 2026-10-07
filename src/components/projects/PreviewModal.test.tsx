@@ -8,6 +8,14 @@ import { createDesignLayer, createEmptyDesignSurface } from '@/lib/projects/desi
 import { EDITOR_PREFERENCES_STORAGE_KEY } from '@/lib/ui-preferences/preferences';
 
 vi.mock('server-only', () => ({}));
+// The cover page renders through the canonical Fabric preview (not available in jsdom): stand in with its contract.
+vi.mock('./design-surface/DesignSurfaceStaticPreview', () => ({
+  DesignSurfaceStaticPreview: ({ surface }: { surface: { layers: Array<{ type: string; content?: string }> } }) => (
+    <div data-testid="cover-preview-surface">
+      {surface.layers.map((layer, index) => (layer.type === 'text' ? <span key={index}>{layer.content}</span> : null))}
+    </div>
+  ),
+}));
 vi.mock('@/lib/ui-preferences/actions', () => ({
   getEditorPreferencesAction: vi.fn(async () => {
     throw new Error('db unavailable in test');
@@ -293,7 +301,7 @@ describe('PreviewModal', () => {
     expect(screen.queryByText('Subtitulo antiguo')).not.toBeInTheDocument();
   });
 
-  test('renders a Cover Studio v2 design through DesignSurfaceRenderer instead of the legacy field-map preview', () => {
+  test('renders a Cover Studio v2 design through the canonical surface preview instead of the legacy field-map preview', () => {
     const project = makeProject();
     const coverSurface = createEmptyDesignSurface('cover');
     coverSurface.layers = [
@@ -308,7 +316,7 @@ describe('PreviewModal', () => {
       />,
     );
 
-    expect(screen.getByTestId('design-surface-renderer')).toBeInTheDocument();
+    expect(screen.getByTestId('cover-preview-surface')).toBeInTheDocument();
     expect(screen.getByText('Título v2')).toBeInTheDocument();
   });
 
@@ -325,7 +333,7 @@ describe('PreviewModal', () => {
       />,
     );
 
-    expect(screen.getByTestId('design-surface-renderer')).toBeInTheDocument();
+    expect(screen.getByTestId('cover-preview-surface')).toBeInTheDocument();
     expect(screen.getByText('Diseño vivo')).toBeInTheDocument();
     expect(screen.queryByAltText(copy.previewModalCoverAlt)).not.toBeInTheDocument();
   });

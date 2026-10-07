@@ -43,6 +43,11 @@ export interface DesignLayerBase {
   visible: boolean;
   locked: boolean;
   name?: string;
+  /** Layers sharing a `groupId` move, scale and rotate together (08B). Serializable: no Fabric runtime state. */
+  groupId?: string;
+  /** Mirror flips (08B image/shape inspector). */
+  flipX?: boolean;
+  flipY?: boolean;
 }
 
 export type TextLayerRole = 'title' | 'subtitle' | 'author' | 'body' | 'authorBio' | 'free';
@@ -460,6 +465,9 @@ export function createDesignLayer(partial: Partial<DesignLayer> & Pick<DesignLay
     visible: partial.visible ?? true,
     locked: partial.locked ?? false,
     name: partial.name,
+    ...(partial.groupId ? { groupId: partial.groupId } : {}),
+    ...(partial.flipX ? { flipX: true } : {}),
+    ...(partial.flipY ? { flipY: true } : {}),
   };
 
   if (partial.type === 'text') {

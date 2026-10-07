@@ -1,20 +1,26 @@
 'use client';
 
 /**
- * Cover Studio v2 — rulers (mission §13). Fixed-interval tick marks (every
- * 50 logical px, labeled every 100) scaled by the current zoom — simpler
- * than adaptive tick density, still gives coherent, readable units at every
- * zoom level the editor actually offers (roughly 25%-200%).
+ * Cover Studio v2 — rulers (08C). Origin is the top-left of the cover, units are surface pixels. Tick spacing
+ * adapts to the zoom so the labelled step stays at least ~48 screen px apart at every zoom level. Pure overlay:
+ * it is positioned outside the paper and never takes part in the canvas layout or the export.
  */
 
-const TICK_INTERVAL = 50;
-const LABEL_INTERVAL = 100;
-const RULER_THICKNESS = 20;
+const STEPS = [10, 20, 50, 100, 200, 500, 1000];
+const MIN_LABEL_SPACING = 48;
+export const CANVAS_RULER_THICKNESS = 20;
 
-function buildTicks(length: number) {
+/** Smallest "nice" step whose on-screen spacing is readable at this zoom. */
+export function rulerMajorStep(zoom: number): number {
+  return STEPS.find((step) => step * zoom >= MIN_LABEL_SPACING) ?? STEPS[STEPS.length - 1];
+}
+
+function buildTicks(length: number, major: number) {
+  const minor = major / 5;
   const ticks: Array<{ position: number; label: boolean }> = [];
-  for (let position = 0; position <= length; position += TICK_INTERVAL) {
-    ticks.push({ position, label: position % LABEL_INTERVAL === 0 });
+  for (let position = 0; position <= length + 0.001; position += minor) {
+    const rounded = Math.round(position * 100) / 100;
+    ticks.push({ position: rounded, label: Math.abs(rounded % major) < 0.001 });
   }
   return ticks;
 }
@@ -23,82 +29,45 @@ export interface CanvasRulersProps {
   width: number;
   height: number;
   zoom: number;
-  /** Current pointer position in logical surface units, for the moving position indicator (null when the pointer is outside the canvas). */
-  cursorPosition?: { x: number; y: number } | null;
 }
 
-export function CanvasRulers({ width, height, zoom, cursorPosition }: CanvasRulersProps) {
-  const horizontalTicks = buildTicks(width);
-  const verticalTicks = buildTicks(height);
+export function CanvasRulers({ width, height, zoom }: CanvasRulersProps) {
+  const major = rulerMajorStep(zoom);
+  const horizontalTicks = buildTicks(width, major);
+  const verticalTicks = buildTicks(height, major);
+  const thickness = CANVAS_RULER_THICKNESS;
 
   return (
     <div
       data-testid="canvas-rulers"
-      className="pointer-events-none absolute inset-0"
-      style={{ width: width * zoom + RULER_THICKNESS, height: height * zoom + RULER_THICKNESS }}
+      data-ruler-step={major}
+      className="pointer-events-none absolute"
+      // The ruler origin (0,0) coincides with the top-left corner of the cover paper.
+      style={{ left: -thickness, top: -thickness, width: width * zoom + thickness, height: height * zoom + thickness }}
       aria-hidden="true"
     >
       <div
-        className="absolute left-0 top-0 bg-[var(--surface-soft)]"
-        style={{ width: RULER_THICKNESS, height: RULER_THICKNESS }}
-      />
-
-      <div
         data-testid="canvas-ruler-horizontal"
-        className="absolute top-0 overflow-hidden border-b border-[var(--border-subtle)] bg-[var(--surface-soft)]"
-        style={{ left: RULER_THICKNESS, width: width * zoom, height: RULER_THICKNESS }}
+        className="cover-ruler cover-ruler--horizontal"
+        style={{ left: thickness, width: width * zoom, height: thickness }}
       >
         {horizontalTicks.map((tick) => (
-          <div
-            key={tick.position}
-            className="absolute bottom-0 border-l border-[var(--border-subtle)]"
-            style={{ left: tick.position * zoom, height: tick.label ? '100%' : '50%' }}
-          >
-            {tick.label && (
-              <span className="absolute -top-0.5 left-1 text-[9px] leading-none text-[var(--text-tertiary)]">{tick.position}</span>
-            )}
+          <div key={tick.position} className="cover-ruler__tick" style={{ left: tick.position * zoom, height: tick.label ? '100%' : '40%' }}>
+            {tick.label && <span className="cover-ruler__label">{tick.position}</span>}
           </div>
         ))}
-        {cursorPosition && (
-          <div
-            data-testid="canvas-ruler-horizontal-indicator"
-            className="absolute top-0 h-full w-px bg-[var(--accent)]"
-            style={{ left: cursorPosition.x * zoom }}
-          />
-        )}
       </div>
-
       <div
         data-testid="canvas-ruler-vertical"
-        className="absolute left-0 overflow-hidden border-r border-[var(--border-subtle)] bg-[var(--surface-soft)]"
-        style={{ top: RULER_THICKNESS, width: RULER_THICKNESS, height: height * zoom }}
+        className="cover-ruler cover-ruler--vertical"
+        style={{ top: thickness, width: thickness, height: height * zoom }}
       >
         {verticalTicks.map((tick) => (
-          <div
-            key={tick.position}
-            className="absolute right-0 border-t border-[var(--border-subtle)]"
-            style={{ top: tick.position * zoom, width: tick.label ? '100%' : '50%' }}
-          >
-            {tick.label && (
-              <span
-                className="absolute left-0 top-0.5 text-[9px] leading-none text-[var(--text-tertiary)]"
-                style={{ writingMode: 'vertical-rl' }}
-              >
-                {tick.position}
-              </span>
-            )}
+          <div key={tick.position} className="cover-ruler__tick" style={{ top: tick.position * zoom, width: tick.label ? '100%' : '40%' }}>
+            {tick.label && <span className="cover-ruler__label cover-ruler__label--vertical">{tick.position}</span>}
           </div>
         ))}
-        {cursorPosition && (
-          <div
-            data-testid="canvas-ruler-vertical-indicator"
-            className="absolute left-0 h-px w-full bg-[var(--accent)]"
-            style={{ top: cursorPosition.y * zoom }}
-          />
-        )}
       </div>
     </div>
   );
 }
-
-export const CANVAS_RULER_THICKNESS = RULER_THICKNESS;

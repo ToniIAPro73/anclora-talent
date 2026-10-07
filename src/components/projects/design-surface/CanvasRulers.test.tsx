@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, test } from 'vitest';
-import { CanvasRulers } from './CanvasRulers';
+import { CanvasRulers, rulerMajorStep } from './CanvasRulers';
 
 describe('CanvasRulers', () => {
   test('renders both rulers sized to the surface at 100% zoom', () => {
@@ -21,12 +21,22 @@ describe('CanvasRulers', () => {
     expect(tickAt50).toBeTruthy();
   });
 
-  test('shows a cursor position indicator only when a position is provided', () => {
-    const { rerender } = render(<CanvasRulers width={400} height={600} zoom={1} cursorPosition={null} />);
-    expect(screen.queryByTestId('canvas-ruler-horizontal-indicator')).not.toBeInTheDocument();
+  test('the labelled step adapts to the zoom so labels stay readable (>= 48 screen px apart)', () => {
+    for (const zoom of [0.25, 0.5, 0.73, 1, 1.5, 2.5]) {
+      const step = rulerMajorStep(zoom);
+      expect(step * zoom).toBeGreaterThanOrEqual(48);
+    }
+    expect(rulerMajorStep(1)).toBe(50);
+    expect(rulerMajorStep(2.5)).toBe(20);
+    expect(rulerMajorStep(0.5)).toBe(100);
+  });
 
-    rerender(<CanvasRulers width={400} height={600} zoom={1} cursorPosition={{ x: 120, y: 80 }} />);
-    expect(screen.getByTestId('canvas-ruler-horizontal-indicator')).toHaveStyle({ left: '120px' });
-    expect(screen.getByTestId('canvas-ruler-vertical-indicator')).toHaveStyle({ top: '80px' });
+  test('origin is the top-left of the cover and labels are in surface pixels', () => {
+    render(<CanvasRulers width={400} height={600} zoom={1} />);
+    const rulers = screen.getByTestId('canvas-rulers');
+    expect(rulers).toHaveStyle({ left: '-20px', top: '-20px' });
+    expect(rulers).toHaveAttribute('data-ruler-step', '50');
+    const labels = [...screen.getByTestId('canvas-ruler-horizontal').querySelectorAll('.cover-ruler__label')].map((node) => node.textContent);
+    expect(labels).toEqual(['0', '50', '100', '150', '200', '250', '300', '350', '400']);
   });
 });

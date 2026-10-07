@@ -493,3 +493,69 @@ describe('editable background image', () => {
     expect(background.kind === 'image' && background.fit).toBe('cover');
   });
 });
+
+describe('multi-selection, groups and arrangement (08B)', () => {
+  const shiftSelect = (id: string) => fireEvent.click(screen.getByTestId(`layer-select-${id}`), { shiftKey: true });
+
+  it('shift-selecting layers opens the multi-selection inspector with count, align, distribute and group', async () => {
+    await setup();
+    fireEvent.click(screen.getByTestId('layer-select-title'));
+    shiftSelect('subtitle');
+    shiftSelect('author');
+
+    expect(screen.getByTestId('properties-panel-multi')).toBeInTheDocument();
+    expect(screen.getByTestId('multi-selection-count')).toHaveTextContent('3');
+    expect(screen.getByTestId('multi-distribute-horizontal')).toBeEnabled(); // 3+ selected
+    expect(screen.getByTestId('multi-ungroup-button')).toBeDisabled();
+  });
+
+  it('group keeps every geometry, selecting one member selects all, ungroup restores free layers', async () => {
+    const { surface } = await setup();
+    const geometryBefore = surface().layers.map((layer) => [layer.id, layer.x, layer.y, layer.width, layer.height]);
+
+    fireEvent.click(screen.getByTestId('layer-select-title'));
+    shiftSelect('subtitle');
+    fireEvent.click(screen.getByTestId('multi-group-button'));
+
+    const grouped = surface().layers.filter((layer) => layer.groupId);
+    expect(grouped.map((layer) => layer.id).sort()).toEqual(['subtitle', 'title']);
+    expect(new Set(grouped.map((layer) => layer.groupId)).size).toBe(1);
+    expect(surface().layers.map((layer) => [layer.id, layer.x, layer.y, layer.width, layer.height])).toEqual(geometryBefore);
+    expect(screen.getByTestId(`layer-group-${grouped[0].groupId}`)).toBeInTheDocument();
+    expect(screen.getByTestId('layer-row-title')).toHaveAttribute('data-grouped', 'true');
+
+    // another layer first, then one member: the whole group comes with it
+    fireEvent.click(screen.getByTestId('layer-select-author'));
+    expect(screen.queryByTestId('properties-panel-multi')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('layer-select-subtitle'));
+    expect(screen.getByTestId('multi-selection-count')).toHaveTextContent('2');
+    expect(screen.getByTestId('layer-row-title')).toHaveAttribute('data-selected', 'true');
+
+    fireEvent.click(screen.getByTestId('multi-ungroup-button'));
+    expect(surface().layers.some((layer) => layer.groupId)).toBe(false);
+    expect(surface().layers.map((layer) => [layer.id, layer.x, layer.y, layer.width, layer.height])).toEqual(geometryBefore);
+  });
+
+  it('alignment from the multi inspector uses the selection bounds', async () => {
+    const { surface } = await setup();
+    fireEvent.click(screen.getByTestId('layer-select-title'));
+    shiftSelect('author');
+    fireEvent.click(screen.getByTestId('multi-align-left'));
+    const x = (id: string) => surface().layers.find((layer) => layer.id === id)!.x;
+    expect(x('title')).toBe(x('author'));
+    expect(x('title')).toBe(24); // the left-most of the selection
+    expect(x('subtitle')).toBe(36); // unselected layer untouched
+  });
+
+  it('moving a multi-selection on the canvas persists every member (ActiveSelection members are reported one by one)', async () => {
+    const { surface } = await setup();
+    const members = ['title', 'subtitle'].map((id) => mocks.state.objects.find((object) => object.id === id)!);
+    members[0].left = 90;
+    members[0].top = 200;
+    members[1].left = 100;
+    members[1].top = 330;
+    act(() => mocks.state.handlers.get('object:modified')?.({ target: { getObjects: () => members } }));
+
+    expect(positions(surface())).toMatchObject({ title: [90, 200], subtitle: [100, 330], author: [36, 420] });
+  });
+});

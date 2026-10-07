@@ -420,14 +420,9 @@ export function PreviewModal({
   );
 }
 
-import { CoverPreview } from './CoverPreview';
-import { BackCoverPreview } from './BackCoverPreview';
-import { createDefaultSurfaceState, normalizeSurfaceState } from '@/lib/projects/cover-surface';
-import { resolveBackCoverSurfaceFields } from '@/lib/projects/back-cover-surface-resolver';
-import { resolveCoverSurfaceFields } from '@/lib/projects/cover-surface-resolver';
-import { isDesignSurfaceV2, isLegacySurfaceState } from '@/lib/projects/design-surface';
+import { isDesignSurfaceV2 } from '@/lib/projects/design-surface';
 import { getBackCoverDesign, getCoverDesign } from '@/lib/projects/design-surface-repository';
-import { DesignSurfaceRenderer } from './design-surface/DesignSurfaceRenderer';
+import { DesignSurfaceStaticPreview } from './design-surface/DesignSurfaceStaticPreview';
 
 export function PageRenderer({
   page,
@@ -466,41 +461,11 @@ export function PageRenderer({
       );
     }
 
-    // 2. Cover Studio v2: a design authored in the new layered editor renders
-    // through the same canonical model the editor and export use (mission
-    // §45-47's "one engine" requirement) instead of the legacy field-map
-    // preview, which cannot represent arbitrary layers.
-    if (isDesignSurfaceV2(project.cover.surfaceState)) {
-      return (
-        <div style={pageStyle} className="rounded-[8px] overflow-hidden shadow-[var(--shadow-strong)] border border-white/10">
-          <DesignSurfaceRenderer surface={getCoverDesign(project)} className="h-full w-full" />
-        </div>
-      );
-    }
-
-    // 3. Otherwise, use the standard CoverPreview component for coherence with basic editor
-    const baseSurface = normalizeSurfaceState(
-      (isLegacySurfaceState(project.cover.surfaceState) ? project.cover.surfaceState : null) ?? {
-        ...createDefaultSurfaceState('cover'),
-      },
-    );
-    const surface = {
-      ...baseSurface,
-      fields: {
-        ...baseSurface.fields,
-        ...resolveCoverSurfaceFields(project, baseSurface),
-      },
-    };
-
+    // 2. Every other cover renders through the same canonical surface the editor opens (a stored v2 design, or the
+    // migrated legacy one) and the same Fabric engine — no second field-map layout.
     return (
       <div style={pageStyle} className="rounded-[8px] overflow-hidden shadow-[var(--shadow-strong)] border border-white/10">
-        <CoverPreview
-          surface={surface}
-          palette={project.cover.palette}
-          backgroundImageUrl={project.cover.backgroundImageUrl}
-          eyebrow={copy.coverEyebrow}
-          defaultTitle={copy.coverDefaultTitle}
-        />
+        <DesignSurfaceStaticPreview surface={getCoverDesign(project)} margin={0} />
       </div>
     );
   }
@@ -520,35 +485,9 @@ export function PageRenderer({
       );
     }
 
-    if (isDesignSurfaceV2(project.backCover.surfaceState)) {
-      return (
-        <div style={pageStyle} className="rounded-[8px] overflow-hidden shadow-[var(--shadow-strong)] border border-white/10">
-          <DesignSurfaceRenderer surface={getBackCoverDesign(project)} className="h-full w-full" />
-        </div>
-      );
-    }
-
-    const baseSurface = normalizeSurfaceState(
-      (isLegacySurfaceState(project.backCover.surfaceState) ? project.backCover.surfaceState : null) ?? {
-        ...createDefaultSurfaceState('back-cover'),
-      },
-    );
-    const surface = {
-      ...baseSurface,
-      fields: {
-        ...baseSurface.fields,
-        ...resolveBackCoverSurfaceFields(project, baseSurface),
-      },
-    };
-
     return (
       <div style={pageStyle} className="rounded-[8px] overflow-hidden shadow-[var(--shadow-strong)] border border-white/10">
-        <BackCoverPreview
-          surface={surface}
-          backgroundImageUrl={project.backCover.backgroundImageUrl}
-          accentColor={project.backCover.accentColor}
-          eyebrow={copy.backCoverEyebrow}
-        />
+        <DesignSurfaceStaticPreview surface={getBackCoverDesign(project)} margin={0} />
       </div>
     );
   }

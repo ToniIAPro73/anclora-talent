@@ -56,3 +56,29 @@ export function alignLayers(
     return next;
   });
 }
+
+/** Equal gaps between the selected layers along one axis; the outermost two stay where they are (needs 3+). */
+export function distributeLayers(layers: DesignLayer[], selectedIds: string[], axis: 'horizontal' | 'vertical'): DesignLayer[] {
+  const selected = layers.filter((layer) => selectedIds.includes(layer.id) && !layer.locked);
+  if (selected.length < 3) return layers;
+
+  const size = (layer: DesignLayer) => (axis === 'horizontal' ? layer.width : layer.height);
+  const start = (layer: DesignLayer) => (axis === 'horizontal' ? layer.x : layer.y);
+  const ordered = [...selected].sort((a, b) => start(a) - start(b));
+  const first = ordered[0];
+  const last = ordered[ordered.length - 1];
+  const span = start(last) + size(last) - start(first);
+  const gap = (span - ordered.reduce((sum, layer) => sum + size(layer), 0)) / (ordered.length - 1);
+
+  const positions = new Map<string, number>();
+  let cursor = start(first);
+  for (const layer of ordered) {
+    positions.set(layer.id, cursor);
+    cursor += size(layer) + gap;
+  }
+  return layers.map((layer) => {
+    const position = positions.get(layer.id);
+    if (position === undefined) return layer;
+    return axis === 'horizontal' ? { ...layer, x: position } : { ...layer, y: position };
+  });
+}

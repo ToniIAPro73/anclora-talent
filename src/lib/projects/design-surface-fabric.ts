@@ -76,6 +76,8 @@ function baseObjectProps(layer: DesignLayer, opts: { interactive: boolean }) {
     angle: layer.rotation,
     opacity: layer.opacity,
     visible: layer.visible,
+    flipX: Boolean(layer.flipX),
+    flipY: Boolean(layer.flipY),
     selectable: opts.interactive && !layer.locked,
     evented: opts.interactive && !layer.locked,
     hasControls: opts.interactive && !layer.locked,

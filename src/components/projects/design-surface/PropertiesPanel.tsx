@@ -15,6 +15,7 @@ import type { DesignLayer, ImageLayerProps, TextLayerProps } from '@/lib/project
 import { TextLayerProperties } from './TextLayerProperties';
 import { ImageLayerProperties } from './ImageLayerProperties';
 import { ShapeLayerProperties } from './ShapeLayerProperties';
+import { MultiSelectionProperties, type MultiSelectionPropertiesProps } from './MultiSelectionProperties';
 
 export interface PropertiesPanelProps {
   selectedLayers: DesignLayer[];
@@ -24,11 +25,13 @@ export interface PropertiesPanelProps {
   onReplaceImage: (layerId: string, file: File) => void;
   onReorder?: (layerId: string, direction: 'up' | 'down' | 'front' | 'back') => void;
   onUseAsBackground?: (layerId: string) => void;
+  /** Arrange/group actions for a multi-selection (08B). */
+  multiActions?: Omit<MultiSelectionPropertiesProps, 'count' | 'copy'>;
   /** role -> value the metadata precedence chain currently resolves to (mission §40-41). The caller holds the `ProjectRecord`, so it computes this. */
   metadataValues?: Partial<Record<string, string>>;
 }
 
-export function PropertiesPanel({ selectedLayers, copy, brandColors, onLayerChange, onReplaceImage, onReorder, onUseAsBackground, metadataValues }: PropertiesPanelProps) {
+export function PropertiesPanel({ selectedLayers, copy, brandColors, onLayerChange, onReplaceImage, onReorder, onUseAsBackground, multiActions, metadataValues }: PropertiesPanelProps) {
   if (selectedLayers.length === 0) {
     return (
       <div className="cover-properties-empty" data-testid="properties-panel-empty">
@@ -42,6 +45,7 @@ export function PropertiesPanel({ selectedLayers, copy, brandColors, onLayerChan
   }
 
   if (selectedLayers.length > 1) {
+    if (multiActions) return <MultiSelectionProperties count={selectedLayers.length} copy={copy} {...multiActions} />;
     return (
       <div className="ac-editor-inspector__empty" data-testid="properties-panel-multi">
         <p className="text-xs text-[var(--text-secondary)]">{copy.multiSelection}</p>
