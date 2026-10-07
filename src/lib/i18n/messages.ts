@@ -1374,6 +1374,8 @@ export type AppMessages = {
       moveDownLabel: string;
       bringToFrontLabel: string;
       coverBackgroundLabel: string;
+      backCoverBackgroundLabel: string;
+      roleBackBody: string;
       sendToBackLabel: string;
       untitledText: string;
       untitledImage: string;
@@ -1402,6 +1404,7 @@ export type AppMessages = {
       templateLabel: string;
       selectTemplate: string;
       canvasLabel: string;
+      backCanvasLabel: string;
       properties: string;
       layers: string;
       emptyTitle: string;
@@ -3071,11 +3074,13 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         lockLabel: 'Bloquear',
         unlockLabel: 'Desbloquear',
         duplicateLabel: 'Duplicar',
-        deleteLabel: 'Eliminar proyecto',
+        deleteLabel: 'Eliminar capa',
         moveUpLabel: 'Subir una posición',
         moveDownLabel: 'Bajar una posición',
         bringToFrontLabel: 'Traer al frente',
         coverBackgroundLabel: 'Fondo de portada',
+        backCoverBackgroundLabel: 'Fondo de contraportada',
+        roleBackBody: 'Texto de contraportada',
         sendToBackLabel: 'Enviar al fondo',
         untitledText: 'Texto',
         untitledImage: 'Imagen',
@@ -3104,6 +3109,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         templateLabel: 'Plantilla editorial',
         selectTemplate: 'Seleccionar plantilla',
         canvasLabel: 'Lienzo de portada',
+        backCanvasLabel: 'Lienzo de contraportada',
         properties: 'Propiedades',
         layers: 'Capas',
         emptyTitle: 'Nada seleccionado',
@@ -4770,11 +4776,13 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         lockLabel: 'Lock',
         unlockLabel: 'Unlock',
         duplicateLabel: 'Duplicate',
-        deleteLabel: 'Delete project',
+        deleteLabel: 'Delete layer',
         moveUpLabel: 'Move up one position',
         moveDownLabel: 'Move down one position',
         bringToFrontLabel: 'Bring to front',
         coverBackgroundLabel: 'Cover background',
+        backCoverBackgroundLabel: 'Back cover background',
+        roleBackBody: 'Back cover text',
         sendToBackLabel: 'Send to back',
         untitledText: 'Text',
         untitledImage: 'Image',
@@ -4803,6 +4811,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         templateLabel: 'Editorial template',
         selectTemplate: 'Select template',
         canvasLabel: 'Cover canvas',
+        backCanvasLabel: 'Back cover canvas',
         properties: 'Properties',
         layers: 'Layers',
         emptyTitle: 'Nothing selected',

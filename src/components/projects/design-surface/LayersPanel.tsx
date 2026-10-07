@@ -395,7 +395,8 @@ export function reorderLayers(layers: DesignLayer[], layerId: string, direction:
   return sorted.map((layer, i) => ({ ...layer, zIndex: i + 1 }));
 }
 
-export function buildLayersPanelCopy(copy: AppMessages['coverDesignSurface']): LayersPanelCopy {
+export function buildLayersPanelCopy(copy: AppMessages['coverDesignSurface'], surfaceKind: DesignSurface['surface'] = 'cover'): LayersPanelCopy {
+  const back = surfaceKind === 'back-cover';
   return {
     title: copy.layers.title,
     emptyLabel: copy.layers.emptyLabel,
@@ -410,7 +411,7 @@ export function buildLayersPanelCopy(copy: AppMessages['coverDesignSurface']): L
     moveDownLabel: copy.layers.moveDownLabel,
     bringToFrontLabel: copy.layers.bringToFrontLabel,
     sendToBackLabel: copy.layers.sendToBackLabel,
-    coverBackgroundLabel: copy.layers.coverBackgroundLabel,
+    coverBackgroundLabel: back ? copy.layers.backCoverBackgroundLabel : copy.layers.coverBackgroundLabel,
     groupLabel: copy.workspace.groupDefaultName,
     untitledText: copy.layers.untitledText,
     untitledImage: copy.layers.untitledImage,
@@ -418,7 +419,7 @@ export function buildLayersPanelCopy(copy: AppMessages['coverDesignSurface']): L
     roleTitle: copy.layers.roleTitle,
     roleSubtitle: copy.layers.roleSubtitle,
     roleAuthor: copy.layers.roleAuthor,
-    roleBody: copy.layers.roleBody,
+    roleBody: back ? copy.layers.roleBackBody : copy.layers.roleBody,
     roleAuthorBio: copy.layers.roleAuthorBio,
     backgroundImage: copy.layers.backgroundImage,
     lineLabel: copy.layers.lineLabel,

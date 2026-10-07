@@ -157,7 +157,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
     return () => observer.disconnect();
   }, []);
 
-  const layersCopy = useMemo(() => buildLayersPanelCopy(copy), [copy]);
+  const layersCopy = useMemo(() => buildLayersPanelCopy(copy, surface.surface), [copy, surface.surface]);
 
   const fitToArea = useCallback(() => {
     manualZoomRef.current = false;
@@ -646,7 +646,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
         <main className="cover-canvas-area" data-testid="advanced-editor-canvas-column">
           <div className="cover-canvas-header">
             <span className="cover-canvas-header__title">
-              {ws.canvasLabel}
+              {surface.surface === 'back-cover' ? ws.backCanvasLabel : ws.canvasLabel}
               <small>{surface.width} × {surface.height} px</small>
             </span>
             <div className="cover-canvas-header__tools">

@@ -320,6 +320,24 @@ describe('PreviewModal', () => {
     expect(screen.getByText('Título v2')).toBeInTheDocument();
   });
 
+  test('renders the back cover through the same canonical surface preview as the cover', async () => {
+    const project = makeProject();
+    const backSurface = createEmptyDesignSurface('back-cover');
+    backSurface.layers = [createDesignLayer({ type: 'text', content: 'Sinopsis v2', role: 'body', source: 'manual' }, 1)];
+
+    render(
+      <PreviewModal
+        project={{ ...project, backCover: { ...project.backCover, renderedImageUrl: null, surfaceState: backSurface } }}
+        copy={copy}
+        onClose={() => {}}
+      />,
+    );
+
+    fireEvent.keyDown(screen.getByTestId('preview-modal-stage'), { key: 'End' });
+    await waitFor(() => expect(screen.getByText('Sinopsis v2')).toBeInTheDocument());
+    expect(screen.getByTestId('cover-preview-surface')).toBeInTheDocument();
+  });
+
   test('prefers the live v2 surface over a stale legacy rendered image', () => {
     const project = makeProject();
     const coverSurface = createEmptyDesignSurface('cover');

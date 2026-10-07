@@ -305,4 +305,24 @@ describe('COVER_EDITOR_08A Architectural Contract Gates', () => {
     fireEvent.click(screen.getByTestId('advanced-editor-rulers-toggle'));
     expect(screen.queryByTestId('canvas-rulers')).not.toBeInTheDocument();
   });
+
+  test('BACK_COVER: Contraportada uses its own context labels and semantic layer names on the same workspace', () => {
+    const surface = createEmptyDesignSurface('back-cover');
+    surface.layers = [
+      createDesignLayer({ type: 'text', content: 'Título', role: 'title', source: 'metadata' }, 1),
+      createDesignLayer({ type: 'text', content: 'Sinopsis', role: 'body', source: 'metadata' }, 2),
+      createDesignLayer({ type: 'text', content: 'Bio', role: 'authorBio', source: 'metadata' }, 3),
+    ];
+    render(<AdvancedCoverEditor surface={surface} onChange={vi.fn()} copy={coverCopy} />);
+
+    expect(screen.getByText('Lienzo de contraportada')).toBeInTheDocument();
+    expect(screen.queryByText('Lienzo de portada')).not.toBeInTheDocument();
+    expect(screen.getByTestId('layer-name-background')).toHaveTextContent('Fondo de contraportada');
+    const names = screen.getAllByTestId(/^layer-name-/).map((node) => node.textContent);
+    expect(names).toEqual(['Biografía del autor', 'Texto de contraportada', 'Título', 'Fondo de contraportada']);
+    // same workspace pieces as Portada
+    for (const id of ['cover-workspace-toolbar', 'cover-template-select', 'advanced-editor-rulers-toggle', 'advanced-editor-bleed-toggle', 'cover-editor-import-button']) {
+      expect(screen.getByTestId(id)).toBeInTheDocument();
+    }
+  });
 });
