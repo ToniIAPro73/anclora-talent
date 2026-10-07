@@ -1682,10 +1682,26 @@ function buildChaptersFromBlocks(
       continue;
     }
 
-    if (isMajorChapterBlock(block, chapterBoundaryLevel)) {
+    const targetPool = currentTitle !== null ? currentBlocks : frontMatter;
+    const lastPoolBlock = targetPool[targetPool.length - 1];
+    // An Editorial Kicker paragraph ("CAPÍTULO UNO", "PARTE II", ...)
+    // immediately preceding a heading is, by construction, a structural
+    // boundary marker — that is the entire purpose of the style. Trust it
+    // independently of `chapterBoundaryLevel`'s single-level heuristic:
+    // without this, a document with BOTH real "Part" (H1) and "Chapter"
+    // (H2) headings picks one level as the boundary and silently nests the
+    // other level's headings as plain content of the chosen level (e.g.
+    // all 10 real chapters absorbed into their enclosing part, invisible
+    // in the chapters list) — confirmed importing the skill's own
+    // regenerated DOCX/ODT, which legitimately has both levels styled.
+    const precededByEditorialKicker = Boolean(
+      block.kind === 'heading' &&
+        lastPoolBlock?.html &&
+        /class="[^"]*\beditorial-kicker\b[^"]*"/i.test(lastPoolBlock.html),
+    );
+
+    if (isMajorChapterBlock(block, chapterBoundaryLevel) || precededByEditorialKicker) {
       let headingText = cleanHeadingText(block.text);
-      const targetPool = currentTitle !== null ? currentBlocks : frontMatter;
-      const lastPoolBlock = targetPool[targetPool.length - 1];
       let kickerBlock: ParsedBlock | null = null;
       if (lastPoolBlock && lastPoolBlock.html && /class="[^"]*\beditorial-kicker\b[^"]*"/i.test(lastPoolBlock.html)) {
         const kickerText = lastPoolBlock.text.trim();

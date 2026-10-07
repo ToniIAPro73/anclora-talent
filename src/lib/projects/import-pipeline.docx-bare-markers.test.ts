@@ -134,6 +134,54 @@ describe('promoteDocxChapterMarkerParagraphs — Normal-only DOCX marker recover
   });
 });
 
+describe('buildImportedDocumentSeed — real two-level heading hierarchy with Editorial Kicker style', () => {
+  it('splits BOTH part (H1) and chapter (H2) headings into separate chapters when each has its own Editorial Kicker paragraph', () => {
+    // This is the shape a *properly* reconstructed DOCX produces (real
+    // named Heading 1/Heading 2/Editorial Kicker styles, kicker and title
+    // as two separate paragraphs) — distinct from the "Normal-only, bare
+    // marker" shape covered above. Before this fix, `determineChapterBoundaryLevel`
+    // picked ONE level (parts) as the chapter-splitting boundary and
+    // silently absorbed every chapter heading as plain content of its
+    // enclosing part — confirmed when importing the skill's own
+    // regenerated DOCX, which has exactly this two-level shape.
+    const html = [
+      '<p class="editorial-kicker">PARTE I</p><h1>El diagnóstico</h1>',
+      '<p class="editorial-kicker">CAPÍTULO UNO</p><h2>La paradoja del éxito solitario</h2>',
+      '<p>Cuerpo del capítulo uno.</p>',
+      '<p class="editorial-kicker">CAPÍTULO DOS</p><h2>Cómo se construye una vida llena y vacía a la vez</h2>',
+      '<p>Cuerpo del capítulo dos.</p>',
+      '<p class="editorial-kicker">PARTE II</p><h1>Los mecanismos invisibles</h1>',
+      '<p class="editorial-kicker">CAPÍTULO TRES</p><h2>Las cuatro corazas del alto rendimiento</h2>',
+      '<p>Cuerpo del capítulo tres.</p>',
+    ].join('');
+
+    const seed = buildImportedDocumentSeed({
+      fileName: 'manuscrito.docx',
+      mimeType: MIME,
+      text: html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
+      html,
+    });
+
+    const titles = seed.chapters?.map((chapter) => chapter.title) ?? [];
+    expect(titles).toContain('Parte I. El diagnóstico');
+    expect(titles).toContain('Capítulo Uno. La paradoja del éxito solitario');
+    expect(titles).toContain('Capítulo Dos. Cómo se construye una vida llena y vacía a la vez');
+    expect(titles).toContain('Parte II. Los mecanismos invisibles');
+    expect(titles).toContain('Capítulo Tres. Las cuatro corazas del alto rendimiento');
+
+    const chapterOne = seed.chapters?.find((chapter) => chapter.title.startsWith('Capítulo Uno'));
+    expect(chapterOne?.semanticType).toBe('chapter');
+    expect(chapterOne?.chapterNumber).toBe(1);
+    // The chapter's own body text must stay with it, not with its part.
+    expect(chapterOne?.blocks.some((block) => block.content.includes('Cuerpo del capítulo uno'))).toBe(true);
+
+    const partOne = seed.chapters?.find((chapter) => chapter.title.startsWith('Parte I.'));
+    expect(partOne?.semanticType).toBe('part');
+    // The part's own blocks must NOT swallow its chapters' content.
+    expect(partOne?.blocks.some((block) => block.content.includes('Cuerpo del capítulo uno'))).toBe(false);
+  });
+});
+
 describe('splitConcatenatedTocParagraph — concatenated dot-leader TOC recovery', () => {
   it('splits a concatenated table of contents (one paragraph, many dot-leader entries) into separate entries', () => {
     const html =
