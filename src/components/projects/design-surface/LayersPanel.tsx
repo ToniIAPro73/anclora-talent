@@ -65,6 +65,8 @@ export interface LayersPanelProps {
   onReorder: (layerId: string, direction: 'up' | 'down' | 'front' | 'back') => void;
   /** The structural cover background, always the bottom row (never above a layer). */
   backgroundSelected?: boolean;
+  /** True when the background is an image (shows the image icon on its row). */
+  backgroundIsImage?: boolean;
   onSelectBackground?: () => void;
 }
 
@@ -87,6 +89,7 @@ export function LayersPanel({
   onDelete,
   onReorder,
   backgroundSelected = false,
+  backgroundIsImage = false,
   onSelectBackground,
 }: LayersPanelProps) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -115,7 +118,11 @@ export function LayersPanel({
         onClick={onSelectBackground}
         className="flex min-w-0 flex-1 items-center gap-2 text-left"
       >
-        <Square className="cover-layer-row__icon h-4 w-4 shrink-0" aria-hidden="true" />
+        {backgroundIsImage ? (
+          <ImageIcon className="cover-layer-row__icon h-4 w-4 shrink-0" aria-hidden="true" />
+        ) : (
+          <Square className="cover-layer-row__icon h-4 w-4 shrink-0" aria-hidden="true" />
+        )}
         <span className="cover-layer-row__name select-none" data-testid="layer-name-background">
           {copy.coverBackgroundLabel ?? 'Fondo de portada'}
         </span>

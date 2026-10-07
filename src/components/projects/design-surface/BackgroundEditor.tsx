@@ -10,8 +10,19 @@ import { useRef } from 'react';
 import { Plus, X } from 'lucide-react';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { BackgroundSpec } from '@/lib/projects/design-surface';
+import {
+  backgroundScalePercent,
+  centerBackgroundFrame,
+  isBackgroundOffCanvas,
+  patchBackgroundFrame,
+  resetBackgroundFrame,
+  resolveBackgroundFrame,
+  scaleBackgroundToPercent,
+  setBackgroundFit,
+  type Size,
+} from '@/lib/projects/design-surface-background';
 import { ColorPickerField } from './ColorPickerField';
-import { CompactSlider, PropertySection, SegmentedGroup } from './PropertyControls';
+import { CompactNumberField, CompactSlider, PropertySection, SegmentedGroup } from './PropertyControls';
 
 type Copy = AppMessages['coverDesignSurface']['background'];
 type ColorPickerCopy = AppMessages['coverDesignSurface']['colorPicker'];
@@ -23,9 +34,13 @@ export interface BackgroundEditorProps {
   brandColors?: string[];
   onChange: (background: BackgroundSpec) => void;
   onUploadFile: (file: File) => void;
+  /** Surface size and the image's natural size (null until measured) drive the framing controls. */
+  surfaceSize?: Size;
+  natural?: Size | null;
+  onConvertToImage?: () => void;
 }
 
-export function BackgroundEditor({ background, copy, colorPickerCopy, brandColors, onChange, onUploadFile }: BackgroundEditorProps) {
+export function BackgroundEditor({ background, copy, colorPickerCopy, brandColors, onChange, onUploadFile, surfaceSize, natural, onConvertToImage }: BackgroundEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -143,7 +158,7 @@ export function BackgroundEditor({ background, copy, colorPickerCopy, brandColor
             onClick={() => fileInputRef.current?.click()}
             className="ac-button ac-button--secondary cover-prop-button"
           >
-            {copy.image}
+            {background.src ? copy.replaceImageLabel : copy.image}
           </button>
           <input
             ref={fileInputRef}
@@ -157,21 +172,53 @@ export function BackgroundEditor({ background, copy, colorPickerCopy, brandColor
               event.target.value = '';
             }}
           />
-          <SegmentedGroup label={copy.fitLabel}>
-            {(['cover', 'contain'] as const).map((fit) => (
-              <button
-                key={fit}
-                type="button"
-                data-testid={`background-image-fit-${fit}-button`}
-                onClick={() => onChange({ ...background, fit })}
-                className="cover-prop-text-button"
-                data-active={background.fit === fit ? 'true' : 'false'}
-                aria-pressed={background.fit === fit}
-              >
-                {fit === 'cover' ? copy.fitCover : copy.fitContain}
-              </button>
-            ))}
-          </SegmentedGroup>
+        <SegmentedGroup label={copy.fitLabel}>
+          {(['cover', 'contain', 'original'] as const).map((fit) => (
+            <button
+              key={fit}
+              type="button"
+              data-testid={`background-image-fit-${fit}-button`}
+              onClick={() => onChange(setBackgroundFit(background, fit))}
+              className="cover-prop-text-button"
+              data-active={background.fit === fit && !background.frame ? 'true' : 'false'}
+              aria-pressed={background.fit === fit && !background.frame}
+            >
+              {fit === 'cover' ? copy.fitCover : fit === 'contain' ? copy.fitContain : copy.fitOriginal}
+            </button>
+          ))}
+        </SegmentedGroup>
+          {background.src && surfaceSize && natural && natural.width > 0 && (() => {
+            const frame = resolveBackgroundFrame(background, natural, surfaceSize);
+            const offCanvas = isBackgroundOffCanvas(frame, surfaceSize);
+            return (
+              <div className="cover-prop-stack" data-testid="background-image-framing">
+                <div className="cover-prop-grid" data-testid="background-image-transform-fields">
+                  <CompactNumberField label={copy.positionXLabel} value={frame.x} onChange={(x) => onChange(patchBackgroundFrame(background, natural, surfaceSize, { x }))} testId="background-image-x-input" />
+                  <CompactNumberField label={copy.positionYLabel} value={frame.y} onChange={(y) => onChange(patchBackgroundFrame(background, natural, surfaceSize, { y }))} testId="background-image-y-input" />
+                  <CompactNumberField label={copy.rotationLabel} value={frame.rotation} onChange={(rotation) => onChange(patchBackgroundFrame(background, natural, surfaceSize, { rotation }))} testId="background-image-rotation-input" suffix="°" />
+                </div>
+                <CompactSlider
+                  label={copy.scaleLabel}
+                  value={backgroundScalePercent(background, natural, surfaceSize)}
+                  min={10}
+                  max={400}
+                  step={1}
+                  onChange={(percent) => onChange(scaleBackgroundToPercent(background, natural, surfaceSize, percent))}
+                  display={(value) => `${value}%`}
+                  testId="background-image-scale-slider"
+                />
+                {offCanvas && <p className="cover-prop-hint" data-testid="background-image-off-canvas-hint">{copy.offCanvasHint}</p>}
+                <div className="cover-prop-grid">
+                  <button type="button" data-testid="background-image-center-button" onClick={() => onChange(centerBackgroundFrame(background, natural, surfaceSize))} className="ac-button ac-button--secondary cover-prop-button">
+                    {copy.centerLabel}
+                  </button>
+                  <button type="button" data-testid="background-image-reset-button" onClick={() => onChange(resetBackgroundFrame(background))} className="ac-button ac-button--secondary cover-prop-button">
+                    {copy.resetFrameLabel}
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
           <CompactSlider
             label={copy.opacityLabel}
             value={Math.round(background.opacity * 100)}
@@ -191,6 +238,11 @@ export function BackgroundEditor({ background, copy, colorPickerCopy, brandColor
             />
             {copy.grayscaleLabel}
           </label>
+          {background.src && onConvertToImage && (
+            <button type="button" data-testid="background-image-convert-button" onClick={onConvertToImage} className="ac-button ac-button--secondary cover-prop-button">
+              {copy.convertToImageLabel}
+            </button>
+          )}
         </>
       )}
       </PropertySection>

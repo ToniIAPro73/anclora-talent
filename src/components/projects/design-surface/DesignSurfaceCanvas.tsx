@@ -33,9 +33,17 @@ import {
   applyBackgroundToCanvas,
   hydrateFabricLayerObject,
   normalizeFabricObjectScale,
+  readBackgroundFrameFromFabricObject,
   readLayerPatchFromFabricObject,
 } from '@/lib/projects/design-surface-fabric';
-import { createDesignLayer, type DesignLayer, type DesignSurface } from '@/lib/projects/design-surface';
+import { BACKGROUND_OBJECT_ID } from '@/lib/projects/design-surface-background';
+import {
+  createDesignLayer,
+  type BackgroundImageFrame,
+  type BackgroundSpec,
+  type DesignLayer,
+  type DesignSurface,
+} from '@/lib/projects/design-surface';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type FabricObject = any;
@@ -43,6 +51,11 @@ type FabricObject = any;
 type FabricCanvas = any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type FabricEvent = any;
+
+/** Stack slot taken by the interactive background object (0 or 1 objects), so layer z-order lands above it. */
+function backgroundOffset(canvas: FabricCanvas): number {
+  return (canvas.getObjects?.() ?? []).some((object: FabricObject) => object?.id === BACKGROUND_OBJECT_ID) ? 1 : 0;
+}
 
 /** Fabric's `requestRenderAll` (batched, preferred) isn't on every build/mock; falls back to the always-available `renderAll`. */
 function renderCanvas(canvas: FabricCanvas): void {
@@ -63,6 +76,8 @@ export interface DesignSurfaceCanvasHandle {
   setZoom(factor: number): void;
   zoomToFit(): void;
   selectLayers(layerIds: string[]): void;
+  /** Selects the cover background image object (or clears the selection when the background is a colour). */
+  selectBackground(): void;
 }
 
 export interface DesignSurfaceCanvasProps {
@@ -72,6 +87,10 @@ export interface DesignSurfaceCanvasProps {
   onSelectionChange: (layerIds: string[]) => void;
   /** A click on empty cover area (no object hit): the structural cover background. */
   onBackgroundClick?: () => void;
+  /** The background image object was moved/scaled/rotated on the canvas (surface px, layer convention). */
+  onBackgroundFrameChange?: (frame: BackgroundImageFrame) => void;
+  /** Undo/redo restores the background together with the layers. */
+  onBackgroundRestore?: (background: BackgroundSpec) => void;
   /** Container size available to the canvas — used for zoom-to-fit and CSS scaling. */
   viewportSize?: { width: number; height: number };
   /** Snapping to canvas edges/center, guides and other layer edges (mission §15). Defaults to true; the user can turn it off temporarily. */
@@ -93,7 +112,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 
 export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignSurfaceCanvasProps>(
   function DesignSurfaceCanvas(
-    { surface, onLayerChange, onLayersChange, onSelectionChange, onBackgroundClick, viewportSize, snapEnabled = true, onZoomChange, onHistoryChange, onReady, maxFitZoom = 1 },
+    { surface, onLayerChange, onLayersChange, onSelectionChange, onBackgroundClick, onBackgroundFrameChange, onBackgroundRestore, viewportSize, snapEnabled = true, onZoomChange, onHistoryChange, onReady, maxFitZoom = 1 },
     ref,
   ) {
     const canvasElRef = useRef<HTMLCanvasElement>(null);
@@ -118,6 +137,12 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
     useEffect(() => {
       onBackgroundClickRef.current = onBackgroundClick;
     }, [onBackgroundClick]);
+    const onBackgroundFrameChangeRef = useRef(onBackgroundFrameChange);
+    const onBackgroundRestoreRef = useRef(onBackgroundRestore);
+    useEffect(() => {
+      onBackgroundFrameChangeRef.current = onBackgroundFrameChange;
+      onBackgroundRestoreRef.current = onBackgroundRestore;
+    }, [onBackgroundFrameChange, onBackgroundRestore]);
     const [zoom, setZoomState] = useState(1);
     const suppressHistoryRef = useRef(false);
 
@@ -133,7 +158,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
       // Keep history in the canonical model rather than Fabric's serialized
       // object graph. Fabric does not reliably restore custom layer IDs from
       // JSON, which can otherwise turn an undo into an empty surface.
-      const snapshot = JSON.stringify(surfaceRef.current.layers);
+      const snapshot = JSON.stringify({ layers: surfaceRef.current.layers, background: surfaceRef.current.background });
       if (historyRef.current[historyIndexRef.current] === snapshot) return;
       historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1);
       historyRef.current.push(snapshot);
@@ -153,6 +178,10 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
 
     const reportLayerChange = useCallback((object: FabricObject) => {
       if (!object?.id) return;
+      if (object.id === BACKGROUND_OBJECT_ID) {
+        onBackgroundFrameChangeRef.current?.(readBackgroundFrameFromFabricObject(object));
+        return;
+      }
       normalizeFabricObjectScale(object);
       onLayerChangeRef.current(object.id, readLayerPatchFromFabricObject(object));
     }, []);
@@ -178,7 +207,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
         guideManagerRef.current.setCustomGuides(surface.guides ?? []);
         guideManagerRef.current.setZoom(1);
 
-        await applyBackgroundToCanvas(fabric, canvas, surface.background, surface);
+        await applyBackgroundToCanvas(fabric, canvas, surface.background, surface, { interactive: true });
 
         const sorted = [...surface.layers].sort((a, b) => a.zIndex - b.zIndex);
         for (const layer of sorted) {
@@ -192,14 +221,18 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
         setCanvasReady(true);
         onReadyRef.current?.();
 
-        historyRef.current = [JSON.stringify(surfaceRef.current.layers)];
+        historyRef.current = [JSON.stringify({ layers: surfaceRef.current.layers, background: surfaceRef.current.background })];
         historyIndexRef.current = 0;
 
         const emitSelection = (event: FabricEvent) => {
           const selected: FabricObject[] = event.selected ?? (event.target ? [event.target] : []);
-          const ids = selected.map((object) => object.id).filter(Boolean);
+          const all = selected.map((object) => object.id).filter(Boolean);
+          const onlyBackground = all.length > 0 && all.every((id: string) => id === BACKGROUND_OBJECT_ID);
+          const ids = all.filter((id: string) => id !== BACKGROUND_OBJECT_ID);
           setActiveObjectIds(ids);
           onSelectionChange(ids);
+          // The background is selected through its own editor state, not as a layer.
+          if (onlyBackground) onBackgroundClickRef.current?.();
         };
 
         canvas.on('mouse:down', (event: FabricEvent) => {
@@ -330,7 +363,8 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           .sort((a, b) => a.zIndex - b.zIndex)
           .forEach((layer, index) => {
             const object = objectsByIdRef.current.get(layer.id);
-            if (object) canvas.moveObjectTo?.(object, index);
+            // The background object (when there is one) always owns stack slot 0.
+            if (object) canvas.moveObjectTo?.(object, index + backgroundOffset(canvas));
           });
 
         renderCanvas(canvas);
@@ -353,8 +387,9 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
       (async () => {
         const fabric = await getFabric();
         if (cancelled) return;
-        await applyBackgroundToCanvas(fabric, canvas, surface.background, surface);
+        await applyBackgroundToCanvas(fabric, canvas, surface.background, surface, { interactive: true });
         renderCanvas(canvas);
+        pushHistory();
       })();
       return () => {
         cancelled = true;
@@ -373,8 +408,9 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
         const canvas = fabricRef.current;
         if (!canvas) return;
         suppressHistoryRef.current = true;
-        const layers = JSON.parse(snapshot) as DesignLayer[];
-        onLayersChange(layers);
+        const restored = JSON.parse(snapshot) as { layers: DesignLayer[]; background: BackgroundSpec };
+        onLayersChange(restored.layers);
+        onBackgroundRestoreRef.current?.(restored.background);
         setActiveObjectIds([]);
         onSelectionChange([]);
         suppressHistoryRef.current = false;
@@ -392,7 +428,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
         deleteSelected() {
           const canvas = fabricRef.current;
           if (!canvas) return;
-          const active = canvas.getActiveObjects?.() ?? [];
+          const active = (canvas.getActiveObjects?.() ?? []).filter((object: FabricObject) => object.id !== BACKGROUND_OBJECT_ID);
           if (active.length === 0) return;
           for (const object of active) {
             canvas.remove(object);
@@ -403,6 +439,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           onLayersChange(
             canvas
               .getObjects()
+              .filter((object: FabricObject) => object.id !== BACKGROUND_OBJECT_ID)
               .map((object: FabricObject, index: number) => {
                 const layer = surface.layers.find((candidate) => candidate.id === object.id);
                 return layer ? ({ ...layer, zIndex: index } as DesignLayer) : null;
@@ -460,6 +497,17 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           guideManagerRef.current?.setZoom(factor);
           setZoomState(factor);
           onZoomChange?.(factor);
+        },
+        selectBackground() {
+          const canvas = fabricRef.current;
+          if (!canvas) return;
+          const background = (canvas.getObjects?.() ?? []).find((object: FabricObject) => object.id === BACKGROUND_OBJECT_ID);
+          if (!background) {
+            canvas.discardActiveObject?.();
+          } else if (canvas.getActiveObject?.() !== background) {
+            canvas.setActiveObject?.(background);
+          }
+          renderCanvas(canvas);
         },
         selectLayers(layerIds: string[]) {
           const canvas = fabricRef.current;
@@ -525,6 +573,8 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
 
         if (event.key === 'Delete' || event.key === 'Backspace') {
           event.preventDefault();
+          // The cover background is structural: it is replaced or changed, never deleted from the canvas.
+          if (activeObject.id === BACKGROUND_OBJECT_ID) return;
           canvas.remove(activeObject);
           if (activeObject.id) objectsByIdRef.current.delete(activeObject.id);
           canvas.discardActiveObject?.();
@@ -532,6 +582,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           onLayersChange(
             canvas
               .getObjects()
+              .filter((object: FabricObject) => object.id !== BACKGROUND_OBJECT_ID)
               .map((object: FabricObject, index: number) => {
                 const layer = surface.layers.find((candidate) => candidate.id === object.id);
                 return layer ? ({ ...layer, zIndex: index } as DesignLayer) : null;
@@ -584,6 +635,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
         data-canvas-ready={canvasReady ? 'true' : 'false'}
         data-active-object-ids={activeObjectIds.join(',')}
         data-object-ids={surface.layers.map((layer) => layer.id).join(',')}
+        data-background={JSON.stringify(surface.background.kind === 'image' ? { kind: 'image', fit: surface.background.fit, opacity: surface.background.opacity, frame: surface.background.frame ?? null } : { kind: surface.background.kind })}
         data-object-geometry={JSON.stringify(Object.fromEntries(surface.layers.map((layer) => [layer.id, { x: layer.x, y: layer.y, width: layer.width, height: layer.height }]))) }
         data-object-content={JSON.stringify(Object.fromEntries(surface.layers.filter((layer) => layer.type === 'text').map((layer) => [layer.id, layer.content]))) }
         data-surface-size={`${surface.width}x${surface.height}`}

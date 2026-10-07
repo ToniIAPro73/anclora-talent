@@ -287,5 +287,8 @@ export function applyTemplateToSurface(
     binding: options.binding,
     existing: current,
   });
-  return { ...next, guides: current.guides, safeArea: current.safeArea, isbnArea: current.isbnArea };
+  // Product rule: a template restyles layout and colour, but never silently discards the user's background
+  // image (and its framing). Colour/gradient backgrounds follow the template as before.
+  const background = current.background.kind === 'image' && current.background.src ? current.background : next.background;
+  return { ...next, background, guides: current.guides, safeArea: current.safeArea, isbnArea: current.isbnArea };
 }

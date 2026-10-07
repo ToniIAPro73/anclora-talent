@@ -3529,6 +3529,7 @@ body:has([data-testid="cover-step-workspace"]) .talent-legal-footer { display: n
 .cover-prop-link { display: inline-flex; align-items: center; gap: 4px; justify-self: start; border: 0; background: none; color: var(--accent-text); font-size: 11px; cursor: pointer; }
 .cover-prop-link:hover { text-decoration: underline; }
 .cover-prop-button { height: 30px !important; font-size: 12px !important; width: 100%; }
+.cover-prop-hint { margin: 0; padding: 6px 8px; border: 1px solid color-mix(in srgb, #f1cc77 45%, transparent); border-radius: 6px; background: color-mix(in srgb, #f1cc77 12%, transparent); color: #f1cc77; font-size: 11px; line-height: 1.4; }
 .cover-prop-check { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 12px; }
 
 .cover-prop-color { display: grid; gap: 4px; }

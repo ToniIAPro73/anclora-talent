@@ -15,7 +15,9 @@
  * shared type from the `fabric` package itself.
  */
 
+import { BACKGROUND_OBJECT_ID, resolveBackgroundFrame } from './design-surface-background';
 import type {
+  BackgroundImageFrame,
   BackgroundSpec,
   DesignLayer,
   DesignSurface,
@@ -226,56 +228,114 @@ export async function hydrateFabricLayers(
   return entries;
 }
 
-/** Applies a `BackgroundSpec` to a Fabric canvas (client `Canvas` or server `StaticCanvas` — both share this API). Never a selectable/interactive object, matching the model: background is not a layer. */
+/**
+ * Applies a `BackgroundSpec` to a Fabric canvas (client `Canvas` or server `StaticCanvas` — both share this API).
+ *
+ * Solid/gradient backgrounds are canvas colours. A background IMAGE is framed by `resolveBackgroundFrame`
+ * (the cover is a clipping window; the image may extend beyond it). On the server/export canvas it is the
+ * canvas `backgroundImage`; on the interactive editor canvas (`interactive: true`) it is a real, selectable
+ * Fabric object kept at the very bottom of the stack (never a layer, never in the z-order model), so it can be
+ * moved and scaled directly while every layer stays above it.
+ */
 export async function applyBackgroundToCanvas(
   fabric: FabricModule,
   canvas: FabricCanvasLike,
   background: BackgroundSpec,
   dimensions: { width: number; height: number },
+  opts: { interactive?: boolean } = {},
 ): Promise<void> {
-  if (background.kind === 'solid') {
-    canvas.backgroundColor = background.color;
+  const interactive = Boolean(opts.interactive);
+  const existingBackgroundObjects = () => (canvas.getObjects?.() ?? []).filter((object: FabricObject) => object?.id === BACKGROUND_OBJECT_ID);
+
+  if (background.kind !== 'image' || !background.src) {
+    canvas.backgroundImage = undefined;
+    for (const object of existingBackgroundObjects()) canvas.remove(object);
+    if (background.kind === 'solid') {
+      canvas.backgroundColor = background.color;
+    } else if (background.kind === 'gradient') {
+      const radians = (background.angle * Math.PI) / 180;
+      const x2 = dimensions.width * Math.cos(radians);
+      const y2 = dimensions.height * Math.sin(radians);
+      canvas.backgroundColor = new fabric.Gradient({
+        type: 'linear',
+        coords: { x1: 0, y1: 0, x2, y2 },
+        colorStops: background.stops.map((stop) => ({ offset: stop.offset, color: stop.color })),
+      });
+    }
     return;
   }
 
-  if (background.kind === 'gradient') {
-    const radians = (background.angle * Math.PI) / 180;
-    const x2 = dimensions.width * Math.cos(radians);
-    const y2 = dimensions.height * Math.sin(radians);
-    canvas.backgroundColor = new fabric.Gradient({
-      type: 'linear',
-      coords: { x1: 0, y1: 0, x2, y2 },
-      colorStops: background.stops.map((stop) => ({ offset: stop.offset, color: stop.color })),
+  const filterKey = background.filters?.grayscale ? 'grayscale' : '';
+  const applyFrame = (image: FabricObject) => {
+    const sourceWidth: number = image.width || dimensions.width;
+    const sourceHeight: number = image.height || dimensions.height;
+    const frame = resolveBackgroundFrame(background, { width: sourceWidth, height: sourceHeight }, dimensions);
+    image.set({
+      originX: 'left',
+      originY: 'top',
+      left: frame.x,
+      top: frame.y,
+      scaleX: frame.width / sourceWidth,
+      scaleY: frame.height / sourceHeight,
+      angle: frame.rotation,
+      opacity: background.opacity,
     });
-    return;
+    image.setCoords?.();
+  };
+
+  if (interactive) {
+    // Same asset: only re-frame (a drag/scale commit must not reload the image).
+    const current = existingBackgroundObjects()[0];
+    if (current && current.__src === background.src && current.__filterKey === filterKey) {
+      applyFrame(current);
+      canvas.moveObjectTo?.(current, 0);
+      return;
+    }
   }
 
-  if (!background.src) return;
   const result = fabric.FabricImage.fromURL(background.src, { crossOrigin: 'anonymous' });
   const image = result instanceof Promise ? await result : result;
-  const sourceWidth: number = image.width || dimensions.width;
-  const sourceHeight: number = image.height || dimensions.height;
-  const scale =
-    background.fit === 'contain'
-      ? Math.min(dimensions.width / sourceWidth, dimensions.height / sourceHeight)
-      : Math.max(dimensions.width / sourceWidth, dimensions.height / sourceHeight);
-
-  image.set({
-    originX: 'center',
-    originY: 'center',
-    left: dimensions.width / 2,
-    top: dimensions.height / 2,
-    scaleX: scale,
-    scaleY: scale,
-    opacity: background.opacity,
-  });
+  applyFrame(image);
 
   if (background.filters?.grayscale) {
     image.filters = [new fabric.filters.Grayscale()];
     image.applyFilters();
   }
 
-  canvas.backgroundImage = image;
+  if (!interactive) {
+    canvas.backgroundImage = image;
+    return;
+  }
+
+  canvas.backgroundImage = undefined;
+  for (const object of existingBackgroundObjects()) canvas.remove(object);
+  image.set({
+    id: BACKGROUND_OBJECT_ID,
+    isCoverBackground: true,
+    selectable: true,
+    evented: true,
+    hasControls: true,
+    lockScalingFlip: true,
+    objectCaching: true,
+    // Handles keep the aspect ratio: only the four corners scale.
+  });
+  image.setControlsVisibility?.({ ml: false, mr: false, mt: false, mb: false });
+  image.__src = background.src;
+  image.__filterKey = filterKey;
+  canvas.add(image);
+  canvas.moveObjectTo?.(image, 0);
+}
+
+/** Frame (surface px, layer convention) a Fabric background object currently shows, scale folded into width/height. */
+export function readBackgroundFrameFromFabricObject(object: FabricObject): BackgroundImageFrame {
+  const round = (value: number) => Math.round(value * 100) / 100;
+  return {
+    x: round(object.left ?? 0),
+    y: round(object.top ?? 0),
+    width: round((object.width ?? 0) * (object.scaleX ?? 1)),
+    height: round((object.height ?? 0) * (object.scaleY ?? 1)),
+    rotation: round(object.angle ?? 0),
+  };
 }
 
 /**

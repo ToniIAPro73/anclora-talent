@@ -167,7 +167,8 @@ test('E. layers panel: selecting and renaming never moves rows or scroll, autosa
   expect(before.count).toBeGreaterThanOrEqual(6);
   expect(new Set(before.rows.map((row) => row[0]))).toEqual(new Set([32]));
 
-  const buttons = page.locator('[data-testid^="layer-select-"]');
+  // The structural background row is not a layer: it has no rename.
+  const buttons = page.locator('[data-testid^="layer-select-"]:not([data-testid="layer-select-background"])');
   const count = await buttons.count();
   for (const index of [0, Math.floor(count / 2), count - 1, 0, count - 1]) {
     await buttons.nth(index).click();
@@ -180,9 +181,9 @@ test('E. layers panel: selecting and renaming never moves rows or scroll, autosa
   // rename in place: the row keeps its height and no sibling moves
   const last = buttons.nth(count - 1);
   await last.click();
-  const row = page.locator('[data-testid^="layer-row-"]').nth(count - 1);
+  const row = page.locator('[data-testid^="layer-row-"]:not([data-testid="layer-row-background"])').nth(count - 1);
   const rowBox = (await row.boundingBox())!;
-  await page.locator('[data-testid^="layer-name-"]').nth(count - 1).dblclick();
+  await page.locator('[data-testid^="layer-name-"]:not([data-testid="layer-name-background"])').nth(count - 1).dblclick();
   await expect(page.locator('[data-testid^="layer-rename-input-"]')).toBeVisible();
   const renaming = (await row.boundingBox())!;
   expect(renaming.height).toBe(rowBox.height);

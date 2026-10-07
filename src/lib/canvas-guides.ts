@@ -53,6 +53,8 @@ interface GuideObject {
   originX?: string;
   originY?: string;
   excludeFromExport?: boolean;
+  /** The cover background image object: never a snap target for other objects. */
+  isCoverBackground?: boolean;
   visible?: boolean;
   getBoundingRect?(absolute?: boolean, calculate?: boolean): FabricRect;
   setCoords?(): void;
@@ -376,7 +378,7 @@ export class CanvasGuideManager {
     }
 
     this.canvas!.getObjects().forEach((obj) => {
-      if (obj === movingObject || obj?.visible === false || obj?.type === 'line' || obj?.type === 'text' && obj?.excludeFromExport) return;
+      if (obj === movingObject || obj?.visible === false || obj?.type === 'line' || obj?.isCoverBackground || obj?.type === 'text' && obj?.excludeFromExport) return;
 
       const other = getBounds(obj);
 
@@ -404,7 +406,7 @@ export class CanvasGuideManager {
 
   private findEqualSpacingTarget(movingObject: GuideObject, moving: Bounds, threshold: number): void {
     const others = this.canvas!.getObjects().filter(
-      (obj) => obj !== movingObject && obj.visible !== false && obj.type !== 'line' && !(obj.type === 'text' && obj.excludeFromExport),
+      (obj) => obj !== movingObject && obj.visible !== false && obj.type !== 'line' && !obj.isCoverBackground && !(obj.type === 'text' && obj.excludeFromExport),
     );
     const best: Partial<Record<Axis, { target: SnapTarget; feedback: EqualSpacingFeedback }>> = {};
 
@@ -478,7 +480,7 @@ export class CanvasGuideManager {
     let bestVertical: { gap: number; y1: number; y2: number; x: number } | null = null;
 
     this.canvas!.getObjects().forEach((obj) => {
-      if (obj === movingObject || obj?.visible === false || obj?.type === 'line' || obj?.excludeFromExport) return;
+      if (obj === movingObject || obj?.visible === false || obj?.type === 'line' || obj?.isCoverBackground || obj?.excludeFromExport) return;
 
       const other = getBounds(obj);
       const verticalOverlap = overlappingRange(bounds.top, bounds.bottom, other.top, other.bottom);

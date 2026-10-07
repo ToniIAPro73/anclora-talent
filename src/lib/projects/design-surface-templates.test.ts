@@ -144,3 +144,16 @@ describe('cover override beats the manuscript value', () => {
     expect(applyTemplateToSurface(current, templateB).guides).toEqual(current.guides);
   });
 });
+
+describe('template change keeps the user background image', () => {
+  it('an image background (and its framing) survives applying another template; colour backgrounds follow the template', () => {
+    const [templateA, templateB] = COVER_TEMPLATES;
+    const first = buildDesignSurfaceFromTemplate(templateA, { palette: 'obsidian', binding: BINDING });
+    const withImage = {
+      ...first,
+      background: { kind: 'image' as const, src: 'https://example.com/bg.jpg', fit: 'cover' as const, opacity: 1, frame: { x: -80, y: 24, width: 600, height: 900, rotation: 0 } },
+    };
+    expect(applyTemplateToSurface(withImage, templateB, { binding: BINDING }).background).toEqual(withImage.background);
+    expect(applyTemplateToSurface(first, templateB, { binding: BINDING }).background.kind).toBe('solid');
+  });
+});

@@ -89,8 +89,9 @@ const backgroundSpecSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('image'),
     src: imageSrcSchema,
-    fit: z.enum(['cover', 'contain']),
+    fit: z.enum(['cover', 'contain', 'original']),
     opacity: finiteNumber.min(0).max(1),
+    frame: z.object({ x: finiteNumber, y: finiteNumber, width: finiteNumber.positive(), height: finiteNumber.positive(), rotation: finiteNumber }).optional(),
     originalUncropped: z.boolean().optional(),
     filters: z.object({ grayscale: z.boolean().optional() }).optional(),
   }),

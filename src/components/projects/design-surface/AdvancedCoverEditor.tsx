@@ -57,6 +57,12 @@ import { normalizeLayerPatch } from './layer-patch';
 import { TemplateThumbnail } from './TemplateThumbnail';
 import { PropertiesPanel } from './PropertiesPanel';
 import { BackgroundEditor } from './BackgroundEditor';
+import { loadImageSize } from './image-size';
+import {
+  backgroundToImageLayer,
+  imageLayerToBackground,
+  type BackgroundImageSpec,
+} from '@/lib/projects/design-surface-background';
 import { DesignSurfaceRenderer } from './DesignSurfaceRenderer';
 import { COVER_TEMPLATES, BACK_COVER_TEMPLATES, type EditorialTemplate } from '@/lib/projects/cover-templates';
 import { applyTemplateToSurface, type SemanticBinding } from '@/lib/projects/design-surface-templates';
@@ -215,18 +221,60 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
     [setLayers, surface.layers],
   );
 
-  const handleUseAsBackground = useCallback((layerId: string) => {
-    const current = latestSurfaceRef.current;
-    const layer = current.layers.find((candidate) => candidate.id === layerId);
+  // Every route that sets a background image converges on the same BackgroundSpec image variant.
+  const handleUseAsBackground = useCallback(async (layerId: string) => {
+    const layer = latestSurfaceRef.current.layers.find((candidate) => candidate.id === layerId);
     if (!layer || layer.type !== 'image') return;
+    const surfaceSize = { width: latestSurfaceRef.current.width, height: latestSurfaceRef.current.height };
+    const fullBleed = layer.x <= 0 && layer.y <= 0 && layer.width >= surfaceSize.width && layer.height >= surfaceSize.height && layer.rotation === 0;
+    const natural = fullBleed ? { width: 0, height: 0 } : await loadImageSize(layer.src);
+    const current = latestSurfaceRef.current;
     commitSurface({
       ...current,
-      background: { kind: 'image', src: layer.src, fit: layer.fit === 'contain' ? 'contain' : 'cover', opacity: layer.opacity },
+      background: imageLayerToBackground(layer, natural, surfaceSize),
       layers: current.layers.filter((candidate) => candidate.id !== layerId),
     });
     setSelectedLayerIds([]);
     setBackgroundSelected(true);
   }, [commitSurface, setSelectedLayerIds]);
+
+  const handleBackgroundToImage = useCallback(async () => {
+    const start = latestSurfaceRef.current;
+    if (start.background.kind !== 'image' || !start.background.src) return;
+    const natural = await loadImageSize(start.background.src);
+    const current = latestSurfaceRef.current;
+    if (current.background.kind !== 'image') return;
+    const layer = backgroundToImageLayer(current.background, natural, { width: current.width, height: current.height }, current.layers.length + 1);
+    commitSurface({
+      ...current,
+      background: { kind: 'solid', color: '#0b133f' },
+      layers: reorderLayers([...current.layers, layer], layer.id, 'back'),
+    });
+    setSelectedLayerIds([layer.id]);
+  }, [commitSurface, setSelectedLayerIds]);
+
+  const handleBackgroundFrameChange = useCallback((frame: NonNullable<BackgroundImageSpec['frame']>) => {
+    const current = latestSurfaceRef.current;
+    if (current.background.kind !== 'image') return;
+    commitSurface({ ...current, background: { ...current.background, frame } });
+  }, [commitSurface]);
+
+  const handleBackgroundRestore = useCallback((background: DesignSurface['background']) => {
+    commitSurface({ ...latestSurfaceRef.current, background });
+  }, [commitSurface]);
+
+  const [backgroundNatural, setBackgroundNatural] = useState<{ src: string; width: number; height: number } | null>(null);
+  const backgroundSrc = surface.background.kind === 'image' ? surface.background.src : '';
+  useEffect(() => {
+    if (!backgroundSrc) return;
+    let cancelled = false;
+    void loadImageSize(backgroundSrc).then((size) => {
+      if (!cancelled) setBackgroundNatural({ src: backgroundSrc, ...size });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [backgroundSrc]);
 
   const handleSelect = useCallback((layerId: string, options?: { additive?: boolean }) => {
     setSelectedLayerIds((current) => {
@@ -236,8 +284,10 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
   }, [setSelectedLayerIds]);
 
   useEffect(() => {
-    canvasRef.current?.selectLayers(selectedLayerIds);
-  }, [selectedLayerIds]);
+    // An image background is a real canvas object: selecting "Fondo de portada" puts its frame handles on it.
+    if (selectedLayerIds.length === 0 && backgroundSelected) canvasRef.current?.selectBackground();
+    else canvasRef.current?.selectLayers(selectedLayerIds);
+  }, [selectedLayerIds, backgroundSelected]);
 
   const selectBackground = useCallback(() => {
     setSelectedLayerIds([]);
@@ -315,8 +365,8 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
     setImageQualityWarning(dimensions.width > 0 && (dimensions.width < 1200 || dimensions.height < 1800)
       ? `Resolución baja: ${dimensions.width} × ${dimensions.height}px. La portada se ha importado igualmente.`
       : null);
-    onChange({ ...surface, background: { kind: 'image', src, fit: 'cover', opacity: 1 }, originAssetId: null, originMode: 'blank' });
-  }, [inspectImage, onChange, surface]);
+    commitSurface({ ...latestSurfaceRef.current, background: { kind: 'image', src, fit: 'cover', opacity: 1 }, originAssetId: null, originMode: 'blank' });
+  }, [commitSurface, inspectImage]);
 
   // The active template is the one the composition was actually built from (persisted on the
   // surface), not the last card clicked: cancelling the confirmation changes nothing.
@@ -736,6 +786,8 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
                     onLayersChange={setLayers}
                     onSelectionChange={setSelectedLayerIds}
                     onBackgroundClick={selectBackground}
+                    onBackgroundFrameChange={handleBackgroundFrameChange}
+                    onBackgroundRestore={handleBackgroundRestore}
                     snapEnabled={snapEnabled}
                     onZoomChange={setZoom}
                     onHistoryChange={setHistoryState}
@@ -798,10 +850,15 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
                   copy={copy.background}
                   colorPickerCopy={copy.colorPicker}
                   brandColors={brandColors}
-                  onChange={(background) => onChange({ ...surface, background })}
+                  surfaceSize={{ width: surface.width, height: surface.height }}
+                  natural={backgroundNatural && backgroundNatural.src === backgroundSrc ? backgroundNatural : null}
+                  onChange={(background) => commitSurface({ ...latestSurfaceRef.current, background })}
+                  onConvertToImage={handleBackgroundToImage}
                   onUploadFile={async (file) => {
                     const src = await readFileAsDataUrl(file);
-                    onChange({ ...surface, background: { kind: 'image', src, fit: 'cover', opacity: 1 } });
+                    const current = latestSurfaceRef.current;
+                    // Same representation as every other route; a new asset starts at the default Rellenar framing.
+                    commitSurface({ ...current, background: { kind: 'image', src, fit: 'cover', opacity: current.background.kind === 'image' ? current.background.opacity : 1 } });
                   }}
                 />
               ) : (
@@ -842,6 +899,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
                 onDelete={(layerId) => setLayers(surface.layers.filter((l) => l.id !== layerId))}
                 onReorder={handleReorder}
                 backgroundSelected={backgroundSelected}
+                backgroundIsImage={surface.background.kind === 'image'}
                 onSelectBackground={selectBackground}
               />
             </section>

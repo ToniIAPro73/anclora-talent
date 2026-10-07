@@ -99,14 +99,29 @@ export type DesignLayer =
   | (DesignLayerBase & ImageLayerProps)
   | (DesignLayerBase & ShapeLayerProps);
 
+export interface BackgroundImageFrame {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+}
+
 export type BackgroundSpec =
   | { kind: 'solid'; color: string }
   | { kind: 'gradient'; angle: number; stops: Array<{ color: string; offset: number }> }
   | {
       kind: 'image';
       src: string;
-      fit: 'cover' | 'contain';
+      /** Framing mode that produced the current frame: cover = Rellenar, contain = Ajustar, original = 1:1. */
+      fit: 'cover' | 'contain' | 'original';
       opacity: number;
+      /**
+       * Non-destructive framing in surface pixels (same convention as an image layer: top-left of the
+       * unrotated box). The cover is a clipping window: the frame may extend beyond it. Absent = derive
+       * from `fit` (legacy documents and fresh imports).
+       */
+      frame?: BackgroundImageFrame;
       /** True when this is an inherited original-PDF page, never cropped/overlaid unless the user opts in (mission §34). */
       originalUncropped?: boolean;
       /** Basic mode's "blanco y negro" toggle applies here — a background image is not a layer, so it needs its own (much smaller) filter set. */

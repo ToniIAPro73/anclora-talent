@@ -427,3 +427,63 @@ describe('cover background selection and layering', () => {
     expect(screen.getByTestId('background-editor')).toBeInTheDocument();
   });
 });
+
+describe('editable background image', () => {
+  function surfaceWithImageBackground(): DesignSurface {
+    const start = makeSurface();
+    start.background = { kind: 'image', src: 'https://example.com/bg.jpg', fit: 'cover', opacity: 1 };
+    return start;
+  }
+  const backgroundObject = () => mocks.state.objects.find((object) => object.id === '__cover-background__');
+
+  it('renders the background image as a selectable canvas object at the bottom of the stack, outside the layer model', async () => {
+    const { surface } = await setupWithBinding(surfaceWithImageBackground());
+    await waitFor(() => expect(backgroundObject()).toBeDefined());
+    const bg = backgroundObject()!;
+    expect(bg.selectable).toBe(true);
+    expect(mocks.state.objects.indexOf(bg)).toBe(0);
+    expect(surface().layers.map((layer) => layer.id)).toEqual(['title', 'subtitle', 'author']);
+  });
+
+  it('clicking the image selects the background; clicking a layer above selects that layer (click priority)', async () => {
+    await setupWithBinding(surfaceWithImageBackground());
+    await waitFor(() => expect(backgroundObject()).toBeDefined());
+
+    act(() => mocks.state.handlers.get('selection:created')?.({ selected: [backgroundObject()] }));
+    expect(screen.getByTestId('background-editor')).toBeInTheDocument();
+    expect(screen.getByTestId('layer-row-background')).toHaveAttribute('data-selected', 'true');
+
+    const title = mocks.state.objects.find((object) => object.id === 'title')!;
+    act(() => mocks.state.handlers.get('selection:updated')?.({ selected: [title] }));
+    expect(screen.queryByTestId('background-editor')).not.toBeInTheDocument();
+    expect(screen.getByTestId('layer-row-title')).toHaveAttribute('data-selected', 'true');
+  });
+
+  it('moving or scaling the background on the canvas stores one frame and leaves every layer untouched', async () => {
+    const { surface } = await setupWithBinding(surfaceWithImageBackground());
+    await waitFor(() => expect(backgroundObject()).toBeDefined());
+    const layersBefore = surface().layers;
+    const bg = backgroundObject()!;
+    Object.assign(bg, { left: -80, top: 24, scaleX: 1.35, scaleY: 1.35, angle: 0 });
+    act(() => mocks.state.handlers.get('object:modified')?.({ target: bg }));
+
+    const background = surface().background;
+    expect(background.kind).toBe('image');
+    if (background.kind === 'image') {
+      expect(background.frame).toMatchObject({ x: -80, y: 24, width: 135, height: 54 });
+    }
+    expect(surface().layers).toBe(layersBefore);
+  });
+
+  it('the panel offers Restablecer encuadre and recovers a background moved off the cover', async () => {
+    const start = surfaceWithImageBackground();
+    start.background = { kind: 'image', src: 'https://example.com/bg.jpg', fit: 'cover', opacity: 1, frame: { x: 900, y: 900, width: 300, height: 300, rotation: 0 } };
+    const { surface } = await setupWithBinding(start);
+    fireEvent.click(screen.getByTestId('layer-select-background'));
+    // Natural size is measured asynchronously; the fit group is available immediately.
+    fireEvent.click(screen.getByTestId('background-image-fit-cover-button'));
+    const background = surface().background;
+    expect(background.kind === 'image' && background.frame).toBeFalsy();
+    expect(background.kind === 'image' && background.fit).toBe('cover');
+  });
+});

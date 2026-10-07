@@ -1337,6 +1337,16 @@ export type AppMessages = {
       fitLabel: string;
       fitCover: string;
       fitContain: string;
+      fitOriginal: string;
+      scaleLabel: string;
+      rotationLabel: string;
+      positionXLabel: string;
+      positionYLabel: string;
+      centerLabel: string;
+      resetFrameLabel: string;
+      convertToImageLabel: string;
+      replaceImageLabel: string;
+      offCanvasHint: string;
       grayscaleLabel: string;
     };
     colorPicker: {
@@ -3011,8 +3021,18 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         removeColorStopButton: 'Quitar color',
         opacityLabel: 'Opacidad',
         fitLabel: 'Ajuste',
-        fitCover: 'Cubrir',
-        fitContain: 'Contener',
+        fitCover: 'Rellenar',
+        fitContain: 'Ajustar',
+        fitOriginal: 'Original',
+        scaleLabel: 'Escala',
+        rotationLabel: 'Rotación',
+        positionXLabel: 'X',
+        positionYLabel: 'Y',
+        centerLabel: 'Centrar',
+        resetFrameLabel: 'Restablecer encuadre',
+        convertToImageLabel: 'Convertir en imagen',
+        replaceImageLabel: 'Sustituir imagen',
+        offCanvasHint: 'La imagen está fuera de la portada. Restablece el encuadre.',
         grayscaleLabel: 'Blanco y negro',
       },
       colorPicker: {
@@ -4684,8 +4704,18 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         removeColorStopButton: 'Remove color',
         opacityLabel: 'Opacity',
         fitLabel: 'Fit',
-        fitCover: 'Cover',
-        fitContain: 'Contain',
+        fitCover: 'Fill',
+        fitContain: 'Fit',
+        fitOriginal: 'Original',
+        scaleLabel: 'Scale',
+        rotationLabel: 'Rotation',
+        positionXLabel: 'X',
+        positionYLabel: 'Y',
+        centerLabel: 'Center',
+        resetFrameLabel: 'Reset framing',
+        convertToImageLabel: 'Convert to image',
+        replaceImageLabel: 'Replace image',
+        offCanvasHint: 'The image is outside the cover. Reset the framing.',
         grayscaleLabel: 'Black and white',
       },
       colorPicker: {
