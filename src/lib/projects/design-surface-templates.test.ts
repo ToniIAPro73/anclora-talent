@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { buildDesignSurfaceFromTemplate } from './design-surface-templates';
+import { applyTemplateToSurface, buildDesignSurfaceFromTemplate } from './design-surface-templates';
 import { COVER_TEMPLATES, BACK_COVER_TEMPLATES } from './cover-templates';
 
 describe('buildDesignSurfaceFromTemplate', () => {
@@ -50,10 +50,97 @@ describe('buildDesignSurfaceFromTemplate', () => {
     expect(surface.background).toEqual({ kind: 'solid', color: '#f2e3b3' });
   });
 
-  test('a field hidden by the template visibility map never gets a layer', () => {
+  test('a slot hidden by the template design still gets its layer (hidden, never missing)', () => {
     const fictionCover = COVER_TEMPLATES.find((t) => t.id === 'fiction-cover')!;
     expect(fictionCover.visibility?.subtitle).toBe(false);
-    const surface = buildDesignSurfaceFromTemplate(fictionCover, { palette: 'obsidian' });
-    expect(surface.layers.some((layer) => layer.type === 'text' && layer.role === 'subtitle')).toBe(false);
+    const surface = buildDesignSurfaceFromTemplate(fictionCover, {
+      palette: 'obsidian',
+      binding: { title: 'La atención deliberada', subtitle: 'Un subtítulo real', author: 'María Vega' },
+    });
+    const subtitle = surface.layers.find((layer) => layer.type === 'text' && layer.role === 'subtitle');
+    expect(subtitle).toMatchObject({ visible: false, content: 'Un subtítulo real' });
+  });
+});
+
+const BINDING = { title: 'La atención deliberada', subtitle: 'Sistemas para pensar', author: 'María Vega' } as const;
+
+function role(surface: ReturnType<typeof buildDesignSurfaceFromTemplate>, name: string) {
+  return surface.layers.find((layer) => layer.type === 'text' && layer.role === name);
+}
+
+describe('template slots are bound to the manuscript', () => {
+  test('every cover template materializes title, subtitle and author with the real content', () => {
+    for (const template of COVER_TEMPLATES) {
+      const surface = buildDesignSurfaceFromTemplate(template, { palette: 'obsidian', binding: BINDING });
+      expect(surface.layers.map((l) => l.type === 'text' && l.role), template.id).toEqual(['title', 'subtitle', 'author']);
+      expect(role(surface, 'title')).toMatchObject({ content: BINDING.title, visible: true });
+      expect(role(surface, 'subtitle')).toMatchObject({ content: BINDING.subtitle });
+      expect(role(surface, 'author')).toMatchObject({ content: BINDING.author });
+      expect(surface.templateId).toBe(template.id);
+    }
+  });
+
+  test('every back-cover template materializes title, body and bio slots', () => {
+    for (const template of BACK_COVER_TEMPLATES) {
+      const surface = buildDesignSurfaceFromTemplate(template, {
+        palette: 'obsidian',
+        binding: { title: 'T', body: 'Sinopsis', authorBio: 'Bio' },
+      });
+      expect(surface.layers.map((l) => l.type === 'text' && l.role), template.id).toEqual(['title', 'body', 'authorBio']);
+      expect(role(surface, 'body')).toMatchObject({ content: 'Sinopsis' });
+    }
+  });
+
+  test('an empty manuscript field keeps an (invisible) layer instead of dropping it', () => {
+    const surface = buildDesignSurfaceFromTemplate(COVER_TEMPLATES[0], { palette: 'obsidian', binding: { title: 'Solo título' } });
+    expect(surface.layers).toHaveLength(3);
+    expect(role(surface, 'subtitle')).toMatchObject({ content: '', visible: false });
+    expect(role(surface, 'author')).toMatchObject({ content: '', visible: false });
+  });
+
+  test('a surface built with no binding at all is still a complete (never blank-by-pruning) composition', () => {
+    for (const template of COVER_TEMPLATES) {
+      expect(buildDesignSurfaceFromTemplate(template, { palette: 'obsidian' }).layers).toHaveLength(3);
+    }
+  });
+});
+
+describe('cover override beats the manuscript value', () => {
+  const [templateA, templateB, templateC] = COVER_TEMPLATES;
+
+  test('a manual cover title survives applying another template; the others follow the manuscript', () => {
+    const first = buildDesignSurfaceFromTemplate(templateA, { palette: 'obsidian', binding: BINDING });
+    const edited = {
+      ...first,
+      layers: first.layers.map((l) => (l.type === 'text' && l.role === 'title' ? { ...l, content: 'Título de portada', source: 'manual' as const } : l)),
+    };
+
+    const second = applyTemplateToSurface(edited, templateB, { binding: { ...BINDING, title: 'Nuevo título del documento' } });
+    expect(role(second, 'title')).toMatchObject({ content: 'Título de portada', source: 'manual' });
+    expect(role(second, 'subtitle')).toMatchObject({ content: BINDING.subtitle, source: 'metadata' });
+  });
+
+  test('metadata-sourced content is refreshed from the manuscript on template change', () => {
+    const first = buildDesignSurfaceFromTemplate(templateA, { palette: 'obsidian', binding: BINDING });
+    const second = applyTemplateToSurface(first, templateB, { binding: { ...BINDING, title: 'Título renombrado' } });
+    expect(role(second, 'title')).toMatchObject({ content: 'Título renombrado', source: 'metadata' });
+  });
+
+  test('A -> B -> C keeps content and role layer ids, only layout/style change', () => {
+    const a = buildDesignSurfaceFromTemplate(templateA, { palette: 'obsidian', binding: BINDING });
+    const b = applyTemplateToSurface(a, templateB, { binding: BINDING });
+    const c = applyTemplateToSurface(b, templateC, { binding: BINDING });
+
+    for (const name of ['title', 'subtitle', 'author']) {
+      expect(role(b, name)!.id).toBe(role(a, name)!.id); // stable identity across templates
+      expect(role(c, name)!.id).toBe(role(a, name)!.id);
+      expect((role(c, name) as { content: string }).content).toBe((role(a, name) as { content: string }).content);
+    }
+    expect([b.templateId, c.templateId]).toEqual([templateB.id, templateC.id]);
+  });
+
+  test('guides and safe area survive a template change', () => {
+    const current = { ...buildDesignSurfaceFromTemplate(templateA, { palette: 'obsidian' }), guides: [{ id: 'g', axis: 'x' as const, position: 100 }] };
+    expect(applyTemplateToSurface(current, templateB).guides).toEqual(current.guides);
   });
 });

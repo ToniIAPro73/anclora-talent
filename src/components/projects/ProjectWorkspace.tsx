@@ -53,7 +53,7 @@ import type { CoAuthorChapter } from '@/lib/ai/co-author';
 import type { KdpDisclosure } from '@/lib/ai/kdp-disclosure';
 import type { CollaborationView } from '@/lib/collaboration/view';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
-import { getBackCoverDesign, getCoverDesign } from '@/lib/projects/design-surface-repository';
+import { buildSemanticBinding, getBackCoverDesign, getCoverDesign } from '@/lib/projects/design-surface-repository';
 
 type SaveState = 'idle' | 'saving' | 'saved';
 type PaginationSyncFeedback = 'idle' | 'done' | 'missing-index';
@@ -174,6 +174,8 @@ export function ProjectWorkspace({
 
   const canonicalCoverSurface = useMemo(() => getCoverDesign(project), [project]);
   const canonicalBackCoverSurface = useMemo(() => getBackCoverDesign(project), [project]);
+  const coverSemanticBinding = useMemo(() => buildSemanticBinding(project, 'cover'), [project]);
+  const backCoverSemanticBinding = useMemo(() => buildSemanticBinding(project, 'back-cover'), [project]);
   const coverDesignSurfaceCopy = useMemo(() => resolveLocaleMessages(locale).coverDesignSurface, [locale]);
   const sourceDocumentAssetId = project.assets.find((asset) => asset.usage === 'source-document')?.id ?? null;
   const sourcePageCount = project.document.source?.pageCount ?? null;
@@ -437,13 +439,16 @@ export function ProjectWorkspace({
         return (
           <div className="cover-workspace-host w-full">
             <CoverStudioV2
-              key={project.updatedAt}
+              // Keyed by project only: the studio owns its surface (autosave), so a refreshed
+              // `updatedAt` after every save must not remount it and drop selection/scroll/canvas.
+              key={project.id}
               surfaceKind="cover"
               projectId={project.id}
               initialSurface={canonicalCoverSurface}
               sourceDocumentAssetId={sourceDocumentAssetId}
               pageCount={sourcePageCount}
               copy={coverDesignSurfaceCopy}
+              semanticBinding={coverSemanticBinding}
             />
           </div>
         );
@@ -452,13 +457,14 @@ export function ProjectWorkspace({
         return (
           <div className="mx-auto max-w-6xl space-y-6">
             <CoverStudioV2
-              key={project.updatedAt}
+              key={project.id}
               surfaceKind="back-cover"
               projectId={project.id}
               initialSurface={canonicalBackCoverSurface}
               sourceDocumentAssetId={sourceDocumentAssetId}
               pageCount={sourcePageCount}
               copy={coverDesignSurfaceCopy}
+              semanticBinding={backCoverSemanticBinding}
             />
           </div>
         );

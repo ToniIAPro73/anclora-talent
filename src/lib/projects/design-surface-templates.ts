@@ -161,18 +161,45 @@ function estimateHeight(fontSize: number, lineHeight = 1.3): number {
 }
 
 /**
+ * The manuscript's own editorial content, by semantic role. A template never
+ * carries text: it defines layout and style, and the content of every slot comes
+ * from here (see `buildSemanticBinding` in design-surface-repository.ts).
+ */
+export type SemanticBinding = Partial<Record<'title' | 'subtitle' | 'author' | 'body' | 'authorBio', string>>;
+
+export interface BuildTemplateOptions {
+  palette: CoverDesign['palette'];
+  accentColor?: string | null;
+  /** Real manuscript content for each role slot. */
+  binding?: SemanticBinding;
+  /**
+   * The composition being replaced. Its role layers keep their id (stable selection/keys) and any
+   * cover-specific override (`source: 'manual'`, non-empty) wins over the manuscript value.
+   */
+  existing?: Pick<DesignSurface, 'layers'>;
+}
+
+/**
  * Instantiates a `DesignSurface` from a legacy `EditorialTemplate` — real
  * positioned layers, not just a typography preset (mission §50: "al
  * seleccionar un template, instantiate layers que luego pueden
  * modificarse").
+ *
+ * Every semantic slot of the surface kind (cover: title/subtitle/author, back
+ * cover: title/body/authorBio) is materialized, whatever the template's
+ * visibility map says or whether the manuscript has a value for it: a slot a
+ * template hides, or a field the manuscript leaves empty, is a hidden/empty
+ * layer, never a missing one — so the layer list is always complete and
+ * switching templates keeps every slot reachable.
  */
 export function buildDesignSurfaceFromTemplate(
   template: EditorialTemplate,
-  options: { palette: CoverDesign['palette']; accentColor?: string | null } = { palette: 'obsidian' },
+  options: BuildTemplateOptions = { palette: 'obsidian' },
 ): DesignSurface {
   const surface = createEmptyDesignSurface(template.surface);
   const colors = PALETTE_TEXT[options.palette] ?? PALETTE_TEXT.obsidian;
   surface.background = { kind: 'solid', color: colors.background };
+  surface.templateId = template.id;
 
   const isCover = template.surface === 'cover';
   const archetypeKey = isCover
@@ -192,17 +219,24 @@ export function buildDesignSurfaceFromTemplate(
   const layers: DesignSurface['layers'] = [];
   let zIndex = 1;
   for (const fieldKey of fieldOrder) {
-    const visible = template.visibility?.[fieldKey] ?? defaultVisible[fieldKey];
-    if (!visible) continue;
+    const templateVisible = template.visibility?.[fieldKey] ?? defaultVisible[fieldKey];
     const fieldGeometry = (geometry as Record<string, FieldGeometry>)[fieldKey];
     if (!fieldGeometry) continue;
+
+    const previous = options.existing?.layers.find(
+      (layer): layer is DesignLayer & TextLayerProps => layer.type === 'text' && layer.role === fieldKey,
+    );
+    // cover override > manuscript content > empty placeholder
+    const hasOverride = Boolean(previous && previous.source === 'manual' && previous.content.trim());
+    const content = hasOverride ? previous!.content : (options.binding?.[fieldKey] ?? '');
+    const hasContent = content.trim().length > 0;
 
     const stylePreset = template.layerStyles?.[fieldKey] ?? {};
     const fontSize = typeof stylePreset.fontSize === 'number' ? stylePreset.fontSize : 24;
     const isPrimary = fieldKey === 'title';
 
     const textLayer: DesignSurface['layers'][number] = {
-      id: createUuid(),
+      id: previous?.id ?? createUuid(),
       type: 'text',
       zIndex: zIndex++,
       x: fieldGeometry.x,
@@ -211,9 +245,10 @@ export function buildDesignSurfaceFromTemplate(
       height: estimateHeight(fontSize, typeof stylePreset.lineHeight === 'number' ? stylePreset.lineHeight : 1.3),
       rotation: 0,
       opacity: 1,
-      visible: true,
+      // Hidden by the template's design, or nothing to show: the layer still exists.
+      visible: templateVisible && (hasContent || isPrimary),
       locked: false,
-      content: '',
+      content,
       fontFamily: stylePreset.fontFamily?.trim() || 'DM Sans',
       fontSize,
       fontWeight: stylePreset.fontWeight ?? (isPrimary ? 800 : 500),
@@ -226,7 +261,7 @@ export function buildDesignSurfaceFromTemplate(
       verticalAlign: 'top',
       textTransform: fieldKey === 'author' && isCover ? 'uppercase' : 'none',
       role: fieldKey,
-      source: 'metadata',
+      source: hasOverride ? 'manual' : 'metadata',
     } satisfies DesignSurface['layers'][number] & TextLayerProps;
 
     layers.push(textLayer);
@@ -234,4 +269,23 @@ export function buildDesignSurfaceFromTemplate(
 
   surface.layers = layers;
   return surface;
+}
+
+/**
+ * Replaces a composition with a template, atomically: layout + style from the
+ * template, content from the manuscript (or the layer's cover override), and
+ * the user's guides/safe area carried over. One value in, one finished
+ * surface out — no intermediate empty state.
+ */
+export function applyTemplateToSurface(
+  current: DesignSurface,
+  template: EditorialTemplate,
+  options: { palette?: CoverDesign['palette']; binding?: SemanticBinding } = {},
+): DesignSurface {
+  const next = buildDesignSurfaceFromTemplate(template, {
+    palette: options.palette ?? 'obsidian',
+    binding: options.binding,
+    existing: current,
+  });
+  return { ...next, guides: current.guides, safeArea: current.safeArea, isbnArea: current.isbnArea };
 }

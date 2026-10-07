@@ -30,6 +30,7 @@ import {
   RotateCw,
   ShieldCheck,
   Sparkles,
+  Check,
   ChevronDown,
   Eye,
   Grid2X2,
@@ -52,12 +53,13 @@ import { DesignSurfaceCanvas, type DesignSurfaceCanvasHandle } from './DesignSur
 import { CanvasOverlays, type GridDensity } from './CanvasOverlays';
 import { LayersPanel, buildLayersPanelCopy, reorderLayers } from './LayersPanel';
 import { resolveLayerLabel } from './layer-labels';
+import { normalizeLayerPatch } from './layer-patch';
 import { TemplateThumbnail } from './TemplateThumbnail';
 import { PropertiesPanel } from './PropertiesPanel';
 import { BackgroundEditor } from './BackgroundEditor';
 import { DesignSurfaceRenderer } from './DesignSurfaceRenderer';
 import { COVER_TEMPLATES, BACK_COVER_TEMPLATES, type EditorialTemplate } from '@/lib/projects/cover-templates';
-import { buildDesignSurfaceFromTemplate } from '@/lib/projects/design-surface-templates';
+import { applyTemplateToSurface, type SemanticBinding } from '@/lib/projects/design-surface-templates';
 
 export interface AdvancedCoverEditorProps {
   surface: DesignSurface;
@@ -68,6 +70,8 @@ export interface AdvancedCoverEditorProps {
   originalBackgroundSrc?: string;
   /** role -> value the metadata precedence chain currently resolves to (mission §40-41), forwarded to the properties panel's "Actualizar desde metadatos" action. */
   metadataValues?: Partial<Record<string, string>>;
+  /** Manuscript content per semantic slot: what a template's Title/Subtitle/Author slots are filled with. Falls back to `metadataValues`. */
+  semanticBinding?: SemanticBinding;
   saveStatus?: 'idle' | 'saving' | 'saved' | 'error';
   onSaveFinal?: () => void;
 }
@@ -93,11 +97,18 @@ function readFileAsDataUrl(file: File): Promise<string> {
   });
 }
 
-export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, originalBackgroundSrc, metadataValues, saveStatus = 'idle', onSaveFinal }: AdvancedCoverEditorProps) {
+export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, originalBackgroundSrc, metadataValues, semanticBinding, saveStatus = 'idle', onSaveFinal }: AdvancedCoverEditorProps) {
   const canvasRef = useRef<DesignSurfaceCanvasHandle>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const [selectedLayerIds, setSelectedLayerIds] = useState<string[]>([]);
+  const [selectedLayerIds, setSelectedLayerIdsState] = useState<string[]>([]);
+  // Selection echoes between the layers panel and the canvas; only a real change may re-render.
+  const setSelectedLayerIds = useCallback((next: string[] | ((current: string[]) => string[])) => {
+    setSelectedLayerIdsState((current) => {
+      const value = typeof next === 'function' ? next(current) : next;
+      return value.length === current.length && value.every((id, index) => id === current[index]) ? current : value;
+    });
+  }, []);
   const [zoom, setZoom] = useState(1);
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [grid, setGrid] = useState<GridDensity>('none');
@@ -105,7 +116,6 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
   const [historyState, setHistoryState] = useState({ canUndo: false, canRedo: false });
   const [viewportSize, setViewportSize] = useState<{ width: number; height: number } | undefined>(undefined);
   const [activeTool, setActiveTool] = useState<'elements' | 'text' | 'images' | 'shapes' | 'lines' | 'icons' | 'background'>('elements');
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [showAllTemplates, setShowAllTemplates] = useState(false);
   // Once the user picks a zoom level the cover stops following the window size.
   const manualZoomRef = useRef(false);
@@ -168,7 +178,11 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
   const patchLayer = useCallback(
     (layerId: string, patch: Partial<DesignLayer>) => {
       const current = latestSurfaceRef.current;
-      commitSurface({ ...current, layers: patchLayerById(current.layers, layerId, patch) });
+      const target = current.layers.find((layer) => layer.id === layerId);
+      commitSurface({
+        ...current,
+        layers: patchLayerById(current.layers, layerId, target ? normalizeLayerPatch(target, patch) : patch),
+      });
     },
     [commitSurface],
   );
@@ -200,7 +214,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
       const next = !options?.additive ? [layerId] : current.includes(layerId) ? current.filter((id) => id !== layerId) : [...current, layerId];
       return next;
     });
-  }, []);
+  }, [setSelectedLayerIds]);
 
   useEffect(() => {
     canvasRef.current?.selectLayers(selectedLayerIds);
@@ -232,7 +246,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
       setLayers([...surface.layers, duplicate]);
       setSelectedLayerIds([duplicate.id]);
     },
-    [setLayers, surface.layers],
+    [setLayers, setSelectedLayerIds, surface.layers],
   );
 
   const appendLayer = useCallback(
@@ -240,7 +254,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
       setLayers([...surface.layers, layer]);
       setSelectedLayerIds([layer.id]);
     },
-    [setLayers, surface.layers],
+    [setLayers, setSelectedLayerIds, surface.layers],
   );
 
   const addTextLayer = useCallback(() => {
@@ -276,12 +290,22 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
     onChange({ ...surface, background: { kind: 'image', src, fit: 'cover', opacity: 1 }, originAssetId: null, originMode: 'blank' });
   }, [inspectImage, onChange, surface]);
 
+  // The active template is the one the composition was actually built from (persisted on the
+  // surface), not the last card clicked: cancelling the confirmation changes nothing.
+  const selectedTemplateId = surface.templateId ?? null;
+  const binding = useMemo<SemanticBinding>(
+    () => semanticBinding ?? (metadataValues as SemanticBinding | undefined) ?? {},
+    [metadataValues, semanticBinding],
+  );
+
   const applyTemplate = useCallback((template: EditorialTemplate) => {
+    if (selectedTemplateId === template.id && surface.layers.length > 0) return;
     if (surface.layers.length > 0 && !window.confirm(copy.origin.resetToTemplateConfirm)) return;
-    const next = buildDesignSurfaceFromTemplate(template, { palette: 'obsidian' });
-    onChange({ ...next, guides: surface.guides, safeArea: surface.safeArea, isbnArea: surface.isbnArea });
-    setSelectedTemplateId(template.id);
-  }, [copy.origin.resetToTemplateConfirm, onChange, surface.guides, surface.isbnArea, surface.layers.length, surface.safeArea]);
+    const next = applyTemplateToSurface(latestSurfaceRef.current, template, { binding });
+    commitSurface(next);
+    // Layers the old composition had may be gone: never keep a selection pointing at a removed id.
+    setSelectedLayerIds((current) => current.filter((id) => next.layers.some((layer) => layer.id === id)));
+  }, [binding, commitSurface, copy.origin.resetToTemplateConfirm, selectedTemplateId, setSelectedLayerIds, surface.layers.length]);
 
   const addGuide = useCallback(
     (axis: 'x' | 'y') => {
@@ -311,12 +335,12 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
       }),
     );
     setSelectedLayerIds([]);
-  }, [copy.origin.resetToOriginalConfirm, onChange, originalBackgroundSrc, surface]);
+  }, [copy.origin.resetToOriginalConfirm, onChange, originalBackgroundSrc, setSelectedLayerIds, surface]);
 
   const ws = copy.workspace;
   const selectedLayer = selectedLayers.length === 1 ? selectedLayers[0] : null;
   const SelectedIcon = selectedLayer?.type === 'text' ? Type : selectedLayer?.type === 'image' ? ImageIcon : Shapes;
-  const visibleTemplates = showAllTemplates ? templates : templates.slice(0, 3);
+  const visibleTemplates = showAllTemplates ? templates : templates.slice(0, 4);
   const zoomSelectValue = ZOOM_OPTIONS.find((option) => Math.abs(option - zoom) < 0.01)?.toString() ?? 'custom';
 
   return (
@@ -514,10 +538,18 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
                     className="cover-template-card"
                     data-active={selectedTemplateId === template.id ? 'true' : 'false'}
                     onClick={() => applyTemplate(template)}
-                    title={template.description}
+                    aria-pressed={selectedTemplateId === template.id}
+                    aria-label={`${template.name}. ${template.description}`}
                   >
-                    <TemplateThumbnail template={template} surfaceKind={surface.surface} />
-                    <span>{template.name}</span>
+                    <span className="cover-template-card__frame">
+                      <TemplateThumbnail template={template} surfaceKind={surface.surface} />
+                      {selectedTemplateId === template.id && (
+                        <span className="cover-template-card__check" data-testid="cover-template-active-check" aria-hidden="true">
+                          <Check className="h-3 w-3" />
+                        </span>
+                      )}
+                    </span>
+                    <span className="cover-template-card__name">{template.name}</span>
                   </button>
                 ))}
               </div>

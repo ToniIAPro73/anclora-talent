@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getBackCoverDesign, getCoverDesign } from './design-surface-repository';
+import { buildSemanticBinding, getBackCoverDesign, getCoverDesign } from './design-surface-repository';
 import { createEmptyDesignSurface, createDesignLayer, type TextLayerProps } from './design-surface';
 import { createDefaultSurfaceState } from './cover-surface';
 import type { ProjectRecord } from './types';
@@ -147,5 +147,48 @@ describe('getCoverDesign keeps user positions', () => {
     surface.layers = [createDesignLayer({ type: 'text', content: 'x', x: -30.99615912240978, y: 143.36 }, 1)];
     const roundTripped = JSON.parse(JSON.stringify(surface));
     expect(roundTripped.layers[0]).toMatchObject({ x: -30.99615912240978, y: 143.36 });
+  });
+});
+
+describe('buildSemanticBinding', () => {
+  it('cover: title/subtitle/author come from the same precedence chain as hydration', () => {
+    const project = makeProject({
+      document: { ...makeProject().document, title: 'Doc', subtitle: 'Sub del documento', author: 'Autora Real', metadata: { title: 'Título confirmado' } } as never,
+    });
+    expect(buildSemanticBinding(project, 'cover')).toEqual({
+      title: 'Título confirmado',
+      subtitle: 'Sub del documento',
+      author: 'Autora Real',
+    });
+  });
+
+  it('never surfaces the provisional "Mi proyecto" title', () => {
+    const project = makeProject({ title: 'Mi proyecto', document: { ...makeProject().document, title: '' } as never });
+    expect(buildSemanticBinding(project, 'cover').title).toBe('');
+  });
+
+  it('back cover: title plus the back-cover body and author bio', () => {
+    const project = makeProject({
+      backCover: { id: 'bc', title: '', body: ' Sinopsis ', authorBio: 'Bio del autor', accentColor: null, backgroundImageUrl: null, renderedImageUrl: null } as never,
+    });
+    expect(buildSemanticBinding(project, 'back-cover')).toMatchObject({ body: 'Sinopsis', authorBio: 'Bio del autor' });
+  });
+});
+
+describe('hydration visibility', () => {
+  it('a slot hidden on purpose stays hidden when the manuscript has content; an empty slot that gains content shows', () => {
+    const surface = createEmptyDesignSurface('cover');
+    surface.layers = [
+      createDesignLayer({ type: 'text', role: 'subtitle', source: 'metadata', content: 'ya tenía texto', visible: false }, 1),
+      createDesignLayer({ type: 'text', role: 'author', source: 'metadata', content: '', visible: false }, 2),
+    ];
+    const project = makeProject({
+      document: { ...makeProject().document, subtitle: 'Sub', author: 'Autor' } as never,
+      cover: { id: 'c', title: '', subtitle: '', palette: 'obsidian', backgroundImageUrl: null, thumbnailUrl: null, surfaceState: surface } as never,
+    });
+    const hydrated = getCoverDesign(project);
+    const find = (r: string) => hydrated.layers.find((l) => l.type === 'text' && l.role === r);
+    expect(find('subtitle')).toMatchObject({ content: 'Sub', visible: false });
+    expect(find('author')).toMatchObject({ content: 'Autor', visible: true });
   });
 });

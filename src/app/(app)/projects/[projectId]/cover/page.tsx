@@ -8,7 +8,7 @@ import { isFileStudioEnabled } from '@/lib/filestudio/config';
 import { listProjectFileStudioJobs } from '@/lib/filestudio/emission';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
-import { getCoverDesign } from '@/lib/projects/design-surface-repository';
+import { buildSemanticBinding, getCoverDesign } from '@/lib/projects/design-surface-repository';
 
 export default async function ProjectCoverPage({
   params,
@@ -45,6 +45,7 @@ export default async function ProjectCoverPage({
         sourceDocumentAssetId={sourceDocumentAssetId}
         pageCount={pageCount}
         copy={coverDesignSurfaceCopy}
+        semanticBinding={buildSemanticBinding(project, 'cover')}
       />
       {filestudioJobs && (
         <section aria-label={filestudioCopy.derivativesTitle} className="mt-8">

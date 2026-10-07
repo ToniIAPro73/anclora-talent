@@ -29,7 +29,7 @@ import {
   type TextLayerRole,
 } from '@/lib/projects/design-surface';
 import { COVER_TEMPLATES, BACK_COVER_TEMPLATES, type EditorialTemplate } from '@/lib/projects/cover-templates';
-import { buildDesignSurfaceFromTemplate, applyPaletteToSurface, PALETTE_PRESETS, type SurfacePalette } from '@/lib/projects/design-surface-templates';
+import { applyTemplateToSurface, applyPaletteToSurface, PALETTE_PRESETS, type SemanticBinding, type SurfacePalette } from '@/lib/projects/design-surface-templates';
 import { FontSelector } from '../cover-studio/FontSelector';
 import { ColorPickerField } from './ColorPickerField';
 import { ImageLayerProperties } from './ImageLayerProperties';
@@ -254,31 +254,15 @@ export function BasicCoverEditor({ surface, onChange, copy, palette, onPaletteCh
 
   const applyTemplate = (template: EditorialTemplate) => {
     if (!isEmptyDesignSurface(surface) && !window.confirm(copy.origin.resetToTemplateConfirm)) return;
-    const existingContentByRole = new Map<string, string>();
+    // Basic mode has no manuscript binding of its own: what each slot currently says is its content.
+    const binding: SemanticBinding = {};
     for (const layer of surface.layers) {
-      if (layer.type === 'text' && layer.role && layer.content) {
-        existingContentByRole.set(layer.role, layer.content);
+      if (layer.type === 'text' && layer.role !== 'free' && layer.content) {
+        (binding as Record<string, string>)[layer.role] = layer.content;
       }
     }
-
-    const next = buildDesignSurfaceFromTemplate(template, { palette });
-    const preservedLayers = next.layers.map((layer) => {
-      if (layer.type === 'text' && layer.role && existingContentByRole.has(layer.role)) {
-        return {
-          ...layer,
-          content: existingContentByRole.get(layer.role)!,
-          source: 'manual' as const,
-        };
-      }
-      return layer;
-    });
-
     onChange({
-      ...next,
-      layers: preservedLayers,
-      guides: surface.guides,
-      safeArea: surface.safeArea,
-      isbnArea: surface.isbnArea,
+      ...applyTemplateToSurface(surface, template, { palette, binding }),
       originAssetId: null,
       originMode: 'blank',
     });

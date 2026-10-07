@@ -6,7 +6,7 @@ import { requireUserId } from '@/lib/auth/guards';
 import { projectRepository } from '@/lib/db/repositories';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
-import { getBackCoverDesign } from '@/lib/projects/design-surface-repository';
+import { buildSemanticBinding, getBackCoverDesign } from '@/lib/projects/design-surface-repository';
 
 export default async function ProjectBackCoverPage({
   params,
@@ -55,6 +55,7 @@ export default async function ProjectBackCoverPage({
         sourceDocumentAssetId={sourceDocumentAssetId}
         pageCount={pageCount}
         copy={coverDesignSurfaceCopy}
+        semanticBinding={buildSemanticBinding(project, 'back-cover')}
       />
     </div>
   );

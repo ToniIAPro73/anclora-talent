@@ -22,6 +22,7 @@ import {
 } from '@/lib/projects/design-surface';
 import { saveBackCoverDesignAction, saveCoverDesignAction, type SaveDesignSurfaceResult } from '@/lib/projects/actions';
 import { rasterizeSourcePdfPage, resolveOriginPageNumber } from '@/lib/projects/pdf-page-rasterizer';
+import type { SemanticBinding } from '@/lib/projects/design-surface-templates';
 import { AdvancedCoverEditor } from './AdvancedCoverEditor';
 import { CoverOriginPrompt } from './CoverOriginPrompt';
 
@@ -35,6 +36,8 @@ export interface CoverStudioV2Props {
   pageCount: number | null;
   copy: AppMessages['coverDesignSurface'];
   brandColors?: string[];
+  /** Manuscript content per semantic slot, used when a template is applied (title/subtitle/author or title/body/bio). */
+  semanticBinding?: SemanticBinding;
 }
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
@@ -50,6 +53,7 @@ export function CoverStudioV2({
   pageCount,
   copy,
   brandColors,
+  semanticBinding,
 }: CoverStudioV2Props) {
   const [surface, setSurface] = useState<DesignSurface>(initialSurface);
   const [promptDismissed, setPromptDismissed] = useState(false);
@@ -163,6 +167,7 @@ export function CoverStudioV2({
           onChange={handleChange}
           copy={copy}
           brandColors={brandColors}
+          semanticBinding={semanticBinding}
           originalBackgroundSrc={originalBackgroundSrc}
           saveStatus={saveStatus}
           onSaveFinal={() => void handleSaveFinal()}

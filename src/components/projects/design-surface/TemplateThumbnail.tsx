@@ -15,24 +15,22 @@ import { DesignSurfaceRenderer } from './DesignSurfaceRenderer';
 export function TemplateThumbnail({
   template,
   surfaceKind,
-  width = 64,
+  width = 84,
 }: {
   template: EditorialTemplate;
   surfaceKind: DesignSurface['surface'];
   width?: number;
 }) {
   const surface = useMemo(() => {
-    const built = buildDesignSurfaceFromTemplate(template, { palette: 'obsidian' });
-    // Templates carry no text of their own (it comes from the document's metadata),
-    // so the miniature shows neutral sample copy to make the composition readable.
-    const sample: Record<string, string> = { title: 'Título', subtitle: 'Subtítulo del libro', author: 'Autor', body: 'Texto', authorBio: 'Autor' };
-    // Stable ids: the builder mints random ones, which would differ between server and client render.
-    const layers = built.layers.map((layer, index) => {
-      const stable = { ...layer, id: `${template.id}-thumb-${index}` };
-      return stable.type === 'text'
-        ? { ...stable, content: stable.content.trim() ? stable.content : (sample[stable.role] ?? 'Texto'), visible: true }
-        : stable;
+    // Templates carry no text of their own (it comes from the manuscript), so the miniature is
+    // built with neutral sample content to make the composition readable. Fields the template
+    // hides stay hidden, exactly as when it is applied.
+    const built = buildDesignSurfaceFromTemplate(template, {
+      palette: 'obsidian',
+      binding: { title: 'Título', subtitle: 'Subtítulo del libro', author: 'Autor', body: 'Texto de la contraportada', authorBio: 'Sobre el autor' },
     });
+    // Stable ids: the builder mints random ones, which would differ between server and client render.
+    const layers = built.layers.map((layer, index) => ({ ...layer, id: `${template.id}-thumb-${index}` }));
     return { ...built, layers, surface: surfaceKind };
   }, [surfaceKind, template]);
   const scale = width / surface.width;

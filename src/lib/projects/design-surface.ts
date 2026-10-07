@@ -145,6 +145,8 @@ export interface DesignSurface {
   originMode?: SurfaceOriginMode;
   /** Marks a design the user explicitly finalized (mission §43) — informational only, never blocks further edits. */
   status?: 'draft' | 'final';
+  /** The editorial template this composition was last built from (drives the gallery's active state). Never imposes layout again after the build. */
+  templateId?: string | null;
 }
 
 const DEFAULT_PALETTE_COLORS: Record<CoverDesign['palette'], { primary: string; secondary: string; background: string }> = {

@@ -113,6 +113,7 @@ export const designSurfaceSchema = z.object({
   originAssetId: z.string().nullable().optional(),
   originMode: z.enum(['blank', 'use-original', 'edit-original']).optional(),
   status: z.enum(['draft', 'final']).optional(),
+  templateId: z.string().min(1).nullable().optional(),
 });
 
 export type ValidatedDesignSurface = z.infer<typeof designSurfaceSchema>;

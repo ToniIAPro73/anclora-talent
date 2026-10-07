@@ -19,6 +19,7 @@ import {
   type TextLayerProps,
 } from './design-surface';
 import type { SurfaceState } from './cover-surface';
+import type { SemanticBinding } from './design-surface-templates';
 import type { BackCoverDesign, CoverDesign, ProjectRecord } from './types';
 
 function isTextLayer(layer: DesignLayer): layer is DesignLayer & TextLayerProps {
@@ -50,11 +51,35 @@ function hydrateMetadataLayers(surface: DesignSurface, project: ProjectRecord): 
     return {
       ...layer,
       content: resolved.value,
-      visible: Boolean(resolved.value.trim()),
+      // An empty slot is hidden; a slot that gains content shows. A slot that already had
+      // content keeps the visibility the template/user gave it (a template may hide it on purpose).
+      visible: resolved.value.trim() ? (layer.content.trim() ? layer.visible : true) : false,
     };
   });
 
   return { ...surface, layers };
+}
+
+/**
+ * The manuscript content behind each semantic slot of a surface — the single input a
+ * template needs to fill its Title/Subtitle/Author (cover) or Title/Body/Bio (back
+ * cover) slots. Reuses the same precedence chain as hydration (`resolveCoverText`),
+ * so applying a template and reloading the page can never disagree.
+ */
+export function buildSemanticBinding(project: ProjectRecord, surfaceKind: 'cover' | 'back-cover'): SemanticBinding {
+  const title = resolveCoverText(project, 'title').value;
+  if (surfaceKind === 'cover') {
+    return {
+      title,
+      subtitle: resolveCoverText(project, 'subtitle').value,
+      author: resolveCoverText(project, 'author').value,
+    };
+  }
+  return {
+    title,
+    body: project.backCover?.body?.trim() ?? '',
+    authorBio: project.backCover?.authorBio?.trim() ?? '',
+  };
 }
 
 function coverMigrationContext(cover: CoverDesign) {
