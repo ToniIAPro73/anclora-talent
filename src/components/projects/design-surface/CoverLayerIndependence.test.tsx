@@ -242,6 +242,10 @@ async function setupWithBinding(initial: DesignSurface = makeSurface()) {
   return { surface: () => latest };
 }
 
+/** The top "Plantilla editorial" select is the single place a template is chosen. */
+const chooseTemplate = (id: string) => fireEvent.change(screen.getByTestId('cover-template-select'), { target: { value: id } });
+const activeCard = () => screen.getByTestId('cover-template-active-card');
+
 const textOf = (surface: DesignSurface, role: string) => surface.layers.find((l) => l.type === 'text' && l.role === role) as (DesignSurface['layers'][number] & { content: string; source: string; visible: boolean }) | undefined;
 
 describe('applying a cover template', () => {
@@ -251,55 +255,57 @@ describe('applying a cover template', () => {
 
   it('materializes every slot with the manuscript content and marks the template active', async () => {
     const { surface } = await setupWithBinding();
-    fireEvent.click(screen.getByTestId(`cover-template-card-${TEMPLATE_A.id}`));
+    chooseTemplate(TEMPLATE_A.id);
 
     expect(surface().layers).toHaveLength(3);
     expect(textOf(surface(), 'title')).toMatchObject({ content: 'La atención deliberada', source: 'metadata', visible: true });
     expect(textOf(surface(), 'subtitle')).toMatchObject({ content: 'Sistemas para pensar' });
     expect(textOf(surface(), 'author')).toMatchObject({ content: 'María Vega' });
     expect(surface().templateId).toBe(TEMPLATE_A.id);
-    expect(screen.getByTestId(`cover-template-card-${TEMPLATE_A.id}`)).toHaveAttribute('data-active', 'true');
-    expect(screen.getAllByTestId('cover-template-active-check')).toHaveLength(1);
+    expect(activeCard()).toHaveAttribute('data-template-id', TEMPLATE_A.id);
+    expect(screen.getAllByTestId('cover-template-active-card')).toHaveLength(1);
+    expect(screen.getByTestId('cover-template-select')).toHaveValue(TEMPLATE_A.id);
   });
 
   it('cancelling the confirmation changes neither the surface nor the active template', async () => {
     const { surface } = await setupWithBinding();
-    fireEvent.click(screen.getByTestId(`cover-template-card-${TEMPLATE_A.id}`));
+    chooseTemplate(TEMPLATE_A.id);
     const applied = surface();
 
     vi.spyOn(window, 'confirm').mockReturnValue(false);
-    fireEvent.click(screen.getByTestId(`cover-template-card-${TEMPLATE_B.id}`));
+    chooseTemplate(TEMPLATE_B.id);
 
     expect(surface()).toBe(applied);
-    expect(screen.getByTestId(`cover-template-card-${TEMPLATE_A.id}`)).toHaveAttribute('data-active', 'true');
-    expect(screen.getByTestId(`cover-template-card-${TEMPLATE_B.id}`)).toHaveAttribute('data-active', 'false');
+    expect(activeCard()).toHaveAttribute('data-template-id', TEMPLATE_A.id);
+    expect(screen.getByTestId('cover-template-select')).toHaveValue(TEMPLATE_A.id); // the select reverts too
   });
 
   it('A -> B -> C -> A keeps the content and the layer identities; the active card follows', async () => {
     const { surface } = await setupWithBinding();
-    fireEvent.click(screen.getByTestId(`cover-template-card-${TEMPLATE_A.id}`));
+    chooseTemplate(TEMPLATE_A.id);
     const ids = surface().layers.map((l) => l.id);
     const contentA = surface().layers.map((l) => (l.type === 'text' ? l.content : ''));
 
     for (const template of [TEMPLATE_B, TEMPLATE_C, TEMPLATE_A]) {
-      fireEvent.click(screen.getByTestId(`cover-template-card-${template.id}`));
+      chooseTemplate(template.id);
       expect(surface().layers.map((l) => l.id)).toEqual(ids);
       expect(surface().layers.map((l) => (l.type === 'text' ? l.content : ''))).toEqual(contentA);
       expect(surface().templateId).toBe(template.id);
-      expect(screen.getByTestId(`cover-template-card-${template.id}`)).toHaveAttribute('data-active', 'true');
+      expect(activeCard()).toHaveAttribute('data-template-id', template.id);
+      expect(screen.getByTestId('cover-template-active-name')).toHaveTextContent(template.name);
     }
   });
 
   it('a title edited on the cover is an override that survives the next template', async () => {
     const { surface } = await setupWithBinding();
-    fireEvent.click(screen.getByTestId(`cover-template-card-${TEMPLATE_A.id}`));
+    chooseTemplate(TEMPLATE_A.id);
     const title = textOf(surface(), 'title')!;
 
     fireEvent.click(screen.getByTestId(`layer-select-${title.id}`));
     fireEvent.change(screen.getByTestId('text-layer-content-input'), { target: { value: 'Título de portada' } });
     expect(textOf(surface(), 'title')).toMatchObject({ content: 'Título de portada', source: 'manual' });
 
-    fireEvent.click(screen.getByTestId(`cover-template-card-${TEMPLATE_B.id}`));
+    chooseTemplate(TEMPLATE_B.id);
     expect(textOf(surface(), 'title')).toMatchObject({ content: 'Título de portada', source: 'manual' });
     expect(textOf(surface(), 'subtitle')).toMatchObject({ content: 'Sistemas para pensar', source: 'metadata' });
   });
@@ -313,7 +319,7 @@ describe('applying a cover template', () => {
     fireEvent.click(screen.getByTestId(`layer-select-${free.id}`));
     expect(screen.getByTestId('cover-properties-selection')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId(`cover-template-card-${TEMPLATE_A.id}`));
+    chooseTemplate(TEMPLATE_A.id);
     expect(screen.queryByTestId('cover-properties-selection')).not.toBeInTheDocument();
     expect(screen.getByTestId('properties-panel-empty')).toBeInTheDocument();
   });

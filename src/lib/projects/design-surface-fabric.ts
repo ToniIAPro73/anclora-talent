@@ -378,3 +378,27 @@ export function normalizeFabricObjectScale(object: FabricObject): void {
   const height = (object.height ?? 0) * scaleY;
   object.set({ width, height, scaleX: 1, scaleY: 1 });
 }
+
+/**
+ * Live geometry of the objects on a canvas in surface pixels (what is actually drawn, text height included),
+ * keyed by layer id. Editor and preview both read it, so parity is checked on the real objects.
+ */
+export function readLiveGeometry(objects: FabricObject[]): Record<string, { x: number; y: number; width: number; height: number; rotation: number; fontSize?: number; fontFamily?: string; lines?: number }> {
+  const round = (value: number) => Math.round(value * 100) / 100;
+  const entries: Array<[string, { x: number; y: number; width: number; height: number; rotation: number; fontSize?: number; fontFamily?: string; lines?: number }]> = [];
+  for (const object of objects) {
+    if (!object?.id || object.id === BACKGROUND_OBJECT_ID || object.visible === false) continue;
+    entries.push([
+      object.id,
+      {
+        x: round(object.left ?? 0),
+        y: round(object.top ?? 0),
+        width: round((object.width ?? 0) * (object.scaleX ?? 1)),
+        height: round((object.height ?? 0) * (object.scaleY ?? 1)),
+        rotation: round(object.angle ?? 0),
+        ...(typeof object.text === 'string' ? { fontSize: object.fontSize, fontFamily: object.fontFamily, lines: Array.isArray(object._textLines) ? object._textLines.length : undefined } : {}),
+      },
+    ]);
+  }
+  return Object.fromEntries(entries);
+}

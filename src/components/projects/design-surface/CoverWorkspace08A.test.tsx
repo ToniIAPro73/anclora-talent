@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
 import { ProjectWorkspace } from '../ProjectWorkspace';
+import { COVER_TEMPLATES } from '@/lib/projects/cover-templates';
 import { AdvancedCoverEditor } from './AdvancedCoverEditor';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import type { ProjectRecord } from '@/lib/projects/types';
@@ -146,7 +147,7 @@ describe('COVER_EDITOR_08A Architectural Contract Gates', () => {
     expect(screen.getByTestId('cover-tool-button-icons')).toBeInTheDocument();
     expect(screen.getByTestId('cover-tool-button-background')).toBeInTheDocument();
     expect(screen.getByTestId('cover-template-select')).toBeInTheDocument();
-    expect(screen.getByTestId('cover-templates-view-all-button')).toBeInTheDocument();
+    expect(screen.queryByTestId('cover-templates-view-all-button')).not.toBeInTheDocument(); // no second gallery
 
     // COVER_UI_05: Central canvas is mounted with bottom zoom controls
     expect(screen.getByTestId('advanced-editor-canvas-column')).toBeInTheDocument();
@@ -204,15 +205,23 @@ describe('COVER_EDITOR_08A Architectural Contract Gates', () => {
     expect(header).toContainElement(screen.getByTestId('add-horizontal-guide-button'));
   });
 
-  test('COVER_UI_14: templates render real miniatures and "Ver todas" reveals the full catalogue', () => {
-    render(<AdvancedCoverEditor surface={createEmptyDesignSurface('cover')} onChange={vi.fn()} copy={coverCopy} />);
+  test('COVER_UI_14: the sidebar shows only the applied template (large miniature); the top select owns the choice', () => {
+    const surface = createEmptyDesignSurface('cover');
+    const { rerender } = render(<AdvancedCoverEditor surface={surface} onChange={vi.fn()} copy={coverCopy} />);
+    // No template applied yet: no card, no gallery.
+    expect(screen.queryByTestId('cover-template-active-card')).not.toBeInTheDocument();
+    expect(screen.queryAllByTestId(/^cover-template-card-/)).toHaveLength(0);
 
-    const initial = screen.getAllByTestId(/^cover-template-card-/);
-    expect(initial.length).toBe(4);
-    expect(screen.getAllByTestId(/^cover-template-thumb-/).length).toBe(4);
+    const [first, second] = COVER_TEMPLATES;
+    rerender(<AdvancedCoverEditor surface={{ ...surface, templateId: first.id }} onChange={vi.fn()} copy={coverCopy} />);
+    expect(screen.getAllByTestId('cover-template-active-card')).toHaveLength(1);
+    expect(screen.getAllByTestId(/^cover-template-thumb-/)).toHaveLength(1);
+    expect(screen.getByTestId('cover-template-active-card')).toHaveAttribute('data-template-id', first.id);
+    expect(screen.getByTestId('cover-template-select')).toHaveValue(first.id);
 
-    fireEvent.click(screen.getByTestId('cover-templates-view-all-button'));
-    expect(screen.getAllByTestId(/^cover-template-card-/).length).toBeGreaterThan(4);
+    rerender(<AdvancedCoverEditor surface={{ ...surface, templateId: second.id }} onChange={vi.fn()} copy={coverCopy} />);
+    expect(screen.getByTestId('cover-template-active-card')).toHaveAttribute('data-template-id', second.id);
+    expect(screen.getByTestId('cover-template-active-name')).toHaveTextContent(second.name);
   });
 
   test('COVER_PROPS_01: the text properties form is compact (icon buttons, readable case control, internal scroll)', () => {

@@ -30,7 +30,6 @@ import {
   RotateCw,
   ShieldCheck,
   Sparkles,
-  Check,
   ChevronDown,
   Eye,
   Grid2X2,
@@ -63,7 +62,7 @@ import {
   imageLayerToBackground,
   type BackgroundImageSpec,
 } from '@/lib/projects/design-surface-background';
-import { DesignSurfaceRenderer } from './DesignSurfaceRenderer';
+import { DesignSurfaceStaticPreview } from './DesignSurfaceStaticPreview';
 import { COVER_TEMPLATES, BACK_COVER_TEMPLATES, type EditorialTemplate } from '@/lib/projects/cover-templates';
 import { applyTemplateToSurface, type SemanticBinding } from '@/lib/projects/design-surface-templates';
 
@@ -128,7 +127,6 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
   const [historyState, setHistoryState] = useState({ canUndo: false, canRedo: false });
   const [viewportSize, setViewportSize] = useState<{ width: number; height: number } | undefined>(undefined);
   const [activeTool, setActiveTool] = useState<'elements' | 'text' | 'images' | 'shapes' | 'lines' | 'icons' | 'background'>('elements');
-  const [showAllTemplates, setShowAllTemplates] = useState(false);
   // Once the user picks a zoom level the cover stops following the window size.
   const manualZoomRef = useRef(false);
   const [isPreview, setIsPreview] = useState(false);
@@ -418,7 +416,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
   const ws = copy.workspace;
   const selectedLayer = selectedLayers.length === 1 ? selectedLayers[0] : null;
   const SelectedIcon = selectedLayer?.type === 'text' ? Type : selectedLayer?.type === 'image' ? ImageIcon : Shapes;
-  const visibleTemplates = showAllTemplates ? templates : templates.slice(0, 4);
+  const activeTemplate = templates.find((template) => template.id === selectedTemplateId) ?? null;
   const zoomSelectValue = ZOOM_OPTIONS.find((option) => Math.abs(option - zoom) < 0.01)?.toString() ?? 'custom';
 
   return (
@@ -535,7 +533,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
 
       {isPreview ? (
         <div className="cover-editor-preview-stage" data-testid="cover-editor-preview-stage">
-          <DesignSurfaceRenderer surface={surface} />
+          <DesignSurfaceStaticPreview surface={surface} />
           <button
             type="button"
             data-testid="cover-editor-preview-exit-button"
@@ -593,45 +591,24 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
               }}
             />
 
-            <section className="cover-editor-templates" aria-label={ws.templates}>
-              <div className="cover-editor-section-heading">
-                <strong>{ws.templates}</strong>
-                <button
-                  type="button"
-                  data-testid="cover-templates-view-all-button"
-                  className="cover-editor-link"
-                  aria-expanded={showAllTemplates}
-                  onClick={() => setShowAllTemplates((current) => !current)}
+            {activeTemplate && (
+              <section className="cover-editor-templates" aria-label={ws.templates}>
+                <div className="cover-editor-section-heading">
+                  <strong>{ws.templates}</strong>
+                </div>
+                {/* Display only: the top "Plantilla editorial" select is the single place a template is chosen. */}
+                <div
+                  className="cover-template-card cover-template-card--current"
+                  data-testid="cover-template-active-card"
+                  data-template-id={activeTemplate.id}
+                  data-active="true"
+                  title={activeTemplate.description}
                 >
-                  {ws.viewAllTemplates}
-                  <ChevronDown className={`h-3 w-3 transition-transform ${showAllTemplates ? 'rotate-180' : ''}`} />
-                </button>
-              </div>
-              <div className="cover-template-grid" data-testid="cover-template-grid">
-                {visibleTemplates.map((template) => (
-                  <button
-                    key={template.id}
-                    type="button"
-                    data-testid={`cover-template-card-${template.id}`}
-                    className="cover-template-card"
-                    data-active={selectedTemplateId === template.id ? 'true' : 'false'}
-                    onClick={() => applyTemplate(template)}
-                    aria-pressed={selectedTemplateId === template.id}
-                    aria-label={`${template.name}. ${template.description}`}
-                  >
-                    <span className="cover-template-card__frame">
-                      <TemplateThumbnail template={template} surfaceKind={surface.surface} />
-                      {selectedTemplateId === template.id && (
-                        <span className="cover-template-card__check" data-testid="cover-template-active-check" aria-hidden="true">
-                          <Check className="h-3 w-3" />
-                        </span>
-                      )}
-                    </span>
-                    <span className="cover-template-card__name">{template.name}</span>
-                  </button>
-                ))}
-              </div>
-            </section>
+                  <TemplateThumbnail template={activeTemplate} surfaceKind={surface.surface} width={168} />
+                  <span className="cover-template-card__name" data-testid="cover-template-active-name">{activeTemplate.name}</span>
+                </div>
+              </section>
+            )}
 
             <input
               ref={coverInputRef}

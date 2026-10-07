@@ -35,6 +35,7 @@ import {
   normalizeFabricObjectScale,
   readBackgroundFrameFromFabricObject,
   readLayerPatchFromFabricObject,
+  readLiveGeometry,
 } from '@/lib/projects/design-surface-fabric';
 import { BACKGROUND_OBJECT_ID } from '@/lib/projects/design-surface-background';
 import {
@@ -138,6 +139,8 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
       onBackgroundClickRef.current = onBackgroundClick;
     }, [onBackgroundClick]);
     const pendingSelectionRef = useRef<string[] | null>(null);
+    // True while an object is being rebuilt in place: the remove/add must not look like a user deselect.
+    const rebuildingRef = useRef(false);
     const onBackgroundFrameChangeRef = useRef(onBackgroundFrameChange);
     const onBackgroundRestoreRef = useRef(onBackgroundRestore);
     useEffect(() => {
@@ -176,6 +179,13 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
     useEffect(() => {
       onLayerChangeRef.current = onLayerChange;
     }, [onLayerChange]);
+
+    // What is actually drawn (text height included), published for parity checks against the preview.
+    const publishLiveGeometry = useCallback(() => {
+      const canvas = fabricRef.current;
+      if (!canvas || !containerRef.current) return;
+      containerRef.current.setAttribute('data-live-geometry', JSON.stringify(readLiveGeometry(canvas.getObjects?.() ?? [])));
+    }, []);
 
     const reportLayerChange = useCallback((object: FabricObject) => {
       if (!object?.id) return;
@@ -219,6 +229,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           canvas.add(object);
         }
         canvas.renderAll();
+        publishLiveGeometry();
         setCanvasReady(true);
         onReadyRef.current?.();
 
@@ -226,6 +237,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
         historyIndexRef.current = 0;
 
         const emitSelection = (event: FabricEvent) => {
+          if (rebuildingRef.current) return;
           const selected: FabricObject[] = event.selected ?? (event.target ? [event.target] : []);
           const all = selected.map((object) => object.id).filter(Boolean);
           const onlyBackground = all.length > 0 && all.every((id: string) => id === BACKGROUND_OBJECT_ID);
@@ -243,6 +255,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
         canvas.on('selection:created', emitSelection);
         canvas.on('selection:updated', emitSelection);
         canvas.on('selection:cleared', () => {
+          if (rebuildingRef.current) return;
           setActiveObjectIds([]);
           onSelectionChange([]);
         });
@@ -266,6 +279,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           guideManagerRef.current?.hideGuidesWithAnimation();
           if (suppressHistoryRef.current) return;
           if (event.target) reportLayerChange(event.target);
+          publishLiveGeometry();
           pushHistory();
         });
 
@@ -344,11 +358,20 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           const needsRebuild = !existing || layer.type === 'image';
 
           if (needsRebuild) {
-            if (existing) canvas.remove(existing);
+            // Rebuilding an image (fit/crop/size/filters) must keep it selected: the removal of the
+            // active object would otherwise read as a deselect and hide its inspector.
+            const wasActive = Boolean(existing) && canvas.getActiveObject?.() === existing;
             const object = await hydrateFabricLayerObject(fabric, layer);
-            if (object) {
-              objectsByIdRef.current.set(layer.id, object);
-              canvas.add(object);
+            rebuildingRef.current = true;
+            try {
+              if (existing) canvas.remove(existing);
+              if (object) {
+                objectsByIdRef.current.set(layer.id, object);
+                canvas.add(object);
+                if (wasActive) canvas.setActiveObject?.(object);
+              }
+            } finally {
+              rebuildingRef.current = false;
             }
           } else {
             existing.set(fabricPatchFromLayer(layer));
@@ -376,6 +399,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
         }
 
         renderCanvas(canvas);
+        publishLiveGeometry();
         // Property-panel and layer-panel edits arrive through the canonical
         // surface rather than Fabric events. Record them here as one history
         // entry; pushHistory deduplicates the snapshot emitted by a drag.
@@ -385,7 +409,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
       return () => {
         cancelled = true;
       };
-    }, [pushHistory, surface.layers]);
+    }, [pushHistory, publishLiveGeometry, surface.layers]);
 
     // Background changes independently of the layer array.
     useEffect(() => {

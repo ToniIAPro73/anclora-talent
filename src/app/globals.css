@@ -3316,6 +3316,8 @@ body:has([data-testid="cover-step-workspace"]) .talent-legal-footer { display: n
 .cover-template-card__frame { position: relative; display: inline-block; line-height: 0; }
 .cover-template-card[data-active="true"] .cover-template-thumb { box-shadow: 0 0 0 2px var(--accent), 0 4px 12px rgb(0 0 0 / 40%); }
 .cover-template-card__check { position: absolute; top: -6px; right: -6px; display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); color: #081019; box-shadow: 0 1px 4px rgb(0 0 0 / 50%); }
+.cover-template-card--current { cursor: default; padding: 8px 8px 10px; font-size: 12px; font-weight: 600; }
+.cover-template-card--current:hover { background: var(--accent-soft); }
 .cover-template-card__name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .cover-template-thumb { overflow: hidden; border-radius: 3px; box-shadow: 0 2px 8px rgb(0 0 0 / 35%); }
 .cover-editor-import { flex: 0 0 auto; width: 100%; height: 32px !important; min-height: 0 !important; padding: 0 10px !important; font-size: 12px !important; gap: 6px; margin-top: auto; }
@@ -3386,8 +3388,12 @@ body:has([data-testid="cover-step-workspace"]) .talent-legal-footer { display: n
 .cover-editor-bottom-zoom span { cursor: default; min-width: 56px; }
 .cover-editor-bottom-zoom button:hover { background: var(--hover); }
 .cover-editor-bottom-zoom > :last-child { border-right: 0; }
-.cover-editor-preview-stage { display: grid; flex: 1; place-items: center; align-content: center; gap: 20px; min-height: 0; padding: 28px; background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--accent) 16%, var(--cover-stage)) 0%, var(--cover-stage) 70%); }
-.cover-editor-preview-stage > :first-child { width: min(380px, 60vw); max-height: 70%; box-shadow: 0 24px 60px rgb(0 0 0 / 55%); }
+.cover-editor-preview-stage { display: flex; flex: 1; flex-direction: column; align-items: center; gap: 8px; min-height: 0; padding: 8px 16px 16px; background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--accent) 16%, var(--cover-stage)) 0%, var(--cover-stage) 70%); }
+.cover-editor-preview-stage > button { flex: 0 0 auto; }
+/* The preview fills the stage; the cover inside keeps its exact aspect ratio (uniform scale only). */
+.cover-preview-surface { position: relative; display: grid; flex: 1 1 0; width: 100%; min-height: 0; place-items: center; }
+.cover-preview-paper { box-shadow: 0 24px 60px rgb(0 0 0 / 55%), 0 0 0 1px rgb(255 255 255 / 6%); }
+.cover-preview-paper canvas { display: block; }
 
 /* ── Properties + layers ─────────────────────────────────────────────── */
 .cover-properties-panel {

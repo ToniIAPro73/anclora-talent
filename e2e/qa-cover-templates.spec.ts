@@ -45,18 +45,21 @@ async function contents(page: Page): Promise<Record<string, string>> {
 async function geometry(page: Page): Promise<Record<string, { x: number; y: number; width: number; height: number }>> {
   return JSON.parse((await page.getByTestId('design-surface-canvas').getAttribute('data-object-geometry')) ?? '{}');
 }
-const cards = (page: Page) => page.locator('[data-testid^="cover-template-card-"]');
+// The top "Plantilla editorial" select is the only place a template is chosen; the sidebar shows the applied one.
+const templateOptions = (page: Page) => page.locator('[data-testid="cover-template-select"] option:not([value=""])');
 async function activeCardIds(page: Page): Promise<string[]> {
-  return page.locator('[data-testid^="cover-template-card-"][data-active="true"]').evaluateAll((els) =>
-    els.map((el) => (el.getAttribute('data-testid') ?? '').replace('cover-template-card-', '')),
-  );
+  const selected = await page.getByTestId('cover-template-select').inputValue();
+  const card = await page.getByTestId('cover-template-active-card').getAttribute('data-template-id');
+  expect(card, 'sidebar card follows the top select').toBe(selected);
+  return [selected];
 }
 async function applyCard(page: Page, index: number, accept = true) {
   // Re-applying the active template asks nothing, so the handler must not outlive the click.
   const onDialog = (dialog: import('@playwright/test').Dialog) => void (accept ? dialog.accept() : dialog.dismiss());
   page.on('dialog', onDialog);
   try {
-    await cards(page).nth(index).click();
+    const value = await templateOptions(page).nth(index).getAttribute('value');
+    await page.getByTestId('cover-template-select').selectOption(value!);
     await page.waitForTimeout(700);
   } finally {
     page.off('dialog', onDialog);
@@ -72,7 +75,7 @@ test('A. every template materializes all slots with the manuscript content (no b
   const original = await contents(page);
   expect(original[TITLE].replace(/\s+/g, ' ')).toContain('La atención');
 
-  const total = await cards(page).count();
+  const total = await templateOptions(page).count();
   expect(total).toBeGreaterThanOrEqual(3);
   for (let index = 0; index < Math.min(total, 4); index += 1) {
     await applyCard(page, index);
