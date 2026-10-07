@@ -338,7 +338,7 @@ describe('layers panel stability', () => {
 
     expect(ids.map((id) => screen.getByTestId(`layer-row-${id}`))).toEqual(rows); // same nodes
     expect(screen.getAllByRole('listitem').map((row) => row.getAttribute('data-testid'))).toEqual(orderBefore);
-    expect(screen.getAllByRole('listitem')).toHaveLength(ids.length);
+    expect(screen.getAllByRole('listitem')).toHaveLength(ids.length + 1); // + structural cover background row
   });
 
   it('row actions are an overlay: opening the menu does not add anything to the row layout', async () => {
@@ -351,6 +351,79 @@ describe('layers panel stability', () => {
     fireEvent.click(screen.getByTestId(`layer-menu-${id}`));
     expect(tray).toHaveAttribute('data-open', 'true');
     expect(row).toContainElement(tray); // inside the row (absolutely positioned by CSS), not a sibling block
-    expect(screen.getAllByRole('listitem')).toHaveLength(surface().layers.length);
+    expect(screen.getAllByRole('listitem')).toHaveLength(surface().layers.length + 1);
+  });
+});
+
+describe('cover background selection and layering', () => {
+  function surfaceWithBackgroundImage(): DesignSurface {
+    const start = makeSurface();
+    const image = { ...createDesignLayer({ type: 'image', src: 'https://example.com/bg.jpg', x: 0, y: 0, width: start.width, height: start.height }, 1), id: 'bg-image' };
+    start.layers = [image, ...start.layers.map((layer, index) => ({ ...layer, zIndex: index + 2 }))];
+    return start;
+  }
+
+  it('the Layers panel has a "Fondo de portada" row that opens the compact Fondo editor', async () => {
+    await setupWithBinding();
+    expect(screen.queryByTestId('background-editor')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('layer-select-background'));
+
+    expect(screen.getByTestId('background-editor')).toBeInTheDocument();
+    expect(screen.getByTestId('layer-row-background')).toHaveAttribute('data-selected', 'true');
+    expect(screen.getByTestId('cover-properties-selection')).toHaveTextContent('Fondo de portada');
+    expect(screen.getByTestId('background-kind-solid-button')).toBeInTheDocument();
+    expect(screen.getByTestId('background-kind-gradient-button')).toBeInTheDocument();
+    expect(screen.getByTestId('background-kind-image-button')).toBeInTheDocument();
+  });
+
+  it('clicking empty cover area on the canvas selects the background; selecting a layer leaves it', async () => {
+    await setupWithBinding();
+    act(() => {
+      mocks.state.handlers.get('mouse:down')?.({ target: undefined });
+    });
+    expect(screen.getByTestId('background-editor')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('layer-select-title'));
+    expect(screen.queryByTestId('background-editor')).not.toBeInTheDocument();
+    expect(screen.getByTestId('layer-row-background')).toHaveAttribute('data-selected', 'false');
+  });
+
+  it('changing the background colour goes through the surface', async () => {
+    const { surface } = await setupWithBinding();
+    fireEvent.click(screen.getByTestId('layer-select-background'));
+    fireEvent.click(screen.getByTestId('background-kind-gradient-button'));
+    expect(surface().background.kind).toBe('gradient');
+    fireEvent.click(screen.getByTestId('background-kind-solid-button'));
+    expect(surface().background).toMatchObject({ kind: 'solid' });
+  });
+
+  it('an imported image can be moved behind/above the text with the explicit layering actions', async () => {
+    const { surface } = await setupWithBinding(surfaceWithBackgroundImage());
+    const z = (id: string) => surface().layers.find((l) => l.id === id)!.zIndex;
+    expect(z('bg-image')).toBeLessThan(z('title'));
+
+    fireEvent.click(screen.getByTestId('layer-select-bg-image'));
+    fireEvent.click(screen.getByTestId('image-layer-order-front'));
+    expect(z('bg-image')).toBeGreaterThan(z('author'));
+
+    fireEvent.click(screen.getByTestId('image-layer-order-back'));
+    expect(z('bg-image')).toBeLessThan(z('title'));
+    expect(z('title')).toBeLessThan(z('subtitle'));
+    expect(z('subtitle')).toBeLessThan(z('author'));
+
+    // Layers panel lists highest zIndex first: author above ... above the image.
+    const rowIds = screen.getAllByRole('listitem').map((row) => row.getAttribute('data-testid'));
+    expect(rowIds).toEqual(['layer-row-author', 'layer-row-subtitle', 'layer-row-title', 'layer-row-bg-image', 'layer-row-background']);
+  });
+
+  it('"Usar como fondo" turns the image into the structural background and removes the layer', async () => {
+    const { surface } = await setupWithBinding(surfaceWithBackgroundImage());
+    fireEvent.click(screen.getByTestId('layer-select-bg-image'));
+    fireEvent.click(screen.getByTestId('image-layer-use-as-background'));
+
+    expect(surface().background).toMatchObject({ kind: 'image', src: 'https://example.com/bg.jpg', fit: 'cover' });
+    expect(surface().layers.map((l) => l.id)).toEqual(['title', 'subtitle', 'author']);
+    expect(screen.getByTestId('background-editor')).toBeInTheDocument();
   });
 });

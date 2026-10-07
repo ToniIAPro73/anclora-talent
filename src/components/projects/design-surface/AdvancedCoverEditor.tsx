@@ -102,12 +102,18 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
   const viewportRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [selectedLayerIds, setSelectedLayerIdsState] = useState<string[]>([]);
+  const selectedLayerIdsRef = useRef<string[]>([]);
+  // The cover background is structural (not a layer): selecting it is a separate editor state.
+  const [backgroundSelected, setBackgroundSelected] = useState(false);
   // Selection echoes between the layers panel and the canvas; only a real change may re-render.
+  // Selecting any layer leaves the cover background.
   const setSelectedLayerIds = useCallback((next: string[] | ((current: string[]) => string[])) => {
-    setSelectedLayerIdsState((current) => {
-      const value = typeof next === 'function' ? next(current) : next;
-      return value.length === current.length && value.every((id, index) => id === current[index]) ? current : value;
-    });
+    const current = selectedLayerIdsRef.current;
+    const value = typeof next === 'function' ? next(current) : next;
+    if (value.length === current.length && value.every((id, index) => id === current[index])) return;
+    selectedLayerIdsRef.current = value;
+    setSelectedLayerIdsState(value);
+    if (value.length > 0) setBackgroundSelected(false);
   }, []);
   const [zoom, setZoom] = useState(1);
   const [snapEnabled, setSnapEnabled] = useState(true);
@@ -209,6 +215,19 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
     [setLayers, surface.layers],
   );
 
+  const handleUseAsBackground = useCallback((layerId: string) => {
+    const current = latestSurfaceRef.current;
+    const layer = current.layers.find((candidate) => candidate.id === layerId);
+    if (!layer || layer.type !== 'image') return;
+    commitSurface({
+      ...current,
+      background: { kind: 'image', src: layer.src, fit: layer.fit === 'contain' ? 'contain' : 'cover', opacity: layer.opacity },
+      layers: current.layers.filter((candidate) => candidate.id !== layerId),
+    });
+    setSelectedLayerIds([]);
+    setBackgroundSelected(true);
+  }, [commitSurface, setSelectedLayerIds]);
+
   const handleSelect = useCallback((layerId: string, options?: { additive?: boolean }) => {
     setSelectedLayerIds((current) => {
       const next = !options?.additive ? [layerId] : current.includes(layerId) ? current.filter((id) => id !== layerId) : [...current, layerId];
@@ -219,6 +238,11 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
   useEffect(() => {
     canvasRef.current?.selectLayers(selectedLayerIds);
   }, [selectedLayerIds]);
+
+  const selectBackground = useCallback(() => {
+    setSelectedLayerIds([]);
+    setBackgroundSelected(true);
+  }, [setSelectedLayerIds]);
 
   const handleObjectAlignment = useCallback(
     (alignment: LayerAlignment) => {
@@ -278,8 +302,12 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
     setImageQualityWarning(dimensions.width > 0 && (dimensions.width < 800 || dimensions.height < 1200)
       ? `Resolución baja: ${dimensions.width} × ${dimensions.height}px. La imagen se ha importado igualmente.`
       : null);
-    appendLayer(createDesignLayer({ type: 'image', src, fit: 'cover', x: 0, y: 0, width: surface.width, height: surface.height, name: file.name || undefined }, surface.layers.length + 1));
-  }, [appendLayer, inspectImage, surface.height, surface.layers.length, surface.width]);
+    // A full-bleed import must never land above the text: it enters just above the cover background.
+    const image = createDesignLayer({ type: 'image', src, fit: 'cover', x: 0, y: 0, width: surface.width, height: surface.height, name: file.name || undefined }, surface.layers.length + 1);
+    const current = latestSurfaceRef.current;
+    commitSurface({ ...current, layers: reorderLayers([...current.layers, image], image.id, 'back') });
+    setSelectedLayerIds([image.id]);
+  }, [commitSurface, inspectImage, setSelectedLayerIds, surface.height, surface.layers.length, surface.width]);
 
   const handleImportCover = useCallback(async (file: File) => {
     const src = await readFileAsDataUrl(file);
@@ -494,7 +522,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
                     if (tool === 'shapes') addShapeLayer();
                     if (tool === 'lines') addLine();
                     if (tool === 'icons') addIcon();
-                    if (tool === 'background') setSelectedLayerIds([]);
+                    if (tool === 'background') selectBackground();
                   }}
                 >
                   <Icon className="h-[18px] w-[18px] shrink-0" />
@@ -707,6 +735,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
                     onLayerChange={patchLayer}
                     onLayersChange={setLayers}
                     onSelectionChange={setSelectedLayerIds}
+                    onBackgroundClick={selectBackground}
                     snapEnabled={snapEnabled}
                     onZoomChange={setZoom}
                     onHistoryChange={setHistoryState}
@@ -749,6 +778,12 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
           <aside className="cover-properties-panel" data-testid="advanced-editor-properties-column">
             <header className="cover-properties-header">
               <h2 className="cover-editor-properties-title">{ws.properties}</h2>
+              {backgroundSelected && !selectedLayer && (
+                <div className="cover-properties-selection" data-testid="cover-properties-selection">
+                  <Grid3x3 className="h-4 w-4" aria-hidden="true" />
+                  <span>{layersCopy.coverBackgroundLabel}</span>
+                </div>
+              )}
               {selectedLayer && (
                 <div className="cover-properties-selection" data-testid="cover-properties-selection">
                   <SelectedIcon className="h-4 w-4" aria-hidden="true" />
@@ -757,7 +792,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
               )}
             </header>
             <div className="cover-properties-body">
-              {activeTool === 'background' && selectedLayerIds.length === 0 ? (
+              {backgroundSelected && selectedLayerIds.length === 0 ? (
                 <BackgroundEditor
                   background={surface.background}
                   copy={copy.background}
@@ -776,6 +811,8 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
                   brandColors={brandColors}
                   onLayerChange={patchLayer}
                   onReplaceImage={handleReplaceImage}
+                  onReorder={handleReorder}
+                  onUseAsBackground={handleUseAsBackground}
                   metadataValues={metadataValues}
                 />
               )}
@@ -804,6 +841,8 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
                 onDuplicate={duplicateLayer}
                 onDelete={(layerId) => setLayers(surface.layers.filter((l) => l.id !== layerId))}
                 onReorder={handleReorder}
+                backgroundSelected={backgroundSelected}
+                onSelectBackground={selectBackground}
               />
             </section>
           </aside>

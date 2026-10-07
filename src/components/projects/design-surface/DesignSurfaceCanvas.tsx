@@ -70,6 +70,8 @@ export interface DesignSurfaceCanvasProps {
   onLayerChange: (layerId: string, patch: Partial<DesignLayer>) => void;
   onLayersChange: (layers: DesignLayer[]) => void;
   onSelectionChange: (layerIds: string[]) => void;
+  /** A click on empty cover area (no object hit): the structural cover background. */
+  onBackgroundClick?: () => void;
   /** Container size available to the canvas — used for zoom-to-fit and CSS scaling. */
   viewportSize?: { width: number; height: number };
   /** Snapping to canvas edges/center, guides and other layer edges (mission §15). Defaults to true; the user can turn it off temporarily. */
@@ -91,7 +93,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 
 export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignSurfaceCanvasProps>(
   function DesignSurfaceCanvas(
-    { surface, onLayerChange, onLayersChange, onSelectionChange, viewportSize, snapEnabled = true, onZoomChange, onHistoryChange, onReady, maxFitZoom = 1 },
+    { surface, onLayerChange, onLayersChange, onSelectionChange, onBackgroundClick, viewportSize, snapEnabled = true, onZoomChange, onHistoryChange, onReady, maxFitZoom = 1 },
     ref,
   ) {
     const canvasElRef = useRef<HTMLCanvasElement>(null);
@@ -112,6 +114,10 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
     useEffect(() => {
       onReadyRef.current = onReady;
     }, [onReady]);
+    const onBackgroundClickRef = useRef(onBackgroundClick);
+    useEffect(() => {
+      onBackgroundClickRef.current = onBackgroundClick;
+    }, [onBackgroundClick]);
     const [zoom, setZoomState] = useState(1);
     const suppressHistoryRef = useRef(false);
 
@@ -195,6 +201,10 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           setActiveObjectIds(ids);
           onSelectionChange(ids);
         };
+
+        canvas.on('mouse:down', (event: FabricEvent) => {
+          if (!event.target) onBackgroundClickRef.current?.();
+        });
 
         canvas.on('selection:created', emitSelection);
         canvas.on('selection:updated', emitSelection);
@@ -287,6 +297,13 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
           if (lastSyncedLayersRef.current.get(layer.id) === serialized) continue;
 
           const existing = objectsByIdRef.current.get(layer.id);
+          // A pure stacking change (reorder) must not rebuild the Fabric object: removing it
+          // would clear the canvas selection. The stack is reconciled below.
+          const previous = lastSyncedLayersRef.current.get(layer.id);
+          if (existing && previous && JSON.stringify({ ...JSON.parse(previous), zIndex: 0 }) === JSON.stringify({ ...layer, zIndex: 0 })) {
+            lastSyncedLayersRef.current.set(layer.id, serialized);
+            continue;
+          }
           // Image fit/crop/filter changes alter the Fabric source frame and
           // scale, so rebuild the object from the canonical layer rather than
           // applying only the common style patch.

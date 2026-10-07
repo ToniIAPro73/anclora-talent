@@ -1296,6 +1296,7 @@ export type AppMessages = {
     };
     image: {
       replaceLabel: string;
+      useAsBackgroundLabel: string;
       uploadLabel: string;
       fitLabel: string;
       fitCover: string;
@@ -1358,6 +1359,7 @@ export type AppMessages = {
       moveUpLabel: string;
       moveDownLabel: string;
       bringToFrontLabel: string;
+      coverBackgroundLabel: string;
       sendToBackLabel: string;
       untitledText: string;
       untitledImage: string;
@@ -1402,6 +1404,7 @@ export type AppMessages = {
       drag: string;
       sectionSpacing: string;
       sectionAppearance: string;
+      sectionLayering: string;
       sectionPosition: string;
     };
     origin: {
@@ -2969,6 +2972,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       },
       image: {
         replaceLabel: 'Reemplazar imagen',
+        useAsBackgroundLabel: 'Usar como fondo',
         uploadLabel: 'Subir imagen',
         fitLabel: 'Ajuste',
         fitCover: 'Cubrir',
@@ -3031,6 +3035,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         moveUpLabel: 'Subir una posición',
         moveDownLabel: 'Bajar una posición',
         bringToFrontLabel: 'Traer al frente',
+        coverBackgroundLabel: 'Fondo de portada',
         sendToBackLabel: 'Enviar al fondo',
         untitledText: 'Texto',
         untitledImage: 'Imagen',
@@ -3075,6 +3080,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         drag: 'Arrastrar',
         sectionSpacing: 'Espaciado',
         sectionAppearance: 'Aspecto',
+        sectionLayering: 'Orden',
         sectionPosition: 'Posición y tamaño',
       },
       origin: {
@@ -4639,6 +4645,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       },
       image: {
         replaceLabel: 'Replace image',
+        useAsBackgroundLabel: 'Use as background',
         uploadLabel: 'Upload image',
         fitLabel: 'Fit',
         fitCover: 'Cover',
@@ -4701,6 +4708,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         moveUpLabel: 'Move up one position',
         moveDownLabel: 'Move down one position',
         bringToFrontLabel: 'Bring to front',
+        coverBackgroundLabel: 'Cover background',
         sendToBackLabel: 'Send to back',
         untitledText: 'Text',
         untitledImage: 'Image',
@@ -4745,6 +4753,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         drag: 'Drag',
         sectionSpacing: 'Spacing',
         sectionAppearance: 'Appearance',
+        sectionLayering: 'Order',
         sectionPosition: 'Position & size',
       },
       origin: {

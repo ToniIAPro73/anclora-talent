@@ -23,13 +23,15 @@ export interface ImageLayerPropertiesProps {
   workspace: AppMessages['coverDesignSurface']['workspace'];
   onChange: (patch: Partial<ImageLayerProps> & Partial<Pick<DesignLayer, 'x' | 'y' | 'width' | 'height' | 'rotation' | 'opacity'>>) => void;
   onReplaceFile: (file: File) => void;
+  onReorder?: (direction: 'up' | 'down' | 'front' | 'back') => void;
+  onUseAsBackground?: () => void;
 }
 
 function setFilter(filters: ImageLayerFilters | undefined, patch: Partial<ImageLayerFilters>): ImageLayerFilters {
   return { ...filters, ...patch };
 }
 
-export function ImageLayerProperties({ layer, copy, workspace: ws, onChange, onReplaceFile }: ImageLayerPropertiesProps) {
+export function ImageLayerProperties({ layer, copy, workspace: ws, onChange, onReplaceFile, onReorder, onUseAsBackground }: ImageLayerPropertiesProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const filters = layer.filters ?? {};
   const filterSlider = (label: string, key: 'brightness' | 'contrast' | 'saturation') => (
@@ -83,6 +85,30 @@ export function ImageLayerProperties({ layer, copy, workspace: ws, onChange, onR
           ))}
         </SegmentedGroup>
       </PropertySection>
+
+      {(onReorder || onUseAsBackground) && (
+        <PropertySection title={ws.sectionLayering}>
+          {onReorder && (
+            <div className="cover-prop-grid" role="group" aria-label={ws.sectionLayering} data-testid="image-layer-layering">
+              {([
+                ['front', 'Traer al frente'],
+                ['up', 'Subir'],
+                ['down', 'Bajar'],
+                ['back', 'Enviar al fondo'],
+              ] as const).map(([direction, label]) => (
+                <button key={direction} type="button" data-testid={`image-layer-order-${direction}`} onClick={() => onReorder(direction)} className="ac-button ac-button--secondary cover-prop-button" title={label} aria-label={label}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+          {onUseAsBackground && (
+            <button type="button" data-testid="image-layer-use-as-background" onClick={onUseAsBackground} className="ac-button ac-button--secondary cover-prop-button">
+              {copy.useAsBackgroundLabel}
+            </button>
+          )}
+        </PropertySection>
+      )}
 
       <PropertySection title={ws.sectionPosition}>
         <div className="cover-prop-grid" data-testid="image-layer-transform-fields">

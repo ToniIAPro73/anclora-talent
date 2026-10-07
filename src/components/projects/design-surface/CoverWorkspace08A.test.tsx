@@ -157,7 +157,7 @@ describe('COVER_EDITOR_08A Architectural Contract Gates', () => {
     // COVER_UI_07 & COVER_UI_08: Right properties panel with layers list
     expect(screen.getByTestId('advanced-editor-properties-column')).toBeInTheDocument();
     expect(screen.getByTestId('layers-panel')).toBeInTheDocument();
-    expect(screen.getAllByRole('listitem')).toHaveLength(4);
+    expect(screen.getAllByRole('listitem')).toHaveLength(5); // 4 layers + cover background row
 
     // COVER_UI_09: Compact workspace toolbar has undo, redo, zoom, preview, save
     expect(screen.getByTestId('cover-workspace-toolbar')).toBeInTheDocument();
@@ -179,7 +179,7 @@ describe('COVER_EDITOR_08A Architectural Contract Gates', () => {
     render(<AdvancedCoverEditor surface={surface} onChange={vi.fn()} copy={coverCopy} />);
 
     const names = screen.getAllByTestId(/^layer-name-/).map((node) => node.textContent);
-    expect(names).toEqual(['Imagen de fondo', 'Autor', 'Subtítulo', 'Título']);
+    expect(names).toEqual(['Imagen de fondo', 'Autor', 'Subtítulo', 'Título', 'Fondo de portada']);
     expect(names).not.toContain('Text');
     expect(names).not.toContain('Texto');
   });

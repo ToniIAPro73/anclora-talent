@@ -30,7 +30,9 @@ export function FontSelector({
     maxHeight: number;
     listMaxHeight: number;
   } | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const selectableFonts = useMemo(() => {
     if (!selectedFont || fonts.some((font) => font.family === selectedFont)) return fonts;
@@ -65,6 +67,11 @@ export function FontSelector({
     // configured font source instead of silently stopping at the first 50.
     return result;
   }, [selectableFonts, searchQuery, activeCategory]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    listRef.current?.querySelector<HTMLElement>('[data-active-option="true"]')?.scrollIntoView?.({ block: 'nearest' });
+  }, [activeIndex, isOpen]);
 
   const handleSelectFont = (fontFamily: string) => {
     loadFont(fontFamily);
@@ -102,19 +109,21 @@ export function FontSelector({
       } else {
         setOpenUp(false);
       }
-      // Reserve room for the search field, category filters and panel chrome,
-      // then let only the font list scroll. This keeps the complete list
-      // reachable even when the selector is near the bottom of the modal.
-      const availableSpace = Math.max(280, (shouldOpenUp ? spaceAbove : spaceBelow) - 16);
-      const listMaxHeight = Math.max(160, availableSpace - 132);
+      // The panel is a flex column (search + categories + list): only the
+      // list scrolls (flex-1 / min-h-0), so its height can never be eaten by
+      // the chrome above it and the last family is always reachable.
+      const available = Math.max(200, (shouldOpenUp ? spaceAbove : spaceBelow) - 16);
+      const maxHeight = Math.min(340, available);
+      const width = Math.min(Math.max(rect.width, 260), window.innerWidth - 16);
+      const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
       setDropdownPosition({
-        left: rect.left,
-        width: rect.width,
-        maxHeight: availableSpace,
-        listMaxHeight,
+        left,
+        width,
+        maxHeight,
+        listMaxHeight: maxHeight,
         ...(shouldOpenUp
-          ? { bottom: window.innerHeight - rect.top + 8 }
-          : { top: rect.bottom + 8 }),
+          ? { bottom: window.innerHeight - rect.top + 6 }
+          : { top: rect.bottom + 6 }),
       });
     }
     setIsOpen(true);
@@ -138,97 +147,101 @@ export function FontSelector({
 
       {isOpen && dropdownPosition && (
         <div
-          className="fixed z-[100] rounded-xl border border-[var(--border-strong)] shadow-2xl"
+          className="fixed z-[100] flex flex-col overflow-hidden rounded-lg border border-[var(--border-strong)] shadow-2xl"
+          data-testid="font-selector-dropdown"
           style={{
             left: dropdownPosition.left,
             width: dropdownPosition.width,
             top: dropdownPosition.top,
             bottom: dropdownPosition.bottom,
             maxHeight: dropdownPosition.maxHeight,
-            overflow: 'hidden',
             backgroundColor: 'var(--surface-elevated)',
-            backdropFilter: 'blur(16px)',
           }}
         >
-          {/* Search */}
-          <div className="p-3 border-b border-[var(--border-subtle)]">
+          <div className="shrink-0 border-b border-[var(--border-subtle)] p-2">
             <div className="relative">
-              <Search className="absolute right-2 top-2.5 h-4 w-4 text-[var(--text-tertiary)]" />
+              <Search className="pointer-events-none absolute right-2 top-1.5 h-3.5 w-3.5 text-[var(--text-tertiary)]" />
               <Input
                 placeholder="Busca fuentes..."
                 data-testid="font-selector-search-input"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-8 pr-8 pl-3 text-sm bg-[var(--surface-soft)] border-[var(--border-subtle)]"
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setActiveIndex(0);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setActiveIndex((i) => Math.min(displayedFonts.length - 1, i + 1));
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setActiveIndex((i) => Math.max(0, i - 1));
+                  } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const font = displayedFonts[activeIndex];
+                    if (font) handleSelectFont(font.family);
+                  }
+                }}
+                className="h-7 pl-2 pr-7 text-xs bg-[var(--surface-soft)] border-[var(--border-subtle)]"
                 autoFocus
               />
             </div>
           </div>
 
-          {/* Categories */}
-          <div className="flex gap-2 p-3 border-b border-[var(--border-subtle)] flex-wrap" style={{ backgroundColor: 'rgba(15, 23, 42, 0.7)' }}>
-            <button
-              type="button"
-              onClick={() => setActiveCategory('all')}
-              data-testid="font-selector-category-all-button"
-              className={`px-3 py-1.5 text-xs rounded font-medium transition-all ${
-                activeCategory === 'all'
-                  ? 'bg-[var(--accent)] text-black shadow-md'
-                  : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
-              }`}
-            >
-              Todos
-            </button>
-            {categories.map((cat) => (
+          <div
+            className="flex shrink-0 gap-1 overflow-x-auto border-b border-[var(--border-subtle)] px-2 py-1.5"
+            data-testid="font-selector-categories"
+          >
+            {['all', ...categories].map((cat) => (
               <button
                 key={cat}
                 type="button"
-                onClick={() => setActiveCategory(cat)}
+                onClick={() => {
+                  setActiveCategory(cat);
+                  setActiveIndex(0);
+                }}
                 data-testid={`font-selector-category-${cat}-button`}
-                className={`px-3 py-1.5 text-xs rounded capitalize font-medium transition-all ${
+                className={`h-6 shrink-0 rounded px-2 text-[11px] font-medium capitalize leading-none transition-colors ${
                   activeCategory === cat
-                    ? 'bg-[var(--accent)] text-black shadow-md'
-                    : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+                    ? 'bg-[var(--accent)] text-black'
+                    : 'bg-[var(--surface-soft)] text-[var(--text-secondary)] hover:bg-[var(--surface-highlight)]'
                 }`}
               >
-                {cat === 'sans-serif' ? 'Sans' : cat === 'monospace' ? 'Mono' : cat}
+                {cat === 'all' ? 'Todos' : cat === 'sans-serif' ? 'Sans' : cat === 'monospace' ? 'Mono' : cat}
               </button>
             ))}
           </div>
 
-          {/* Font List: one compact row per font (name + category inline)
-              instead of a two-line card — with 1000+ Google Fonts, a taller
-              row multiplies total scroll distance enough that the end of
-              the list becomes practically unreachable by wheel/track. */}
-          <div className="overflow-y-auto p-1.5" style={{ maxHeight: dropdownPosition?.listMaxHeight, backgroundColor: 'color-mix(in srgb, var(--surface-canvas) 88%, transparent)' }}>
+          <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto p-1" data-testid="font-selector-list" role="listbox">
             {displayedFonts.length === 0 ? (
-              <div className="text-center py-6 text-slate-300 text-sm font-medium">
-                No se encontraron fuentes
-              </div>
+              <div className="py-4 text-center text-xs text-[var(--text-secondary)]">No se encontraron fuentes</div>
             ) : (
-              <div>
-                {displayedFonts.map((font) => (
-                  <button
-                    key={font.family}
-                    type="button"
-                    onClick={() => handleSelectFont(font.family)}
-                    data-testid={`font-option-${font.family.replace(/\s+/g, '-').toLowerCase()}`}
-                    className={`flex w-full items-baseline gap-2 rounded-md px-3 py-1.5 text-left text-sm transition-all ${
-                      selectedFont === font.family
-                        ? 'bg-[var(--accent)] text-black font-bold shadow-md'
-                        : 'hover:bg-slate-700 text-slate-100 hover:text-white'
-                    }`}
-                  >
-                    <span className="truncate" style={{ fontFamily: font.family }}>{font.family}</span>
-                    <span className="ml-auto shrink-0 text-xs text-slate-400">{font.category}</span>
-                  </button>
-                ))}
-              </div>
+              displayedFonts.map((font, index) => (
+                <button
+                  key={font.family}
+                  type="button"
+                  role="option"
+                  aria-selected={selectedFont === font.family}
+                  data-active-option={index === activeIndex ? 'true' : 'false'}
+                  onClick={() => handleSelectFont(font.family)}
+                  onMouseMove={() => index !== activeIndex && setActiveIndex(index)}
+                  data-testid={`font-option-${font.family.replace(/\s+/g, '-').toLowerCase()}`}
+                  className={`flex h-7 w-full items-center gap-2 rounded px-2 text-left text-xs transition-colors ${
+                    selectedFont === font.family
+                      ? 'bg-[var(--accent)] font-semibold text-black'
+                      : index === activeIndex
+                        ? 'bg-[var(--surface-highlight)] text-[var(--text-primary)]'
+                        : 'text-[var(--text-primary)] hover:bg-[var(--surface-highlight)]'
+                  }`}
+                >
+                  <span className="truncate" style={{ fontFamily: font.family }}>{font.family}</span>
+                  <span className="ml-auto shrink-0 text-[10px] opacity-60">{font.category}</span>
+                </button>
+              ))
             )}
           </div>
         </div>
       )}
-
     </div>
   );
 }

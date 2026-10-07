@@ -22,11 +22,13 @@ export interface PropertiesPanelProps {
   brandColors?: string[];
   onLayerChange: (layerId: string, patch: Partial<DesignLayer>) => void;
   onReplaceImage: (layerId: string, file: File) => void;
+  onReorder?: (layerId: string, direction: 'up' | 'down' | 'front' | 'back') => void;
+  onUseAsBackground?: (layerId: string) => void;
   /** role -> value the metadata precedence chain currently resolves to (mission §40-41). The caller holds the `ProjectRecord`, so it computes this. */
   metadataValues?: Partial<Record<string, string>>;
 }
 
-export function PropertiesPanel({ selectedLayers, copy, brandColors, onLayerChange, onReplaceImage, metadataValues }: PropertiesPanelProps) {
+export function PropertiesPanel({ selectedLayers, copy, brandColors, onLayerChange, onReplaceImage, onReorder, onUseAsBackground, metadataValues }: PropertiesPanelProps) {
   if (selectedLayers.length === 0) {
     return (
       <div className="cover-properties-empty" data-testid="properties-panel-empty">
@@ -76,6 +78,8 @@ export function PropertiesPanel({ selectedLayers, copy, brandColors, onLayerChan
         workspace={copy.workspace}
         onChange={(patch) => onLayerChange(layer.id, patch)}
         onReplaceFile={(file) => onReplaceImage(layer.id, file)}
+        onReorder={onReorder ? (direction) => onReorder(layer.id, direction) : undefined}
+        onUseAsBackground={onUseAsBackground ? () => onUseAsBackground(layer.id) : undefined}
       />
     );
   }

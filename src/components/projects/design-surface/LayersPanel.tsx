@@ -22,6 +22,7 @@ import {
   Lock,
   MoreVertical,
   Shapes,
+  Square,
   Trash2,
   Type,
   Unlock,
@@ -46,6 +47,7 @@ export interface LayersPanelCopy extends LayerLabelCopy {
   moveDownLabel: string;
   bringToFrontLabel: string;
   sendToBackLabel: string;
+  coverBackgroundLabel?: string;
 }
 
 export interface LayersPanelProps {
@@ -61,6 +63,9 @@ export interface LayersPanelProps {
   onDuplicate: (layerId: string) => void;
   onDelete: (layerId: string) => void;
   onReorder: (layerId: string, direction: 'up' | 'down' | 'front' | 'back') => void;
+  /** The structural cover background, always the bottom row (never above a layer). */
+  backgroundSelected?: boolean;
+  onSelectBackground?: () => void;
 }
 
 function layerIcon(layer: DesignLayer) {
@@ -81,6 +86,8 @@ export function LayersPanel({
   onDuplicate,
   onDelete,
   onReorder,
+  backgroundSelected = false,
+  onSelectBackground,
 }: LayersPanelProps) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const sorted = [...layers].sort((a, b) => b.zIndex - a.zIndex);
@@ -95,7 +102,28 @@ export function LayersPanel({
     return () => document.removeEventListener('click', close);
   }, [menuOpenId]);
 
-  if (sorted.length === 0) {
+  const backgroundRow = onSelectBackground ? (
+    <div
+      role="listitem"
+      data-testid="layer-row-background"
+      data-selected={backgroundSelected ? 'true' : 'false'}
+      className="cover-layer-row"
+    >
+      <button
+        type="button"
+        data-testid="layer-select-background"
+        onClick={onSelectBackground}
+        className="flex min-w-0 flex-1 items-center gap-2 text-left"
+      >
+        <Square className="cover-layer-row__icon h-4 w-4 shrink-0" aria-hidden="true" />
+        <span className="cover-layer-row__name select-none" data-testid="layer-name-background">
+          {copy.coverBackgroundLabel ?? 'Fondo de portada'}
+        </span>
+      </button>
+    </div>
+  ) : null;
+
+  if (sorted.length === 0 && !backgroundRow) {
     return (
       <div className="ac-editor-inspector__empty" data-testid="layers-panel-empty">
         <p className="text-xs text-[var(--text-secondary)]">{copy.emptyLabel}</p>
@@ -318,6 +346,7 @@ export function LayersPanel({
           </div>
         );
       })}
+      {backgroundRow}
     </div>
   );
 }
@@ -352,6 +381,7 @@ export function buildLayersPanelCopy(copy: AppMessages['coverDesignSurface']): L
     moveDownLabel: copy.layers.moveDownLabel,
     bringToFrontLabel: copy.layers.bringToFrontLabel,
     sendToBackLabel: copy.layers.sendToBackLabel,
+    coverBackgroundLabel: copy.layers.coverBackgroundLabel,
     untitledText: copy.layers.untitledText,
     untitledImage: copy.layers.untitledImage,
     untitledShape: copy.layers.untitledShape,
