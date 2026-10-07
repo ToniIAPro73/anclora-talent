@@ -1352,6 +1352,11 @@ function splitTitleSubtitleBlock(block: ParsedBlock): ParsedBlock[] {
   ];
 }
 
+/** A source "kicker" (small letter-spaced line such as "GUÍA PRÁCTICA" or "ESCRITO POR") labels what follows; it is never the title or subtitle. */
+function isKickerBlock(block: ParsedBlock) {
+  return /class="[^"]*\beditorial-kicker\b[^"]*"/i.test(block.html ?? '');
+}
+
 function findTitleCandidate(frontMatter: ParsedBlock[]) {
   const index = frontMatter.findIndex((block) => {
     const text = block.text.trim();
@@ -1359,6 +1364,7 @@ function findTitleCandidate(frontMatter: ParsedBlock[]) {
       text.length > 0 &&
       text.length <= 140 &&
       text.toLocaleLowerCase() !== '[imagen]' &&
+      !isKickerBlock(block) &&
       !isDecorativeLine(text) &&
       !COPYRIGHT_RE.test(text) &&
       !isLikelyAuthorName(text)
@@ -1430,7 +1436,7 @@ function detectSubtitleFromFrontMatter(
 
   for (const block of frontMatter.slice(startIndex)) {
     const text = stripMarkdownInline(block.text);
-    if (!text || isDecorativeLine(text)) continue;
+    if (!text || isDecorativeLine(text) || isKickerBlock(block)) continue;
     if (text === title) continue;
     if (text === author || isLikelyAuthorName(text) || COPYRIGHT_RE.test(text)) break;
     candidates.push(text);

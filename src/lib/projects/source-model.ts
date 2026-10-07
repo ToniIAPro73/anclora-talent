@@ -3,6 +3,7 @@ import { DOMParser, type Document as XmlDocument, type Element as XmlElement, ty
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
+import { reconstructLayoutFlow, type LayoutLine } from './odt-layout-flow';
 import type { Content, PhrasingContent, Root, RootContent } from 'mdast';
 
 export type SourceFormat = 'doc' | 'docx' | 'odt' | 'markdown' | 'txt' | 'pages' | 'pdf';
@@ -868,6 +869,17 @@ function richBlocksFromHtml(html: string): SourceBlock[] {
   return blocks;
 }
 
+/** The text:p that only carries a page of absolutely positioned text frames (an ODT converted from a PDF). */
+function odtLayoutCarrierFrames(element: XmlElement): XmlElement[] | null {
+  if (element.localName !== 'p') return null;
+  const frames = odtChildren(element).filter((child) => child.localName === 'frame');
+  if (!frames.length) return null;
+  const hasTextFrame = frames.some((frame) => odtChildren(frame).some((child) => child.localName === 'text-box'));
+  if (!hasTextFrame) return null;
+  const ownText = Array.from(element.childNodes).some((child) => child.nodeType === 3 && (child.textContent ?? '').trim());
+  return ownText ? null : frames;
+}
+
 export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourceDocument> {
   const zip = await JSZip.loadAsync(buffer);
   const content = await zip.file('content.xml')?.async('text');
@@ -950,6 +962,11 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
   };
   const parseChildren = (parent: XmlElement) => {
     for (const element of odtChildren(parent)) {
+      const layoutFrames = layoutPagesByCarrier.has(element) ? odtLayoutCarrierFrames(element) : null;
+      if (layoutFrames) {
+        emitLayoutCarrier(element, layoutFrames);
+        continue;
+      }
       const parsed = element.localName === 'p' || element.localName === 'h' ? parseParagraph(element) : element.localName === 'list' ? parseList(element) : element.localName === 'table' ? parseTable(element) : element.localName === 'frame' ? parseImage(element) : element.localName === 'section' ? (parseChildren(element), null) : null;
       if (parsed) blocks.push(parsed);
       // ODT commonly wraps an embedded image in an otherwise empty text:p.
@@ -963,6 +980,81 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
           }
         }
       }
+    }
+  };
+  // PDF-converted ODT: pages of positioned text frames are rebuilt into a reading flow (see odt-layout-flow.ts).
+  const layoutLines: LayoutLine[] = [];
+  const layoutPagesByCarrier = new Map<XmlElement, number[]>();
+  for (const carrier of odtChildren(root)) {
+    const frames = odtLayoutCarrierFrames(carrier);
+    if (!frames) continue;
+    const pages = new Set<number>();
+    for (const frame of frames) {
+      const textBox = odtChildren(frame).find((child) => child.localName === 'text-box');
+      if (!textBox) continue;
+      const page = Number.parseInt(odtAttr(frame, 'anchor-page-number') ?? '1', 10) || 1;
+      pages.add(page);
+      const frameY = odtLengthToPt(odtAttr(frame, 'y')) ?? 0;
+      const frameX = odtLengthToPt(odtAttr(frame, 'x')) ?? 0;
+      const frameWidth = odtLengthToPt(odtAttr(frame, 'width')) ?? 0;
+      const frameHeight = odtLengthToPt(odtAttr(frame, 'height')) ?? 0;
+      odtChildren(textBox).filter((child) => child.localName === 'p').forEach((paragraph, index) => {
+        const styleId = odtAttr(paragraph, 'style-name');
+        const style = resolveOdtStyle(styleMap, 'paragraph', styleId);
+        const formatting = odtTextFormatting(style);
+        const text = odtRuns(paragraph, styleMap, formatting, styleId).map((run) => run.text).join('');
+        if (!text.trim()) return;
+        const fontSizePt = typeof formatting.fontSizePt === 'number' ? formatting.fontSizePt : undefined;
+        layoutLines.push({
+          page,
+          x: frameX,
+          y: frameY + index * (fontSizePt ?? (frameHeight || 12)) * 1.25,
+          width: frameWidth,
+          height: frameHeight,
+          text,
+          ...(fontSizePt !== undefined ? { fontSizePt } : {}),
+          ...(formatting.bold === true ? { bold: true } : {}),
+          ...(formatting.italic === true ? { italic: true } : {}),
+        });
+      });
+    }
+    layoutPagesByCarrier.set(carrier, [...pages]);
+  }
+  const layoutFlow = layoutLines.length ? reconstructLayoutFlow(layoutLines) : [];
+  let emittedLayoutBlocks = 0;
+  const emitLayoutCarrier = (carrier: XmlElement, frames: XmlElement[]) => {
+    const pages = new Set(layoutPagesByCarrier.get(carrier) ?? []);
+    for (const block of layoutFlow.filter((candidate) => pages.has(candidate.page))) {
+      const startsPage = block.first && emittedLayoutBlocks > 0;
+      const directFormatting: Record<string, string | number | boolean> = {
+        ...(block.bold ? { bold: true } : {}),
+        ...(block.italic ? { italic: true } : {}),
+      };
+      const run: SourceTextRun = {
+        text: block.text,
+        ...(Object.keys(directFormatting).length ? { directFormatting } : {}),
+        provenance: provenance(block.kind === 'heading' ? 'SOURCE_STYLE' : 'SOURCE_EXPLICIT', 'content.xml'),
+      };
+      blocks.push({
+        id: stableId('odt-layout', blocks.length, block.text),
+        type: block.kind === 'heading' ? 'heading' : 'paragraph',
+        ...(block.kind === 'heading' ? { level: block.level } : {}),
+        ...(block.kind === 'paragraph' && block.kicker ? { semanticRole: 'chapter-opener-kicker' as const } : {}),
+        text: block.text,
+        runs: [run],
+        ...(startsPage ? { paragraphProperties: { pageBreakBefore: 'page' } } : {}),
+        provenance: provenance(block.kind === 'heading' ? 'SOURCE_STYLE' : 'SOURCE_EXPLICIT', 'content.xml'),
+      });
+      emittedLayoutBlocks += 1;
+    }
+    // Page art: the page-sized SVG duplicates the text that was just rebuilt, so only smaller pictures are kept.
+    for (const frame of frames) {
+      if (odtChildren(frame).some((child) => child.localName === 'text-box')) continue;
+      const width = odtLengthToPt(odtAttr(frame, 'width')) ?? 0;
+      const height = odtLengthToPt(odtAttr(frame, 'height')) ?? 0;
+      if (pages.size && width >= 400 && height >= 560) continue;
+      const image = parseImage(frame);
+      if (image) blocks.push(image);
     }
   };
   parseChildren(root);
