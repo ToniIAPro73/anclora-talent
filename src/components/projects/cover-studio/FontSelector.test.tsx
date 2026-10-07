@@ -42,4 +42,12 @@ describe('FontSelector (compact picker)', () => {
     expect(onFontSelect.mock.calls[0][0]).toMatch(/^Family 11\d$/);
     expect(screen.queryByTestId('font-selector-list')).not.toBeInTheDocument();
   });
+
+  it('quotes family names so names with digits (Source Serif 4) are not dropped by the browser', () => {
+    render(<FontSelector selectedFont="Family 007" onFontSelect={vi.fn()} compact />);
+    expect(screen.getByTestId('font-selector-toggle').querySelector('span')!.style.fontFamily).toBe('"Family 007"');
+    fireEvent.click(screen.getByTestId('font-selector-toggle'));
+    const option = screen.getByTestId('font-option-family-008').querySelector('span')!;
+    expect(option.style.fontFamily).toBe('"Family 008"');
+  });
 });

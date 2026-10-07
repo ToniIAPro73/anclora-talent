@@ -137,6 +137,7 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
     useEffect(() => {
       onBackgroundClickRef.current = onBackgroundClick;
     }, [onBackgroundClick]);
+    const pendingSelectionRef = useRef<string[] | null>(null);
     const onBackgroundFrameChangeRef = useRef(onBackgroundFrameChange);
     const onBackgroundRestoreRef = useRef(onBackgroundRestore);
     useEffect(() => {
@@ -367,6 +368,13 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
             if (object) canvas.moveObjectTo?.(object, index + backgroundOffset(canvas));
           });
 
+        const pending = pendingSelectionRef.current;
+        if (pending) {
+          pendingSelectionRef.current = null;
+          const objects = pending.map((id) => objectsByIdRef.current.get(id)).filter(Boolean);
+          if (objects.length === 1 && pending.length === 1) canvas.setActiveObject?.(objects[0]);
+        }
+
         renderCanvas(canvas);
         // Property-panel and layer-panel edits arrive through the canonical
         // surface rather than Fabric events. Record them here as one history
@@ -522,8 +530,10 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
             .filter((obj): obj is FabricObject => Boolean(obj));
 
           if (matchedObjects.length === 0) {
-            canvas.discardActiveObject?.();
-            setActiveObjectIds([]);
+            // A just-created layer has no canvas object yet (the diff effect hydrates it asynchronously):
+            // keep the current selection state and select it as soon as it exists, instead of clearing it.
+            pendingSelectionRef.current = layerIds;
+            return;
           } else if (matchedObjects.length === 1) {
             canvas.setActiveObject?.(matchedObjects[0]);
             setActiveObjectIds([matchedObjects[0].id].filter(Boolean));

@@ -3174,8 +3174,8 @@ body:has([data-testid="cover-step-workspace"]) .talent-legal-footer { display: n
   display: flex;
   align-items: center;
   gap: 14px;
-  min-height: 56px;
-  padding: 8px 16px;
+  min-height: 44px;
+  padding: 6px 12px;
   border-bottom: 1px solid var(--cover-line);
   background: var(--cover-panel-strong);
   flex-shrink: 0;
@@ -3189,35 +3189,36 @@ body:has([data-testid="cover-step-workspace"]) .talent-legal-footer { display: n
 .cover-workspace-toolbar__select-wrap > svg { position: absolute; right: 10px; pointer-events: none; color: var(--text-secondary); }
 .cover-workspace-toolbar__select {
   appearance: none;
-  height: 36px;
-  min-width: 176px;
-  padding: 0 30px 0 12px;
+  height: 30px;
+  min-width: 160px;
+  padding: 0 28px 0 10px;
   border: 1px solid var(--border-default, var(--cover-line));
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--surface);
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
 }
 .cover-workspace-toolbar__select:hover { border-color: var(--accent); }
-.cover-workspace-toolbar__zoom .cover-workspace-toolbar__select { min-width: 132px; }
+.cover-workspace-toolbar__zoom .cover-workspace-toolbar__select { min-width: 120px; }
 .cover-toolbar-button {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  height: 36px;
-  padding: 0 12px;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
   transition: background-color 0.15s, color 0.15s;
 }
 .cover-toolbar-button:hover:not(:disabled) { background: var(--hover); color: var(--text-primary); }
 .cover-toolbar-button:disabled { opacity: 0.38; cursor: default; }
-.cover-toolbar-cta { height: 36px; gap: 8px; }
+/* Uses the shared compact-button tokens instead of overriding the component. */
+.cover-toolbar-cta { --ac-button-min-height: 30px; --ac-button-padding-x: 12px; height: 30px; gap: 6px; font-size: 12px; }
 .cover-toolbar-divider { width: 1px; height: 20px; margin: 0 4px; background: var(--cover-line); flex-shrink: 0; }
 .cover-toolbar-icon {
   display: inline-grid;
@@ -3248,8 +3249,8 @@ body:has([data-testid="cover-step-workspace"]) .talent-legal-footer { display: n
 .cover-tools-panel {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 16px 14px;
+  gap: 14px;
+  padding: 12px 10px;
   border-right: 1px solid var(--cover-line);
   overflow-y: auto;
   padding-bottom: 68px; /* clear of the app's floating cookie button */
@@ -3260,21 +3261,21 @@ body:has([data-testid="cover-step-workspace"]) .talent-legal-footer { display: n
   position: relative;
   display: flex;
   align-items: center;
-  gap: 14px;
-  min-height: 42px;
-  padding: 0 14px;
+  gap: 10px;
+  min-height: 32px;
+  padding: 0 10px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
   color: var(--text-secondary);
   text-align: left;
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
   transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 }
 .cover-editor-tool:hover { background: var(--hover); color: var(--text-primary); }
 .cover-editor-tool[data-active="true"] { border-color: var(--cover-line); background: var(--accent-soft); color: var(--text-primary); }
-.cover-editor-tool[data-active="true"]::before { content: ''; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
+.cover-editor-tool[data-active="true"]::before { content: ''; position: absolute; left: 0; top: 7px; bottom: 7px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
 
 .cover-editor-section-heading,
 .cover-editor-layers-heading {
@@ -3282,9 +3283,9 @@ body:has([data-testid="cover-step-workspace"]) .talent-legal-footer { display: n
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding-bottom: 10px;
+  padding-bottom: 6px;
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
 }
 .cover-editor-link { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; color: var(--accent-text); font-size: 12px; font-weight: 500; cursor: pointer; }
@@ -3317,7 +3318,7 @@ body:has([data-testid="cover-step-workspace"]) .talent-legal-footer { display: n
 .cover-template-card__check { position: absolute; top: -6px; right: -6px; display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); color: #081019; box-shadow: 0 1px 4px rgb(0 0 0 / 50%); }
 .cover-template-card__name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .cover-template-thumb { overflow: hidden; border-radius: 3px; box-shadow: 0 2px 8px rgb(0 0 0 / 35%); }
-.cover-editor-import { width: 100%; height: 40px; gap: 8px; margin-top: auto; }
+.cover-editor-import { flex: 0 0 auto; width: 100%; height: 32px !important; min-height: 0 !important; padding: 0 10px !important; font-size: 12px !important; gap: 6px; margin-top: auto; }
 .cover-editor-quality-warning { margin: 0; padding: 8px 10px; border: 1px solid color-mix(in srgb, #f1cc77 45%, transparent); border-radius: 6px; background: color-mix(in srgb, #f1cc77 12%, transparent); color: #f1cc77; font-size: 11px; line-height: 1.4; }
 
 /* ── Canvas ──────────────────────────────────────────────────────────── */
@@ -3396,7 +3397,7 @@ body:has([data-testid="cover-step-workspace"]) .talent-legal-footer { display: n
   overflow: hidden;
 }
 .cover-properties-header { padding: 12px 12px 0; flex-shrink: 0; }
-.cover-editor-properties-title { margin: 0 0 8px; color: var(--text-primary); font-size: 15px; font-weight: 650; }
+.cover-editor-properties-title { margin: 0 0 6px; color: var(--text-primary); font-size: 13px; font-weight: 650; }
 .cover-properties-selection {
   display: flex;
   align-items: center;
@@ -3445,7 +3446,7 @@ body:has([data-testid="cover-step-workspace"]) .talent-legal-footer { display: n
 .cover-layer-row:hover { background: var(--hover); }
 .cover-layer-row[data-selected="true"] { border-color: var(--accent); background: var(--accent-soft); }
 .cover-layer-row[data-hidden="true"] .cover-layer-row__name { opacity: 0.5; }
-.cover-layer-row { height: 32px; overflow: hidden; }
+.cover-layer-row { height: 30px; min-height: 30px; overflow: hidden; }
 .cover-layer-row__icon { color: var(--accent-text); }
 /* Rename happens inside the row: same height, nothing is pushed. */
 .cover-layer-row__rename { min-width: 0; flex: 1; height: 24px; padding: 0 6px; border: 1px solid var(--accent); border-radius: 4px; outline: none; background: var(--surface); color: var(--text-primary); font-size: 12px; }
@@ -3467,7 +3468,7 @@ body:has([data-testid="cover-step-workspace"]) .talent-legal-footer { display: n
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 32px;
+  min-height: 28px;
   color: var(--text-secondary);
   font-size: 11px;
   font-weight: 600;
@@ -3481,7 +3482,7 @@ body:has([data-testid="cover-step-workspace"]) .talent-legal-footer { display: n
 .cover-prop-section__summary:hover { color: var(--text-primary); }
 .cover-prop-section__summary svg { transition: transform 0.15s; }
 .cover-prop-section:not([open]) .cover-prop-section__summary svg { transform: rotate(-90deg); }
-.cover-prop-section__body { display: grid; gap: 8px; padding: 0 0 12px; }
+.cover-prop-section__body { display: grid; gap: 6px; padding: 0 0 10px; }
 
 .cover-prop-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .cover-prop-row--font > :first-child { flex: 1 1 auto; min-width: 0; }
@@ -3528,7 +3529,10 @@ body:has([data-testid="cover-step-workspace"]) .talent-legal-footer { display: n
 .cover-prop-textarea { min-height: 48px !important; padding: 6px 8px !important; border-color: var(--border-subtle) !important; border-radius: 6px !important; background: var(--surface) !important; font-size: 12px !important; line-height: 1.4 !important; resize: vertical; }
 .cover-prop-link { display: inline-flex; align-items: center; gap: 4px; justify-self: start; border: 0; background: none; color: var(--accent-text); font-size: 11px; cursor: pointer; }
 .cover-prop-link:hover { text-decoration: underline; }
-.cover-prop-button { height: 30px !important; font-size: 12px !important; width: 100%; }
+/* Property actions. Default = compact secondary action (content-sized, 28px); `--full` is for a primary action only. */
+.cover-prop-button { display: inline-flex; align-items: center; justify-content: center; justify-self: start; width: auto; height: 28px !important; min-height: 0 !important; padding: 0 12px !important; font-size: 12px !important; }
+.cover-prop-button--full { width: 100%; justify-self: stretch; }
+.cover-prop-grid > .cover-prop-button { width: 100%; justify-self: stretch; padding: 0 6px !important; }
 .cover-prop-hint { margin: 0; padding: 6px 8px; border: 1px solid color-mix(in srgb, #f1cc77 45%, transparent); border-radius: 6px; background: color-mix(in srgb, #f1cc77 12%, transparent); color: #f1cc77; font-size: 11px; line-height: 1.4; }
 .cover-prop-check { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 12px; }
 

@@ -165,7 +165,7 @@ test('E. layers panel: selecting and renaming never moves rows or scroll, autosa
     }));
   const before = await snapshot();
   expect(before.count).toBeGreaterThanOrEqual(6);
-  expect(new Set(before.rows.map((row) => row[0]))).toEqual(new Set([32]));
+  expect(new Set(before.rows.map((row) => row[0]))).toEqual(new Set([30]));
 
   // The structural background row is not a layer: it has no rename.
   const buttons = page.locator('[data-testid^="layer-select-"]:not([data-testid="layer-select-background"])');

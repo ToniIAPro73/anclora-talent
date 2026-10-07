@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, ChevronDown } from 'lucide-react';
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
 import { Input } from '@/components/ui/input';
+import { cssFontFamily } from '@/lib/style-engine/font-registry';
 
 interface FontSelectorProps {
   selectedFont: string;
@@ -137,7 +138,7 @@ export function FontSelector({
         data-testid="font-selector-toggle"
         className={`w-full ${compact ? 'h-8 px-2.5 rounded-md text-xs' : 'h-10 px-3 rounded-lg text-sm'} border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-primary)] flex items-center justify-between hover:bg-[var(--surface-highlight)] transition-colors`}
       >
-        <span className="truncate" style={{ fontFamily: selectedFont }}>{selectedFont}</span>
+        <span className="truncate" style={{ fontFamily: cssFontFamily(selectedFont) }}>{selectedFont}</span>
         <ChevronDown
           className={`h-4 w-4 transition-transform ${
             isOpen ? (openUp ? '-rotate-180' : 'rotate-180') : ''
@@ -234,7 +235,7 @@ export function FontSelector({
                         : 'text-[var(--text-primary)] hover:bg-[var(--surface-highlight)]'
                   }`}
                 >
-                  <span className="truncate" style={{ fontFamily: font.family }}>{font.family}</span>
+                  <span className="truncate" style={{ fontFamily: cssFontFamily(font.family) }}>{font.family}</span>
                   <span className="ml-auto shrink-0 text-[10px] opacity-60">{font.category}</span>
                 </button>
               ))
