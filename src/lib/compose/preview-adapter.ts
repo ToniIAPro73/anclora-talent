@@ -440,8 +440,9 @@ function buildPagesFromResult(
     globalPageNumber += 1;
   }
 
-  // BACK COVER (contract-identical).
-  if (project.backCover && !sourceFidelity) {
+  // BACK COVER (contract-identical). It is a Talent-owned editorial surface, appended AFTER the content pages, so
+  // it also belongs to source-fidelity previews: it never takes part in the source pagination or its numbering.
+  if (project.backCover) {
     const backFields = createSurfaceSnapshotFromProject('back-cover', project).fields;
     pages.push({
       type: 'back-cover',

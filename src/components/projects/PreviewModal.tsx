@@ -127,7 +127,8 @@ export function PreviewModal({
   );
   const previewPages = useMemo(() => {
     if (!sourceFidelity) return composed.pages;
-    return buildPreviewPages(project, paginationConfig).filter((page) => page.type !== 'back-cover');
+    // Source pagination drives the manuscript pages; the cover and back cover are Talent surfaces around them.
+    return buildPreviewPages(project, paginationConfig);
   }, [composed.pages, paginationConfig, project, sourceFidelity]);
 
   const cover = useMemo(() => previewPages.find(p => p.type === 'cover'), [previewPages]);
@@ -400,6 +401,12 @@ export function PreviewModal({
                     className="ac-preview-page-field talent-preview-page-input"
                   />
                   <span className="text-white/55">de {logicalTotalPages}</span>
+                  {(currentPage === 0 || (backCover && currentPage === backCoverIndex)) && (
+                    // The editorial surfaces are named, never presented as an extra numbered manuscript page.
+                    <span className="text-white/75" data-testid="preview-modal-surface-label">
+                      · {currentPage === 0 ? copy.stepCover : copy.stepBackCover}
+                    </span>
+                  )}
                 </label>
                 <button
                   data-testid="preview-modal-next-page-button"

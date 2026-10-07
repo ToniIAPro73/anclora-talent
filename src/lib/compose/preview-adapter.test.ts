@@ -347,7 +347,7 @@ describe('composeProjectPreview — metadata injection (C7)', () => {
     expect(pages.some((p) => p.content?.includes('legal-page'))).toBe(false);
   });
 
-  it.each(['odt', 'docx', 'doc'] as const)('preserves %s source fidelity without synthetic front or back matter', (sourceFormat) => {
+  it.each(['odt', 'docx', 'doc'] as const)('keeps %s source fidelity: no synthetic title/legal pages, source numbering untouched, Talent back cover appended', (sourceFormat) => {
     const project = createProject();
     project.document.source = {
       fileName: `source.${sourceFormat}`,
@@ -369,7 +369,14 @@ describe('composeProjectPreview — metadata injection (C7)', () => {
     expect(pages[0].type).toBe('cover');
     expect(pages.some((p) => p.content?.includes('title-page'))).toBe(false);
     expect(pages.some((p) => p.content?.includes('legal-page'))).toBe(false);
-    expect(pages.at(-1)?.type).toBe('content');
+    // The back cover is a Talent surface appended after the manuscript: it is not a numbered source page.
+    expect(pages.at(-1)?.type).toBe('back-cover');
+    expect(pages.filter((p) => p.type === 'back-cover')).toHaveLength(1);
+    const content = pages.filter((p) => p.type === 'content');
+    expect(content.map((p) => p.pageNumber)).toEqual(content.map((_, index) => index + 2)); // source page 1 stays page 1 (after the cover)
+    // Same manuscript pages with or without the back cover.
+    const withoutBack = composeProjectPreview({ ...project, backCover: undefined as never }, config).pages.filter((p) => p.type === 'content');
+    expect(content.map((p) => [p.pageNumber, p.content])).toEqual(withoutBack.map((p) => [p.pageNumber, p.content]));
   });
 });
 

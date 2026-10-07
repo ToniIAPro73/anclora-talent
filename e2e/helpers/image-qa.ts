@@ -46,10 +46,10 @@ export async function signInAsQaIdentity(page: Page) {
   await expect(page).toHaveURL(/\/(dashboard|projects)/, { timeout: 20_000 });
 }
 
-export async function importFreshProject(page: Page, title: string): Promise<string> {
+export async function importFreshProject(page: Page, title: string, sourcePath: string = ODT_PATH): Promise<string> {
   await page.goto('/projects/new');
   await (await requireSingle(page.locator('#project-title'), 'project title input')).fill(title);
-  await page.locator('[data-testid="source-document-input"]').setInputFiles(ODT_PATH);
+  await page.locator('[data-testid="source-document-input"]').setInputFiles(sourcePath);
   const docDataSave = await requireSingle(page.locator('[data-testid="document-data-save-button"]'), 'document data save');
   await docDataSave.click();
   await expect(docDataSave).toBeHidden({ timeout: 15_000 });

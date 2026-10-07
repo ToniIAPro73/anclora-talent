@@ -336,6 +336,8 @@ describe('PreviewModal', () => {
     fireEvent.keyDown(screen.getByTestId('preview-modal-stage'), { key: 'End' });
     await waitFor(() => expect(screen.getByText('Sinopsis v2')).toBeInTheDocument());
     expect(screen.getByTestId('cover-preview-surface')).toBeInTheDocument();
+    // named as an editorial surface, never as one more numbered manuscript page
+    expect(screen.getByTestId('preview-modal-surface-label')).toHaveTextContent(copy.stepBackCover);
   });
 
   test('prefers the live v2 surface over a stale legacy rendered image', () => {

@@ -178,6 +178,8 @@ test('G/image. a positioned image and a framed background image keep their geome
   const editorBackground = await page.getByTestId('design-surface-canvas').getAttribute('data-background');
   const editor = await editorLive(page);
   await enterPreview(page);
+  // Step 5 first paints the project it was opened with; once the freshly saved surface lands the preview re-renders.
+  await expect.poll(async () => Object.keys(await previewLive(page)).length, { timeout: 15_000 }).toBe(Object.keys(editor).length);
   const preview = await previewLive(page);
   await expectParity(editor, preview);
   const imageId = Object.keys(editor).find((id) => editor[id].fontSize === undefined)!;
