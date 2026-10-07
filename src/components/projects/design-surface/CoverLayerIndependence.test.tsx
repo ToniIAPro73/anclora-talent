@@ -481,7 +481,7 @@ describe('editable background image', () => {
     expect(surface().layers).toBe(layersBefore);
   });
 
-  it('the panel offers Restablecer encuadre and recovers a background moved off the cover', async () => {
+  it('the panel offers Restablecer fondo and recovers a background moved off the cover', async () => {
     const start = surfaceWithImageBackground();
     start.background = { kind: 'image', src: 'https://example.com/bg.jpg', fit: 'cover', opacity: 1, frame: { x: 900, y: 900, width: 300, height: 300, rotation: 0 } };
     const { surface } = await setupWithBinding(start);

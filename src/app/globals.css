@@ -3548,7 +3548,9 @@ body:has([data-testid="cover-step-workspace"]) .talent-legal-footer { display: n
 .cover-prop-link { display: inline-flex; align-items: center; gap: 4px; justify-self: start; border: 0; background: none; color: var(--accent-text); font-size: 11px; cursor: pointer; }
 .cover-prop-link:hover { text-decoration: underline; }
 /* Property actions. Default = compact secondary action (content-sized, 28px); `--full` is for a primary action only. */
-.cover-prop-button { display: inline-flex; align-items: center; justify-content: center; justify-self: start; width: auto; height: 28px !important; min-height: 0 !important; padding: 0 12px !important; font-size: 12px !important; }
+.cover-prop-button { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; justify-self: start; width: auto; height: 28px !important; min-height: 0 !important; padding: 0 12px !important; font-size: 12px !important; white-space: nowrap; }
+/* A row of content-sized property actions: each button is as wide as its label needs (never clipped or wrapped). */
+.cover-prop-actions { display: flex; flex-wrap: wrap; gap: 6px 8px; }
 .cover-prop-button--full { width: 100%; justify-self: stretch; }
 .cover-prop-grid > .cover-prop-button { width: 100%; justify-self: stretch; padding: 0 6px !important; }
 .cover-prop-hint { margin: 0; padding: 6px 8px; border: 1px solid color-mix(in srgb, #f1cc77 45%, transparent); border-radius: 6px; background: color-mix(in srgb, #f1cc77 12%, transparent); color: #f1cc77; font-size: 11px; line-height: 1.4; }

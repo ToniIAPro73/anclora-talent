@@ -94,6 +94,15 @@ describe('use as background / convert back', () => {
   });
 });
 
+describe('conversions keep the black-and-white toggle', () => {
+  it('background -> layer and layer -> background both carry grayscale', () => {
+    const layer = backgroundToImageLayer({ ...base, filters: { grayscale: true } }, natural, surface, 2);
+    expect(layer).toMatchObject({ type: 'image', filters: { grayscale: true } });
+    const back = imageLayerToBackground(layer as Parameters<typeof imageLayerToBackground>[0], natural, surface);
+    expect(back.filters).toEqual({ grayscale: true });
+  });
+});
+
 describe('serialization', () => {
   it('the zod schema keeps the frame and the original fit', () => {
     const doc = createEmptyDesignSurface('cover');

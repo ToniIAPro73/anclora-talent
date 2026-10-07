@@ -55,7 +55,7 @@ export function setBackgroundFit(background: BackgroundImageSpec, fit: Backgroun
   return { ...rest, fit };
 }
 
-/** Restablecer encuadre: back to the default Rellenar framing. */
+/** "Restablecer fondo": back to the default Rellenar framing (position, scale, rotation); opacity and the grayscale toggle stay. */
 export function resetBackgroundFrame(background: BackgroundImageSpec): BackgroundImageSpec {
   return setBackgroundFit(background, 'cover');
 }
@@ -94,7 +94,7 @@ export function patchBackgroundFrame(
   return { ...background, frame: { ...resolveBackgroundFrame(background, natural, surface), ...patch } };
 }
 
-/** True when the frame no longer intersects the cover at all (the user needs "Restablecer encuadre"). */
+/** True when the frame no longer intersects the cover at all (the user needs "Restablecer fondo"). */
 export function isBackgroundOffCanvas(frame: BackgroundImageFrame, surface: Size): boolean {
   return frame.x >= surface.width || frame.y >= surface.height || frame.x + frame.width <= 0 || frame.y + frame.height <= 0;
 }
@@ -102,8 +102,9 @@ export function isBackgroundOffCanvas(frame: BackgroundImageFrame, surface: Size
 /** "Usar como fondo": an image layer becomes the structural background, keeping its src, box, rotation and opacity. */
 export function imageLayerToBackground(layer: DesignLayer & { type: 'image' }, natural: Size, surface: Size): BackgroundImageSpec {
   const fullBleed = layer.x <= 0 && layer.y <= 0 && layer.width >= surface.width && layer.height >= surface.height && layer.rotation === 0;
+  const filters = layer.filters?.grayscale ? { filters: { grayscale: true } } : {};
   if (fullBleed || natural.width <= 0 || natural.height <= 0) {
-    return { kind: 'image', src: layer.src, fit: layer.fit === 'contain' ? 'contain' : 'cover', opacity: layer.opacity };
+    return { kind: 'image', src: layer.src, fit: layer.fit === 'contain' ? 'contain' : 'cover', opacity: layer.opacity, ...filters };
   }
   // The layer box is the area the user composed: show the whole image covering that box.
   const scale = Math.max(layer.width / natural.width, layer.height / natural.height);
@@ -114,6 +115,7 @@ export function imageLayerToBackground(layer: DesignLayer & { type: 'image' }, n
     src: layer.src,
     fit: 'cover',
     opacity: layer.opacity,
+    ...filters,
     frame: {
       x: round(layer.x + (layer.width - width) / 2),
       y: round(layer.y + (layer.height - height) / 2),
@@ -128,7 +130,7 @@ export function imageLayerToBackground(layer: DesignLayer & { type: 'image' }, n
 export function backgroundToImageLayer(background: BackgroundImageSpec, natural: Size, surface: Size, zIndex: number): DesignLayer {
   const frame = resolveBackgroundFrame(background, natural, surface);
   return createDesignLayer(
-    { type: 'image', src: background.src, fit: 'fill', x: frame.x, y: frame.y, width: frame.width, height: frame.height, rotation: frame.rotation, opacity: background.opacity },
+    { type: 'image', src: background.src, fit: 'fill', x: frame.x, y: frame.y, width: frame.width, height: frame.height, rotation: frame.rotation, opacity: background.opacity, ...(background.filters?.grayscale ? { filters: { grayscale: true } } : {}) },
     zIndex,
   );
 }

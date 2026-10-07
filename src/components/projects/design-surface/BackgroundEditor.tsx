@@ -208,11 +208,12 @@ export function BackgroundEditor({ background, copy, colorPickerCopy, brandColor
                   testId="background-image-scale-slider"
                 />
                 {offCanvas && <p className="cover-prop-hint" data-testid="background-image-off-canvas-hint">{copy.offCanvasHint}</p>}
-                <div className="cover-prop-grid">
-                  <button type="button" data-testid="background-image-center-button" onClick={() => onChange(centerBackgroundFrame(background, natural, surfaceSize))} className="ac-button ac-button--secondary cover-prop-button">
+                {/* Framing actions: content-sized buttons, one line each, wrapping to a second row only if the panel is narrower. */}
+                <div className="cover-prop-actions" data-testid="background-image-framing-actions">
+                  <button type="button" data-testid="background-image-center-button" onClick={() => onChange(centerBackgroundFrame(background, natural, surfaceSize))} title={copy.centerHint} className="ac-button ac-button--secondary cover-prop-button">
                     {copy.centerLabel}
                   </button>
-                  <button type="button" data-testid="background-image-reset-button" onClick={() => onChange(resetBackgroundFrame(background))} className="ac-button ac-button--secondary cover-prop-button">
+                  <button type="button" data-testid="background-image-reset-button" onClick={() => onChange(resetBackgroundFrame(background))} title={copy.resetHint} className="ac-button ac-button--secondary cover-prop-button">
                     {copy.resetFrameLabel}
                   </button>
                 </div>
@@ -238,14 +239,19 @@ export function BackgroundEditor({ background, copy, colorPickerCopy, brandColor
             />
             {copy.grayscaleLabel}
           </label>
-          {background.src && onConvertToImage && (
-            <button type="button" data-testid="background-image-convert-button" onClick={onConvertToImage} className="ac-button ac-button--secondary cover-prop-button">
-              {copy.convertToImageLabel}
-            </button>
-          )}
         </>
       )}
       </PropertySection>
+      {background.kind === 'image' && background.src && onConvertToImage && (
+        // A structural change, not a framing tweak: its own section, apart from the framing actions.
+        <PropertySection title={copy.layerSectionLabel} testId="background-image-layer-section">
+          <div className="cover-prop-actions">
+            <button type="button" data-testid="background-image-convert-button" onClick={onConvertToImage} title={copy.convertHint} className="ac-button ac-button--secondary cover-prop-button">
+              {copy.convertToImageLabel}
+            </button>
+          </div>
+        </PropertySection>
+      )}
     </div>
   );
 }

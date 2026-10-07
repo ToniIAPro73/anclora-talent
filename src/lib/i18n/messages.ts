@@ -1345,6 +1345,10 @@ export type AppMessages = {
       centerLabel: string;
       resetFrameLabel: string;
       convertToImageLabel: string;
+      centerHint: string;
+      resetHint: string;
+      convertHint: string;
+      layerSectionLabel: string;
       replaceImageLabel: string;
       offCanvasHint: string;
       grayscaleLabel: string;
@@ -3040,9 +3044,13 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         rotationLabel: 'Rotación',
         positionXLabel: 'X',
         positionYLabel: 'Y',
-        centerLabel: 'Centrar',
-        resetFrameLabel: 'Restablecer encuadre',
-        convertToImageLabel: 'Convertir en imagen',
+        centerLabel: 'Centrar imagen',
+        resetFrameLabel: 'Restablecer fondo',
+        convertToImageLabel: 'Convertir en capa',
+        centerHint: 'Centra la imagen dentro de la portada manteniendo la escala actual.',
+        resetHint: 'Restaura la posición, la escala y el encuadre iniciales de la imagen de fondo.',
+        convertHint: 'Convierte el fondo en una capa de imagen normal que puede ordenarse con el resto de elementos.',
+        layerSectionLabel: 'Capa',
         replaceImageLabel: 'Sustituir imagen',
         offCanvasHint: 'La imagen está fuera de la portada. Restablece el encuadre.',
         grayscaleLabel: 'Blanco y negro',
@@ -4735,9 +4743,13 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         rotationLabel: 'Rotation',
         positionXLabel: 'X',
         positionYLabel: 'Y',
-        centerLabel: 'Center',
-        resetFrameLabel: 'Reset framing',
-        convertToImageLabel: 'Convert to image',
+        centerLabel: 'Center image',
+        resetFrameLabel: 'Reset background',
+        convertToImageLabel: 'Convert to layer',
+        centerHint: 'Centers the image inside the cover, keeping the current scale.',
+        resetHint: 'Restores the background image to its initial position, scale and framing.',
+        convertHint: 'Turns the background into a normal image layer that can be ordered with the other elements.',
+        layerSectionLabel: 'Layer',
         replaceImageLabel: 'Replace image',
         offCanvasHint: 'The image is outside the cover. Reset the framing.',
         grayscaleLabel: 'Black and white',
