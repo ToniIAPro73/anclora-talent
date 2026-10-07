@@ -46,6 +46,7 @@ export type SectionSemanticType =
   | 'toc'
   | 'prologue'
   | 'introduction'
+  | 'part'
   | 'chapter'
   | 'subheading'
   | 'epilogue'

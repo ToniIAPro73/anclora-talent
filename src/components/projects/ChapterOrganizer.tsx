@@ -35,10 +35,18 @@ export function ChapterOrganizer({
 
   const resolveChapterKicker = (chapter: DocumentChapter | undefined, index: number) => {
     if (!chapter) return '';
+    const type = chapter.semanticType;
+    // 'part' must be checked before the generic chapterNumber branch below —
+    // both parts and chapters carry a chapterNumber, and a part mislabeled
+    // "CAPÍTULO N" would be indistinguishable from a real chapter in the UI.
+    if (type === 'part') {
+      return chapter.chapterNumber != null
+        ? `${locale === 'en' ? 'PART' : 'PARTE'} ${chapter.chapterNumber}`
+        : locale === 'en' ? 'PART' : 'PARTE';
+    }
     if (chapter.chapterNumber != null) {
       return `${locale === 'en' ? 'CHAPTER' : 'CAPÍTULO'} ${chapter.chapterNumber}`;
     }
-    const type = chapter.semanticType;
     if (type === 'toc') return locale === 'en' ? 'TABLE OF CONTENTS' : 'ÍNDICE';
     if (type === 'prologue') return locale === 'en' ? 'PROLOGUE' : 'PRÓLOGO';
     if (type === 'introduction') return locale === 'en' ? 'INTRODUCTION' : 'INTRODUCCIÓN';

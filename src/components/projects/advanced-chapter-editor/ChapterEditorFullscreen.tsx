@@ -231,7 +231,11 @@ export function ChapterEditorFullscreen({
           <div className="ac-editor-title-divider hidden sm:block" />
           <div className="ac-editor-shell__chapter-context flex items-center gap-2 min-w-0">
             <h2 className="ac-editor-shell__title shrink-0">
-              {editor.currentChapter.chapterNumber != null
+              {editor.currentChapter.semanticType === 'part'
+                ? editor.currentChapter.chapterNumber != null
+                  ? `${locale === 'es' ? 'Parte' : 'Part'} ${editor.currentChapter.chapterNumber}`
+                  : locale === 'es' ? 'Parte' : 'Part'
+                : editor.currentChapter.chapterNumber != null
                 ? `${locale === 'es' ? 'Capítulo' : 'Chapter'} ${editor.currentChapter.chapterNumber}`
                 : editor.currentChapter.semanticType && editor.currentChapter.semanticType !== 'other'
                   ? (editor.currentChapter.semanticType === 'toc' ? (locale === 'es' ? 'Índice' : 'Table of Contents')

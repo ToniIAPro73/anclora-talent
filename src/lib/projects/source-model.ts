@@ -1029,6 +1029,14 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
       const directFormatting: Record<string, string | number | boolean> = {
         ...(block.bold ? { bold: true } : {}),
         ...(block.italic ? { italic: true } : {}),
+        // `block.fontSizePt` is already carried by `LayoutBlock` (used
+        // internally for heading-level/kicker classification) but was
+        // previously dropped here instead of reaching the emitted run —
+        // the reconstructed paragraph then rendered at the editor's
+        // default size instead of the source's actual type size.
+        // `inlineSourceHtml` (below) reads `directFormatting.fontSizePt`
+        // specifically (a bare point-size number), not a CSS string.
+        ...(typeof block.fontSizePt === 'number' ? { fontSizePt: block.fontSizePt } : {}),
       };
       const run: SourceTextRun = {
         text: block.text,

@@ -40,6 +40,34 @@ describe('source pagination baseline', () => {
     expect(isSourcePaginationBaselineValid(baseline, [{ ...blocks[0], content: 'editado' }, blocks[1]], 'source-hash')).toBe(false);
   });
 
+  it('projects a page boundary from a <w:sectPr> section break (PDF-to-DOCX reconstruction, no explicit page-break run)', async () => {
+    const zip = new JSZip();
+    // Reconstruction tools commonly encode every source page as its own
+    // section instead of an explicit page-break run — see diagnostic
+    // finding #10. The sectPr lives in the LAST paragraph of the closing
+    // section's own <w:pPr>; the following paragraph starts the new page.
+    zip.file('word/document.xml', `<w:document xmlns:w="x"><w:body>
+      <w:p><w:pPr><w:sectPr><w:pgSz w:w="12240" w:h="15840"/></w:sectPr></w:pPr><w:r><w:t>Primera página</w:t></w:r></w:p>
+      <w:p><w:r><w:t>Prólogo</w:t></w:r></w:p>
+    </w:body></w:document>`);
+    const buffer = await zip.generateAsync({ type: 'nodebuffer' });
+    const html = await injectDocxSourcePageBreaks('<h1>Prólogo</h1>', buffer);
+
+    expect(html).toBe('<hr data-page-break="source"/><h1>Prólogo</h1>');
+  });
+
+  it('does not treat a continuous <w:sectPr> (no visual page boundary) as a page break', async () => {
+    const zip = new JSZip();
+    zip.file('word/document.xml', `<w:document xmlns:w="x"><w:body>
+      <w:p><w:pPr><w:sectPr><w:type w:val="continuous"/></w:sectPr></w:pPr><w:r><w:t>Primera página</w:t></w:r></w:p>
+      <w:p><w:r><w:t>Prólogo</w:t></w:r></w:p>
+    </w:body></w:document>`);
+    const buffer = await zip.generateAsync({ type: 'nodebuffer' });
+    const html = await injectDocxSourcePageBreaks('<h1>Prólogo</h1>', buffer);
+
+    expect(html).toBe('<h1>Prólogo</h1>');
+  });
+
   it('does not claim a baseline when OOXML has no page marker', async () => {
     const zip = new JSZip();
     zip.file('word/document.xml', '<w:document xmlns:w="x"><w:body><w:p><w:r><w:t>Texto</w:t></w:r></w:p></w:body></w:document>');

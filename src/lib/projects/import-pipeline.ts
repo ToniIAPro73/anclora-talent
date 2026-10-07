@@ -9,18 +9,119 @@ import { normalizeFootnoteReferenceMarkup, parseDocxFootnotes, type CanonicalFoo
 const SUPPORTED_IMPORT_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'odt', 'txt', 'md', 'markdown']);
 const BLOCK_TAG_RE = /<(h[1-6]|p|ul|ol|blockquote|table|pre|figure)[^>]*>[\s\S]*?<\/\1>|<hr\b[^>]*\/?>(?:<\/hr>)?/gi;
 const ALL_CAPS_RE = /^(?=.{40,})[^a-z]*[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ0-9 .,·:;()\-–—]+$/;
-const MAJOR_HEADING_RE = /^(?:cap[ií]tulo|chapter|introducci[oó]n|pr[oó]logo|prologo|[íi]ndice|indice|fase\s+\d+|parte\s+\d+|secci[oó]n|ep[ií]logo|conclusi[oó]n|glosario|bibliograf[ií]a|cierre|despu[eé]s\s+de|recursos(?:\s+recomendados)?|anexos?|ap[eé]ndices?)(?:\b|:)/i;
+// "fase"/"parte" lost their digit requirement so that spelled-out ("Parte
+// Uno") and Roman ("Parte I") markers match too; the false-positive risk
+// this opens up ("parte de la vida que...") is closed by routing both
+// keywords through AMBIGUOUS_MAJOR_HEADING_PREFIX_RE below, which caps the
+// line length instead of requiring a digit.
+const MAJOR_HEADING_RE = /^(?:cap[ií]tulo|chapter|introducci[oó]n|pr[oó]logo|prologo|[íi]ndice|indice|fase|parte|secci[oó]n|ep[ií]logo|conclusi[oó]n|glosario|bibliograf[ií]a|cierre|despu[eé]s\s+de|recursos(?:\s+recomendados)?|anexos?|ap[eé]ndices?)(?:\b|:)/i;
 const MINOR_HEADING_RE = /^(?:d[ií]a\s+\d+|tema\s+\d+|idea\s+clave|reto\s+de\s+acci[oó]n|preguntas?\s+de\s+reflexi[oó]n|ejercicio|caso|las\s+cinco\s+claves|cierre\s+de\s+fase)(?:\b|:)/i;
 
 /**
- * A heading marker line that carries ONLY a section keyword + number, no
- * inline title text (e.g. "Capítulo 1", "Chapter 2", "Parte 3"). Distinct
- * from `MAJOR_HEADING_RE`, which also matches when the title is inline
- * ("Capítulo 3: El suelo financiero") — that case needs no lookahead.
- * Matched against the tracked-heading-normalized line (see
- * `normalizeTrackedHeading`).
+ * Spelled-out chapter/part numbers, Spanish and English (cardinal words, as
+ * used editorially: "Capítulo Uno", "Chapter One"), plus Roman numerals.
+ * Keyed without diacritics; lookups normalize the candidate first.
  */
-const CHAPTER_MARKER_RE = /^(?:cap[ií]tulo|chapter|parte|fase|secci[oó]n)\s*\d+[.:]?\s*$/i;
+const NUMBER_WORDS_ES: Record<string, number> = {
+  uno: 1, una: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10,
+  once: 11, doce: 12, trece: 13, catorce: 14, quince: 15, dieciseis: 16, diecisiete: 17, dieciocho: 18,
+  diecinueve: 19, veinte: 20,
+};
+const NUMBER_WORDS_EN: Record<string, number> = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+  eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18,
+  nineteen: 19, twenty: 20,
+};
+
+function stripDiacritics(value: string): string {
+  return value.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+}
+
+/** Roman numeral (I..MMMCMXCIX) -> integer, or null when not a valid numeral. */
+function romanToNumber(token: string): number | null {
+  const roman = token.toUpperCase();
+  if (!/^[IVXLCDM]+$/.test(roman)) return null;
+  const values: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 };
+  let total = 0;
+  for (let index = 0; index < roman.length; index += 1) {
+    const current = values[roman[index]];
+    const next = values[roman[index + 1]];
+    total += next && current < next ? -current : current;
+  }
+  // Round-trip check rejects non-canonical sequences ("IIII", "VV") that
+  // the additive loop above would otherwise silently accept as a number.
+  return total > 0 && total <= 3999 && numberToRoman(total) === roman ? total : null;
+}
+
+function numberToRoman(value: number): string {
+  const table: Array<[number, string]> = [
+    [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'],
+    [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I'],
+  ];
+  let remaining = value;
+  let result = '';
+  for (const [amount, symbol] of table) {
+    while (remaining >= amount) {
+      result += symbol;
+      remaining -= amount;
+    }
+  }
+  return result;
+}
+
+/**
+ * Parses a chapter/part marker's number token: Arabic digits ("1"), a Roman
+ * numeral ("I", "IV"), or a spelled-out Spanish/English cardinal ("uno",
+ * "one"). Returns null when the token is not a recognizable number — the
+ * caller must treat that as "not a marker", not silently ignore it.
+ */
+function parseMarkerNumberToken(token: string): number | null {
+  const trimmed = token.trim();
+  if (!trimmed) return null;
+  if (/^\d+$/.test(trimmed)) return Number.parseInt(trimmed, 10);
+
+  const normalized = stripDiacritics(trimmed.toLowerCase());
+  if (normalized in NUMBER_WORDS_ES) return NUMBER_WORDS_ES[normalized];
+  if (normalized in NUMBER_WORDS_EN) return NUMBER_WORDS_EN[normalized];
+
+  // Roman numerals only use letters that are never, on their own, a valid
+  // Spanish/English number word ("I" through "XX" don't collide with the
+  // maps above), so checking this last is safe.
+  if (/^[ivxlcdm]+$/i.test(trimmed) && trimmed.length <= 15) return romanToNumber(trimmed);
+
+  return null;
+}
+
+/**
+ * Renders a marker's number token for display: digits pass through, a
+ * spelled-out word is editorial-title-cased ("uno" -> "Uno"), and a Roman
+ * numeral is upper-cased as a whole unit ("ii" -> "II") rather than run
+ * through word title-casing, which would wrongly treat it as a regular
+ * word and produce "Ii". Checked in the same order as
+ * `parseMarkerNumberToken` (word maps before Roman) for the same reason.
+ */
+function formatMarkerNumberLabel(token: string): string {
+  const trimmed = token.trim();
+  if (/^\d+$/.test(trimmed)) return trimmed;
+
+  const normalized = stripDiacritics(trimmed.toLowerCase());
+  if (normalized in NUMBER_WORDS_ES || normalized in NUMBER_WORDS_EN) return toEditorialTitleCase(trimmed);
+  if (/^[ivxlcdm]+$/i.test(trimmed) && romanToNumber(trimmed) !== null) return trimmed.toUpperCase();
+
+  return toEditorialTitleCase(trimmed);
+}
+
+/**
+ * A heading marker line that carries ONLY a section keyword + number, no
+ * inline title text (e.g. "Capítulo 1", "Chapter 2", "Parte 3", "Capítulo
+ * Uno", "Parte I"). Distinct from `MAJOR_HEADING_RE`, which also matches
+ * when the title is inline ("Capítulo 3: El suelo financiero") — that case
+ * needs no lookahead. Matched against the tracked-heading-normalized line
+ * (see `normalizeTrackedHeading`). The captured token still needs
+ * `parseMarkerNumberToken` to confirm it is a real number before being
+ * trusted as a chapter/part boundary — this regex alone only checks shape.
+ */
+const CHAPTER_MARKER_RE = /^(?:cap[ií]tulo|chapter|parte|fase|secci[oó]n)\s+([a-záéíóúñ]+|[ivxlcdm]+|\d+)[.:]?\s*$/i;
 
 /** A page folio in "— N —" form (any dash style), always safe to strip. */
 const STRICT_FOLIO_RE = /^[-–—―]\s*\d{1,4}\s*[-–—―]$/;
@@ -431,10 +532,13 @@ function isTopLevelChapterHeading(input: string) {
  * heading. Trusted only when short, the way a genuine "Recursos
  * recomendados" or "Después de la Fase 1"-style marker is; the other,
  * more distinctly structural alternatives (capítulo, chapter,
- * introducción, prólogo, índice, epílogo, anexos, apéndice, fase N, parte
- * N) are specific enough to trust outright.
+ * introducción, prólogo, índice, epílogo, anexos, apéndice) are specific
+ * enough to trust outright. "fase"/"parte" moved into this ambiguous group
+ * once MAJOR_HEADING_RE stopped requiring a digit after them (needed to
+ * recognize "Parte Uno"/"Parte I") — without this gate, ordinary prose like
+ * "parte de la vida que..." or "fase de..." would misread as a heading.
  */
-const AMBIGUOUS_MAJOR_HEADING_PREFIX_RE = /^(?:despu[eé]s\s+de|recursos|cierre|secci[oó]n)\b/i;
+const AMBIGUOUS_MAJOR_HEADING_PREFIX_RE = /^(?:despu[eé]s\s+de|recursos|cierre|secci[oó]n|parte|fase)\b/i;
 
 function matchesMajorHeadingKeyword(trimmed: string): boolean {
   if (!MAJOR_HEADING_RE.test(trimmed)) return false;
@@ -1185,11 +1289,20 @@ export function inferSectionSemantics(title: string): {
     return { semanticType: 'bibliography', chapterNumber: null };
   }
 
-  // Numbered Chapter: "Capítulo N", "Chapter N", "Capítulo 1.", etc.
-  const chapterMatch = normalized.match(/^(?:cap[ií]tulo|chapter)\s*(\d+)\b/i);
+  // Part: "Parte N", "Parte Uno", "Parte I" — checked before the chapter
+  // match below since "parte" groups chapters and must never be labeled
+  // 'chapter' itself.
+  const partMatch = normalized.match(/^parte\s+([a-záéíóúñ]+|[ivxlcdm]+|\d+)\b/i);
+  if (partMatch) {
+    return { semanticType: 'part', chapterNumber: parseMarkerNumberToken(partMatch[1]) };
+  }
+
+  // Numbered Chapter: "Capítulo N", "Chapter N", "Capítulo 1.", "Capítulo
+  // Uno", "Capítulo I", etc. — Arabic digits, Roman numerals and spelled-out
+  // Spanish/English ordinals all resolve through `parseMarkerNumberToken`.
+  const chapterMatch = normalized.match(/^(?:cap[ií]tulo|chapter)\s+([a-záéíóúñ]+|[ivxlcdm]+|\d+)\b/i);
   if (chapterMatch) {
-    const num = parseInt(chapterMatch[1], 10);
-    return { semanticType: 'chapter', chapterNumber: isNaN(num) ? null : num };
+    return { semanticType: 'chapter', chapterNumber: parseMarkerNumberToken(chapterMatch[1]) };
   }
 
   return { semanticType: 'other', chapterNumber: null };
@@ -1583,8 +1696,17 @@ function buildChaptersFromBlocks(
         // class, including any custom color/size) instead of being
         // discarded, and keeping the reading order kicker -> heading intact.
         kickerBlock = targetPool.pop() ?? null;
-        if (CHAPTER_MARKER_RE.test(kickerText)) {
-          headingText = `${toEditorialTitleCase(kickerText)}. ${headingText}`;
+        const chapterMarkerMatch = CHAPTER_MARKER_RE.exec(kickerText);
+        if (chapterMarkerMatch) {
+          // Title-case the keyword and the number token independently
+          // (`formatMarkerNumberLabel`) rather than running the whole
+          // kicker through `toEditorialTitleCase` as one phrase — that
+          // word-by-word title-caser turns a Roman numeral like "II" into
+          // "Ii", since it has no notion of Roman numerals. The keyword is
+          // always the marker's first word (none of CHAPTER_MARKER_RE's
+          // keywords are multi-word), the number token is the capture.
+          const keyword = kickerText.trim().split(/\s+/)[0];
+          headingText = `${toEditorialTitleCase(keyword)} ${formatMarkerNumberLabel(chapterMarkerMatch[1])}. ${headingText}`;
         } else if (/^introducci[oó]n$/i.test(kickerText)) {
           headingText = `Introducción: ${headingText}`;
         } else if (/^conclusi[oó]n$/i.test(kickerText)) {
@@ -1827,7 +1949,12 @@ export function buildImportedDocumentSeed({
     { text: contentText, html },
   );
 
-  const normalizedHtml = detectedSourceFormat === 'markdown' ? sourceModelToHtml(canonicalSourceModel) : html ? html : null;
+  const rawNormalizedHtml = detectedSourceFormat === 'markdown' ? sourceModelToHtml(canonicalSourceModel) : html ? html : null;
+  // Reconstruction tools (PDF -> DOCX/ODT) commonly bake an entire table of
+  // contents into one run-on paragraph, with each entry's dot-leader and
+  // page number as literal characters. Split it into real per-entry list
+  // items before block parsing, for either source format.
+  const normalizedHtml = rawNormalizedHtml ? splitConcatenatedTocParagraph(rawNormalizedHtml) : rawNormalizedHtml;
   const htmlBlocks = normalizedHtml
     ? parseHtmlBlocks(normalizedHtml, { preserveStyles: canonicalSourceModel.format === 'odt' })
     : [];
@@ -2276,6 +2403,12 @@ async function extractDocxRichContent(buffer: Buffer): Promise<ExtractedImportSo
       // cannot be inspected; the fallback parser still handles its list.
     }
     let richHtml = inlineDocxFootnotes(normalizeHtmlFragment(result.value), footnoteSet).replace(/<p([^>]*)>(\s*[·._\-—]{3,}\s*\d+\s*)<\/p>/gi, '<p$1 class="toc-entry">$2</p>');
+    // Recover chapter/part headings when the source document has no named
+    // heading style at all (every paragraph "Normal") — common in DOCX
+    // files reconstructed from a PDF. Must run before any other HTML-shape
+    // transform below so the promoted <h1>/<h2> is a normal heading by the
+    // time parseHtmlBlocks sees it.
+    richHtml = promoteDocxChapterMarkerParagraphs(richHtml);
     // Source page breaks are supplementary metadata. If the DOCX container
     // is partial, keep Mammoth's recovered HTML instead of discarding the
     // whole rich import and falling back to plain text extraction.
@@ -2301,6 +2434,147 @@ async function extractDocxRichContent(buffer: Buffer): Promise<ExtractedImportSo
     // Fallback to WordExtractor below when Mammoth is unavailable or fails.
   }
   return null;
+}
+
+/**
+ * Splits a single paragraph that concatenates an entire table of contents
+ * ("Title one.......5 Title two..........8 ...") into real per-entry
+ * `<li data-toc-entry="true" data-toc-page="N">` items — the same shape
+ * `splitHtmlListBlocks` produces for a table of contents that already
+ * arrived as a proper `<ul>`/`<ol>`. Source-format-agnostic: PDF-to-DOCX
+ * tools bake the TOC into one `<w:p>`; PDF-to-ODT geometric reconstruction
+ * merges it via the paragraph-continuation heuristic (same font/size/weight
+ * line after line looks exactly like a wrapped body paragraph). Requires at
+ * least 3 recovered entries so an ordinary paragraph that happens to
+ * contain one or two dotted abbreviations is never mistaken for a TOC.
+ */
+export function splitConcatenatedTocParagraph(html: string): string {
+  const entryRe = /([^\s][\s\S]*?)[ \t]*[·._\-—]{2,}[ \t]*(\d{1,4})(?=\s|$)/g;
+
+  return html.replace(/<(p|h[1-6])([^>]*)>([\s\S]*?)<\/\1>/gi, (full, tag: string, attrs: string, inner: string) => {
+    if (/class=/i.test(attrs)) return full;
+    const plainText = textFromHtml(inner).replace(/\s+/g, ' ').trim();
+    const matches = Array.from(plainText.matchAll(entryRe));
+    if (matches.length < 3) return full;
+
+    const entries = matches
+      .map((match) => ({ title: match[1].trim(), page: match[2] }))
+      .filter((entry) => entry.title.length > 0 && entry.title.length <= 140);
+    if (entries.length < 3) return full;
+
+    // Nearly every character of plainText must belong to a matched entry
+    // SPAN (title + dot-leader + page number, not just title+page — the
+    // leader itself is most of each entry's length) — a residual tail
+    // (e.g. prose containing one dotted number, followed by more prose
+    // with no page-number shape) means this wasn't really a concatenated
+    // TOC and must be left alone.
+    const consumed = matches.reduce((sum, match) => sum + match[0].length, 0);
+    if (consumed < plainText.length * 0.8) return full;
+
+    const items = entries
+      .map((entry) => `<li data-toc-entry="true" data-toc-level="2" data-toc-page="${entry.page}">${escapeHtml(entry.title)}</li>`)
+      .join('');
+    return `<ul class="toc-list">${items}</ul>`;
+  });
+}
+
+const DOCX_BARE_MARKER_RE = /^(cap[ií]tulo|chapter|parte|fase)\s+([a-záéíóúñ]+|[ivxlcdm]+|\d+)\s*[.:]?\s*$/i;
+
+/**
+ * Front-matter/back-matter keyword markers that carry no number ("prólogo",
+ * "introducción", ...) — the same keyword set and display labels already
+ * used by `buildChaptersFromBlocks`'s editorial-kicker fusion, kept in sync
+ * so a "styled Editorial Kicker paragraph" source and a "bare Normal
+ * paragraph" source (this function's case) produce the identical title.
+ */
+const DOCX_FRONTMATTER_KEYWORD_LABELS: Record<string, string> = {
+  introduccion: 'Introducción',
+  conclusion: 'Conclusión',
+  epilogo: 'Epílogo',
+  prologo: 'Prólogo',
+  apendice: 'Apéndice',
+  glosario: 'Glosario',
+  bibliografia: 'Bibliografía',
+};
+const DOCX_BARE_FRONTMATTER_MARKER_RE = /^(introducci[oó]n|conclusi[oó]n|ep[ií]logo|pr[oó]logo|ap[eé]ndice|glosario|bibliograf[ií]a)\s*[.:]?\s*$/i;
+
+/**
+ * Promotes DOCX chapter/part/front-matter marker paragraphs into real
+ * `<h1>`/`<h2>` elements when mammoth could not do it via styleMap, because
+ * the source document has no named heading style at all — every paragraph
+ * is "Normal". This is exactly the shape produced by PDF-to-DOCX
+ * reconstruction tools: a marker ("CAPÍTULO UNO", "INTRODUCCIÓN") and its
+ * title live either on one `<p>` separated by a `<w:br/>` (`<br/>` after
+ * mammoth conversion), or as two consecutive bare `<p>` elements. Only
+ * paragraphs with NO class attribute are touched, so anything already
+ * classified by the styleMap (title, subtitle, TOC entry, editorial kicker,
+ * block quote) is left untouched. Runs on raw mammoth HTML, before
+ * `parseHtmlBlocks` ever sees it, so the promoted heading flows through the
+ * same chapter-detection machinery a genuinely heading-styled DOCX would
+ * use (`isMajorChapterBlock`, `inferSectionSemantics`, etc.) instead of
+ * needing a parallel code path.
+ */
+export function promoteDocxChapterMarkerParagraphs(html: string): string {
+  const markerLevelFor = (keyword: string): 1 | 2 =>
+    stripDiacritics(keyword.toLowerCase()) === 'parte' ? 1 : 2;
+
+  const isBareMarkerText = (text: string): boolean =>
+    DOCX_BARE_MARKER_RE.test(text) || DOCX_BARE_FRONTMATTER_MARKER_RE.test(text);
+
+  const toHeading = (markerText: string, titleText: string): string | null => {
+    if (!titleText || titleText.length > 160) return null;
+    // A title that is itself another marker ("Capítulo Uno" directly
+    // followed by "Capítulo Dos" with no body text between) is not a
+    // marker+title pair — refuse it instead of inventing a run-on heading.
+    if (isBareMarkerText(titleText)) return null;
+
+    const chapterMatch = DOCX_BARE_MARKER_RE.exec(markerText);
+    if (chapterMatch) {
+      if (parseMarkerNumberToken(chapterMatch[2]) === null) return null;
+      const markerLabel = `${toEditorialTitleCase(chapterMatch[1])} ${formatMarkerNumberLabel(chapterMatch[2])}`;
+      const level = markerLevelFor(chapterMatch[1]);
+      return `<h${level}>${escapeHtml(`${markerLabel}. ${titleText}`)}</h${level}>`;
+    }
+
+    const frontMatterMatch = DOCX_BARE_FRONTMATTER_MARKER_RE.exec(markerText);
+    if (frontMatterMatch) {
+      const label = DOCX_FRONTMATTER_KEYWORD_LABELS[stripDiacritics(frontMatterMatch[1].toLowerCase())];
+      if (!label) return null;
+      return `<h2>${escapeHtml(`${label}: ${titleText}`)}</h2>`;
+    }
+
+    return null;
+  };
+
+  // Shape 1: marker and title on one paragraph, separated by a line break.
+  let promoted = html.replace(/<p([^>]*)>([\s\S]*?)<\/p>/gi, (full, attrs: string, inner: string) => {
+    if (/class=/i.test(attrs)) return full;
+    const segments = inner.split(/<br\s*\/?>/i);
+    if (segments.length < 2) return full;
+
+    const markerText = textFromHtml(segments[0]).trim();
+    if (!isBareMarkerText(markerText)) return full;
+
+    const titleText = textFromHtml(segments.slice(1).join(' ')).trim();
+    return toHeading(markerText, titleText) ?? full;
+  });
+
+  // Shape 2: marker alone on its own paragraph, immediately followed by a
+  // separate paragraph holding only the title (no shared line break).
+  promoted = promoted.replace(
+    /<p([^>]*)>([\s\S]*?)<\/p>\s*<p([^>]*)>([\s\S]*?)<\/p>/gi,
+    (full, markerAttrs: string, markerInner: string, titleAttrs: string, titleInner: string) => {
+      if (/class=/i.test(markerAttrs) || /class=/i.test(titleAttrs)) return full;
+      const markerText = textFromHtml(markerInner).trim();
+      if (!isBareMarkerText(markerText)) return full;
+
+      const titleText = textFromHtml(titleInner).trim();
+      const heading = toHeading(markerText, titleText);
+      return heading ? `${heading}` : full;
+    },
+  );
+
+  return promoted;
 }
 
 function decodeDocxXmlText(value: string): string {
@@ -2351,15 +2625,26 @@ export async function injectDocxSourcePageBreaks(html: string, buffer: Buffer | 
     const lastTextOffset = textMatches.at(-1)?.index ?? -1;
     const breakMatches = [...paragraph.matchAll(/<w:(?:br\b[^>]*w:type="page"|lastRenderedPageBreak\b[^>]*)\/?\s*>/g)];
     const hasPageBreak = breakMatches.length > 0;
+    // PDF-to-DOCX reconstruction tools often encode every source page as
+    // its own section (<w:sectPr>) instead of an explicit page-break run.
+    // A paragraph's <w:sectPr> (always inside its <w:pPr>, i.e. structurally
+    // before that paragraph's own text) closes the CURRENT section/page —
+    // whatever paragraph comes next starts a new one — unless it is
+    // declared "continuous" (no visual page boundary). A document-wide
+    // continuous-only final <w:sectPr> (no preceding <w:p> wrapper) is not
+    // matched by this per-paragraph scan and correctly contributes nothing.
+    const sectPrMatch = paragraph.match(/<w:sectPr\b[^>]*>[\s\S]*?<\/w:sectPr>/);
+    const isContinuousSection = sectPrMatch ? /<w:type\s+w:val="continuous"/.test(sectPrMatch[0]) : false;
+    const hasSectionBreak = Boolean(sectPrMatch) && !isContinuousSection;
     if (!text) {
-      breakAfterPrevious = hasPageBreak;
+      breakAfterPrevious = hasPageBreak || hasSectionBreak;
       continue;
     }
     const breakBeforeParagraph = /<w:pageBreakBefore\b/.test(paragraph) ||
       breakAfterPrevious ||
       breakMatches.some((item) => (item.index ?? Number.POSITIVE_INFINITY) < firstTextOffset);
     if (breakBeforeParagraph) boundaryTexts.add(normalizedBoundaryText(text));
-    breakAfterPrevious = hasPageBreak && breakMatches.some((item) => (item.index ?? -1) >= lastTextOffset);
+    breakAfterPrevious = (hasPageBreak && breakMatches.some((item) => (item.index ?? -1) >= lastTextOffset)) || hasSectionBreak;
   }
 
   if (boundaryTexts.size === 0) return html;
