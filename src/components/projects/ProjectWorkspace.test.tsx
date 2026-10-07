@@ -230,9 +230,28 @@ describe('ProjectWorkspace', () => {
 
     render(<ProjectWorkspace project={makeProject({ workflowStep: 4 })} copy={copy} />);
 
-    expect(screen.getByText('de 8 pasos')).toBeInTheDocument();
-    expect(screen.getAllByText('4').length).toBeGreaterThan(0);
     expect(screen.getAllByText(copy.stepBackCover).length).toBeGreaterThan(0);
+    // Step 4 is the same full-width workspace as Portada: the top stepper is the only workflow navigation.
+    expect(screen.getByTestId('cover-step-workspace')).toBeInTheDocument();
+    expect(screen.queryByText('Progreso')).not.toBeInTheDocument();
+    expect(screen.queryByText('de 8 pasos')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('previous-step-button')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('next-step-button')).not.toBeInTheDocument();
+  });
+
+  test('Portada and Contraportada share one workspace shell but never share a studio instance', () => {
+    const { container } = render(<ProjectWorkspace project={makeProject({ workflowStep: 3 })} copy={copy} />);
+    const front = container.querySelector('[data-testid="cover-studio-v2"]');
+    expect(front).toHaveAttribute('data-surface-kind', 'cover');
+
+    clickStepperStep(container, 4);
+
+    const studios = container.querySelectorAll('[data-testid="cover-studio-v2"]');
+    expect(studios).toHaveLength(1);
+    expect(studios[0]).toHaveAttribute('data-surface-kind', 'back-cover');
+    // A reused instance would keep the front surface in its state (and save it as the back cover): it must be a new studio.
+    expect(studios[0]).not.toBe(front);
+    vi.mocked(saveProjectWorkflowStepAction).mockClear();
   });
 
   test('persists the workflow step when navigating', async () => {

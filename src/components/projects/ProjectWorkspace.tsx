@@ -439,9 +439,10 @@ export function ProjectWorkspace({
         return (
           <div className="cover-workspace-host w-full">
             <CoverStudioV2
-              // Keyed by project only: the studio owns its surface (autosave), so a refreshed
+              // Keyed by project AND surface: front and back share one workspace shell, so the key is what stops
+              // React from reusing one studio (and its state) for the other surface. A refreshed
               // `updatedAt` after every save must not remount it and drop selection/scroll/canvas.
-              key={project.id}
+              key={`${project.id}:cover`}
               surfaceKind="cover"
               projectId={project.id}
               initialSurface={canonicalCoverSurface}
@@ -455,9 +456,9 @@ export function ProjectWorkspace({
       case 4: // Back Cover
         if (fixedPdf) return renderFixedPdfIncludedPanel(copy.stepBackCover);
         return (
-          <div className="mx-auto max-w-6xl space-y-6">
+          <div className="cover-workspace-host w-full">
             <CoverStudioV2
-              key={project.id}
+              key={`${project.id}:back-cover`}
               surfaceKind="back-cover"
               projectId={project.id}
               initialSurface={canonicalBackCoverSurface}
@@ -718,7 +719,7 @@ export function ProjectWorkspace({
       </div>
 
       {/* Step Layout */}
-      {activeStep === 3 && !fixedPdf ? (
+      {(activeStep === 3 || activeStep === 4) && !fixedPdf ? (
         <div className="cover-workspace-stage w-full" data-testid="cover-step-workspace">
           {renderStepContent()}
         </div>
