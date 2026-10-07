@@ -8,7 +8,7 @@
  * are unconditionally stable and fully keyboard-accessible, mission §54).
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
@@ -87,6 +87,13 @@ export function LayersPanel({
   const labelOf = (layer: DesignLayer) => resolveLayerLabel(layer, layers, copy, surfaceSize);
 
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  // The row menu is an overlay: any click elsewhere dismisses it.
+  useEffect(() => {
+    if (!menuOpenId) return;
+    const close = () => setMenuOpenId(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [menuOpenId]);
 
   if (sorted.length === 0) {
     return (
@@ -151,7 +158,7 @@ export function LayersPanel({
                     if (event.key === 'Escape') setRenamingId(null);
                   }}
                   onClick={(event) => event.stopPropagation()}
-                  className="min-w-0 flex-1 rounded border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-1 text-xs text-white"
+                  className="cover-layer-row__rename"
                 />
               ) : (
                 <span
@@ -203,13 +210,7 @@ export function LayersPanel({
             </button>
 
             {/* Action buttons (rendered cleanly, visible on hover or menu open, accessible to tests) */}
-            <div
-              className={`cover-layer-actions ${
-                isMenuOpen
-                  ? 'flex absolute right-0 top-full z-20 mt-1 bg-[#071d2b] border border-[#2d5870] rounded-md p-1 shadow-xl'
-                  : 'hidden group-hover:flex items-center gap-0.5'
-              }`}
-            >
+            <div className="cover-layer-actions" data-open={isMenuOpen ? 'true' : 'false'}>
               {!layer.locked && (
                 <button
                   type="button"

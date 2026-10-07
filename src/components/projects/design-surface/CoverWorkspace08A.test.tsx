@@ -208,11 +208,11 @@ describe('COVER_EDITOR_08A Architectural Contract Gates', () => {
     render(<AdvancedCoverEditor surface={createEmptyDesignSurface('cover')} onChange={vi.fn()} copy={coverCopy} />);
 
     const initial = screen.getAllByTestId(/^cover-template-card-/);
-    expect(initial.length).toBe(3);
-    expect(screen.getAllByTestId(/^cover-template-thumb-/).length).toBe(3);
+    expect(initial.length).toBe(4);
+    expect(screen.getAllByTestId(/^cover-template-thumb-/).length).toBe(4);
 
     fireEvent.click(screen.getByTestId('cover-templates-view-all-button'));
-    expect(screen.getAllByTestId(/^cover-template-card-/).length).toBeGreaterThan(3);
+    expect(screen.getAllByTestId(/^cover-template-card-/).length).toBeGreaterThan(4);
   });
 
   test('COVER_PROPS_01: the text properties form is compact (icon buttons, readable case control, internal scroll)', () => {
