@@ -19,6 +19,8 @@ import {
   type TextLayerProps,
 } from './design-surface';
 import type { SurfaceState } from './cover-surface';
+import { BACK_COVER_TEMPLATES, DEFAULT_BACK_COVER_TEMPLATE_ID, normalizeBackTemplateId } from './cover-templates';
+import { buildDesignSurfaceFromTemplate } from './design-surface-templates';
 import type { SemanticBinding } from './design-surface-templates';
 import type { BackCoverDesign, CoverDesign, ProjectRecord } from './types';
 
@@ -77,6 +79,7 @@ export function buildSemanticBinding(project: ProjectRecord, surfaceKind: 'cover
   }
   return {
     title,
+    author: resolveCoverText(project, 'author').value,
     body: project.backCover?.body?.trim() ?? '',
     authorBio: project.backCover?.authorBio?.trim() ?? '',
   };
@@ -116,12 +119,44 @@ export function getCoverDesign(project: ProjectRecord): DesignSurface {
   return hydrateMetadataLayers(surface, project);
 }
 
+/**
+ * A back cover nobody has designed yet: no stored v2 design, and no layers or manual field values in a legacy one.
+ * Opening it must not show "no template" next to a ready-made composition, so it starts on the default back-cover template.
+ */
+function isUntouchedBackCover(persisted: DesignSurface | SurfaceState | null | undefined): boolean {
+  if (isDesignSurfaceV2(persisted)) return false;
+  if (!persisted) return true;
+  const hasLayers = (persisted.layers ?? []).length > 0;
+  const hasManualField = Object.values(persisted.fields ?? {}).some((field) => field?.source === 'manual');
+  return !hasLayers && !hasManualField;
+}
+
+/** The default back-cover composition, with deterministic ids (server and client must render the very same layers). */
+function buildDefaultBackCoverDesign(project: ProjectRecord): DesignSurface {
+  const template = BACK_COVER_TEMPLATES.find((candidate) => candidate.id === DEFAULT_BACK_COVER_TEMPLATE_ID) ?? BACK_COVER_TEMPLATES[0];
+  const built = buildDesignSurfaceFromTemplate(template, {
+    palette: template.previewTone as 'obsidian' | 'teal' | 'sand',
+    accentColor: project.backCover.accentColor,
+    binding: buildSemanticBinding(project, 'back-cover'),
+  });
+  let decor = 0;
+  return {
+    ...built,
+    layers: built.layers.map((layer) => ({
+      ...layer,
+      id: layer.type === 'text' ? `migrated-back-cover-${layer.role}` : `migrated-back-cover-decor-${decor++}`,
+    })),
+  };
+}
+
 /** Reads the project's back cover as a `DesignSurface` — migrates and hydrates metadata lazily, never mutates `project`. */
 export function getBackCoverDesign(project: ProjectRecord): DesignSurface {
-  const surface = resolveSurface(
-    project.backCover.surfaceState,
-    'back-cover',
-    backCoverMigrationContext(project.backCover, project.cover.palette),
-  );
-  return hydrateMetadataLayers(surface, project);
+  const persisted = project.backCover.surfaceState;
+  if (isUntouchedBackCover(persisted)) {
+    return hydrateMetadataLayers(buildDefaultBackCoverDesign(project), project);
+  }
+  const surface = resolveSurface(persisted, 'back-cover', backCoverMigrationContext(project.backCover, project.cover.palette));
+  // Designs saved with the first back-cover catalogue keep their layout; only their template id moves to the new namespace.
+  const templateId = normalizeBackTemplateId(surface.templateId);
+  return hydrateMetadataLayers(templateId === (surface.templateId ?? null) ? surface : { ...surface, templateId }, project);
 }

@@ -17,6 +17,7 @@ import { createUuid } from '@/lib/utils/uuid';
 import type { EditorialTemplate } from './cover-templates';
 import { createEmptyDesignSurface, type DesignLayer, type DesignSurface, type TextLayerProps } from './design-surface';
 import { COVER_SURFACE_CANVAS } from './cover-layout';
+import { BACK_LAYOUTS } from './back-cover-layouts';
 import type { SurfaceFieldKey } from './cover-surface';
 import type { CoverDesign } from './types';
 
@@ -127,35 +128,6 @@ const COVER_KIND_TO_ARCHETYPE: Record<string, keyof typeof COVER_ARCHETYPES> = {
   'statement-bold': 'top',
 };
 
-/** Back-cover geometry — a single well-designed "left editorial" default (the format nearly every back cover actually wants), with one size variation for body-heavy layouts. Mission §29 focuses the named archetypes on the cover; back-cover templates differ mainly in typography, which the legacy catalog already provides per category. */
-const BACK_COVER_ARCHETYPES: Record<'default' | 'body-heavy' | 'minimal', { title: FieldGeometry; body: FieldGeometry; authorBio: FieldGeometry }> = {
-  default: {
-    title: { x: W * 0.16, y: H * 0.18, width: W * 0.72, textAlign: 'left' },
-    body: { x: W * 0.16, y: H * 0.36, width: W * 0.72, textAlign: 'left' },
-    authorBio: { x: W * 0.16, y: H * 0.78, width: W * 0.62, textAlign: 'left' },
-  },
-  'body-heavy': {
-    title: { x: W * 0.16, y: H * 0.12, width: W * 0.72, textAlign: 'left' },
-    body: { x: W * 0.16, y: H * 0.26, width: W * 0.72, textAlign: 'left' },
-    authorBio: { x: W * 0.16, y: H * 0.85, width: W * 0.62, textAlign: 'left' },
-  },
-  minimal: {
-    title: { x: W * 0.18, y: H * 0.3, width: W * 0.64, textAlign: 'center' },
-    body: { x: W * 0.18, y: H * 0.44, width: W * 0.64, textAlign: 'center' },
-    authorBio: { x: W * 0.18, y: H * 0.84, width: W * 0.64, textAlign: 'center' },
-  },
-};
-
-const BACK_COVER_KIND_TO_ARCHETYPE: Record<string, keyof typeof BACK_COVER_ARCHETYPES> = {
-  'body-led': 'default',
-  'summary-card': 'body-heavy',
-  'benefits-grid': 'body-heavy',
-  'synopsis-focus': 'body-heavy',
-  'minimal-body': 'minimal',
-  'bio-balanced': 'default',
-  'statement-body': 'body-heavy',
-};
-
 function estimateHeight(fontSize: number, lineHeight = 1.3): number {
   return Math.max(fontSize * lineHeight * 1.4, fontSize * 1.4);
 }
@@ -202,22 +174,42 @@ export function buildDesignSurfaceFromTemplate(
   surface.templateId = template.id;
 
   const isCover = template.surface === 'cover';
-  const archetypeKey = isCover
-    ? (COVER_KIND_TO_ARCHETYPE[template.layout.kind] ?? 'centered')
-    : (BACK_COVER_KIND_TO_ARCHETYPE[template.layout.kind] ?? 'default');
-  const geometry = isCover ? COVER_ARCHETYPES[archetypeKey as keyof typeof COVER_ARCHETYPES] : BACK_COVER_ARCHETYPES[archetypeKey as keyof typeof BACK_COVER_ARCHETYPES];
+  const backLayout = isCover ? null : (BACK_LAYOUTS[template.layout.kind] ?? BACK_LAYOUTS['classic-editorial']);
+  const geometry = isCover
+    ? COVER_ARCHETYPES[(COVER_KIND_TO_ARCHETYPE[template.layout.kind] ?? 'centered') as keyof typeof COVER_ARCHETYPES]
+    : (backLayout!.slots as Record<string, FieldGeometry>);
 
-  const fieldOrder: SurfaceFieldKey[] = isCover ? ['title', 'subtitle', 'author'] : ['title', 'body', 'authorBio'];
+  const fieldOrder: SurfaceFieldKey[] = isCover ? ['title', 'subtitle', 'author'] : ['title', 'body', 'author', 'authorBio'];
   const defaultVisible: Record<SurfaceFieldKey, boolean> = {
     title: true,
     subtitle: isCover,
-    author: isCover,
+    author: true,
     body: !isCover,
     authorBio: !isCover,
   };
 
   const layers: DesignSurface['layers'] = [];
   let zIndex = 1;
+  // Back-cover decoration sits behind every text slot (lowest z-order) and is a plain, editable shape layer.
+  for (const decor of backLayout?.decor ?? []) {
+    layers.push({
+      id: createUuid(),
+      type: 'shape',
+      zIndex: zIndex++,
+      x: decor.x,
+      y: decor.y,
+      width: decor.width,
+      height: decor.height,
+      rotation: 0,
+      opacity: decor.opacity ?? 1,
+      visible: true,
+      locked: false,
+      name: decor.name,
+      shape: 'rect',
+      fill: decor.tone === 'rule' ? colors.secondary : colors.primary,
+      strokeWidth: 0,
+    });
+  }
   for (const fieldKey of fieldOrder) {
     const templateVisible = template.visibility?.[fieldKey] ?? defaultVisible[fieldKey];
     const fieldGeometry = (geometry as Record<string, FieldGeometry>)[fieldKey];
@@ -283,7 +275,8 @@ export function applyTemplateToSurface(
   options: { palette?: CoverDesign['palette']; binding?: SemanticBinding } = {},
 ): DesignSurface {
   const next = buildDesignSurfaceFromTemplate(template, {
-    palette: options.palette ?? 'obsidian',
+    // Back-cover families keep the palette of their front-cover counterpart; the front cover keeps its default.
+    palette: options.palette ?? (template.surface === 'back-cover' ? (template.previewTone as SurfacePalette) : 'obsidian'),
     binding: options.binding,
     existing: current,
   });

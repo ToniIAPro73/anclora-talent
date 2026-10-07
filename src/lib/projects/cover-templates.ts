@@ -10,7 +10,9 @@ export interface EditorialTemplate extends SurfaceTemplateDefinition {
     | 'fiction'
     | 'minimal'
     | 'memoir'
-    | 'statement';
+    | 'statement'
+    | 'author'
+    | 'guide';
   previewTone: string;
 }
 
@@ -118,105 +120,141 @@ export const COVER_TEMPLATES: EditorialTemplate[] = [
   },
 ];
 
+/**
+ * Back-cover catalogue. It is NOT the front-cover one: ids are namespaced (`back-*`), the layouts are real back-cover
+ * compositions (`back-cover-layouts.ts`) and the semantic slots include the author name. Fonts come from the canonical
+ * registry. Text never lives here: the slots are filled from the project.
+ */
 export const BACK_COVER_TEMPLATES: EditorialTemplate[] = [
   {
-    id: 'essay-premium-back',
+    id: 'back-classic-editorial',
     surface: 'back-cover',
     category: 'essay',
-    name: 'Ensayo premium back',
-    description: 'Texto de solapa elegante y balanceado.',
+    name: 'Clásica editorial',
+    description: 'Referencia arriba, sinopsis centrada en la lectura y autor al pie.',
     previewTone: 'obsidian',
-    visibility: { title: true, body: true, authorBio: true },
-    layout: { kind: 'body-led' },
+    visibility: { title: true, body: true, author: true, authorBio: true },
+    layout: { kind: 'classic-editorial' },
     layerStyles: {
-      title: { fontFamily: 'Playfair Display', fontSize: 26, fontWeight: 700, lineHeight: 1.15 },
-      body: { fontFamily: 'DM Sans', fontSize: 15, fontWeight: 500, lineHeight: 1.5 },
-      authorBio: { fontFamily: 'DM Sans', fontSize: 13, fontWeight: 400, lineHeight: 1.4 },
+      title: { fontFamily: 'Playfair Display', fontSize: 20, fontWeight: 700, lineHeight: 1.2 },
+      body: { fontFamily: 'DM Sans', fontSize: 14, fontWeight: 400, lineHeight: 1.55 },
+      author: { fontFamily: 'DM Sans', fontSize: 12, fontWeight: 600, lineHeight: 1.3, charSpacing: 160 },
+      authorBio: { fontFamily: 'DM Sans', fontSize: 12, fontWeight: 400, lineHeight: 1.45 },
     },
   },
   {
-    id: 'business-leadership-back',
+    id: 'back-author-focus',
+    surface: 'back-cover',
+    category: 'author',
+    name: 'Autor destacado',
+    description: 'Sinopsis breve y un bloque propio para el autor y su biografía.',
+    previewTone: 'teal',
+    visibility: { title: true, body: true, author: true, authorBio: true },
+    layout: { kind: 'author-focus' },
+    layerStyles: {
+      title: { fontFamily: 'DM Sans', fontSize: 14, fontWeight: 600, lineHeight: 1.3, charSpacing: 180 },
+      body: { fontFamily: 'DM Sans', fontSize: 14, fontWeight: 400, lineHeight: 1.5 },
+      author: { fontFamily: 'Playfair Display', fontSize: 24, fontWeight: 700, lineHeight: 1.15 },
+      authorBio: { fontFamily: 'DM Sans', fontSize: 13, fontWeight: 400, lineHeight: 1.55 },
+    },
+  },
+  {
+    id: 'back-essay-premium',
+    surface: 'back-cover',
+    category: 'essay',
+    name: 'Ensayo premium',
+    description: 'Sinopsis protagonista con filete lateral y un cierre mínimo.',
+    previewTone: 'obsidian',
+    visibility: { title: true, body: true, author: true, authorBio: true },
+    layout: { kind: 'essay-premium' },
+    layerStyles: {
+      title: { fontFamily: 'DM Sans', fontSize: 12, fontWeight: 600, lineHeight: 1.3, charSpacing: 300 },
+      body: { fontFamily: 'Lora', fontSize: 15, fontWeight: 400, lineHeight: 1.6 },
+      author: { fontFamily: 'DM Sans', fontSize: 12, fontWeight: 600, lineHeight: 1.3, charSpacing: 200 },
+      authorBio: { fontFamily: 'DM Sans', fontSize: 12, fontWeight: 400, lineHeight: 1.45 },
+    },
+  },
+  {
+    id: 'back-business',
     surface: 'back-cover',
     category: 'business',
-    name: 'Negocio / liderazgo back',
-    description: 'Resumen de valor y promesa del libro.',
+    name: 'Negocio / liderazgo',
+    description: 'Promesa clara, cuerpo directo y banda inferior con credenciales.',
     previewTone: 'teal',
-    visibility: { title: true, body: true, authorBio: true },
-    layout: { kind: 'summary-card' },
+    visibility: { title: true, body: true, author: true, authorBio: true },
+    layout: { kind: 'business-band' },
     layerStyles: {
-      title: { fontFamily: 'Archivo', fontSize: 26, fontWeight: 800, lineHeight: 1.1 },
-      body: { fontFamily: 'DM Sans', fontSize: 15, fontWeight: 500, lineHeight: 1.5 },
-      authorBio: { fontFamily: 'Archivo', fontSize: 13, fontWeight: 500, lineHeight: 1.4 },
+      title: { fontFamily: 'Inter', fontSize: 24, fontWeight: 800, lineHeight: 1.12 },
+      body: { fontFamily: 'DM Sans', fontSize: 14, fontWeight: 400, lineHeight: 1.5 },
+      author: { fontFamily: 'Inter', fontSize: 14, fontWeight: 700, lineHeight: 1.25 },
+      authorBio: { fontFamily: 'DM Sans', fontSize: 12, fontWeight: 400, lineHeight: 1.4 },
     },
   },
   {
-    id: 'workbook-back',
-    surface: 'back-cover',
-    category: 'workbook',
-    name: 'Workbook back',
-    description: 'Beneficios y estructura de uso.',
-    previewTone: 'sand',
-    visibility: { title: true, body: true, authorBio: false },
-    layout: { kind: 'benefits-grid' },
-    layerStyles: {
-      title: { fontFamily: 'Inter', fontSize: 24, fontWeight: 800, lineHeight: 1.15 },
-      body: { fontFamily: 'Inter', fontSize: 15, fontWeight: 500, lineHeight: 1.5 },
-    },
-  },
-  {
-    id: 'fiction-back',
+    id: 'back-literary',
     surface: 'back-cover',
     category: 'fiction',
-    name: 'Ficcion back',
-    description: 'Sinopsis y tono narrativo.',
+    name: 'Ficción literaria',
+    description: 'Composición centrada y espaciosa, con autor discreto.',
     previewTone: 'obsidian',
-    visibility: { title: true, body: true, authorBio: false },
-    layout: { kind: 'synopsis-focus' },
+    visibility: { title: true, body: true, author: true, authorBio: true },
+    layout: { kind: 'literary-quote' },
     layerStyles: {
-      title: { fontFamily: 'Cormorant Garamond', fontSize: 26, fontWeight: 700, lineHeight: 1.15 },
-      body: { fontFamily: 'Cormorant Garamond', fontSize: 17, fontWeight: 500, lineHeight: 1.5 },
+      title: { fontFamily: 'Cormorant Garamond', fontSize: 24, fontWeight: 700, fontStyle: 'italic', lineHeight: 1.2 },
+      body: { fontFamily: 'Cormorant Garamond', fontSize: 17, fontWeight: 500, lineHeight: 1.55 },
+      author: { fontFamily: 'Cormorant Garamond', fontSize: 15, fontWeight: 600, lineHeight: 1.3, charSpacing: 240 },
+      authorBio: { fontFamily: 'Cormorant Garamond', fontSize: 13, fontWeight: 500, fontStyle: 'italic', lineHeight: 1.4 },
     },
   },
   {
-    id: 'minimal-editorial-back',
+    id: 'back-minimal',
     surface: 'back-cover',
     category: 'minimal',
-    name: 'Minimal editorial back',
-    description: 'Texto limpio con mucho aire.',
+    name: 'Minimal',
+    description: 'Solo sinopsis y autor, con mucho aire.',
     previewTone: 'sand',
-    visibility: { title: false, body: true, authorBio: true },
-    layout: { kind: 'minimal-body' },
+    visibility: { title: false, body: true, author: true, authorBio: true },
+    layout: { kind: 'minimal-air' },
     layerStyles: {
-      body: { fontFamily: 'DM Sans', fontSize: 15, fontWeight: 500, lineHeight: 1.55 },
-      authorBio: { fontFamily: 'DM Sans', fontSize: 13, fontWeight: 400, lineHeight: 1.4 },
+      title: { fontFamily: 'DM Sans', fontSize: 18, fontWeight: 600, lineHeight: 1.3 },
+      body: { fontFamily: 'DM Sans', fontSize: 14, fontWeight: 400, lineHeight: 1.7 },
+      author: { fontFamily: 'DM Sans', fontSize: 11, fontWeight: 600, lineHeight: 1.3, charSpacing: 300 },
+      authorBio: { fontFamily: 'DM Sans', fontSize: 11, fontWeight: 400, lineHeight: 1.45 },
     },
   },
   {
-    id: 'memoir-back',
+    id: 'back-guide',
     surface: 'back-cover',
-    category: 'memoir',
-    name: 'Memoria back',
-    description: 'Bio y contexto humano del autor.',
-    previewTone: 'teal',
-    visibility: { title: true, body: true, authorBio: true },
-    layout: { kind: 'bio-balanced' },
+    category: 'guide',
+    name: 'Guía / workbook',
+    description: 'Resumen estructurado en panel, con autor e información al pie.',
+    previewTone: 'sand',
+    visibility: { title: true, body: true, author: true, authorBio: true },
+    layout: { kind: 'guide-structured' },
     layerStyles: {
-      title: { fontFamily: 'Lora', fontSize: 26, fontWeight: 700, lineHeight: 1.15 },
-      body: { fontFamily: 'Lora', fontSize: 15, fontWeight: 500, lineHeight: 1.5 },
-      authorBio: { fontFamily: 'DM Sans', fontSize: 13, fontWeight: 400, lineHeight: 1.4 },
-    },
-  },
-  {
-    id: 'statement-back',
-    surface: 'back-cover',
-    category: 'statement',
-    name: 'Statement back',
-    description: 'Mensaje corto e impactante.',
-    previewTone: 'obsidian',
-    visibility: { title: false, body: true, authorBio: false },
-    layout: { kind: 'statement-body' },
-    layerStyles: {
-      body: { fontFamily: 'Archivo', fontSize: 20, fontWeight: 700, lineHeight: 1.3 },
+      title: { fontFamily: 'Inter', fontSize: 22, fontWeight: 800, lineHeight: 1.15 },
+      body: { fontFamily: 'Inter', fontSize: 14, fontWeight: 400, lineHeight: 1.55 },
+      author: { fontFamily: 'Inter', fontSize: 13, fontWeight: 700, lineHeight: 1.25 },
+      authorBio: { fontFamily: 'Inter', fontSize: 12, fontWeight: 400, lineHeight: 1.45 },
     },
   },
 ];
+
+/** The safe default for a back cover opened for the first time. */
+export const DEFAULT_BACK_COVER_TEMPLATE_ID = 'back-classic-editorial';
+
+/** Ids the first back-cover catalogue used (they reused the front-cover families). Persisted designs may still carry them. */
+export const LEGACY_BACK_TEMPLATE_IDS: Record<string, string> = {
+  'essay-premium-back': 'back-essay-premium',
+  'business-leadership-back': 'back-business',
+  'workbook-back': 'back-guide',
+  'fiction-back': 'back-literary',
+  'minimal-editorial-back': 'back-minimal',
+  'memoir-back': 'back-author-focus',
+  'statement-back': 'back-minimal',
+};
+
+export function normalizeBackTemplateId(id: string | null | undefined): string | null {
+  if (!id) return null;
+  return LEGACY_BACK_TEMPLATE_IDS[id] ?? id;
+}

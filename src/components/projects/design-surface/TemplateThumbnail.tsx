@@ -26,8 +26,8 @@ export function TemplateThumbnail({
     // built with neutral sample content to make the composition readable. Fields the template
     // hides stay hidden, exactly as when it is applied.
     const built = buildDesignSurfaceFromTemplate(template, {
-      palette: 'obsidian',
-      binding: { title: 'Título', subtitle: 'Subtítulo del libro', author: 'Autor', body: 'Texto de la contraportada', authorBio: 'Sobre el autor' },
+      palette: template.surface === 'back-cover' ? (template.previewTone as 'obsidian' | 'teal' | 'sand') : 'obsidian',
+      binding: { title: 'Título', subtitle: 'Subtítulo del libro', author: 'Autor', body: 'Texto de la contraportada: una sinopsis breve que invita a leer el libro.', authorBio: 'Sobre el autor' },
     });
     // Stable ids: the builder mints random ones, which would differ between server and client render.
     const layers = built.layers.map((layer, index) => ({ ...layer, id: `${template.id}-thumb-${index}` }));

@@ -76,7 +76,7 @@ test('A/J. step 4 is the same workspace as Portada, with back-cover context labe
   // the back-cover template catalogue, not the front-cover one
   const values = await options(page).evaluateAll((els) => els.map((el) => el.getAttribute('value')));
   expect(values.length).toBeGreaterThanOrEqual(3);
-  expect(values.every((value) => value?.endsWith('-back'))).toBe(true);
+  expect(values.every((value) => value?.startsWith('back-'))).toBe(true);
 });
 
 test('B. switching back-cover template keeps content, shows one template card and survives reload', async ({ page }) => {

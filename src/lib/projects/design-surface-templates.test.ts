@@ -86,7 +86,8 @@ describe('template slots are bound to the manuscript', () => {
         palette: 'obsidian',
         binding: { title: 'T', body: 'Sinopsis', authorBio: 'Bio' },
       });
-      expect(surface.layers.map((l) => l.type === 'text' && l.role), template.id).toEqual(['title', 'body', 'authorBio']);
+      // decoration shapes sit behind the text slots; every semantic slot of the back cover is materialized
+      expect(surface.layers.filter((l) => l.type === 'text').map((l) => l.type === 'text' && l.role), template.id).toEqual(['title', 'body', 'author', 'authorBio']);
       expect(role(surface, 'body')).toMatchObject({ content: 'Sinopsis' });
     }
   });
