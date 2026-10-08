@@ -1,7 +1,7 @@
 /**
  * Preview/export adapter — bridges the composition engine (FASE C) to the
  * stable `PreviewPage[]` contract consumed by `export-builder.tsx`,
- * `PreviewModal` and the TOC numbering pipeline.
+ * `PreviewWorkspace` and the TOC numbering pipeline.
  *
  * Contract preserved from `preview-builder.ts`:
  * - Page 1 is the cover (`type: 'cover'`, `coverData`), content pages follow
@@ -462,7 +462,7 @@ function buildPagesFromResult(
 }
 
 /**
- * Flow HTML for `MultipageFlow`/`PreviewModal`: page HTML joined by manual
+ * Flow HTML for `MultipageFlow`/`PreviewWorkspace`: page HTML joined by manual
  * page-break markers (same shape as `buildPreviewContentFlowHtml`).
  */
 export function buildComposedFlowHtml(pages: PreviewPage[]): string {

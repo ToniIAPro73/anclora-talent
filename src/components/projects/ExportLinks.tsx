@@ -6,7 +6,6 @@ import { buildExportQueryString } from '@/lib/projects/export-config';
 import type { ProjectRecord } from '@/lib/projects/types';
 import { getProjectCapabilities } from '@/lib/projects/capabilities';
 import { PdfExportButton } from './PdfExportButton';
-import { PreviewDeviceSelector } from './PreviewDeviceSelector';
 import { CreateEditableCopyButton } from './CreateEditableCopyButton';
 
 interface ExportLinksProps {
@@ -41,7 +40,6 @@ export function ExportLinks({
 
   return (
     <div className="ac-export-suite__actions">
-      <PreviewDeviceSelector copy={copy} />
       <a
         href={buildExportHref('/api/projects/export', projectId, query)}
         download={`${projectSlug || copy.previewExportFilename}.html`}

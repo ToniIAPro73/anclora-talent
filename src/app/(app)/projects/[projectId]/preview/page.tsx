@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { PreviewCanvas } from '@/components/projects/PreviewCanvas';
+import { PreviewWorkspace } from '@/components/projects/preview-workspace/PreviewWorkspace';
 import { FixedPdfPreview } from '@/components/projects/FixedPdfPreview';
 import { ExportLinks } from '@/components/projects/ExportLinks';
 import { premiumPrimaryDarkButton, premiumSecondaryLightButton } from '@/components/ui/button-styles';
@@ -50,7 +50,7 @@ export default async function ProjectPreviewPage({
       {isFixedPdfProject(project) ? (
         <FixedPdfPreview projectId={project.id} copy={projectCopy} />
       ) : (
-        <PreviewCanvas copy={projectCopy} project={project} />
+        <PreviewWorkspace copy={projectCopy} project={project} exportHref={`/projects/${project.id}/editor`} />
       )}
     </div>
   );

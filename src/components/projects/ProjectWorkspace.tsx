@@ -7,7 +7,7 @@ import { Stepper, type Step } from '@/components/ui/Stepper';
 import { ChapterOrganizer } from './ChapterOrganizer';
 import { ContentWorkspace } from './content-workspace/ContentWorkspace';
 import { CoverStudioV2 } from './design-surface/CoverStudioV2';
-import { PreviewCanvas } from './PreviewCanvas';
+import { PreviewWorkspace } from './preview-workspace/PreviewWorkspace';
 import { FixedPdfPreview } from './FixedPdfPreview';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { CollaborationPanel } from './CollaborationPanel';
@@ -161,6 +161,11 @@ export function ProjectWorkspace({
       ? normalizeWorkflowStep(project.workflowStep)
       : (persistedStep ?? 1);
   });
+  // The preview must never show a stale cover/back cover or chapter: entering Step 5 re-reads the saved project.
+  useEffect(() => {
+    if (activeStep === 5) router.refresh();
+  }, [activeStep, router]);
+
   const [activeChapterId, setActiveChapterId] = useState(
     project.document.chapters[0]?.id ?? '',
   );
@@ -473,7 +478,7 @@ export function ProjectWorkspace({
         return fixedPdf ? (
           <FixedPdfPreview projectId={project.id} copy={copy} />
         ) : (
-          <PreviewCanvas project={project} copy={copy} />
+          <PreviewWorkspace project={project} copy={copy} onExport={() => setActiveStep(8)} />
         );
       case 6: // Collaborate
         return collaboration ? (
@@ -721,6 +726,11 @@ export function ProjectWorkspace({
       {/* Step Layout */}
       {(activeStep === 3 || activeStep === 4) && !fixedPdf ? (
         <div className="cover-workspace-stage w-full" data-testid="cover-step-workspace">
+          {renderStepContent()}
+        </div>
+      ) : activeStep === 5 ? (
+        // The top stepper is the only workflow navigation here: the preview workspace owns the full width.
+        <div className="preview-workspace-stage w-full" data-testid="preview-step-workspace">
           {renderStepContent()}
         </div>
       ) : (

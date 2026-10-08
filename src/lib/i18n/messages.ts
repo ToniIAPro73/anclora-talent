@@ -827,6 +827,71 @@ export type AppMessages = {
     previewModalUntitledChapter: string;
     previewModalCoverAlt: string;
     previewModalBackCoverAlt: string;
+    pwTitle: string;
+    pwRailTitle: string;
+    pwModeGroup: string;
+    pwModeDocument: string;
+    pwModeSpread: string;
+    pwModeCover: string;
+    pwCoverFront: string;
+    pwCoverBack: string;
+    pwCoverSelector: string;
+    pwPageLabel: string;
+    pwPageOfTotal: string;
+    pwPrevPage: string;
+    pwNextPage: string;
+    pwZoomOut: string;
+    pwZoomIn: string;
+    pwFit: string;
+    pwFitTitle: string;
+    pwFullscreen: string;
+    pwExitFullscreen: string;
+    pwExport: string;
+    pwCompositionTitle: string;
+    pwDestination: string;
+    pwDestPrint: string;
+    pwDestDesktop: string;
+    pwDestTablet: string;
+    pwDestEreader: string;
+    pwViewPrint: string;
+    pwViewDesktop: string;
+    pwViewTablet: string;
+    pwViewEreader: string;
+    pwFormat: string;
+    pwMargins: string;
+    pwMarginTop: string;
+    pwMarginBottom: string;
+    pwMarginInner: string;
+    pwMarginOuter: string;
+    pwMarginsNote: string;
+    pwPagesSection: string;
+    pwPagesTotal: string;
+    pwPagesContent: string;
+    pwPagesPreliminary: string;
+    pwPagesCover: string;
+    pwPagesBackCover: string;
+    pwPresent: string;
+    pwAbsent: string;
+    pwPreflight: string;
+    pwPfFonts: string;
+    pwPfImages: string;
+    pwPfMetadata: string;
+    pwPfComposition: string;
+    pwPfSafeArea: string;
+    pwPfOk: string;
+    pwPfUnchecked: string;
+    pwPfPartial: string;
+    pwPfFindingsCount: string;
+    pwPfGoToPage: string;
+    pwFixedNotice: string;
+    pwRecomposedNotice: string;
+    pwSpreadUnavailable: string;
+    pwThumbPage: string;
+    pwRailToggle: string;
+    pwPanelToggle: string;
+    pwBusy: string;
+    pwStageLabel: string;
+    pwEmptyPage: string;
     onboardingEyebrow: string;
     onboardingStepLabel: string;
     onboardingStep1Title: string;
@@ -2529,6 +2594,71 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewModalUntitledChapter: 'Capítulo sin título',
       previewModalCoverAlt: 'Portada de vista previa',
       previewModalBackCoverAlt: 'Contraportada de vista previa',
+      pwTitle: 'Vista previa',
+      pwRailTitle: 'Páginas',
+      pwModeGroup: 'Modo de vista',
+      pwModeDocument: 'Documento',
+      pwModeSpread: 'Pliego',
+      pwModeCover: 'Portada',
+      pwCoverFront: 'Portada',
+      pwCoverBack: 'Contraportada',
+      pwCoverSelector: 'Superficie de portada',
+      pwPageLabel: 'Página',
+      pwPageOfTotal: 'de {total}',
+      pwPrevPage: 'Página anterior',
+      pwNextPage: 'Página siguiente',
+      pwZoomOut: 'Reducir zoom',
+      pwZoomIn: 'Aumentar zoom',
+      pwFit: 'Ajustar',
+      pwFitTitle: 'Ajustar al área',
+      pwFullscreen: 'Pantalla completa',
+      pwExitFullscreen: 'Salir de pantalla completa',
+      pwExport: 'Exportar',
+      pwCompositionTitle: 'Composición',
+      pwDestination: 'Destino de lectura',
+      pwDestPrint: 'Impresión',
+      pwDestDesktop: 'Escritorio',
+      pwDestTablet: 'Tableta',
+      pwDestEreader: 'Lector electrónico',
+      pwViewPrint: 'Vista de impresión',
+      pwViewDesktop: 'Vista de escritorio',
+      pwViewTablet: 'Vista de tableta',
+      pwViewEreader: 'Vista de lector electrónico',
+      pwFormat: 'Formato',
+      pwMargins: 'Márgenes',
+      pwMarginTop: 'Superior',
+      pwMarginBottom: 'Inferior',
+      pwMarginInner: 'Interior',
+      pwMarginOuter: 'Exterior',
+      pwMarginsNote: 'Valores efectivos de la composición. La vista previa no modifica el documento.',
+      pwPagesSection: 'Páginas',
+      pwPagesTotal: 'Total',
+      pwPagesContent: 'Páginas de contenido',
+      pwPagesPreliminary: 'Páginas preliminares',
+      pwPagesCover: 'Portada',
+      pwPagesBackCover: 'Contraportada',
+      pwPresent: 'Incluida',
+      pwAbsent: 'No incluida',
+      pwPreflight: 'Comprobación previa (preflight)',
+      pwPfFonts: 'Fuentes',
+      pwPfImages: 'Imágenes',
+      pwPfMetadata: 'Metadatos',
+      pwPfComposition: 'Composición',
+      pwPfSafeArea: 'Zona segura y sangrado',
+      pwPfOk: 'Sin incidencias',
+      pwPfUnchecked: 'No comprobado',
+      pwPfPartial: 'Comprobación parcial: la resolución real de las imágenes no se verifica en el navegador.',
+      pwPfFindingsCount: '{count} incidencias',
+      pwPfGoToPage: 'Ir a la página {page}',
+      pwFixedNotice: 'Diseño fijo: se conserva la paginación del documento original; el destino solo cambia el marco de visualización.',
+      pwRecomposedNotice: 'Recompuesto para este destino. El documento no se modifica.',
+      pwSpreadUnavailable: 'El pliego no está disponible en este destino.',
+      pwThumbPage: 'Página {n}',
+      pwRailToggle: 'Mostrar páginas',
+      pwPanelToggle: 'Mostrar composición',
+      pwBusy: 'Recomponiendo…',
+      pwStageLabel: 'Escenario de la vista previa',
+      pwEmptyPage: 'Página sin contenido',
       onboardingEyebrow: 'Bienvenido a tu workspace editorial',
       onboardingStepLabel: 'Paso {step} de {total}',
       onboardingStep1Title: 'Revisa sin miedo',
@@ -4232,6 +4362,71 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       previewModalUntitledChapter: 'Untitled chapter',
       previewModalCoverAlt: 'Preview cover',
       previewModalBackCoverAlt: 'Preview back cover',
+      pwTitle: 'Preview',
+      pwRailTitle: 'Pages',
+      pwModeGroup: 'View mode',
+      pwModeDocument: 'Document',
+      pwModeSpread: 'Spread',
+      pwModeCover: 'Cover',
+      pwCoverFront: 'Front cover',
+      pwCoverBack: 'Back cover',
+      pwCoverSelector: 'Cover surface',
+      pwPageLabel: 'Page',
+      pwPageOfTotal: 'of {total}',
+      pwPrevPage: 'Previous page',
+      pwNextPage: 'Next page',
+      pwZoomOut: 'Zoom out',
+      pwZoomIn: 'Zoom in',
+      pwFit: 'Fit',
+      pwFitTitle: 'Fit to area',
+      pwFullscreen: 'Fullscreen',
+      pwExitFullscreen: 'Exit fullscreen',
+      pwExport: 'Export',
+      pwCompositionTitle: 'Composition',
+      pwDestination: 'Reading destination',
+      pwDestPrint: 'Print',
+      pwDestDesktop: 'Desktop',
+      pwDestTablet: 'Tablet',
+      pwDestEreader: 'E-reader',
+      pwViewPrint: 'Print view',
+      pwViewDesktop: 'Desktop view',
+      pwViewTablet: 'Tablet view',
+      pwViewEreader: 'E-reader view',
+      pwFormat: 'Format',
+      pwMargins: 'Margins',
+      pwMarginTop: 'Top',
+      pwMarginBottom: 'Bottom',
+      pwMarginInner: 'Inner',
+      pwMarginOuter: 'Outer',
+      pwMarginsNote: 'Effective composition values. The preview does not change the document.',
+      pwPagesSection: 'Pages',
+      pwPagesTotal: 'Total',
+      pwPagesContent: 'Content pages',
+      pwPagesPreliminary: 'Preliminary pages',
+      pwPagesCover: 'Front cover',
+      pwPagesBackCover: 'Back cover',
+      pwPresent: 'Included',
+      pwAbsent: 'Not included',
+      pwPreflight: 'Pre-flight check',
+      pwPfFonts: 'Fonts',
+      pwPfImages: 'Images',
+      pwPfMetadata: 'Metadata',
+      pwPfComposition: 'Composition',
+      pwPfSafeArea: 'Safe area and bleed',
+      pwPfOk: 'No issues',
+      pwPfUnchecked: 'Not checked',
+      pwPfPartial: 'Partial check: actual image resolution is not verified in the browser.',
+      pwPfFindingsCount: '{count} issues',
+      pwPfGoToPage: 'Go to page {page}',
+      pwFixedNotice: 'Fixed layout: the original document pagination is kept; the destination only changes the viewing frame.',
+      pwRecomposedNotice: 'Recomposed for this destination. The document is not modified.',
+      pwSpreadUnavailable: 'Spreads are not available for this destination.',
+      pwThumbPage: 'Page {n}',
+      pwRailToggle: 'Show pages',
+      pwPanelToggle: 'Show composition',
+      pwBusy: 'Recomposing…',
+      pwStageLabel: 'Preview stage',
+      pwEmptyPage: 'Empty page',
       onboardingEyebrow: 'Welcome to your editorial workspace',
       onboardingStepLabel: 'Step {step} of {total}',
       onboardingStep1Title: 'Edit without fear',

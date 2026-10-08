@@ -71,10 +71,6 @@ describe('Chapter Editor Remediation & Global No-Arrow Contract', () => {
         resolve(root, 'src/components/projects/FixedPdfPreview.tsx'),
         'utf8'
       );
-      const previewModal = readFileSync(
-        resolve(root, 'src/components/projects/PreviewModal.tsx'),
-        'utf8'
-      );
 
       expect(coverEditor).not.toContain('Undo2');
       expect(coverEditor).not.toContain('Redo2');
@@ -83,7 +79,6 @@ describe('Chapter Editor Remediation & Global No-Arrow Contract', () => {
       expect(layersPanel).not.toContain('ChevronUp');
       expect(layersPanel).not.toContain('ChevronDown');
       expect(fixedPdfPreview).not.toMatch(/<Chevron(Left|Right)[^>]*\/>/);
-      expect(previewModal).not.toMatch(/<Chevron(Left|Right)[^>]*\/>/);
     });
   });
 
