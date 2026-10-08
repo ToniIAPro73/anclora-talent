@@ -14,6 +14,7 @@ import type { DocumentMode, ManuscriptType, SourceDocumentAccessLevel } from '@/
 import { detectSourceFormat, isActiveImportFormat, parseOdtSource, summarizeSourceModel, summarizeSourceText } from '@/lib/projects/source-model';
 import { buildSourcePageMapFromRenderedPages } from '@/lib/projects/source-page-map';
 import { renderAuthoritativeSourcePages } from '@/lib/projects/source-page-map-renderer';
+import { applyRenderedPageBreaks } from '@/lib/projects/source-page-breaks';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 const SUPPORTED_EXTENSIONS = new Set(['doc', 'docx', 'odt', 'txt', 'md', 'markdown']);
@@ -296,6 +297,10 @@ export async function POST(request: NextRequest) {
     let sourcePageMap = seed.sourcePageMap ?? null;
     const renderedSourcePages = await renderAuthoritativeSourcePages(fileName, Buffer.from(await file.arrayBuffer()));
     if (renderedSourcePages && seed.chapters?.length && seed.chapters.every((chapter) => Array.isArray(chapter.blocks))) {
+      // The pages the source really has decide where the imported book breaks: one break per source page.
+      const aligned = applyRenderedPageBreaks(seed.chapters, renderedSourcePages);
+      seed.chapters = aligned.chapters;
+      console.info('[import-route] source pages aligned', { fileName, ...aligned.alignment });
       const renderChapters = seed.chapters.map((chapter, chapterIndex) => ({
         id: `import-section-${chapterIndex}`,
         order: chapterIndex + 1,
