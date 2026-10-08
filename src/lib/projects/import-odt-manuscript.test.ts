@@ -32,7 +32,6 @@ describe.skipIf(!existsSync(PATH))('real ODT manuscript: exito-sin-compania', ()
     // author started on a new page keeps its page break.
     const one = html('Capítulo Uno. La paradoja del éxito solitario');
     expect(one.replace(/<[^>]+>/g, '')).not.toMatch(/\S {2,}\S/);
-    expect(one.replace(/<[^>]+>/g, '')).toContain('lo que mejor sabes hacer');
     const oneBlocks = chapters.find((chapter) => chapter.title.startsWith('Capítulo Uno'))?.blocks ?? [];
     const breakIndex = oneBlocks.findIndex((block) => block.type === 'pageBreak');
     expect(oneBlocks[breakIndex + 1]?.content).toContain('Por qué a nadie le preocupa tu soledad');
@@ -45,6 +44,13 @@ describe.skipIf(!existsSync(PATH))('real ODT manuscript: exito-sin-compania', ()
     // The author's own page breaks inside a chapter survive (not only those before headings).
     const breaks = chapters.reduce((total, chapter) => total + chapter.blocks.filter((block) => block.type === 'pageBreak').length, 0);
     expect(breaks).toBeGreaterThan(8);
+
+    // A sentence the author continues on the next page keeps that page boundary (pages must match the original).
+    const split = oneBlocks.findIndex((block) => block.content.includes('mejor sabes hacer'));
+    expect(oneBlocks[split - 1]?.type).toBe('pageBreak');
+
+    // Callout boxes keep their fill colour.
+    expect(one).toContain('data-source-background="#f8ede3"');
 
     // The closing lines split by a hard return are one paragraph again.
     const last = html(chapters[chapters.length - 1].title);

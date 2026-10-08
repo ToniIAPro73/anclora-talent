@@ -265,6 +265,7 @@ const SourceParagraphDecorationAttributes = Extension.create({
     return [{
       types: ['paragraph', 'heading'],
       attributes: {
+        sourceBackground: { default: null, parseHTML: (el: HTMLElement) => el.getAttribute('data-source-background'), renderHTML: (a: Record<string, unknown>) => a.sourceBackground ? { 'data-source-background': a.sourceBackground, style: `background-color: ${a.sourceBackground};` } : {} },
         sourceBorderBottomStyle: { default: null, parseHTML: (el: HTMLElement) => el.getAttribute('data-source-border-bottom-style'), renderHTML: (a: Record<string, unknown>) => a.sourceBorderBottomStyle ? { 'data-source-border-bottom-style': a.sourceBorderBottomStyle } : {} },
         sourceBorderBottomWidth: { default: null, parseHTML: (el: HTMLElement) => el.getAttribute('data-source-border-bottom-width'), renderHTML: (a: Record<string, unknown>) => a.sourceBorderBottomWidth ? { 'data-source-border-bottom-width': a.sourceBorderBottomWidth } : {} },
         sourceBorderBottomColor: { default: null, parseHTML: (el: HTMLElement) => el.getAttribute('data-source-border-bottom-color'), renderHTML: (a: Record<string, unknown>) => a.sourceBorderBottomColor ? { 'data-source-border-bottom-color': a.sourceBorderBottomColor } : {} },

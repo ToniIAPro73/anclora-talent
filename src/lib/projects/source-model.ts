@@ -477,6 +477,8 @@ function mergeSplitParagraphs(blocks: SourceBlock[]) {
     if (!before || !after || before.includes('\t') || after.includes('\t')) continue;
     if (SENTENCE_END_RE.test(before) || !/^\p{Ll}/u.test(after)) continue;
     if (previous.paragraphProperties?.textAlign !== current.paragraphProperties?.textAlign) continue;
+    // A paragraph the author continues on a new page keeps that page boundary: the pages must match the original.
+    if (current.paragraphProperties?.pageBreakBefore) continue;
     if (previous.paragraphProperties?.borderBottomWidthPt !== undefined || current.paragraphProperties?.borderBottomWidthPt !== undefined) continue;
     const previousRuns = previous.runs ?? [];
     const currentRuns = (current.runs ?? []).map((run, runIndex) => (runIndex === 0 ? { ...run, text: run.text.trimStart() } : run));
@@ -489,8 +491,11 @@ function mergeSplitParagraphs(blocks: SourceBlock[]) {
 
 function sourceBlockBorderAttributes(block: SourceBlock): string {
   const properties = block.paragraphProperties ?? {};
-  if (properties.borderBottomWidthPt === undefined) return '';
-  return ` data-source-border-bottom-style="${escapeSourceHtml(String(properties.borderBottomStyle ?? 'solid'))}" data-source-border-bottom-width="${escapeSourceHtml(String(properties.borderBottomWidthPt))}"`
+  const background = typeof properties.backgroundColor === 'string' && properties.backgroundColor !== 'transparent'
+    ? ` data-source-background="${escapeSourceHtml(properties.backgroundColor)}"`
+    : '';
+  if (properties.borderBottomWidthPt === undefined) return background;
+  return background +` data-source-border-bottom-style="${escapeSourceHtml(String(properties.borderBottomStyle ?? 'solid'))}" data-source-border-bottom-width="${escapeSourceHtml(String(properties.borderBottomWidthPt))}"`
     + (properties.borderBottomColor ? ` data-source-border-bottom-color="${escapeSourceHtml(String(properties.borderBottomColor))}"` : '')
     + ` data-source-border-bottom-spacing="${escapeSourceHtml(String(properties.borderBottomSpacingPt ?? 1))}"`;
 }
@@ -754,6 +759,7 @@ function odtParagraphFormatting(style: OdtStyleDefinition): Record<string, OdtSc
     ['text-align', 'textAlign'], ['line-height', 'lineHeight'], ['margin-top', 'spacingBefore'],
     ['margin-bottom', 'spacingAfter'], ['text-indent', 'firstLineIndent'], ['margin-left', 'leftIndent'],
     ['margin-right', 'rightIndent'], ['break-before', 'pageBreakBefore'], ['keep-with-next', 'keepNext'],
+    ['background-color', 'backgroundColor'],
   ];
   for (const [from, to] of map) {
     const value = style.paragraph[from];
