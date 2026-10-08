@@ -37,6 +37,15 @@ describe.skipIf(!existsSync(PATH))('real ODT manuscript: exito-sin-compania', ()
     const breakIndex = oneBlocks.findIndex((block) => block.type === 'pageBreak');
     expect(oneBlocks[breakIndex + 1]?.content).toContain('Por qué a nadie le preocupa tu soledad');
 
+    // The table keeps the author's navy header band and borderless, padded cells.
+    const table = chapters.flatMap((chapter) => chapter.blocks).find((block) => /<table/.test(block.content))?.content ?? '';
+    expect(table).toMatch(/<th style="background-color:#16263d;border:none;padding:/);
+    expect(table).toMatch(/<td style="background-color:#f6f1e7/);
+
+    // The author's own page breaks inside a chapter survive (not only those before headings).
+    const breaks = chapters.reduce((total, chapter) => total + chapter.blocks.filter((block) => block.type === 'pageBreak').length, 0);
+    expect(breaks).toBeGreaterThan(8);
+
     // The closing lines split by a hard return are one paragraph again.
     const last = html(chapters[chapters.length - 1].title);
     expect(last.replace(/<[^>]+>/g, '')).toContain('también lo tiene todo y, sin embargo');

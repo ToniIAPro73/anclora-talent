@@ -72,6 +72,8 @@ export interface SourceBlock {
   items?: SourceBlock[];
   rows?: string[][];
   cellRuns?: SourceTextRun[][];
+  /** CSS declarations of each cell (fill, borders, padding), in the same row-major order as `cellRuns`. */
+  cellStyles?: string[];
   language?: string;
   src?: string;
   alt?: string;
@@ -501,7 +503,7 @@ export function sourceModelToHtml(model: CanonicalSourceDocument): string {
       ? '<hr data-page-break="source"/>'
       : '';
     if (block.type === 'heading') return `${pageBreak}<h${Math.min(block.level ?? 1, 6)}${sourceAttribute}${sourceBlockBorderAttributes(block)}${sourceBlockStyle(block)}>${sourceBlockInlineHtml(block)}</h${Math.min(block.level ?? 1, 6)}>`;
-    if (block.type === 'paragraph') return `<p${sourceAttribute}${semanticClass}${sourceBlockBorderAttributes(block)}${sourceBlockStyle(block)}>${sourceBlockInlineHtml(block).replace(/\n/g, '<br />') || '<br />'}</p>`;
+    if (block.type === 'paragraph') return `${pageBreak}<p${sourceAttribute}${semanticClass}${sourceBlockBorderAttributes(block)}${sourceBlockStyle(block)}>${sourceBlockInlineHtml(block).replace(/\n/g, '<br />') || '<br />'}</p>`;
     if (block.type === 'blockquote') return `<blockquote>${(block.items ?? []).map(render).join('')}</blockquote>`;
     if (block.type === 'orderedList' || block.type === 'unorderedList') return `<${block.type === 'orderedList' ? 'ol' : 'ul'}>${(block.items ?? []).map((item) => `<li>${sourceBlockInlineHtml(item)}${(item.items ?? []).map(render).join('')}</li>`).join('')}</${block.type === 'orderedList' ? 'ol' : 'ul'}>`;
     if (block.type === 'table') {
@@ -510,7 +512,11 @@ export function sourceModelToHtml(model: CanonicalSourceDocument): string {
         const html = (block.cellRuns?.[cellIndex++] ?? [{ text: cell, provenance: provenance('SOURCE_SEMANTIC') }]).map(inlineSourceHtml).join('');
         return html;
       };
-      return `<table><thead><tr>${(block.rows?.[0] ?? []).map((cell) => `<th>${renderCell(cell)}</th>`).join('')}</tr></thead><tbody>${(block.rows ?? []).slice(1).map((row) => `<tr>${row.map((cell) => `<td>${renderCell(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+      const cellStyle = (index: number) => block.cellStyles?.[index] ? ` style="${escapeSourceHtml(block.cellStyles[index])}"` : '';
+      let styleIndex = 0;
+      const head = (block.rows?.[0] ?? []).map((cell) => { const style = cellStyle(styleIndex++); return `<th${style}>${renderCell(cell)}</th>`; }).join('');
+      const body = (block.rows ?? []).slice(1).map((row) => `<tr>${row.map((cell) => { const style = cellStyle(styleIndex++); return `<td${style}>${renderCell(cell)}</td>`; }).join('')}</tr>`).join('');
+      return `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
     }
     if (block.type === 'image') return block.src ? `<p><img src="${escapeSourceHtml(block.src)}" alt="${escapeSourceHtml(block.alt ?? '')}" /></p>` : '';
     if (block.type === 'codeBlock') return `<pre><code${block.language ? ` data-language="${escapeSourceHtml(block.language)}"` : ''}>${escapeSourceHtml(block.text ?? '')}</code></pre>`;
@@ -628,6 +634,7 @@ interface OdtStyleDefinition {
   parent?: string;
   text: Record<string, OdtScalar>;
   paragraph: Record<string, OdtScalar>;
+  cell?: Record<string, OdtScalar>;
 }
 
 function odtAttr(element: XmlElement, localName: string): string | undefined {
@@ -676,7 +683,9 @@ function collectOdtStyles(document: XmlDocument): Map<string, OdtStyleDefinition
     const name = odtAttr(element, 'name') ?? `__default_${family}`;
     const text = odtChildren(element).find((child) => child.localName === 'text-properties');
     const paragraph = odtChildren(element).find((child) => child.localName === 'paragraph-properties');
+    const cell = odtChildren(element).find((child) => child.localName === 'table-cell-properties');
     styles.set(`${family}:${name}`, {
+      ...(cell ? { cell: odtProperties(cell) } : {}),
       name,
       family,
       parent: odtAttr(element, 'parent-style-name'),
@@ -702,6 +711,7 @@ function resolveOdtStyle(styles: Map<string, OdtStyleDefinition>, family: string
     ...current,
     text: { ...parent.text, ...current.text },
     paragraph: { ...parent.paragraph, ...current.paragraph },
+    ...(parent.cell || current.cell ? { cell: { ...parent.cell, ...current.cell } } : {}),
   };
 }
 
@@ -722,6 +732,20 @@ function odtTextFormatting(style: OdtStyleDefinition, href?: string): Record<str
   if (style.text['background-color']) result.highlight = style.text['background-color'];
   if (href) result.href = href;
   return result;
+}
+
+// Fill, borders and padding the author gave a table cell (header band, zebra rows, borderless grids).
+function odtCellCss(cell: Record<string, OdtScalar> | undefined): string {
+  if (!cell) return '';
+  const declarations: string[] = [];
+  const fill = cell['background-color'];
+  if (typeof fill === 'string' && fill !== 'transparent') declarations.push(`background-color:${fill}`);
+  const border = cell.border;
+  if (border === 'none') declarations.push('border:none');
+  else if (typeof border === 'string') declarations.push(`border:${border.replace(/[^#\w\s.%-]/g, '')}`);
+  const padding = ['top', 'right', 'bottom', 'left'].map((side) => odtLengthToPt(typeof cell[`padding-${side}`] === 'string' ? cell[`padding-${side}`] as string : undefined));
+  if (padding.every((value) => value !== undefined)) declarations.push(`padding:${padding.map((value) => `${Math.round((value as number) * 100) / 100}pt`).join(' ')}`);
+  return declarations.join(';');
 }
 
 function odtParagraphFormatting(style: OdtStyleDefinition): Record<string, OdtScalar> {
@@ -1025,6 +1049,7 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
   const parseTable = (element: XmlElement): SourceBlock => {
     const rows: string[][] = [];
     const cellRuns: SourceTextRun[][] = [];
+    const cellStyles: string[] = [];
     for (const row of odtChildren(element).filter((child) => child.localName === 'table-row')) {
       const cells: string[] = [];
       for (const cell of odtChildren(row).filter((child) => child.localName === 'table-cell')) {
@@ -1032,10 +1057,11 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
         const runs = paragraphs.flatMap((paragraph) => odtRuns(paragraph, styleMap, odtTextFormatting(resolveOdtStyle(styleMap, 'paragraph', odtAttr(paragraph, 'style-name'))), odtAttr(paragraph, 'style-name')));
         cells.push(runs.map((run) => run.text).join('\n'));
         cellRuns.push(runs);
+        cellStyles.push(odtCellCss(resolveOdtStyle(styleMap, 'table-cell', odtAttr(cell, 'style-name')).cell));
       }
       if (cells.length) rows.push(cells);
     }
-    return { id: stableId('odt-table', blocks.length, rows.flat().join('|')), type: 'table', text: rows.map((row) => row.join(' | ')).join('\n'), rows, cellRuns, provenance: provenance('SOURCE_EXPLICIT', 'content.xml') };
+    return { id: stableId('odt-table', blocks.length, rows.flat().join('|')), type: 'table', text: rows.map((row) => row.join(' | ')).join('\n'), rows, cellRuns, ...(cellStyles.some(Boolean) ? { cellStyles } : {}), provenance: provenance('SOURCE_EXPLICIT', 'content.xml') };
   };
   const parseImage = (element: XmlElement): SourceBlock | null => {
     let image: XmlElement | undefined;

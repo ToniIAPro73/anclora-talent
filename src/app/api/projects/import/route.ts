@@ -24,6 +24,13 @@ function getExtension(fileName: string) {
   return parts.length > 1 ? (parts.at(-1) ?? '') : '';
 }
 
+// Composition margins are expressed in px (see composition.ts); source profiles carry points.
+function marginsPtToPx(margins?: { top: number; bottom: number; left: number; right: number } | null) {
+  if (!margins) return undefined;
+  const toPx = (value: number) => Math.round(value * (96 / 72));
+  return { top: toPx(margins.top), bottom: toPx(margins.bottom), left: toPx(margins.left), right: toPx(margins.right) };
+}
+
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
 
@@ -207,7 +214,7 @@ export async function POST(request: NextRequest) {
               fontFamily: direct.styleProfile.body.fontFamily ?? SYSTEM_COMPOSITION_DEFAULTS.fontFamily,
               fontSizePt: direct.styleProfile.body.fontSizePt ?? SYSTEM_COMPOSITION_DEFAULTS.fontSizePt,
               lineHeight: direct.styleProfile.body.lineHeight ?? SYSTEM_COMPOSITION_DEFAULTS.lineHeight,
-              margins: direct.styleProfile.page.marginsPt ?? SYSTEM_COMPOSITION_DEFAULTS.margins,
+              margins: marginsPtToPx(direct.styleProfile.page.marginsPt) ?? SYSTEM_COMPOSITION_DEFAULTS.margins,
             },
             source: 'docx-styles',
           };
@@ -233,7 +240,7 @@ export async function POST(request: NextRequest) {
             ...(presentation.fontFamily ? { fontFamily: presentation.fontFamily } : {}),
             ...(presentation.fontSizePt !== undefined ? { fontSizePt: presentation.fontSizePt } : {}),
             ...(presentation.lineHeight !== undefined ? { lineHeight: presentation.lineHeight } : {}),
-            ...(presentation.marginsPt ? { margins: presentation.marginsPt } : {}),
+            ...(presentation.marginsPt ? { margins: marginsPtToPx(presentation.marginsPt) } : {}),
           },
           source: 'odt-styles',
         };
@@ -259,14 +266,8 @@ export async function POST(request: NextRequest) {
             fontFamily: body.fontFamily ?? SYSTEM_COMPOSITION_DEFAULTS.fontFamily,
             fontSizePt: body.fontSizePt ?? SYSTEM_COMPOSITION_DEFAULTS.fontSizePt,
             lineHeight: body.lineHeight ?? SYSTEM_COMPOSITION_DEFAULTS.lineHeight,
-            margins: page.marginsPt
-              ? {
-                  top: page.marginsPt.top,
-                  bottom: page.marginsPt.bottom,
-                  left: page.marginsPt.left,
-                  right: page.marginsPt.right,
-                }
-              : SYSTEM_COMPOSITION_DEFAULTS.margins,
+            margins: marginsPtToPx(page.marginsPt)
+              ?? SYSTEM_COMPOSITION_DEFAULTS.margins,
           },
           source: 'docx-styles',
         };

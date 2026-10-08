@@ -242,6 +242,23 @@ const TocBlockAttributes = Extension.create({
   },
 });
 
+// Cell fill, borders and padding carried from the source document (header band, zebra rows, borderless grids).
+const SourceTableCellStyleAttributes = Extension.create({
+  name: 'sourceTableCellStyleAttributes',
+  addGlobalAttributes() {
+    return [{
+      types: ['tableCell', 'tableHeader'],
+      attributes: {
+        sourceCellStyle: {
+          default: null,
+          parseHTML: (el: HTMLElement) => el.getAttribute('style'),
+          renderHTML: (a: Record<string, unknown>) => (a.sourceCellStyle ? { style: String(a.sourceCellStyle) } : {}),
+        },
+      },
+    }];
+  },
+});
+
 const SourceParagraphDecorationAttributes = Extension.create({
   name: 'sourceParagraphDecorationAttributes',
   addGlobalAttributes() {
@@ -2066,6 +2083,7 @@ export function AdvancedRichTextEditor({
       EditorialParagraphAttributes,
       TocBlockAttributes,
       SourceParagraphDecorationAttributes,
+      SourceTableCellStyleAttributes,
       TocInlineAttributes,
       Placeholder.configure({
         placeholder: resolveLocaleMessages(locale).editor.placeholder,

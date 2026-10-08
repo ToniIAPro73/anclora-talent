@@ -1711,9 +1711,12 @@ function buildChaptersFromBlocks(
   const flushCurrent = () => {
     if (!currentTitle) return;
 
-    const documentBlocks = currentBlocks
-      .filter((block) => block.text.trim().length > 0 || block.kind === 'rule' || block.kind === 'pageBreak')
-      .map(toDocumentBlock);
+    const keptBlocks = currentBlocks
+      .filter((block) => block.text.trim().length > 0 || block.kind === 'rule' || block.kind === 'pageBreak');
+    // A page break that only separates this chapter from the next (or sits at its very start) is the chapter
+    // boundary itself, not content: the next chapter already starts on its own page.
+    while (keptBlocks.length > 0 && keptBlocks[keptBlocks.length - 1].kind === 'pageBreak') keptBlocks.pop();
+    const documentBlocks = keptBlocks.map(toDocumentBlock);
 
     // `currentBlocks` always starts with the chapter's own heading block
     // (see the assignment below), so there is never a need to synthesize
