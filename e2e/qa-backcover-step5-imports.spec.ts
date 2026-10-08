@@ -27,15 +27,14 @@ async function openFullPreview(page: Page, projectId: string) {
   await signInAsQaIdentity(page);
   await page.goto(`/projects/${projectId}/editor`);
   await gotoStep(page, 4);
-  await page.getByTestId('open-full-preview-button').click();
-  await expect(page.getByTestId('preview-modal-stage')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('preview-stage')).toBeVisible({ timeout: 30_000 });
   await page.waitForTimeout(2500); // the manuscript flow measures its page count asynchronously
 }
-const total = async (page: Page) => Number(((await page.getByTestId('preview-modal-footer').innerText()).match(/de\s+(\d+)/) ?? [])[1]);
+const total = async (page: Page) => Number(((await page.getByTestId('preview-page-total').innerText()).match(/(\d+)/) ?? [])[1]);
 async function goToBack(page: Page) {
-  await page.getByTestId('preview-modal-stage').focus();
+  await page.getByTestId('preview-workspace').focus();
   await page.keyboard.press('End');
-  await expect(page.getByTestId('preview-modal-surface-label')).toHaveText(/Contraportada/, { timeout: 15_000 });
+  await expect(page.getByTestId('preview-surface-label')).toHaveText(/Contraportada/, { timeout: 15_000 });
 }
 
 for (const source of SOURCES) {
@@ -73,7 +72,7 @@ for (const source of SOURCES) {
         const count = await total(view);
         expect(count).toBeGreaterThanOrEqual(3);
         // cover + manuscript + back cover: the back cover is its own surface, not one more source page
-        await expect(view.getByTestId('preview-modal-surface-label')).toHaveText(/Portada/);
+        await expect(view.getByTestId('preview-surface-label')).toHaveText(/Portada/);
         await goToBack(view);
         expect(await total(view)).toBe(count);
 
@@ -93,12 +92,12 @@ for (const source of SOURCES) {
         expect(await view.getByTestId('canvas-isbn-area').count()).toBe(0);
 
         // the manuscript pages before it keep their source numbering: page 2 is still the first manuscript page
-        await view.getByTestId('preview-modal-stage').focus();
+        await view.getByTestId('preview-workspace').focus();
         await view.keyboard.press('Home');
-        await expect(view.getByTestId('preview-modal-surface-label')).toHaveText(/Portada/);
-        await view.getByTestId('preview-modal-next-page-button').click();
-        await expect(view.getByTestId('preview-modal-surface-label')).toHaveCount(0);
-        await expect(view.getByTestId('preview-modal-page-input')).toHaveValue('2');
+        await expect(view.getByTestId('preview-surface-label')).toHaveText(/Portada/);
+        await view.getByTestId('preview-next-page').click();
+        await expect(view.getByTestId('preview-surface-label')).toHaveCount(0);
+        await expect(view.getByTestId('preview-page-input')).toHaveValue('2');
         if (reload) await view.context().close();
       }
     } finally {

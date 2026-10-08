@@ -474,46 +474,27 @@ test.describe('Chapter Editor Architectural Recovery - Single Visible Editable S
     await page.goto(`/projects/${projectId}/preview`);
     await page.waitForLoadState('networkidle');
 
-    // Wait for inline preview document
-    const previewInline = page.locator('[data-testid="preview-inline-document"]');
-    await previewInline.waitFor({ state: 'visible', timeout: 20_000 });
+    // The preview is a workspace: it opens directly, with pages rail, stage and composition panel.
+    const previewStage = page.locator('[data-testid="preview-stage"]');
+    await previewStage.waitFor({ state: 'visible', timeout: 20_000 });
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'preview/01-preview-overview.png') });
 
-    // Open full preview modal
-    const openFullPreviewBtn = page.locator('[data-testid="open-full-preview-button"]');
-    await openFullPreviewBtn.waitFor({ state: 'visible', timeout: 10_000 });
-    await openFullPreviewBtn.click();
+    // Document mode (single page)
+    await page.locator('[data-testid="preview-mode-document"]').click();
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'preview/03-preview-single-page.png') });
 
-    // Wait for preview modal stage
-    const previewStage = page.locator('[data-testid="preview-modal-stage"]');
-    await previewStage.waitFor({ state: 'visible', timeout: 15_000 });
-    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'preview/02-preview-modal-stage.png') });
-
-    // Switch to single view or inspect pages
-    const singleViewBtn = page.locator('[data-testid="preview-modal-single-view-button"]');
-    if (await singleViewBtn.count() > 0) {
-      await singleViewBtn.click();
-      await page.waitForTimeout(500);
-      await page.screenshot({ path: path.join(EVIDENCE_DIR, 'preview/03-preview-single-page.png') });
-    }
-
-    // Verify footer page count / navigation
-    const pageInput = page.locator('[data-testid="preview-modal-page-input"]');
+    // Verify page count / navigation
+    const pageInput = page.locator('[data-testid="preview-page-input"]');
     const maxAttr = await pageInput.getAttribute('max');
     const previewPagesCount = maxAttr ? parseInt(maxAttr, 10) : 16;
     expect(previewPagesCount).toBeGreaterThanOrEqual(14);
 
-    const nextPageBtn = page.locator('[data-testid="preview-modal-next-page-button"]');
+    const nextPageBtn = page.locator('[data-testid="preview-next-page"]');
     if (await nextPageBtn.count() > 0 && await nextPageBtn.isEnabled()) {
       await nextPageBtn.click();
       await page.waitForTimeout(400);
       await page.screenshot({ path: path.join(EVIDENCE_DIR, 'preview/04-preview-page-2-nota-editorial.png') });
-    }
-
-    // Close preview modal
-    const closePreviewBtn = page.locator('[data-testid="preview-modal-close-button"]');
-    if (await closePreviewBtn.count() > 0) {
-      await closePreviewBtn.click();
     }
 
     // 14. FINAL STATE

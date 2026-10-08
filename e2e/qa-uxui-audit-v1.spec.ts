@@ -122,11 +122,9 @@ test.describe('E1 — proyecto en blanco por plantilla', () => {
     await page.goto(editorUrl);
     await dismissOnboarding(page);
     await goToWorkspaceStep(page, 6);
-    await page.getByTestId('open-full-preview-button').click();
-    const stage = page.getByTestId('preview-modal-stage');
+    const stage = page.getByTestId('preview-stage');
     await expect(stage).toBeVisible({ timeout: 20_000 });
     await page.screenshot({ path: shotPath('e1-preview-1440x900-light') });
-    await page.getByTestId('preview-modal-close-button').click();
   });
 
   test('cover studio: portada y contraportada renderizan', async ({ page }) => {
@@ -221,8 +219,7 @@ test.describe('E3 — libro real (docx)', () => {
     await page.goto(editorUrl);
     await dismissOnboarding(page);
     await goToWorkspaceStep(page, 6);
-    await page.getByTestId('open-full-preview-button').click();
-    const stage = page.getByTestId('preview-modal-stage');
+    const stage = page.getByTestId('preview-stage');
     await expect(stage).toBeVisible({ timeout: 30_000 });
 
     let h1 = 0;
@@ -248,7 +245,7 @@ test.describe('E3 — libro real (docx)', () => {
       tables = Math.max(tables, counts.tables);
       imgs = Math.max(imgs, counts.imgs);
 
-      const nextButton = page.getByTestId('preview-modal-next-page-button');
+      const nextButton = page.getByTestId('preview-next-page');
       if (await nextButton.isDisabled()) break;
       await nextButton.click();
       await page.waitForTimeout(150);
@@ -266,7 +263,6 @@ test.describe('E3 — libro real (docx)', () => {
     );
 
     await page.screenshot({ path: shotPath('e3-preview-1440x900-light') });
-    await page.getByTestId('preview-modal-close-button').click();
   });
 
   test('paridad preview↔export HTML: mismo recuento de tablas', async ({ request }) => {
@@ -517,15 +513,13 @@ test.describe('E6 — transversal', () => {
     await dismissOnboarding(page);
     await goToWorkspaceStep(page, 6);
 
-    await page.getByTestId('open-full-preview-button').click();
-    const stage = page.getByTestId('preview-modal-stage');
+    const stage = page.getByTestId('preview-stage');
     await expect(stage).toBeVisible({ timeout: 20_000 });
     await page.screenshot({ path: shotPath('e6-modal-preview-open-1440x900-light') });
 
     await page.keyboard.press('Escape');
     await expect(stage).toBeHidden({ timeout: 5000 }).catch(async () => {
       // Si Escape no cierra, se documenta como hallazgo y se cierra por botón.
-      await page.getByTestId('preview-modal-close-button').click();
     });
   });
 });

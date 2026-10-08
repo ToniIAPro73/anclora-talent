@@ -58,7 +58,7 @@ test.describe('P5 — shared retrieval and immediate preview', () => {
     expect(modalIds).toEqual(inventoryIds);
   });
 
-  test('shows useful preview content before opening the full preview modal', async ({ page }) => {
+  test('shows the preview workspace with real content immediately', async ({ page }) => {
     await login(page);
     const title = `P5 immediate preview ${Date.now()}`;
     await createProject(page, title);
@@ -66,10 +66,9 @@ test.describe('P5 — shared retrieval and immediate preview', () => {
     expect(projectId).toBeTruthy();
 
     await page.goto(`/projects/${projectId}/preview`);
-    await expect(page.getByTestId('preview-inline-document')).toBeVisible();
-    await expect(page.getByTestId('preview-inline-cover')).toBeVisible();
-    await expect(page.getByTestId('preview-inline-content')).toContainText(/Portadilla|Esta primera versión|This first version/);
-    await page.getByTestId('open-full-preview-button').click();
-    await expect(page.getByTestId('preview-modal-stage')).toBeVisible();
+    await expect(page.getByTestId('preview-workspace')).toBeVisible();
+    await expect(page.getByTestId('preview-page-rail')).toBeVisible();
+    await expect(page.getByTestId('preview-stage')).toBeVisible();
+    await expect(page.getByTestId('preview-stage')).toContainText(/Portadilla|Esta primera versión|This first version/);
   });
 });

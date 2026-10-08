@@ -69,6 +69,15 @@ async function goToWorkspaceStep(page: Page, step: number) {
   }
 }
 
+/** Opens a workflow step through the shared top stepper (the legacy side rail is gone on the preview step). */
+async function goToStepperStep(page: Page, step: number) {
+  const triggers = page.locator('.ac-stepper__trigger');
+  await expect(triggers.nth(step - 1)).toBeVisible({ timeout: 30_000 });
+  for (let i = 1; i < step && (await triggers.nth(step - 1).isDisabled()); i += 1) await triggers.nth(i).click();
+  await triggers.nth(step - 1).click();
+  await page.waitForTimeout(800);
+}
+
 /** Every table/list under `rootSelector` must fit horizontally inside its page surface. */
 async function expectContentNodesNotClipped(page: Page, rootSelector: string) {
   const clipped = await page.evaluate((selector) => {
@@ -181,10 +190,9 @@ test.describe('M2 visual import', () => {
     test.setTimeout(240_000);
     await page.goto(editorUrl);
     await dismissOnboarding(page);
-    await goToWorkspaceStep(page, 6);
+    await goToStepperStep(page, 5);
 
-    await page.getByTestId('open-full-preview-button').click();
-    const stage = page.getByTestId('preview-modal-stage');
+    const stage = page.getByTestId('preview-stage');
     await expect(stage).toBeVisible({ timeout: 30_000 });
 
     let tables = 0;
@@ -204,9 +212,9 @@ test.describe('M2 visual import', () => {
       reflexion += (counts.text.match(/REFLEXIÓN/g) ?? []).length;
       ejercicio += (counts.text.match(/EJERCICIO/g) ?? []).length;
       visitedTexts.add(counts.text.slice(0, 200));
-      await expectContentNodesNotClipped(page, '[data-testid="preview-modal-stage"]');
+      await expectContentNodesNotClipped(page, '[data-testid="preview-stage"]');
 
-      const nextButton = page.getByTestId('preview-modal-next-page-button');
+      const nextButton = page.getByTestId('preview-next-page');
       if (await nextButton.isDisabled()) break;
       await nextButton.click();
       await page.waitForTimeout(150);
@@ -218,7 +226,6 @@ test.describe('M2 visual import', () => {
     expect(ejercicio, 'preview renders EJERCICIO blocks').toBeGreaterThan(0);
     expect(visitedTexts.size, 'preview advances through distinct pages').toBeGreaterThan(3);
 
-    await page.getByTestId('preview-modal-close-button').click();
   });
 
   test('export surface exposes every export action', async ({ page }) => {

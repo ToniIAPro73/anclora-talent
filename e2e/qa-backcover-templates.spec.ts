@@ -168,12 +168,11 @@ test('H/I/J. cancel keeps everything; save and reload keep the back template; th
 
   // step 5: the selected back template renders through the canonical preview with the editor's geometry
   await gotoStep(page, 4);
-  await page.getByTestId('open-full-preview-button').click();
-  await expect(page.getByTestId('preview-modal-stage')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('preview-stage')).toBeVisible({ timeout: 30_000 });
   await page.waitForTimeout(2500);
-  await page.getByTestId('preview-modal-stage').focus();
+  await page.getByTestId('preview-workspace').focus();
   await page.keyboard.press('End');
-  await expect(page.getByTestId('preview-modal-surface-label')).toHaveText(/Contraportada/, { timeout: 15_000 });
+  await expect(page.getByTestId('preview-surface-label')).toHaveText(/Contraportada/, { timeout: 15_000 });
   const paper = page.getByTestId('cover-preview-paper').last();
   await expect.poll(async () => Object.keys(JSON.parse((await paper.getAttribute('data-preview-geometry')) ?? '{}')).length, { timeout: 15_000 }).toBe(Object.keys(live1).length);
   const preview: Live = JSON.parse((await paper.getAttribute('data-preview-geometry')) ?? '{}');
