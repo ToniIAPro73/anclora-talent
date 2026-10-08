@@ -274,6 +274,9 @@ export function MultipageFlow({
           list-style: none;
           line-height: 1.5;
         }
+        .flow-content-root.ProseMirror [data-toc-entry="true"][data-toc-level="1"] {
+          font-weight: 700;
+        }
         .flow-content-root.ProseMirror [data-toc-entry="true"][data-toc-page]::before {
           content: "······································································································";
           order: 1;

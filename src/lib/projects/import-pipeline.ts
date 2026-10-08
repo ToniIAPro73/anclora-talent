@@ -1170,6 +1170,11 @@ function parseHtmlBlocks(input: string, options: { preserveStyles?: boolean } = 
     const tag = clean.match(/^<(h[1-6]|p|ul|ol|blockquote|table|pre|figure)/i)?.[1]?.toLowerCase() ?? 'p';
     const text = textFromHtml(clean);
     const hasImage = /<img\b[^>]*>/i.test(clean);
+    // A drawn rule (empty paragraph with a bottom border in the source) is kept: it is part of the book's design.
+    if (!text && !hasImage && tag === 'p' && /data-source-border-bottom-width=/i.test(clean)) {
+      blocks.push({ kind: 'rule', text: '', html: clean, level: null, structural: false });
+      continue;
+    }
     if (!text && !hasImage) continue;
     // A decorative-only line (a run of dashes/dots/etc, no letters or
     // digits) is usually PDF-extraction noise (a stray rule artifact) and
@@ -1794,25 +1799,17 @@ function buildChaptersFromBlocks(
           headingText = `Nota editorial: ${headingText}`;
         }
       }
-      const triggeringIsToc = isTocChapterTitle(headingText);
-      let leadingBlocks: ParsedBlock[] = [];
 
       if (currentTitle === null && frontMatter.length > 0) {
         const prologueBlocks = extractPrologueBlocksFromFrontMatter(frontMatter, title, author);
         if (prologueBlocks.length > 0) {
-          if (triggeringIsToc) {
-            // Content between the copyright page and the table of contents
-            // (e.g. a dedication) has no heading of its own. Fold it into
-            // the upcoming Índice chapter instead of inventing a
-            // misleading "Prólogo" label — a real Prólogo heading, if the
-            // book has one, is detected later on its own merits.
-            leadingBlocks = prologueBlocks;
-          } else {
-            chapters.push({
-              title: 'Prólogo',
-              blocks: prologueBlocks.map(toDocumentBlock),
-            });
-          }
+          // Whatever the source puts between the copyright page and the first chapter (dedication, epigraph, preface)
+          // is its own page(s) in the book, never part of the table of contents that follows.
+          const hasOwnPrologue = blocks.some((candidate) => candidate.kind === 'heading' && /^pr[oó]logo\b/i.test(candidate.text.trim()));
+          chapters.push({
+            title: hasOwnPrologue ? 'Dedicatoria' : 'Prólogo',
+            blocks: prologueBlocks.map(toDocumentBlock),
+          });
         }
       }
 
@@ -1822,7 +1819,7 @@ function buildChaptersFromBlocks(
       // content (e.g. a dedication with no heading of its own, folded into
       // the upcoming Índice chapter above). The heading block is always
       // present here, so `flushCurrent()` never needs to synthesize one.
-      currentBlocks = [...(kickerBlock ? [kickerBlock] : []), block, ...leadingBlocks];
+      currentBlocks = [...(kickerBlock ? [kickerBlock] : []), block];
       continue;
     }
 
@@ -1838,6 +1835,7 @@ function buildChaptersFromBlocks(
   const detectedOutline = buildOutlineEntriesFromBlocks(blocks, title, chapterBoundaryLevel);
 
   if (chapters.length > 0) {
+    assignImportedTocLevels(chapters);
     return { chapters, frontMatter, detectedOutline };
   }
 
@@ -1858,6 +1856,26 @@ function buildChaptersFromBlocks(
       },
     ],
   };
+}
+
+// The source's contents list is flat text ("El diagnóstico … 8", "La paradoja … 9"); the book's own structure says which
+// entries are parts (they open a "Parte N." chapter) and which are chapters, so the index keeps that hierarchy.
+function assignImportedTocLevels(chapters: NonNullable<ImportedDocumentSeed['chapters']>) {
+  const normalize = (value: string) => value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().toLocaleLowerCase();
+  const partTitles = new Set<string>();
+  for (const chapter of chapters) {
+    const match = chapter.title.match(/^parte\s+(?:[ivxlc]+|\d+|\p{L}+)[.:\s-]+(.+)$/iu);
+    if (match) partTitles.add(normalize(match[1]));
+  }
+  if (partTitles.size === 0) return;
+  for (const chapter of chapters) {
+    if (!isTocChapterTitle(chapter.title)) continue;
+    for (const block of chapter.blocks) {
+      if (!/data-toc-entry=/i.test(block.content)) continue;
+      if (!partTitles.has(normalize(block.content))) continue;
+      block.content = block.content.replace(/data-toc-level="\d+"/i, 'data-toc-level="1"');
+    }
+  }
 }
 
 // Copyright/legal patterns: paragraphs matching these are skipped when extracting the prologue.

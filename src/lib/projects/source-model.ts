@@ -440,6 +440,37 @@ function sourceBlockStyle(block: SourceBlock): string {
   return styles ? ` style="${styles}"` : '';
 }
 
+// A sentence broken across two paragraphs (a hard return where the text wrapped, typical of documents round-tripped
+// through PDF or Word page breaks) leaves each half as the "last line" of its own paragraph, so a justified or centred
+// block renders ragged. Rejoin them: the first paragraph does not end the sentence and the next one continues in lowercase.
+const SENTENCE_END_RE = /[.!?…:;”»"')\]—–]$/u;
+function mergeSplitParagraphs(blocks: SourceBlock[]) {
+  for (let index = blocks.length - 1; index > 0; index -= 1) {
+    const previous = blocks[index - 1];
+    const current = blocks[index];
+    if (previous.type !== 'paragraph' || current.type !== 'paragraph') continue;
+    if (!previous.sourceStyleId || !current.sourceStyleId) continue;
+    if (previous.semanticRole || current.semanticRole || previous.items?.length || current.items?.length) continue;
+    const before = (previous.text ?? '').trimEnd();
+    const after = (current.text ?? '').trimStart();
+    if (!before || !after || before.includes('\t') || after.includes('\t')) continue;
+    if (SENTENCE_END_RE.test(before) || !/^\p{Ll}/u.test(after)) continue;
+    if (previous.paragraphProperties?.textAlign !== current.paragraphProperties?.textAlign) continue;
+    if (previous.paragraphProperties?.borderBottomWidthPt !== undefined || current.paragraphProperties?.borderBottomWidthPt !== undefined) continue;
+    if (current.paragraphProperties?.pageBreakBefore) continue;
+    const runs = [...(previous.runs ?? []), { ...(previous.runs?.[previous.runs.length - 1] ?? current.runs?.[0]), text: ' ' }, ...(current.runs ?? [])] as SourceTextRun[];
+    blocks.splice(index - 1, 2, { ...previous, text: `${before} ${after}`, runs });
+  }
+}
+
+function sourceBlockBorderAttributes(block: SourceBlock): string {
+  const properties = block.paragraphProperties ?? {};
+  if (properties.borderBottomWidthPt === undefined) return '';
+  return ` data-source-border-bottom-style="${escapeSourceHtml(String(properties.borderBottomStyle ?? 'solid'))}" data-source-border-bottom-width="${escapeSourceHtml(String(properties.borderBottomWidthPt))}"`
+    + (properties.borderBottomColor ? ` data-source-border-bottom-color="${escapeSourceHtml(String(properties.borderBottomColor))}"` : '')
+    + ` data-source-border-bottom-spacing="${escapeSourceHtml(String(properties.borderBottomSpacingPt ?? 1))}"`;
+}
+
 export function sourceModelToHtml(model: CanonicalSourceDocument): string {
   const render = (block: SourceBlock): string => {
     const sourceAttribute = block.sourceStyleId ? ` data-source-style-id="${escapeSourceHtml(block.sourceStyleId)}"` : '';
@@ -447,8 +478,8 @@ export function sourceModelToHtml(model: CanonicalSourceDocument): string {
     const pageBreak = block.paragraphProperties?.pageBreakBefore === 'page' || block.paragraphProperties?.pageBreakBefore === true
       ? '<hr data-page-break="source"/>'
       : '';
-    if (block.type === 'heading') return `${pageBreak}<h${Math.min(block.level ?? 1, 6)}${sourceAttribute}${sourceBlockStyle(block)}>${sourceBlockInlineHtml(block)}</h${Math.min(block.level ?? 1, 6)}>`;
-    if (block.type === 'paragraph') return `<p${sourceAttribute}${semanticClass}${sourceBlockStyle(block)}>${sourceBlockInlineHtml(block).replace(/\n/g, '<br />')}</p>`;
+    if (block.type === 'heading') return `${pageBreak}<h${Math.min(block.level ?? 1, 6)}${sourceAttribute}${sourceBlockBorderAttributes(block)}${sourceBlockStyle(block)}>${sourceBlockInlineHtml(block)}</h${Math.min(block.level ?? 1, 6)}>`;
+    if (block.type === 'paragraph') return `<p${sourceAttribute}${semanticClass}${sourceBlockBorderAttributes(block)}${sourceBlockStyle(block)}>${sourceBlockInlineHtml(block).replace(/\n/g, '<br />') || '<br />'}</p>`;
     if (block.type === 'blockquote') return `<blockquote>${(block.items ?? []).map(render).join('')}</blockquote>`;
     if (block.type === 'orderedList' || block.type === 'unorderedList') return `<${block.type === 'orderedList' ? 'ol' : 'ul'}>${(block.items ?? []).map((item) => `<li>${sourceBlockInlineHtml(item)}${(item.items ?? []).map(render).join('')}</li>`).join('')}</${block.type === 'orderedList' ? 'ol' : 'ul'}>`;
     if (block.type === 'table') {
@@ -685,6 +716,17 @@ function odtParagraphFormatting(style: OdtStyleDefinition): Record<string, OdtSc
     else if (['spacingBefore', 'spacingAfter', 'firstLineIndent', 'leftIndent', 'rightIndent'].includes(to)) result[to] = odtLengthToPt(typeof value === 'string' ? value : undefined) ?? value;
     else result[to] = value;
   }
+  // "3.49pt solid #c2622f": the rule the author drew under a paragraph (decorative line below a title, dividers…).
+  const border = typeof style.paragraph['border-bottom'] === 'string' ? style.paragraph['border-bottom'].trim().split(/\s+/) : [];
+  const borderWidth = odtLengthToPt(border[0]);
+  if (borderWidth && border.some((token) => token === 'solid' || token === 'double' || token === 'dotted' || token === 'dashed')) {
+    result.borderBottomWidthPt = Math.round(borderWidth * 100) / 100;
+    result.borderBottomStyle = border.find((token) => ['solid', 'double', 'dotted', 'dashed'].includes(token)) ?? 'solid';
+    const color = border.find((token) => token.startsWith('#'));
+    if (color) result.borderBottomColor = color;
+    const padding = odtLengthToPt(typeof style.paragraph['padding-bottom'] === 'string' ? style.paragraph['padding-bottom'] : undefined);
+    result.borderBottomSpacingPt = Math.round(Math.max(padding ?? 0, 0.5) * 100) / 100;
+  }
   return result;
 }
 
@@ -911,8 +953,21 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
     const style = resolveOdtStyle(styleMap, 'paragraph', styleId);
     let runs = odtRuns(element, styleMap, odtTextFormatting(style), styleId);
     let text = runs.map((run) => run.text).join('');
-    if (!text.trim()) return null;
     const isHeading = element.localName === 'h';
+    if (!text.trim()) {
+      // An empty paragraph that carries a border is a drawn rule (ornament under a title, divider): keep it.
+      const properties = odtParagraphFormatting(style);
+      if (isHeading || properties.borderBottomWidthPt === undefined) return null;
+      return {
+        id: stableId('odt-rule', blocks.length, styleId ?? ''),
+        type: 'paragraph',
+        text: '',
+        runs: [],
+        ...(styleId ? { sourceStyleId: styleId } : {}),
+        paragraphProperties: properties,
+        provenance: provenance('SOURCE_STYLE', 'content.xml'),
+      };
+    }
     // "C A P Í T U L O  U N O": letter-spaced display type is typeset with spaces; read it as the words it spells and
     // keep it as a kicker (a label that introduces what follows), never as a sentence or a title.
     const collapsedText = isHeading ? text : collapseLetterSpacing(text);
@@ -1074,6 +1129,7 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
     }
   };
   parseChildren(root);
+  mergeSplitParagraphs(blocks);
   const presentationProfile = odtPresentationProfile(styleMap, styleDocument ?? contentDocument);
   const contentPresentationProfile = odtPresentationProfile(styleMap, contentDocument);
   return {

@@ -42,6 +42,7 @@ describe('pdf-import-structural-recovery: synthetic fixture (Level A)', () => {
 
     const titles = seed.chapters?.map((c) => c.title) ?? [];
     expect(titles).toEqual([
+      'Dedicatoria',
       'Índice',
       'Prólogo',
       'El mapa antes del territorio',
@@ -51,7 +52,7 @@ describe('pdf-import-structural-recovery: synthetic fixture (Level A)', () => {
     ]);
 
     const nonIndexCount = titles.filter((t) => t.toLowerCase() !== 'índice').length;
-    expect(nonIndexCount).toBe(5); // primary structural units, excluding the generated index
+    expect(nonIndexCount).toBe(6); // primary structural units, excluding the generated index
 
     const lowerTitles = titles.map((t) => t.toLowerCase());
     expect(new Set(lowerTitles).size).toBe(lowerTitles.length);
@@ -87,12 +88,14 @@ describe('pdf-import-structural-recovery: synthetic fixture (Level A)', () => {
     }
   });
 
-  test('the dedication (front matter before the table of contents) is preserved, not mislabeled as a fake Prólogo', async () => {
+  test('the dedication (front matter before the table of contents) gets its own page, not the Índice nor the real Prólogo', async () => {
     const { seed } = await importFixture();
 
     const indexChapter = seed.chapters?.find((c) => c.title.toLowerCase() === 'índice');
     const indexContent = indexChapter?.blocks.map((b) => b.content).join(' ') ?? '';
-    expect(indexContent).toContain('A quienes se atreven a hacer las cosas de otra manera');
+    expect(indexContent).not.toContain('A quienes se atreven a hacer las cosas de otra manera');
+    const dedication = seed.chapters?.find((c) => c.title === 'Dedicatoria');
+    expect(dedication?.blocks.map((b) => b.content).join(' ')).toContain('A quienes se atreven a hacer las cosas de otra manera');
 
     // The real Prólogo chapter holds only its own content, not the dedication.
     const prologoChapter = seed.chapters?.find((c) => c.title === 'Prólogo');

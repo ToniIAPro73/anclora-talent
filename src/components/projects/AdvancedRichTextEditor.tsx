@@ -2628,6 +2628,10 @@ export function AdvancedRichTextEditor({
                 list-style: none;
                 line-height: 1.5;
               }
+              .ProseMirror [data-toc-entry="true"][data-toc-level="1"],
+              .preview-page [data-toc-entry="true"][data-toc-level="1"] {
+                font-weight: 700;
+              }
               .ProseMirror [data-toc-entry="true"][data-toc-page]::before,
               .preview-page [data-toc-entry="true"][data-toc-page]::before {
                 content: "······································································································";

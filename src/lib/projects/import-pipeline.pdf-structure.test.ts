@@ -318,7 +318,7 @@ describe('pdf-import-structural-recovery: table of contents', () => {
     expect(new Set(lowerTitles).size).toBe(lowerTitles.length); // no duplicates
   });
 
-  test('a headingless dedication before the TOC folds into the Índice chapter without duplicating its heading', () => {
+  test('a headingless dedication before the TOC becomes its own page and leaves the Índice chapter intact', () => {
     const text = [
       'Manual de Estrategia Profesional',
       '',
@@ -340,17 +340,15 @@ describe('pdf-import-structural-recovery: table of contents', () => {
 
     const result = buildImportedDocumentSeed({ fileName: 'libro.pdf', mimeType: 'application/pdf', text });
 
-    const indexChapter = result.chapters?.[0];
+    // The document has its own PRÓLOGO later, so the dedication page is not labelled as one.
+    const dedicationChapter = result.chapters?.[0];
+    expect(dedicationChapter?.title).toBe('Dedicatoria');
+    expect(dedicationChapter?.blocks.some((b) => b.content.includes('atreven a cambiar de rumbo'))).toBe(true);
+    const indexChapter = result.chapters?.[1];
     expect(indexChapter?.title).toBe('Índice');
-    // Exactly one heading block for "Índice" — the bug folded the dedication
-    // in ahead of the heading block, which made flushCurrent()'s own
-    // "prepend the title unless already there" check see the dedication as
-    // block 0 and prepend a second "Índice" heading.
     const headingBlocks = indexChapter?.blocks.filter((b) => b.type === 'heading') ?? [];
     expect(headingBlocks).toEqual([{ type: 'heading', content: 'Índice' }]);
-    // The dedication survives as body content of that same chapter (never
-    // discarded, never mislabeled as a "Prólogo" that doesn't exist yet).
-    expect(indexChapter?.blocks.some((b) => b.content.includes('atreven a cambiar de rumbo'))).toBe(true);
+    expect(indexChapter?.blocks.some((b) => b.content.includes('atreven a cambiar de rumbo'))).toBe(false);
   });
 
   test('a TOC entry title wrapped across lines rejoins with its page number instead of scattering into broken fragments', () => {

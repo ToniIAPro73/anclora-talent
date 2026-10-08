@@ -30,7 +30,9 @@ describe('cover detection for an ODT made of loose paragraphs', () => {
     const seed = seedFrom(`${COVER}${credits}<h1>Índice</h1><p>Introducción 5</p><h1>Introducción</h1><p>Texto del capítulo.</p>`);
     const first = seed.chapters?.[0];
     const text = (first?.blocks ?? []).map((block) => block.content.replace(/<[^>]+>/g, '')).join(' | ');
-    expect(first?.title).toMatch(/ndice/i);
+    // The epigraph is its own front-matter page, followed by the Índice.
+    expect(first?.title).toBe('Prólogo');
+    expect(seed.chapters?.[1]?.title).toMatch(/ndice/i);
     expect(text).toContain('La soledad no es la ausencia');
     expect(text).not.toMatch(/ISBN|Primera edición|Todos los derechos|Diseño de cubierta/);
   });

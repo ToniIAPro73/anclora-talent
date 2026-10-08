@@ -218,6 +218,23 @@ describe('source-aware import model', () => {
     expect(model.blocks[1].runs?.some((run) => run.sourceStyleId === 'Emphasis')).toBe(true);
   });
 
+  it('keeps ODT drawn rules (empty bordered paragraphs) and rejoins sentences split across paragraphs', async () => {
+    const zip = new JSZip();
+    zip.file('content.xml', '<office:document-content xmlns:office="urn:o" xmlns:text="urn:t" xmlns:style="urn:s" xmlns:fo="urn:f"><office:automatic-styles><style:style style:name="Rule" style:family="paragraph"><style:paragraph-properties fo:padding-bottom="0.0138in" fo:border-bottom="3.49pt solid #c2622f"/></style:style><style:style style:name="Just" style:family="paragraph"><style:paragraph-properties fo:text-align="justify"/></style:style></office:automatic-styles><office:body><office:text><text:h text:outline-level="1">Title</text:h><text:p text:style-name="Rule"/><text:p text:style-name="Just">Si este libro te ha acompañado, compártelo con alguien que también lo tiene</text:p><text:p text:style-name="Just">todo y, sin embargo, se siente vacío.</text:p><text:p text:style-name="Just">Otro párrafo.</text:p></office:text></office:body></office:document-content>');
+    zip.file('styles.xml', '<office:document-styles xmlns:office="urn:o" />');
+    const model = await parseOdtSource(await zip.generateAsync({ type: 'uint8array' }));
+    expect(model.blocks.map((block) => block.text)).toEqual([
+      'Title',
+      '',
+      'Si este libro te ha acompañado, compártelo con alguien que también lo tiene todo y, sin embargo, se siente vacío.',
+      'Otro párrafo.',
+    ]);
+    const html = sourceModelToHtml(model);
+    expect(html).toContain('data-source-border-bottom-width="3.49"');
+    expect(html).toContain('data-source-border-bottom-color="#c2622f"');
+    expect(html).toContain('<br /></p>');
+  });
+
   it('reports ODT presentation only when styles.xml actually provides it', async () => {
     const zip = new JSZip();
     zip.file('content.xml', '<office:document-content xmlns:office="urn:o" xmlns:text="urn:t"><office:body><office:text><text:p>Body</text:p></office:text></office:body></office:document-content>');
