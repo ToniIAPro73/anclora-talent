@@ -274,8 +274,15 @@ export function MultipageFlow({
           list-style: none;
           line-height: 1.5;
         }
-        .flow-content-root.ProseMirror [data-toc-entry="true"][data-toc-level="1"] {
-          font-weight: 700;
+        .flow-content-root.ProseMirror p,
+        .flow-content-root.ProseMirror h1,
+        .flow-content-root.ProseMirror h2,
+        .flow-content-root.ProseMirror h3,
+        .flow-content-root.ProseMirror h4,
+        .flow-content-root.ProseMirror h5,
+        .flow-content-root.ProseMirror h6,
+        .flow-content-root.ProseMirror li {
+          white-space: pre-wrap;
         }
         .flow-content-root.ProseMirror [data-toc-entry="true"][data-toc-page]::before {
           content: "······································································································";

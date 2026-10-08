@@ -440,6 +440,25 @@ function sourceBlockStyle(block: SourceBlock): string {
   return styles ? ` style="${styles}"` : '';
 }
 
+// Word-processor exports leave a space at the end of a run plus an explicit space node at the start of the next one:
+// two spaces in a row at a run boundary. Typeset text never wants them (they open a wrapped line with a gap and ruin
+// justification). Spaces inside a single run, and letter-spaced labels, are left exactly as authored.
+function collapseRunSpaces(runs: SourceTextRun[]): SourceTextRun[] {
+  const joined = runs.map((run) => run.text).join('');
+  if (collapseLetterSpacing(joined) !== joined) return runs;
+  let previousEndsWithSpace = false;
+  const result: SourceTextRun[] = [];
+  for (const run of runs) {
+    const spaceOnly = run.text.length > 0 && !run.text.trim();
+    // A space node right after a run that already ends in a space adds nothing but a gap.
+    if (spaceOnly && previousEndsWithSpace) continue;
+    const text: string = previousEndsWithSpace && run.text.startsWith(' ') && !spaceOnly ? run.text.slice(1) : run.text;
+    if (text) previousEndsWithSpace = text.endsWith(' ');
+    result.push(text === run.text ? run : { ...run, text });
+  }
+  return result;
+}
+
 // A sentence broken across two paragraphs (a hard return where the text wrapped, typical of documents round-tripped
 // through PDF or Word page breaks) leaves each half as the "last line" of its own paragraph, so a justified or centred
 // block renders ragged. Rejoin them: the first paragraph does not end the sentence and the next one continues in lowercase.
@@ -457,8 +476,11 @@ function mergeSplitParagraphs(blocks: SourceBlock[]) {
     if (SENTENCE_END_RE.test(before) || !/^\p{Ll}/u.test(after)) continue;
     if (previous.paragraphProperties?.textAlign !== current.paragraphProperties?.textAlign) continue;
     if (previous.paragraphProperties?.borderBottomWidthPt !== undefined || current.paragraphProperties?.borderBottomWidthPt !== undefined) continue;
-    if (current.paragraphProperties?.pageBreakBefore) continue;
-    const runs = [...(previous.runs ?? []), { ...(previous.runs?.[previous.runs.length - 1] ?? current.runs?.[0]), text: ' ' }, ...(current.runs ?? [])] as SourceTextRun[];
+    const previousRuns = previous.runs ?? [];
+    const currentRuns = (current.runs ?? []).map((run, runIndex) => (runIndex === 0 ? { ...run, text: run.text.trimStart() } : run));
+    const endsWithSpace = (previousRuns[previousRuns.length - 1]?.text ?? '').endsWith(' ');
+    const separator = endsWithSpace ? [] : [{ ...(previousRuns[previousRuns.length - 1] ?? currentRuns[0]), text: ' ' }];
+    const runs = [...previousRuns, ...separator, ...currentRuns] as SourceTextRun[];
     blocks.splice(index - 1, 2, { ...previous, text: `${before} ${after}`, runs });
   }
 }
@@ -951,7 +973,7 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
   const parseParagraph = (element: XmlElement): SourceBlock | null => {
     const styleId = odtAttr(element, 'style-name');
     const style = resolveOdtStyle(styleMap, 'paragraph', styleId);
-    let runs = odtRuns(element, styleMap, odtTextFormatting(style), styleId);
+    let runs = collapseRunSpaces(odtRuns(element, styleMap, odtTextFormatting(style), styleId));
     let text = runs.map((run) => run.text).join('');
     const isHeading = element.localName === 'h';
     if (!text.trim()) {

@@ -2628,10 +2628,6 @@ export function AdvancedRichTextEditor({
                 list-style: none;
                 line-height: 1.5;
               }
-              .ProseMirror [data-toc-entry="true"][data-toc-level="1"],
-              .preview-page [data-toc-entry="true"][data-toc-level="1"] {
-                font-weight: 700;
-              }
               .ProseMirror [data-toc-entry="true"][data-toc-page]::before,
               .preview-page [data-toc-entry="true"][data-toc-page]::before {
                 content: "······································································································";
@@ -2982,6 +2978,12 @@ export function AdvancedRichTextEditor({
                 left: 0;
                 color: var(--text-primary);
                 font-weight: 600;
+              }
+              /* ProseMirror defaults to break-spaces, which pushes the space that ends a wrapped line onto the next
+                 line (ragged left edge, broken justification). pre-wrap lets it hang at the end of the line. */
+              .ProseMirror p, .ProseMirror h1, .ProseMirror h2, .ProseMirror h3,
+              .ProseMirror h4, .ProseMirror h5, .ProseMirror h6, .ProseMirror li {
+                white-space: pre-wrap;
               }
               .ProseMirror hr[data-page-break="manual"],
               .preview-page hr[data-page-break="manual"],

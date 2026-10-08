@@ -28,6 +28,15 @@ describe.skipIf(!existsSync(PATH))('real ODT manuscript: exito-sin-compania', ()
     // The brown rules the author drew (empty bordered paragraphs) survive.
     expect(html('Parte I. El diagnóstico')).toContain('data-source-border-bottom-color="#c2622f"');
 
+    // No doubled spaces at run boundaries, sentences split by a page break are one paragraph, and the heading the
+    // author started on a new page keeps its page break.
+    const one = html('Capítulo Uno. La paradoja del éxito solitario');
+    expect(one.replace(/<[^>]+>/g, '')).not.toMatch(/\S {2,}\S/);
+    expect(one.replace(/<[^>]+>/g, '')).toContain('lo que mejor sabes hacer');
+    const oneBlocks = chapters.find((chapter) => chapter.title.startsWith('Capítulo Uno'))?.blocks ?? [];
+    const breakIndex = oneBlocks.findIndex((block) => block.type === 'pageBreak');
+    expect(oneBlocks[breakIndex + 1]?.content).toContain('Por qué a nadie le preocupa tu soledad');
+
     // The closing lines split by a hard return are one paragraph again.
     const last = html(chapters[chapters.length - 1].title);
     expect(last.replace(/<[^>]+>/g, '')).toContain('también lo tiene todo y, sin embargo');
