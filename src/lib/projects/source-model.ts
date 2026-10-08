@@ -3,7 +3,7 @@ import { DOMParser, type Document as XmlDocument, type Element as XmlElement, ty
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
-import { reconstructLayoutFlow, type LayoutLine } from './odt-layout-flow';
+import { collapseLetterSpacing, reconstructLayoutFlow, type LayoutLine } from './odt-layout-flow';
 import type { Content, PhrasingContent, Root, RootContent } from 'mdast';
 
 export type SourceFormat = 'doc' | 'docx' | 'odt' | 'markdown' | 'txt' | 'pages' | 'pdf';
@@ -909,10 +909,18 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
   const parseParagraph = (element: XmlElement): SourceBlock | null => {
     const styleId = odtAttr(element, 'style-name');
     const style = resolveOdtStyle(styleMap, 'paragraph', styleId);
-    const runs = odtRuns(element, styleMap, odtTextFormatting(style), styleId);
-    const text = runs.map((run) => run.text).join('');
+    let runs = odtRuns(element, styleMap, odtTextFormatting(style), styleId);
+    let text = runs.map((run) => run.text).join('');
     if (!text.trim()) return null;
     const isHeading = element.localName === 'h';
+    // "C A P Í T U L O  U N O": letter-spaced display type is typeset with spaces; read it as the words it spells and
+    // keep it as a kicker (a label that introduces what follows), never as a sentence or a title.
+    const collapsedText = isHeading ? text : collapseLetterSpacing(text);
+    const letterSpaced = collapsedText !== text;
+    if (letterSpaced) {
+      runs = [{ ...runs[0], text: collapsedText }];
+      text = collapsedText;
+    }
     const level = isHeading ? Number.parseInt(odtAttr(element, 'outline-level') ?? '1', 10) : undefined;
     return {
       id: stableId('odt', blocks.length, text),
@@ -921,7 +929,7 @@ export async function parseOdtSource(buffer: Uint8Array): Promise<CanonicalSourc
       text,
       runs,
       ...(styleId ? { sourceStyleId: styleId } : {}),
-      ...(style.parent && /kicker/i.test(style.parent) ? { semanticRole: 'chapter-opener-kicker' as const } : {}),
+      ...((style.parent && /kicker/i.test(style.parent)) || (letterSpaced && text.length <= 40) ? { semanticRole: 'chapter-opener-kicker' as const } : {}),
       paragraphProperties: odtParagraphFormatting(style),
       provenance: provenance(isHeading ? 'SOURCE_SEMANTIC' : styleId ? 'SOURCE_STYLE' : 'SOURCE_EXPLICIT', 'content.xml'),
     };

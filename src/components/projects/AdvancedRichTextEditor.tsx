@@ -73,6 +73,7 @@ import { countRenderablePages, paginateContent } from '@/lib/preview/content-pag
 import { getPageContentHeight } from '@/lib/preview/page-layout';
 import { DEVICE_PAGINATION_CONFIGS } from '@/lib/preview/device-configs';
 import { reconcileOverflowBreaks } from '@/lib/preview/editor-page-layout';
+import { stripBlockWhitespace } from '@/lib/preview/html-normalize';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { PAGE_BREAK_HTML } from '@/lib/preview/page-breaks';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
@@ -581,10 +582,10 @@ function normalizeEditorHtml(content: string): string {
     const parser = new DOMParser();
     const doc = parser.parseFromString(`<div>${trimmed}</div>`, 'text/html');
     const html = doc.body.firstElementChild?.innerHTML ?? '';
-    return normalizeBreakMarkup(html.replace(/>\s+</g, '><').replace(/&nbsp;/g, ' '));
+    return normalizeBreakMarkup(stripBlockWhitespace(html).replace(/&nbsp;/g, ' '));
   }
 
-  return normalizeBreakMarkup(trimmed.replace(/>\s+</g, '><').replace(/&nbsp;/g, ' '));
+  return normalizeBreakMarkup(stripBlockWhitespace(trimmed).replace(/&nbsp;/g, ' '));
 }
 
 function countMeaningfulTopLevelBlocks(html: string): number {

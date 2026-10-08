@@ -3,6 +3,19 @@
  * Shared between editor and preview to ensure consistent rendering truth.
  */
 
+const BLOCK_TAGS = '(?:p|div|h[1-6]|ul|ol|li|blockquote|table|thead|tbody|tfoot|tr|td|th|hr|figure|section|article|pre)';
+const WHITESPACE_AFTER_BLOCK_TAG = new RegExp(`(<\\/?${BLOCK_TAGS}\\b[^>]*>)\\s+(?=<)`, 'gi');
+const WHITESPACE_BEFORE_BLOCK_TAG = new RegExp(`>\\s+(?=<\\/?${BLOCK_TAGS}\\b)`, 'gi');
+
+/**
+ * Drops the formatting whitespace between BLOCK tags only. Whitespace between two inline elements is content: in
+ * `<span>del</span><span> </span><span>personaje</span>` or `<strong>a</strong> <em>b</em>` that single space is the
+ * space between words, and removing it (what `/>\s+</g` did) glued the words together.
+ */
+export function stripBlockWhitespace(html: string): string {
+  return html.replace(WHITESPACE_AFTER_BLOCK_TAG, '$1').replace(WHITESPACE_BEFORE_BLOCK_TAG, '>');
+}
+
 export function normalizeDocumentHtml(content: string): string {
   if (!content) return '';
   
@@ -94,8 +107,8 @@ export function normalizeHtmlContent(content: string): string {
     // ───────────────────────────────────────────────────────────────────────
 
     const html = root.innerHTML ?? '';
-    return normalizeBreakMarkup(html.replace(/>\s+</g, '><').replace(/&nbsp;/g, ' '));
+    return normalizeBreakMarkup(stripBlockWhitespace(html).replace(/&nbsp;/g, ' '));
   }
 
-  return normalizeBreakMarkup(trimmed.replace(/>\s+</g, '><').replace(/&nbsp;/g, ' '));
+  return normalizeBreakMarkup(stripBlockWhitespace(trimmed).replace(/&nbsp;/g, ' '));
 }

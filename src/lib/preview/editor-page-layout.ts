@@ -4,13 +4,15 @@ import {
   paginateContent,
 } from './content-paginator';
 import { PaginationConfig } from './device-configs';
+import { stripBlockWhitespace } from './html-normalize';
 import { removeAutoPageBreakMarkers } from './page-breaks';
 
 const MANUAL_PAGE_BREAK_SPLIT =
   /<hr\s+data-page-break="(?:true|manual)"\s*\/?>/i;
 
+/** Formatting whitespace between block tags goes; the space between two inline elements is content (see `stripBlockWhitespace`). */
 export function stripAutoBreaks(html: string): string {
-  return removeAutoPageBreakMarkers(html).replace(/>\s+</g, '><').trim();
+  return stripBlockWhitespace(removeAutoPageBreakMarkers(html)).trim();
 }
 
 export function splitHtmlIntoPageSegments(html: string): string[] {

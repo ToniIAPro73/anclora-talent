@@ -1495,6 +1495,15 @@ function isKickerBlock(block: ParsedBlock) {
   return /class="[^"]*\beditorial-kicker\b[^"]*"/i.test(block.html ?? '');
 }
 
+/** Largest explicit font size (pt) of a source block, when its HTML carries one. */
+function displaySizePt(block: ParsedBlock): number {
+  let largest = 0;
+  for (const match of (block.html ?? '').matchAll(/font-size:\s*(\d+(?:\.\d+)?)pt/gi)) largest = Math.max(largest, Number(match[1]));
+  return largest;
+}
+
+const DISPLAY_TITLE_MIN_PT = 24;
+
 function findTitleCandidate(frontMatter: ParsedBlock[]) {
   const index = frontMatter.findIndex((block) => {
     const text = block.text.trim();
@@ -1508,13 +1517,25 @@ function findTitleCandidate(frontMatter: ParsedBlock[]) {
       !isLikelyAuthorName(text)
     );
   });
+  if (index < 0) return null;
 
-  return index >= 0 ? { index, block: frontMatter[index] } : null;
+  // A title typeset as several display-size lines ("Éxito" / "sin compañía") is one title, not its first line.
+  const block = frontMatter[index];
+  let text = block.text.trim();
+  let extraBlocks = 0;
+  if (displaySizePt(block) >= DISPLAY_TITLE_MIN_PT) {
+    for (const next of frontMatter.slice(index + 1)) {
+      if (displaySizePt(next) < DISPLAY_TITLE_MIN_PT || isKickerBlock(next) || next.text.trim().length === 0 || next.text.length > 60) break;
+      text = `${text} ${next.text.trim()}`;
+      extraBlocks += 1;
+    }
+  }
+  return { index, block, text, extraBlocks };
 }
 
 function detectTitleFromFrontMatter(frontMatter: ParsedBlock[], fallbackTitle: string) {
   const candidate = findTitleCandidate(frontMatter);
-  const cleaned = stripMarkdownInline(candidate?.block.text || fallbackTitle);
+  const cleaned = stripMarkdownInline(candidate?.text || fallbackTitle);
   return {
     title: isAllCapsText(cleaned) ? toEditorialTitleCase(cleaned) : cleaned,
     foundCandidate: candidate !== null,
@@ -1531,7 +1552,7 @@ function detectAuthorFromFrontMatter(
   fallbackText: string,
 ): { author: string; source: AuthorDetectionSource } {
   const titleCandidate = findTitleCandidate(frontMatter);
-  const startIndex = titleCandidate ? titleCandidate.index + 1 : 0;
+  const startIndex = titleCandidate ? titleCandidate.index + 1 + titleCandidate.extraBlocks : 0;
 
   for (const block of frontMatter.slice(startIndex)) {
     if (COPYRIGHT_RE.test(block.text)) {
@@ -1569,12 +1590,12 @@ function detectSubtitleFromFrontMatter(
   author: string,
 ) {
   const titleCandidate = findTitleCandidate(frontMatter);
-  const startIndex = titleCandidate ? titleCandidate.index + 1 : 0;
+  const startIndex = titleCandidate ? titleCandidate.index + 1 + titleCandidate.extraBlocks : 0;
   const candidates: string[] = [];
 
   for (const block of frontMatter.slice(startIndex)) {
     const text = stripMarkdownInline(block.text);
-    if (!text || isDecorativeLine(text) || isKickerBlock(block)) continue;
+    if (!text || text.toLocaleLowerCase() === '[imagen]' || isDecorativeLine(text) || isKickerBlock(block)) continue;
     if (text === title) continue;
     if (text === author || isLikelyAuthorName(text) || COPYRIGHT_RE.test(text)) break;
     candidates.push(text);
@@ -1648,13 +1669,20 @@ function extractPrologueBlocksFromFrontMatter(frontMatter: ParsedBlock[], title:
 
   if (lastCopyrightIdx < 0) return [];
 
+  // The rest of the copyright page (rights, edition, ISBN, credits, the publisher's name repeated) is colophon, not
+  // content: it must not be folded into the chapter that follows.
+  const copyrightText = frontMatter.slice(0, lastCopyrightIdx + 1).map((block) => block.text.toLocaleLowerCase()).join(' ');
   return frontMatter
     .slice(lastCopyrightIdx + 1)
     .filter((block) => {
       const text = block.text.trim();
+      if (COLOPHON_LINE_RE.test(text)) return false;
+      if (text.length <= 40 && copyrightText.includes(text.toLocaleLowerCase())) return false;
       return text.length > 12 && text !== title && text !== author && !COPYRIGHT_RE.test(text);
     });
 }
+
+const COLOPHON_LINE_RE = /^(?:todos\s+los\s+derechos|all\s+rights|primera\s+edici[oó]n|first\s+edition|isbn\b|dep[oó]sito\s+legal|dise[ñn]o\s+de|impreso\s+en|printed\s+in|edici[oó]n\b)/i;
 
 function buildChaptersFromBlocks(
   blocks: ParsedBlock[],

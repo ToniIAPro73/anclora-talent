@@ -99,3 +99,23 @@ describe('ODT converted from a PDF (one positioned text frame per line)', () => 
     expect(seed.chapters?.some((chapter) => /paradoja/i.test(chapter.title))).toBe(true);
   });
 });
+
+describe('flowing ODT with letter-spaced labels and space-only spans', () => {
+  it('collapses "C A P Í T U L O" to a kicker and keeps the space nodes between styled spans', async () => {
+    const zip = new JSZip();
+    zip.file('mimetype', 'application/vnd.oasis.opendocument.text');
+    zip.file(
+      'content.xml',
+      `<?xml version="1.0" encoding="UTF-8"?><office:document-content ${NS}><office:automatic-styles><style:style style:name="T1" style:family="text"><style:text-properties fo:font-size="10pt"/></style:style><style:style style:name="T2" style:family="text"><style:text-properties fo:font-size="11.5pt" fo:color="#2c2c2c"/></style:style></office:automatic-styles><office:body><office:text>` +
+        `<text:p text:style-name="P1"><text:span text:style-name="T1">${spaced('CAPÍTULO  UNO')}</text:span></text:p>` +
+        `<text:p text:style-name="P2"><text:span text:style-name="T2">No es la del</text:span> <text:span text:style-name="T2">personaje fracasado</text:span></text:p>` +
+        `</office:text></office:body></office:document-content>`,
+    );
+    zip.file('styles.xml', `<?xml version="1.0" encoding="UTF-8"?><office:document-styles ${NS}/>`);
+    const model = await parseOdtSource(await zip.generateAsync({ type: 'uint8array' }));
+
+    expect(model.blocks[0]).toMatchObject({ type: 'paragraph', text: 'CAPÍTULO UNO', semanticRole: 'chapter-opener-kicker' });
+    expect(model.blocks[1].text).toBe('No es la del personaje fracasado');
+    expect(sourceModelToHtml(model)).toContain('class="editorial-kicker"');
+  });
+});
