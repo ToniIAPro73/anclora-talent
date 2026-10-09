@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import type { SemanticDocument } from '@/lib/document/model';
-import { buildTextReplacementSuggestion, parseStoredOperations } from './suggestions';
+import { buildTextReplacementSuggestion, isPatchStale, parseStoredOperations, summarizeOperations } from './suggestions';
 
 function documentFixture(): SemanticDocument {
   return {
@@ -99,5 +99,23 @@ describe('parseStoredOperations', () => {
     expect(parseStoredOperations([])).toBeNull();
     expect(parseStoredOperations([{ type: 'drop-table' }])).toBeNull();
     expect(parseStoredOperations(['update'])).toBeNull();
+  });
+});
+
+describe('summarizeOperations / isPatchStale', () => {
+  test('reads the before/after plain text of a stored patch', () => {
+    const built = buildTextReplacementSuggestion(documentFixture(), { blockId: 'p-1', replacementText: 'Texto corregido' });
+    if ('error' in built) throw new Error('unexpected');
+    expect(summarizeOperations(built.operations)).toEqual([
+      { blockId: 'p-1', kind: 'update', before: 'Texto con errata', after: 'Texto corregido' },
+    ]);
+  });
+
+  test('a patch is stale once its block no longer exists in the document', () => {
+    const document = documentFixture();
+    const built = buildTextReplacementSuggestion(document, { blockId: 'p-1', replacementText: 'Texto corregido' });
+    if ('error' in built) throw new Error('unexpected');
+    expect(isPatchStale(document, built.operations)).toBe(false);
+    expect(isPatchStale({ ...document, blocks: document.blocks.filter((block) => block.id !== 'p-1') }, built.operations)).toBe(true);
   });
 });

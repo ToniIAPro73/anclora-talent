@@ -210,7 +210,10 @@ describe('ProjectWorkspace', () => {
     // Appears twice: once in the stepper label, once in the portalled
     // topbar's step eyebrow (see AppShell's #talent-editor-topbar-slot).
     expect(screen.getAllByText('Colaborar').length).toBeGreaterThan(0);
-    expect(screen.getByText('de 8 pasos')).toBeInTheDocument();
+    // Step 6 is a full-width workspace: the top stepper is the only workflow navigation (no legacy rail).
+    expect(screen.queryByText('de 8 pasos')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('previous-step-button')).not.toBeInTheDocument();
+    expect(screen.getByTestId('collab-step-workspace')).toBeInTheDocument();
     expect(screen.getAllByText('6').length).toBeGreaterThan(0);
 
     const activeStepButton = container.querySelector('[aria-current="step"]');
