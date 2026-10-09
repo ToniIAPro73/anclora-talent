@@ -29,6 +29,8 @@ import type {
   SuggestionStatus,
 } from './model';
 import { parseInvitableRole } from './permissions';
+import type { SemanticDocument } from '@/lib/document/model';
+import { isPatchStale, parseStoredOperations, summarizeOperations } from './suggestions';
 
 export type CollaborationDb = Pick<
   ReturnType<typeof getDb>,
@@ -411,6 +413,8 @@ export async function findEditorSuggestion(
 export async function listEditorSuggestions(
   db: CollaborationDb,
   projectId: string,
+  /** When given, pending suggestions whose stored patch no longer applies are flagged `stale`. */
+  document?: SemanticDocument,
 ): Promise<EditorSuggestionView[]> {
   const rows = (await db
     .select({ suggestion: editorSuggestions, authorName: users.fullName })
@@ -450,6 +454,15 @@ export async function listEditorSuggestions(
       authorName: row.authorName,
       summary: row.suggestion.summary,
       affectedBlockIds,
+      changes: (() => {
+        const operations = parseStoredOperations(row.suggestion.operations);
+        return operations ? summarizeOperations(operations) : [];
+      })(),
+      stale: (() => {
+        if (status !== 'pending' || !document) return false;
+        const operations = parseStoredOperations(row.suggestion.operations);
+        return operations ? isPatchStale(document, operations) : true;
+      })(),
       status,
       decidedByName: row.suggestion.decidedBy ? (deciderNames.get(row.suggestion.decidedBy) ?? null) : null,
       decidedAt: row.suggestion.decidedAt?.toISOString() ?? null,

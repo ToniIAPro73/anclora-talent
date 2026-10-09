@@ -29,13 +29,28 @@ export interface BlockAnchor {
  * level-1 headings (the same chapter definition the composer and the F2
  * diff use). Content before the first chapter is front matter (index -1).
  */
-export function indexDocumentBlocks(document: SemanticDocument): Map<string, BlockAnchor> {
+export interface ChapterBoundary {
+  /** Id of the first block of the chapter. */
+  startBlockId: string;
+  title: string;
+}
+
+export function indexDocumentBlocks(
+  document: SemanticDocument,
+  /** Project chapters (step 2). When given they replace the level-1 heading slicing. */
+  boundaries?: ChapterBoundary[],
+): Map<string, BlockAnchor> {
   const index = new Map<string, BlockAnchor>();
+  const boundaryById = new Map((boundaries ?? []).map((boundary) => [boundary.startBlockId, boundary]));
   let chapterTitle = '';
   let chapterIndex = -1;
 
   for (const block of document.blocks) {
-    if (block.type === 'heading' && block.level === 1) {
+    const boundary = boundaryById.get(block.id);
+    if (boundary) {
+      chapterIndex += 1;
+      chapterTitle = boundary.title;
+    } else if (!boundaries?.length && block.type === 'heading' && block.level === 1) {
       chapterIndex += 1;
       chapterTitle = blockToPlainText(block);
     }
@@ -113,8 +128,9 @@ export interface ChapterCommentGroup {
 export function buildCommentGroups(
   comments: BlockCommentView[],
   document: SemanticDocument,
+  boundaries?: ChapterBoundary[],
 ): ChapterCommentGroup[] {
-  const anchors = indexDocumentBlocks(document);
+  const anchors = indexDocumentBlocks(document, boundaries);
   const threads = groupCommentsIntoThreads(comments);
 
   const chapters = new Map<number, ChapterCommentGroup>();

@@ -4,10 +4,9 @@
  * Accept-invitation card (F4, entregable 2).
  *
  * The acceptance itself is validated server-side (session email must match
- * the invited email; single-use, expiring token). On success the invitee
- * lands on the dashboard: the collaborator in-app editing surface is out of
- * this deliverable's scope — access and roles are already effective for the
- * collaboration actions.
+ * the invited email; single-use, expiring token). On success the invitee can
+ * open the project's collaboration workspace (role-scoped; the owner-only
+ * project editor stays closed to collaborators) or go to the dashboard.
  */
 
 import { useState, useTransition } from 'react';
@@ -24,6 +23,7 @@ export function AcceptInvitationCard({ token, copy }: { token: string; copy: Cop
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [acceptedRole, setAcceptedRole] = useState<CollaboratorRole | null>(null);
+  const [acceptedProjectId, setAcceptedProjectId] = useState<string | null>(null);
 
   const errorMessage = error && error in copy.errors
     ? copy.errors[error as keyof Copy['errors']]
@@ -38,6 +38,7 @@ export function AcceptInvitationCard({ token, copy }: { token: string; copy: Cop
         return;
       }
       setAcceptedRole(result.role);
+      setAcceptedProjectId(result.projectId);
     });
   };
 
@@ -53,11 +54,22 @@ export function AcceptInvitationCard({ token, copy }: { token: string; copy: Cop
           <p className="mt-3 text-xs text-[var(--text-tertiary)]">
             {copy.invite.roleLabel}: <strong>{copy.roleBadges[acceptedRole]}</strong>
           </p>
+          {acceptedProjectId ? (
+            <button
+              type="button"
+              data-testid="open-project-button"
+              onClick={() => router.push(`/projects/${acceptedProjectId}/collaborate`)}
+              className="ac-button ac-button--primary mt-6 w-full"
+            >
+              <Check className="h-4 w-4" />
+              {copy.wsOpenProject}
+            </button>
+          ) : null}
           <button
             type="button"
             data-testid="go-to-dashboard-button"
             onClick={() => router.push('/dashboard')}
-            className="ac-button ac-button--primary mt-6 w-full"
+            className={acceptedProjectId ? 'ac-button ac-button--ghost mt-2 w-full' : 'ac-button ac-button--primary mt-6 w-full'}
           >
             <Check className="h-4 w-4" />
             {copy.invite.goToDashboardButton}

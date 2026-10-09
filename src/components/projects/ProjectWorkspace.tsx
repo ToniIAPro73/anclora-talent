@@ -10,7 +10,7 @@ import { CoverStudioV2 } from './design-surface/CoverStudioV2';
 import { PreviewWorkspace } from './preview-workspace/PreviewWorkspace';
 import { FixedPdfPreview } from './FixedPdfPreview';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
-import { CollaborationPanel } from './CollaborationPanel';
+import { CollaborationWorkspace } from './collaboration-workspace/CollaborationWorkspace';
 import { AIAssistant } from './AIAssistant';
 import { ChapterEditorFullscreen } from './advanced-chapter-editor/ChapterEditorFullscreen';
 import { AddChapterDialog } from './AddChapterDialog';
@@ -482,7 +482,7 @@ export function ProjectWorkspace({
         );
       case 6: // Collaborate
         return collaboration ? (
-          <CollaborationPanel
+          <CollaborationWorkspace
             copy={collaboration.copy}
             projectId={project.id}
             view={collaboration.view}
@@ -731,6 +731,10 @@ export function ProjectWorkspace({
       ) : activeStep === 5 ? (
         // The top stepper is the only workflow navigation here: the preview workspace owns the full width.
         <div className="preview-workspace-stage w-full" data-testid="preview-step-workspace">
+          {renderStepContent()}
+        </div>
+      ) : activeStep === 6 ? (
+        <div className="collab-workspace-stage w-full" data-testid="collab-step-workspace">
           {renderStepContent()}
         </div>
       ) : (

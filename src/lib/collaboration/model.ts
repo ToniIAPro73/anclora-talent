@@ -52,6 +52,35 @@ export interface BlockCommentView {
 
 export type SuggestionStatus = 'pending' | 'accepted' | 'rejected';
 
+/** One block-level change of a suggestion, readable as before/after plain text. */
+export interface SuggestionChangeView {
+  blockId: string;
+  kind: 'update' | 'insert' | 'remove' | 'move';
+  before: string | null;
+  after: string | null;
+}
+
+export interface OwnerSummary {
+  id: string;
+  fullName: string;
+  email: string;
+}
+
+export interface OutlineBlockView {
+  blockId: string;
+  kind: string;
+  level?: number;
+  /** Plain text of the block (safety-capped). */
+  text: string;
+}
+
+export interface OutlineChapterView {
+  /** 0-based chapter index (-1 for content before the first chapter). */
+  index: number;
+  title: string;
+  blocks: OutlineBlockView[];
+}
+
 export interface EditorSuggestionView {
   id: string;
   authorId: string;
@@ -63,4 +92,13 @@ export interface EditorSuggestionView {
   decidedByName: string | null;
   decidedAt: string | null;
   createdAt: string;
+  /** Before/after of every block the stored patch touches. */
+  changes?: SuggestionChangeView[];
+  /** The author's role at read time (the owner is `author`). */
+  authorRole?: CollaboratorRole;
+  /** Pending only: the stored patch no longer applies to the current document. */
+  stale?: boolean;
+  /** Chapter of the first affected block (-1 front matter), when known. */
+  chapterIndex?: number;
+  chapterTitle?: string;
 }

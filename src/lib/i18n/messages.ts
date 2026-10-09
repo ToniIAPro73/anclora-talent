@@ -1245,6 +1245,74 @@ export type AppMessages = {
     decidedByLabel: string;
     acceptButton: string;
     rejectButton: string;
+    wsTeamTitle: string;
+    wsMembersOne: string;
+    wsOpenThreadsOne: string;
+    wsPendingSuggestionsOne: string;
+    wsMembers: string;
+    wsOpenThreads: string;
+    wsPendingSuggestions: string;
+    wsSummaryLabel: string;
+    wsInviteCta: string;
+    wsSoloTeam: string;
+    wsMemberMenu: string;
+    wsInviteDialogTitle: string;
+    wsInviteDialogClose: string;
+    wsInviteCancel: string;
+    wsRoleEditorHint: string;
+    wsRoleDesignerHint: string;
+    wsInviteEmailInvalid: string;
+    wsInviteCreated: string;
+    wsLinkCopied: string;
+    wsCopyLink: string;
+    wsAllChapters: string;
+    wsChapterFilter: string;
+    wsReaderLabel: string;
+    wsReaderHint: string;
+    wsReaderAllNote: string;
+    wsReaderEmpty: string;
+    wsCommentOnBlock: string;
+    wsBlockComments: string;
+    wsReviewTabs: string;
+    wsTabComments: string;
+    wsTabSuggestions: string;
+    wsFilterAll: string;
+    wsFilterOpen: string;
+    wsFilterResolved: string;
+    wsFilterPending: string;
+    wsFilterDecided: string;
+    wsNoOpenComments: string;
+    wsNoResolvedComments: string;
+    wsNoComments: string;
+    wsNoPendingSuggestions: string;
+    wsNoSuggestions: string;
+    wsReplyCount: string;
+    wsReply: string;
+    wsNewCommentPlaceholder: string;
+    wsSendComment: string;
+    wsViewInChapter: string;
+    wsResolved: string;
+    wsBlockThreadsHeading: string;
+    wsCloseBlock: string;
+    wsBefore: string;
+    wsAfter: string;
+    wsStaleNotice: string;
+    wsDecisionQueue: string;
+    wsSuggestionIn: string;
+    wsProposeCorrection: string;
+    wsProposeCancel: string;
+    wsNoChangeDetail: string;
+    wsYourRole: string;
+    wsCapabilityAuthor: string;
+    wsCapabilityEditor: string;
+    wsCapabilityDesigner: string;
+    wsFixedPdfNotice: string;
+    wsTeamToggle: string;
+    wsReviewToggle: string;
+    wsOpenProject: string;
+    wsCollabRouteTitle: string;
+    wsStatusOpen: string;
+    wsPendingStatus: string;
     invite: {
       title: string;
       description: string;
@@ -3015,6 +3083,74 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       decidedByLabel: 'Decidido por {name}',
       acceptButton: 'Aceptar',
       rejectButton: 'Rechazar',
+      wsTeamTitle: 'Equipo',
+      wsMembersOne: '1 miembro',
+      wsOpenThreadsOne: '1 hilo abierto',
+      wsPendingSuggestionsOne: '1 sugerencia pendiente',
+      wsMembers: '{count} miembros',
+      wsOpenThreads: '{count} hilos abiertos',
+      wsPendingSuggestions: '{count} sugerencias pendientes',
+      wsSummaryLabel: 'Resumen de colaboración',
+      wsInviteCta: 'Invitar colaborador',
+      wsSoloTeam: 'Trabajas solo en este proyecto.',
+      wsMemberMenu: 'Acciones de {name}',
+      wsInviteDialogTitle: 'Invitar colaborador',
+      wsInviteDialogClose: 'Cerrar',
+      wsInviteCancel: 'Cancelar',
+      wsRoleEditorHint: 'Puede comentar y proponer correcciones.',
+      wsRoleDesignerHint: 'Puede comentar y colaborar en decisiones de diseño.',
+      wsInviteEmailInvalid: 'Introduce un correo electrónico válido.',
+      wsInviteCreated: 'Invitación creada. Comparte el enlace con la persona invitada.',
+      wsLinkCopied: 'Enlace copiado',
+      wsCopyLink: 'Copiar enlace',
+      wsAllChapters: 'Todos los capítulos',
+      wsChapterFilter: 'Capítulo',
+      wsReaderLabel: 'Texto del capítulo',
+      wsReaderHint: 'Selecciona un párrafo para ver sus comentarios o abrir un hilo.',
+      wsReaderAllNote: 'Mostrando solo los párrafos con comentarios. Elige un capítulo para leerlo completo.',
+      wsReaderEmpty: 'Este capítulo no tiene texto comentable.',
+      wsCommentOnBlock: 'Comentar',
+      wsBlockComments: '{count} comentarios',
+      wsReviewTabs: 'Revisión',
+      wsTabComments: 'Comentarios',
+      wsTabSuggestions: 'Sugerencias',
+      wsFilterAll: 'Todos',
+      wsFilterOpen: 'Abiertos',
+      wsFilterResolved: 'Resueltos',
+      wsFilterPending: 'Pendientes',
+      wsFilterDecided: 'Decididas',
+      wsNoOpenComments: 'No hay comentarios abiertos.',
+      wsNoResolvedComments: 'No hay comentarios resueltos.',
+      wsNoComments: 'No hay comentarios.',
+      wsNoPendingSuggestions: 'No hay sugerencias pendientes.',
+      wsNoSuggestions: 'Aún no hay sugerencias.',
+      wsReplyCount: '{count} respuestas',
+      wsReply: 'Responder',
+      wsNewCommentPlaceholder: 'Escribe un comentario…',
+      wsSendComment: 'Enviar comentario',
+      wsViewInChapter: 'Ver en capítulo',
+      wsResolved: 'Resuelto',
+      wsBlockThreadsHeading: 'Hilos de este párrafo',
+      wsCloseBlock: 'Quitar selección',
+      wsBefore: 'Antes',
+      wsAfter: 'Después',
+      wsStaleNotice: 'El contenido ha cambiado desde que se creó esta sugerencia.',
+      wsDecisionQueue: 'Pendientes de tu decisión',
+      wsSuggestionIn: 'En {chapter}',
+      wsProposeCorrection: 'Proponer corrección',
+      wsProposeCancel: 'Cancelar',
+      wsNoChangeDetail: 'Sin detalle de cambios.',
+      wsYourRole: 'Tu rol',
+      wsCapabilityAuthor: 'Gestionas el equipo, resuelves hilos y decides las sugerencias.',
+      wsCapabilityEditor: 'Comentas y propones correcciones; el autor decide.',
+      wsCapabilityDesigner: 'Comentas y colaboras en las decisiones de diseño.',
+      wsFixedPdfNotice: 'Este documento es un PDF de diseño fijo: no tiene bloques de texto que comentar. El equipo y las invitaciones siguen disponibles.',
+      wsTeamToggle: 'Mostrar equipo',
+      wsReviewToggle: 'Mostrar revisión',
+      wsOpenProject: 'Abrir proyecto',
+      wsCollabRouteTitle: 'Colaboración',
+      wsStatusOpen: 'Abierto',
+      wsPendingStatus: 'Pendiente',
       invite: {
         title: 'Invitación de colaboración',
         description: 'Te han invitado a colaborar en un proyecto de Anclora Talent.',
@@ -4782,6 +4918,74 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       decidedByLabel: 'Decided by {name}',
       acceptButton: 'Accept',
       rejectButton: 'Reject',
+      wsTeamTitle: 'Team',
+      wsMembersOne: '1 member',
+      wsOpenThreadsOne: '1 open thread',
+      wsPendingSuggestionsOne: '1 pending suggestion',
+      wsMembers: '{count} members',
+      wsOpenThreads: '{count} open threads',
+      wsPendingSuggestions: '{count} pending suggestions',
+      wsSummaryLabel: 'Collaboration summary',
+      wsInviteCta: 'Invite collaborator',
+      wsSoloTeam: 'You are working alone on this project.',
+      wsMemberMenu: 'Actions for {name}',
+      wsInviteDialogTitle: 'Invite collaborator',
+      wsInviteDialogClose: 'Close',
+      wsInviteCancel: 'Cancel',
+      wsRoleEditorHint: 'Can comment and propose corrections.',
+      wsRoleDesignerHint: 'Can comment and collaborate on design decisions.',
+      wsInviteEmailInvalid: 'Enter a valid email address.',
+      wsInviteCreated: 'Invitation created. Share the link with the invitee.',
+      wsLinkCopied: 'Link copied',
+      wsCopyLink: 'Copy link',
+      wsAllChapters: 'All chapters',
+      wsChapterFilter: 'Chapter',
+      wsReaderLabel: 'Chapter text',
+      wsReaderHint: 'Select a paragraph to see its comments or open a thread.',
+      wsReaderAllNote: 'Showing only paragraphs with comments. Pick a chapter to read it in full.',
+      wsReaderEmpty: 'This chapter has no commentable text.',
+      wsCommentOnBlock: 'Comment',
+      wsBlockComments: '{count} comments',
+      wsReviewTabs: 'Review',
+      wsTabComments: 'Comments',
+      wsTabSuggestions: 'Suggestions',
+      wsFilterAll: 'All',
+      wsFilterOpen: 'Open',
+      wsFilterResolved: 'Resolved',
+      wsFilterPending: 'Pending',
+      wsFilterDecided: 'Decided',
+      wsNoOpenComments: 'There are no open comments.',
+      wsNoResolvedComments: 'There are no resolved comments.',
+      wsNoComments: 'There are no comments.',
+      wsNoPendingSuggestions: 'There are no pending suggestions.',
+      wsNoSuggestions: 'There are no suggestions yet.',
+      wsReplyCount: '{count} replies',
+      wsReply: 'Reply',
+      wsNewCommentPlaceholder: 'Write a comment…',
+      wsSendComment: 'Send comment',
+      wsViewInChapter: 'View in chapter',
+      wsResolved: 'Resolved',
+      wsBlockThreadsHeading: 'Threads on this paragraph',
+      wsCloseBlock: 'Clear selection',
+      wsBefore: 'Before',
+      wsAfter: 'After',
+      wsStaleNotice: 'The content has changed since this suggestion was created.',
+      wsDecisionQueue: 'Waiting for your decision',
+      wsSuggestionIn: 'In {chapter}',
+      wsProposeCorrection: 'Propose correction',
+      wsProposeCancel: 'Cancel',
+      wsNoChangeDetail: 'No change detail.',
+      wsYourRole: 'Your role',
+      wsCapabilityAuthor: 'You manage the team, resolve threads and decide on suggestions.',
+      wsCapabilityEditor: 'You comment and propose corrections; the author decides.',
+      wsCapabilityDesigner: 'You comment and collaborate on design decisions.',
+      wsFixedPdfNotice: 'This document is a fixed-layout PDF: it has no text blocks to comment on. Team and invitations remain available.',
+      wsTeamToggle: 'Show team',
+      wsReviewToggle: 'Show review',
+      wsOpenProject: 'Open project',
+      wsCollabRouteTitle: 'Collaboration',
+      wsStatusOpen: 'Open',
+      wsPendingStatus: 'Pending',
       invite: {
         title: 'Collaboration invitation',
         description: 'You have been invited to collaborate on an Anclora Talent project.',

@@ -17,6 +17,7 @@
 import { diffDocuments, blockToPlainText, type DocumentDiff } from '@/lib/document/diff';
 import type { DocumentBlock, SemanticDocument } from '@/lib/document/model';
 import { applyOperations, type BlockOperation } from '@/lib/ai/ast-diff-proposal';
+import type { SuggestionChangeView } from './model';
 
 export type SuggestionBuildError = 'blockNotFound' | 'unsupportedBlock' | 'unchanged';
 
@@ -85,4 +86,30 @@ export function parseStoredOperations(value: unknown): BlockOperation[] | null {
     if (typeof type !== 'string' || !OPERATION_TYPES.has(type)) return null;
   }
   return value as BlockOperation[];
+}
+
+/** Readable before/after of a stored patch (plain text per block), for the review UI. */
+export function summarizeOperations(operations: BlockOperation[]): SuggestionChangeView[] {
+  return operations.map((operation): SuggestionChangeView => {
+    switch (operation.type) {
+      case 'update':
+        return { blockId: operation.blockId, kind: 'update', before: blockToPlainText(operation.before), after: blockToPlainText(operation.after) };
+      case 'insert':
+        return { blockId: operation.block.id, kind: 'insert', before: null, after: blockToPlainText(operation.block) };
+      case 'remove':
+        return { blockId: operation.block.id, kind: 'remove', before: blockToPlainText(operation.block), after: null };
+      case 'move':
+        return { blockId: operation.blockId, kind: 'move', before: null, after: null };
+    }
+  });
+}
+
+/** True when the stored patch no longer applies to the document (it changed since the proposal). */
+export function isPatchStale(document: SemanticDocument, operations: BlockOperation[]): boolean {
+  try {
+    applyOperations(document.blocks, operations);
+    return false;
+  } catch {
+    return true;
+  }
 }
