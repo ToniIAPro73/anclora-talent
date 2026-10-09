@@ -11,7 +11,8 @@ import { hasChannelToken } from '@/lib/sales/credentials';
 import { getSnapshotHistoryViewForProject } from '@/lib/snapshots/view';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
 import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
-import { listCoAuthorChapters } from '@/lib/ai/co-author';
+import { listCoAuthorChapterStats } from '@/lib/ai/co-author';
+import { blockToPlainText } from '@/lib/document/diff';
 import { isAiCloudEnabled } from '@/lib/ai/provider';
 import { aiOperationsLog } from '@/lib/ai/operations-log';
 import { buildKdpDisclosure } from '@/lib/ai/kdp-disclosure';
@@ -60,15 +61,31 @@ export default async function ProjectEditorPage({
   // F3 Capa 2: co-author entry (step 1). Chapters come from the document AST
   // (level-1 slices); the panel hides itself without a cloud provider.
   const { document } = projectToSemanticDocument(project);
+  // Step 7 reads the AI operations log once: the same accepted-operations record feeds the KDP disclosure below
+  // and the "Historial IA" panel (audit, not conversation).
+  const aiOperations = await aiOperationsLog.list(userId, project.id);
   const coAuthor = {
-    chapters: listCoAuthorChapters(document),
+    chapters: listCoAuthorChapterStats(document),
     cloudAvailable: isAiCloudEnabled(),
+    totalWords: document.blocks.reduce((total, block) => {
+      const text = blockToPlainText(block).trim();
+      return total + (text ? text.split(/\s+/).length : 0);
+    }, 0),
+    totalBlocks: document.blocks.length,
+    history: [...aiOperations].reverse().map((operation) => ({
+      id: operation.id,
+      kind: operation.kind,
+      summary: operation.summary,
+      mode: operation.mode,
+      affectedBlocks: operation.affectedBlockIds.length,
+      createdAt: operation.createdAt,
+    })),
   };
   // F3 Capa 2 (governance): KDP AI-content disclosure shown in the export
   // step, derived from the provenance registry + accepted-operations log.
   const kdpDisclosure = buildKdpDisclosure({
     provenance: project.document.provenance,
-    operations: await aiOperationsLog.list(userId, project.id),
+    operations: aiOperations,
     locale,
     isFixedPdfSource: isFixedPdfProject(project),
   });

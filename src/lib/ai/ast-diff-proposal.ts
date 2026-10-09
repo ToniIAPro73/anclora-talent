@@ -93,6 +93,29 @@ function indexOfBlock(blocks: DocumentBlock[], blockId: string): number {
   return blocks.findIndex((block) => block.id === blockId);
 }
 
+/** Order-independent, JSON-normalised form of a block (what survives the client round-trip of a proposal). */
+function canonicalBlock(block: unknown): string {
+  const normalise = (value: unknown): unknown => {
+    if (Array.isArray(value)) return value.map(normalise);
+    if (value && typeof value === 'object') {
+      return Object.fromEntries(
+        Object.entries(value as Record<string, unknown>)
+          .filter(([, entry]) => entry !== undefined)
+          .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+          .map(([key, entry]) => [key, normalise(entry)]),
+      );
+    }
+    return value;
+  };
+  return JSON.stringify(normalise(block));
+}
+
+function requireUnchanged(current: DocumentBlock, expected: DocumentBlock): void {
+  if (canonicalBlock(current) !== canonicalBlock(expected)) {
+    throw new StaleProposalError(`Block ${current.id} changed since the proposal was generated`);
+  }
+}
+
 function requireIndex(blocks: DocumentBlock[], blockId: string): number {
   const index = indexOfBlock(blocks, blockId);
   if (index < 0) {
@@ -131,6 +154,8 @@ export function applyOperations(
     switch (operation.type) {
       case 'update': {
         const index = requireIndex(current, operation.blockId);
+        // The block must still be exactly what the proposal was generated from: an edit made meanwhile is never overwritten.
+        requireUnchanged(current[index], operation.before);
         if (indexOfBlock(current, operation.after.id) >= 0 && operation.after.id !== operation.blockId) {
           throw new StaleProposalError(`Block id ${operation.after.id} would collide`);
         }
@@ -138,7 +163,7 @@ export function applyOperations(
         break;
       }
       case 'remove': {
-        requireIndex(current, operation.block.id);
+        requireUnchanged(current[requireIndex(current, operation.block.id)], operation.block);
         current = current.filter((block) => block.id !== operation.block.id);
         break;
       }

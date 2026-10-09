@@ -11,7 +11,7 @@ import { PreviewWorkspace } from './preview-workspace/PreviewWorkspace';
 import { FixedPdfPreview } from './FixedPdfPreview';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { CollaborationWorkspace } from './collaboration-workspace/CollaborationWorkspace';
-import { AIAssistant } from './AIAssistant';
+import { AiWorkspace } from './ai-workspace/AiWorkspace';
 import { ChapterEditorFullscreen } from './advanced-chapter-editor/ChapterEditorFullscreen';
 import { AddChapterDialog } from './AddChapterDialog';
 import { ImportChapterDialog } from './ImportChapterDialog';
@@ -49,7 +49,8 @@ import { LaunchPackPanel } from './LaunchPackPanel';
 import { PublishChannelsPanel } from './PublishChannelsPanel';
 import { KdpDisclosurePanel } from './KdpDisclosurePanel';
 import { buildExportQueryString } from '@/lib/projects/export-config';
-import type { CoAuthorChapter } from '@/lib/ai/co-author';
+import type { CoAuthorChapterStats } from '@/lib/ai/co-author';
+import type { AiHistoryEntry } from './ai-workspace/SidePanels';
 import type { KdpDisclosure } from '@/lib/ai/kdp-disclosure';
 import type { CollaborationView } from '@/lib/collaboration/view';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
@@ -133,8 +134,11 @@ export function ProjectWorkspace({
   };
   /** F3 Capa 2: co-author section (AST chapters + provider flag); rendered in step 1. */
   coAuthor?: {
-    chapters: CoAuthorChapter[];
+    chapters: CoAuthorChapterStats[];
     cloudAvailable: boolean;
+    totalWords: number;
+    totalBlocks: number;
+    history: AiHistoryEntry[];
   };
   /** F3 Capa 2: KDP AI-content disclosure; rendered in the export step (9). */
   kdpDisclosure?: KdpDisclosure;
@@ -399,7 +403,6 @@ export function ProjectWorkspace({
             }
             locale={locale}
             history={history}
-            coAuthor={coAuthor}
             styleMap={compiledDocument.styleMap}
             onNavigateStep={setActiveStep}
           />
@@ -490,7 +493,27 @@ export function ProjectWorkspace({
           />
         ) : null;
       case 7: // AI
-        return <AIAssistant />;
+        return (
+          <AiWorkspace
+            projectId={project.id}
+            projectTitle={project.title}
+            language={project.document.language}
+            copy={copy}
+            locale={locale}
+            chapters={coAuthor?.chapters ?? []}
+            totalWords={coAuthor?.totalWords ?? 0}
+            totalBlocks={coAuthor?.totalBlocks ?? 0}
+            cloudAvailable={coAuthor?.cloudAvailable ?? false}
+            editable={!fixedPdf}
+            history={coAuthor?.history ?? []}
+            voice={{
+              active: project.brandProfile?.status === 'active' && (project.brandProfile.voicePairs?.length ?? 0) > 0,
+              name: project.brandProfile?.name,
+            }}
+            violations={documentViolations}
+            checks={preflightChecks}
+          />
+        );
       case 8: // Export
         return (
           <section className="ac-surface-panel ac-export-suite">
@@ -735,6 +758,10 @@ export function ProjectWorkspace({
         </div>
       ) : activeStep === 6 ? (
         <div className="collab-workspace-stage w-full" data-testid="collab-step-workspace">
+          {renderStepContent()}
+        </div>
+      ) : activeStep === 7 ? (
+        <div className="ai-workspace-stage w-full" data-testid="ai-step-workspace">
           {renderStepContent()}
         </div>
       ) : (

@@ -10,7 +10,6 @@ import { BrandWorkspace } from './brand/BrandWorkspace';
 import { PreflightWorkspace } from './preflight/PreflightWorkspace';
 import { DocumentHealthPanel } from '../DocumentHealthPanel';
 import { VersionsWorkspace } from './versions/VersionsWorkspace';
-import { CoAuthorPanel } from '../CoAuthorPanel';
 import { saveDocumentSnapshotAction } from '@/lib/snapshots/actions';
 import { resolveDocumentRules } from '@/lib/compose/rules';
 import type { AppMessages } from '@/lib/i18n/messages';
@@ -20,7 +19,6 @@ import type { ComposeViolation, CompositionDiff } from '@/lib/compose/compose';
 import type { PreflightCheck } from '@/lib/preflight/preflight';
 import type { DocumentSnapshotMeta } from '@/lib/snapshots/model';
 import type { RecompositionTelemetry } from '../useDocumentComposition';
-import type { CoAuthorChapter } from '@/lib/ai/co-author';
 import type { DocumentStyleMap } from '@/lib/style-engine/model';
 
 type Copy = AppMessages['project'];
@@ -38,7 +36,6 @@ export function ContentWorkspace({
   revert,
   locale,
   history,
-  coAuthor,
   styleMap,
   onNavigateStep,
 }: {
@@ -54,7 +51,6 @@ export function ContentWorkspace({
   revert: { chapterTitle: string; pending: boolean; onRevert: () => void } | null;
   locale: 'es' | 'en';
   history?: { copy: AppMessages['history']; snapshots: DocumentSnapshotMeta[] };
-  coAuthor?: { chapters: CoAuthorChapter[]; cloudAvailable: boolean };
   styleMap?: DocumentStyleMap | null;
   onNavigateStep: (step: number) => void;
 }) {
@@ -156,15 +152,6 @@ export function ContentWorkspace({
               locale={locale}
               revert={revert}
             />
-            {coAuthor && (
-              <CoAuthorPanel
-                projectId={project.id}
-                chapters={coAuthor.chapters}
-                cloudAvailable={coAuthor.cloudAvailable}
-                copy={copy}
-                locale={locale}
-              />
-            )}
           </div>
         )}
 

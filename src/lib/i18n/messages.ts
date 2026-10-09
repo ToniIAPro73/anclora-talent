@@ -654,6 +654,113 @@ export type AppMessages = {
     aiCoAuthorArchitectureAction: string;
     aiCoAuthorSummaryAction: string;
     aiCoAuthorNoProposal: string;
+    aiWsTitle: string;
+    aiWsTagline: string;
+    aiWsActionsTitle: string;
+    aiWsGroupWriting: string;
+    aiWsGroupDocument: string;
+    aiWsGroupFixes: string;
+    aiWsToolStyle: string;
+    aiWsToolStyleDesc: string;
+    aiWsToolArchitecture: string;
+    aiWsToolArchitectureDesc: string;
+    aiWsToolSummary: string;
+    aiWsToolSummaryDesc: string;
+    aiWsToolCoherence: string;
+    aiWsToolCoherenceDesc: string;
+    aiWsToolFixes: string;
+    aiWsToolFixesDesc: string;
+    aiWsNeedsProvider: string;
+    aiWsNeedsEditable: string;
+    aiWsManuscript: string;
+    aiWsTargetsTitle: string;
+    aiWsWholeDocument: string;
+    aiWsApplyTo: string;
+    aiWsChaptersOne: string;
+    aiWsChaptersMany: string;
+    aiWsWordsMany: string;
+    aiWsWordsOne: string;
+    aiWsIdleTitle: string;
+    aiWsIdleBody: string;
+    aiWsRun: string;
+    aiWsRunning: string;
+    aiWsRunningCloud: string;
+    aiWsRunningLocal: string;
+    aiWsRunningTarget: string;
+    aiWsProposalTitle: string;
+    aiWsChangesTitle: string;
+    aiWsAffected: string;
+    aiWsTargetLabel: string;
+    aiWsModeLabel: string;
+    aiWsCloudMode: string;
+    aiWsLocalMode: string;
+    aiWsChangedOne: string;
+    aiWsChangedMany: string;
+    aiWsAddedOne: string;
+    aiWsAddedMany: string;
+    aiWsRemovedOne: string;
+    aiWsRemovedMany: string;
+    aiWsMovedOne: string;
+    aiWsMovedMany: string;
+    aiWsHeadingsOne: string;
+    aiWsHeadingsMany: string;
+    aiWsNoChanges: string;
+    aiWsFrontMatter: string;
+    aiWsKindChanged: string;
+    aiWsKindAdded: string;
+    aiWsKindRemoved: string;
+    aiWsKindMoved: string;
+    aiWsAccept: string;
+    aiWsReject: string;
+    aiWsApplying: string;
+    aiWsApplied: string;
+    aiWsRejected: string;
+    aiWsStaleTitle: string;
+    aiWsStaleBody: string;
+    aiWsRegenerate: string;
+    aiWsDiscard: string;
+    aiWsErrorTitle: string;
+    aiWsRetry: string;
+    aiWsEmpty: string;
+    aiWsUnavailableTitle: string;
+    aiWsUnavailableBody: string;
+    aiWsFixedPdfTitle: string;
+    aiWsFixedPdfBody: string;
+    aiWsContextTitle: string;
+    aiWsContextProject: string;
+    aiWsContextTarget: string;
+    aiWsContextSize: string;
+    aiWsContextBlocks: string;
+    aiWsContextChapters: string;
+    aiWsContextLanguage: string;
+    aiWsContextVoice: string;
+    aiWsVoiceApplied: string;
+    aiWsVoiceNone: string;
+    aiWsContextProcessing: string;
+    aiWsProcessingCloud: string;
+    aiWsProcessingNone: string;
+    aiWsHistoryTitle: string;
+    aiWsHistoryEmpty: string;
+    aiWsHistoryApplied: string;
+    aiWsHistoryBlocksOne: string;
+    aiWsHistoryBlocksMany: string;
+    aiWsHistoryNote: string;
+    aiWsIssuesTitle: string;
+    aiWsIssuesNone: string;
+    aiWsIssueWarning: string;
+    aiWsIssueIn: string;
+    aiWsIssueProposalsTitle: string;
+    aiWsFixesTitle: string;
+    aiWsFixesEmpty: string;
+    aiWsProposeFix: string;
+    aiWsNoFixProposal: string;
+    aiWsTargetsToggle: string;
+    aiWsContextToggle: string;
+    aiWsLiveReady: string;
+    aiWsLiveLoading: string;
+    aiWsGroupToggle: string;
+    aiWsCapabilitiesTitle: string;
+    aiWsAuditNote: string;
     kdpDisclosureTitle: string;
     kdpDisclosureRequiredBadge: string;
     kdpDisclosureExemptBadge: string;
@@ -2485,6 +2592,113 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       aiCoAuthorArchitectureAction: 'Arquitectura de contenido',
       aiCoAuthorSummaryAction: 'Resumen derivado',
       aiCoAuthorNoProposal: 'Sin propuesta: la IA no devolvió cambios válidos para esta acción.',
+      aiWsTitle: 'Asistente IA',
+      aiWsTagline: 'La IA propone. Tú decides qué se aplica.',
+      aiWsActionsTitle: 'Acciones editoriales',
+      aiWsGroupWriting: 'Escritura',
+      aiWsGroupDocument: 'Documento',
+      aiWsGroupFixes: 'Correcciones',
+      aiWsToolStyle: 'Mejorar estilo',
+      aiWsToolStyleDesc: 'Mejora claridad y fluidez manteniendo las ideas originales.',
+      aiWsToolArchitecture: 'Reorganizar capítulo',
+      aiWsToolArchitectureDesc: 'Propone una estructura más clara mediante movimientos y subtítulos.',
+      aiWsToolSummary: 'Crear resumen',
+      aiWsToolSummaryDesc: 'Crea un capítulo de resumen derivado del contenido del manuscrito.',
+      aiWsToolCoherence: 'Revisar coherencia',
+      aiWsToolCoherenceDesc: 'Detecta referencias rotas, encabezados duplicados y capítulos sin título.',
+      aiWsToolFixes: 'Resolver problemas detectados',
+      aiWsToolFixesDesc: 'Propone correcciones para los avisos de composición del documento.',
+      aiWsNeedsProvider: 'Requiere proveedor de IA',
+      aiWsNeedsEditable: 'Esta operación requiere un documento editable.',
+      aiWsManuscript: 'Manuscrito',
+      aiWsTargetsTitle: 'Destino',
+      aiWsWholeDocument: 'Documento completo',
+      aiWsApplyTo: 'Aplicar a',
+      aiWsChaptersOne: '1 capítulo',
+      aiWsChaptersMany: '{count} capítulos',
+      aiWsWordsMany: '{count} palabras',
+      aiWsWordsOne: '1 palabra',
+      aiWsIdleTitle: 'Selecciona una tarea para generar una propuesta.',
+      aiWsIdleBody: 'Cada tarea produce una propuesta que revisas antes de que se aplique nada al documento.',
+      aiWsRun: 'Generar propuesta',
+      aiWsRunning: 'Generando propuesta…',
+      aiWsRunningCloud: 'Procesamiento en la nube. Puede tardar unos segundos.',
+      aiWsRunningLocal: 'Análisis local del documento.',
+      aiWsRunningTarget: 'Trabajando sobre {target}',
+      aiWsProposalTitle: 'Propuesta',
+      aiWsChangesTitle: 'Cambios propuestos',
+      aiWsAffected: 'Bloques afectados',
+      aiWsTargetLabel: 'Destino',
+      aiWsModeLabel: 'Procesamiento',
+      aiWsCloudMode: 'Procesamiento en la nube',
+      aiWsLocalMode: 'Análisis local, sin nube',
+      aiWsChangedOne: '1 bloque modificado',
+      aiWsChangedMany: '{count} bloques modificados',
+      aiWsAddedOne: '1 bloque añadido',
+      aiWsAddedMany: '{count} bloques añadidos',
+      aiWsRemovedOne: '1 bloque eliminado',
+      aiWsRemovedMany: '{count} bloques eliminados',
+      aiWsMovedOne: '1 bloque movido',
+      aiWsMovedMany: '{count} bloques movidos',
+      aiWsHeadingsOne: '1 subtítulo añadido',
+      aiWsHeadingsMany: '{count} subtítulos añadidos',
+      aiWsNoChanges: 'Esta propuesta no modifica el documento.',
+      aiWsFrontMatter: 'Antes del primer capítulo',
+      aiWsKindChanged: 'Modificado',
+      aiWsKindAdded: 'Añadido',
+      aiWsKindRemoved: 'Eliminado',
+      aiWsKindMoved: 'Movido',
+      aiWsAccept: 'Aceptar cambios',
+      aiWsReject: 'Rechazar',
+      aiWsApplying: 'Aplicando…',
+      aiWsApplied: 'Cambios aplicados al documento.',
+      aiWsRejected: 'Propuesta rechazada. El documento no ha cambiado.',
+      aiWsStaleTitle: 'El documento ha cambiado desde que se generó esta propuesta.',
+      aiWsStaleBody: 'Esta propuesta ya no se puede aplicar. Genera una nueva o descártala.',
+      aiWsRegenerate: 'Regenerar propuesta',
+      aiWsDiscard: 'Descartar',
+      aiWsErrorTitle: 'No se pudo generar la propuesta.',
+      aiWsRetry: 'Reintentar',
+      aiWsEmpty: 'La IA no propone cambios para esta selección.',
+      aiWsUnavailableTitle: 'Asistente IA no disponible',
+      aiWsUnavailableBody: 'Las tareas de escritura requieren un proveedor de IA configurado en el servidor. Revisar coherencia sigue disponible.',
+      aiWsFixedPdfTitle: 'Documento de diseño fijo',
+      aiWsFixedPdfBody: 'Este proyecto usa el PDF original sin edición: la IA no puede proponer cambios sobre él.',
+      aiWsContextTitle: 'Contexto activo',
+      aiWsContextProject: 'Proyecto',
+      aiWsContextTarget: 'Destino',
+      aiWsContextSize: 'Tamaño',
+      aiWsContextBlocks: '{count} bloques',
+      aiWsContextChapters: 'Capítulos',
+      aiWsContextLanguage: 'Idioma',
+      aiWsContextVoice: 'Voz editorial',
+      aiWsVoiceApplied: 'Voz editorial aplicada',
+      aiWsVoiceNone: 'Sin perfil de marca activo',
+      aiWsContextProcessing: 'Procesamiento',
+      aiWsProcessingCloud: 'En la nube',
+      aiWsProcessingNone: 'Sin proveedor de IA',
+      aiWsHistoryTitle: 'Historial IA',
+      aiWsHistoryEmpty: 'Aún no se ha aplicado ninguna operación de IA.',
+      aiWsHistoryApplied: 'Aplicada',
+      aiWsHistoryBlocksOne: '1 bloque',
+      aiWsHistoryBlocksMany: '{count} bloques',
+      aiWsHistoryNote: 'Solo constan las operaciones aceptadas.',
+      aiWsIssuesTitle: 'Problemas de coherencia',
+      aiWsIssuesNone: 'Sin problemas de coherencia: referencias vivas y encabezados correctos.',
+      aiWsIssueWarning: 'Aviso',
+      aiWsIssueIn: 'En «{where}»',
+      aiWsIssueProposalsTitle: 'Propuestas de corrección',
+      aiWsFixesTitle: 'Problemas del documento',
+      aiWsFixesEmpty: 'No hay avisos de composición que la IA pueda corregir.',
+      aiWsProposeFix: 'Proponer corrección',
+      aiWsNoFixProposal: 'Sin propuestas automáticas para este aviso.',
+      aiWsTargetsToggle: 'Capítulos',
+      aiWsContextToggle: 'Acciones y contexto',
+      aiWsLiveReady: 'Propuesta lista para revisar.',
+      aiWsLiveLoading: 'Generando propuesta.',
+      aiWsGroupToggle: 'Mostrar u ocultar {title}',
+      aiWsCapabilitiesTitle: 'Qué puede hacer la IA aquí',
+      aiWsAuditNote: 'Cada propuesta aceptada queda registrada para la declaración de uso de IA.',
       kdpDisclosureTitle: 'Declaración de contenido IA (KDP)',
       kdpDisclosureRequiredBadge: 'Requerida: contenido AI-assisted',
       kdpDisclosureExemptBadge: 'Exenta: contenido 100% humano',
@@ -4321,6 +4535,113 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       aiCoAuthorArchitectureAction: 'Content architecture',
       aiCoAuthorSummaryAction: 'Derived summary',
       aiCoAuthorNoProposal: 'No proposal: AI returned no valid changes for this action.',
+      aiWsTitle: 'AI assistant',
+      aiWsTagline: 'AI proposes. You decide what gets applied.',
+      aiWsActionsTitle: 'Editorial actions',
+      aiWsGroupWriting: 'Writing',
+      aiWsGroupDocument: 'Document',
+      aiWsGroupFixes: 'Corrections',
+      aiWsToolStyle: 'Improve style',
+      aiWsToolStyleDesc: 'Improves clarity and flow while keeping the original ideas.',
+      aiWsToolArchitecture: 'Reorganize chapter',
+      aiWsToolArchitectureDesc: 'Proposes a clearer structure through moves and subheadings.',
+      aiWsToolSummary: 'Create summary',
+      aiWsToolSummaryDesc: 'Creates a summary chapter derived from the manuscript content.',
+      aiWsToolCoherence: 'Review coherence',
+      aiWsToolCoherenceDesc: 'Detects broken references, duplicate headings and chapters without a title.',
+      aiWsToolFixes: 'Resolve detected problems',
+      aiWsToolFixesDesc: 'Proposes fixes for the document composition warnings.',
+      aiWsNeedsProvider: 'Requires an AI provider',
+      aiWsNeedsEditable: 'This operation requires an editable document.',
+      aiWsManuscript: 'Manuscript',
+      aiWsTargetsTitle: 'Target',
+      aiWsWholeDocument: 'Whole document',
+      aiWsApplyTo: 'Apply to',
+      aiWsChaptersOne: '1 chapter',
+      aiWsChaptersMany: '{count} chapters',
+      aiWsWordsMany: '{count} words',
+      aiWsWordsOne: '1 word',
+      aiWsIdleTitle: 'Select a task to generate a proposal.',
+      aiWsIdleBody: 'Every task produces a proposal you review before anything is applied to the document.',
+      aiWsRun: 'Generate proposal',
+      aiWsRunning: 'Generating proposal…',
+      aiWsRunningCloud: 'Cloud processing. This may take a few seconds.',
+      aiWsRunningLocal: 'Local document analysis.',
+      aiWsRunningTarget: 'Working on {target}',
+      aiWsProposalTitle: 'Proposal',
+      aiWsChangesTitle: 'Proposed changes',
+      aiWsAffected: 'Affected blocks',
+      aiWsTargetLabel: 'Target',
+      aiWsModeLabel: 'Processing',
+      aiWsCloudMode: 'Cloud processing',
+      aiWsLocalMode: 'Local analysis, no cloud',
+      aiWsChangedOne: '1 block modified',
+      aiWsChangedMany: '{count} blocks modified',
+      aiWsAddedOne: '1 block added',
+      aiWsAddedMany: '{count} blocks added',
+      aiWsRemovedOne: '1 block removed',
+      aiWsRemovedMany: '{count} blocks removed',
+      aiWsMovedOne: '1 block moved',
+      aiWsMovedMany: '{count} blocks moved',
+      aiWsHeadingsOne: '1 subheading added',
+      aiWsHeadingsMany: '{count} subheadings added',
+      aiWsNoChanges: 'This proposal does not change the document.',
+      aiWsFrontMatter: 'Before the first chapter',
+      aiWsKindChanged: 'Modified',
+      aiWsKindAdded: 'Added',
+      aiWsKindRemoved: 'Removed',
+      aiWsKindMoved: 'Moved',
+      aiWsAccept: 'Accept changes',
+      aiWsReject: 'Reject',
+      aiWsApplying: 'Applying…',
+      aiWsApplied: 'Changes applied to the document.',
+      aiWsRejected: 'Proposal rejected. The document has not changed.',
+      aiWsStaleTitle: 'The document has changed since this proposal was generated.',
+      aiWsStaleBody: 'This proposal can no longer be applied. Generate a new one or discard it.',
+      aiWsRegenerate: 'Regenerate proposal',
+      aiWsDiscard: 'Discard',
+      aiWsErrorTitle: 'The proposal could not be generated.',
+      aiWsRetry: 'Retry',
+      aiWsEmpty: 'The AI proposes no changes for this selection.',
+      aiWsUnavailableTitle: 'AI assistant not available',
+      aiWsUnavailableBody: 'Writing tasks require an AI provider configured on the server. Coherence review remains available.',
+      aiWsFixedPdfTitle: 'Fixed-layout document',
+      aiWsFixedPdfBody: 'This project uses the original PDF without editing: the AI cannot propose changes on it.',
+      aiWsContextTitle: 'Active context',
+      aiWsContextProject: 'Project',
+      aiWsContextTarget: 'Target',
+      aiWsContextSize: 'Size',
+      aiWsContextBlocks: '{count} blocks',
+      aiWsContextChapters: 'Chapters',
+      aiWsContextLanguage: 'Language',
+      aiWsContextVoice: 'Editorial voice',
+      aiWsVoiceApplied: 'Editorial voice applied',
+      aiWsVoiceNone: 'No active brand profile',
+      aiWsContextProcessing: 'Processing',
+      aiWsProcessingCloud: 'In the cloud',
+      aiWsProcessingNone: 'No AI provider',
+      aiWsHistoryTitle: 'AI history',
+      aiWsHistoryEmpty: 'No AI operation has been applied yet.',
+      aiWsHistoryApplied: 'Applied',
+      aiWsHistoryBlocksOne: '1 block',
+      aiWsHistoryBlocksMany: '{count} blocks',
+      aiWsHistoryNote: 'Only accepted operations are recorded.',
+      aiWsIssuesTitle: 'Coherence issues',
+      aiWsIssuesNone: 'No coherence issues: live references and headings are correct.',
+      aiWsIssueWarning: 'Warning',
+      aiWsIssueIn: 'In “{where}”',
+      aiWsIssueProposalsTitle: 'Proposed fixes',
+      aiWsFixesTitle: 'Document problems',
+      aiWsFixesEmpty: 'There are no composition warnings the AI can fix.',
+      aiWsProposeFix: 'Propose fix',
+      aiWsNoFixProposal: 'No automatic proposals for this warning.',
+      aiWsTargetsToggle: 'Chapters',
+      aiWsContextToggle: 'Actions and context',
+      aiWsLiveReady: 'Proposal ready for review.',
+      aiWsLiveLoading: 'Generating proposal.',
+      aiWsGroupToggle: 'Show or hide {title}',
+      aiWsCapabilitiesTitle: 'What the AI can do here',
+      aiWsAuditNote: 'Every accepted proposal is recorded for the AI-use disclosure.',
       kdpDisclosureTitle: 'AI content disclosure (KDP)',
       kdpDisclosureRequiredBadge: 'Required: AI-assisted content',
       kdpDisclosureExemptBadge: 'Exempt: 100% human content',

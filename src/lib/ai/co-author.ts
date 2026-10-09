@@ -34,6 +34,7 @@
 
 import { z } from 'zod';
 import { splitChapters, type ChapterSlice } from '@/lib/compose/compose';
+import { blockToPlainText } from '@/lib/document/diff';
 import {
   inlineToPlainText,
   type DocumentBlock,
@@ -126,6 +127,28 @@ export function listCoAuthorChapters(document: SemanticDocument): CoAuthorChapte
       const first = slice.blocks[0];
       const title = chapterHeadingText(slice) || blockPreview(first, 40);
       return { key: first.id, title: title || first.id };
+    });
+}
+
+export interface CoAuthorChapterStats extends CoAuthorChapter {
+  words: number;
+  blocks: number;
+}
+
+function countWords(text: string): number {
+  const trimmed = text.trim();
+  return trimmed ? trimmed.split(/\s+/).length : 0;
+}
+
+/** Same chapter targets as `listCoAuthorChapters`, with real word/block counts for the workspace context. */
+export function listCoAuthorChapterStats(document: SemanticDocument): CoAuthorChapterStats[] {
+  return splitChapters(document.blocks, 1)
+    .filter((slice) => slice.blocks.length > 0)
+    .map((slice) => {
+      const first = slice.blocks[0];
+      const title = chapterHeadingText(slice) || blockPreview(first, 40);
+      const words = slice.blocks.reduce((total, block) => total + countWords(blockToPlainText(block)), 0);
+      return { key: first.id, title: title || first.id, words, blocks: slice.blocks.length };
     });
 }
 
