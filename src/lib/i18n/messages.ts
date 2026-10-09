@@ -761,6 +761,118 @@ export type AppMessages = {
     aiWsGroupToggle: string;
     aiWsCapabilitiesTitle: string;
     aiWsAuditNote: string;
+    exWsTitle: string;
+    exWsFormatsTitle: string;
+    exWsFormatsHint: string;
+    exWsPdfDesc: string;
+    exWsPdfOriginalDesc: string;
+    exWsEpubDesc: string;
+    exWsDocxDesc: string;
+    exWsHtmlDesc: string;
+    exWsMarkdownDesc: string;
+    exWsKindFixed: string;
+    exWsKindReflow: string;
+    exWsKindEditable: string;
+    exWsKindWeb: string;
+    exWsKindText: string;
+    exWsUnavailable: string;
+    exWsUnavailableFixedPdf: string;
+    exWsConfigTitle: string;
+    exWsConfigHint: string;
+    exWsPageSize: string;
+    exWsPageSizeHint: string;
+    exWsMargins: string;
+    exWsMarginsValue: string;
+    exWsTypography: string;
+    exWsTypographyValue: string;
+    exWsCoverRow: string;
+    exWsBackCoverRow: string;
+    exWsIncluded: string;
+    exWsNumbering: string;
+    exWsNumberingOn: string;
+    exWsNumberingOff: string;
+    exWsPdfSourceNote: string;
+    exWsPdfOriginalNote: string;
+    exWsEditComposition: string;
+    exWsEpubNote: string;
+    exWsEpubCoverNote: string;
+    exWsEpubNav: string;
+    exWsEpubNavValue: string;
+    exWsDocxNote: string;
+    exWsDocxStructure: string;
+    exWsHtmlNote: string;
+    exWsMarkdownNote: string;
+    exWsMetadata: string;
+    exWsTitleLabel: string;
+    exWsAuthorLabel: string;
+    exWsLanguageLabel: string;
+    exWsIsbnLabel: string;
+    exWsNotSet: string;
+    exWsEditMetadata: string;
+    exWsFileName: string;
+    exWsCheckTitle: string;
+    exWsCheckHint: string;
+    exWsCheckContent: string;
+    exWsCheckContentDetail: string;
+    exWsCheckCover: string;
+    exWsCheckBackCover: string;
+    exWsCheckCoverOk: string;
+    exWsCheckCoverEmpty: string;
+    exWsCheckMetadata: string;
+    exWsCheckFonts: string;
+    exWsCheckImages: string;
+    exWsCheckComposition: string;
+    exWsCheckAi: string;
+    exWsCheckOk: string;
+    exWsCheckIssues: string;
+    exWsCheckPartial: string;
+    exWsAiRequired: string;
+    exWsAiNotRequired: string;
+    exWsAiUnconfirmed: string;
+    exWsReview: string;
+    exWsBlocksFormat: string;
+    exWsFormatIssues: string;
+    exWsReady: string;
+    exWsReadyBody: string;
+    exWsReadyWarnings: string;
+    exWsAttention: string;
+    exWsAttentionBody: string;
+    exWsErrorsCount: string;
+    exWsErrorsOne: string;
+    exWsWarningsCount: string;
+    exWsWarningsOne: string;
+    exWsExport: string;
+    exWsExporting: string;
+    exWsResultTitle: string;
+    exWsResultVerified: string;
+    exWsResultFailed: string;
+    exWsDownload: string;
+    exWsRecentTitle: string;
+    exWsRecentEmpty: string;
+    exWsErrorTitle: string;
+    exWsErrorHttp: string;
+    exWsErrorNetwork: string;
+    exWsLiveBusy: string;
+    exWsLiveDone: string;
+    exWsLiveFail: string;
+    exWsLaunchTitle: string;
+    exWsLaunchShow: string;
+    exWsVNonEmpty: string;
+    exWsVContentType: string;
+    exWsVPdfHeader: string;
+    exWsVPdfTrailer: string;
+    exWsVPdfPages: string;
+    exWsVZipPackage: string;
+    exWsVDocxDocument: string;
+    exWsVDocxText: string;
+    exWsVEpubMimetype: string;
+    exWsVEpubContainer: string;
+    exWsVEpubPackage: string;
+    exWsVEpubNavigation: string;
+    exWsVEpubChapters: string;
+    exWsVHtmlDocument: string;
+    exWsVHtmlBody: string;
+    exWsVMarkdownText: string;
     kdpDisclosureTitle: string;
     kdpDisclosureRequiredBadge: string;
     kdpDisclosureExemptBadge: string;
@@ -2699,6 +2811,118 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       aiWsGroupToggle: 'Mostrar u ocultar {title}',
       aiWsCapabilitiesTitle: 'Qué puede hacer la IA aquí',
       aiWsAuditNote: 'Cada propuesta aceptada queda registrada para la declaración de uso de IA.',
+      exWsTitle: 'Exportar',
+      exWsFormatsTitle: 'Formatos de salida',
+      exWsFormatsHint: 'Selecciona el formato más adecuado para tu libro.',
+      exWsPdfDesc: 'Publicación final para impresión o distribución.',
+      exWsPdfOriginalDesc: 'PDF original del proyecto, sin modificar.',
+      exWsEpubDesc: 'Libro electrónico reflowable.',
+      exWsDocxDesc: 'Documento editable.',
+      exWsHtmlDesc: 'Versión web interoperable.',
+      exWsMarkdownDesc: 'Contenido estructurado en texto.',
+      exWsKindFixed: 'Maquetación fija',
+      exWsKindReflow: 'Reflowable',
+      exWsKindEditable: 'Editable',
+      exWsKindWeb: 'Web',
+      exWsKindText: 'Texto',
+      exWsUnavailable: 'No disponible',
+      exWsUnavailableFixedPdf: 'Este proyecto conserva el PDF original como maquetación fija.',
+      exWsConfigTitle: 'Configuración',
+      exWsConfigHint: 'Opciones de exportación para {format}.',
+      exWsPageSize: 'Tamaño de página',
+      exWsPageSizeHint: 'Solo para esta exportación; no cambia el documento.',
+      exWsMargins: 'Márgenes',
+      exWsMarginsValue: 'Sup. {top} · Inf. {bottom} · Izq. {left} · Der. {right} mm',
+      exWsTypography: 'Tipografía',
+      exWsTypographyValue: '{size} px · interlineado {line}',
+      exWsCoverRow: 'Portada',
+      exWsBackCoverRow: 'Contraportada',
+      exWsIncluded: 'Incluida',
+      exWsNumbering: 'Numeración de páginas',
+      exWsNumberingOn: 'Activa',
+      exWsNumberingOff: 'Desactivada',
+      exWsPdfSourceNote: 'La vista previa conserva la paginación del documento original; el PDF se compone con los ajustes de salida y puede diferir.',
+      exWsPdfOriginalNote: 'Se descargará el PDF original, byte a byte, sin pasar por la composición.',
+      exWsEditComposition: 'Editar composición',
+      exWsEpubNote: 'Libro electrónico reflowable: se adapta al lector; no copia la maquetación impresa.',
+      exWsEpubCoverNote: 'La portada del EPUB es una página generada con los metadatos del libro, no el diseño de la Portada.',
+      exWsEpubNav: 'Navegación',
+      exWsEpubNavValue: 'Índice con encabezados H1–H3',
+      exWsDocxNote: 'Formato editable; la maquetación puede variar según el procesador de textos.',
+      exWsDocxStructure: 'Encabezados, párrafos, listas, tablas e imágenes como elementos nativos.',
+      exWsHtmlNote: 'Contenido semántico para la web; no es una vista de impresión.',
+      exWsMarkdownNote: 'Texto estructurado: encabezados y listas, sin maquetación visual.',
+      exWsMetadata: 'Metadatos',
+      exWsTitleLabel: 'Título',
+      exWsAuthorLabel: 'Autor',
+      exWsLanguageLabel: 'Idioma',
+      exWsIsbnLabel: 'ISBN',
+      exWsNotSet: 'Sin definir',
+      exWsEditMetadata: 'Editar en Datos del documento',
+      exWsFileName: 'Nombre del archivo',
+      exWsCheckTitle: 'Comprobación final',
+      exWsCheckHint: 'Revisa el estado de tu libro antes de exportar.',
+      exWsCheckContent: 'Contenido',
+      exWsCheckContentDetail: '{chapters} capítulos · {words} palabras',
+      exWsCheckCover: 'Portada',
+      exWsCheckBackCover: 'Contraportada',
+      exWsCheckCoverOk: 'Diseño configurado',
+      exWsCheckCoverEmpty: 'Sin diseño',
+      exWsCheckMetadata: 'Metadatos',
+      exWsCheckFonts: 'Fuentes',
+      exWsCheckImages: 'Imágenes',
+      exWsCheckComposition: 'Composición',
+      exWsCheckAi: 'Uso de IA',
+      exWsCheckOk: 'Sin incidencias',
+      exWsCheckIssues: '{count} incidencias',
+      exWsCheckPartial: 'Comprobación parcial: la resolución real de las imágenes no se verifica.',
+      exWsAiRequired: 'Requiere declaración',
+      exWsAiNotRequired: 'No requiere declaración',
+      exWsAiUnconfirmed: 'Origen no confirmado',
+      exWsReview: 'Revisar',
+      exWsBlocksFormat: 'Bloquea {format}',
+      exWsFormatIssues: 'Afecta a {format}',
+      exWsReady: 'Listo para exportar',
+      exWsReadyBody: 'Tu libro está preparado para generarse en {format}.',
+      exWsReadyWarnings: 'Puedes exportar {format}; hay {count} advertencias que conviene revisar.',
+      exWsAttention: 'Requiere atención',
+      exWsAttentionBody: '{format} está bloqueado por la política del documento mientras haya {count} errores.',
+      exWsErrorsCount: '{count} errores críticos',
+      exWsErrorsOne: '1 error crítico',
+      exWsWarningsCount: '{count} advertencias',
+      exWsWarningsOne: '1 advertencia',
+      exWsExport: 'Exportar {format}',
+      exWsExporting: 'Generando {format}…',
+      exWsResultTitle: 'Archivo generado',
+      exWsResultVerified: 'Verificado',
+      exWsResultFailed: 'El archivo generado no ha superado la verificación y no se ha descargado.',
+      exWsDownload: 'Descargar',
+      exWsRecentTitle: 'Generados en esta sesión',
+      exWsRecentEmpty: 'Aún no has generado archivos en esta sesión.',
+      exWsErrorTitle: 'No se pudo exportar',
+      exWsErrorHttp: 'El servidor respondió con un error ({status}).',
+      exWsErrorNetwork: 'No se pudo contactar con el servidor.',
+      exWsLiveBusy: 'Generando el archivo.',
+      exWsLiveDone: 'Archivo generado y verificado.',
+      exWsLiveFail: 'La exportación ha fallado.',
+      exWsLaunchTitle: 'Publicación y lanzamiento',
+      exWsLaunchShow: 'Mostrar publicación y lanzamiento',
+      exWsVNonEmpty: 'Contenido no vacío',
+      exWsVContentType: 'Tipo de contenido correcto',
+      exWsVPdfHeader: 'Cabecera PDF',
+      exWsVPdfTrailer: 'Cierre del archivo PDF',
+      exWsVPdfPages: 'Páginas presentes',
+      exWsVZipPackage: 'Paquete válido',
+      exWsVDocxDocument: 'Parte principal del documento',
+      exWsVDocxText: 'Texto presente',
+      exWsVEpubMimetype: 'mimetype EPUB',
+      exWsVEpubContainer: 'container.xml',
+      exWsVEpubPackage: 'Paquete OPF y spine',
+      exWsVEpubNavigation: 'Navegación',
+      exWsVEpubChapters: 'Capítulos',
+      exWsVHtmlDocument: 'Documento HTML completo',
+      exWsVHtmlBody: 'Cuerpo con contenido',
+      exWsVMarkdownText: 'Texto Markdown',
       kdpDisclosureTitle: 'Declaración de contenido IA (KDP)',
       kdpDisclosureRequiredBadge: 'Requerida: contenido AI-assisted',
       kdpDisclosureExemptBadge: 'Exenta: contenido 100% humano',
@@ -4642,6 +4866,118 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       aiWsGroupToggle: 'Show or hide {title}',
       aiWsCapabilitiesTitle: 'What the AI can do here',
       aiWsAuditNote: 'Every accepted proposal is recorded for the AI-use disclosure.',
+      exWsTitle: 'Export',
+      exWsFormatsTitle: 'Output formats',
+      exWsFormatsHint: 'Choose the format that suits your book.',
+      exWsPdfDesc: 'Final publication for print or distribution.',
+      exWsPdfOriginalDesc: 'The project\'s original PDF, unmodified.',
+      exWsEpubDesc: 'Reflowable e-book.',
+      exWsDocxDesc: 'Editable document.',
+      exWsHtmlDesc: 'Interoperable web version.',
+      exWsMarkdownDesc: 'Structured content as text.',
+      exWsKindFixed: 'Fixed layout',
+      exWsKindReflow: 'Reflowable',
+      exWsKindEditable: 'Editable',
+      exWsKindWeb: 'Web',
+      exWsKindText: 'Text',
+      exWsUnavailable: 'Not available',
+      exWsUnavailableFixedPdf: 'This project keeps the original PDF as a fixed layout.',
+      exWsConfigTitle: 'Settings',
+      exWsConfigHint: 'Export options for {format}.',
+      exWsPageSize: 'Page size',
+      exWsPageSizeHint: 'For this export only; it does not change the document.',
+      exWsMargins: 'Margins',
+      exWsMarginsValue: 'Top {top} · Bottom {bottom} · Left {left} · Right {right} mm',
+      exWsTypography: 'Typography',
+      exWsTypographyValue: '{size} px · line height {line}',
+      exWsCoverRow: 'Front cover',
+      exWsBackCoverRow: 'Back cover',
+      exWsIncluded: 'Included',
+      exWsNumbering: 'Page numbering',
+      exWsNumberingOn: 'On',
+      exWsNumberingOff: 'Off',
+      exWsPdfSourceNote: 'The preview keeps the original document pagination; the PDF is composed with the output settings and may differ.',
+      exWsPdfOriginalNote: 'The original PDF will be downloaded byte for byte, without going through composition.',
+      exWsEditComposition: 'Edit composition',
+      exWsEpubNote: 'Reflowable e-book: it adapts to the reader; it does not copy the printed layout.',
+      exWsEpubCoverNote: 'The EPUB cover is a page generated from the book metadata, not the Cover design.',
+      exWsEpubNav: 'Navigation',
+      exWsEpubNavValue: 'Table of contents with H1–H3 headings',
+      exWsDocxNote: 'Editable format; layout may vary depending on the word processor.',
+      exWsDocxStructure: 'Headings, paragraphs, lists, tables and images as native elements.',
+      exWsHtmlNote: 'Semantic web content; it is not a print view.',
+      exWsMarkdownNote: 'Structured text: headings and lists, no visual layout.',
+      exWsMetadata: 'Metadata',
+      exWsTitleLabel: 'Title',
+      exWsAuthorLabel: 'Author',
+      exWsLanguageLabel: 'Language',
+      exWsIsbnLabel: 'ISBN',
+      exWsNotSet: 'Not set',
+      exWsEditMetadata: 'Edit in Document data',
+      exWsFileName: 'File name',
+      exWsCheckTitle: 'Final check',
+      exWsCheckHint: 'Review the state of your book before exporting.',
+      exWsCheckContent: 'Content',
+      exWsCheckContentDetail: '{chapters} chapters · {words} words',
+      exWsCheckCover: 'Front cover',
+      exWsCheckBackCover: 'Back cover',
+      exWsCheckCoverOk: 'Design configured',
+      exWsCheckCoverEmpty: 'No design',
+      exWsCheckMetadata: 'Metadata',
+      exWsCheckFonts: 'Fonts',
+      exWsCheckImages: 'Images',
+      exWsCheckComposition: 'Composition',
+      exWsCheckAi: 'AI use',
+      exWsCheckOk: 'No issues',
+      exWsCheckIssues: '{count} issues',
+      exWsCheckPartial: 'Partial check: the actual image resolution is not verified.',
+      exWsAiRequired: 'Declaration required',
+      exWsAiNotRequired: 'No declaration required',
+      exWsAiUnconfirmed: 'Origin not confirmed',
+      exWsReview: 'Review',
+      exWsBlocksFormat: 'Blocks {format}',
+      exWsFormatIssues: 'Affects {format}',
+      exWsReady: 'Ready to export',
+      exWsReadyBody: 'Your book is ready to be generated as {format}.',
+      exWsReadyWarnings: 'You can export {format}; there are {count} warnings worth reviewing.',
+      exWsAttention: 'Needs attention',
+      exWsAttentionBody: '{format} is blocked by the document policy while there are {count} errors.',
+      exWsErrorsCount: '{count} critical errors',
+      exWsErrorsOne: '1 critical error',
+      exWsWarningsCount: '{count} warnings',
+      exWsWarningsOne: '1 warning',
+      exWsExport: 'Export {format}',
+      exWsExporting: 'Generating {format}…',
+      exWsResultTitle: 'File generated',
+      exWsResultVerified: 'Verified',
+      exWsResultFailed: 'The generated file did not pass verification and was not downloaded.',
+      exWsDownload: 'Download',
+      exWsRecentTitle: 'Generated in this session',
+      exWsRecentEmpty: 'You have not generated any file in this session yet.',
+      exWsErrorTitle: 'Export failed',
+      exWsErrorHttp: 'The server responded with an error ({status}).',
+      exWsErrorNetwork: 'Could not reach the server.',
+      exWsLiveBusy: 'Generating the file.',
+      exWsLiveDone: 'File generated and verified.',
+      exWsLiveFail: 'The export failed.',
+      exWsLaunchTitle: 'Publishing and launch',
+      exWsLaunchShow: 'Show publishing and launch',
+      exWsVNonEmpty: 'Non-empty content',
+      exWsVContentType: 'Correct content type',
+      exWsVPdfHeader: 'PDF header',
+      exWsVPdfTrailer: 'PDF end marker',
+      exWsVPdfPages: 'Pages present',
+      exWsVZipPackage: 'Valid package',
+      exWsVDocxDocument: 'Main document part',
+      exWsVDocxText: 'Text present',
+      exWsVEpubMimetype: 'EPUB mimetype',
+      exWsVEpubContainer: 'container.xml',
+      exWsVEpubPackage: 'OPF package and spine',
+      exWsVEpubNavigation: 'Navigation',
+      exWsVEpubChapters: 'Chapters',
+      exWsVHtmlDocument: 'Complete HTML document',
+      exWsVHtmlBody: 'Body with content',
+      exWsVMarkdownText: 'Markdown text',
       kdpDisclosureTitle: 'AI content disclosure (KDP)',
       kdpDisclosureRequiredBadge: 'Required: AI-assisted content',
       kdpDisclosureExemptBadge: 'Exempt: 100% human content',

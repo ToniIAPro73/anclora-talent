@@ -2,7 +2,7 @@
 
 import { useEffect, useTransition, useState, useMemo, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Download, Loader2 } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { Stepper, type Step } from '@/components/ui/Stepper';
 import { ChapterOrganizer } from './ChapterOrganizer';
 import { ContentWorkspace } from './content-workspace/ContentWorkspace';
@@ -12,6 +12,7 @@ import { FixedPdfPreview } from './FixedPdfPreview';
 import { useEditorPreferences } from '@/hooks/use-editor-preferences';
 import { CollaborationWorkspace } from './collaboration-workspace/CollaborationWorkspace';
 import { AiWorkspace } from './ai-workspace/AiWorkspace';
+import { ExportWorkspace } from './export-workspace/ExportWorkspace';
 import { ChapterEditorFullscreen } from './advanced-chapter-editor/ChapterEditorFullscreen';
 import { AddChapterDialog } from './AddChapterDialog';
 import { ImportChapterDialog } from './ImportChapterDialog';
@@ -19,14 +20,12 @@ import { ReimportDialog } from './ReimportDialog';
 import { DocumentDataModal } from './DocumentDataModal';
 import { Portal } from '@/components/ui/Portal';
 import { SlotPortal } from '@/components/ui/SlotPortal';
-import { PdfExportButton } from './PdfExportButton';
-import { CreateEditableCopyButton } from './CreateEditableCopyButton';
 import { WorkspaceOnboarding } from './WorkspaceOnboarding';
 import { useDocumentComposition } from './useDocumentComposition';
 import { compileDocument } from '@/lib/style-engine/document-compiler';
 import { resolveDocumentRules } from '@/lib/compose/rules';
 import { projectToSemanticDocument } from '@/lib/compose/preview-adapter';
-import { countPreflightErrors, preflight } from '@/lib/preflight/preflight';
+import { preflight } from '@/lib/preflight/preflight';
 import {
   saveChapterContentAction,
   saveProjectWorkflowStepAction,
@@ -47,7 +46,6 @@ import type { LaunchPackView } from '@/lib/manifest/view';
 import type { DocumentSnapshotMeta } from '@/lib/snapshots/model';
 import { LaunchPackPanel } from './LaunchPackPanel';
 import { PublishChannelsPanel } from './PublishChannelsPanel';
-import { KdpDisclosurePanel } from './KdpDisclosurePanel';
 import { buildExportQueryString } from '@/lib/projects/export-config';
 import type { CoAuthorChapterStats } from '@/lib/ai/co-author';
 import type { AiHistoryEntry } from './ai-workspace/SidePanels';
@@ -315,7 +313,6 @@ export function ProjectWorkspace({
   // export gate (memoized per project revision).
   const composition = useDocumentComposition(project);
   const documentViolations = composition.result.violations;
-  const documentViolationCount = documentViolations.length;
   // F1: channel pre-flight (KDP/IngramSpark/Kobo) over the same inputs the
   // composition used; merged into the health panel, errors feed the gate.
   const preflightInput = useMemo(() => {
@@ -323,13 +320,8 @@ export function ProjectWorkspace({
     return { document, composed: composition.result, metadata: document.metadata };
   }, [project, composition.result]);
   const preflightChecks = useMemo(() => preflight(preflightInput), [preflightInput]);
-  const preflightErrorCount = countPreflightErrors(preflightChecks);
   const exportGate = resolveDocumentRules(project.document.rules).exportGate;
-  // Fixed-PDF document mode: Talent does not govern this document's
-  // composition, so composition/preflight issues must never block or warn
-  // about exporting the original PDF (see capabilities.canCompose).
-  const gateIssueCount = capabilities.canCompose ? documentViolationCount + preflightErrorCount : 0;
-  const exportBlocked = capabilities.canCompose && exportGate === 'block' && gateIssueCount > 0;
+  // Per-format gating (blockers, warnings, fixed-PDF exemption) lives in lib/projects/export-workspace.ts (formatGate).
 
   // F0.3 undo: last chapter save of the session (recorded by the chapter
   // editor). Reverting re-saves the pre-save HTML through the regular save
@@ -516,122 +508,31 @@ export function ProjectWorkspace({
         );
       case 8: // Export
         return (
-          <section className="ac-surface-panel ac-export-suite">
-            <div className="ac-export-suite__mark">
-              <Download className="h-8 w-8" />
-            </div>
-            <div className="ac-export-suite__content">
-              <h3 className="ac-export-suite__title">{copy.stepExport}</h3>
-              <p className="ac-export-suite__summary">
-                Tu proyecto está listo para ser publicado. Elige el formato de salida deseado.
-              </p>
-              {exportGate !== 'off' && gateIssueCount > 0 && (
-                <p
-                  role="alert"
-                  data-testid="export-gate-message"
-                  className={`mt-3 text-sm font-semibold ${exportBlocked ? 'text-red-600' : 'text-[var(--accent)]'}`}
-                >
-                  {exportBlocked
-                    ? copy.exportGateBlockedMessage
-                    : copy.exportGateWarnMessage.replace('{count}', String(gateIssueCount))}
-                </p>
-              )}
-            </div>
-            <div
-              className={`ac-export-suite__actions ${exportBlocked ? 'pointer-events-none opacity-50' : ''}`}
-              aria-disabled={exportBlocked}
-            >
-               <button
-                 data-testid="export-html-button"
-                 onClick={() => {
-                   const htmlUrl = `/api/projects/export?projectId=${project.id}&${exportQuery}`;
-                   window.open(htmlUrl, '_blank');
-                 }}
-                 disabled={exportBlocked || !capabilities.canExportHtml}
-                 title={!capabilities.canExportHtml ? copy.fixedPdfHtmlUnavailable : undefined}
-                 className="ac-button ac-button--secondary"
-               >
-                  {copy.previewExportButton}
-               </button>
-               {fixedPdf ? (
-                 <button
-                   data-testid="export-pdf-original-button"
-                   onClick={() => {
-                     window.open(`/api/projects/export/pdf?projectId=${project.id}`, '_blank');
-                   }}
-                   className="ac-button ac-button--primary"
-                 >
-                   {copy.fixedPdfExportLabel}
-                 </button>
-               ) : (
-                 <PdfExportButton
-                   project={project}
-                   projectSlug={project.slug || ''}
-                   copy={copy}
-                   className="ac-button ac-button--primary"
-                 />
-               )}
-               <button
-                 data-testid="export-docx-button"
-                 onClick={() => {
-                   const docxUrl = `/api/projects/export/docx?projectId=${project.id}&${exportQuery}`;
-                   window.open(docxUrl, '_blank');
-                 }}
-                 disabled={exportBlocked || !capabilities.canExportDocx}
-                 title={!capabilities.canExportDocx ? copy.fixedPdfDocxUnavailable : undefined}
-                 className="ac-button ac-button--secondary"
-               >
-                  {copy.previewExportDocxButton}
-               </button>
-               <button
-                 data-testid="export-epub-button"
-                 onClick={() => {
-                   const epubUrl = `/api/projects/export/epub?projectId=${project.id}&${exportQuery}`;
-                   window.open(epubUrl, '_blank');
-                 }}
-                 disabled={exportBlocked || !capabilities.canExportEpub}
-                 title={!capabilities.canExportEpub ? copy.fixedPdfEpubUnavailable : undefined}
-                 className="ac-button ac-button--secondary"
-               >
-                  {copy.previewExportEpubButton}
-               </button>
-               <button
-                 data-testid="export-markdown-button"
-                 onClick={() => {
-                   const markdownUrl = `/api/projects/export/markdown?projectId=${project.id}&${exportQuery}`;
-                   window.open(markdownUrl, '_blank');
-                 }}
-                 disabled={exportBlocked || !capabilities.canExportMarkdown}
-                 title={!capabilities.canExportMarkdown ? copy.fixedPdfMarkdownUnavailable : undefined}
-                 className="ac-button ac-button--secondary"
-               >
-                  {copy.previewExportMarkdownButton}
-               </button>
-               {capabilities.canCreateEditableCopy && (
-                 <CreateEditableCopyButton
-                   projectId={project.id}
-                   label={copy.createEditableCopyButton}
-                   className="ac-button ac-button--secondary"
-                 />
-               )}
-            </div>
-            {kdpDisclosure && <KdpDisclosurePanel disclosure={kdpDisclosure} copy={copy} />}
-            {launchPack && (
-              <LaunchPackPanel
-                copy={launchPack.copy}
-                projectId={project.id}
-                view={launchPack.view}
-              />
-            )}
-            {publishChannels && (
+          <ExportWorkspace
+            project={project}
+            copy={copy}
+            locale={locale}
+            capabilities={capabilities}
+            exportQuery={exportQuery}
+            exportGate={exportGate}
+            violations={documentViolations}
+            checks={preflightChecks}
+            kdpDisclosure={kdpDisclosure}
+            onNavigateStep={setActiveStep}
+            onOpenDocumentData={() => setIsDocumentDataOpen(true)}
+          >
+            {launchPack ? (
+              <LaunchPackPanel copy={launchPack.copy} projectId={project.id} view={launchPack.view} />
+            ) : null}
+            {publishChannels ? (
               <PublishChannelsPanel
                 copy={publishChannels.copy}
                 projectId={project.id}
                 gumroadEnabled={publishChannels.gumroadEnabled}
                 gumroadConnected={publishChannels.gumroadConnected}
               />
-            )}
-          </section>
+            ) : null}
+          </ExportWorkspace>
         );
       default:
         return null;
@@ -762,6 +663,10 @@ export function ProjectWorkspace({
         </div>
       ) : activeStep === 7 ? (
         <div className="ai-workspace-stage w-full" data-testid="ai-step-workspace">
+          {renderStepContent()}
+        </div>
+      ) : activeStep === 8 ? (
+        <div className="export-workspace-stage w-full" data-testid="export-step-workspace">
           {renderStepContent()}
         </div>
       ) : (

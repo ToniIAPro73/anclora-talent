@@ -455,12 +455,15 @@ describe('ProjectWorkspace', () => {
     test('export step offers the original PDF and disables DOCX/EPUB/HTML/Markdown', () => {
       render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 8 })} copy={copy} />);
 
-      expect(screen.getByTestId('export-pdf-original-button')).toBeInTheDocument();
+      // The original PDF is the primary (and only) action; the other formats are off, with the reason in text.
+      expect(screen.getByTestId('export-cta')).toHaveTextContent(copy.fixedPdfExportLabel);
+      expect(screen.getByTestId('export-original-note')).toBeInTheDocument();
       expect(screen.queryByTestId('pdf-export-button')).not.toBeInTheDocument();
-      expect(screen.getByTestId('export-docx-button')).toBeDisabled();
-      expect(screen.getByTestId('export-epub-button')).toBeDisabled();
-      expect(screen.getByTestId('export-html-button')).toBeDisabled();
-      expect(screen.getByTestId('export-markdown-button')).toBeDisabled();
+      for (const id of ['docx', 'epub', 'html', 'markdown']) {
+        expect(screen.getByTestId(`export-format-${id}`)).toBeDisabled();
+        expect(screen.getByTestId(`export-format-${id}`)).toHaveAttribute('aria-disabled', 'true');
+        expect(screen.getByTestId(`export-format-${id}`)).toHaveTextContent(copy.exWsUnavailableFixedPdf);
+      }
     });
 
     test('export step offers "Crear copia editable" (Fase 3)', () => {
@@ -478,9 +481,8 @@ describe('ProjectWorkspace', () => {
     test('the original-PDF download button is never blocked by the export gate', () => {
       render(<ProjectWorkspace project={makeFixedPdfProject({ workflowStep: 8 })} copy={copy} />);
 
-      expect(screen.getByTestId('export-pdf-original-button')).not.toBeDisabled();
-      const actions = screen.getByTestId('export-pdf-original-button').closest('.ac-export-suite__actions');
-      expect(actions).not.toHaveAttribute('aria-disabled', 'true');
+      expect(screen.getByTestId('export-cta')).not.toBeDisabled();
+      expect(screen.getByTestId('export-workspace')).toHaveAttribute('data-ready', 'ready');
     });
 
     test('regression: an editable project is unaffected by fixed-pdf gating', () => {
@@ -493,10 +495,10 @@ describe('ProjectWorkspace', () => {
     test('regression: editable project export step keeps every reflowable format enabled', () => {
       render(<ProjectWorkspace project={makeProject({ workflowStep: 8 })} copy={copy} />);
 
-      expect(screen.getByTestId('export-html-button')).not.toBeDisabled();
-      expect(screen.getByTestId('export-docx-button')).not.toBeDisabled();
-      expect(screen.getByTestId('export-epub-button')).not.toBeDisabled();
-      expect(screen.getByTestId('export-markdown-button')).not.toBeDisabled();
+      for (const id of ['pdf', 'html', 'docx', 'epub', 'markdown']) {
+        expect(screen.getByTestId(`export-format-${id}`)).not.toBeDisabled();
+        expect(screen.getByTestId(`export-format-${id}`)).toHaveAttribute('data-available', 'true');
+      }
     });
 
     test('regression: an already-editable project never offers "Crear copia editable"', () => {
