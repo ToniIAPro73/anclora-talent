@@ -92,6 +92,33 @@ describe('applyOperations', () => {
   });
 });
 
+describe('stale protection when a block was edited meanwhile', () => {
+  const edited = (): ParagraphBlock => ({ ...firstParagraph, content: [{ type: 'text', text: 'Editado por la persona.' }] });
+
+  test('an update proposed over the old text never overwrites a newer edit', () => {
+    const document = fixtureDocument();
+    const operation = { type: 'update' as const, blockId: 'p1', before: firstParagraph, after: { ...firstParagraph, content: [{ type: 'text' as const, text: 'Reescrito por la IA.' }] } };
+    const moved = [document.blocks[0], edited(), document.blocks[2]];
+    expect(() => applyOperations(moved, [operation])).toThrow(StaleProposalError);
+    // Unchanged document: applies. A JSON round-trip of the proposal (client → server) must not read as stale.
+    expect(() => applyOperations(document.blocks, [JSON.parse(JSON.stringify(operation))])).not.toThrow();
+  });
+
+  test('a removal over an edited block is stale', () => {
+    const document = fixtureDocument();
+    expect(() =>
+      applyOperations([document.blocks[0], edited(), document.blocks[2]], [{ type: 'remove', block: firstParagraph, previousBlockId: 'h1' }]),
+    ).toThrow(StaleProposalError);
+  });
+
+  test('applying the same update twice is refused the second time', () => {
+    const document = fixtureDocument();
+    const operation = { type: 'update' as const, blockId: 'p1', before: firstParagraph, after: { ...firstParagraph, content: [{ type: 'text' as const, text: 'Reescrito.' }] } };
+    const once = applyOperations(document.blocks, [operation]);
+    expect(() => applyOperations(once, [operation])).toThrow(StaleProposalError);
+  });
+});
+
 describe('createProposal / applyProposal', () => {
   test('carries the structural diff (F2 format) of the operations', () => {
     const document = fixtureDocument();
