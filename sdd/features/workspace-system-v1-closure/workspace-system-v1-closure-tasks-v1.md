@@ -1,0 +1,30 @@
+# Tasks — Workspace System v1 Closure (`workspace-system-v1-closure`) & User Manual v2 (`CHG-0015`)
+
+- [x] **T1 — SDD Artifacts & Parity Audit Matrix**:
+  - [x] Inspect all 18 screens (`00`, `00b`, `01`–`06`, `07`, `07b`, `08a`–`08c`, `09`, `10`, `11`, `12`, `13`) against `docs/mockups/workspace-system-v1/` and SDD specs.
+  - [x] Create `sdd/features/workspace-system-v1-closure/workspace-system-v1-closure-spec-v1.md`.
+  - [x] Create `sdd/features/workspace-system-v1-closure/workspace-system-v1-closure-plan-v1.md`.
+  - [x] Create `sdd/features/workspace-system-v1-closure/workspace-system-v1-closure-tasks-v1.md`.
+- [x] **T2 — WS-01 (`CreateProjectForm.tsx` i18n parity)**:
+  - [x] Add `newProjectStep1Title`, `newProjectStep1Description`, `newProjectSummaryEyebrow`, `newProjectSummaryDescription`, `newProjectSummaryTemplate`, and `newProjectSummaryReady` to `src/lib/i18n/messages.ts` (`es` and `en`).
+  - [x] Replace hardcoded Spanish strings in `src/components/projects/CreateProjectForm.tsx`.
+  - [x] Add unit test in `src/components/projects/CreateProjectForm.test.tsx`.
+- [x] **T3 — WS-02 (`ProjectWorkspace.tsx` topbar & fallback rail i18n parity)**:
+  - [x] Add `contentSaving` and `contentSaved` to `src/lib/i18n/messages.ts` (`es` and `en`).
+  - [x] Replace hardcoded Spanish save status and fallback fixed-PDF rail labels in `src/components/projects/ProjectWorkspace.tsx`.
+  - [x] Guard post-unmount `window.setTimeout` callbacks in `ProjectWorkspace.tsx`.
+- [x] **T4 — WS-03 (`ProjectWorkspace.tsx` & `/projects/[projectId]/preview/page.tsx` query deep-linking)**:
+  - [x] Parse `?step=1..8` and `?documentData=open` in `src/components/projects/ProjectWorkspace.tsx` on mount.
+  - [x] Update `exportHref` in `src/app/(app)/projects/[projectId]/preview/page.tsx` to `/projects/${project.id}/editor?step=8`.
+  - [x] Add unit tests in `src/components/projects/ProjectWorkspace.test.tsx`.
+- [x] **T5 — WS-04 (`AdvancedCoverEditor.tsx` low-resolution warning i18n parity)**:
+  - [x] Add `lowResImageWarning` and `lowResCoverWarning` to `coverDesignSurface.workspace` in `src/lib/i18n/messages.ts` (`es` and `en`).
+  - [x] Replace hardcoded Spanish warning strings in `src/components/projects/design-surface/AdvancedCoverEditor.tsx`.
+- [x] **T6 — Manual v2 Update & PDF Regeneration (`CHG-0015`)**:
+  - [x] Update `docs/manual/manual-usuario.md` to Version 2.0 covering all v2 workspaces (`00`–`13`).
+  - [x] Update `docs/manual/screenshots/` with verified v2 synthetic QA captures.
+  - [x] Update `docs/manual/screenshots.manifest.json`, `docs/manual/RECAPTURE.md`, and `docs/manual/MANUAL_CHANGELOG.md` (`status: "CURRENT"`).
+  - [x] Regenerate and validate `public/manuals/anclora-talent-manual-usuario-es.pdf`.
+- [x] **T7 — Verification Gates & Git Push**:
+  - [x] Run Vitest unit tests (`messages-parity.test.ts`, `CreateProjectForm.test.tsx`, `ProjectWorkspace.test.tsx`, `CoverWorkspace08A.test.tsx`) and ESLint.
+  - [x] Commit and push to `origin/development`.

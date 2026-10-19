@@ -91,4 +91,15 @@ describe('CreateProjectForm', () => {
     expect(screen.getByTestId('project-creation-summary')).toBeInTheDocument();
     expect(screen.getByTestId('create-project-submit-button')).toHaveTextContent('Crear proyecto y abrir editor');
   });
+
+  test('renders localized English copy across Step 1 and the creation summary card (WS-01)', () => {
+    render(<CreateProjectForm copy={resolveLocaleMessages('en').project} />);
+
+    expect(screen.getByTestId('new-project-project-section')).toHaveTextContent('Project');
+    expect(screen.getByTestId('new-project-project-section')).toHaveTextContent('Define the name of your new editorial project.');
+    expect(screen.getByTestId('project-creation-summary')).toHaveTextContent('Summary');
+    expect(screen.getByTestId('project-creation-summary')).toHaveTextContent('Review the configuration before opening the editor.');
+    expect(screen.getByTestId('project-creation-summary')).toHaveTextContent('Template');
+    expect(screen.getByTestId('project-creation-summary')).toHaveTextContent('Ready to create');
+  });
 });

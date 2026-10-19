@@ -375,23 +375,23 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
     const src = await readFileAsDataUrl(file);
     const dimensions = await inspectImage(file);
     setImageQualityWarning(dimensions.width > 0 && (dimensions.width < 800 || dimensions.height < 1200)
-      ? `Resolución baja: ${dimensions.width} × ${dimensions.height}px. La imagen se ha importado igualmente.`
+      ? copy.workspace.lowResImageWarning.replace('{width}', String(dimensions.width)).replace('{height}', String(dimensions.height))
       : null);
     // A full-bleed import must never land above the text: it enters just above the cover background.
     const image = createDesignLayer({ type: 'image', src, fit: 'cover', x: 0, y: 0, width: surface.width, height: surface.height, name: file.name || undefined }, surface.layers.length + 1);
     const current = latestSurfaceRef.current;
     commitSurface({ ...current, layers: reorderLayers([...current.layers, image], image.id, 'back') });
     setSelectedLayerIds([image.id]);
-  }, [commitSurface, inspectImage, setSelectedLayerIds, surface.height, surface.layers.length, surface.width]);
+  }, [commitSurface, copy.workspace.lowResImageWarning, inspectImage, setSelectedLayerIds, surface.height, surface.layers.length, surface.width]);
 
   const handleImportCover = useCallback(async (file: File) => {
     const src = await readFileAsDataUrl(file);
     const dimensions = await inspectImage(file);
     setImageQualityWarning(dimensions.width > 0 && (dimensions.width < 1200 || dimensions.height < 1800)
-      ? `Resolución baja: ${dimensions.width} × ${dimensions.height}px. La portada se ha importado igualmente.`
+      ? copy.workspace.lowResCoverWarning.replace('{width}', String(dimensions.width)).replace('{height}', String(dimensions.height))
       : null);
     commitSurface({ ...latestSurfaceRef.current, background: { kind: 'image', src, fit: 'cover', opacity: 1 }, originAssetId: null, originMode: 'blank' });
-  }, [commitSurface, inspectImage]);
+  }, [commitSurface, copy.workspace.lowResCoverWarning, inspectImage]);
 
   // The active template is the one the composition was actually built from (persisted on the
   // surface), not the last card clicked: cancelling the confirmation changes nothing.

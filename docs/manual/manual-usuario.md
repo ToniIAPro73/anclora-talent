@@ -6,14 +6,14 @@
 
 <div class="cover-title">Manual de usuario</div>
 
-<div class="cover-subtitle">Crea, edita y prepara tus proyectos editoriales para publicar.</div>
+<div class="cover-subtitle">Crea, edita, valida y exporta tus proyectos editoriales desde un único sistema de trabajo.</div>
 
 <div class="cover-meta">
-  <div class="cover-version">Versión 1.0</div>
-  <div class="cover-date">11 septiembre 2026</div>
+  <div class="cover-version">Versión 2.0</div>
+  <div class="cover-date">19 octubre 2026</div>
 </div>
 
-<div class="cover-disclaimer">Guía práctica de la aplicación actual. Las capturas usan datos de demostración y no contienen cuentas ni contenido personal.</div>
+<div class="cover-disclaimer">Guía práctica de la aplicación actual. Las capturas usan datos sintéticos de demostración y no contienen cuentas ni contenido personal.</div>
 
 </div>
 
@@ -21,586 +21,340 @@
 
 ## Índice
 
-Esta guía sigue el recorrido natural de un proyecto: entrar, crear una base, editar el manuscrito, revisar el resultado y exportarlo.
+Esta guía sigue el recorrido completo de un proyecto editorial en Anclora Talent: acceder, configurar la base del proyecto, gestionar el documento y sus capítulos, diseñar cubierta, validar en vista previa, colaborar con el equipo, apoyarse en el asistente editorial gobernado y exportar archivos verificados.
 
 - **Primeros pasos**: capítulos 1 a 4.
 - **Trabajo editorial**: capítulos 5 a 8.
-- **Portada, preview y exportación**: capítulos 9 a 11.
-- **Preferencias y ayuda**: capítulos 12 a 16.
+- **Cubierta, validación, colaboración, IA y exportación**: capítulos 9 a 11.
+- **Dispositivos, preferencias y soporte**: capítulos 12 a 16.
 
 | Capítulo | Para qué sirve |
 | --- | --- |
 | 1. Empieza aquí | Entender el producto y elegir tu recorrido |
 | 2. Cuenta, acceso y recuperación | Entrar, registrarte y recuperar la contraseña |
-| 3. Dashboard y proyectos | Localizar, abrir y organizar proyectos |
-| 4. Crear un proyecto | Empezar desde cero o importar un manuscrito |
-| 5. Workspace editorial | Reconocer las áreas de trabajo |
-| 6. Importar y preparar el manuscrito | Analizar un documento y revisar su estructura |
-| 7. Capítulos, edición y formato | Escribir, ordenar y dar formato al contenido |
-| 8. Composición, metadatos y guardado | Ajustar la publicación sin perder el manuscrito |
-| 9. Portada y contraportada | Diseñar las superficies de publicación |
-| 10. Preview y revisión final | Leer el proyecto antes de descargarlo |
-| 11. Exportar | Elegir HTML, Word o PDF y revisar el archivo |
-| 12. Trabajar en móvil y tablet | Entender qué cambia en pantallas estrechas |
-| 13. Idioma, tema y preferencias | Cambiar ES/EN, oscuro/claro y vista de edición |
-| 14. Si algo no funciona | Recuperarse de los problemas más habituales |
-| 15. Preguntas frecuentes | Respuestas rápidas |
-| 16. Glosario | Significado de los términos de la aplicación |
+| 3. Dashboard y proyectos | Localizar, filtrar, ordenar y abrir proyectos |
+| 4. Crear un proyecto | Configurar título, documento base, plantilla, estilo y marca |
+| 5. Workspace editorial | Recorrer los 8 pasos del sistema y el centro de control de Contenido |
+| 6. Importar y preparar el manuscrito | Subir un documento, revisar su estructura y configurar Datos del documento |
+| 7. Capítulos, edición y formato | Organizar capítulos y trabajar en el editor a pantalla completa |
+| 8. Composición, metadatos, marca y versiones | Ajustar reglas tipográficas, pre-flight por canal e historial |
+| 9. Portada y contraportada | Diseñar las superficies de cubierta en el estudio unificado |
+| 10. Vista previa, colaboración y asistente IA | Validar paginación, revisar en equipo y aplicar propuestas IA |
+| 11. Exportar | Generar y verificar PDF, EPUB, DOCX, HTML y Markdown |
+| 12. Trabajar en móvil y tablet | Entender cómo se adapta la interfaz a pantallas estrechas |
+| 13. Idioma, tema y preferencias | Cambiar ES/EN, oscuro/claro y opciones de visualización |
+| 14. Si algo no funciona | Resolver las incidencias más habituales |
+| 15. Preguntas frecuentes | Respuestas rápidas a dudas comunes |
+| 16. Glosario | Significado de los términos editoriales de la aplicación |
 
 <div class="page-break"></div>
 
 ## 1. Empieza aquí
 
-Anclora Talent es un espacio de trabajo editorial. Te permite reunir un manuscrito, convertirlo en un proyecto organizado, editar sus capítulos, preparar portada y contraportada, revisar una preview y descargar distintos formatos.
+Anclora Talent es una plataforma editorial interactiva diseñada para transformar un manuscrito o una idea inicial en una publicación lista para imprenta o distribución digital. Desde un mismo espacio puedes estructurar capítulos, editar con paginación real, aplicar reglas de composición y perfiles de marca, diseñar portada y contraportada, revisar con colaboradores, aplicar mejoras editoriales gobernadas por IA y exportar archivos verificados.
 
-La aplicación trabaja con dos ideas importantes:
+La aplicación se apoya en tres principios clave:
 
-- **Tu manuscrito es el contenido principal.** La preview, la composición y los archivos descargados se generan a partir de él.
-- **Cada proyecto conserva su identidad.** El título, los capítulos, el orden, los metadatos y las superficies de publicación pertenecen al mismo proyecto.
+- **Un único documento canónico.** El editor de capítulos, la vista previa y todos los formatos de exportación leen la misma estructura y contenido.
+- **Separación entre contenido y estilo.** Puedes cambiar plantilla, reglas de composición, documento de referencia o perfil de marca sin perder el texto ni el orden de tus capítulos.
+- **Flujo editorial en 8 pasos.** Todo proyecto recorre una secuencia clara en la barra superior: **1. Contenido**, **2. Capítulos**, **3. Portada**, **4. Contraportada**, **5. Vista previa**, **6. Colaborar**, **7. Asistente IA** y **8. Exportar**.
 
 ![Landing actual de Anclora Talent en tema oscuro](screenshots/landing-dark.png)
 
 ### Qué puedes hacer
 
-- Crear un proyecto vacío o partir de un documento.
-- Importar documentos compatibles y revisar la estructura detectada.
-- Escribir y editar capítulos.
-- Usar títulos, párrafos, listas, citas, enlaces, imágenes y saltos de página.
-- Ajustar composición, tamaño de texto, márgenes y dispositivo de referencia.
-- Diseñar portada y contraportada.
-- Consultar una preview paginada y una vista completa.
-- Descargar HTML, Word y PDF desde el área de preview.
-- Guardar versiones y consultar el estado del documento.
-- Cambiar idioma entre español e inglés.
-- Elegir tema oscuro o claro.
+- Crear un proyecto desde cero o importar un manuscrito en `.docx`, `.doc`, `.odt`, `.md`, `.txt` o `.pdf`.
+- Aplicar plantillas de producto (**Libro estándar**, **Manual técnico**, **Guía / lead magnet**, **Curso modular**, **Bundle**) y estilos editoriales de referencia.
+- Gestionar metadatos editoriales, reglas de composición, perfiles de marca, pre-flight por canal (**KDP**, **IngramSpark**, **Kobo**) e historial de versiones desde **Contenido**.
+- Ordenar capítulos y escribir en un editor multipágina con esquema lateral, inspector de salud, modo enfoque y posicionamiento de imágenes.
+- Diseñar **Portada** y **Contraportada** sobre un lienzo interactivo con capas, plantillas editoriales, guías de sangrado y área segura.
+- Validar el libro en **Vista previa** por destino de lectura (**Impresión**, **Escritorio**, **Tableta**, **Lector electrónico**) y modo (**Documento**, **Pliego**, **Portada**).
+- Revisar el manuscrito en **Colaborar** mediante comentarios anclados a bloques y sugerencias por rol (**Autor**, **Corrector**, **Maquetador**).
+- Ejecutar tareas en **Asistente IA** bajo revisión humana explícita (propuestas sobre el AST con diff antes/después y registro para divulgación KDP).
+- Generar y verificar **PDF**, **EPUB**, **DOCX**, **HTML** y **Markdown** en **Exportar**.
 
 ### Elige tu recorrido
 
 | Si estás en esta situación | Empieza por |
 | --- | --- |
 | Es tu primera visita | Capítulos 1 y 2 |
-| Ya tienes un manuscrito | Capítulos 4 y 6 |
+| Ya tienes un manuscrito en Word, ODT, Markdown o PDF | Capítulos 4 y 6 |
 | Quieres escribir desde cero | Capítulos 4, 5 y 7 |
-| Quieres preparar una portada | Capítulo 9 |
-| Necesitas un archivo final | Capítulos 10 y 11 |
-| Trabajas desde un teléfono | Capítulo 12 |
-| Algo no responde como esperabas | Capítulo 14 |
-
-Las capturas del manual usan proyectos y nombres sintéticos. Los textos de tu cuenta pueden ser diferentes.
+| Necesitas ajustar márgenes, tipografía o pre-flight KDP | Capítulo 8 |
+| Quieres diseñar la cubierta delantera y trasera | Capítulo 9 |
+| Vas a revisar paginación, comentar en equipo o usar IA | Capítulo 10 |
+| Necesitas generar el archivo final para publicar | Capítulo 11 |
 
 ## 2. Cuenta, acceso y recuperación
 
 ### Crear una cuenta
 
-**Cuándo usarlo:** cuando aún no tienes un espacio de trabajo.
+**Cuándo usarlo:** cuando todavía no dispones de una cuenta en Anclora Talent.
 
-1. Abre Anclora Talent y pulsa **Crear cuenta**.
-2. Escribe tu **Nombre completo**.
-3. Escribe tu **Email**.
-4. Crea una contraseña de al menos ocho caracteres, con al menos una letra y un número.
-5. Pulsa **Crear cuenta**.
-6. Si aparece un aviso de validación, corrige el campo indicado y vuelve a intentarlo.
+1. Abre la página principal y pulsa **Crear cuenta**.
+2. Introduce tu **Nombre completo**.
+3. Introduce tu **Email**.
+4. Define una **Contraseña** de al menos ocho caracteres que incluya letras y números.
+5. Pulsa **Crear cuenta** (o utiliza el acceso con **Google** o **GitHub** si están habilitados en tu entorno).
+6. Si algún campo necesita corrección, el formulario indicará el motivo junto al campo correspondiente conservando los datos válidos.
 
 ![Formulario actual de registro](screenshots/sign-up-current.png)
-
-El email debe tener un formato válido. Si ya existe una cuenta con ese email, la aplicación no crea otra cuenta: vuelve al acceso y utiliza la contraseña correspondiente.
 
 ### Iniciar sesión
 
 1. Pulsa **Iniciar sesión**.
-2. Escribe tu email.
-3. Escribe tu contraseña.
+2. Introduce tu **Email** y tu **Contraseña**.
+3. Usa el botón de visibilidad del campo contraseña si quieres comprobar lo escrito antes de enviar.
 4. Pulsa **Iniciar sesión**.
 
 ![Formulario actual de inicio de sesión](screenshots/sign-in-current.png)
 
-El icono del campo de contraseña permite mostrarla u ocultarla durante la comprobación. Si las credenciales no son válidas, se muestra un mensaje general de acceso incorrecto. Esto protege la información de las cuentas: el mensaje no revela si un email concreto está registrado.
+Si las credenciales no coinciden, verás un aviso general de acceso sin exponer si un correo concreto está registrado.
 
 ### Acceso social
 
-En una configuración con Google o GitHub habilitados, sus botones abren el recorrido del proveedor correspondiente. Si el botón aparece desactivado con el texto **Próximamente**, utiliza email y contraseña. No intentes introducir tu contraseña de Google o GitHub en el formulario de Anclora Talent.
+En las pantallas de inicio de sesión y registro aparecen los proveedores configurados (**Google** y **GitHub**). Si un proveedor no está habilitado en el entorno actual, el control se muestra desactivado con la indicación **Próximamente**; en ese caso, accede con email y contraseña.
 
 ### Recuperar la contraseña
 
-1. En la pantalla de acceso, pulsa **¿Olvidaste tu contraseña?**
-2. Escribe el email de tu cuenta.
+1. En la pantalla de inicio de sesión, pulsa **¿Olvidaste tu contraseña?**.
+2. Escribe el email asociado a tu cuenta.
 3. Pulsa **Enviar enlace de recuperación**.
-4. Abre el enlace recibido y escribe una contraseña nueva.
-5. Vuelve a iniciar sesión.
+4. Abre el enlace temporal de un solo uso recibido por correo y define tu nueva contraseña.
 
 ![Pantalla actual de recuperación de contraseña](screenshots/recovery-current.png)
 
-La pantalla confirma la solicitud sin revelar si el email existe. El enlace de recuperación es temporal y de un solo uso. Si no recibes ningún mensaje, revisa spam y confirma que el email está escrito correctamente. Si la instalación no tiene el servicio de correo operativo, verás un aviso de indisponibilidad y deberás contactar con la persona responsable del entorno.
-
 ## 3. Dashboard y proyectos
 
-Después de iniciar sesión llegas al dashboard. La navegación principal reúne **Dashboard**, **Mis proyectos** y la creación de un proyecto. En la cabecera puedes cambiar idioma, tema y cuenta.
+Al iniciar sesión accedes al **Dashboard**, donde conviven el listado de **Mis proyectos** a la izquierda y el panel de **Actividad reciente** a la derecha. En la barra superior dispones del botón **Nuevo proyecto**, el selector de idioma (**ES** / **EN**), el selector de tema (**oscuro** / **claro**) y el menú de usuario.
 
-![Dashboard con proyecto nuevo y selector de idioma, tema y cuenta](screenshots/dashboard-dark.png)
+![Dashboard con listado de proyectos, actividad reciente y controles globales](screenshots/dashboard-dark.png)
 
 ### Dashboard vacío
 
-Si todavía no tienes proyectos, verás un estado inicial con una acción para crear el primero. Un estado vacío no significa que la cuenta esté rota: significa que aún no se ha creado un proyecto.
+Cuando una cuenta aún no tiene proyectos creados, el panel principal muestra un estado de bienvenida con acceso directo a **Nuevo proyecto**.
 
-![Dashboard sin proyectos](screenshots/dashboard-empty-light.png)
+![Dashboard sin proyectos en tema claro](screenshots/dashboard-empty-light.png)
 
-1. Pulsa **Crear nuevo proyecto** o **Crear el primer proyecto**.
-2. Sigue el formulario de proyecto.
-3. Al terminar, entrarás en el editor del proyecto.
+### Buscar, filtrar y gestionar proyectos
 
-### Mis proyectos
+En **Mis proyectos** puedes localizar cualquier obra sin recorrer manualmente toda la lista:
 
-La pantalla **Mis proyectos** es la vista completa del inventario. Úsala cuando tengas varios proyectos o cuando no recuerdes el título exacto.
-
-- Busca por título.
-- Revisa el recuento de resultados.
-- Abre el proyecto que necesitas.
-- Utiliza la paginación cuando la lista sea larga.
-- Comprueba fecha de actualización y número de capítulos antes de entrar.
-
-El acceso rápido de la cabecera y **Mis proyectos** comparten la misma identidad de proyecto. El acceso rápido sirve para saltar pronto a un proyecto; la pantalla completa sirve para buscar y revisar el inventario.
-
-### Proyectos con títulos parecidos
-
-Si dos proyectos tienen títulos iguales o casi iguales, no elijas solo por el nombre. Comprueba la fecha de actualización, el autor y el número de capítulos. Si vas a trabajar sobre uno de ellos, abre la ficha y confirma el título dentro del workspace.
-
-### Abrir y volver
-
-1. Abre un proyecto desde una tarjeta, una fila o el acceso rápido.
-2. Trabaja dentro de su workspace.
-3. Usa los enlaces del encabezado para volver al editor, preview o portada.
-4. Para regresar al inventario, pulsa **Mis proyectos**.
-
-El proyecto abierto no cambia porque cambies de pantalla. Los controles de una ruta concreta actúan sobre el proyecto que aparece en esa ruta.
+- **Buscar proyectos:** filtra en tiempo real por título, subtítulo o autor.
+- **Ordenar por:** elige entre **Recientes**, **Más antiguos** o **Título**.
+- **Estado:** filtra por **Todos los estados**, **Activo** o **Borrador**.
+- **Vista:** alterna entre vista de **lista** y vista de **cuadrícula**.
+- **Menú de acciones (`⋮`):** en cada tarjeta puedes abrir directamente **Datos del documento** o **Eliminar** el proyecto tras confirmación.
+- **Acciones directas:** pulsa **Abrir editor** para entrar al workspace del proyecto o **Vista previa** para abrir la lectura validada.
 
 ## 4. Crear un proyecto
 
-### Proyecto vacío
+Al pulsar **Nuevo proyecto** desde el Dashboard accedes a un espacio de creación previo al flujo de 8 pasos, organizado en cuatro bloques numerados a la izquierda y una tarjeta de **Resumen del proyecto** a la derecha.
 
-**Úsalo cuando:** vas a escribir el contenido en Talent o quieres preparar primero la estructura.
+1. **1. Proyecto:** define el **Título del proyecto** (obligatorio).
+2. **2. Documento base y Plantilla de producto:** sube un manuscrito opcional (`.docx`, `.doc`, `.odt`, `.md`, `.txt` o `.pdf` hasta 50 MB) o empieza en blanco, y selecciona una plantilla base (**Libro estándar**, **Manual técnico**, **Guía / lead magnet**, **Curso modular** o **Bundle**).
+3. **3. Estilo editorial:** elige **Sin referencia**, **Estilo de Talent**, **Mis estilos editoriales** o **Crear desde documento de referencia** para extraer tipografía, tamaños, interlineado y márgenes de un DOCX/PDF de muestra sin copiar su texto.
+4. **4. Identidad de marca:** vincula o consulta el estado del manual de marca PDF cuando la función esté habilitada.
+5. Revisa la columna **Resumen del proyecto** (**Documento**, **Plantilla**, **Estilo**, **Marca** y el indicador **Listo para crear**) y pulsa **Crear proyecto y abrir editor**.
 
-1. Entra en **Dashboard**.
-2. Pulsa **Crear nuevo proyecto**.
-3. Escribe el **Título del proyecto**.
-4. Elige una plantilla, por ejemplo **Libro estándar**, **Manual técnico**, **Guía / lead magnet** o **Curso modular**, si están disponibles.
-5. Decide si vas a subir un manuscrito ahora.
-6. Pulsa **Crear proyecto y abrir editor**.
-
-![Formulario de creación y plantilla de proyecto](screenshots/dashboard-dark.png)
-
-La plantilla inicial puede sembrar capítulos guía y reglas de composición. Después puedes ajustar la estructura desde el editor.
-
-### Proyecto a partir de un manuscrito
-
-En el mismo formulario puedes usar **Manuscrito (opcional)** para subir un archivo compatible. La aplicación analiza el documento antes de crear el proyecto definitivo.
-
-Usa esta opción cuando ya tengas el texto y quieras empezar con una base editorial organizada. Conserva una copia del archivo original hasta revisar la importación.
-
-### Qué revisar antes de crear
-
-- El título debe identificar el proyecto.
-- El archivo debe abrirse correctamente en tu equipo.
-- El tamaño debe respetar el límite que muestra la pantalla.
-- La plantilla debe parecerse al tipo de publicación que estás preparando.
-- Si el documento contiene información sensible, comprueba que estás en la cuenta correcta.
+![Pantalla de creación de proyecto con análisis de importación y resumen](screenshots/import-analysis.png)
 
 ## 5. Workspace editorial
 
-El workspace concentra el trabajo principal. La parte superior muestra el proyecto y el recorrido actual. El panel lateral reúne progreso y navegación; el área central contiene la edición o la revisión seleccionada.
+Una vez dentro de un proyecto, la cabecera compacta muestra el paso activo, el título de la obra, el estado de guardado (**Guardando…**, **Guardado**, **Guardado justo ahora**) y accesos rápidos a **Vista previa**, **Datos del documento** y **Dashboard**. Debajo se sitúa el **Stepper de 8 pasos**.
 
-![Workspace editorial con estado del documento y controles de composición](screenshots/workspace-editor.png)
+![Paso 1 — Contenido: centro de control del documento con 6 pestañas](screenshots/workspace-editor.png)
 
-### Cómo leer la pantalla
+### Las 6 pestañas del Paso 1 (Contenido)
 
-- **Progreso:** indica el paso del recorrido editorial.
-- **Documento:** contiene metadatos, capítulos y contenido.
-- **Composición:** muestra reglas y avisos que pueden afectar a la publicación.
-- **Preview:** abre una lectura paginada del resultado.
-- **Historial de versiones:** permite guardar una copia completa para comparar o recuperar trabajo.
-- **Portada y contraportada:** abren sus estudios de diseño.
+El paso **1. Contenido** actúa como centro de control global del libro y se organiza en seis pestañas:
 
-La interfaz conserva controles avanzados, pero no necesitas abrirlos todos para empezar a escribir. Si estás creando el primer proyecto, completa primero el contenido y deja las reglas avanzadas para una segunda revisión.
-
-### Recorrido recomendado
-
-1. Comprueba el título y los datos principales.
-2. Importa o escribe el contenido.
-3. Revisa capítulos y orden.
-4. Corrige avisos del documento.
-5. Ajusta composición si el resultado lo necesita.
-6. Diseña portada y contraportada.
-7. Abre preview.
-8. Exporta y revisa el archivo descargado.
+- **Resumen:** vista en tres columnas con **Estado del documento** (portada en miniatura, título, subtítulo, autor, idioma, ISBN y tira de 5 métricas: capítulos, palabras, caracteres, tiempo de lectura y páginas estimadas), **Actividad reciente**, **Composición** (preset activo y recuento de reglas/violaciones), **Marca aplicada**, **Salud del documento** y **Pre-flight** por canal, además de la barra inferior de acciones rápidas (**Asistente editorial**, **Revisar coherencia**, **Guardar versión**, **Ver historial** y **Abrir vista previa**).
+- **Metadatos:** formulario editorial completo con sincronización automática hacia portada, contraportada y exportación, chips de palabras clave (hasta 10), sinopsis (hasta 1000 caracteres) e indicador de **Completitud de metadatos** en porcentaje.
+- **Composición:** selección de presets (**Maquetación print sin sustos**, **Empezar con buen pie**, **Publicar sin rechazos**) y configuración detallada dividida en **Paginación**, **Tipografía**, **Estructura**, **Numeración** y **Exportación**.
+- **Marca:** inspección del sistema visual aplicado (paleta con roles `ink`, `paper`, `accent`, `accentMuted`, par tipográfico y superficies conectadas).
+- **Pre-flight:** validación por canal (**Amazon KDP**, **IngramSpark**, **Kobo** y **PDF / EPUB**), filtros por severidad (**Todos**, **Errores**, **Avisos**, **Info**), porcentaje de preparación y panel de **Salud del documento**.
+- **Versiones:** línea temporal de instantáneas guardadas, comparador de diferencias por capítulo/bloque y restauración de versiones anteriores.
 
 ## 6. Importar y preparar el manuscrito
 
-### Formatos de entrada
+### Formatos y modos de documento
 
-La pantalla de importación muestra los formatos aceptados por la instalación. El flujo actual contempla documentos de texto y Word; también puede mostrar tratamiento de PDF escaneado mediante OCR cuando esa capacidad está disponible. Si un archivo no es compatible, la pantalla lo indica.
+- **Documentos editables (`.docx`, `.doc`, `.odt`, `.md`, `.txt`):** Talent extrae capítulos, encabezados, párrafos, listas, citas, tablas, notas e imágenes, aislando el índice original para que los números de página del TOC antiguo no contaminen los títulos de capítulo. Cuando el archivo de origen contiene paginación certificada, conserva el mapa de páginas de origen (`sourcePageMap`).
+- **Modo PDF de diseño fijo (`fixed-pdf`):** cuando importas un PDF y eliges conservar su maquetación original, los pasos de capítulos, portada y contraportada se marcan como ya incluidos en el PDF original, y en **Exportar** puedes descargar el PDF original intacto o pulsar **Crear copia editable** para transformarlo en un proyecto editable.
 
-No cambies la extensión de un archivo para forzar la importación. Exporta o guarda una copia en un formato aceptado.
+### Modal «Datos del documento»
 
-### Pasos de importación
+Al terminar el análisis de un manuscrito (o en cualquier momento pulsando **Datos del documento** en la cabecera del workspace o en el menú de una tarjeta del Dashboard), se abre un diálogo amplio donde puedes:
 
-1. Abre **Crear nuevo proyecto** o el área **Manuscrito** del proyecto.
-2. Pulsa **Arrastra tu documento aquí** o selecciona el archivo.
-3. Espera a que aparezca **Analizando documento...**.
-4. Revisa **Listo para importar**.
-5. Comprueba título, autor, número de capítulos y tipo de manuscrito detectados.
-6. Revisa la **Estructura detectada**.
-7. Lee los avisos de **Revisión recomendada**.
-8. Confirma la importación solo cuando la estructura tenga sentido.
-
-![Análisis de importación con datos sintéticos](screenshots/import-analysis.png)
-
-### Qué significa la confianza
-
-Cuando aparece una confianza alta, media o baja, es una señal para revisar cuánto trabajo de comprobación conviene hacer:
-
-- **Alta:** la aplicación encontró señales claras de estructura.
-- **Media:** revisa especialmente títulos y cortes de capítulo.
-- **Baja:** compara con el archivo original antes de continuar.
-
-La importación ayuda a preparar el documento, pero no sustituye tu revisión editorial.
-
-### Si la importación detecta mal un capítulo
-
-1. No borres el archivo original.
-2. Cancela o vuelve a seleccionar el archivo si todavía estás en el análisis.
-3. Si el proyecto ya fue creado, corrige el título o el orden desde el organizador de capítulos.
-4. Revisa también el índice y la preview.
-5. Guarda una versión cuando el resultado sea coherente.
+- Revisar el origen tipográfico detectado (**verificado en fuente** para estilos extraídos de Word/ODT o presentación generada para Markdown/TXT).
+- Ajustar familia tipográfica, cuerpo en puntos (`pt`), interlineado y márgenes (**Compacto**, **Normal**, **Amplio**, **Estilo libro**, **Mínimo** o **Personalizado**).
+- Elegir el alcance de la composición: **Solo este proyecto** o **Todos mis proyectos** (con opción de sobrescribir proyectos personalizados).
+- Consultar la **Estructura detectada** (jerarquía de encabezados y patrón macro con nivel de confianza).
 
 ## 7. Capítulos, edición y formato
 
-### Añadir y ordenar capítulos
+### Paso 2 — Organizador de capítulos
 
-El organizador de capítulos permite trabajar con una estructura explícita. Cada capítulo conserva una posición y un identificador propio.
+El paso **2. Capítulos** presenta tres columnas dedicadas a la arquitectura del manuscrito:
 
-- Pulsa **Añadir capítulo** para crear uno.
-- Usa **Editar capítulo** para cambiar título o contenido.
-- Usa **Mover capítulo arriba** y **Mover capítulo abajo** para ajustar el orden.
-- Usa **Eliminar capítulo** solo después de comprobar que no contiene texto que necesites.
-- Utiliza **Capítulo anterior** y **Siguiente capítulo** para recorrer el manuscrito.
+- **Columna izquierda (`Capítulos`):** botones **Añadir capítulo** e **Importar**, lista numerada de capítulos con recuento de palabras y menú `⋮` por fila (**Editar capítulo**, **Mover capítulo arriba**, **Mover capítulo abajo**, **Eliminar capítulo**), pie con totales y botones **Sincronizar numeración** y **Reimportar DOCX**.
+- **Columna central (`Vista general`):** etiqueta semántica (`CAPÍTULO N`, `PARTE N`, `PRÓLOGO`, `INTRODUCCIÓN`, `ÍNDICE`, etc.), título, métricas de palabras/lectura/bloques, vista previa representativa de la primera página del capítulo y botones **Abrir capítulo** y **Renombrar**.
+- **Columna derecha (`Propiedades / Estructura`):** título, número de capítulo, estado e indicadores de **Salud del capítulo**.
 
-El orden de los capítulos se refleja en preview y exportación. Después de mover o borrar un capítulo, revisa el índice y la numeración.
+### Editor de capítulos a pantalla completa
 
-### Escribir y editar
+Al pulsar **Abrir capítulo** (o **Editar capítulo**), el organizador se reemplaza por el editor multipágina a pantalla completa:
 
-Dentro del editor puedes colocar el cursor, escribir texto y seleccionar fragmentos. La barra de formato permite, según el contexto:
+- **Cabecera del editor:** botón **Volver a Capítulos**, título del capítulo activo, navegación **Capítulo anterior** / **Capítulo siguiente**, paginador **Pág. anterior** / **Pág. siguiente**, controles de zoom (`50%`–`150%`), botón **Guardar** y conmutadores para mostrar/ocultar el **Esquema** lateral, el inspector de **Capítulo** y el **Modo enfoque**.
+- **Barra de herramientas:** selector de familia tipográfica y tamaño, color de texto, negrita, cursiva, tachado, alineación (izquierda, centro, derecha, justificado), sangría de primera línea y controles de párrafo, listas con viñetas y numeradas, inserción de imágenes (en flujo o posicionadas libremente con guías de alineación al centro) y saltos de página.
+- **Superficie editable única:** lienzo paginado sobre papel editorial donde escribes directamente viendo los saltos de página reales y el pie de página.
 
-- negrita, cursiva y tachado;
-- alineación izquierda, centrada, derecha y justificada;
-- listas con viñetas y numeradas;
-- color de texto y resaltado;
-- imágenes;
-- saltos de página;
-- deshacer y rehacer.
+## 8. Composición, metadatos, marca y versiones
 
-![Workspace y controles de revisión editorial](screenshots/workspace-editor.png)
+### Reglas de composición y paginación
 
-Usa estilos con intención. Un título debe marcar una sección; no lo uses solo para aumentar el tamaño de un párrafo.
+Desde **Contenido → Composición** puedes gobernar cómo el motor pagina tu obra:
 
-### Imágenes y enlaces
+- **Salto de página antes de cada capítulo** y **Capítulo en página impar (recto)** para impresión.
+- **Líneas mínimas tras un encabezado** (`keepWithNext`) y control de **viudas y huérfanas** (`widowsOrphans`).
+- **Bloques indivisibles (`keepTogether`):** evita partir tablas, citas, avisos, bloques de código, imágenes con pie o listas cortas.
+- **Numeración:** reinicio de figuras y tablas por capítulo y formato de numeración de página (**Decimal**, **Romano minúsculas**, **Romano mayúsculas**).
+- **Puerta de exportación (`exportGate`):** define si las violaciones de composición e incidencias críticas deben **Bloquear**, **Advertir** o **Ignorarse** al exportar.
 
-Inserta una imagen solo cuando tengas derecho a utilizarla y cuando aporte valor al manuscrito. Comprueba su posición en preview y en el archivo exportado.
+### Pre-flight y reversión rápida
 
-Los enlaces deben apuntar al destino correcto. Después de exportar HTML o PDF, comprueba que el enlace sigue siendo identificable y que el texto que lo acompaña explica su destino.
-
-### Atajos
-
-El editor ofrece atajos para acciones frecuentes, como deshacer, rehacer, avanzar o retroceder entre capítulos y guardar. Si no recuerdas un atajo, utiliza el control visible: el resultado debe ser el mismo.
-
-## 8. Composición, metadatos y guardado
-
-### Datos del proyecto
-
-Antes de exportar, revisa:
-
-- título;
-- subtítulo, si existe;
-- autor;
-- idioma del documento;
-- ISBN u otros datos editoriales, si aplican;
-- reglas y preferencias de composición.
-
-Estos datos pueden aparecer en portada, contraportada, índice, preview y exportación.
-
-### Preferencias de composición
-
-Las preferencias de edición permiten elegir una vista de dispositivo, tamaño de texto, familia tipográfica y márgenes. Estas preferencias ayudan a revisar el resultado y pueden alimentar la configuración de exportación.
-
-Cambiar el dispositivo de vista no cambia el contenido del manuscrito. Cambia la forma en que se calcula y se presenta la composición.
-
-### Avisos de composición
-
-El workspace puede mostrar **Salud del documento**, **Cero violaciones** o incidencias por canal. Lee el mensaje concreto antes de exportar.
-
-Si la exportación está bloqueada, corrige primero las violaciones indicadas. Si solo hay avisos, decide si son aceptables para tu destino y revísalos en preview.
-
-### Guardar trabajo y versiones
-
-Guarda los cambios cuando termines una unidad editorial. El estado **Guardado** confirma que la operación terminó; **Guardando** indica que todavía está en curso.
-
-El panel **Historial de versiones** permite usar **Guardar versión**. Una versión es una copia de referencia del documento, útil antes de una reestructuración importante o antes de reimportar.
-
-![Historial y salud del documento](screenshots/workspace-editor.png)
-
-No cierres la pestaña mientras aparezca **Guardando**. Si una acción falla, conserva el texto original y vuelve a cargar solo después de comprobar qué se guardó.
+En **Contenido → Pre-flight**, además de revisar las reglas de **KDP**, **IngramSpark** y **Kobo**, puedes solicitar una propuesta de corrección automática para incidencias compatibles o revertir la última recomposición guardada desde el banner de **Salud del documento**.
 
 ## 9. Portada y contraportada
 
-### Cover Studio
+Los pasos **3. Portada** y **4. Contraportada** comparten el estudio de diseño unificado (**Cover Studio v2**), manteniendo estados e historiales independientes para cada superficie.
 
-Abre **Cover studio** desde el workspace o desde preview. La pantalla permite trabajar con una plantilla y ajustar el contenido guiado. En el modo avanzado puedes editar capas de texto directamente sobre el lienzo.
+![Paso 3 — Portada: estudio de diseño con herramientas, lienzo y panel de propiedades y capas](screenshots/cover-studio.png)
 
-![Cover Studio con datos sintéticos](screenshots/cover-studio.png)
+### Cómo trabajar en Portada (Paso 3)
 
-Puedes ajustar, según la plantilla:
+- **Barra superior del estudio:** selector de **Plantilla editorial**, botones **Deshacer** y **Rehacer**, selector de zoom (**Ajustar al área**, `50%`–`200%`) y botón **Guardar**.
+- **Panel izquierdo de herramientas:** añade o selecciona **Elementos**, **Texto**, **Imágenes**, **Formas**, **Líneas**, **Iconos** y **Fondos**, consulta la miniatura de la plantilla activa o pulsa **Importar portada** para cargar una imagen completa (con aviso automático si la resolución es baja).
+- **Lienzo central:** arrastra, redimensiona y rota capas directamente; en la cabecera del lienzo puedes activar **Ajuste magnético (snap)**, **Área segura**, **Sangrado (bleed)**, **Reglas** y **Cuadrícula**, o usar los botones de alineación y distribución cuando seleccionas varios elementos.
+- **Panel derecho (`Propiedades` y `Capas`):** edita el texto, tipografía, color, opacidad, posición (`X`, `Y`), tamaño (`Ancho`, `Alto`), rotación, recorte o conversión entre capa de imagen y fondo, y gestiona el orden, agrupación, bloqueo y visibilidad en la lista de **Capas**.
 
-- título;
-- subtítulo;
-- autor;
-- paleta;
-- imagen de fondo y opacidad;
-- alineación;
-- negrita y cursiva;
-- tamaño, interlineado y espaciado;
-- visibilidad de elementos.
+### Cómo trabajar en Contraportada (Paso 4)
 
-Pulsa **Guardar portada** o **Guardar Diseño Final** cuando el resultado sea correcto. La portada guardada debe coincidir con la que revisas en preview.
+![Paso 4 — Contraportada: edición de sinopsis, biografía, sello e ISBN sobre el lienzo trasero](screenshots/back-cover.png)
 
-### Imagen de portada
+El paso **4. Contraportada** ofrece un catálogo propio de plantillas traseras y enlaza semánticamente los bloques de **Sinopsis**, **Biografía del autor**, **Sello editorial (imprint)** y reserva de **ISBN / código de barras**.
 
-Usa una imagen que tengas derecho a publicar. Si aparece **Generar imagen**, úsalo para guardar la representación preparada por la aplicación. Revisa el resultado en la preview y en el archivo final.
+## 10. Vista previa, colaboración y asistente IA
 
-### Contraportada
+### Paso 5 — Vista previa
 
-Abre **Contraportada** desde el estudio de portada o desde el workspace. Puedes completar:
+El paso **5. Vista previa** es el espacio único de validación editorial (sin necesidad de abrir modales intermedios):
 
-- título del autor;
-- texto de contraportada;
-- biografía del autor.
+![Paso 5 — Vista previa: carril de páginas, lienzo de lectura y panel de composición y preflight](screenshots/preview-full.png)
 
-![Contraportada del proyecto](screenshots/back-cover.png)
+- **Carril izquierdo (`Páginas`):** miniaturas numeradas de la portada, páginas preliminares/contenido y contraportada para saltar directamente a cualquier página.
+- **Barra de herramientas superior:** selector de modo (**Documento** de 1 página, **Pliego** de 2 páginas enfrentadas o **Portada** enfocada con selector **Portada | Contraportada**), navegador de páginas, controles de zoom, botón **Ajustar**, pantalla completa y botón **Exportar** (que lleva al paso 8).
+- **Panel derecho (`Composición`):** selector de **Destino de lectura** (**Impresión**, **Escritorio**, **Tableta**, **Lector electrónico**), formato y márgenes efectivos, desglose de páginas (**Total**, **Contenido**, **Preliminares**, **Cubierta**) y **Comprobación previa (preflight)** con salto directo a la página afectada.
 
-Escribe un texto breve y revisa que no se corte en la vista final. Pulsa **Guardar contraportada** y vuelve a preview antes de exportar.
+### Paso 6 — Colaborar
 
-## 10. Preview y revisión final
+El paso **6. Colaborar** organiza la revisión en equipo en tres columnas:
 
-### Preview del proyecto
+- **Equipo (izquierda):** muestra al propietario/autor, colaboradores activos (**Corrector** o **Maquetador**) e invitaciones pendientes, con el botón **Invitar colaborador** (que genera un enlace de invitación y envía correo). Los colaboradores también pueden acceder mediante la ruta dedicada `/projects/[id]/collaborate`.
+- **Lector de capítulos (centro):** selector de capítulo y visualización de cada bloque del manuscrito con contador de hilos abiertos y botón **Comentar**.
+- **Comentarios y Sugerencias (derecha):** pestaña **Comentarios** (con filtro **Abiertos / Resueltos / Todos**, respuestas y botón **Resolver** para el autor) y pestaña **Sugerencias** (donde los correctores proponen cambios con diff **Antes / Después** y el autor acepta o rechaza).
 
-La preview es una lectura visual del proyecto. No es un sustituto del archivo final: sirve para revisar composición, orden, portada, contraportada y paginación antes de descargar.
+### Paso 7 — Asistente IA
 
-![Preview paginada con portada y controles de dispositivo](screenshots/preview-full.png)
+El paso **7. Asistente IA** es un espacio de trabajo editorial gobernado y orientado a propuestas (nunca modifica el manuscrito sin tu aceptación explícita):
 
-En la barra superior puedes encontrar controles para:
-
-- vista de una página o dos páginas;
-- laptop, tablet o móvil;
-- zoom;
-- página anterior y siguiente;
-- índice de la preview;
-- cerrar.
-
-### Revisión completa
-
-1. Comprueba la portada.
-2. Avanza varias páginas del manuscrito.
-3. Revisa títulos y saltos de capítulo.
-4. Comprueba listas, citas, imágenes y enlaces.
-5. Revisa la contraportada.
-6. Cambia temporalmente de dispositivo si vas a publicar en más de un formato.
-7. Vuelve al editor si encuentras un problema.
-
-Si aparece **Sin contenido para mostrar**, no exportes todavía. Comprueba que el proyecto contiene capítulos y que la lectura no está bloqueada por un error de carga.
-
-### Preview y archivo descargado
-
-La preview muestra cómo se compone el documento dentro de la aplicación. El archivo descargado puede tener reglas adicionales propias de su formato. Por eso la revisión termina después de abrir el archivo exportado.
+- **Columna izquierda (`Manuscrito`):** selección de capítulo objetivo o **Documento completo**.
+- **Columna derecha (`Acciones editoriales` y `Contexto activo`):** tareas de **Escritura** (**Mejorar estilo**, **Reorganizar capítulo**), **Documento** (**Crear resumen**, **Revisar coherencia** local determinista) y **Correcciones** (**Resolver problemas detectados** en pre-flight/composición), junto con el resumen de contexto (voz editorial de marca, modo de procesamiento local o cloud) e **Historial IA** de operaciones aceptadas.
+- **Columna central:** ejecuta la tarea seleccionada y presenta la tarjeta de revisión con resumen de impacto, cambios agrupados por capítulo y tipo (**Modificado**, **Añadido**, **Eliminado**, **Movido**), comparativa **Antes / Después** y botones **Aceptar cambios** o **Rechazar** (con protección ante propuestas desactualizadas si el capítulo cambió mientras tanto).
 
 ## 11. Exportar
 
-### Antes de descargar
+El paso **8. Exportar** concentra la generación y verificación de entregables en tres columnas más una barra inferior de estado:
 
-Completa esta lista:
+![Paso 8 — Exportar: formatos de salida, configuración específica, comprobación final y barra de exportación](screenshots/exports.png)
 
-- El manuscrito tiene contenido.
-- Los capítulos están en el orden correcto.
-- Los metadatos principales son correctos.
-- La portada y la contraportada están guardadas.
-- La preview muestra texto real.
-- No hay violaciones bloqueantes.
-- Has elegido el formato que necesitas.
+### Cómo exportar y verificar tu publicación
 
-Los botones de exportación aparecen en la zona de preview y pueden mostrar **Exportar HTML**, **Exportar PDF** y **Exportar Word (.docx)**.
+1. **Formatos de salida (izquierda):** selecciona mediante tarjetas de radio el formato deseado:
+   - **PDF (`Diseño fijo`):** paginación compuesta lista para imprenta o lectura digital con portada y contraportada integradas (o descarga del PDF original en proyectos `fixed-pdf`).
+   - **EPUB (`Reflowable`):** libro electrónico adaptable con tabla de navegación de 3 niveles y validación estructural.
+   - **DOCX (`Editable`):** documento Word con texto editable, estilos de encabezado, listas y tablas.
+   - **HTML (`Web`):** documento web semántico autocontenido con estilos de marca.
+   - **Markdown (`Texto`):** texto estructurado limpio con encabezados y formato semántico.
+2. **Configuración (centro):** revisa o ajusta el **Tamaño de página** de salida (por ejemplo `6 × 9 in`, `5.5 × 8.5 in`, etc. para PDF/DOCX sin alterar tu proyecto guardado), márgenes, tipografía, inclusión de portada/contraportada, numeración y el bloque de **Metadatos** (**Título**, **Autor**, **Idioma**, **ISBN**), además del nombre de archivo resultante.
+3. **Comprobación final (derecha):** verifica el estado de **Contenido**, **Portada**, **Contraportada**, **Metadatos**, **Fuentes**, **Imágenes**, **Composición** y **Uso de IA** (incluyendo el panel de **Declaración de contenido IA para KDP** cuando se han aceptado propuestas del asistente). Cada fila es interactiva y te lleva al paso correspondiente si necesitas corregir algo.
+4. **Barra inferior y verificación del archivo:** comprueba el estado (**Listo para exportar** o **Requiere atención**) y pulsa **Exportar {formato}**. Antes de iniciar la descarga, Talent valida en el navegador la integridad real del archivo generado (cabeceras, páginas PDF, `word/document.xml` en DOCX, estructura OPF/NAV en EPUB, cierre HTML) y muestra la tarjeta **Archivo generado** junto con la lista **Exportados en esta sesión**.
 
-![Acciones de exportación del proyecto](screenshots/exports.png)
-
-### HTML
-
-**Úsalo para:** conservar una versión web del proyecto o revisar el contenido en un navegador.
-
-1. Abre preview.
-2. Pulsa **Exportar HTML**.
-3. Guarda el archivo descargado.
-4. Ábrelo en un navegador.
-5. Comprueba título, headings, párrafos, capítulos, imágenes y enlaces.
-
-El archivo HTML debe contener el manuscrito, no solo una portada o una pantalla vacía.
-
-### Word
-
-**Úsalo para:** continuar la edición en un procesador de textos.
-
-1. Abre preview.
-2. Pulsa **Exportar Word (.docx)**.
-3. Abre el archivo en Word, LibreOffice o una aplicación compatible.
-4. Comprueba que puedes seleccionar y editar el texto.
-5. Revisa el orden de capítulos, encabezados, listas e imágenes.
-
-Si el documento se ve como una sola imagen, no lo consideres correcto para continuar editándolo: vuelve a generar el archivo y comprueba el estado del proyecto.
-
-### PDF
-
-**Úsalo para:** compartir o revisar una versión paginada.
-
-1. Abre preview.
-2. Pulsa **Exportar PDF**.
-3. Espera a que termine la preparación.
-4. Abre el PDF descargado.
-5. Comprueba que el texto se puede seleccionar, que se lee y que las páginas coinciden con la preview.
-
-La fidelidad visual y la semántica son comprobaciones diferentes. Un PDF que descarga correctamente puede seguir necesitando revisión de contenido.
-
-### EPUB y otros paquetes
-
-El repositorio contiene un flujo EPUB y capacidades de pack de lanzamiento. Si tu workspace muestra **Exportar EPUB (.epub)** o **Pack de lanzamiento**, sigue las instrucciones de esa pantalla y revisa el archivo con un lector compatible. No confundas una capacidad disponible en una ruta técnica con un botón que necesariamente aparezca en todos los proyectos.
-
-### Qué hacer si el archivo está vacío
-
-No continúes con un archivo que no contenga el manuscrito. Vuelve al editor, comprueba que los capítulos tienen texto, guarda los cambios y repite preview y exportación. Si vuelve a ocurrir, conserva el archivo descargado y anota formato, proyecto y hora para soporte.
+Además, al final del paso puedes desplegar **Pack de lanzamiento y canales de venta** para generar el manifiesto multiformato o sincronizar borradores con **Gumroad** / **Hotmart** cuando estén configurados.
 
 ## 12. Trabajar en móvil y tablet
 
-Anclora Talent adapta el espacio de trabajo a pantallas estrechas. El editor físico no debe convertirse en una doble página de escritorio recortada.
+Anclora Talent adapta el shell, los paneles laterales y el editor de capítulos a pantallas estrechas para evitar recortes horizontales.
 
-![Editor en viewport móvil](screenshots/mobile-editor.png)
+![Workspace editorial adaptado a viewport móvil](screenshots/mobile-editor.png)
 
-En móvil:
-
-- el documento se presenta en una columna ajustada;
-- las herramientas pueden ocupar varias filas;
-- la navegación entre capítulos permanece accesible;
-- los controles secundarios pueden quedar detrás de un menú;
-- el contenido principal debe aparecer antes que los paneles avanzados.
-
-En tablet, la aplicación puede mostrar más controles en paralelo, pero el orden del contenido sigue siendo el mismo.
-
-### Recomendaciones
-
-1. Gira el dispositivo si necesitas una revisión amplia de una portada.
-2. Usa la vista móvil para comprobar lectura y clipping.
-3. Usa escritorio para ajustes finos de composición y Cover Studio.
-4. Si un control no aparece, abre el menú de navegación o reduce el zoom del navegador sin forzar un desplazamiento horizontal.
+- En **móvil (`375px`–`430px`)**, el documento del editor se muestra en una sola columna ajustada al ancho físico de la pantalla sin modificar el formato de exportación guardado en tu proyecto.
+- En **Vista previa (Paso 5)**, **Colaborar (Paso 6)** y **Asistente IA (Paso 7)**, las columnas laterales de páginas, composición, equipo o contexto se pliegan en cajones accesibles mediante botones superiores.
+- En **Exportar (Paso 8)**, las tres columnas se apilan verticalmente manteniendo accesibles la selección de formato, la configuración y el botón de descarga.
 
 ## 13. Idioma, tema y preferencias
 
-### Cambiar idioma
+### Cambiar idioma (`ES` / `EN`)
 
-En la cabecera, pulsa el selector que muestra **ES** o **EN**.
+En la barra superior, pulsa **ES** o **EN** para alternar toda la interfaz operativa entre español e inglés. El idioma elegido se guarda en tus preferencias sin traducir ni alterar el contenido de tu manuscrito.
 
-- **ES** muestra la interfaz en español.
-- **EN** muestra la interfaz en inglés.
+### Cambiar tema (`Oscuro` / `Claro`)
 
-El cambio se guarda en la preferencia del navegador y se aplica también a las pantallas cargadas por el servidor. Si una pantalla conserva el idioma anterior, actualiza la página una vez y comprueba que la cookie de preferencia no está bloqueada.
-
-![Cabecera del dashboard con idioma y tema](screenshots/dashboard-dark.png)
-
-El idioma de la interfaz no cambia automáticamente el idioma editorial del manuscrito. El idioma del documento es un dato separado que debes revisar en sus metadatos.
-
-### Cambiar tema
-
-La aplicación empieza en tema **dark**. Pulsa el control de luna o sol para cambiar entre tema oscuro y claro. El tema es una preferencia de interfaz; no cambia colores ni contenido ya guardados en una portada o en un documento.
-
-### Preferencias de editor
-
-En el panel de preferencias puedes ajustar familia tipográfica, tamaño, dispositivo y márgenes. Estas opciones sirven para trabajar y revisar el proyecto. Cambiar una preferencia no debe borrar capítulos ni alterar su orden.
+La aplicación inicia en modo **oscuro** (`quiet luxury` azul cielo `#4A9FD8` sobre navy/teal profundo). Pulsa el icono de sol/luna en la cabecera para alternar con el modo **claro** cálido (`#F2F7FC`). El cambio de tema afecta únicamente a la interfaz de la aplicación, nunca al color del papel ni a las portadas exportadas.
 
 ## 14. Si algo no funciona
 
 | Problema | Posible causa | Qué hacer |
 | --- | --- | --- |
-| No puedo entrar | Email, contraseña o sesión incorrectos | Revisa ambos campos y vuelve a intentarlo; utiliza recuperación si olvidaste la contraseña |
-| No recibo recuperación | Mensaje en spam o servicio de correo no disponible | Revisa spam, confirma el email y contacta con soporte si el aviso indica indisponibilidad |
-| No veo mi proyecto | Búsqueda, cuenta o proyecto equivocados | Comprueba la cuenta, limpia la búsqueda y revisa **Mis proyectos** |
-| La preview aparece vacía | Proyecto sin capítulos o carga incompleta | Vuelve al editor, confirma que hay texto y recarga después de guardar |
-| La importación falla | Archivo no compatible, grande o difícil de analizar | Usa un formato aceptado, revisa el límite y conserva el original |
-| Un capítulo está en el sitio equivocado | Orden no revisado después de importar o mover | Usa **Mover capítulo arriba/abajo**, guarda y revisa preview |
-| Cover Studio no carga | Imagen o datos del proyecto no disponibles | Vuelve al editor, confirma el proyecto y abre de nuevo el estudio |
-| La exportación tarda | Documento largo, imágenes o preparación del formato | Espera a que termine; no cierres la pestaña mientras muestre estado de progreso |
-| El archivo exportado no contiene el texto | Error de integridad del artefacto | No lo publiques; guarda el archivo, repite guardado/preview y registra el formato |
-| El modal de proyectos no responde | Foco o carga incompleta | Pulsa Escape, vuelve a abrirlo y usa la tabla completa como alternativa |
-| El idioma solo cambia en una parte | Cookie antigua o página sin refrescar | Cambia otra vez, actualiza la página y comprueba ES/EN en una pantalla distinta |
-| Se cerró la sesión | Sesión caducada | Vuelve a iniciar sesión; el contenido persistido permanece en la cuenta |
-
-Cuando informes de un problema, incluye ruta, idioma, tema, formato de pantalla, nombre sintético del proyecto y pasos realizados. No envíes contraseñas, tokens ni claves.
+| No puedo iniciar sesión | Email o contraseña incorrectos | Revisa ambos campos o usa **¿Olvidaste tu contraseña?** |
+| No encuentro un proyecto | Filtro de estado o búsqueda activa | Limpia el campo **Buscar proyectos** y selecciona **Todos los estados** en el Dashboard |
+| El botón de exportar está desactivado | Política `exportGate` en modo **Bloquear** con errores activos, o formato no aplicable en modo `fixed-pdf` | Revisa la columna **Comprobación final** en el Paso 8 o cambia la puerta de exportación en **Contenido → Composición → Exportación** |
+| Una propuesta del Asistente IA aparece como desactualizada | El capítulo se editó después de generar la propuesta | Pulsa **Regenerar propuesta** en el Paso 7 para calcular el diff sobre el texto actual |
+| Los números del índice no coinciden tras reordenar capítulos | Orden modificado en el Paso 2 | Pulsa **Sincronizar numeración** en la columna izquierda de **Capítulos** |
+| Quiero editar el texto de un PDF importado en modo fijo | El proyecto está en modo `fixed-pdf` | Ve al Paso 8 (**Exportar**) y pulsa **Crear copia editable** |
 
 ## 15. Preguntas frecuentes
 
-### ¿Necesito una cuenta?
+### ¿Puedo empezar un libro sin subir ningún archivo?
 
-Sí, necesitas una cuenta para guardar y recuperar proyectos en el espacio autenticado.
+Sí. En **Nuevo proyecto**, escribe el título, elige una plantilla y pulsa **Crear proyecto y abrir editor** dejando vacío el bloque de manuscrito.
 
-### ¿Puedo empezar sin manuscrito?
+### ¿Cambiar el destino en Vista previa modifica mi libro?
 
-Sí. Crea un proyecto vacío y empieza a escribir desde el editor.
+No. Cambiar entre **Impresión**, **Escritorio**, **Tableta** y **Lector electrónico** en el Paso 5 solo cambia la simulación de lectura; nunca sobrescribe tus capítulos ni tus reglas guardadas.
 
-### ¿Puedo importar un Word?
+### ¿El Asistente IA modifica mis capítulos automáticamente?
 
-El flujo de proyecto contempla manuscritos Word compatibles. Revisa siempre la estructura detectada después del análisis.
+Nunca. Toda acción en el Paso 7 genera una propuesta de operaciones sobre bloques que puedes inspeccionar con diff **Antes / Después** y debes **Aceptar** o **Rechazar** manualmente.
 
-### ¿Se guarda automáticamente?
+### ¿Cuándo se activa el aviso de divulgación de IA para Amazon KDP?
 
-Las operaciones de guardado muestran estados como **Guardando** y **Guardado**. Además puedes usar **Guardar versión** antes de cambios importantes.
+Solo cuando aceptas propuestas generadas o asistidas por IA (o cuando el documento registra procedencia IA). Las revisiones rechazadas o descartadas no alteran el manuscrito ni activan la declaración.
 
-### ¿Qué diferencia hay entre preview y export?
+### ¿Cómo sé que el archivo descargado en Exportar no está vacío ni corrupto?
 
-Preview es la lectura dentro de Talent. Export es el archivo que sale de la aplicación. Debes revisar ambos.
-
-### ¿Puedo editar después de exportar?
-
-Sí. El proyecto sigue siendo editable. Después de cambiarlo, vuelve a revisar y exporta otra versión.
-
-### ¿Qué formato debo descargar?
-
-HTML para navegador, Word para continuar editando y PDF para compartir o revisar paginación. Elige según el uso final y comprueba el archivo.
-
-### ¿Puedo usar Talent desde el móvil?
-
-Sí, para revisar y editar en una pantalla estrecha. Para composición avanzada y diseño de portada, una pantalla grande ofrece más espacio.
-
-### ¿Qué ocurre si cierro el navegador?
-
-Los cambios que ya aparecen como guardados permanecen en tu proyecto. Si cerraste mientras decía **Guardando**, vuelve a entrar y comprueba el contenido antes de seguir.
-
-### ¿Cómo recupero mi contraseña?
-
-Usa **¿Olvidaste tu contraseña?** en la pantalla de acceso y sigue el enlace válido recibido.
+El Paso 8 verifica automáticamente los bytes y la estructura interna del archivo (PDF, EPUB, DOCX, HTML o Markdown) antes de ofrecer la descarga y muestra las comprobaciones superadas en la tarjeta **Archivo generado**.
 
 ## 16. Glosario
 
 | Término | Significado |
 | --- | --- |
-| Proyecto | Espacio que reúne título, manuscrito, capítulos, metadatos y superficies de publicación |
-| Manuscrito | Texto de trabajo que vas a editar y preparar |
-| Capítulo | Unidad ordenada del manuscrito |
-| Workspace | Espacio de trabajo editorial del proyecto |
-| Composición | Reglas que determinan cómo se distribuye el contenido en páginas |
-| Preview | Vista de lectura del resultado dentro de Talent |
-| Cover Studio | Herramienta para diseñar la portada |
-| Contraportada | Superficie posterior con resumen, título del autor o biografía |
-| Exportación | Generación de un archivo descargable |
-| Versión | Copia guardada del documento para comparar o recuperar trabajo |
-| Violación | Aviso de una regla de composición que requiere revisión |
-| Proyecto vacío | Proyecto sin manuscrito inicial, listo para empezar a escribir |
+| **AST / Documento semántico** | Representación estructurada de capítulos y bloques (encabezados, párrafos, listas, tablas, citas, imágenes) que sirve de fuente única |
+| **Mapa de páginas de origen (`sourcePageMap`)** | Correspondencia certificada entre las páginas físicas del documento importado y las páginas mostradas en el editor y la vista previa |
+| **Estilo editorial de referencia** | Perfil tipográfico y de márgenes extraído de un documento DOCX/PDF modelo sin copiar su contenido |
+| **Perfil de marca (`BrandProfile`)** | Conjunto reutilizable de colores semánticos (`ink`, `paper`, `accent`, `accentMuted`), tipografías y voz editorial |
+| **Pre-flight** | Validación previa de metadatos, estructura y composición frente a los requisitos de **KDP**, **IngramSpark** y **Kobo** |
+| **Cover Studio v2** | Estudio unificado de los pasos 3 y 4 para diseñar portada y contraportada por capas o plantillas |
+| **Propuesta IA gobernada** | Conjunto de cambios sobre bloques con vista previa antes/después que requiere aceptación humana explícita |
+| **Puerta de exportación (`exportGate`)** | Regla del proyecto (`off`, `warn`, `block`) que decide si los errores de composición o pre-flight bloquean la exportación por formato |

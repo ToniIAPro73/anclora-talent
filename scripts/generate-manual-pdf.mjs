@@ -4,17 +4,17 @@
  * Uso: node scripts/generate-manual-pdf.mjs
  * Salida: public/manuals/anclora-talent-manual-usuario-es.pdf
  *
- * Requiere: Chromium de Playwright + poppler (pdfinfo, pdftotext) para
- * calcular la numeración de páginas del índice.
- *
  * Renderiza en dos pasadas: la primera para averiguar en qué página
  * empieza cada sección (vía pdftotext), la segunda ya con el índice
- * completo y la numeración de página estampada en cada página (footer
- * de Playwright).
+ * completo y la numeración de página estampada en cada página.
+ * Usa Chromium de Playwright cuando el binario local está disponible y
+ * recurre automáticamente a @react-pdf/pdfkit en entornos sin navegador
+ * headless instalado.
  */
 import { chromium } from '@playwright/test';
+import PDFDocument from '@react-pdf/pdfkit';
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { createWriteStream, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -56,14 +56,26 @@ for (const relPath of referencedImages) {
   if (!existsSync(imagePath)) throw new Error(`Imagen referenciada no encontrada: ${relPath}`);
 }
 
-const browser = await chromium.launch({ headless: true });
+let browser = null;
+try {
+  browser = await chromium.launch({ headless: true });
+} catch {
+  browser = null;
+}
 
-await renderPdf({});
-const sectionPages = extractSectionPages();
-await renderPdf(sectionPages);
-validateFinalPdf(sectionPages);
+if (browser) {
+  await renderPdf({});
+  const sectionPages = extractSectionPages();
+  await renderPdf(sectionPages);
+  validateFinalPdf(sectionPages);
+  await browser.close();
+} else {
+  await renderPdfWithPdfKit({});
+  const sectionPages = extractSectionPages();
+  await renderPdfWithPdfKit(sectionPages);
+  validateFinalPdf(sectionPages);
+}
 
-await browser.close();
 console.log(`Manual generado: ${path.relative(root, outputPath)}`);
 console.log(`Secciones: ${manual.sections.length}; imágenes: ${referencedImages.length}`);
 
@@ -156,6 +168,419 @@ function footerTemplate() {
 </script>`;
 }
 
+// ─── Renderizado alternativo A4 en dos pasadas con PDFKit ───────────────────
+function stripInlineMarkdown(value) {
+  return String(value)
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
+    .trim();
+}
+
+function readPngSize(filePath) {
+  const buf = readFileSync(filePath);
+  if (buf.length >= 24 && buf[0] === 0x89 && buf[1] === 0x50) {
+    return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+  }
+  return { width: 1440, height: 900 };
+}
+
+async function renderPdfWithPdfKit(sectionPages) {
+  const isFinalPass = Object.keys(sectionPages).length > 0;
+  const outFile = isFinalPass ? outputPath : passPdfPath;
+  const PAGE_W = 595.28;
+  const PAGE_H = 841.89;
+  const MARGIN_X = 51;
+  const MARGIN_TOP = 56;
+  const MARGIN_BOTTOM = 52;
+  const CONTENT_W = PAGE_W - MARGIN_X * 2;
+
+  const doc = new PDFDocument({
+    size: 'A4',
+    margins: { top: MARGIN_TOP, bottom: MARGIN_BOTTOM, left: MARGIN_X, right: MARGIN_X },
+    bufferPages: true,
+    info: {
+      Title: 'Anclora Talent - Manual de Usuario v2.0',
+      Author: 'Anclora Group',
+      Subject: 'Manual de usuario oficial en español (Versión 2.0)',
+    },
+  });
+
+  const stream = createWriteStream(outFile);
+  const done = new Promise((resolve, reject) => {
+    stream.on('finish', resolve);
+    stream.on('error', reject);
+  });
+  doc.pipe(stream);
+
+  const fontBodyPath = '/System/Library/Fonts/Supplemental/Arial.ttf';
+  const fontBoldPath = '/System/Library/Fonts/Supplemental/Arial Bold.ttf';
+  const fontItalicPath = '/System/Library/Fonts/Supplemental/Arial Italic.ttf';
+  const BodyFont = existsSync(fontBodyPath) ? 'Body' : 'Helvetica';
+  const BoldFont = existsSync(fontBoldPath) ? 'Bold' : 'Helvetica-Bold';
+  const ItalicFont = existsSync(fontItalicPath) ? 'Italic' : 'Helvetica-Oblique';
+  if (existsSync(fontBodyPath)) doc.registerFont('Body', fontBodyPath);
+  if (existsSync(fontBoldPath)) doc.registerFont('Bold', fontBoldPath);
+  if (existsSync(fontItalicPath)) doc.registerFont('Italic', fontItalicPath);
+
+  const ensureSpace = (neededHeight) => {
+    if (doc.y + neededHeight > PAGE_H - MARGIN_BOTTOM) {
+      doc.addPage();
+    }
+  };
+
+  // 1. Portada (Página 1)
+  doc.save();
+  doc.rect(0, 0, PAGE_W, PAGE_H).fill('#0c141e');
+  doc.roundedRect(22, 22, PAGE_W - 44, PAGE_H - 44, 4).lineWidth(1).strokeColor('#4a9fd8').stroke();
+  doc.restore();
+
+  doc.image(logoPath, (PAGE_W - 96) / 2, 86, { width: 96 });
+  doc.y = 204;
+  doc.font(BoldFont).fontSize(11).fillColor('#8fc8ee').text('ANCLORA TALENT', MARGIN_X, doc.y, {
+    width: CONTENT_W,
+    align: 'center',
+    characterSpacing: 1.6,
+  });
+  doc.moveTo(PAGE_W / 2 - 56, doc.y + 8).lineTo(PAGE_W / 2 + 56, doc.y + 8).lineWidth(1).strokeColor('#4a9fd8').stroke();
+
+  doc.y += 24;
+  doc.font(BoldFont).fontSize(36).fillColor('#f4f8fb').text('Manual de Usuario', MARGIN_X, doc.y, {
+    width: CONTENT_W,
+    align: 'center',
+  });
+
+  doc.y += 14;
+  doc.font(BodyFont).fontSize(13.5).fillColor('#c6d9e8').text(
+    'Guía práctica del sistema de workspaces v2 para crear, estructurar, editar, diseñar portada y contraportada, colaborar, usar el Asistente IA gobernado y exportar tu publicación en Anclora Talent.',
+    MARGIN_X + 28,
+    doc.y,
+    { width: CONTENT_W - 56, align: 'center', lineGap: 3 },
+  );
+
+  const pillY = doc.y + 34;
+  const pills = ['Versión 2.0', 'Actualizado 19 octubre 2026', 'Idioma Español'];
+  const pillWidths = [115, 175, 120];
+  const pillGap = 12;
+  const totalPillW = pillWidths.reduce((a, b) => a + b, 0) + pillGap * (pills.length - 1);
+  let pillX = (PAGE_W - totalPillW) / 2;
+  pills.forEach((label, idx) => {
+    const w = pillWidths[idx];
+    doc.save();
+    doc.roundedRect(pillX, pillY, w, 24, 12).fill('#4a9fd8');
+    doc.restore();
+    doc.font(BoldFont).fontSize(9).fillColor('#092033').text(label, pillX, pillY + 7, {
+      width: w,
+      align: 'center',
+    });
+    pillX += w + pillGap;
+  });
+
+  doc.page.margins.bottom = 0;
+  doc.font(BodyFont).fontSize(8).fillColor('#9db9cb').text(
+    'Documento de ayuda al usuario final. Todas las capturas utilizan datos sintéticos de demostración sobre la versión actual v2 de Anclora Talent.',
+    MARGIN_X + 16,
+    PAGE_H - 76,
+    { width: CONTENT_W - 32, align: 'center' },
+  );
+
+  // 2. Índice (Página 2)
+  doc.addPage();
+  doc.page.margins.bottom = MARGIN_BOTTOM;
+  doc.font(BoldFont).fontSize(8.5).fillColor('#2c729f').text('MANUAL DE USUARIO', MARGIN_X, MARGIN_TOP, {
+    characterSpacing: 1.1,
+  });
+  doc.moveDown(0.2);
+  doc.font(BoldFont).fontSize(22).fillColor('#12344b').text('Índice', MARGIN_X, doc.y);
+  doc.moveDown(0.2);
+  doc.font(BodyFont).fontSize(9.5).fillColor('#536b7b').text(
+    'Una guía ordenada para crear, editar, revisar y exportar un proyecto editorial en el sistema de workspaces v2.',
+    MARGIN_X,
+    doc.y,
+    { width: CONTENT_W },
+  );
+  doc.y += 10;
+  doc.moveTo(MARGIN_X, doc.y).lineTo(PAGE_W - MARGIN_X, doc.y).lineWidth(1).strokeColor('#4a9fd8').stroke();
+  doc.y += 6;
+
+  for (const section of manual.sections) {
+    const rowY = doc.y;
+    const pageNo = sectionPages[section.number] ? String(sectionPages[section.number]) : '';
+    doc.font(BoldFont).fontSize(8.5).fillColor('#2c729f').text(section.number.padStart(2, '0'), MARGIN_X, rowY + 3, {
+      width: 24,
+    });
+    doc.font(BodyFont).fontSize(10).fillColor('#12344b').text(section.title, MARGIN_X + 28, rowY + 2, {
+      width: CONTENT_W - 70,
+    });
+    if (pageNo) {
+      doc.font(BoldFont).fontSize(9.5).fillColor('#12344b').text(pageNo, PAGE_W - MARGIN_X - 36, rowY + 2, {
+        width: 36,
+        align: 'right',
+      });
+    }
+    doc.y = rowY + 20;
+    doc.moveTo(MARGIN_X, doc.y).lineTo(PAGE_W - MARGIN_X, doc.y).lineWidth(0.5).strokeColor('#e4ddd1').stroke();
+    doc.y += 4;
+  }
+
+  // 3. Secciones (1..16)
+  for (const section of manual.sections) {
+    if (section.number === '1' || doc.y > 240) {
+      doc.addPage();
+    } else {
+      doc.y += 18;
+    }
+
+    const headingText = `${section.number}. ${section.title}`;
+    doc.font(BoldFont).fontSize(18).fillColor('#12344b').text(headingText, MARGIN_X, doc.y, {
+      width: CONTENT_W,
+    });
+    doc.y += 4;
+    doc.moveTo(MARGIN_X, doc.y).lineTo(PAGE_W - MARGIN_X, doc.y).lineWidth(1).strokeColor('#4a9fd8').stroke();
+    doc.y += 10;
+
+    const lines = section.lines;
+    let i = 0;
+    while (i < lines.length) {
+      const trimmed = lines[i].trim();
+      if (!trimmed || trimmed === '---' || trimmed === '<div class="page-break"></div>') {
+        i += 1;
+        continue;
+      }
+      if (trimmed.startsWith('<div class="footer-brand">')) {
+        while (i < lines.length && lines[i].trim() !== '</div>') i += 1;
+        i += 1;
+        continue;
+      }
+
+      const imageMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/);
+      if (imageMatch) {
+        const alt = stripInlineMarkdown(imageMatch[1]);
+        const relPath = imageMatch[2];
+        const absImg = path.join(manualDir, relPath);
+        const dims = readPngSize(absImg);
+        if (dims.width < 20 || dims.height < 20) {
+          throw new Error(`Imagen con dimensiones no razonables: ${relPath}`);
+        }
+        const maxW = CONTENT_W;
+        const maxH = 285;
+        const scale = Math.min(maxW / dims.width, maxH / dims.height, 1);
+        const drawW = Math.round(dims.width * scale);
+        const drawH = Math.round(dims.height * scale);
+        const captionH = doc.font(ItalicFont).fontSize(8).heightOfString(alt, { width: CONTENT_W });
+        ensureSpace(drawH + captionH + 22);
+
+        const imgX = MARGIN_X + (CONTENT_W - drawW) / 2;
+        const imgY = doc.y + 4;
+        doc.image(absImg, imgX, imgY, { width: drawW, height: drawH });
+        doc.save();
+        doc.roundedRect(imgX, imgY, drawW, drawH, 3).lineWidth(1).strokeColor('#9ab7c8').stroke();
+        doc.restore();
+        doc.y = imgY + drawH + 5;
+        doc.font(ItalicFont).fontSize(8).fillColor('#5a6a7c').text(alt, MARGIN_X, doc.y, {
+          width: CONTENT_W,
+          align: 'center',
+        });
+        doc.y += 8;
+        i += 1;
+        continue;
+      }
+
+      if (/^###\s+/.test(trimmed)) {
+        const subTitle = stripInlineMarkdown(trimmed.replace(/^###\s+/, ''));
+        ensureSpace(44);
+        doc.y += 6;
+        doc.font(BoldFont).fontSize(12.5).fillColor('#1a4c6c').text(subTitle, MARGIN_X, doc.y, {
+          width: CONTENT_W,
+        });
+        doc.y += 4;
+        i += 1;
+        continue;
+      }
+
+      if (/^>\s+/.test(trimmed)) {
+        const quoteLines = [];
+        while (i < lines.length && /^>\s+/.test(lines[i].trim())) {
+          quoteLines.push(stripInlineMarkdown(lines[i].trim().replace(/^>\s+/, '')));
+          i += 1;
+        }
+        const quoteText = quoteLines.join('\n');
+        doc.font(BodyFont).fontSize(9.5);
+        const textH = doc.heightOfString(quoteText, { width: CONTENT_W - 24, lineGap: 2 });
+        const boxH = textH + 16;
+        ensureSpace(boxH + 10);
+        const boxY = doc.y + 2;
+        doc.save();
+        doc.rect(MARGIN_X, boxY, CONTENT_W, boxH).fill('#edf5fa');
+        doc.rect(MARGIN_X, boxY, 4, boxH).fill('#4a9fd8');
+        doc.restore();
+        doc.font(BodyFont).fontSize(9.5).fillColor('#21324a').text(quoteText, MARGIN_X + 12, boxY + 8, {
+          width: CONTENT_W - 24,
+          lineGap: 2,
+        });
+        doc.y = boxY + boxH + 8;
+        continue;
+      }
+
+      if (/^[-*]\s+/.test(trimmed)) {
+        while (i < lines.length && /^[-*]\s+/.test(lines[i].trim())) {
+          const itemText = stripInlineMarkdown(lines[i].trim().replace(/^[-*]\s+/, ''));
+          doc.font(BodyFont).fontSize(9.8);
+          const itemH = doc.heightOfString(itemText, { width: CONTENT_W - 16, lineGap: 1.5 });
+          ensureSpace(itemH + 6);
+          const itemY = doc.y;
+          doc.font(BoldFont).fontSize(9.8).fillColor('#2c729f').text('•', MARGIN_X + 2, itemY);
+          doc.font(BodyFont).fontSize(9.8).fillColor('#142534').text(itemText, MARGIN_X + 14, itemY, {
+            width: CONTENT_W - 14,
+            lineGap: 1.5,
+          });
+          doc.y += 3;
+          i += 1;
+        }
+        doc.y += 4;
+        continue;
+      }
+
+      if (/^\d+\.\s+/.test(trimmed)) {
+        let num = 1;
+        while (i < lines.length && /^\d+\.\s+/.test(lines[i].trim())) {
+          const itemText = stripInlineMarkdown(lines[i].trim().replace(/^\d+\.\s+/, ''));
+          doc.font(BodyFont).fontSize(9.8);
+          const itemH = doc.heightOfString(itemText, { width: CONTENT_W - 20, lineGap: 1.5 });
+          ensureSpace(itemH + 6);
+          const itemY = doc.y;
+          doc.font(BoldFont).fontSize(9.5).fillColor('#2c729f').text(`${num}.`, MARGIN_X, itemY, { width: 16 });
+          doc.font(BodyFont).fontSize(9.8).fillColor('#142534').text(itemText, MARGIN_X + 18, itemY, {
+            width: CONTENT_W - 18,
+            lineGap: 1.5,
+          });
+          doc.y += 3;
+          num += 1;
+          i += 1;
+        }
+        doc.y += 4;
+        continue;
+      }
+
+      if (trimmed.startsWith('|')) {
+        const tableLines = [];
+        while (i < lines.length && lines[i].trim().startsWith('|')) {
+          tableLines.push(lines[i].trim());
+          i += 1;
+        }
+        const rows = tableLines
+          .filter((l) => !/^\|\s*-+/.test(l))
+          .map((l) => l.replace(/^\||\|$/g, '').split('|').map((c) => stripInlineMarkdown(c)));
+        if (rows.length > 0) {
+          const colCount = rows[0].length;
+          const colW = CONTENT_W / colCount;
+          const padX = 6;
+          const padY = 5;
+
+          const drawRow = (row, isHeader) => {
+            doc.font(isHeader ? BoldFont : BodyFont).fontSize(8.6);
+            const cellHeights = row.map((cell) =>
+              doc.heightOfString(cell, { width: colW - padX * 2, lineGap: 1.2 }),
+            );
+            const rowH = Math.max(...cellHeights, 12) + padY * 2;
+            ensureSpace(rowH + 6);
+            const startY = doc.y;
+            if (isHeader) {
+              doc.save();
+              doc.rect(MARGIN_X, startY, CONTENT_W, rowH).fill('#1b5577');
+              doc.restore();
+            }
+            row.forEach((cell, cIdx) => {
+              const cellX = MARGIN_X + cIdx * colW;
+              doc
+                .font(isHeader ? BoldFont : cIdx === 0 ? BoldFont : BodyFont)
+                .fontSize(8.6)
+                .fillColor(isHeader ? '#ffffff' : '#142534')
+                .text(cell, cellX + padX, startY + padY, {
+                  width: colW - padX * 2,
+                  lineGap: 1.2,
+                });
+            });
+            doc.save();
+            doc
+              .moveTo(MARGIN_X, startY + rowH)
+              .lineTo(MARGIN_X + CONTENT_W, startY + rowH)
+              .lineWidth(isHeader ? 1 : 0.5)
+              .strokeColor(isHeader ? '#4a9fd8' : '#dfe5e8')
+              .stroke();
+            doc.restore();
+            doc.y = startY + rowH;
+          };
+
+          const [head, ...body] = rows;
+          drawRow(head, true);
+          body.forEach((r) => drawRow(r, false));
+          doc.y += 8;
+        }
+        continue;
+      }
+
+      const paragraph = [];
+      while (i < lines.length && lines[i].trim() && !isBlockStart(lines[i].trim())) {
+        paragraph.push(stripInlineMarkdown(lines[i].trim()));
+        i += 1;
+      }
+      const pText = paragraph.join(' ');
+      if (pText) {
+        doc.font(BodyFont).fontSize(9.8);
+        const pH = doc.heightOfString(pText, { width: CONTENT_W, lineGap: 2 });
+        ensureSpace(pH + 6);
+        doc.font(BodyFont).fontSize(9.8).fillColor('#142534').text(pText, MARGIN_X, doc.y, {
+          width: CONTENT_W,
+          lineGap: 2,
+        });
+        doc.y += 6;
+      }
+    }
+  }
+
+  // Pie de cierre en la última página y numeración en todas las páginas >= 2
+  ensureSpace(48);
+  doc.y += 12;
+  doc.moveTo(MARGIN_X, doc.y).lineTo(PAGE_W - MARGIN_X, doc.y).lineWidth(1).strokeColor('#4a9fd8').stroke();
+  doc.y += 8;
+  doc.font(BoldFont).fontSize(9.5).fillColor('#12344b').text('Anclora Talent', MARGIN_X, doc.y, {
+    width: CONTENT_W,
+    align: 'center',
+  });
+  doc.font(BodyFont).fontSize(8.5).fillColor('#51646f').text(
+    'Manual de usuario · Versión 2.0 · Español',
+    MARGIN_X,
+    doc.y + 2,
+    { width: CONTENT_W, align: 'center' },
+  );
+
+  if (isFinalPass) {
+    const range = doc.bufferedPageRange();
+    for (let p = 1; p < range.count; p += 1) {
+      doc.switchToPage(p);
+      const prevBottom = doc.page.margins.bottom;
+      doc.page.margins.bottom = 0;
+      const footerY = PAGE_H - 34;
+      doc.font(BoldFont).fontSize(7.5).fillColor('#182a4a').text('Anclora Talent', MARGIN_X, footerY, {
+        width: CONTENT_W / 2,
+        align: 'left',
+        lineBreak: false,
+      });
+      doc.font(BodyFont).fontSize(7.5).fillColor('#182a4a').text(String(p + 1), MARGIN_X + CONTENT_W / 2, footerY, {
+        width: CONTENT_W / 2,
+        align: 'right',
+        lineBreak: false,
+      });
+      doc.page.margins.bottom = prevBottom;
+    }
+  }
+
+  doc.end();
+  await done;
+}
+
 // ─── Numeración de páginas del índice (dos pasadas) ─────────────────────────
 function extractSectionPages() {
   const info = execFileSync('pdfinfo', [passPdfPath], { encoding: 'utf8' });
@@ -184,7 +609,7 @@ function validateFinalPdf(sectionPages) {
   if (!pageCount || pageCount < manual.sections.length + 2) {
     throw new Error(`Número de páginas inesperado: ${pageCount}`);
   }
-  if (!/595\.27 x 841\.89|595\.276 x 841\.89|A4/i.test(pageSize)) {
+  if (!/595\.27 x 841\.89|595\.276 x 841\.89|595\.28 x 841\.89|A4/i.test(pageSize)) {
     throw new Error(`El PDF no declara tamaño A4: ${pageSize}`);
   }
   if (!/^no$/i.test(encrypted)) throw new Error(`El PDF aparece cifrado: ${encrypted}`);
@@ -615,7 +1040,8 @@ figcaption { margin-top: 1.8mm; padding: 0 1mm; color: #5a6a7c; font-size: 8pt; 
 
 /* ─── PIE (footer estampado por Playwright) ─────────────────────────────── */
 .footer-brand {
-  margin-top: 14mm; padding-top: 5mm; border-top: 1px solid #4a9fd8;
+  margin-top: 14mm; padding-top: 5mm;
+  border-top: 1px solid #4a9fd8;
   color: #51646f; text-align: center;
 }
 `;

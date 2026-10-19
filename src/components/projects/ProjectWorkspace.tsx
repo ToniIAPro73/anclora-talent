@@ -158,6 +158,13 @@ export function ProjectWorkspace({
   // derived from the same fixed-pdf/editable mode check above.
   const capabilities = useMemo(() => getProjectCapabilities(project), [project]);
   const [activeStep, setActiveStep] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stepParam = new URLSearchParams(window.location.search).get('step');
+      const parsedStep = stepParam ? Number(stepParam) : NaN;
+      if (Number.isInteger(parsedStep) && parsedStep >= 1 && parsedStep <= 8) {
+        return parsedStep;
+      }
+    }
     const persistedStep = readStoredWorkflowStep(project.id);
     return Number.isFinite(project.workflowStep)
       ? normalizeWorkflowStep(project.workflowStep)
@@ -177,7 +184,12 @@ export function ProjectWorkspace({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isReimportDialogOpen, setIsReimportDialogOpen] = useState(false);
-  const [isDocumentDataOpen, setIsDocumentDataOpen] = useState(false);
+  const [isDocumentDataOpen, setIsDocumentDataOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('documentData') === 'open';
+    }
+    return false;
+  });
 
   const canonicalCoverSurface = useMemo(() => getCoverDesign(project), [project]);
   const canonicalBackCoverSurface = useMemo(() => getBackCoverDesign(project), [project]);
@@ -220,8 +232,11 @@ export function ProjectWorkspace({
       formData.set('projectId', project.id);
       formData.set('workflowStep', String(activeStep));
       await saveProjectWorkflowStepAction(formData);
+      if (typeof window === 'undefined') return;
       setSaveStepState('saved');
-      window.setTimeout(() => setSaveStepState('idle'), 2000);
+      window.setTimeout(() => {
+        if (typeof window !== 'undefined') setSaveStepState('idle');
+      }, 2000);
     });
   }, [activeStep, project.id, project.workflowStep, startTransition]);
 
@@ -300,12 +315,17 @@ export function ProjectWorkspace({
       formData.set('marginRight', String(preferences.margins?.right ?? 24));
 
       const result = await syncProjectPaginationAction(formData);
+      if (typeof window === 'undefined') return;
       router.refresh();
       setPageNumberSyncState('saved');
       setLastSyncedChapterSignature(chapterSignature);
       setPageNumberSyncFeedback(result?.status === 'missing-index' ? 'missing-index' : 'done');
-      window.setTimeout(() => setPageNumberSyncState('idle'), 2000);
-      window.setTimeout(() => setPageNumberSyncFeedback('idle'), 3500);
+      window.setTimeout(() => {
+        if (typeof window !== 'undefined') setPageNumberSyncState('idle');
+      }, 2000);
+      window.setTimeout(() => {
+        if (typeof window !== 'undefined') setPageNumberSyncFeedback('idle');
+      }, 3500);
     });
   };
 
@@ -598,13 +618,13 @@ export function ProjectWorkspace({
             {isPending && (
               <span className="flex items-center gap-1.5" data-testid="project-save-status-saving">
                 <Loader2 className="h-3 w-3 animate-spin" />
-                Guardando…
+                {copy.contentSaving}
               </span>
             )}
             {!isPending && saveStepState === 'saved' && (
               <span className="flex items-center gap-1.5 text-[var(--accent-text)]" data-testid="project-save-status-saved">
                 <Check className="h-3 w-3" />
-                Guardado
+                {copy.contentSaved}
               </span>
             )}
             {!isPending && saveStepState !== 'saved' && savedLabel && <span>{savedLabel}</span>}
@@ -675,13 +695,13 @@ export function ProjectWorkspace({
           {activeStep > 2 && (
             <aside className="ac-workflow-shell__rail xl:sticky xl:top-8 xl:self-start">
                <div className="ac-workflow-shell__panel ac-surface-panel ac-surface-panel--subtle p-5">
-                  <h4 className="ac-workflow-shell__panel-meta">Progreso</h4>
+                  <h4 className="ac-workflow-shell__panel-meta">{locale === 'en' ? 'Progress' : 'Progreso'}</h4>
                   <div className="ac-workflow-shell__panel-value mt-3">
                      <strong>{activeStep}</strong>
-                     <span>de {steps.length} pasos</span>
+                     <span>{locale === 'en' ? `of ${steps.length} steps` : `de ${steps.length} pasos`}</span>
                   </div>
                   <p className="ac-workflow-shell__panel-summary mt-4 text-xs leading-5">
-                     {steps[activeStep - 1]?.description || 'Sigue el flujo editorial para completar tu publicación premium.'}
+                     {steps[activeStep - 1]?.description || (locale === 'en' ? 'Follow the editorial workflow to complete your premium publication.' : 'Sigue el flujo editorial para completar tu publicación premium.')}
                   </p>
                </div>
 
@@ -692,7 +712,7 @@ export function ProjectWorkspace({
                     disabled={activeStep === 1}
                     className={`${premiumSecondaryLightButton} w-full py-3 text-xs disabled:opacity-30 disabled:cursor-default cursor-pointer`}
                   >
-                     Paso anterior
+                     {locale === 'en' ? 'Previous step' : 'Paso anterior'}
                   </button>
                   <button
                     data-testid="next-step-button"
@@ -700,7 +720,7 @@ export function ProjectWorkspace({
                     disabled={activeStep === steps.length}
                     className={`${premiumPrimaryDarkButton} w-full py-3 text-xs disabled:opacity-30 disabled:cursor-default cursor-pointer`}
                   >
-                     Siguiente paso
+                     {locale === 'en' ? 'Next step' : 'Siguiente paso'}
                   </button>
                </div>
             </aside>

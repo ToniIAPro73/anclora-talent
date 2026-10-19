@@ -50,7 +50,7 @@ export default async function ProjectPreviewPage({
       {isFixedPdfProject(project) ? (
         <FixedPdfPreview projectId={project.id} copy={projectCopy} />
       ) : (
-        <PreviewWorkspace copy={projectCopy} project={project} exportHref={`/projects/${project.id}/editor`} />
+        <PreviewWorkspace copy={projectCopy} project={project} exportHref={`/projects/${project.id}/editor?step=8`} />
       )}
     </div>
   );

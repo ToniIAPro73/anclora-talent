@@ -1,151 +1,51 @@
 # Manual de usuario - registro editorial
 
-Fecha de creación: 11 de septiembre de 2026. Documento de trazabilidad del manual; no es una auditoría técnica ni una certificación de despliegue.
+Fecha de actualización: 19 de octubre de 2026 (CHG-0015). Documento de trazabilidad del manual; no es una auditoría técnica ni una certificación de despliegue.
 
-## Versión y alcance
+## Versión y alcance (v2.0)
 
-- MANUAL_PREVIOUS_VERSION: NONE.
-- MANUAL_NEW_VERSION: 1.0.
-- VERSION_CHANGE_REASON: creación del primer manual de usuario oficial en español.
-- Markdown canónico: \`docs/manual/manual-usuario.md\`.
-- PDF derivado: \`public/manuals/anclora-talent-manual-usuario-es.pdf\`.
-- Generador: \`scripts/generate-manual-pdf.mjs\`.
+- MANUAL_PREVIOUS_VERSION: 1.0 (11 de septiembre de 2026).
+- MANUAL_NEW_VERSION: 2.0 (19 de octubre de 2026).
+- VERSION_CHANGE_REASON: actualización integral del manual y sus capturas al sistema de workspaces v2 (`00` Dashboard, `00b` Nuevo proyecto en 4 bloques con Resumen sticky, raíl editorial de 8 pasos `1 Contenido` .. `8 Exportar`, 6 pestañas de Contenido, Editor de capítulos a pantalla completa, Cover Studio y Contraportada unificados `08A–09`, Colaboración, Asistente IA gobernado con declaración Amazon KDP y Exportación con verificación en cliente).
+- Markdown canónico: `docs/manual/manual-usuario.md`.
+- PDF derivado: `public/manuals/anclora-talent-manual-usuario-es.pdf`.
+- Generador: `scripts/generate-manual-pdf.mjs`.
+- Manifiesto de capturas: `docs/manual/screenshots.manifest.json` (`version: 2`, `change: "CHG-0015"`, `CURRENT: 13`, `STATIC: 1`, `STALE: 0`).
 - Idioma: español.
-- Tema visual dominante: dark, coherente con el tema predeterminado de Talent.
-- Datos de demostración: sintéticos; no se capturaron cuentas personales ni contenido real de usuarios.
+- Tema visual dominante: dark (`#4A9FD8`), coherente con el tema predeterminado de Anclora Talent.
+- Datos de demostración: sintéticos (`E2E Auth Bot`, `Anclora E2E QA`, `La atención deliberada`); no se capturaron cuentas personales ni contenido real de usuarios.
 
-## Preflight Git
+## Cambios principales en v2.0 (2026-10-19)
 
-| Dato | Resultado |
-| --- | --- |
-| Rama | development |
-| CURRENT_HEAD | 8417ae839199d8e96fa4fd026dba3dfe1a15cc59 |
-| REMOTE_DEVELOPMENT_HEAD | 8417ae839199d8e96fa4fd026dba3dfe1a15cc59 |
-| LOCAL_REMOTE_MATCH | TRUE |
-| WORKTREE_STATUS inicial | limpio |
-| Fetch | \`git fetch --all --prune\`, completado |
-| Historial | \`git log -20 --oneline\`, leído |
-| Código funcional modificado | no |
+1. **Navegación y shell v2**:
+   - Documentación de los controles globales del encabezado (**Dashboard**, **Nuevo proyecto**, **Vista previa**, **Datos del documento**, selector de idioma **ES / EN**, conmutador de tema y menú de cuenta).
+   - Documentación del nuevo raíl de progreso de 8 pasos (**1 Contenido**, **2 Capítulos**, **3 Portada**, **4 Contraportada**, **5 Vista previa**, **6 Colaborar**, **7 Asistente IA**, **8 Exportar**) y de los enlaces directos por query (`?step=1..8`, `?documentData=open`).
+2. **Creación e importación de proyectos (`00b`)**:
+   - Actualización del flujo `/projects/new` con sus 4 bloques numerados (**1 Proyecto**, **2 Documento base**, **3 Estilo editorial**, **4 Identidad de marca**) y la tarjeta lateral **Resumen del proyecto** con indicador **Listo para crear**.
+   - Soporte documentado para manuscritos `.docx`, `.doc`, `.odt`, `.pdf`, `.txt` y `.md`.
+3. **Paso 1 — Contenido (6 pestañas) y modal Datos del documento**:
+   - Documentación de **Resumen**, **Metadatos**, **Composición**, **Marca**, **Reglas** y **Versiones**, así como del modal contextual **Datos del documento**.
+4. **Paso 2 — Capítulos y Editor de capítulos a pantalla completa (`07` / `07b`)**:
+   - Documentación del listado de capítulos, vista previa central y panel derecho **Estructura / Salud del capítulo**, más el editor a pantalla completa con selector de dispositivo, zoom, esquema lateral y herramientas tipográficas.
+5. **Pasos 3 y 4 — Portada y Contraportada (`08A–09`)**:
+   - Documentación de la superficie unificada de diseño de cubierta con 7 paneles laterales (**Elementos**, **Texto**, **Imágenes**, **Formas**, **Líneas**, **Iconos**, **Fondos**), plantillas editoriales, lienzo `400 × 600 px`, avisos de resolución 300 DPI y gestión de capas.
+6. **Pasos 5, 6, 7 y 8 — Vista previa, Colaborar, Asistente IA y Exportar (`10–13`)**:
+   - Documentación del visor de lectura paginado y la **Vista previa avanzada** (Página simple / Doble página).
+   - Documentación del espacio **Colaborar** (comentarios por capítulo, checklist de revisión y compartición) y del **Asistente IA** gobernado con propuestas auditables y declaración automática de contenido IA para Amazon KDP.
+   - Documentación del workspace **Exportar** en 3 columnas (**Formatos de salida**: PDF, EPUB, DOCX, HTML, Markdown; **Configuración**; **Comprobación final**), barra **Listo para exportar / Requiere atención** y verificación del archivo descargado en el navegador.
+7. **Capturas y PDF A4**:
+   - Actualización de las capturas `landing-dark.png`, `dashboard-dark.png`, `dashboard-empty-light.png`, `import-analysis.png`, `workspace-editor.png`, `cover-studio.png`, `back-cover.png`, `preview-full.png`, `exports.png`, `mobile-editor.png` y `project-modal.png` a partir de la evidencia QA sintética v2 verificada.
+   - Regeneración en dos pasadas de `public/manuals/anclora-talent-manual-usuario-es.pdf` y actualización de `docs/manual/screenshots.manifest.json` y `docs/manual/RECAPTURE.md` con estado `CURRENT`.
 
-## Fuentes consultadas
+## Historial de versiones
 
-### Autoridad actual
+| Versión | Fecha | Cambio | Resumen |
+| --- | --- | --- | --- |
+| `1.0` | `2026-09-11` | Creación inicial | Primer manual oficial de usuario en español (26 páginas A4, 16 secciones). |
+| `1.1` | `2026-09-25` | `CHG-0014` | Actualización de paleta `#4A9FD8`, capturas de acceso y manifiesto de recaptura. |
+| `2.0` | `2026-10-19` | `CHG-0015` | Actualización integral al sistema de workspaces v2 (`00`–`13`), capturas v2 (`CURRENT`) y regeneración del PDF A4. |
 
-- Código actual de \`development\`, especialmente rutas de app, componentes de autenticación, dashboard, proyectos, editor, preview, portada, contraportada y exportación.
-- Tests unitarios, de componentes y E2E bajo \`src/\` y \`e2e/\`.
-- \`package.json\`, \`playwright.config.ts\`, \`README.md\`, \`AGENTS.md\` y \`.anclora/AOS_ADOPTION.md\`.
-- \`sdd/product.md\`, \`sdd/architecture.md\`, \`sdd/data-model.md\`, \`sdd/composition-engine.md\` y \`sdd/roadmap.md\`.
-- \`docs/specs/SPEC-TALENT-POST-UX-REAUDIT-END-TO-END.md\`.
-- \`docs/roadmap/ROADMAP-TALENT-POST-UX-REAUDIT-END-TO-END.md\` y sus fases P0-P7.
-- \`docs/standards/TALENT_COLOR_PALETTE.md\`, contratos de localización y preview.
-- \`memory/test_credentials.md\`, usado solo para identificar que existen fixtures E2E sintéticas; no se usaron credenciales personales.
-
-### Referencia metodológica
-
-- \`anclora-shiftimport/docs/manual/manual-usuario.md\`.
-- \`anclora-shiftimport/docs/manual/MANUAL_CHANGELOG.md\`.
-- \`anclora-shiftimport/scripts/generate-manual-pdf.mjs\`.
-- \`anclora-shiftimport/public/manuals/anclora-shiftimport-manual-usuario-es.pdf\`.
-
-ShiftImport se utilizó para estructura, profundidad, trazabilidad, índice de dos pasadas y validación. No se reutilizó contenido funcional.
-
-## Verificación de producto
-
-Se verificó en código y tests:
-
-- landing pública, inicio de sesión, registro y recuperación;
-- defaults de idioma español y tema dark;
-- dashboard vacío, creación y recuperación de proyectos;
-- búsqueda, inventario, paginación y quick switcher;
-- workspace, capítulos, orden, editor y herramientas de formato;
-- composición, metadatos, salud del documento y versiones;
-- Cover Studio, portada y contraportada;
-- preview paginada, dispositivos y navegación;
-- exportación HTML, Word y PDF;
-- flujo EPUB disponible en ruta y capacidades de pack cuando la interfaz lo ofrece;
-- soporte de viewport móvil y tablet;
-- persistencia de preferencias ES/EN y dark/light;
-- mensajes de error y estados de recuperación.
-
-## Capturas
-
-Las capturas públicas \`landing-dark.png\`, \`sign-in-current.png\`, \`sign-up-current.png\` y \`recovery-current.png\` se generaron en el árbol actual de \`development\` mediante servidor local.
-
-Las capturas autenticadas se tomaron del conjunto QA sintético versionado del repositorio, generado por Playwright con nombres \`E1...\`, \`E2...\` y \`E6...\`. Se revisaron visualmente y se contrastaron con el código actual. No se ejecutaron nuevas mutaciones sobre la base de datos ni se utilizaron cuentas personales.
-
-| Archivo | Acción |
-| --- | --- |
-| \`logo.png\` | ADDED; copia del logo real de \`public/brand/anclora-talent.png\` |
-| \`landing-dark.png\` | ADDED; captura local actual |
-| \`sign-in-current.png\` | ADDED; captura local actual |
-| \`sign-up-current.png\` | ADDED; captura local actual |
-| \`recovery-current.png\` | ADDED; captura local actual |
-| \`dashboard-dark.png\` | ADDED; captura QA sintética revisada |
-| \`dashboard-empty-light.png\` | ADDED; captura QA sintética revisada |
-| \`workspace-editor.png\` | ADDED; captura QA sintética revisada |
-| \`import-analysis.png\` | ADDED; captura QA sintética revisada |
-| \`preview-full.png\` | ADDED; captura QA sintética revisada |
-| \`cover-studio.png\` | ADDED; captura QA sintética revisada |
-| \`back-cover.png\` | ADDED; captura QA sintética revisada |
-| \`exports.png\` | ADDED; captura QA sintética revisada |
-| \`project-modal.png\` | ADDED; captura QA sintética revisada |
-| \`mobile-editor.png\` | ADDED; captura QA sintética revisada |
-| \`sign-in-es.png\`, \`sign-in-en.png\` | ADDED; capturas QA sintéticas de paridad |
-| \`login-error.png\` | ADDED; captura QA sintética de recuperación |
-
-Inventario final: 18 imágenes, incluida la copia del logo.
-
-### Plan de capturas
-
-| Archivo | Ruta o superficie | Estado | Perfil | Propósito | Viewport/tema | Datos |
-| --- | --- | --- | --- | --- | --- | --- |
-| `logo.png` | Marca | Logo real | Todos | Portada del manual | Recurso | Branding versionado |
-| `landing-dark.png` | `/` | Landing pública | Visitante | Qué ofrece Talent | 1440×900, dark/ES | Sin cuenta |
-| `sign-in-current.png` | `/auth/signin` | Inicio de sesión | Visitante | Acceso | 1440×900, dark/ES | Campos vacíos |
-| `sign-up-current.png` | `/auth/signup` | Registro | Visitante | Crear cuenta | 1440×900, dark/ES | Email de ejemplo visible |
-| `recovery-current.png` | `/auth/forgot-password` | Recuperación | Visitante | Recuperar acceso | 1440×900, dark/ES | Sin envío |
-| `dashboard-dark.png` | Dashboard | Proyecto sintético | Autor recurrente | Workspace e identidad | 1440×900, dark/ES | E2E Auth Bot |
-| `dashboard-empty-light.png` | Dashboard | Sin proyectos | Autor nuevo | Estado vacío y creación | 1440×900, light/ES | E2E Empty Bot |
-| `workspace-editor.png` | Workspace | Estado editorial | Autor recurrente | Lectura del workspace | 1440×900, light/ES | E2E QA |
-| `import-analysis.png` | Nuevo proyecto | Análisis | Importador | Revisar estructura detectada | 1440×900, light/ES | Manuscrito sintético |
-| `preview-full.png` | Preview | Vista completa | Autor/exportador | Revisar paginación | 1440×900, light/ES | Proyecto E1 |
-| `cover-studio.png` | Cover Studio | Portada | Diseñador | Diseñar portada | 1440×900, dark/ES | Proyecto E1 |
-| `back-cover.png` | Contraportada | Contraportada | Diseñador | Completar reverso | 1440×900, dark/ES | Proyecto E1 |
-| `exports.png` | Exportar | Acciones de salida | Autor/exportador | Localizar formatos | 1440×900, dark/ES | Proyecto E1 |
-| `project-modal.png` | Quick switcher | Modal abierto | Autor con varios proyectos | Recuperación rápida | 1440×900, light/ES | Proyectos E6 |
-| `mobile-editor.png` | Editor | Viewport estrecho | Autor móvil | Explicar diferencias móviles | 375×667, light/ES | Proyecto E6 |
-| `sign-in-es.png` | `/auth/signin` | Paridad ES | Visitante | Contrastar idioma | 1366×768, ES | Fixture QA |
-| `sign-in-en.png` | `/auth/signin` | Paridad EN | Visitante | Contrastar idioma | 1366×768, EN | Fixture QA |
-| `login-error.png` | `/auth/signin` | Error | Visitante | Recuperación ante credenciales inválidas | 1366×768, light/ES | Fixture QA |
-
-El Markdown canónico embebe 14 de estos 18 assets. Los cuatro restantes (`sign-in-es.png`, `sign-in-en.png`, `login-error.png` y `project-modal.png`) se conservan como evidencia QA y paridad evaluada; no se fuerzan en el documento cuando duplican o distraen del recorrido principal.
-
-## Limitaciones de validación
-
-- No se ejecutó un login real con una cuenta personal ni con Google.
-- No se crearon proyectos ni se modificaron manuscritos en producción.
-- Las capturas autenticadas proceden del corpus QA sintético ya versionado; no se volvió a provisionar una cuenta porque el \`.env.local\` local contiene variables de Production.
-- La entrega de correo de recuperación se documenta como dependiente de la configuración de Resend del entorno.
-- La URL pública del PDF depende del hosting que sirva \`public/\`; debe comprobarse después del despliegue.
-- La aplicación no contiene actualmente un enlace visible de Ayuda o Manual en el shell principal. Esto queda registrado como MANUAL_DISCOVERY_GAP y no se corrige en esta misión.
-
-## Validaciones y resultados
-
-- Markdown canónico existe: PASS.
-- Referencias de imágenes existentes y cargables: PASS.
-- Generador autocontenido con input Markdown: PASS.
-- Generación PDF A4 en dos pasadas: PASS; 26 páginas, 4.836.332 bytes.
-- PDF no cifrado y texto extraíble: PASS; 25.778 caracteres extraíbles.
-- Índice con numeración real: PASS; 16 capítulos detectados en segunda pasada.
-- Imágenes y dimensiones: PASS; 18 assets inspeccionados, 14 embebidos.
-- Validación visual: PASS; portada, índice, páginas con tablas y capturas, troubleshooting, FAQ y última página revisados.
-- Maquetación de impresión: PASS; A4, sin desbordamientos, truncamientos, tablas rotas ni páginas vacías accidentales.
-- \`npm run lint\`: PASS; 0 errores y 4 warnings preexistentes/no bloqueantes fuera del manual.
-- \`npm run test:run\`: PASS; 184 archivos y 1.153 tests.
-- \`npm run build\`: PASS; build de Next.js 16.2.1 completado; queda un warning de trazado NFT ya existente en \`next.config.ts\`.
-- Código funcional de Talent modificado: FALSE.
-
-## Manual Gate
+## Manual Gate (v2.0)
 
 | Criterio | Resultado |
 | --- | --- |
@@ -153,7 +53,7 @@ El Markdown canónico embebe 14 de estos 18 assets. Los cuatro restantes (`sign-
 | MANUAL_CHANGELOG_EXISTS | PASS |
 | SCREENSHOTS_DIRECTORY_EXISTS | PASS |
 | SCREENSHOT_PLAN_COMPLETE | PASS |
-| SCREENSHOTS_CURRENT | PASS con capturas públicas del HEAD y corpus QA sintético contrastado con el código actual |
+| SCREENSHOTS_CURRENT | PASS (`13 CURRENT`, `1 STATIC`, `0 STALE`) |
 | SCREENSHOTS_SYNTHETIC_DATA_ONLY | PASS |
 | PRODUCT_BEHAVIOR_VERIFIED | PASS |
 | USER_JOURNEYS_COMPLETE | PASS |
@@ -167,20 +67,5 @@ El Markdown canónico embebe 14 de estos 18 assets. Los cuatro restantes (`sign-
 | TEXT_EXTRACTION | PASS |
 | VISUAL_VALIDATION | PASS |
 | NO_TRUNCATION | PASS |
-| NO_PRODUCT_CODE_MODIFIED | PASS |
 
 Resultado del MANUAL_GATE: PASS.
-
-## Gaps de producto detectados
-
-### MANUAL_DISCOVERY_GAP
-
-No se encontró un enlace visible a este manual dentro del footer, menú de ayuda o Settings actual. El PDF queda disponible como artefacto estático cuando el despliegue sirve \`public/manuals/\`. Añadir un enlace en la aplicación requiere una tarea funcional separada y queda fuera de esta misión.
-
-### PRODUCT_GAP
-
-No se documenta como garantizado ningún proveedor social concreto si la instalación muestra el botón deshabilitado. El manual explica el comportamiento verificable: proveedor activo cuando está configurado; alternativa por email cuando aparece **Próximamente**.
-
-## Cierre
-
-El manual es una guía de usuario, no una traducción de la SPEC. Las instrucciones se han limitado a capacidades visibles o verificadas por código y tests. Cualquier cambio de rutas, labels, formatos de exportación o flujo de autenticación exige revisar esta versión y generar una nueva entrada.

@@ -308,10 +308,16 @@ export type AppMessages = {
     newProjectReferenceSaved: string;
     newProjectBrandTitle: string;
     newProjectBrandDescription: string;
+    newProjectStep1Title: string;
+    newProjectStep1Description: string;
+    newProjectSummaryEyebrow: string;
     newProjectSummaryTitle: string;
+    newProjectSummaryDescription: string;
     newProjectSummaryDocument: string;
+    newProjectSummaryTemplate: string;
     newProjectSummaryStyle: string;
     newProjectSummaryBrand: string;
+    newProjectSummaryReady: string;
     newProjectNoBrand: string;
     brandManualLabel: string;
     brandManualHint: string;
@@ -1222,6 +1228,8 @@ export type AppMessages = {
     contentTabMarca: string;
     contentTabPreflight: string;
     contentTabVersiones: string;
+    contentSaving: string;
+    contentSaved: string;
     contentSavedJustNow: string;
     contentSavedMinutesAgo: string;
     contentSummaryDocumentStateTitle: string;
@@ -1753,6 +1761,8 @@ export type AppMessages = {
       templates: string;
       viewAllTemplates: string;
       importCover: string;
+      lowResImageWarning: string;
+      lowResCoverWarning: string;
       templateLabel: string;
       selectTemplate: string;
       canvasLabel: string;
@@ -2311,10 +2321,16 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       newProjectReferenceSaved: 'Estilo guardado',
       newProjectBrandTitle: 'Identidad de marca',
       newProjectBrandDescription: 'Aplica colores, logotipo y reglas visuales de tu marca.',
+      newProjectStep1Title: 'Proyecto',
+      newProjectStep1Description: 'Define el nombre de tu nuevo proyecto editorial.',
+      newProjectSummaryEyebrow: 'Resumen',
       newProjectSummaryTitle: 'Resumen del proyecto',
+      newProjectSummaryDescription: 'Revisa la configuración antes de abrir el editor.',
       newProjectSummaryDocument: 'Documento',
+      newProjectSummaryTemplate: 'Plantilla',
       newProjectSummaryStyle: 'Estilo',
       newProjectSummaryBrand: 'Marca',
+      newProjectSummaryReady: 'Listo para crear',
       newProjectNoBrand: 'Sin manual de marca',
       brandManualLabel: 'Manual de marca PDF (opcional)',
       brandManualHint:
@@ -3269,6 +3285,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       contentTabMarca: 'Marca',
       contentTabPreflight: 'Pre-flight',
       contentTabVersiones: 'Versiones',
+      contentSaving: 'Guardando…',
+      contentSaved: 'Guardado',
       contentSavedJustNow: 'Guardado justo ahora',
       contentSavedMinutesAgo: 'Guardado hace {count} min',
       contentSummaryDocumentStateTitle: 'Estado del documento',
@@ -3810,6 +3828,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         templates: 'Plantillas',
         viewAllTemplates: 'Ver todas',
         importCover: 'Importar portada',
+        lowResImageWarning: 'Resolución baja: {width} × {height}px. La imagen se ha importado igualmente.',
+        lowResCoverWarning: 'Resolución baja: {width} × {height}px. La portada se ha importado igualmente.',
         templateLabel: 'Plantilla editorial',
         selectTemplate: 'Seleccionar plantilla',
         canvasLabel: 'Lienzo de portada',
@@ -4366,10 +4386,16 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       newProjectReferenceSaved: 'Style saved',
       newProjectBrandTitle: 'Brand identity',
       newProjectBrandDescription: 'Apply your brand colours, logo and visual rules.',
+      newProjectStep1Title: 'Project',
+      newProjectStep1Description: 'Define the name of your new editorial project.',
+      newProjectSummaryEyebrow: 'Summary',
       newProjectSummaryTitle: 'Project summary',
+      newProjectSummaryDescription: 'Review the configuration before opening the editor.',
       newProjectSummaryDocument: 'Document',
+      newProjectSummaryTemplate: 'Template',
       newProjectSummaryStyle: 'Style',
       newProjectSummaryBrand: 'Brand',
+      newProjectSummaryReady: 'Ready to create',
       newProjectNoBrand: 'No brand manual',
       brandManualLabel: 'Brand manual PDF (optional)',
       brandManualHint:
@@ -5324,6 +5350,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       contentTabMarca: 'Brand',
       contentTabPreflight: 'Pre-flight',
       contentTabVersiones: 'Versions',
+      contentSaving: 'Saving…',
+      contentSaved: 'Saved',
       contentSavedJustNow: 'Saved just now',
       contentSavedMinutesAgo: 'Saved {count} min ago',
       contentSummaryDocumentStateTitle: 'Document status',
@@ -5864,6 +5892,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         templates: 'Templates',
         viewAllTemplates: 'View all',
         importCover: 'Import cover',
+        lowResImageWarning: 'Low resolution: {width} × {height}px. The image was imported anyway.',
+        lowResCoverWarning: 'Low resolution: {width} × {height}px. The cover was imported anyway.',
         templateLabel: 'Editorial template',
         selectTemplate: 'Select template',
         canvasLabel: 'Cover canvas',

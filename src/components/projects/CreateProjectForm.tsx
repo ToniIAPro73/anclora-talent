@@ -58,7 +58,7 @@ export function CreateProjectForm({
           </div>
         )}
         <section className="talent-new-project-step" data-testid="new-project-project-section">
-          <div className="talent-new-project-step__heading"><span className="talent-new-project-step__number">1</span><div><h2>Proyecto</h2><p>Define el nombre de tu nuevo proyecto editorial.</p></div></div>
+          <div className="talent-new-project-step__heading"><span className="talent-new-project-step__number">1</span><div><h2>{copy.newProjectStep1Title}</h2><p>{copy.newProjectStep1Description}</p></div></div>
           <label htmlFor="project-title" className="ac-form-field talent-new-project-title-field">
             <span className="ac-form-field__label">{copy.titleLabel}</span>
             <div className="talent-new-project-input-wrap"><input id="project-title" data-testid="create-project-title-input" type="text" name="title" required placeholder={copy.titlePlaceholder} className="field-input" /><X size={16} aria-hidden="true" /></div>
@@ -101,14 +101,14 @@ export function CreateProjectForm({
       </div>
       <div className="talent-create-form__optional space-y-5">
         <section className="talent-new-project-summary" data-testid="project-creation-summary">
-          <div className="talent-new-project-summary__heading"><div><p className="ac-surface-panel__eyebrow">Resumen</p><h2>{copy.newProjectSummaryTitle}</h2><p>Revisa la configuración antes de abrir el editor.</p></div><Sparkles size={20} aria-hidden="true" /></div>
+          <div className="talent-new-project-summary__heading"><div><p className="ac-surface-panel__eyebrow">{copy.newProjectSummaryEyebrow}</p><h2>{copy.newProjectSummaryTitle}</h2><p>{copy.newProjectSummaryDescription}</p></div><Sparkles size={20} aria-hidden="true" /></div>
           <div className="talent-new-project-summary__items">
             <div><FileText size={16} aria-hidden="true" /><span><small>{copy.newProjectSummaryDocument}</small><strong>{documentSummary}</strong></span><Check size={15} aria-hidden="true" /></div>
-            <div><BookOpen size={16} aria-hidden="true" /><span><small>Plantilla</small><strong>{selectedTemplateLabel}</strong></span><Check size={15} aria-hidden="true" /></div>
+            <div><BookOpen size={16} aria-hidden="true" /><span><small>{copy.newProjectSummaryTemplate}</small><strong>{selectedTemplateLabel}</strong></span><Check size={15} aria-hidden="true" /></div>
             <div><Sparkles size={16} aria-hidden="true" /><span><small>{copy.newProjectSummaryStyle}</small><strong>{selectedStyleLabel}</strong></span><Check size={15} aria-hidden="true" /></div>
             <div><Palette size={16} aria-hidden="true" /><span><small>{copy.newProjectSummaryBrand}</small><strong>{brandSummary}</strong></span><Check size={15} aria-hidden="true" /></div>
           </div>
-          <div className="talent-new-project-summary__ready"><span className="talent-new-project-summary__ready-dot" /> <span>Listo para crear</span></div>
+          <div className="talent-new-project-summary__ready"><span className="talent-new-project-summary__ready-dot" /> <span>{copy.newProjectSummaryReady}</span></div>
         </section>
         <div className="flex flex-col gap-4">
           <p className="text-xs leading-6 text-[var(--text-tertiary)]">

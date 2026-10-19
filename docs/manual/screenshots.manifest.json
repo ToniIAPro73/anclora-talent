@@ -1,13 +1,13 @@
 {
   "$comment": "Estado: CURRENT = UI vigente (solo branding actualizado); STALE = UI obsoleta, pendiente de recaptura; PLACEHOLDER = imagen de relleno o ausente; STATIC = asset de marca, no se captura.",
-  "version": 1,
-  "change": "CHG-0014",
-  "generated": "2026-09-25",
+  "version": 2,
+  "change": "CHG-0015",
+  "generated": "2026-10-19",
   "product": "Anclora Talent",
   "screenshots_dir": "docs/manual/screenshots",
   "env_file": ".env.local",
   "app_url_default": "http://localhost:3000",
-  "start": "npm run dev   # Next.js en http://localhost:3000 (base de datos de producción según contrato; este flujo solo lee)",
+  "start": "npm run dev   # Next.js en http://localhost:3000",
   "generator": "node scripts/generate-manual-pdf.mjs",
   "outputs": [
     "public/manuals/anclora-talent-manual-usuario-es.pdf"
@@ -63,7 +63,7 @@
     "MANUAL_QA_EMPTY_EMAIL",
     "MANUAL_QA_EMPTY_PASSWORD"
   ],
-  "data": "Proyecto QA existente de la cuenta QA (MANUAL_QA_PROJECT_ID) con capítulos, portada y contraportada; documento sintético para la importación asistida; segunda identidad QA @anclora-talent.test sin proyectos para el dashboard vacío.",
+  "data": "Proyecto QA existente de la cuenta QA (MANUAL_QA_PROJECT_ID) con capítulos, portada y contraportada; documento sintético para la importación; segunda identidad QA @anclora-talent.test sin proyectos para el dashboard vacío.",
   "screens": [
     {
       "file": "logo.png",
@@ -77,8 +77,8 @@
       "mode": "auto",
       "role": "guest",
       "path": "/",
-      "full_page": true,
-      "status": "STALE",
+      "full_page": false,
+      "status": "CURRENT",
       "instructions": "Landing actual de Anclora Talent en tema oscuro (sección «1. Empieza aquí»)"
     },
     {
@@ -87,7 +87,7 @@
       "role": "guest",
       "path": "/sign-up",
       "full_page": false,
-      "status": "STALE",
+      "status": "CURRENT",
       "instructions": "Formulario actual de registro (sección «Crear una cuenta»)"
     },
     {
@@ -96,7 +96,7 @@
       "role": "guest",
       "path": "/sign-in",
       "full_page": false,
-      "status": "STALE",
+      "status": "CURRENT",
       "instructions": "Formulario actual de inicio de sesión (sección «Iniciar sesión»)"
     },
     {
@@ -104,8 +104,8 @@
       "mode": "auto",
       "role": "guest",
       "path": "/forgot-password",
-      "full_page": true,
-      "status": "STALE",
+      "full_page": false,
+      "status": "CURRENT",
       "instructions": "Pantalla actual de recuperación de contraseña (sección «Recuperar la contraseña»)"
     },
     {
@@ -114,77 +114,80 @@
       "role": "qa",
       "path": "/dashboard",
       "full_page": false,
-      "status": "STALE",
-      "instructions": "Dashboard con proyecto nuevo y selector de idioma, tema y cuenta (sección «3. Dashboard y proyectos»)"
+      "status": "CURRENT",
+      "instructions": "Dashboard con listado de proyectos, actividad reciente y controles globales (sección «3. Dashboard y proyectos»)"
     },
     {
       "file": "dashboard-empty-light.png",
-      "mode": "assisted",
+      "mode": "auto",
       "role": "qa_empty",
       "path": "/dashboard",
-      "status": "STALE",
-      "instructions": "Cuenta QA sin proyectos. Cambia a tema claro con el control global antes de capturar. — Dashboard sin proyectos (sección «Dashboard vacío»)"
+      "full_page": false,
+      "status": "CURRENT",
+      "instructions": "Dashboard sin proyectos en tema claro (sección «Dashboard vacío»)"
     },
     {
       "file": "workspace-editor.png",
       "mode": "auto",
       "role": "qa",
-      "path": "/projects/${MANUAL_QA_PROJECT_ID}/editor",
+      "path": "/projects/${MANUAL_QA_PROJECT_ID}/editor?step=1",
       "full_page": false,
-      "status": "STALE",
-      "instructions": "Workspace editorial con estado del documento y controles de composición (sección «5. Workspace editorial»)"
+      "status": "CURRENT",
+      "instructions": "Paso 1 — Contenido: centro de control del documento con 6 pestañas (sección «5. Workspace editorial»)"
     },
     {
       "file": "import-analysis.png",
-      "mode": "assisted",
+      "mode": "auto",
       "role": "qa",
-      "path": "/dashboard",
-      "status": "STALE",
-      "instructions": "Con la cuenta QA, importa el documento sintético de QA y deja visible el análisis de importación (nunca documentos reales). — Análisis de importación con datos sintéticos (sección «Pasos de importación»)"
+      "path": "/projects/new",
+      "full_page": false,
+      "status": "CURRENT",
+      "instructions": "Pantalla de creación de proyecto con análisis de importación y resumen (sección «4. Crear un proyecto»)"
     },
     {
       "file": "cover-studio.png",
       "mode": "auto",
       "role": "qa",
-      "path": "/projects/${MANUAL_QA_PROJECT_ID}/cover",
+      "path": "/projects/${MANUAL_QA_PROJECT_ID}/editor?step=3",
       "full_page": false,
-      "status": "STALE",
-      "instructions": "Cover Studio con datos sintéticos (sección «Cover Studio»)"
+      "status": "CURRENT",
+      "instructions": "Paso 3 — Portada: estudio de diseño unificado (sección «9. Portada y contraportada»)"
     },
     {
       "file": "back-cover.png",
       "mode": "auto",
       "role": "qa",
-      "path": "/projects/${MANUAL_QA_PROJECT_ID}/back-cover",
+      "path": "/projects/${MANUAL_QA_PROJECT_ID}/editor?step=4",
       "full_page": false,
-      "status": "STALE",
-      "instructions": "Contraportada del proyecto (sección «Contraportada»)"
+      "status": "CURRENT",
+      "instructions": "Paso 4 — Contraportada: estudio de diseño de reverso (sección «9. Portada y contraportada»)"
     },
     {
       "file": "preview-full.png",
       "mode": "auto",
       "role": "qa",
-      "path": "/projects/${MANUAL_QA_PROJECT_ID}/preview",
+      "path": "/projects/${MANUAL_QA_PROJECT_ID}/editor?step=5",
       "full_page": false,
-      "status": "STALE",
-      "instructions": "Preview paginada con portada y controles de dispositivo (sección «Preview del proyecto»)"
+      "status": "CURRENT",
+      "instructions": "Paso 5 — Vista previa: carril de páginas, lienzo y panel de composición (sección «10. Vista previa, colaboración y asistente IA»)"
     },
     {
       "file": "exports.png",
-      "mode": "assisted",
+      "mode": "auto",
       "role": "qa",
-      "path": "/projects/${MANUAL_QA_PROJECT_ID}/preview",
-      "status": "STALE",
-      "instructions": "Desplaza hasta los botones Exportar HTML / PDF / Word y deja visible el bloque de exportación. — Acciones de exportación del proyecto (sección «Antes de descargar»)"
+      "path": "/projects/${MANUAL_QA_PROJECT_ID}/editor?step=8",
+      "full_page": false,
+      "status": "CURRENT",
+      "instructions": "Paso 8 — Exportar: formatos de salida, configuración y comprobación final (sección «11. Exportar»)"
     },
     {
       "file": "mobile-editor.png",
       "mode": "auto",
       "role": "qa",
-      "path": "/projects/${MANUAL_QA_PROJECT_ID}/editor",
+      "path": "/projects/${MANUAL_QA_PROJECT_ID}/editor?step=1",
       "full_page": false,
-      "status": "STALE",
-      "instructions": "Editor en viewport móvil (sección «12. Trabajar en móvil y tablet»)",
+      "status": "CURRENT",
+      "instructions": "Workspace editorial en viewport móvil (sección «12. Trabajar en móvil y tablet»)",
       "viewport": {
         "width": 375,
         "height": 667

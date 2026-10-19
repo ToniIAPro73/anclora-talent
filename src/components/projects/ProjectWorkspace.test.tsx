@@ -506,5 +506,17 @@ describe('ProjectWorkspace', () => {
 
       expect(screen.queryByTestId('create-editable-copy-button')).not.toBeInTheDocument();
     });
+
+    test('honors ?step=8 and ?documentData=open query parameters on mount (WS-03)', () => {
+      const originalUrl = window.location.href;
+      window.history.replaceState({}, '', '/projects/proj-1/editor?step=8&documentData=open');
+      try {
+        render(<ProjectWorkspace project={makeProject({ workflowStep: 1 })} copy={copy} />);
+        expect(screen.getByTestId('export-step-workspace')).toBeInTheDocument();
+        expect(screen.getByTestId('document-data-modal-panel')).toBeInTheDocument();
+      } finally {
+        window.history.replaceState({}, '', originalUrl);
+      }
+    });
   });
 });
