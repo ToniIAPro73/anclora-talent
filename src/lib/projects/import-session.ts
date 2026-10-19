@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { and, eq, gt, lt } from 'drizzle-orm';
 import { getDb, hasDatabase } from '@/lib/db';
 import { importSessions } from '@/lib/db/schema';
+import { deleteBlobUrls } from '@/lib/blob/client';
 import type { DocumentMode, SourceDocumentAccessLevel } from './types';
 import type { CompositionSettings } from './composition';
 import type { ImportedDocumentSeed } from './types';
@@ -229,7 +230,17 @@ export const importSessionRepository = {
     const deleted = await db
       .delete(importSessions)
       .where(and(eq(importSessions.status, 'ready'), lt(importSessions.expiresAt, now)))
-      .returning({ id: importSessions.id });
+      .returning({ sourceBlobUrl: importSessions.sourceBlobUrl });
+
+    const blobUrls = deleted.flatMap((row) => (row.sourceBlobUrl ? [row.sourceBlobUrl] : []));
+    if (blobUrls.length > 0) {
+      await deleteBlobUrls(blobUrls).catch((error) => {
+        console.error('[import-session] expired source cleanup failed', {
+          count: blobUrls.length,
+          errorName: error instanceof Error ? error.name : 'UnknownError',
+        });
+      });
+    }
 
     return deleted.length;
   },

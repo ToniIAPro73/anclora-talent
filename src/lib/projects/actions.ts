@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { requireUserId } from '@/lib/auth/guards';
 import { getDb, hasDatabase } from '@/lib/db';
 import { projectRepository, userPreferencesRepository } from '@/lib/db/repositories';
-import { uploadProjectBlob, uploadPrivateProjectDocument } from '@/lib/blob/client';
+import { deleteProjectBlobs, uploadProjectBlob, uploadPrivateProjectDocument } from '@/lib/blob/client';
 import { sha256Buffer } from './hash';
 import { isFixedPdfProject, type DocumentMode, type SourceDocumentAccessLevel } from './types';
 import { captureAutoSaveSnapshot, captureProjectSnapshot } from '@/lib/snapshots/capture';
@@ -1037,7 +1037,18 @@ export async function deleteProjectAction(formData: FormData) {
     throw new Error('Project id is required');
   }
 
+  const project = await projectRepository.getProjectById(userId, projectId);
+  if (!project) throw new Error('Project not found');
+
   await projectRepository.deleteProject(userId, projectId);
+  try {
+    await deleteProjectBlobs(project);
+  } catch (error) {
+    console.error('[deleteProject] Blob cleanup failed', {
+      projectId,
+      errorName: error instanceof Error ? error.name : 'UnknownError',
+    });
+  }
   revalidatePath('/dashboard');
   redirect('/dashboard');
 }

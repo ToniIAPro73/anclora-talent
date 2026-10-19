@@ -8,7 +8,7 @@ import { extractOriginalDocumentStyleProfile } from '@/lib/projects/docx-styles'
 import type { OriginalDocumentStyleProfile } from '@/lib/projects/source-style-profile';
 import { extractSourcePaginationBaseline } from '@/lib/projects/source-pagination';
 import { importSessionRepository } from '@/lib/projects/import-session';
-import { uploadPrivateProjectDocument, fetchPrivateProjectDocument } from '@/lib/blob/client';
+import { deleteBlobUrls, uploadPrivateProjectDocument, fetchPrivateProjectDocument } from '@/lib/blob/client';
 import { sha256Buffer } from '@/lib/projects/hash';
 import type { DocumentMode, ManuscriptType, SourceDocumentAccessLevel } from '@/lib/projects/types';
 import { detectSourceFormat, isActiveImportFormat, parseOdtSource, summarizeSourceModel, summarizeSourceText } from '@/lib/projects/source-model';
@@ -38,6 +38,12 @@ export async function POST(request: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  await importSessionRepository.cleanupExpiredSessions().catch((error) => {
+    console.warn('[import-route] expired import cleanup unavailable', {
+      errorName: error instanceof Error ? error.name : 'UnknownError',
+    });
+  });
 
   const contentType = request.headers?.get ? request.headers.get('content-type') ?? '' : '';
 
@@ -140,16 +146,6 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     sourceSha256 = sha256Buffer(buffer);
 
-    // If private blob token is configured, securely store the uploaded document
-    if (process.env.SOURCE_DOCUMENT_READ_WRITE_TOKEN) {
-      try {
-        const stored = await uploadPrivateProjectDocument(randomUUID(), file);
-        sourceBlobUrl = stored.url;
-        sourceAccessLevel = stored.accessLevel;
-      } catch (uploadError) {
-        console.warn('[import-route] private storage upload failed or skipped', uploadError);
-      }
-    }
   }
 
   if (!file) {
@@ -327,19 +323,42 @@ export async function POST(request: NextRequest) {
       sourcePageCount: renderedSourcePages?.length ?? seed.sourcePageCount,
     };
 
+    // Preserve the original only after validation and extraction have succeeded.
+    if (process.env.SOURCE_DOCUMENT_READ_WRITE_TOKEN) {
+      try {
+        const stored = await uploadPrivateProjectDocument(randomUUID(), file);
+        sourceBlobUrl = stored.url;
+        sourceAccessLevel = stored.accessLevel;
+      } catch (uploadError) {
+        console.warn('[import-route] private source document upload failed', uploadError);
+      }
+    }
+
     // Create import session in PostgreSQL to decouple parsing from final create
-    const session = await importSessionRepository.createImportSession(user.id, {
-      sourceFileName: seed.sourceFileName || fileName,
-      sourceMimeType: seed.sourceMimeType || mimeType,
-      sourceBlobUrl,
-      sourceAccessLevel,
-      sourceSha256,
-      sourceSizeBytes: sizeBytes,
-      documentMode: documentModeChoice,
-      extractedSeed: seedWithSourceProfile,
-      composition: composition.settings,
-      originalDocumentStyleProfile,
-    });
+    let session: Awaited<ReturnType<typeof importSessionRepository.createImportSession>>;
+    try {
+      session = await importSessionRepository.createImportSession(user.id, {
+        sourceFileName: seed.sourceFileName || fileName,
+        sourceMimeType: seed.sourceMimeType || mimeType,
+        sourceBlobUrl,
+        sourceAccessLevel,
+        sourceSha256,
+        sourceSizeBytes: sizeBytes,
+        documentMode: documentModeChoice,
+        extractedSeed: seedWithSourceProfile,
+        composition: composition.settings,
+        originalDocumentStyleProfile,
+      });
+    } catch (sessionError) {
+      if (sourceBlobUrl) {
+        await deleteBlobUrls([sourceBlobUrl]).catch((cleanupError) => {
+          console.error('[import-route] orphan source cleanup failed', {
+            errorName: cleanupError instanceof Error ? cleanupError.name : 'UnknownError',
+          });
+        });
+      }
+      throw sessionError;
+    }
 
     return NextResponse.json({
       ok: true,

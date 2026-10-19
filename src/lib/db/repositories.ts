@@ -2,7 +2,7 @@ import 'server-only';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { getDb, hasDatabase } from './index';
-import { backCoverDesigns, brandProfiles, coverDesigns, coverLayers, documentBlocks, projectAssets, projectDocuments, projects, userPreferences } from './schema';
+import { backCoverDesigns, brandProfiles, coverDesigns, coverLayers, documentBlocks, documentSnapshots, projectAssetManifests, projectAssets, projectDocuments, projects, userPreferences } from './schema';
 import type { EditorPreferences } from '@/lib/ui-preferences/preferences';
 import { normalizeSurfaceState, type SurfaceState } from '@/lib/projects/cover-surface';
 import { isDesignSurfaceV2, type DesignSurface } from '@/lib/projects/design-surface';
@@ -927,6 +927,12 @@ async function deleteProjectInDb(userId: string, projectId: string) {
       console.warn('[deleteProject] document_blocks delete skipped', err?.message);
     });
   }
+  await db.delete(documentSnapshots).where(eq(documentSnapshots.projectId, projectId)).catch((err) => {
+    console.warn('[deleteProject] document_snapshots delete skipped', err?.message);
+  });
+  await db.delete(projectAssetManifests).where(eq(projectAssetManifests.projectId, projectId)).catch((err) => {
+    console.warn('[deleteProject] project_asset_manifests delete skipped', err?.message);
+  });
   await db.delete(projectDocuments).where(eq(projectDocuments.projectId, projectId)).catch((err) => {
     console.warn('[deleteProject] project_documents delete skipped', err?.message);
   });

@@ -20,8 +20,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         typeof body.type === 'string' &&
         body.type.startsWith('blob.')
       ) {
-        const token =
-          process.env.SOURCE_DOCUMENT_READ_WRITE_TOKEN ?? process.env.BLOB_READ_WRITE_TOKEN;
+        const token = process.env.SOURCE_DOCUMENT_READ_WRITE_TOKEN;
         if (!token) {
           return NextResponse.json(
             { error: 'Private storage token not configured' },
