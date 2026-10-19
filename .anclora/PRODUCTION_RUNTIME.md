@@ -29,7 +29,7 @@ ANCLORA_FLOW_CONTRACT_VERSION=2.0
 ANCLORA_FLOW_VERSION=1
 RUNTIME_CONTRACT_AUTHORITY=CANONICAL
 STATUS=PRODUCTION_RUNTIME_CONFIRMED
-LOCAL_RUNTIME_MODEL=ENVIRONMENT_SEPARATED
+LOCAL_RUNTIME_MODEL=NEON_PREFERRED_DOCKER_FALLBACK
 DO_NOT_CREATE_DEVELOPMENT_DATABASE=false
 
 Runtime, environment, database, migration, QA and Git rules declared in this
@@ -66,13 +66,16 @@ Vercel Serverless Functions (Route Handlers / Server Actions)
 DATABASE_PROVIDER=PostgreSQL
 DATABASE_RUNTIME_SCOPE=environment-specific
 
-DEVELOPMENT + LOCAL E2E -> Docker PostgreSQL on localhost (DATABASE_URL host localhost)
+LOCAL DEVELOPMENT + LOCAL E2E -> Neon when reachable; otherwise Talent Docker PostgreSQL on localhost
+VERCEL DEVELOPMENT/PREVIEW -> Neon environment configured in Vercel; Docker is never inspected or started
 PREVIEW/STAGING         -> Neon QA
 PRODUCTION              -> Neon production
 
-Local PostgreSQL is selected only from an explicit localhost database hostname.
-Remote URLs continue to use the Neon adapter; local development must not contact
-Neon production or Neon QA endpoints.
+`npm run dev` probes the configured Neon URL once at startup. On failure it uses
+`TALENT_DOCKER_DATABASE_URL` from `.env.local`, after confirming the URL points
+to localhost and the `anclora-talent-postgres` Docker container is available.
+It never switches databases after Next.js has started. Vercel deployments use
+their configured `DATABASE_URL` and do not run this local fallback.
 
 ## 4. Database Migration Contract
 
@@ -174,20 +177,23 @@ DISABLED:
 Environment files:
 - `.env.local` (located in repository root, mode 0600, strictly gitignored)
 
-LOCAL_RUNTIME_MODEL=ENVIRONMENT_SEPARATED
+LOCAL_RUNTIME_MODEL=NEON_PREFERRED_DOCKER_FALLBACK
 
-Local development explicitly overrides only the database target with Docker
-PostgreSQL; storage, email, and OAuth resources remain environment-configured.
+Local development prefers the configured Neon database when reachable and uses
+the existing Talent Docker PostgreSQL container only as a local fallback.
+Vercel deployments never inspect, start, or use Docker. Storage, email, and OAuth
+resources remain environment-configured.
 
 ### Separation of Variables:
 - PRODUCTION_RESOURCE_VARIABLES:
-  - `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `PGHOST`, `POSTGRES_URL` → environment-specific PostgreSQL target; local development uses Docker PostgreSQL and remote environments use their canonical Neon target
+  - `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `PGHOST`, `POSTGRES_URL` → environment-specific PostgreSQL target; local startup prefers reachable Neon and falls back to Talent Docker PostgreSQL
   - `BLOB_READ_WRITE_TOKEN` → Production Vercel Blob Store (Public)
   - `SOURCE_DOCUMENT_READ_WRITE_TOKEN` → Production Vercel Blob Store (Private)
   - `RESEND_API_KEY` → Production Resend API
   - `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GITHUB_OAUTH_CLIENT_ID`, `GITHUB_OAUTH_CLIENT_SECRET` → Production OAuth apps
 - LOCAL_ONLY_RUNTIME_VARIABLES:
   - `PORT=3000` → Local HTTP server binding port
+  - `TALENT_DOCKER_DATABASE_URL` → Local-only connection to `anclora-talent-postgres`; required for the local fallback and never configured in Vercel
 
 ## 10. Local Runtime Exceptions
 
@@ -221,12 +227,16 @@ QA_AUTH_MODEL=DEDICATED_USER
 QA_IS_DEDICATED=true
 QA_IS_REAL_USER=false
 REAL_USER_AS_QA_ALLOWED=false
-QA_SCOPE=production
+QA_SCOPE=local-docker-user-mirror
 QA_REUSE=true
 QA_CREATE_IF_MISSING=true
 QA_DELETE_AFTER_TEST=false
 QA_CREATION_CONFIRMATION_REQUIRED=false
 QA_PERSISTENT_IDENTITY=e2e.auth@anclora-talent.test
+QA_DATABASE_SCOPE=local-docker-only
+QA_DATA_ISOLATION_MODEL=dedicated-user-owned-projects-in-the-same-local-database
+MANUAL_OWNER_TESTING=separate-local-user-account
+QA_AND_OWNER_DATA_MUST_BE_SEPARATE=true
 
 ### Authenticated browser QA bootstrap
 
@@ -250,7 +260,7 @@ normal bootstrap condition. Attempt `agent-browser` first and reuse or create
 the deterministic session; then use the repository Playwright runtime and run
 `npx playwright install chromium` when the browser binary is missing. Launch
 Chromium through `playwright.config.ts` or a focused QA script, start the local
-production-backed app when targeting localhost, and authenticate through
+local app with its selected local runtime when targeting localhost, and authenticate through
 `/sign-in` with the dedicated identity from `.env.local`.
 
 Do not print credential values or session cookies. Persist reusable state only
@@ -329,7 +339,7 @@ PRODUCTION_RUNTIME_MANIFEST_VERSION=2.0
 RUNTIME_CONTRACT_AUTHORITY=CANONICAL
 
 STATUS=PRODUCTION_RUNTIME_CONFIRMED
-LOCAL_RUNTIME_MODEL=ENVIRONMENT_SEPARATED
+LOCAL_RUNTIME_MODEL=NEON_PREFERRED_DOCKER_FALLBACK
 
 DATABASE_SCOPE=environment-specific
 LOCAL_DATABASE_SCOPE=local-docker

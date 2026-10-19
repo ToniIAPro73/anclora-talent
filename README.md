@@ -60,6 +60,20 @@ Anclora Talent es una plataforma premium para crear, editar y publicar proyectos
 
 ## Arranque local
 
+`npm run dev` comprueba la conexión Neon configurada en `.env.local`. Si no
+responde, usa el Postgres Docker local de Talent mediante
+`TALENT_DOCKER_DATABASE_URL` (URL a `localhost`). Si se ejecuta dentro de
+Vercel, Docker no se inspecciona ni se inicia.
+
+Configura `TALENT_DOCKER_DATABASE_URL` y las credenciales de QA en `.env.local`
+(permisos `0600`). El agente usa la identidad persistente
+`e2e.auth@anclora-talent.test`; las pruebas manuales de Toni usan una cuenta
+local distinta. Ambas identidades comparten la base local y cada una conserva
+sus propios proyectos.
+
+Para aplicar cambios de esquema al Postgres local se usa `npm run db:push:local`;
+`npm run db:push` conserva el destino definido en `DATABASE_URL`.
+
 ```bash
 npm install
 npm run dev

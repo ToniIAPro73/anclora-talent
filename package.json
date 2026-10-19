@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/dev-runtime.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -14,6 +14,7 @@
     "postinstall": "node -e \"require('fs').copyFileSync('node_modules/pdfjs-dist/build/pdf.worker.min.mjs', 'public/pdf.worker.min.mjs')\"",
     "db:generate": "drizzle-kit generate",
     "db:push": "dotenv -e .env.local -- drizzle-kit push",
+    "db:push:local": "dotenv -e .env.local -- sh -c 'DATABASE_URL=\"$TALENT_DOCKER_DATABASE_URL\" drizzle-kit push'",
     "db:studio": "dotenv -e .env.local -- drizzle-kit studio"
   },
   "dependencies": {
