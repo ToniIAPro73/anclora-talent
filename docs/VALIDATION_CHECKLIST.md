@@ -7,6 +7,16 @@
 **Commits:** `e7e355a` (editor/cabecera) y `e6ad13d` (proporciones responsive)
 **Alcance:** cabecera global simplificada; flujo de ocho pasos conservado; controles de cabecera redundantes retirados; herramientas y paneles del editor de portada/contraportada compactados para dar más área al lienzo. En escritorio las herramientas usan iconos con nombre accesible; en móvil y tablet vertical se mantienen en una fila compacta.
 
+## Corrección del gate de GitHub
+
+El gate de `testid-coverage-contract` detectó 16 controles nativos sin `data-testid` en `CoverEditorialSystemPanel.tsx`. Se añadieron identificadores estables a los botones, selectores e inputs del panel.
+
+| Comprobación | Comando | Resultado |
+| --- | --- | --- |
+| Contrato de cobertura de controles | `npm run test:run -- src/components/projects/testid-coverage-contract.test.ts` | PASS — 3 tests |
+| TypeScript | `npx tsc --noEmit` | PASS |
+| Integridad del diff | `git diff --check` | PASS |
+
 ## Comprobaciones
 
 | Comprobación | Resultado |

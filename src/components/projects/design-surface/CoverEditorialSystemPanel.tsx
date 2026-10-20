@@ -99,44 +99,44 @@ export function CoverEditorialSystemPanel({ projectId, surface, companionSurface
     <summary>{t.title}</summary>
     <p>{t.local}</p>
     <div className="cover-artifact-row">
-      <button type="button" className="ac-button ac-button--secondary ac-button--sm" onClick={createCheckpoint}>{t.checkpoint}</button>
-      <select aria-label={t.choose} value={selectedCheckpoint} onChange={(event) => setSelectedCheckpoint(event.target.value)}>
+      <button type="button" data-testid="cover-editor-artifacts-checkpoint-create" className="ac-button ac-button--secondary ac-button--sm" onClick={createCheckpoint}>{t.checkpoint}</button>
+      <select data-testid="cover-editor-artifacts-checkpoint-select" aria-label={t.choose} value={selectedCheckpoint} onChange={(event) => setSelectedCheckpoint(event.target.value)}>
         <option value="">{t.choose}</option>{checkpoints.map((item) => <option key={item.id} value={item.id}>{item.name} · {new Date(item.createdAt).toLocaleDateString(locale)}</option>)}
       </select>
-      <button type="button" className="ac-button ac-button--secondary ac-button--sm" disabled={!selected} onClick={() => selected && setComparison(selected)}>{t.compare}</button>
-      <button type="button" className="ac-button ac-button--secondary ac-button--sm" disabled={!selected} onClick={restoreCheckpoint}>{t.restore}</button>
+      <button type="button" data-testid="cover-editor-artifacts-checkpoint-compare" className="ac-button ac-button--secondary ac-button--sm" disabled={!selected} onClick={() => selected && setComparison(selected)}>{t.compare}</button>
+      <button type="button" data-testid="cover-editor-artifacts-checkpoint-restore" className="ac-button ac-button--secondary ac-button--sm" disabled={!selected} onClick={restoreCheckpoint}>{t.restore}</button>
     </div>
     {checkpoints.length === 0 && <small>{t.empty}</small>}
     <div className="cover-artifact-row">
-      <button type="button" className="ac-button ac-button--secondary ac-button--sm" onClick={saveProfile}>{t.saveProfile}</button>
-      <select aria-label={t.profile} value={selectedProfile} onChange={(event) => setSelectedProfile(event.target.value)}>
+      <button type="button" data-testid="cover-editor-artifacts-profile-save" className="ac-button ac-button--secondary ac-button--sm" onClick={saveProfile}>{t.saveProfile}</button>
+      <select data-testid="cover-editor-artifacts-profile-select" aria-label={t.profile} value={selectedProfile} onChange={(event) => setSelectedProfile(event.target.value)}>
         <option value="">{t.profile}</option>{profiles.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
       </select>
-      <button type="button" className="ac-button ac-button--secondary ac-button--sm" disabled={!selectedProfile} onClick={applyProfile}>{t.applyProfile}</button>
+      <button type="button" data-testid="cover-editor-artifacts-profile-apply" className="ac-button ac-button--secondary ac-button--sm" disabled={!selectedProfile} onClick={applyProfile}>{t.applyProfile}</button>
     </div>
     <div className="cover-artifact-row cover-artifact-row--resize">
       <strong>{t.resize}</strong>
-      <label>{t.width}<input type="number" min="100" max="10000" value={resize?.width ?? surface.width} onChange={(event) => setResize({ width: Number(event.target.value), height: resize?.height ?? surface.height, mode: resize?.mode ?? 'scale', anchorX: resize?.anchorX ?? 'center', anchorY: resize?.anchorY ?? 'center' })}/></label>
-      <label>{t.height}<input type="number" min="100" max="10000" value={resize?.height ?? surface.height} onChange={(event) => setResize({ width: resize?.width ?? surface.width, height: Number(event.target.value), mode: resize?.mode ?? 'scale', anchorX: resize?.anchorX ?? 'center', anchorY: resize?.anchorY ?? 'center' })}/></label>
-      <select aria-label={t.resize} value={resize?.mode ?? 'scale'} onChange={(event) => setResize({ width: resize?.width ?? surface.width, height: resize?.height ?? surface.height, mode: event.target.value as 'scale' | 'stretch' | 'anchor', anchorX: resize?.anchorX ?? 'center', anchorY: resize?.anchorY ?? 'center' })}>
+      <label>{t.width}<input data-testid="cover-editor-artifacts-resize-width" type="number" min="100" max="10000" value={resize?.width ?? surface.width} onChange={(event) => setResize({ width: Number(event.target.value), height: resize?.height ?? surface.height, mode: resize?.mode ?? 'scale', anchorX: resize?.anchorX ?? 'center', anchorY: resize?.anchorY ?? 'center' })}/></label>
+      <label>{t.height}<input data-testid="cover-editor-artifacts-resize-height" type="number" min="100" max="10000" value={resize?.height ?? surface.height} onChange={(event) => setResize({ width: resize?.width ?? surface.width, height: Number(event.target.value), mode: resize?.mode ?? 'scale', anchorX: resize?.anchorX ?? 'center', anchorY: resize?.anchorY ?? 'center' })}/></label>
+      <select data-testid="cover-editor-artifacts-resize-mode" aria-label={t.resize} value={resize?.mode ?? 'scale'} onChange={(event) => setResize({ width: resize?.width ?? surface.width, height: resize?.height ?? surface.height, mode: event.target.value as 'scale' | 'stretch' | 'anchor', anchorX: resize?.anchorX ?? 'center', anchorY: resize?.anchorY ?? 'center' })}>
         <option value="scale">{t.scale}</option><option value="stretch">{t.stretch}</option><option value="anchor">{t.anchor}</option>
       </select>
       {resize?.mode === 'anchor' && <>
-        <select aria-label={t.horizontal} value={resize.anchorX} onChange={(event) => setResize({ ...resize, anchorX: event.target.value as 'left' | 'center' | 'right' })}><option value="left">{t.left}</option><option value="center">{t.center}</option><option value="right">{t.right}</option></select>
-        <select aria-label={t.vertical} value={resize.anchorY} onChange={(event) => setResize({ ...resize, anchorY: event.target.value as 'top' | 'center' | 'bottom' })}><option value="top">{t.top}</option><option value="center">{t.center}</option><option value="bottom">{t.bottom}</option></select>
+        <select data-testid="cover-editor-artifacts-resize-anchor-x" aria-label={t.horizontal} value={resize.anchorX} onChange={(event) => setResize({ ...resize, anchorX: event.target.value as 'left' | 'center' | 'right' })}><option value="left">{t.left}</option><option value="center">{t.center}</option><option value="right">{t.right}</option></select>
+        <select data-testid="cover-editor-artifacts-resize-anchor-y" aria-label={t.vertical} value={resize.anchorY} onChange={(event) => setResize({ ...resize, anchorY: event.target.value as 'top' | 'center' | 'bottom' })}><option value="top">{t.top}</option><option value="center">{t.center}</option><option value="bottom">{t.bottom}</option></select>
       </>}
-      <button type="button" className="ac-button ac-button--secondary ac-button--sm" onClick={beginResize}>{t.apply}</button>
+      <button type="button" data-testid="cover-editor-artifacts-resize-preview" className="ac-button ac-button--secondary ac-button--sm" onClick={beginResize}>{t.apply}</button>
     </div>
     {error && <p role="status">{error}</p>}
     {comparison && <div className="cover-artifact-compare" role="dialog" aria-label={t.compareTitle}>
       <h3>{t.compareTitle} · {comparison.name}</h3><div><figure><figcaption>{t.current}</figcaption><DesignSurfaceStaticPreview surface={surface}/></figure><figure><figcaption>{t.saved}</figcaption><DesignSurfaceStaticPreview surface={comparison.surface}/></figure></div>
-      <button type="button" className="ac-button ac-button--secondary ac-button--sm" onClick={() => setComparison(null)}>{t.close}</button>
+      <button type="button" data-testid="cover-editor-artifacts-compare-close" className="ac-button ac-button--secondary ac-button--sm" onClick={() => setComparison(null)}>{t.close}</button>
     </div>}
     {preview && <div className="cover-artifact-compare" role="dialog" aria-label={t.resize}>
       <h3>{t.resize}</h3><div><figure><figcaption>{t.current}</figcaption><DesignSurfaceStaticPreview surface={surface}/></figure><figure><figcaption>{t.width} × {t.height}</figcaption><DesignSurfaceStaticPreview surface={preview}/></figure></div>
-      <button type="button" className="ac-button ac-button--secondary ac-button--sm" onClick={() => setPreview(null)}>{t.cancel}</button>
+      <button type="button" data-testid="cover-editor-artifacts-resize-cancel" className="ac-button ac-button--secondary ac-button--sm" onClick={() => setPreview(null)}>{t.cancel}</button>
       {previewOverflows.length > 0 && <p role="alert">{t.overflow} {previewOverflows.join(', ')}</p>}
-      <button type="button" className="ac-button ac-button--primary ac-button--sm" disabled={previewOverflows.length > 0} onClick={() => { onChange(preview); setPreview(null); }}>{t.accept}</button>
+      <button type="button" data-testid="cover-editor-artifacts-resize-accept" className="ac-button ac-button--primary ac-button--sm" disabled={previewOverflows.length > 0} onClick={() => { onChange(preview); setPreview(null); }}>{t.accept}</button>
     </div>}
   </details>;
 }
