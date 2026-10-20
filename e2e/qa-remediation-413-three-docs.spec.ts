@@ -5,7 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 const TEST_USER = {
   fullName: 'E2E Remediation Bot',
   email: 'e2e.413@anclora-talent.test',
-  password: 'process.env.E2E_AUTH_PASSWORD ?? (() => { throw new Error('E2E_AUTH_PASSWORD must be set in .env.local'); })()!',
+  password: process.env.E2E_AUTH_PASSWORD ?? (() => { throw new Error('E2E_AUTH_PASSWORD must be set in .env.local'); })(),
 };
 
 const MANUSCRIPT_DOCX = '/Users/toni/Downloads/manuscrito_prueba_docx_indice_correcto.docx';
