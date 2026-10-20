@@ -1,19 +1,19 @@
-# Checklist de validación — invariantes de promoción: sin esperar al CI de origen
+# Checklist de validación — dev:docker y dev:vercel liberan el puerto antes de arrancar
 
-**Alcance:** añadir con `anclora-mods/scripts/adopt-repo.mjs` dos líneas a `.anclora/PRODUCTION_RUNTIME.md`: `PROMOTION_AGENT_WAITS_FOR_SOURCE_CI=false` y `PROMOTION_DISPATCH_IMMEDIATELY=true`. Reflejan la política global: el agente lanza la promoción en cuanto hay autorización y no espera ni sondea el CI de la rama de origen; `promote.yml` rechaza un SHA con estado en fallo. No cambia código ni comportamiento de la aplicación.
+**Alcance:** los scripts `dev:docker` y `dev:vercel` ejecutan primero la liberación de puerto de `anclora-infrastructure` (como ya hacía `dev`). Sus runtimes (`scripts/local-dev.mjs`, `scripts/qa/dev-runtime.mjs`) fijan el puerto 3000, que el registro no asigna a talent (3010), por eso se añade `local_alt_ports: "3000"` en el registro de infraestructura. No se cambia el puerto de la aplicación: `AUTH_APP_URL` y el resto del entorno local siguen en 3000.
 
 ## Comprobaciones ejecutadas
 
 | Comprobación | Resultado |
 | --- | --- |
-| `node scripts/adopt-repo.mjs apply --repo <repo>` | APPLIED |
-| `node scripts/adopt-repo.mjs check-all` | 40 PASS, 1 exento, 0 bloqueados |
-| Diff limitado a `.anclora/PRODUCTION_RUNTIME.md` | 2 inserciones |
+| `package.json` válido | PASS |
+| `free-port.mjs --dry-run` en talent | Detecta el `next-server` colgado en el 3000 y lo liberaría |
+| Tests de las herramientas (`anclora-infrastructure`) | PASS — 12 tests |
 
 ## Verificación visual
 
-No aplica: solo contrato de documentación.
+No aplica: solo scripts de arranque.
 
 ## Promoción
 
-Se promueve `development` → `staging` → `production` → `main` con `promote.yml`.
+No solicitada en este cambio.

@@ -15,8 +15,8 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "dotenv -e .env.local -- drizzle-kit push",
     "db:studio": "dotenv -e .env.local -- drizzle-kit studio",
-    "dev:docker": "node scripts/local-dev.mjs --docker",
-    "dev:vercel": "node scripts/qa/dev-runtime.mjs",
+    "dev:docker": "node -e \"const p='../anclora-infrastructure/scripts/free-port.mjs';if(require('fs').existsSync(p)){try{require('child_process').execFileSync(process.execPath,[p],{stdio:'inherit'})}catch(e){process.exit(e.status||1)}}\" && node scripts/local-dev.mjs --docker",
+    "dev:vercel": "node -e \"const p='../anclora-infrastructure/scripts/free-port.mjs';if(require('fs').existsSync(p)){try{require('child_process').execFileSync(process.execPath,[p],{stdio:'inherit'})}catch(e){process.exit(e.status||1)}}\" && node scripts/qa/dev-runtime.mjs",
     "db:push:docker": "node scripts/db-docker.mjs push",
     "db:studio:docker": "node scripts/db-docker.mjs studio"
   },
