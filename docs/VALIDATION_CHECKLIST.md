@@ -1,27 +1,26 @@
-# Checklist de validación — test de borrado de proyecto
+# Checklist de validación — CI de Anclora Talent
 
 **Repositorio:** anclora-talent
-**Rama y commit validado:** `development` @ `6ef8305`
-**Alcance:** corregir el mock del test `deleteProjectAction`; la acción carga el proyecto antes de borrar la fila y limpia sus blobs asociados.
+**Rama y commit validado:** `development` @ `2c18944`
+**Alcance:** corregir el mock de `deleteProjectAction` y una expresión de contraseña QA inválida en un test E2E.
 
 ## Comprobaciones ejecutadas
 
 | Comprobación | Comando | Resultado |
 | --- | --- | --- |
-| Test afectado | `npm run test:run -- src/lib/projects/delete-action.test.ts` | PASS — 1 archivo, 1 test |
+| Test de borrado | `npm run test:run -- src/lib/projects/delete-action.test.ts` | PASS — 1 archivo, 1 test; verifica carga, borrado, limpieza de blobs y redirección. |
+| Lint | `npm run lint` | PASS |
 | Typecheck | `npx tsc --noEmit` | PASS |
 | Build | `npm run build` | PASS |
-| Suite completa local | `npm run test:run` | 1.964 tests pasaron; 7 tests ajenos al borrado expiraron por el timeout de 5 s en pruebas de estructura, importación/exportación y estilos. El test de borrado pasó. |
-| Integridad del diff | `git diff --check` | PASS |
+| Diff | `git diff --check` | PASS |
+| Suite completa local | `npm run test:run` | 1.964 pasaron, 7 expiraron por el timeout de 5 s en pruebas de estructura, importación/exportación y estilos. El test de borrado pasó. |
 
-## Verificación de GitHub
+## Incidencias de CI y resolución
 
-El workflow mostrado por Toni falló únicamente en `src/lib/projects/delete-action.test.ts` por no incluir `getProjectById` en el mock de `projectRepository`. La corrección local reproduce el test y pasa. El nuevo resultado de CI se comprobará después del push a `development`.
+- CI `39334649460`: el mock de repositorio omitía `getProjectById`; corregido y cubierto por el test de borrado.
+- CI `39355310918`: ESLint encontró sintaxis inválida en `e2e/qa-remediation-413-three-docs.spec.ts:8`; la contraseña ahora se lee desde `process.env.E2E_AUTH_PASSWORD`.
+- Ambos commits están en `development`. La nueva ejecución de GitHub Actions se verificará después del push.
 
-## Verificación visual
+## Verificación visual y promoción
 
-No aplica: el cambio solo actualiza un test unitario; no modifica interfaz ni comportamiento de la aplicación.
-
-## Promoción
-
-No solicitada. Este cambio se envía únicamente a `origin/development`.
+La revisión visual no aplica: son cambios de tests, sin cambios en UI ni en el runtime de la aplicación. No se solicitó promoción; destino único: `origin/development`.
