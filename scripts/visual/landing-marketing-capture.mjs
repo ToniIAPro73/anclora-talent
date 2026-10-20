@@ -1,3 +1,6 @@
+import { config as loadEnv } from 'dotenv';
+loadEnv({ path: '.env.local' });
+
 import { chromium } from '@playwright/test';
 import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -17,7 +20,7 @@ mkdirSync(PUBLIC_FEATURES, { recursive: true });
 const USER = {
   fullName: 'E2E Auth Bot',
   email: 'e2e.auth@anclora-talent.test',
-  password: 'E2ePassword123',
+  password: process.env.E2E_AUTH_PASSWORD ?? (() => { throw new Error('E2E_AUTH_PASSWORD must be set in .env.local'); })(),
 };
 
 const VIEWPORT = { width: 1440, height: 900 };

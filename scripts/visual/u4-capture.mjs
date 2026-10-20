@@ -1,3 +1,6 @@
+import { config as loadEnv } from 'dotenv';
+loadEnv({ path: '.env.local' });
+
 import { chromium } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
@@ -7,7 +10,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 // Usage: node scripts/visual/u4-capture.mjs [before|after]
 const BASE = process.env.BASE_URL || 'http://localhost:3000';
 const phase = process.argv[2] || 'after';
-const USER = { fullName: 'E2E Auth Bot', email: 'e2e.auth@anclora-talent.test', password: 'E2ePassword123' };
+const USER = { fullName: 'E2E Auth Bot', email: 'e2e.auth@anclora-talent.test', password: process.env.E2E_AUTH_PASSWORD ?? (() => { throw new Error('E2E_AUTH_PASSWORD must be set in .env.local'); })() };
 const OUT_DIR = process.env.OUT_DIR || '/tmp/u4-visual';
 const FIXTURE = process.env.FIXTURE_PATH || 'fixtures/exito_sin_compania.docx';
 mkdirSync(OUT_DIR, { recursive: true });

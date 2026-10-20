@@ -10,7 +10,7 @@ import { expect, test, type Page } from '@playwright/test';
 const TEST_USER = {
   fullName: 'E2E Composition Bot',
   email: 'e2e.composition@anclora-talent.test',
-  password: 'E2ePassword123',
+  password: process.env.E2E_AUTH_PASSWORD ?? (() => { throw new Error('E2E_AUTH_PASSWORD must be set in .env.local'); })(),
 };
 
 const SOURCE_MD = `# Capítulo 1: Orígenes

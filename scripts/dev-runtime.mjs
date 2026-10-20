@@ -3,7 +3,7 @@ import { loadEnvConfig } from '@next/env';
 import { Pool } from 'pg';
 
 const TALENT_POSTGRES_CONTAINER = 'anclora-talent-postgres';
-const LOCAL_DATABASE_ENV = 'TALENT_DOCKER_DATABASE_URL';
+const LOCAL_DATABASE_ENV = 'DATABASE_URL_DOCKER';
 const CONNECTION_TIMEOUT_MS = 4_000;
 
 loadEnvConfig(process.cwd());
@@ -49,7 +49,7 @@ function ensureTalentPostgresIsRunning() {
 }
 
 async function selectLocalDatabase() {
-  const configuredDatabase = process.env.DATABASE_URL;
+  const configuredDatabase = process.env.DATABASE_URL || process.env.DATABASE_URL_NEON;
   if (configuredDatabase && isLocalDatabaseUrl(configuredDatabase) && await canConnect(configuredDatabase)) {
     return 'configured local PostgreSQL';
   }

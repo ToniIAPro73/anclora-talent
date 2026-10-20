@@ -14,8 +14,11 @@
     "postinstall": "node -e \"require('fs').copyFileSync('node_modules/pdfjs-dist/build/pdf.worker.min.mjs', 'public/pdf.worker.min.mjs')\"",
     "db:generate": "drizzle-kit generate",
     "db:push": "dotenv -e .env.local -- drizzle-kit push",
-    "db:push:local": "dotenv -e .env.local -- sh -c 'DATABASE_URL=\"$TALENT_DOCKER_DATABASE_URL\" drizzle-kit push'",
-    "db:studio": "dotenv -e .env.local -- drizzle-kit studio"
+    "db:studio": "dotenv -e .env.local -- drizzle-kit studio",
+    "dev:docker": "node scripts/local-dev.mjs --docker",
+    "dev:vercel": "node scripts/qa/dev-runtime.mjs",
+    "db:push:docker": "node scripts/db-docker.mjs push",
+    "db:studio:docker": "node scripts/db-docker.mjs studio"
   },
   "dependencies": {
     "@anclora/design-system": "https://codeload.github.com/ToniIAPro73/anclora-design-system/tar.gz/f8034eeec2a545b66995d44a9521809f3f4abde9",

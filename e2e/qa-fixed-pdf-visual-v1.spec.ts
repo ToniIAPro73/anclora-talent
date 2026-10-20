@@ -19,7 +19,7 @@ const REAL_PDF_AVAILABLE = fs.existsSync(REAL_PDF_PATH);
 const TEST_USER = {
   fullName: 'E2E Fixed PDF Bot',
   email: 'e2e.fixedpdf@anclora-talent.test',
-  password: 'E2ePassword123',
+  password: process.env.E2E_AUTH_PASSWORD ?? (() => { throw new Error('E2E_AUTH_PASSWORD must be set in .env.local'); })(),
 };
 
 const SHOTS_DIR = path.resolve(__dirname, '../test-results/qa');

@@ -23,7 +23,7 @@ import { expect, test, type Page } from '@playwright/test';
 const TEST_USER = {
   fullName: 'E2E Editor Scroll Bot',
   email: 'e2e.editorscroll@anclora-talent.test',
-  password: 'E2ePassword123',
+  password: process.env.E2E_AUTH_PASSWORD ?? (() => { throw new Error('E2E_AUTH_PASSWORD must be set in .env.local'); })(),
 };
 
 const FIRST_LINE_MARKER = 'MARCADOR_PRIMERA_LINEA';

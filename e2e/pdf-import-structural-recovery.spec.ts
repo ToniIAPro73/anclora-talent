@@ -21,7 +21,7 @@ const REAL_PDF_AVAILABLE = Boolean(REAL_PDF_PATH && fs.existsSync(REAL_PDF_PATH)
 const TEST_USER = {
   fullName: 'E2E Auth Bot',
   email: 'e2e.auth@anclora-talent.test',
-  password: 'E2ePassword123',
+  password: process.env.E2E_AUTH_PASSWORD ?? (() => { throw new Error('E2E_AUTH_PASSWORD must be set in .env.local'); })(),
 };
 
 const EXPECTED = {

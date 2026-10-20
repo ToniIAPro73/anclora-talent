@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 const TEST_USER = {
   fullName: 'E2E Auth Bot',
   email: 'e2e.auth@anclora-talent.test',
-  password: 'E2ePassword123',
+  password: process.env.E2E_AUTH_PASSWORD ?? (() => { throw new Error('E2E_AUTH_PASSWORD must be set in .env.local'); })(),
 };
 
 test('workspace header actions use compact shared buttons and keep their behavior', async ({ page, request }) => {

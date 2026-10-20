@@ -77,6 +77,7 @@ artifacts/qa/
 evidence/
 validation/
 .env*
+!.env.example
 
 # Manual PDF temporary artifacts (canonical manual assets live under docs/public)
 tmp/manual-pdf/

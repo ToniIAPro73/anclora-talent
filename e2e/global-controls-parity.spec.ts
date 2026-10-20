@@ -5,7 +5,7 @@ const evidenceDir = 'artifacts/qa/global-controls-parity';
 const qaUser = {
   fullName: 'E2E Auth Bot',
   email: 'e2e.auth@anclora-talent.test',
-  password: 'E2ePassword123',
+  password: process.env.E2E_AUTH_PASSWORD ?? (() => { throw new Error('E2E_AUTH_PASSWORD must be set in .env.local'); })(),
 };
 
 test.describe('global header controls — TableExtractor parity', () => {

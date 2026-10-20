@@ -10,7 +10,7 @@ import { expect, test } from '@playwright/test';
 const TEST_USER = {
   fullName: 'E2E Auth Bot',
   email: 'e2e.auth@anclora-talent.test',
-  password: 'E2ePassword123',
+  password: process.env.E2E_AUTH_PASSWORD ?? (() => { throw new Error('E2E_AUTH_PASSWORD must be set in .env.local'); })(),
 };
 
 test.describe('login screen contract', () => {
@@ -193,7 +193,7 @@ test.describe('own-auth flow', () => {
     await page.goto('/sign-up');
     await page.locator('#fullName').fill('E2E Register Bot');
     await page.locator('#email').fill(email);
-    await page.locator('#password').fill('E2ePassword123');
+    await page.locator('#password').fill(process.env.E2E_AUTH_PASSWORD ?? (() => { throw new Error('E2E_AUTH_PASSWORD must be set in .env.local'); })());
     await page.locator('button[type="submit"]').click();
 
     await expect(page).toHaveURL(/dashboard/);

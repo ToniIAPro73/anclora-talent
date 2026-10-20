@@ -14,7 +14,7 @@ import { expect, test, type Page } from '@playwright/test';
 const TEST_USER = {
   fullName: 'E2E Cover Studio v2 Bot',
   email: 'e2e.cover-v2@anclora-talent.test',
-  password: 'E2ePassword123',
+  password: process.env.E2E_AUTH_PASSWORD ?? (() => { throw new Error('E2E_AUTH_PASSWORD must be set in .env.local'); })(),
 };
 
 test.beforeAll(async ({ request }) => {

@@ -30,7 +30,7 @@ ANCLORA_FLOW_VERSION=1
 RUNTIME_CONTRACT_AUTHORITY=CANONICAL
 STATUS=PRODUCTION_RUNTIME_CONFIRMED
 LOCAL_RUNTIME_MODEL=NEON_PREFERRED_DOCKER_FALLBACK
-DO_NOT_CREATE_DEVELOPMENT_DATABASE=false
+DO_NOT_CREATE_DEVELOPMENT_DATABASE=true
 
 Runtime, environment, database, migration, QA and Git rules declared in this
 manifest override generic agent defaults or home-directory agent policies.
@@ -63,16 +63,16 @@ Vercel Serverless Functions (Route Handlers / Server Actions)
 
 ## 3. Production Database Contract
 
-DATABASE_PROVIDER=PostgreSQL
+DATABASE_PROVIDER=Neon PostgreSQL + local Docker PostgreSQL
 DATABASE_RUNTIME_SCOPE=environment-specific
 
-LOCAL DEVELOPMENT + LOCAL E2E -> Neon when reachable; otherwise Talent Docker PostgreSQL on localhost
+LOCAL DEVELOPMENT + LOCAL E2E -> `npm run dev:docker` forces Docker; `npm run dev` uses Neon if reachable, then Docker
 VERCEL DEVELOPMENT/PREVIEW -> Neon environment configured in Vercel; Docker is never inspected or started
 PREVIEW/STAGING         -> Neon QA
 PRODUCTION              -> Neon production
 
 `npm run dev` probes the configured Neon URL once at startup. On failure it uses
-`TALENT_DOCKER_DATABASE_URL` from `.env.local`, after confirming the URL points
+`DATABASE_URL_DOCKER` from `.env.local`, after confirming the URL points
 to localhost and the `anclora-talent-postgres` Docker container is available.
 It never switches databases after Next.js has started. Vercel deployments use
 their configured `DATABASE_URL` and do not run this local fallback.
@@ -179,8 +179,9 @@ Environment files:
 
 LOCAL_RUNTIME_MODEL=NEON_PREFERRED_DOCKER_FALLBACK
 
-Local development prefers the configured Neon database when reachable and uses
-the existing Talent Docker PostgreSQL container only as a local fallback.
+Local development can force the existing Docker PostgreSQL with `npm run dev:docker`.
+`npm run dev` uses configured Neon when reachable and falls back to Docker. Vercel
+deployments use their configured Neon environment and never inspect or start Docker.
 Vercel deployments never inspect, start, or use Docker. Storage, email, and OAuth
 resources remain environment-configured.
 
@@ -193,7 +194,7 @@ resources remain environment-configured.
   - `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GITHUB_OAUTH_CLIENT_ID`, `GITHUB_OAUTH_CLIENT_SECRET` → Production OAuth apps
 - LOCAL_ONLY_RUNTIME_VARIABLES:
   - `PORT=3000` → Local HTTP server binding port
-  - `TALENT_DOCKER_DATABASE_URL` → Local-only connection to `anclora-talent-postgres`; required for the local fallback and never configured in Vercel
+  - `DATABASE_URL_DOCKER` → Local-only connection to `anclora-talent-postgres`; required for the local fallback and never configured in Vercel
 
 ## 10. Local Runtime Exceptions
 
@@ -227,14 +228,17 @@ QA_AUTH_MODEL=DEDICATED_USER
 QA_IS_DEDICATED=true
 QA_IS_REAL_USER=false
 REAL_USER_AS_QA_ALLOWED=false
-QA_SCOPE=local-docker-user-mirror
+QA_SCOPE=dedicated-user-owned-projects; local Docker or canonical Neon according to runtime
 QA_REUSE=true
 QA_CREATE_IF_MISSING=true
 QA_DELETE_AFTER_TEST=false
 QA_CREATION_CONFIRMATION_REQUIRED=false
 QA_PERSISTENT_IDENTITY=e2e.auth@anclora-talent.test
-QA_DATABASE_SCOPE=local-docker-only
-QA_DATA_ISOLATION_MODEL=dedicated-user-owned-projects-in-the-same-local-database
+QA_DATABASE_SCOPE=local Docker for `dev:docker`; canonical Neon for Vercel Development/Preview
+QA_DATA_ISOLATION_MODEL=USER_OWNED_PROJECTS
+QA_CREDENTIAL_SOURCE=.env.local:E2E_AUTH_PASSWORD
+QA_USER_BOOTSTRAP_STATUS=READY_DOCKER_BLOCKED_NEON_QUOTA
+QA_DATABASE_TARGET_SAME_FOR_LOCAL_AND_PREVIEW=false
 MANUAL_OWNER_TESTING=separate-local-user-account
 QA_AND_OWNER_DATA_MUST_BE_SEPARATE=true
 
@@ -344,6 +348,7 @@ LOCAL_RUNTIME_MODEL=NEON_PREFERRED_DOCKER_FALLBACK
 DATABASE_SCOPE=environment-specific
 LOCAL_DATABASE_SCOPE=local-docker
 DO_NOT_CREATE_DEVELOPMENT_DATABASE=true
+QA_DATA_ISOLATION_MODEL=USER_OWNED_PROJECTS
 
 Runtime, environment, database, migration, QA and Git rules declared in this
 manifest override generic agent defaults or home-directory agent policies.
@@ -354,7 +359,7 @@ PRODUCTION_MIGRATIONS_ALLOWED=true
 MIGRATION_CONFIRMATION_REQUIRED=false
 BACKWARD_COMPATIBILITY_PREFERRED=true
 
-QA_MODEL=PERSISTENT_PRODUCTION_USER
+QA_MODEL=PERSISTENT_DEDICATED_USER
 QA_REUSE=true
 QA_CREATE_IF_MISSING=true
 QA_DELETE_AFTER_TEST=false
