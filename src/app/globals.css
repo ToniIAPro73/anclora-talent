@@ -3324,7 +3324,7 @@ html[data-theme="light"] .cover-workspace {
 /* ── Columns ─────────────────────────────────────────────────────────── */
 .cover-workspace-columns {
   display: grid;
-  grid-template-columns: 76px minmax(220px, 258px) minmax(0, 1fr) minmax(276px, 304px);
+  grid-template-columns: 44px minmax(180px, 200px) minmax(0, 1fr) minmax(220px, 248px);
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -3359,7 +3359,7 @@ html[data-theme="light"] .cover-workspace {
   flex-direction: column;
   justify-content: center;
   gap: 4px;
-  min-height: 58px;
+  min-height: 48px;
   padding: 5px 2px;
   border: 1px solid transparent;
   border-radius: 6px;
@@ -3682,7 +3682,7 @@ html[data-theme="light"] .cover-workspace .cover-canvas-paper { outline-color: c
 
 /* ── Responsive ──────────────────────────────────────────────────────── */
 @media (max-width: 1280px) {
-  .cover-workspace-columns { grid-template-columns: 64px minmax(190px, 220px) minmax(0, 1fr) 268px; }
+  .cover-workspace-columns { grid-template-columns: 42px minmax(168px, 184px) minmax(0, 1fr) 220px; }
   .cover-canvas-header__title small { display: none; }
   .cover-workspace-toolbar__label { display: none; }
   .cover-toolbar-button span { display: none; }
@@ -6166,7 +6166,10 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
 
 /* Keep canvas width dominant on desktop and canvas height dominant on phones. */
 @media (min-width: 901px) {
-  .cover-workspace-columns { grid-template-columns: 58px minmax(216px, 248px) minmax(0, 1fr) minmax(248px, 268px); }
+  .cover-workspace-columns { grid-template-columns: 44px minmax(180px, 200px) minmax(0, 1fr) minmax(220px, 248px); }
+  .cover-editor-tool { min-height: 40px; }
+  .cover-editor-tool span { display: none; }
+  .cover-editor-tool > svg { width: 17px; height: 17px; }
 }
 @media (max-width: 900px) {
   .cover-workspace-columns {
@@ -6180,7 +6183,7 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
     grid-column: 1;
     grid-row: 1;
     min-width: 0;
-    padding: 3px 5px;
+    padding: 2px 4px;
     border: 0;
     border-bottom: 1px solid var(--cover-line);
     overflow: hidden;
@@ -6189,18 +6192,19 @@ html[data-theme="light"] .talent-editor-shell .talent-shell-brand__name { color:
     display: flex;
     width: 100%;
     min-width: 0;
-    justify-content: space-between;
+    justify-content: center;
     gap: 2px;
   }
   .cover-editor-tool {
-    flex: 1 1 0;
-    min-width: 0;
-    min-height: 38px;
-    padding: 4px 0;
+    flex: 0 0 40px;
+    width: 40px;
+    min-width: 40px;
+    min-height: 36px;
+    padding: 3px;
     gap: 0;
   }
   .cover-editor-tool span { display: none; }
-  .cover-editor-tool > svg { width: 16px; height: 16px; }
+  .cover-editor-tool > svg { width: 15px; height: 15px; }
   .cover-canvas-area {
     grid-column: 1;
     grid-row: 2;
