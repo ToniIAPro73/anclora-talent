@@ -1,49 +1,19 @@
-# Checklist de validación — editor de portada y cabecera
+# Checklist de validación — invariantes de promoción global
 
-**Repositorio:** `anclora-talent`
+**Alcance:** propagar con `anclora-mods/scripts/adopt-repo.mjs` las invariantes nuevas de la política global de promoción a `.anclora/PRODUCTION_RUNTIME.md`: espera solo a que termine el workflow de cada salto, verificación de cada rama a cargo de Toni, alcance multi-repo y resumen único al final. Solo se añaden 6 líneas de contrato; no cambia código ni comportamiento de la aplicación.
 
-**Rama:** `development`
-
-**Commits:** `e7e355a` (editor/cabecera) y `e6ad13d` (proporciones responsive)
-**Alcance:** cabecera global simplificada; flujo de ocho pasos conservado; controles de cabecera redundantes retirados; herramientas y paneles del editor de portada/contraportada compactados para dar más área al lienzo. En escritorio las herramientas usan iconos con nombre accesible; en móvil y tablet vertical se mantienen en una fila compacta.
-
-## Corrección del gate de GitHub
-
-El gate de `testid-coverage-contract` detectó 16 controles nativos sin `data-testid` en `CoverEditorialSystemPanel.tsx`. Se añadieron identificadores estables a los botones, selectores e inputs del panel.
-
-| Comprobación | Comando | Resultado |
-| --- | --- | --- |
-| Contrato de cobertura de controles | `npm run test:run -- src/components/projects/testid-coverage-contract.test.ts` | PASS — 3 tests |
-| TypeScript | `npx tsc --noEmit` | PASS |
-| Integridad del diff | `git diff --check` | PASS |
-
-## Comprobaciones
+## Comprobaciones ejecutadas
 
 | Comprobación | Resultado |
 | --- | --- |
-| Tests de cabecera y workspace | PASS — 2 archivos, 32 tests |
-| Tests del editor y utilidades de portada | PASS — 7 archivos, 56 tests |
-| TypeScript (`npx tsc --noEmit`) | PASS |
-| ESLint dirigido a los archivos modificados | PASS |
-| Integridad (`git diff --check`) | PASS |
+| `node scripts/adopt-repo.mjs apply --repo anclora-talent` | APPLIED |
+| Diff limitado a `.anclora/PRODUCTION_RUNTIME.md` | 6 inserciones, sin borrados |
+| Tests del adopter (`adopt-repo.test.mjs`) | PASS |
 
 ## Verificación visual
 
-Usé `agent-browser` en el runtime local con la identidad QA dedicada existente. No se alteró ni eliminó esa cuenta.
+No aplica: solo contrato de documentación.
 
-| Viewport | Resultado observado |
-| --- | --- |
-| Móvil 390 × 844 | Cabecera en una fila; categorías en iconos de 40 × 36 px; lienzo a ancho completo |
-| Tablet vertical 768 × 1024 | Categorías compactas; lienzo a ancho completo |
-| Escritorio 1440 × 1000 | Herramientas 44 px, capas 200 px, lienzo 918 px, propiedades 248 px |
+## Promoción
 
-Capturas: `/tmp/talent-refined-mobile.png` y `/tmp/talent-proportions-desktop.png`.
-
-## Límites conocidos
-
-- La reimportación de un JSON local no pudo verificarse desde el selector de archivos del navegador.
-- Permanecen diferencias de paridad registradas en `sdd/features/cover-editor-modernization/parity-matrix-v1.md`.
-
-## Git y promoción
-
-El hook local pidió sobrescribir este checklist antes del push; por eso se incluye una actualización documental para esta entrega. El push autorizado es únicamente a `origin/development`. No se solicitó promoción.
+Se promueve `development` → `staging` → `production` → `main` con `promote.yml`.
