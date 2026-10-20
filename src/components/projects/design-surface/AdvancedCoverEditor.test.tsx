@@ -144,9 +144,12 @@ function makeSurfaceWithTitle(): DesignSurface {
 describe('AdvancedCoverEditor', () => {
   it('renders the mission §31 layout regions', async () => {
     render(<AdvancedCoverEditor surface={makeSurfaceWithTitle()} onChange={vi.fn()} copy={copy} />);
+    expect(screen.getByTestId('advanced-editor-tools-column')).toBeInTheDocument();
     expect(screen.getByTestId('advanced-editor-layers-column')).toBeInTheDocument();
     expect(screen.getByTestId('advanced-editor-canvas-column')).toBeInTheDocument();
     expect(screen.getByTestId('advanced-editor-properties-column')).toBeInTheDocument();
+    expect(screen.getByTestId('advanced-editor-layers-column')).toContainElement(screen.getByTestId('layers-panel'));
+    expect(screen.getByTestId('advanced-editor-properties-column')).not.toContainElement(screen.getByTestId('layers-panel'));
     expect(screen.getByTestId('advanced-editor-layer-count')).toBeInTheDocument();
     await waitFor(() => expect(mocks.state.objects).toHaveLength(1));
   });

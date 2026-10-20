@@ -8,6 +8,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 interface NavigatingLinkProps {
   href: string;
   className?: string;
+  style?: React.CSSProperties;
   children: React.ReactNode;
   pendingLabel?: string;
   title?: string;
@@ -23,6 +24,7 @@ interface NavigatingLinkProps {
 export function NavigatingLink({
   href,
   className,
+  style,
   children,
   pendingLabel,
   title,
@@ -79,6 +81,7 @@ export function NavigatingLink({
       aria-label={ariaLabel}
       data-testid={dataTestId}
       className={className}
+      style={style}
       data-navigation-state={isNavigating ? 'loading' : 'idle'}
       data-pending-label={isNavigating && typeof pendingLabel === 'string' ? pendingLabel : undefined}
       aria-busy={isNavigating}

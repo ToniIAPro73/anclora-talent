@@ -46,11 +46,13 @@ export interface BasicCoverEditorProps {
   palette: SurfacePalette;
   onPaletteChange: (palette: SurfacePalette) => void;
   brandColors?: string[];
+  semanticBinding?: SemanticBinding;
 }
 
-type BasicFieldRole = Extract<TextLayerRole, 'title' | 'subtitle' | 'author'>;
+type BasicFieldRole = Extract<TextLayerRole, 'title' | 'subtitle' | 'author' | 'body' | 'authorBio'>;
 
-const FIELD_ROLES: BasicFieldRole[] = ['title', 'subtitle', 'author'];
+const COVER_FIELD_ROLES: BasicFieldRole[] = ['title', 'subtitle', 'author'];
+const BACK_COVER_FIELD_ROLES: BasicFieldRole[] = ['title', 'body', 'authorBio'];
 
 const PALETTE_SWATCH: Record<SurfacePalette, string> = {
   obsidian: '#0b133f',
@@ -69,7 +71,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
 
 function defaultGeometryForRole(surface: DesignSurface, role: BasicFieldRole) {
   const isCover = surface.surface === 'cover';
-  const order = isCover ? ['title', 'subtitle', 'author'] : ['title', 'subtitle', 'author'];
+  const order = isCover ? COVER_FIELD_ROLES : BACK_COVER_FIELD_ROLES;
   const index = order.indexOf(role);
   const y = surface.height * (0.3 + index * 0.18);
   return { x: surface.width * 0.1, y, width: surface.width * 0.8, height: 60 };
@@ -214,7 +216,7 @@ function FieldEditor({
   );
 }
 
-export function BasicCoverEditor({ surface, onChange, copy, palette, onPaletteChange, brandColors }: BasicCoverEditorProps) {
+export function BasicCoverEditor({ surface, onChange, copy, palette, onPaletteChange, brandColors, semanticBinding }: BasicCoverEditorProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const templates: EditorialTemplate[] = surface.surface === 'cover' ? COVER_TEMPLATES : BACK_COVER_TEMPLATES;
@@ -255,7 +257,7 @@ export function BasicCoverEditor({ surface, onChange, copy, palette, onPaletteCh
   const applyTemplate = (template: EditorialTemplate) => {
     if (!isEmptyDesignSurface(surface) && !window.confirm(copy.origin.resetToTemplateConfirm)) return;
     // Basic mode has no manuscript binding of its own: what each slot currently says is its content.
-    const binding: SemanticBinding = {};
+    const binding: SemanticBinding = { ...semanticBinding };
     for (const layer of surface.layers) {
       if (layer.type === 'text' && layer.role !== 'free' && layer.content) {
         (binding as Record<string, string>)[layer.role] = layer.content;
@@ -321,27 +323,27 @@ export function BasicCoverEditor({ surface, onChange, copy, palette, onPaletteCh
         {/* Controls Column */}
         <div className="order-1 lg:order-2 space-y-6">
           <div className="space-y-2">
-            <Label className="text-xs font-semibold">{copy.templatesLabel}</Label>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="basic-template-grid">
-              {templates.map((template) => (
-                <button
-                  key={template.id}
-                  type="button"
-                  data-testid={`basic-template-${template.id}`}
-                  data-selected={selectedTemplateId === template.id ? 'true' : 'false'}
-                  aria-pressed={selectedTemplateId === template.id}
-                  onClick={() => applyTemplate(template)}
-                  className="ac-button ac-button--secondary flex flex-col items-start gap-1 p-2 text-left text-xs"
-                  title={template.description}
-                >
-                  <span className="font-semibold">{template.name}</span>
-                </button>
-              ))}
-            </div>
+            <Label htmlFor="basic-cover-template-select" className="sr-only">{copy.templatesLabel}</Label>
+            <span className="cover-workspace-toolbar__select-wrap w-full">
+              <select
+                id="basic-cover-template-select"
+                data-testid="basic-template-select"
+                aria-label={copy.templatesLabel}
+                value={selectedTemplateId ?? ''}
+                onChange={(event) => {
+                  const template = templates.find((item) => item.id === event.currentTarget.value);
+                  if (template) applyTemplate(template);
+                }}
+                className="cover-workspace-toolbar__select w-full"
+              >
+                <option value="" disabled>{copy.templatesLabel}</option>
+                {templates.map((template) => <option key={template.id} value={template.id}>{template.name}</option>)}
+              </select>
+            </span>
           </div>
 
       <div className="space-y-3">
-        {FIELD_ROLES.map((role) => (
+        {(surface.surface === 'cover' ? COVER_FIELD_ROLES : BACK_COVER_FIELD_ROLES).map((role) => (
           <FieldEditor
             key={role}
             role={role}

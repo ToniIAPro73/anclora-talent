@@ -8,7 +8,7 @@ import { isFileStudioEnabled } from '@/lib/filestudio/config';
 import { listProjectFileStudioJobs } from '@/lib/filestudio/emission';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
 import { readUiPreferences } from '@/lib/ui-preferences/preferences.server';
-import { buildSemanticBinding, getCoverDesign } from '@/lib/projects/design-surface-repository';
+import { buildSemanticBinding, getBackCoverDesign, getCoverDesign } from '@/lib/projects/design-surface-repository';
 
 export default async function ProjectCoverPage({
   params,
@@ -32,6 +32,7 @@ export default async function ProjectCoverPage({
     : null;
   const hasCover = Boolean(project.cover.renderedImageUrl ?? project.cover.backgroundImageUrl);
   const coverDesignSurfaceCopy = resolveLocaleMessages(locale).coverDesignSurface;
+  const workflowLabels = resolveLocaleMessages(locale).project;
   const initialSurface = getCoverDesign(project);
   const sourceDocumentAssetId = project.assets.find((asset) => asset.usage === 'source-document')?.id ?? null;
   const pageCount = project.document.source?.pageCount ?? null;
@@ -42,9 +43,13 @@ export default async function ProjectCoverPage({
         surfaceKind="cover"
         projectId={project.id}
         initialSurface={initialSurface}
+        companionSurface={getBackCoverDesign(project)}
         sourceDocumentAssetId={sourceDocumentAssetId}
         pageCount={pageCount}
         copy={coverDesignSurfaceCopy}
+        showWorkflowNavigation
+        workflowLabels={workflowLabels}
+        locale={locale}
         semanticBinding={buildSemanticBinding(project, 'cover')}
       />
       {filestudioJobs && (

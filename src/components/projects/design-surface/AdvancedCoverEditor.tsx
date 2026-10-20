@@ -82,6 +82,7 @@ export interface AdvancedCoverEditorProps {
   semanticBinding?: SemanticBinding;
   saveStatus?: 'idle' | 'saving' | 'saved' | 'error';
   onSaveFinal?: () => void;
+  onPngExporterChange?: (exporter: (() => string | null) | null) => void;
 }
 
 /** The cover may grow beyond its natural size to fill the work area (08A: the cover dominates the centre). */
@@ -105,10 +106,15 @@ function readFileAsDataUrl(file: File): Promise<string> {
   });
 }
 
-export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, originalBackgroundSrc, metadataValues, semanticBinding, saveStatus = 'idle', onSaveFinal }: AdvancedCoverEditorProps) {
+export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, originalBackgroundSrc, metadataValues, semanticBinding, saveStatus = 'idle', onSaveFinal, onPngExporterChange }: AdvancedCoverEditorProps) {
   const canvasRef = useRef<DesignSurfaceCanvasHandle>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!onPngExporterChange) return;
+    onPngExporterChange(() => canvasRef.current?.exportPng() ?? null);
+    return () => onPngExporterChange(null);
+  }, [onPngExporterChange]);
   const [selectedLayerIds, setSelectedLayerIdsState] = useState<string[]>([]);
   const selectedLayerIdsRef = useRef<string[]>([]);
   // The cover background is structural (not a layer): selecting it is a separate editor state.
@@ -549,8 +555,8 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
       </div>
 
       <div className="cover-workspace-columns">
-        {/* LEFT: elements, templates, import */}
-        <aside className="cover-tools-panel" data-testid="advanced-editor-layers-column">
+        {/* LEFT: content creation tools */}
+        <aside className="cover-tools-panel" data-testid="advanced-editor-tools-column">
           <nav className="cover-editor-tool-list" aria-label={ws.elements}>
             {([
               ['elements', Grid2X2, ws.elements],
@@ -567,6 +573,8 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
                 data-testid={`cover-tool-button-${tool}`}
                 className="cover-editor-tool"
                 data-active={activeTool === tool ? 'true' : 'false'}
+                aria-label={label}
+                title={label}
                 onClick={() => {
                   setActiveTool(tool);
                   if (tool === 'text') addTextLayer();
@@ -595,12 +603,13 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
             }}
           />
 
+        </aside>
+
+        {/* LAYERS: full-height, independent workspace beside the canvas */}
+        <aside className="cover-layers-workspace" data-testid="advanced-editor-layers-column">
           {activeTemplate && (
             <section className="cover-editor-templates" aria-label={ws.templates}>
-              <div className="cover-editor-section-heading">
-                <strong>{ws.templates}</strong>
-              </div>
-              {/* Display only: the top "Plantilla editorial" select is the single place a template is chosen. */}
+              <div className="cover-editor-section-heading"><strong>{ws.templates}</strong></div>
               <div
                 className="cover-template-card cover-template-card--current"
                 data-testid="cover-template-active-card"
@@ -613,7 +622,6 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
               </div>
             </section>
           )}
-
           <input
             ref={coverInputRef}
             type="file"
@@ -635,11 +643,35 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
             <ImageIcon className="h-4 w-4" />
             {ws.importCover}
           </button>
-          {imageQualityWarning && (
-            <p className="cover-editor-quality-warning" data-testid="cover-editor-quality-warning">
-              {imageQualityWarning}
-            </p>
-          )}
+          {imageQualityWarning && <p className="cover-editor-quality-warning" data-testid="cover-editor-quality-warning">{imageQualityWarning}</p>}
+          <section className="cover-layers-section" aria-label={ws.layers}>
+            <div className="cover-editor-layers-heading">
+              <span>{ws.layers}</span>
+              <span data-testid="advanced-editor-layer-count">{surface.layers.length}</span>
+            </div>
+            <LayersPanel
+              layers={surface.layers}
+              surfaceSize={surface}
+              selectedLayerIds={selectedLayerIds}
+              copy={layersCopy}
+              onSelect={handleSelect}
+              onRename={(layerId, name) => patchLayer(layerId, { name })}
+              onToggleVisibility={(layerId) => {
+                const layer = surface.layers.find((l) => l.id === layerId);
+                if (layer) patchLayer(layerId, { visible: !layer.visible });
+              }}
+              onToggleLock={(layerId) => {
+                const layer = surface.layers.find((l) => l.id === layerId);
+                if (layer) patchLayer(layerId, { locked: !layer.locked });
+              }}
+              onDuplicate={duplicateLayer}
+              onDelete={(layerId) => setLayers(surface.layers.filter((l) => l.id !== layerId))}
+              onReorder={handleReorder}
+              backgroundSelected={backgroundSelected}
+              backgroundIsImage={surface.background.kind === 'image'}
+              onSelectBackground={selectBackground}
+            />
+          </section>
         </aside>
 
         {/* CENTER: the cover is the hero */}
@@ -833,7 +865,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
           </div>
         </main>
 
-        {/* RIGHT: properties and layers */}
+        {/* RIGHT: contextual properties */}
         <aside className="cover-properties-panel" data-testid="advanced-editor-properties-column">
           <header className="cover-properties-header">
             <h2 className="cover-editor-properties-title">{ws.properties}</h2>
@@ -889,34 +921,6 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
             )}
           </div>
 
-          <section className="cover-layers-section" aria-label={ws.layers}>
-            <div className="cover-editor-layers-heading">
-              <span>{ws.layers}</span>
-              <span data-testid="advanced-editor-layer-count">{surface.layers.length}</span>
-            </div>
-            <LayersPanel
-              layers={surface.layers}
-              surfaceSize={surface}
-              selectedLayerIds={selectedLayerIds}
-              copy={layersCopy}
-              onSelect={handleSelect}
-              onRename={(layerId, name) => patchLayer(layerId, { name })}
-              onToggleVisibility={(layerId) => {
-                const layer = surface.layers.find((l) => l.id === layerId);
-                if (layer) patchLayer(layerId, { visible: !layer.visible });
-              }}
-              onToggleLock={(layerId) => {
-                const layer = surface.layers.find((l) => l.id === layerId);
-                if (layer) patchLayer(layerId, { locked: !layer.locked });
-              }}
-              onDuplicate={duplicateLayer}
-              onDelete={(layerId) => setLayers(surface.layers.filter((l) => l.id !== layerId))}
-              onReorder={handleReorder}
-              backgroundSelected={backgroundSelected}
-              backgroundIsImage={surface.background.kind === 'image'}
-              onSelectBackground={selectBackground}
-            />
-          </section>
         </aside>
       </div>
     </div>

@@ -3,12 +3,12 @@ import { describe, expect, test, vi } from 'vitest';
 import { BasicCoverEditor } from './BasicCoverEditor';
 import { createDesignLayer, createEmptyDesignSurface, type DesignSurface } from '@/lib/projects/design-surface';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
-import { COVER_TEMPLATES } from '@/lib/projects/cover-templates';
+import { BACK_COVER_TEMPLATES, COVER_TEMPLATES } from '@/lib/projects/cover-templates';
 
 const copy = resolveLocaleMessages('es').coverDesignSurface;
 
-function makeSurface(): DesignSurface {
-  const surface = createEmptyDesignSurface('cover');
+function makeSurface(kind: 'cover' | 'back-cover' = 'cover'): DesignSurface {
+  const surface = createEmptyDesignSurface(kind);
   surface.layers = [
     createDesignLayer({ type: 'text', role: 'title', source: 'manual', content: 'El Plan de Escape', x: 10, y: 20, width: 300, height: 60 }, 1),
   ];
@@ -16,12 +16,24 @@ function makeSurface(): DesignSurface {
 }
 
 describe('BasicCoverEditor', () => {
-  test('renders the template grid and existing field editors', () => {
+  test('renders the compact template selector and existing field editors', () => {
     render(<BasicCoverEditor surface={makeSurface()} onChange={vi.fn()} copy={copy} palette="obsidian" onPaletteChange={vi.fn()} />);
-    expect(screen.getByTestId('basic-template-grid')).toBeInTheDocument();
-    expect(screen.getByTestId(`basic-template-${COVER_TEMPLATES[0].id}`)).toBeInTheDocument();
+    expect(screen.getByTestId('basic-template-select')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: COVER_TEMPLATES[0].name })).toBeInTheDocument();
     expect(screen.getByTestId('basic-field-title')).toBeInTheDocument();
     expect(screen.getByTestId('basic-field-title-content-input')).toHaveValue('El Plan de Escape');
+  });
+
+  test('back-cover Basic mode exposes synopsis and author biography fields and uses back-cover templates', () => {
+    const surface = makeSurface('back-cover');
+    surface.layers = [
+      createDesignLayer({ type: 'text', role: 'body', source: 'manual', content: 'Sinopsis de prueba' }, 1),
+      createDesignLayer({ type: 'text', role: 'authorBio', source: 'manual', content: 'Biografía de prueba' }, 2),
+    ];
+    render(<BasicCoverEditor surface={surface} onChange={vi.fn()} copy={copy} palette="obsidian" onPaletteChange={vi.fn()} />);
+    expect(screen.getByTestId('basic-field-body-content-input')).toHaveValue('Sinopsis de prueba');
+    expect(screen.getByTestId('basic-field-authorBio-content-input')).toHaveValue('Biografía de prueba');
+    expect(screen.getByRole('option', { name: BACK_COVER_TEMPLATES[0].name })).toBeInTheDocument();
   });
 
   test('a field with no layer yet offers an add button instead of controls', () => {
@@ -62,7 +74,7 @@ describe('BasicCoverEditor', () => {
     const onChange = vi.fn();
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     render(<BasicCoverEditor surface={makeSurface()} onChange={onChange} copy={copy} palette="obsidian" onPaletteChange={vi.fn()} />);
-    fireEvent.click(screen.getByTestId(`basic-template-${COVER_TEMPLATES[0].id}`));
+    fireEvent.change(screen.getByTestId('basic-template-select'), { target: { value: COVER_TEMPLATES[0].id } });
     expect(confirmSpy).toHaveBeenCalled();
     const next: DesignSurface = onChange.mock.calls[0][0];
     expect(next.layers.length).toBeGreaterThan(0);
@@ -74,7 +86,7 @@ describe('BasicCoverEditor', () => {
     const onChange = vi.fn();
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
     render(<BasicCoverEditor surface={makeSurface()} onChange={onChange} copy={copy} palette="obsidian" onPaletteChange={vi.fn()} />);
-    fireEvent.click(screen.getByTestId(`basic-template-${COVER_TEMPLATES[0].id}`));
+    fireEvent.change(screen.getByTestId('basic-template-select'), { target: { value: COVER_TEMPLATES[0].id } });
     expect(onChange).not.toHaveBeenCalled();
     confirmSpy.mockRestore();
   });
@@ -84,7 +96,7 @@ describe('BasicCoverEditor', () => {
     const confirmSpy = vi.spyOn(window, 'confirm');
     const surface = createEmptyDesignSurface('cover');
     render(<BasicCoverEditor surface={surface} onChange={onChange} copy={copy} palette="obsidian" onPaletteChange={vi.fn()} />);
-    fireEvent.click(screen.getByTestId(`basic-template-${COVER_TEMPLATES[0].id}`));
+    fireEvent.change(screen.getByTestId('basic-template-select'), { target: { value: COVER_TEMPLATES[0].id } });
     expect(confirmSpy).not.toHaveBeenCalled();
     expect(onChange).toHaveBeenCalled();
     confirmSpy.mockRestore();
@@ -110,7 +122,7 @@ describe('BasicCoverEditor', () => {
     const onChange = vi.fn();
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     render(<BasicCoverEditor surface={makeSurface()} onChange={onChange} copy={copy} palette="obsidian" onPaletteChange={vi.fn()} />);
-    fireEvent.click(screen.getByTestId(`basic-template-${COVER_TEMPLATES[1].id}`));
+    fireEvent.change(screen.getByTestId('basic-template-select'), { target: { value: COVER_TEMPLATES[1].id } });
     expect(onChange).toHaveBeenCalled();
     const next: DesignSurface = onChange.mock.calls[0][0];
     const titleLayer = next.layers.find((l) => l.type === 'text' && l.role === 'title');

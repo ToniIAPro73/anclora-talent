@@ -1,8 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { LayoutDashboard } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { useUiPreferences } from '@/components/providers/UiPreferencesProvider';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
@@ -23,98 +22,31 @@ export function AppShell({
   const { locale } = useUiPreferences();
   const messages = resolveLocaleMessages(locale).shell;
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   const compactDashboard = pathname === '/dashboard';
   const compactNewProject = pathname === '/projects/new';
   const compactEditor = /^\/projects\/[^/]+\/editor$/.test(pathname ?? '');
-  const focusedWorkspace = compactDashboard || compactNewProject || compactEditor;
-  const navLinks = [
-    {
-      href: '/dashboard',
-      label: messages.navDashboard,
-      active: pathname === '/dashboard' && searchParams.get('projects') !== '1',
-    },
-    {
-      href: compactDashboard ? '/projects/new' : '/dashboard?focus=new-project',
-      label: messages.navNewProject,
-      active: false,
-    },
-  ];
+  const compactCoverStudio = /^\/projects\/[^/]+\/(cover|back-cover)$/.test(pathname ?? '');
+  const compactWorkspace = compactEditor || compactCoverStudio;
 
   return (
     <>
-      <div className={`talent-app-shell-frame min-h-screen bg-[var(--app-gradient)] text-[var(--text-primary)]${compactDashboard ? ' talent-dashboard-shell' : ''}${compactNewProject ? ' talent-new-project-shell' : ''}${compactEditor ? ' talent-editor-shell' : ''}`}>
+      <div className={`talent-app-shell-frame min-h-screen bg-[var(--app-gradient)] text-[var(--text-primary)]${compactDashboard ? ' talent-dashboard-shell' : ''}${compactNewProject ? ' talent-new-project-shell' : ''}${compactWorkspace ? ' talent-editor-shell' : ''}`}>
       <div className="talent-shell-grid">
         <div className="talent-shell-main min-w-0">
-          <header className="talent-shell-topbar">
-            <div className="talent-shell-brand">
+          <header className="talent-shell-topbar" style={{ display: 'flex', minHeight: 56, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'nowrap', gap: 8, padding: '5px 8px' }}>
+            <div className="talent-shell-brand" style={{ flex: '0 1 auto', minWidth: 0, gap: 6 }}>
               <BrandLogo size={32} priority />
-              <div className="talent-shell-brand__name">{messages.brand}</div>
+              <div className="talent-shell-brand__name" style={{ minWidth: 0, fontSize: 14 }}>{messages.brand}</div>
             </div>
 
-            {compactEditor ? (
-              <div id="talent-editor-topbar-slot" className="talent-shell-editor-slot" />
-            ) : (
-              <div className="talent-shell-brand__copy">
-                <p>{compactDashboard ? messages.navDashboard : compactNewProject ? messages.navNewProject : messages.topbarTitle}</p>
-                {!focusedWorkspace && <span>{messages.topbarSubtitle}</span>}
-              </div>
-            )}
-
-            {!focusedWorkspace && (
-              <nav className="talent-shell-nav" aria-label={messages.navLabel}>
-                {navLinks.map((link) => (
-                  <NavigatingLink
-                    key={link.href}
-                    href={link.href}
-                    pendingLabel={link.label}
-                    aria-current={link.active ? 'page' : undefined}
-                    className="talent-shell-nav__link"
-                  >
-                    {link.label}
-                  </NavigatingLink>
-                ))}
-              </nav>
-            )}
-
-            <div className="talent-shell-topbar-actions">
-              {compactDashboard && <NavigatingLink href="/projects/new" pendingLabel={messages.navNewProject} className="ac-button ac-button--compact ac-button--primary dashboard-header-create">{messages.navNewProject}</NavigatingLink>}
-              {compactNewProject && <><NavigatingLink href="/dashboard" pendingLabel={messages.navDashboard} className="ac-button ac-button--compact ac-button--primary new-project-dashboard">{messages.navDashboard}</NavigatingLink><NavigatingLink href="/dashboard" pendingLabel={messages.navCancel} className="ac-button ac-button--compact ac-button--primary new-project-cancel">{messages.navCancel}</NavigatingLink></>}
-              {compactEditor && <NavigatingLink href="/dashboard" pendingLabel={messages.navDashboard} className="ac-button ac-button--compact" data-testid="workspace-dashboard-button">{messages.navDashboard}</NavigatingLink>}
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen((open) => !open)}
-                aria-expanded={mobileMenuOpen}
-                aria-label={messages.mobileMenuLabel}
-                className="talent-shell-mobile-menu-button"
-              >
-                {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-              </button>
-              <div className="global-header-controls">
+            <div className="talent-shell-topbar-actions" style={{ display: 'flex', minWidth: 0, alignItems: 'center', justifyContent: 'flex-end', gap: 4, flexWrap: 'nowrap', marginLeft: 'auto' }}>
+              <NavigatingLink href="/dashboard" pendingLabel={messages.navDashboard} aria-label={messages.navDashboard} title={messages.navDashboard} aria-current={compactDashboard ? 'page' : undefined} className="ac-button ac-button--compact" data-testid="workspace-dashboard-button" style={{ minHeight: 32, padding: '0 7px' }}><LayoutDashboard className="h-4 w-4 sm:hidden" aria-hidden="true" /><span className="hidden sm:inline">{messages.navDashboard}</span></NavigatingLink>
+              <div className="global-header-controls" style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                 <GlobalLanguageControl />
                 <GlobalThemeControl />
               </div>
               <UserMenu user={user} />
             </div>
-
-            {mobileMenuOpen && !focusedWorkspace ? (
-              <div className="talent-shell-mobile-menu" role="menu" aria-label={messages.navLabel}>
-                {navLinks.map((link) => (
-                  <NavigatingLink
-                    key={link.href}
-                    href={link.href}
-                    pendingLabel={link.label}
-                    role="menuitem"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="talent-shell-mobile-menu__link"
-                  >
-                    {link.label}
-                  </NavigatingLink>
-                ))}
-              </div>
-            ) : null}
           </header>
 
           <main id="main-content" className="talent-shell-content">{children}</main>

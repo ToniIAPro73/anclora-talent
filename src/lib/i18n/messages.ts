@@ -1623,6 +1623,8 @@ export type AppMessages = {
       title: string;
       subtitle: string;
       author: string;
+      body: string;
+      authorBio: string;
       addFieldButtonLabel: string;
     };
     text: {
@@ -1795,6 +1797,20 @@ export type AppMessages = {
       sectionArrange: string;
       sectionGroup: string;
       sectionPosition: string;
+      basicModeLabel: string;
+      professionalModeLabel: string;
+      importEditableJson: string;
+      exportEditableJson: string;
+      exportPng: string;
+      exportPngSuccess: string;
+      exportPngError: string;
+      jsonHelp: string;
+      jsonImportError: string;
+      jsonImported: string;
+      jsonImportPartialSave: string;
+      preflightLabel: string;
+      preflightDisclaimer: string;
+      preflightClear: string;
     };
     origin: {
       promptTitle: string;
@@ -3690,6 +3706,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         title: 'Título',
         subtitle: 'Subtítulo',
         author: 'Autor',
+        body: 'Sinopsis',
+        authorBio: 'Biografía del autor',
         addFieldButtonLabel: 'Añadir campo',
       },
       text: {
@@ -3862,6 +3880,20 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         sectionArrange: 'Alinear',
         sectionGroup: 'Grupo',
         sectionPosition: 'Posición y tamaño',
+        basicModeLabel: 'Básico',
+        professionalModeLabel: 'Profesional',
+        importEditableJson: 'Importar JSON',
+        exportEditableJson: 'Exportar JSON',
+        exportPng: 'Exportar PNG',
+        exportPngSuccess: 'PNG exportado.',
+        exportPngError: 'No se pudo exportar el PNG. Comprueba las imágenes del diseño e inténtalo de nuevo.',
+        jsonHelp: 'JSON conserva portada, contraportada, capas e imágenes editables. PNG es una imagen plana.',
+        jsonImportError: 'No se pudo importar el diseño JSON.',
+        jsonImported: 'Diseño JSON importado en las dos superficies.',
+        jsonImportPartialSave: 'La portada se guardó, pero falló la contraportada. Vuelve a importar el archivo para completar el guardado.',
+        preflightLabel: 'Revisión orientativa',
+        preflightDisclaimer: 'Avisos orientativos; no certifican preparación para imprenta ni sustituyen un perfil de producción.',
+        preflightClear: 'No se han encontrado avisos con las comprobaciones orientativas actuales.',
       },
       origin: {
         promptTitle: '¿Cómo quieres empezar?',
@@ -5754,6 +5786,8 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         title: 'Title',
         subtitle: 'Subtitle',
         author: 'Author',
+        body: 'Synopsis',
+        authorBio: 'Author biography',
         addFieldButtonLabel: 'Add field',
       },
       text: {
@@ -5926,6 +5960,20 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         sectionArrange: 'Align',
         sectionGroup: 'Group',
         sectionPosition: 'Position & size',
+        basicModeLabel: 'Basic',
+        professionalModeLabel: 'Professional',
+        importEditableJson: 'Import JSON',
+        exportEditableJson: 'Export JSON',
+        exportPng: 'Export PNG',
+        exportPngSuccess: 'PNG exported.',
+        exportPngError: 'The PNG could not be exported. Check the design images and try again.',
+        jsonHelp: 'JSON keeps both editable covers, layers, and images. PNG is a flat image.',
+        jsonImportError: 'The editable JSON design could not be imported.',
+        jsonImported: 'The JSON design was imported to both surfaces.',
+        jsonImportPartialSave: 'The cover was saved, but the back cover failed. Import the file again to finish saving both surfaces.',
+        preflightLabel: 'Advisory preflight',
+        preflightDisclaimer: 'Advisory checks only; this is not print certification and does not replace a production profile.',
+        preflightClear: 'No issues were found by the current advisory checks.',
       },
       origin: {
         promptTitle: 'How do you want to start?',

@@ -56,6 +56,8 @@ interface GuideObject {
   /** The cover background image object: never a snap target for other objects. */
   isCoverBackground?: boolean;
   visible?: boolean;
+  selectable?: boolean;
+  evented?: boolean;
   getBoundingRect?(absolute?: boolean, calculate?: boolean): FabricRect;
   setCoords?(): void;
   set(props: Record<string, unknown>): void;
@@ -378,7 +380,7 @@ export class CanvasGuideManager {
     }
 
     this.canvas!.getObjects().forEach((obj) => {
-      if (obj === movingObject || obj?.visible === false || obj?.type === 'line' || obj?.isCoverBackground || obj?.type === 'text' && obj?.excludeFromExport) return;
+      if (obj === movingObject || obj?.visible === false || obj?.selectable === false || obj?.evented === false || obj?.excludeFromExport || obj?.type === 'line' || obj?.isCoverBackground) return;
 
       const other = getBounds(obj);
 
@@ -406,7 +408,7 @@ export class CanvasGuideManager {
 
   private findEqualSpacingTarget(movingObject: GuideObject, moving: Bounds, threshold: number): void {
     const others = this.canvas!.getObjects().filter(
-      (obj) => obj !== movingObject && obj.visible !== false && obj.type !== 'line' && !obj.isCoverBackground && !(obj.type === 'text' && obj.excludeFromExport),
+      (obj) => obj !== movingObject && obj.visible !== false && obj.selectable !== false && obj.evented !== false && !obj.excludeFromExport && obj.type !== 'line' && !obj.isCoverBackground,
     );
     const best: Partial<Record<Axis, { target: SnapTarget; feedback: EqualSpacingFeedback }>> = {};
 

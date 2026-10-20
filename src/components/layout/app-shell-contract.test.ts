@@ -17,16 +17,19 @@ describe('app shell v3 contract', () => {
     expect(globalsCss).not.toContain('talent-shell-sidebar');
   });
 
-  test('renders masthead nav with dashboard, new project and projects modal links', () => {
+  test('keeps the global masthead limited to the brand, dashboard and account controls', () => {
     expect(appShell).toContain('talent-shell-brand');
     expect(appShell).toContain('messages.navDashboard');
-    expect(appShell).toContain('messages.navNewProject');
-    expect(appShell).toContain('/dashboard?focus=new-project');
+    expect(appShell).not.toContain('messages.navNewProject');
+    expect(appShell).not.toContain('/dashboard?focus=new-project');
+    expect(appShell).toContain('<GlobalLanguageControl />');
+    expect(appShell).toContain('<GlobalThemeControl />');
+    expect(appShell).toContain('<UserMenu user={user} />');
   });
 
-  test('omits secondary navigation on the compact dashboard shell', () => {
-    expect(appShell).toContain('{!focusedWorkspace && (');
-    expect(appShell).toContain('{mobileMenuOpen && !focusedWorkspace ? (');
+  test('removes secondary and mobile navigation from the global masthead', () => {
+    expect(appShell).not.toContain('talent-shell-nav');
+    expect(appShell).not.toContain('mobileMenuOpen');
   });
 
   test('keeps user menu and removes editor preferences from shell', () => {
@@ -39,11 +42,11 @@ describe('app shell v3 contract', () => {
     ).toBe(false);
   });
 
-  test('mobile burger exists while theme and locale toggles remain top-level controls', () => {
-    expect(appShell).toContain('talent-shell-mobile-menu-button');
+  test('theme and locale toggles remain top-level controls without a mobile burger', () => {
+    expect(appShell).not.toContain('talent-shell-mobile-menu-button');
     expect(appShell).toContain('<GlobalLanguageControl />');
     expect(appShell).toContain('<GlobalThemeControl />');
-    expect(globalsCss).toMatch(/@media \(max-width: 480px\)[\s\S]*\.talent-shell-nav\s*\{[\s\S]*display: none/);
+    expect(globalsCss).toContain('.talent-shell-topbar-actions');
   });
 
   test('renders the shared legal footer after the application shell', () => {

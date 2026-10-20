@@ -43,6 +43,9 @@ interface MockCanvasObject {
   scaleY: number;
   originX: string;
   originY: string;
+  selectable?: boolean;
+  evented?: boolean;
+  excludeFromExport?: boolean;
   set: (props: Record<string, unknown>) => void;
 }
 
@@ -154,6 +157,18 @@ describe('CanvasGuideManager', () => {
     expect(moving.set).toHaveBeenCalled();
   });
 
+  it('ignores locked layers and non-interactive helper overlays as smart-guide neighbors', async () => {
+    const moving = makeObject({ id: 'moving', left: 220, top: 230, width: 100, height: 40 });
+    const locked = makeObject({ id: 'locked', left: 320, top: 230, width: 100, height: 40, selectable: false, evented: false });
+    const overlay = makeObject({ id: 'overlay', left: 320, top: 230, width: 100, height: 40, excludeFromExport: true, selectable: false, evented: false });
+    const canvas = makeCanvas([moving, locked, overlay]);
+    const manager = createGuideManager(canvas);
+
+    await manager.showGuides(moving);
+
+    expect(mocks.LineMock.mock.calls.some(([, options]) => options.stroke === '#f59e0b')).toBe(false);
+  });
+
   it('keeps the screen-space snap feel stable when zoom changes', async () => {
     const moving = makeObject({ id: 'moving', left: 211, top: 300, width: 100, height: 40 });
     const canvas = makeCanvas([moving]);
@@ -172,6 +187,7 @@ describe('CanvasGuideManager', () => {
     const last = makeObject({ id: 'last', left: 200, top: 300, width: 100, height: 40 });
     const canvas = makeCanvas([first, moving, last]);
     const manager = createGuideManager(canvas);
+    manager.setZoom(2);
 
     await manager.showGuides(moving);
     manager.snapToGuides(moving);

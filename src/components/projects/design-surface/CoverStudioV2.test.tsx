@@ -3,8 +3,10 @@ import { describe, expect, test, vi, beforeEach } from 'vitest';
 import { CoverStudioV2 } from './CoverStudioV2';
 import { createDesignLayer, createEmptyDesignSurface, type DesignSurface } from '@/lib/projects/design-surface';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
+import { createCoverDesignPackage } from '@/lib/projects/cover-design-package';
 
 const copy = resolveLocaleMessages('es').coverDesignSurface;
+const workflowLabels = resolveLocaleMessages('es').project;
 
 type SaveResult = { status: 'saved' } | { status: 'error'; error: string };
 const saveCoverDesignAction = vi.fn<(projectId: string, surface: DesignSurface) => Promise<SaveResult>>(async () => ({ status: 'saved' }));
@@ -21,10 +23,23 @@ vi.mock('@/lib/projects/pdf-page-rasterizer', () => ({
 }));
 
 vi.mock('./AdvancedCoverEditor', () => ({
-  AdvancedCoverEditor: (props: { onSaveFinal?: () => void; saveStatus?: string }) => (
+  AdvancedCoverEditor: (props: { onSaveFinal?: () => void; saveStatus?: string; surface: DesignSurface }) => (
     <div data-testid="stub-advanced-editor">
       <button type="button" data-testid="studio-save-final-button" onClick={props.onSaveFinal}>Guardar</button>
       <span data-testid="studio-save-status">{props.saveStatus}</span>
+      <span data-testid="advanced-surface-title">{props.surface.layers.find((layer) => layer.type === 'text')?.content}</span>
+    </div>
+  ),
+}));
+
+vi.mock('./BasicCoverEditor', () => ({
+  BasicCoverEditor: (props: { surface: DesignSurface; onChange: (surface: DesignSurface) => void }) => (
+    <div data-testid="stub-basic-editor">
+      <span>{props.surface.surface}</span>
+      <button type="button" data-testid="basic-edit-title" onClick={() => props.onChange({
+        ...props.surface,
+        layers: props.surface.layers.map((layer) => layer.type === 'text' ? { ...layer, content: 'Título desde Básico' } : layer),
+      })}>Editar título</button>
     </div>
   ),
 }));
@@ -72,6 +87,76 @@ describe('CoverStudioV2', () => {
     );
     expect(screen.queryByTestId('cover-origin-prompt')).not.toBeInTheDocument();
     expect(screen.getByTestId('stub-advanced-editor')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: copy.workspace.exportEditableJson })).toBeInTheDocument();
+    expect(screen.getByTestId('cover-package-import-button')).toHaveAccessibleName(copy.workspace.importEditableJson);
+    expect(screen.getByRole('button', { name: copy.workspace.exportPng })).toBeInTheDocument();
+  });
+
+  test('direct editor routes show the canonical eight-step workflow with the current surface active', () => {
+    render(
+      <CoverStudioV2
+        surfaceKind="back-cover"
+        projectId="p-1"
+        initialSurface={makeNonEmptySurface('back-cover')}
+        sourceDocumentAssetId={null}
+        pageCount={null}
+        copy={copy}
+        showWorkflowNavigation
+        workflowLabels={workflowLabels}
+      />,
+    );
+
+    const nav = screen.getByTestId('cover-workflow-stepper');
+    expect(nav.querySelectorAll('.ac-stepper__item')).toHaveLength(8);
+    expect(nav.querySelector('[aria-current="step"]')).toHaveTextContent('4');
+    expect(nav).toHaveTextContent('Contraportada');
+  });
+
+  test('imports a validated JSON package into both saved surfaces', async () => {
+    const cover = makeNonEmptySurface('cover');
+    const backCover = makeNonEmptySurface('back-cover');
+    const firstTextLayer = backCover.layers[0];
+    if (firstTextLayer.type !== 'text') throw new Error('Expected a text fixture');
+    backCover.layers[0] = { ...firstTextLayer, content: 'Imported back cover' };
+    const packageJson = await createCoverDesignPackage({ cover, 'back-cover': backCover });
+    const file = new File([packageJson], 'design.json', { type: 'application/json' });
+    Object.defineProperty(file, 'text', { value: async () => packageJson });
+    render(
+      <CoverStudioV2
+        surfaceKind="cover"
+        projectId="p-1"
+        initialSurface={makeNonEmptySurface()}
+        companionSurface={makeNonEmptySurface('back-cover')}
+        sourceDocumentAssetId={null}
+        pageCount={null}
+        copy={copy}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId('cover-package-input'), { target: { files: [file] } });
+    await waitFor(() => expect(screen.getByTestId('cover-package-feedback')).toHaveTextContent(copy.workspace.jsonImported));
+    expect(saveCoverDesignAction).toHaveBeenCalledWith('p-1', expect.objectContaining({ surface: 'cover' }));
+    expect(saveBackCoverDesignAction).toHaveBeenCalledWith('p-1', expect.objectContaining({ surface: 'back-cover' }));
+  });
+
+  test('switches between Basic and Professional without losing edits to the shared surface', () => {
+    render(
+      <CoverStudioV2
+        surfaceKind="cover"
+        projectId="p-1"
+        initialSurface={makeNonEmptySurface()}
+        sourceDocumentAssetId={null}
+        pageCount={null}
+        copy={copy}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('studio-mode-basic-button'));
+    fireEvent.click(screen.getByTestId('basic-edit-title'));
+    expect(screen.getByTestId('stub-basic-editor')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('studio-mode-professional-button'));
+
+    expect(screen.getByTestId('advanced-surface-title')).toHaveTextContent('Título desde Básico');
   });
 
   test('choosing "create from scratch" dismisses the prompt and shows the unified editor', () => {

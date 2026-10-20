@@ -2,7 +2,7 @@
 
 import { useEffect, useTransition, useState, useMemo, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Loader2 } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { Stepper, type Step } from '@/components/ui/Stepper';
 import { ChapterOrganizer } from './ChapterOrganizer';
 import { ContentWorkspace } from './content-workspace/ContentWorkspace';
@@ -19,7 +19,6 @@ import { ImportChapterDialog } from './ImportChapterDialog';
 import { ReimportDialog } from './ReimportDialog';
 import { DocumentDataModal } from './DocumentDataModal';
 import { Portal } from '@/components/ui/Portal';
-import { SlotPortal } from '@/components/ui/SlotPortal';
 import { WorkspaceOnboarding } from './WorkspaceOnboarding';
 import { useDocumentComposition } from './useDocumentComposition';
 import { compileDocument } from '@/lib/style-engine/document-compiler';
@@ -198,17 +197,9 @@ export function ProjectWorkspace({
   const coverDesignSurfaceCopy = useMemo(() => resolveLocaleMessages(locale).coverDesignSurface, [locale]);
   const sourceDocumentAssetId = project.assets.find((asset) => asset.usage === 'source-document')?.id ?? null;
   const sourcePageCount = project.document.source?.pageCount ?? null;
-  const [saveStepState, setSaveStepState] = useState<'idle' | 'saved'>('idle');
   const [pageNumberSyncState, setPageNumberSyncState] = useState<SaveState>('idle');
   const [pageNumberSyncFeedback, setPageNumberSyncFeedback] = useState<PaginationSyncFeedback>('idle');
   const [isPending, startTransition] = useTransition();
-  // Compact header "Guardado hace X min" label: ticks every 30s so the
-  // relative time stays fresh without a per-second re-render.
-  const [nowTick, setNowTick] = useState(() => Date.now());
-  useEffect(() => {
-    const interval = window.setInterval(() => setNowTick(Date.now()), 30_000);
-    return () => window.clearInterval(interval);
-  }, []);
 
   const chapterSignature = useMemo(
     () => project.document.chapters.map((ch) => `${ch.id}:${ch.order}`).join(','),
@@ -232,11 +223,6 @@ export function ProjectWorkspace({
       formData.set('projectId', project.id);
       formData.set('workflowStep', String(activeStep));
       await saveProjectWorkflowStepAction(formData);
-      if (typeof window === 'undefined') return;
-      setSaveStepState('saved');
-      window.setTimeout(() => {
-        if (typeof window !== 'undefined') setSaveStepState('idle');
-      }, 2000);
     });
   }, [activeStep, project.id, project.workflowStep, startTransition]);
 
@@ -440,6 +426,9 @@ export function ProjectWorkspace({
                     ? 'synced'
                     : 'idle'
               }
+              pageNumberSyncFeedback={pageNumberSyncFeedback === 'idle' ? null : pageNumberSyncFeedback}
+              pageNumberSyncDoneLabel={copy.chapterSyncPageNumbersDone}
+              pageNumberSyncMissingIndexLabel={copy.chapterSyncPageNumbersMissingIndex}
               pageNumberIsStale={pageNumberIsStale}
               syncPageNumbersLabel={copy.chapterSyncPageNumbers}
               syncPageNumbersTitle={copy.chapterSyncPageNumbersTitle}
@@ -466,10 +455,12 @@ export function ProjectWorkspace({
               surfaceKind="cover"
               projectId={project.id}
               initialSurface={canonicalCoverSurface}
+              companionSurface={canonicalBackCoverSurface}
               sourceDocumentAssetId={sourceDocumentAssetId}
               pageCount={sourcePageCount}
               copy={coverDesignSurfaceCopy}
               semanticBinding={coverSemanticBinding}
+              locale={locale}
             />
           </div>
         );
@@ -482,10 +473,12 @@ export function ProjectWorkspace({
               surfaceKind="back-cover"
               projectId={project.id}
               initialSurface={canonicalBackCoverSurface}
+              companionSurface={canonicalCoverSurface}
               sourceDocumentAssetId={sourceDocumentAssetId}
               pageCount={sourcePageCount}
               copy={coverDesignSurfaceCopy}
               semanticBinding={backCoverSemanticBinding}
+              locale={locale}
             />
           </div>
         );
@@ -559,16 +552,6 @@ export function ProjectWorkspace({
     }
   };
 
-  const savedLabel = (() => {
-    if (isPending) return null;
-    const updatedAt = new Date(project.updatedAt).getTime();
-    if (!Number.isFinite(updatedAt)) return null;
-    const minutes = Math.max(0, Math.floor((nowTick - updatedAt) / 60000));
-    return minutes < 1
-      ? copy.contentSavedJustNow
-      : copy.contentSavedMinutesAgo.replace('{count}', String(minutes));
-  })();
-
   if (editingChapterId !== null && editingChapterIndex >= 0) {
     const effectiveFontFamily =
       compiledDocument.styleMap.body.resolvedFontFamily ||
@@ -604,65 +587,7 @@ export function ProjectWorkspace({
 
   return (
     <div className="ac-workspace-stage talent-workspace-stage" data-testid="project-workspace">
-      {/* Header: portalled into the shared app shell's compact editor topbar
-          (see AppShell.tsx's #talent-editor-topbar-slot) so the whole app
-          shows one merged, compact header row instead of two stacked ones. */}
-      <SlotPortal slotId="talent-editor-topbar-slot">
-        <div className="talent-editor-topbar" data-testid="content-workspace-topbar">
-          <div className="talent-editor-topbar__titles">
-            <p className="talent-editor-topbar__eyebrow">{steps[activeStep - 1]?.title ?? copy.editorEyebrow}</p>
-            <h2 className="talent-editor-topbar__title">{project.title}</h2>
-          </div>
-
-          <div className="talent-editor-topbar__status" data-testid="content-workspace-save-status">
-            {isPending && (
-              <span className="flex items-center gap-1.5" data-testid="project-save-status-saving">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                {copy.contentSaving}
-              </span>
-            )}
-            {!isPending && saveStepState === 'saved' && (
-              <span className="flex items-center gap-1.5 text-[var(--accent-text)]" data-testid="project-save-status-saved">
-                <Check className="h-3 w-3" />
-                {copy.contentSaved}
-              </span>
-            )}
-            {!isPending && saveStepState !== 'saved' && savedLabel && <span>{savedLabel}</span>}
-            {pageNumberSyncFeedback === 'done' && (
-              <span className="flex items-center gap-1.5 text-[var(--accent-text)]" data-testid="pagination-sync-feedback-done">
-                <Check className="h-3 w-3" />
-                {copy.chapterSyncPageNumbersDone}
-              </span>
-            )}
-            {pageNumberSyncFeedback === 'missing-index' && (
-              <span className="text-amber-500" data-testid="pagination-sync-feedback-missing-index">
-                {copy.chapterSyncPageNumbersMissingIndex}
-              </span>
-            )}
-          </div>
-
-          <div className="talent-editor-topbar__actions">
-            <button
-              type="button"
-              data-testid="content-workspace-preview-button"
-              onClick={() => setActiveStep(5)}
-              className="ac-button ac-button--compact ac-button--secondary"
-            >
-              {copy.contentPreviewAction}
-            </button>
-            <button
-              type="button"
-              data-testid="document-data-open-button"
-              onClick={() => setIsDocumentDataOpen(true)}
-              className="ac-button ac-button--compact ac-button--secondary"
-            >
-              {copy.documentDataOpen}
-            </button>
-          </div>
-        </div>
-      </SlotPortal>
-
-      {/* Stepper Navigation */}
+      {/* The global shell stays compact; project context lives in the workflow itself. */}
       <div className="talent-content-stepper-bar" data-testid="chapter-workflow-stepper">
         <Stepper steps={steps} activeStep={activeStep} onStepClick={setActiveStep} />
       </div>

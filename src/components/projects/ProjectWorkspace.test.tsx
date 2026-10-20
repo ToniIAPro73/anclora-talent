@@ -162,29 +162,7 @@ describe('ProjectWorkspace', () => {
     window.localStorage.clear();
     clearLastChapterSave();
     vi.mocked(syncProjectPaginationAction).mockResolvedValue({ status: 'updated' });
-    // ProjectWorkspace portals its header into the app shell's compact
-    // editor topbar slot (see AppShell.tsx); stand that slot in since these
-    // tests render ProjectWorkspace without its AppShell ancestor.
-    document.body.innerHTML = '<div id="talent-editor-topbar-slot"></div>';
-  });
-
-  test('renders the project title in the header', () => {
-    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
-    expect(screen.getByTestId('content-workspace-topbar')).toHaveTextContent('Mi Proyecto');
-  });
-
-  test('uses the compact shared button family for workspace header actions', () => {
-    render(<ProjectWorkspace project={makeProject()} copy={copy} />);
-
-    const preview = screen.getByTestId('content-workspace-preview-button');
-    const documentData = screen.getByTestId('document-data-open-button');
-
-    expect(preview).toHaveClass('ac-button', 'ac-button--compact');
-    expect(preview).not.toHaveClass('ac-button--primary');
-    expect(documentData).toHaveClass('ac-button', 'ac-button--compact');
-    expect(documentData).not.toHaveClass('ac-button--primary');
-    expect(preview).not.toHaveTextContent(/[\uE000-\uF8FF]/);
-    expect(documentData).not.toHaveTextContent(/[\uE000-\uF8FF]/);
+    document.body.innerHTML = '';
   });
 
   test('shows the Resumen tab by default in Step 1', () => {
@@ -246,12 +224,16 @@ describe('ProjectWorkspace', () => {
     const { container } = render(<ProjectWorkspace project={makeProject({ workflowStep: 3 })} copy={copy} />);
     const front = container.querySelector('[data-testid="cover-studio-v2"]');
     expect(front).toHaveAttribute('data-surface-kind', 'cover');
+    expect(screen.queryByTestId('content-workspace-preview-button')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('document-data-open-button')).not.toBeInTheDocument();
 
     clickStepperStep(container, 4);
 
     const studios = container.querySelectorAll('[data-testid="cover-studio-v2"]');
     expect(studios).toHaveLength(1);
     expect(studios[0]).toHaveAttribute('data-surface-kind', 'back-cover');
+    expect(screen.queryByTestId('content-workspace-preview-button')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('document-data-open-button')).not.toBeInTheDocument();
     // A reused instance would keep the front surface in its state (and save it as the back cover): it must be a new studio.
     expect(studios[0]).not.toBe(front);
     vi.mocked(saveProjectWorkflowStepAction).mockClear();

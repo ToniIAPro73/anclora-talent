@@ -76,6 +76,7 @@ export interface DesignSurfaceCanvasHandle {
   canRedo(): boolean;
   setZoom(factor: number): void;
   zoomToFit(): void;
+  exportPng(): string | null;
   selectLayers(layerIds: string[]): void;
   /** Selects the cover background image object (or clears the selection when the background is a colour). */
   selectBackground(): void;
@@ -547,6 +548,12 @@ export const DesignSurfaceCanvas = forwardRef<DesignSurfaceCanvasHandle, DesignS
         },
         canRedo() {
           return historyIndexRef.current < historyRef.current.length - 1;
+        },
+        exportPng() {
+          const canvas = fabricRef.current;
+          if (!canvas) return null;
+          const zoom = canvas.getZoom?.() || 1;
+          return canvas.toDataURL({ format: 'png', multiplier: 1 / zoom, enableRetinaScaling: false });
         },
         setZoom(factor: number) {
           const canvas = fabricRef.current;
