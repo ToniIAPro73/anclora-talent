@@ -1,50 +1,27 @@
-# Checklist de validación — Workspace v2 y manual de usuario (2026-10-19)
+# Checklist de validación — test de borrado de proyecto
 
 **Repositorio:** anclora-talent
-**Rama y commit:** development @ b0a9d32a0ee4a93a4568bb2a138c2ff918317459
-**Entorno de validación:** revisión documental del commit; aplicación no abierta en esta ejecución
-**Datos:** sintéticos según `docs/manual/MANUAL_CHANGELOG.md`; capturas QA persistentes declaradas allí, sin cuenta personal
+**Rama y commit validado:** `development` @ `6ef8305`
+**Alcance:** corregir el mock del test `deleteProjectAction`; la acción carga el proyecto antes de borrar la fila y limpia sus blobs asociados.
 
-## 1. Qué cambia
-- Completa claves de i18n ES/EN, deep links `?step=1..8` y `?documentData=open`, y etiquetas de baja resolución localizadas.
-- Actualiza el manual v2, sus capturas y el PDF generado.
+## Comprobaciones ejecutadas
 
-## 2. Ya comprobado por el agente
-| Comprobación | Comando o método | Resultado | SHA |
-| --- | --- | --- | --- |
-| Gates de unit tests y ESLint | Evidencia registrada en `sdd/features/workspace-system-v1-closure/workspace-system-v1-closure-tasks-v1.md`; los logs originales no forman parte de este commit | PASS documentado; no repetido en esta ejecución | b0a9d32a0ee4a93a4568bb2a138c2ff918317459 |
-| Manual gate y artefactos PDF/capturas | `docs/manual/MANUAL_CHANGELOG.md` (MANUAL_GATE PASS; 13 CURRENT, 1 STATIC, 0 STALE) | PASS documentado | b0a9d32a0ee4a93a4568bb2a138c2ff918317459 |
-| Integridad del diff | `git diff --check origin/development...HEAD` | PASS | b0a9d32a0ee4a93a4568bb2a138c2ff918317459 |
-
-## 3. Pruebas no ejecutadas (NOT_RUN)
-| Prueba | Motivo concreto |
-| --- | --- |
-| Reejecución de Vitest, ESLint y generación/verificación visual del PDF | El commit contiene evidencia documental de ejecución previa; no se reejecutan validaciones ya registradas para atender el bloqueo del hook. |
-| Revisión visual en la aplicación | No se abrió la aplicación en esta ejecución. El commit declara capturas sintéticas verificadas; la inspección visual actual queda pendiente. |
-
-## 4. Checklist para validar en la aplicación
-| # | Dónde | Pasos | Resultado esperado | Cuenta o configuración | Bloqueante |
-| --- | --- | --- | --- | --- | --- |
-| 1 | `/projects/new` | Cambiar idioma ES/EN y revisar los cuatro bloques y el resumen sticky | Todos los textos aparecen en el idioma seleccionado | Identidad QA dedicada del contrato; datos QA existentes | Sí |
-| 2 | `/projects/<id>/editor?step=3` y `?step=8` | Abrir enlaces directos a Portada y Exportar | El workspace abre el paso solicitado | Proyecto QA existente | Sí |
-| 3 | `/projects/<id>/editor?documentData=open` | Abrir el enlace con el parámetro | Se abre el modal Datos del documento | Proyecto QA existente | Sí |
-| 4 | `/projects/<id>/preview` | Usar el enlace de exportación | Navega a `/editor?step=8` | Proyecto QA existente | Sí |
-| 5 | `/projects/<id>/editor?step=3` | Revisar advertencias con imagen de baja resolución en ES y EN | Advertencias localizadas y comprensibles | Proyecto QA con imagen de prueba | Sí |
-
-### Casos negativos y de borde
-| # | Caso | Resultado esperado |
+| Comprobación | Comando | Resultado |
 | --- | --- | --- |
-| 1 | `?step` fuera de 1..8 o inválido | No rompe el workspace; mantiene un paso válido |
-| 2 | Montaje/desmontaje rápido del workspace durante guardado | No ejecuta callbacks de UI tras desmontar |
+| Test afectado | `npm run test:run -- src/lib/projects/delete-action.test.ts` | PASS — 1 archivo, 1 test |
+| Typecheck | `npx tsc --noEmit` | PASS |
+| Build | `npm run build` | PASS |
+| Suite completa local | `npm run test:run` | 1.964 tests pasaron; 7 tests ajenos al borrado expiraron por el timeout de 5 s en pruebas de estructura, importación/exportación y estilos. El test de borrado pasó. |
+| Integridad del diff | `git diff --check` | PASS |
 
-### Estados de interfaz afectados
-- [ ] Vacío · [x] Cargando · [x] Error · [x] Éxito · [x] Móvil · [x] Escritorio · [x] Modo oscuro
+## Verificación de GitHub
 
-## 5. Riesgos y limitaciones
-- Los resultados de tests, ESLint y MANUAL_GATE están documentados en los artefactos del commit, pero sus logs no están adjuntos aquí.
-- La revisión de aplicación para estos cambios queda pendiente; usar solo la identidad QA dedicada y datos existentes del contrato.
+El workflow mostrado por Toni falló únicamente en `src/lib/projects/delete-action.test.ts` por no incluir `getProjectById` en el mock de `projectRepository`. La corrección local reproduce el test y pasa. El nuevo resultado de CI se comprobará después del push a `development`.
 
-## 6. Decisión de Toni
-- [ ] Todos los puntos bloqueantes pasan
-- [ ] Se promociona: escribir `PROMOTE=FULL` (staging → production → main)
-- [ ] No se promociona. Motivo: ______________________
+## Verificación visual
+
+No aplica: el cambio solo actualiza un test unitario; no modifica interfaz ni comportamiento de la aplicación.
+
+## Promoción
+
+No solicitada. Este cambio se envía únicamente a `origin/development`.
