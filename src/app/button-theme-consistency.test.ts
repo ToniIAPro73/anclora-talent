@@ -10,8 +10,10 @@ describe('button theme consistency contract', () => {
     expect(highlightMatches).toHaveLength(2);
   });
 
-  test('keeps a stable foreground for teal primary buttons across themes', () => {
-    const primaryMatches = globalsCss.match(/--button-primary-fg: #fffdf8;/g) ?? [];
-    expect(primaryMatches).toHaveLength(2);
+  test('pairs primary button backgrounds with theme-specific readable foregrounds', () => {
+    expect(globalsCss).toContain('--button-primary-bg: linear-gradient(135deg, #5CB4E8 0%, #4A9FD8 52%, #3A88BE 100%);');
+    expect(globalsCss).toContain('--button-primary-fg: #081019;');
+    expect(globalsCss).toContain('--button-primary-bg: #C7DFE1;');
+    expect(globalsCss).toContain('--button-primary-fg: #12384A;');
   });
 });

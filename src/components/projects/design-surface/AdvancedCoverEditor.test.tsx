@@ -3,6 +3,8 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { AdvancedCoverEditor } from './AdvancedCoverEditor';
 import { createDesignLayer, createEmptyDesignSurface, type DesignSurface } from '@/lib/projects/design-surface';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 /**
  * Same fabric-mocking approach as DesignSurfaceCanvas.test.tsx (this
@@ -154,10 +156,63 @@ describe('AdvancedCoverEditor', () => {
     await waitFor(() => expect(mocks.state.objects).toHaveLength(1));
   });
 
+  it('keeps canvas tools and dimensions beneath the compact layer list and opens full layer management', () => {
+    render(<AdvancedCoverEditor surface={makeSurfaceWithTitle()} onChange={vi.fn()} copy={copy} />);
+    const rail = screen.getByTestId('advanced-editor-layers-column');
+    expect(screen.getByTestId('advanced-editor-canvas-column').querySelector('.cover-canvas-header')).toBeNull();
+    expect(rail.querySelector('.cover-canvas-header')).toBeInTheDocument();
+    expect(rail).toContainElement(screen.getByTestId('advanced-editor-canvas-tools'));
+    expect(rail).toContainElement(screen.getByTestId('advanced-editor-layer-count'));
+    expect(screen.getByTestId('advanced-editor-layer-list')).toHaveAttribute('data-compact', 'true');
+    expect(screen.getByTestId('advanced-editor-layer-list')).toHaveClass('cover-layer-list-compact');
+    expect(screen.getByTestId('advanced-editor-canvas-options-group')).toHaveAttribute('role', 'group');
+    expect(screen.getByTestId('advanced-editor-canvas-alignment-group')).toHaveAttribute('role', 'group');
+    expect(screen.getByTestId('advanced-editor-manage-layers')).toHaveAttribute('aria-label', copy.workspace.manageLayers);
+    expect(screen.getByTestId('advanced-editor-manage-layers').textContent).toBe('');
+    fireEvent.click(screen.getByTestId('advanced-editor-manage-layers'));
+    expect(screen.getByRole('dialog', { name: copy.workspace.layers })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: copy.toolbar.closeLabel })).toHaveFocus();
+    expect(screen.getByTestId('advanced-editor-layer-list-dialog')).toHaveAttribute('data-compact', 'false');
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog', { name: copy.workspace.layers })).not.toBeInTheDocument();
+    expect(screen.getByTestId('advanced-editor-manage-layers')).toHaveFocus();
+  });
+
+  it('shows the current surface dimensions in the relocated canvas heading', () => {
+    const surface = makeSurfaceWithTitle();
+    surface.width = 512;
+    surface.height = 768;
+    render(<AdvancedCoverEditor surface={surface} onChange={vi.fn()} copy={copy} />);
+    expect(screen.getByText('512 × 768 px')).toBeInTheDocument();
+  });
+
+  it('marks selected canvas toggles with the same left accent language as the tool rail', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/app/globals.css'), 'utf8');
+    expect(css).toContain('.cover-toolbar-icon[data-active="true"]::before');
+    expect(css).toContain('.cover-editor-tool[data-active="true"]::before');
+  });
+
+  it('renders supplied package actions in the compact workspace toolbar', () => {
+    render(
+      <AdvancedCoverEditor
+        surface={makeSurfaceWithTitle()}
+        onChange={vi.fn()}
+        copy={copy}
+        toolbarActions={<button type="button" data-testid="test-toolbar-action">Export</button>}
+      />,
+    );
+    expect(screen.getByTestId('cover-workspace-toolbar')).toContainElement(screen.getByTestId('test-toolbar-action'));
+  });
+
   it('undo/redo start disabled with a freshly mounted surface', () => {
     render(<AdvancedCoverEditor surface={makeSurfaceWithTitle()} onChange={vi.fn()} copy={copy} />);
     expect(screen.getByTestId('advanced-editor-undo-button')).toBeDisabled();
     expect(screen.getByTestId('advanced-editor-redo-button')).toBeDisabled();
+    expect(screen.getByTestId('advanced-editor-undo-button').textContent?.trim()).toBe('');
+    expect(screen.getByTestId('advanced-editor-redo-button').textContent?.trim()).toBe('');
+    expect(screen.getByTestId('advanced-editor-undo-button').closest('[data-testid="advanced-editor-layers-column"]')).toBeInTheDocument();
+    expect(screen.getByTestId('advanced-editor-redo-button').closest('[data-testid="advanced-editor-layers-column"]')).toBeInTheDocument();
+    expect(screen.getByTestId('advanced-editor-layers-column').querySelector('[data-testid="cover-editor-history-controls"]')?.nextElementSibling).toBe(screen.getByTestId('cover-editor-import-button'));
   });
 
   it('selecting a layer in the layers panel shows its properties', async () => {

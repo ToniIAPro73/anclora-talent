@@ -35,15 +35,16 @@ describe('theme surface contract (document limit, user menu, CTA)', () => {
     expect(userMenu).not.toContain('text-[var(--action-secondary-fg)]');
   });
 
-  test('light theme CTA uses the dimmed contracted accent gradient', () => {
-    expect(lightBlock).toContain(
-      '--talent-button-primary-bg: linear-gradient(135deg, #4A9FD8 0%, #3A88BE 100%);',
-    );
-    expect(lightBlock).toContain('--talent-button-primary-fg: #081019;');
-    // Dark theme keeps the contracted 3-stop gradient untouched.
+  test('light theme CTA uses a pale teal-blue surface and readable dark foreground', () => {
+    expect(lightBlock).toContain('--talent-button-primary-bg: var(--button-primary-bg);');
+    expect(lightBlock).toContain('--talent-button-primary-fg: var(--button-primary-fg);');
+    expect(lightBlock).toContain('--button-primary-bg: #C7DFE1;');
+    expect(lightBlock).toContain('--button-primary-fg: #12384A;');
+    // Dark theme keeps the contracted sky-blue gradient with dark ink.
     const darkBlock = globalsCss.slice(0, globalsCss.indexOf('html[data-theme="light"]'));
     expect(darkBlock).toContain(
-      '--talent-button-primary-bg: linear-gradient(135deg, #5CB4E8 0%, #4A9FD8 52%, #3A88BE 100%);',
+      '--button-primary-bg: linear-gradient(135deg, #5CB4E8 0%, #4A9FD8 52%, #3A88BE 100%);',
     );
+    expect(darkBlock).toContain('--talent-button-primary-bg: var(--button-primary-bg);');
   });
 });

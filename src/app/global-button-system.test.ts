@@ -8,14 +8,22 @@ const landing = readFileSync(resolve(root, 'src/components/marketing/landing-hea
 const productStory = readFileSync(resolve(root, 'src/components/marketing/landing-product-story.tsx'), 'utf8');
 const editor = readFileSync(resolve(root, 'src/components/projects/advanced-chapter-editor/ChapterEditorFullscreen.tsx'), 'utf8');
 const chapters = readFileSync(resolve(root, 'src/components/projects/ChapterOrganizer.tsx'), 'utf8');
+const projectCard = readFileSync(resolve(root, 'src/components/projects/ProjectCard.tsx'), 'utf8');
 
 describe('global button system contract', () => {
   test('has one canonical CSS family and no dashboard-specific visual family', () => {
     expect(css).not.toMatch(/\.dashboard-button(?:[^\w-]|$)/);
+    expect(css).not.toMatch(/\.talent-action-button(?:[^\w-]|$)/);
     expect(css).toContain('.ac-button--compact');
     expect(css).toContain('.ac-button.ac-button--compact.ac-button--icon');
     expect(css).toContain('.ac-button--compact:active');
     expect(css).toContain('[aria-pressed="true"]');
+  });
+
+  test('project card actions use canonical button variants without page-specific treatment', () => {
+    expect(projectCard).toContain('premiumPrimaryMintButton');
+    expect(projectCard).toContain('premiumSecondaryLightButton');
+    expect(projectCard).not.toContain('talent-action-button');
   });
 
   test('contains all canonical variants with semantic interaction tokens', () => {

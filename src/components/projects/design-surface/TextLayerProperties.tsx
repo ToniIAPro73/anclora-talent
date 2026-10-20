@@ -133,7 +133,7 @@ export function TextLayerProperties({ layer, copy, brandColors, onChange, metada
           />
         </div>
 
-        <div className="cover-prop-row">
+        <div className="cover-prop-row cover-prop-row--stack">
           <SegmentedGroup label={t.boldLabel}>
             <button type="button" onClick={() => onChange({ fontWeight: isBold ? 400 : 700 })} data-testid="text-layer-bold-button" className="cover-prop-icon" data-active={isBold ? 'true' : 'false'} title={t.boldLabel} aria-label={t.boldLabel} aria-pressed={isBold}>
               <Bold className="h-4 w-4" />
@@ -145,7 +145,7 @@ export function TextLayerProperties({ layer, copy, brandColors, onChange, metada
               <Underline className="h-4 w-4" />
             </button>
           </SegmentedGroup>
-          <SegmentedGroup label={t.alignLeftLabel}>
+          <SegmentedGroup label={t.alignLeftLabel} columns={4}>
             {alignButton('left', AlignLeft, t.alignLeftLabel)}
             {alignButton('center', AlignCenter, t.alignCenterLabel)}
             {alignButton('right', AlignRight, t.alignRightLabel)}
@@ -153,7 +153,7 @@ export function TextLayerProperties({ layer, copy, brandColors, onChange, metada
           </SegmentedGroup>
         </div>
 
-        <div className="cover-prop-row">
+        <div className="cover-prop-row cover-prop-row--stack">
           <SegmentedGroup label={t.verticalAlignLabel}>
             {verticalButton('top', AlignStartVertical, t.verticalAlignTopLabel)}
             {verticalButton('middle', AlignVerticalSpaceAround, t.verticalAlignMiddleLabel)}
@@ -161,21 +161,20 @@ export function TextLayerProperties({ layer, copy, brandColors, onChange, metada
           </SegmentedGroup>
         </div>
 
-        <SegmentedGroup label={t.textTransformLabel}>
-          {(['none', 'uppercase', 'lowercase'] as const).map((transform) => (
-            <button
-              key={transform}
-              type="button"
-              onClick={() => onChange({ textTransform: transform })}
-              data-testid={`text-layer-transform-${transform}-button`}
-              className="cover-prop-text-button"
-              data-active={layer.textTransform === transform ? 'true' : 'false'}
-              aria-pressed={layer.textTransform === transform}
-            >
-              {transform === 'none' ? t.textTransformNone : transform === 'uppercase' ? t.textTransformUppercase : t.textTransformLowercase}
-            </button>
-          ))}
-        </SegmentedGroup>
+        <label className="cover-prop-transform-field">
+          <span className="cover-prop-field__label">{t.textTransformLabel}</span>
+          <select
+            value={layer.textTransform}
+            onChange={(event) => onChange({ textTransform: event.currentTarget.value as TextLayerProps['textTransform'] })}
+            data-testid="text-layer-transform-select"
+            className="cover-prop-transform-select"
+            aria-label={t.textTransformLabel}
+          >
+            <option value="none">{t.textTransformNone}</option>
+            <option value="uppercase">{t.textTransformUppercase}</option>
+            <option value="lowercase">{t.textTransformLowercase}</option>
+          </select>
+        </label>
       </PropertySection>
 
       <PropertySection title={ws.sectionSpacing} defaultOpen={false}>

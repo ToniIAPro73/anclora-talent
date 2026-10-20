@@ -1042,7 +1042,7 @@ const ColorSelector = ({
         data-testid="editor-toolbar-text-color-button"
         className={`inline-flex h-9 w-9 items-center justify-center rounded-[10px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] disabled:opacity-30 disabled:cursor-not-allowed ${
           isAvailable && currentColor !== 'inherit'
-            ? 'bg-[var(--accent)] text-[var(--button-highlight-fg)] shadow-[0_0_15px_rgba(45,212,191,0.5)]'
+            ? 'bg-[var(--talent-button-selected-bg)] text-[var(--talent-button-selected-fg)]'
             : isAvailable
             ? 'text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]'
             : 'text-[var(--text-secondary)]'

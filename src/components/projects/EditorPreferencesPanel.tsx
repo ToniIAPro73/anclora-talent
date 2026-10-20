@@ -74,7 +74,7 @@ export function EditorPreferencesPanel({
                 onClick={() => handleFontSizeChange(size)}
                 className={`px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
                   currentFontSize === size
-                    ? 'bg-[var(--accent)] text-[var(--button-highlight-fg)]'
+                    ? 'bg-[var(--talent-button-selected-bg)] text-[var(--talent-button-selected-fg)]'
                     : 'bg-[var(--background)] text-[var(--text-secondary)] hover:bg-[var(--hover)]'
                 }`}
               >
@@ -101,7 +101,7 @@ export function EditorPreferencesPanel({
                 onClick={() => handleDeviceChange(device.id as 'mobile' | 'tablet' | 'desktop')}
                 className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
                   currentDevice === device.id
-                    ? 'bg-[var(--accent)] text-[var(--button-highlight-fg)]'
+                    ? 'bg-[var(--talent-button-selected-bg)] text-[var(--talent-button-selected-fg)]'
                     : 'bg-[var(--background)] text-[var(--text-secondary)] hover:bg-[var(--hover)]'
                 }`}
               >

@@ -50,14 +50,14 @@ export function ProjectCard({
         <NavigatingLink
           href={`/projects/${project.id}/editor`}
           pendingLabel={copy.cardOpenEditor}
-          className={`${premiumPrimaryMintButton} talent-action-button talent-action-button--primary px-5`}
+          className={`${premiumPrimaryMintButton} px-5`}
         >
           {copy.cardOpenEditor}
         </NavigatingLink>
         <NavigatingLink
           href={`/projects/${project.id}/preview`}
           pendingLabel={copy.cardPreview}
-          className={`${premiumSecondaryLightButton} talent-action-button talent-action-button--secondary px-5`}
+          className={`${premiumSecondaryLightButton} px-5`}
         >
           {copy.cardPreview}
         </NavigatingLink>

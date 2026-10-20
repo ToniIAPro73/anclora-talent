@@ -117,9 +117,9 @@ export function CompactSlider({
 }
 
 /** Icon/text segmented group: equal-width buttons, 28px high. */
-export function SegmentedGroup({ label, children }: { label: string; children: ReactNode }) {
+export function SegmentedGroup({ label, children, columns = 3 }: { label: string; children: ReactNode; columns?: number }) {
   return (
-    <div className="ac-editor-inspector__segmented cover-prop-segmented" role="group" aria-label={label}>
+    <div className="ac-editor-inspector__segmented cover-prop-segmented" role="group" aria-label={label} data-columns={columns}>
       {children}
     </div>
   );

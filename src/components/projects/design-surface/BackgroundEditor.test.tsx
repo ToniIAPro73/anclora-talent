@@ -3,10 +3,21 @@ import { describe, expect, test, vi } from 'vitest';
 import { BackgroundEditor } from './BackgroundEditor';
 import type { BackgroundSpec } from '@/lib/projects/design-surface';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 const copy = resolveLocaleMessages('es').coverDesignSurface;
 
 describe('BackgroundEditor', () => {
+  test('background type choices share an evenly distributed segmented control', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/app/globals.css'), 'utf8');
+    const rule = css.match(/\.cover-prop-segmented\s*\{([^}]+)\}/)?.[1] ?? '';
+    expect(rule).toContain('width: 100%');
+    expect(rule).toContain('repeat(3, minmax(0, 1fr))');
+    expect(css).toContain('.cover-prop-segmented button {');
+    expect(css).toContain('white-space: nowrap');
+  });
+
   test('switching to gradient seeds a sensible two-stop default', () => {
     const onChange = vi.fn();
     const background: BackgroundSpec = { kind: 'solid', color: '#0b133f' };

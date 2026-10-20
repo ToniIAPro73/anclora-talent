@@ -160,13 +160,15 @@ describe('COVER_EDITOR_08A Architectural Contract Gates', () => {
     expect(screen.getByTestId('layers-panel')).toBeInTheDocument();
     expect(screen.getAllByRole('listitem')).toHaveLength(5); // 4 layers + cover background row
 
-    // COVER_UI_09: Compact workspace toolbar has undo, redo, zoom, preview, save
+    // COVER_UI_09: Compact workspace toolbar keeps zoom/save; history is by import controls.
     expect(screen.getByTestId('cover-workspace-toolbar')).toBeInTheDocument();
-    expect(screen.getByTestId('advanced-editor-undo-button')).toBeInTheDocument();
-    expect(screen.getByTestId('advanced-editor-redo-button')).toBeInTheDocument();
+    expect(screen.getByTestId('advanced-editor-undo-button').closest('[data-testid="advanced-editor-layers-column"]')).toBeInTheDocument();
+    expect(screen.getByTestId('advanced-editor-redo-button').closest('[data-testid="advanced-editor-layers-column"]')).toBeInTheDocument();
     // The editor is edit-only: the one editorial preview is workflow step 5.
     expect(screen.queryByTestId('cover-editor-preview-button')).not.toBeInTheDocument();
-    expect(screen.getByTestId('studio-save-final-button')).toBeInTheDocument();
+    const saveButton = screen.getByTestId('studio-save-final-button');
+    expect(saveButton).toBeInTheDocument();
+    expect(saveButton.querySelector('.sr-only')).toHaveTextContent('Guardar');
   });
 
   test('COVER_UI_11: layer names are clean and semantic, never raw content or editor residue', () => {
@@ -206,7 +208,12 @@ describe('COVER_EDITOR_08A Architectural Contract Gates', () => {
     expect(header).toContainElement(screen.getByTestId('add-horizontal-guide-button'));
   });
 
-  test('COVER_UI_14: the sidebar shows only the applied template (large miniature); the top select owns the choice', () => {
+  test('COVER_UI_13A: cover import uses the same compact button shape as workspace navigation', () => {
+    render(<AdvancedCoverEditor surface={createEmptyDesignSurface('cover')} onChange={vi.fn()} copy={coverCopy} />);
+    expect(screen.getByTestId('cover-editor-import-button')).toHaveClass('ac-button--compact');
+  });
+
+  test('COVER_UI_14: the applied template is shown on the canvas without a duplicate sidebar preview', () => {
     const surface = createEmptyDesignSurface('cover');
     const { rerender } = render(<AdvancedCoverEditor surface={surface} onChange={vi.fn()} copy={coverCopy} />);
     // No template applied yet: no card, no gallery.
@@ -215,14 +222,13 @@ describe('COVER_EDITOR_08A Architectural Contract Gates', () => {
 
     const [first, second] = COVER_TEMPLATES;
     rerender(<AdvancedCoverEditor surface={{ ...surface, templateId: first.id }} onChange={vi.fn()} copy={coverCopy} />);
-    expect(screen.getAllByTestId('cover-template-active-card')).toHaveLength(1);
-    expect(screen.getAllByTestId(/^cover-template-thumb-/)).toHaveLength(1);
-    expect(screen.getByTestId('cover-template-active-card')).toHaveAttribute('data-template-id', first.id);
+    expect(screen.queryByTestId('cover-template-active-card')).not.toBeInTheDocument();
+    expect(screen.queryAllByTestId(/^cover-template-thumb-/)).toHaveLength(0);
     expect(screen.getByTestId('cover-template-select')).toHaveValue(first.id);
 
     rerender(<AdvancedCoverEditor surface={{ ...surface, templateId: second.id }} onChange={vi.fn()} copy={coverCopy} />);
-    expect(screen.getByTestId('cover-template-active-card')).toHaveAttribute('data-template-id', second.id);
-    expect(screen.getByTestId('cover-template-active-name')).toHaveTextContent(second.name);
+    expect(screen.queryByTestId('cover-template-active-card')).not.toBeInTheDocument();
+    expect(screen.getByTestId('cover-template-select')).toHaveValue(second.id);
   });
 
   test('COVER_PROPS_01: the text properties form is compact (icon buttons, readable case control, internal scroll)', () => {
@@ -237,10 +243,15 @@ describe('COVER_EDITOR_08A Architectural Contract Gates', () => {
     for (const id of ['text-layer-align-left-button', 'text-layer-vertical-top-button', 'text-layer-bold-button', 'text-layer-italic-button']) {
       expect(screen.getByTestId(id)).toHaveClass('cover-prop-icon');
     }
-    // the case control keeps all three words readable in one segmented row
-    const labels = ['none', 'uppercase', 'lowercase'].map((t) => screen.getByTestId(`text-layer-transform-${t}-button`).textContent);
-    expect(labels).toEqual(['Normal', 'MAYÚSCULAS', 'minúsculas']);
-    expect(screen.getByTestId('text-layer-transform-none-button').parentElement).toHaveClass('cover-prop-segmented');
+    expect(screen.getByRole('group', { name: coverCopy.text.boldLabel }).parentElement).toHaveClass('cover-prop-row--stack');
+    expect(screen.getByRole('group', { name: coverCopy.text.alignLeftLabel }).parentElement).toHaveClass('cover-prop-row--stack');
+    expect(screen.getByRole('group', { name: coverCopy.text.verticalAlignLabel }).parentElement).toHaveClass('cover-prop-row--stack');
+    expect(screen.getByRole('group', { name: coverCopy.text.alignLeftLabel })).toHaveAttribute('data-columns', '4');
+    // the case control preserves the three options in one compact select
+    const caseSelect = screen.getByTestId('text-layer-transform-select');
+    expect(caseSelect).toHaveValue('none');
+    expect(Array.from((caseSelect as HTMLSelectElement).options).map((option) => option.textContent)).toEqual(['Normal', 'MAYÚSCULAS', 'minúsculas']);
+    expect(caseSelect).toHaveClass('cover-prop-transform-select');
     // size shares the font row, X/Y/W/H are compact fields
     expect(screen.getByTestId('text-layer-font-size-input').closest('.cover-prop-row--font')).not.toBeNull();
     for (const id of ['x', 'y', 'width', 'height']) {

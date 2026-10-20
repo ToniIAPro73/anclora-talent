@@ -15,6 +15,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import {
   Grid3x3,
   AlignHorizontalJustifyCenter,
@@ -34,6 +35,7 @@ import {
   Sparkles,
   ChevronDown,
   Grid2X2,
+  Expand,
   Image as ImageIcon,
   Minus,
   Save,
@@ -57,7 +59,6 @@ import { bleedInset, resolveSafeArea } from '@/lib/projects/cover-print-guides';
 import { LayersPanel, buildLayersPanelCopy, reorderLayers } from './LayersPanel';
 import { resolveLayerLabel } from './layer-labels';
 import { normalizeLayerPatch } from './layer-patch';
-import { TemplateThumbnail } from './TemplateThumbnail';
 import { PropertiesPanel } from './PropertiesPanel';
 import { BackgroundEditor } from './BackgroundEditor';
 import { loadImageSize } from './image-size';
@@ -83,6 +84,7 @@ export interface AdvancedCoverEditorProps {
   saveStatus?: 'idle' | 'saving' | 'saved' | 'error';
   onSaveFinal?: () => void;
   onPngExporterChange?: (exporter: (() => string | null) | null) => void;
+  toolbarActions?: ReactNode;
 }
 
 /** The cover may grow beyond its natural size to fill the work area (08A: the cover dominates the centre). */
@@ -106,10 +108,13 @@ function readFileAsDataUrl(file: File): Promise<string> {
   });
 }
 
-export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, originalBackgroundSrc, metadataValues, semanticBinding, saveStatus = 'idle', onSaveFinal, onPngExporterChange }: AdvancedCoverEditorProps) {
+export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, originalBackgroundSrc, metadataValues, semanticBinding, saveStatus = 'idle', onSaveFinal, onPngExporterChange, toolbarActions }: AdvancedCoverEditorProps) {
   const canvasRef = useRef<DesignSurfaceCanvasHandle>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const layersDialogRef = useRef<HTMLElement>(null);
+  const manageLayersButtonRef = useRef<HTMLButtonElement>(null);
+  const closeLayersDialogButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!onPngExporterChange) return;
     onPngExporterChange(() => canvasRef.current?.exportPng() ?? null);
@@ -143,6 +148,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
     [stageSize, showRulers],
   );
   const [activeTool, setActiveTool] = useState<'elements' | 'text' | 'images' | 'shapes' | 'lines' | 'icons' | 'background'>('elements');
+  const [layersDialogOpen, setLayersDialogOpen] = useState(false);
   // Once the user picks a zoom level the cover stops following the window size.
   const manualZoomRef = useRef(false);
   const [imageQualityWarning, setImageQualityWarning] = useState<string | null>(null);
@@ -449,8 +455,45 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
   const ws = copy.workspace;
   const selectedLayer = selectedLayers.length === 1 ? selectedLayers[0] : null;
   const SelectedIcon = selectedLayer?.type === 'text' ? Type : selectedLayer?.type === 'image' ? ImageIcon : Shapes;
-  const activeTemplate = templates.find((template) => template.id === selectedTemplateId) ?? null;
   const zoomSelectValue = ZOOM_OPTIONS.find((option) => Math.abs(option - zoom) < 0.01)?.toString() ?? 'custom';
+  const saveLabel = saveStatus === 'saving'
+    ? copy.studio.savingLabel
+    : saveStatus === 'saved'
+      ? copy.studio.savedLabel
+      : saveStatus === 'error'
+        ? copy.studio.saveErrorLabel
+        : surface.status === 'final'
+          ? copy.studio.finalStatusLabel
+          : ws.save;
+
+  useEffect(() => {
+    if (!layersDialogOpen) return;
+    const manageButton = manageLayersButtonRef.current;
+    closeLayersDialogButtonRef.current?.focus();
+    const handleDialogKeyboard = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setLayersDialogOpen(false);
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const controls = layersDialogRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])');
+      if (!controls?.length) return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleDialogKeyboard);
+    return () => {
+      document.removeEventListener('keydown', handleDialogKeyboard);
+      manageButton?.focus();
+    };
+  }, [layersDialogOpen]);
 
   return (
     <div className="cover-workspace" data-testid="advanced-cover-editor">
@@ -481,34 +524,8 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
           </span>
         </div>
 
-        <div className="cover-workspace-toolbar__group cover-workspace-toolbar__history">
-          <button
-            type="button"
-            data-testid="advanced-editor-undo-button"
-            onClick={() => canvasRef.current?.undo()}
-            disabled={!historyState.canUndo}
-            className="cover-toolbar-button"
-            title={copy.toolbar.undoLabel}
-            aria-label={copy.toolbar.undoLabel}
-          >
-            <RotateCcw className="h-4 w-4" />
-            <span>{copy.toolbar.undoLabel}</span>
-          </button>
-          <button
-            type="button"
-            data-testid="advanced-editor-redo-button"
-            onClick={() => canvasRef.current?.redo()}
-            disabled={!historyState.canRedo}
-            className="cover-toolbar-button"
-            title={copy.toolbar.redoLabel}
-            aria-label={copy.toolbar.redoLabel}
-          >
-            <RotateCw className="h-4 w-4" />
-            <span>{copy.toolbar.redoLabel}</span>
-          </button>
-        </div>
-
         <div className="cover-workspace-toolbar__group cover-workspace-toolbar__actions">
+          {toolbarActions && <div className="cover-workspace-toolbar__group cover-workspace-toolbar__file-actions">{toolbarActions}</div>}
           <span className="cover-workspace-toolbar__select-wrap cover-workspace-toolbar__zoom">
             <select
               data-testid="advanced-editor-zoom-select"
@@ -518,7 +535,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
                 if (event.target.value === 'fit') fitToArea();
                 else if (event.target.value !== 'custom') applyZoom(Number(event.target.value));
               }}
-              className="cover-workspace-toolbar__select"
+              className={`cover-workspace-toolbar__select cover-workspace-toolbar__select--zoom-${zoomSelectValue === 'fit' ? 'fit' : 'value'}`}
             >
               <option value="fit">{ws.fitToArea}</option>
               {ZOOM_OPTIONS.map((option) => (
@@ -537,18 +554,12 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
             className="ac-button ac-button--primary ac-button--compact cover-toolbar-cta"
             onClick={onSaveFinal}
             data-testid="studio-save-final-button"
+            aria-label={saveLabel}
+            title={saveLabel}
           >
             <Save className="h-4 w-4" />
-            <span data-testid="studio-save-status" data-status={saveStatus}>
-              {saveStatus === 'saving'
-                ? copy.studio.savingLabel
-                : saveStatus === 'saved'
-                  ? copy.studio.savedLabel
-                  : saveStatus === 'error'
-                    ? copy.studio.saveErrorLabel
-                    : surface.status === 'final'
-                      ? copy.studio.finalStatusLabel
-                      : ws.save}
+            <span className="sr-only" data-testid="studio-save-status" data-status={saveStatus}>
+              {saveLabel}
             </span>
           </button>
         </div>
@@ -607,21 +618,6 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
 
         {/* LAYERS: full-height, independent workspace beside the canvas */}
         <aside className="cover-layers-workspace" data-testid="advanced-editor-layers-column">
-          {activeTemplate && (
-            <section className="cover-editor-templates" aria-label={ws.templates}>
-              <div className="cover-editor-section-heading"><strong>{ws.templates}</strong></div>
-              <div
-                className="cover-template-card cover-template-card--current"
-                data-testid="cover-template-active-card"
-                data-template-id={activeTemplate.id}
-                data-active="true"
-                title={activeTemplate.description}
-              >
-                <TemplateThumbnail template={activeTemplate} surfaceKind={surface.surface} width={168} />
-                <span className="cover-template-card__name" data-testid="cover-template-active-name">{activeTemplate.name}</span>
-              </div>
-            </section>
-          )}
           <input
             ref={coverInputRef}
             type="file"
@@ -634,9 +630,33 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
               event.target.value = '';
             }}
           />
+          <div className="cover-editor-history-controls" data-testid="cover-editor-history-controls" role="group" aria-label={copy.toolbar.undoLabel}>
+            <button
+              type="button"
+              data-testid="advanced-editor-undo-button"
+              onClick={() => canvasRef.current?.undo()}
+              disabled={!historyState.canUndo}
+              className="cover-toolbar-icon"
+              title={copy.toolbar.undoLabel}
+              aria-label={copy.toolbar.undoLabel}
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              data-testid="advanced-editor-redo-button"
+              onClick={() => canvasRef.current?.redo()}
+              disabled={!historyState.canRedo}
+              className="cover-toolbar-icon"
+              title={copy.toolbar.redoLabel}
+              aria-label={copy.toolbar.redoLabel}
+            >
+              <RotateCw className="h-4 w-4" />
+            </button>
+          </div>
           <button
             type="button"
-            className="ac-button ac-button--secondary cover-editor-import"
+            className="ac-button ac-button--secondary ac-button--compact cover-editor-import"
             onClick={() => coverInputRef.current?.click()}
             data-testid="cover-editor-import-button"
           >
@@ -648,40 +668,38 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
             <div className="cover-editor-layers-heading">
               <span>{ws.layers}</span>
               <span data-testid="advanced-editor-layer-count">{surface.layers.length}</span>
+              <button ref={manageLayersButtonRef} type="button" className="cover-layer-expand" data-testid="advanced-editor-manage-layers" aria-label={ws.manageLayers} title={ws.manageLayers} onClick={() => setLayersDialogOpen(true)}>
+                <Expand className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
             </div>
-            <LayersPanel
-              layers={surface.layers}
-              surfaceSize={surface}
-              selectedLayerIds={selectedLayerIds}
-              copy={layersCopy}
-              onSelect={handleSelect}
-              onRename={(layerId, name) => patchLayer(layerId, { name })}
-              onToggleVisibility={(layerId) => {
-                const layer = surface.layers.find((l) => l.id === layerId);
-                if (layer) patchLayer(layerId, { visible: !layer.visible });
-              }}
-              onToggleLock={(layerId) => {
-                const layer = surface.layers.find((l) => l.id === layerId);
-                if (layer) patchLayer(layerId, { locked: !layer.locked });
-              }}
-              onDuplicate={duplicateLayer}
-              onDelete={(layerId) => setLayers(surface.layers.filter((l) => l.id !== layerId))}
-              onReorder={handleReorder}
-              backgroundSelected={backgroundSelected}
-              backgroundIsImage={surface.background.kind === 'image'}
-              onSelectBackground={selectBackground}
-            />
+            <div className="cover-layer-list-compact" data-testid="advanced-editor-layer-list" data-compact="true">
+              <LayersPanel
+                layers={surface.layers}
+                surfaceSize={surface}
+                selectedLayerIds={selectedLayerIds}
+                copy={layersCopy}
+                onSelect={handleSelect}
+                onRename={(layerId, name) => patchLayer(layerId, { name })}
+                onToggleVisibility={(layerId) => { const layer = surface.layers.find((item) => item.id === layerId); if (layer) patchLayer(layerId, { visible: !layer.visible }); }}
+                onToggleLock={(layerId) => { const layer = surface.layers.find((item) => item.id === layerId); if (layer) patchLayer(layerId, { locked: !layer.locked }); }}
+                onDuplicate={duplicateLayer}
+                onDelete={(layerId) => setLayers(surface.layers.filter((layer) => layer.id !== layerId))}
+                onReorder={handleReorder}
+                backgroundSelected={backgroundSelected}
+                backgroundIsImage={surface.background.kind === 'image'}
+                onSelectBackground={selectBackground}
+              />
+            </div>
           </section>
-        </aside>
-
-        {/* CENTER: the cover is the hero */}
-        <main className="cover-canvas-area" data-testid="advanced-editor-canvas-column">
-          <div className="cover-canvas-header">
+          <div className="cover-canvas-header" data-testid="advanced-editor-canvas-tools">
             <span className="cover-canvas-header__title">
               {surface.surface === 'back-cover' ? ws.backCanvasLabel : ws.canvasLabel}
               <small>{surface.width} × {surface.height} px</small>
             </span>
-            <div className="cover-canvas-header__tools">
+            <div className="cover-canvas-tools">
+            <div className="cover-canvas-tool-group" data-testid="advanced-editor-canvas-options-group" role="group" aria-label={ws.canvasOptions}>
+              <span className="cover-canvas-tool-group__label">{ws.canvasOptions}</span>
+              <div className="cover-canvas-header__tools">
               <button
                 type="button"
                 data-testid="advanced-editor-snap-toggle"
@@ -774,7 +792,11 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
                   <X className="h-4 w-4" />
                 </button>
               )}
-              <span className="cover-toolbar-divider" />
+              </div>
+            </div>
+            <div className="cover-canvas-tool-group" data-testid="advanced-editor-canvas-alignment-group" role="group" aria-label={ws.alignObjects}>
+              <span className="cover-canvas-tool-group__label">{ws.alignObjects}</span>
+              <div className="cover-canvas-header__tools">
               <span className="sr-only">{copy.toolbar.objectAlignmentLabel}</span>
               {([
                 ['left', AlignHorizontalJustifyStart, copy.toolbar.objectAlignLeftLabel],
@@ -811,8 +833,13 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
                 </button>
               )}
             </div>
+            </div>
+            </div>
           </div>
+        </aside>
 
+        {/* CENTER: the cover is the hero */}
+        <main className="cover-canvas-area" data-testid="advanced-editor-canvas-column">
           <div className="cover-canvas-stage" ref={viewportRef}>
             <div className="cover-canvas-viewport" data-rulers={showRulers ? 'true' : 'false'}>
               <div className="cover-canvas-paper" style={{ position: 'relative' }}>
@@ -923,6 +950,36 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
 
         </aside>
       </div>
+      {layersDialogOpen && (
+        <div className="cover-layers-dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setLayersDialogOpen(false); }}>
+          <section ref={layersDialogRef} className="cover-layers-dialog" role="dialog" aria-modal="true" aria-label={ws.layers}>
+            <header className="cover-layers-dialog__header">
+              <h2>{ws.layers}</h2>
+              <button ref={closeLayersDialogButtonRef} type="button" className="cover-toolbar-icon" aria-label={copy.toolbar.closeLabel} title={copy.toolbar.closeLabel} onClick={() => setLayersDialogOpen(false)}>
+                <X className="h-4 w-4" />
+              </button>
+            </header>
+            <div className="cover-layer-list-dialog" data-testid="advanced-editor-layer-list-dialog" data-compact="false">
+              <LayersPanel
+                layers={surface.layers}
+                surfaceSize={surface}
+                selectedLayerIds={selectedLayerIds}
+                copy={layersCopy}
+                onSelect={handleSelect}
+                onRename={(layerId, name) => patchLayer(layerId, { name })}
+                onToggleVisibility={(layerId) => { const layer = surface.layers.find((item) => item.id === layerId); if (layer) patchLayer(layerId, { visible: !layer.visible }); }}
+                onToggleLock={(layerId) => { const layer = surface.layers.find((item) => item.id === layerId); if (layer) patchLayer(layerId, { locked: !layer.locked }); }}
+                onDuplicate={duplicateLayer}
+                onDelete={(layerId) => setLayers(surface.layers.filter((layer) => layer.id !== layerId))}
+                onReorder={handleReorder}
+                backgroundSelected={backgroundSelected}
+                backgroundIsImage={surface.background.kind === 'image'}
+                onSelectBackground={selectBackground}
+              />
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

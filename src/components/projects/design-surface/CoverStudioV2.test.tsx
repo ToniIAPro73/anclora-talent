@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, expect, test, vi, beforeEach } from 'vitest';
+import type { ReactNode } from 'react';
 import { CoverStudioV2 } from './CoverStudioV2';
 import { createDesignLayer, createEmptyDesignSurface, type DesignSurface } from '@/lib/projects/design-surface';
 import { resolveLocaleMessages } from '@/lib/i18n/messages';
@@ -23,8 +24,9 @@ vi.mock('@/lib/projects/pdf-page-rasterizer', () => ({
 }));
 
 vi.mock('./AdvancedCoverEditor', () => ({
-  AdvancedCoverEditor: (props: { onSaveFinal?: () => void; saveStatus?: string; surface: DesignSurface }) => (
+  AdvancedCoverEditor: (props: { onSaveFinal?: () => void; saveStatus?: string; surface: DesignSurface; toolbarActions?: ReactNode }) => (
     <div data-testid="stub-advanced-editor">
+      <div data-testid="stub-editor-toolbar-actions">{props.toolbarActions}</div>
       <button type="button" data-testid="studio-save-final-button" onClick={props.onSaveFinal}>Guardar</button>
       <span data-testid="studio-save-status">{props.saveStatus}</span>
       <span data-testid="advanced-surface-title">{props.surface.layers.find((layer) => layer.type === 'text')?.content}</span>
@@ -74,7 +76,7 @@ describe('CoverStudioV2', () => {
     expect(screen.queryByTestId('studio-mode-basic-button')).not.toBeInTheDocument();
   });
 
-  test('a non-empty design skips the prompt and renders the unified editor', () => {
+  test('a non-empty design skips the prompt, renders Professional by default, and keeps compact accessible file actions', () => {
     render(
       <CoverStudioV2
         surfaceKind="cover"
@@ -87,9 +89,18 @@ describe('CoverStudioV2', () => {
     );
     expect(screen.queryByTestId('cover-origin-prompt')).not.toBeInTheDocument();
     expect(screen.getByTestId('stub-advanced-editor')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: copy.workspace.exportEditableJson })).toBeInTheDocument();
-    expect(screen.getByTestId('cover-package-import-button')).toHaveAccessibleName(copy.workspace.importEditableJson);
-    expect(screen.getByRole('button', { name: copy.workspace.exportPng })).toBeInTheDocument();
+    expect(screen.queryByTestId('studio-mode-basic-button')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('studio-mode-professional-button')).not.toBeInTheDocument();
+    const actions = screen.getByTestId('stub-editor-toolbar-actions');
+    expect(actions.querySelector('[data-testid="cover-package-import-button"]')).toHaveAccessibleName(copy.workspace.importEditableJson);
+    expect(actions.querySelector('[data-testid="cover-package-export-button"]')).toHaveAccessibleName(copy.workspace.exportEditableJson);
+    expect(actions.querySelector('[data-testid="cover-png-export-button"]')).toHaveAccessibleName(copy.workspace.exportPng);
+    expect(actions.querySelector('[data-testid="cover-package-import-button"] svg')).toHaveClass('lucide-file-input');
+    expect(actions.querySelector('[data-testid="cover-package-export-button"] svg')).toHaveClass('lucide-file-output');
+    expect(actions.querySelector('[data-testid="cover-png-export-button"] svg')).toHaveClass('lucide-image-up');
+    expect(actions).not.toHaveTextContent('JSON');
+    expect(actions).not.toHaveTextContent('PNG');
+    expect(screen.queryByTestId('cover-package-help')).not.toBeInTheDocument();
   });
 
   test('direct editor routes show the canonical eight-step workflow with the current surface active', () => {
@@ -139,7 +150,9 @@ describe('CoverStudioV2', () => {
     expect(saveBackCoverDesignAction).toHaveBeenCalledWith('p-1', expect.objectContaining({ surface: 'back-cover' }));
   });
 
-  test('switches between Basic and Professional without losing edits to the shared surface', () => {
+  test('reports a file-read error without changing the save status', async () => {
+    const file = new File(['invalid'], 'design.json', { type: 'application/json' });
+    Object.defineProperty(file, 'text', { value: vi.fn().mockRejectedValue(new Error('File read denied')) });
     render(
       <CoverStudioV2
         surfaceKind="cover"
@@ -151,12 +164,28 @@ describe('CoverStudioV2', () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId('studio-mode-basic-button'));
-    fireEvent.click(screen.getByTestId('basic-edit-title'));
-    expect(screen.getByTestId('stub-basic-editor')).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('studio-mode-professional-button'));
+    fireEvent.change(screen.getByTestId('cover-package-input'), { target: { files: [file] } });
+    await waitFor(() => expect(screen.getByTestId('cover-package-feedback')).toHaveTextContent('File read denied'));
+    expect(screen.getByTestId('studio-save-status')).toHaveTextContent('idle');
+    expect(saveCoverDesignAction).not.toHaveBeenCalled();
+  });
 
-    expect(screen.getByTestId('advanced-surface-title')).toHaveTextContent('Título desde Básico');
+  test('does not offer Basic mode and always mounts Professional editing', () => {
+    render(
+      <CoverStudioV2
+        surfaceKind="cover"
+        projectId="p-1"
+        initialSurface={makeNonEmptySurface()}
+        sourceDocumentAssetId={null}
+        pageCount={null}
+        copy={copy}
+      />,
+    );
+
+    expect(screen.getByTestId('stub-advanced-editor')).toBeInTheDocument();
+    expect(screen.queryByTestId('stub-basic-editor')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('studio-mode-basic-button')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('studio-mode-professional-button')).not.toBeInTheDocument();
   });
 
   test('choosing "create from scratch" dismisses the prompt and shows the unified editor', () => {

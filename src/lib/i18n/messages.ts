@@ -1771,6 +1771,9 @@ export type AppMessages = {
       backCanvasLabel: string;
       properties: string;
       layers: string;
+      manageLayers: string;
+      canvasOptions: string;
+      alignObjects: string;
       emptyTitle: string;
       emptyHint: string;
       preview: string;
@@ -1804,7 +1807,7 @@ export type AppMessages = {
       exportPng: string;
       exportPngSuccess: string;
       exportPngError: string;
-      jsonHelp: string;
+      jsonExported: string;
       jsonImportError: string;
       jsonImported: string;
       jsonImportPartialSave: string;
@@ -1848,6 +1851,7 @@ export type AppMessages = {
       zoomOutLabel: string;
       zoomInLabel: string;
       zoomFitLabel: string;
+      closeLabel: string;
     };
     studio: {
       basicModeLabel: string;
@@ -3772,7 +3776,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       },
       background: {
         label: 'Fondo',
-        solid: 'Color sólido',
+        solid: 'Sólido',
         gradient: 'Degradado',
         image: 'Imagen',
         gradientAngleLabel: 'Ángulo',
@@ -3854,6 +3858,9 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         backCanvasLabel: 'Lienzo de contraportada',
         properties: 'Propiedades',
         layers: 'Capas',
+        manageLayers: 'Abrir administrador de capas',
+        canvasOptions: 'Vista y guías',
+        alignObjects: 'Alinear objetos',
         emptyTitle: 'Nada seleccionado',
         emptyHint: 'Selecciona un elemento del lienzo o de la lista de capas para editar sus propiedades.',
         preview: 'Vista previa',
@@ -3887,7 +3894,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         exportPng: 'Exportar PNG',
         exportPngSuccess: 'PNG exportado.',
         exportPngError: 'No se pudo exportar el PNG. Comprueba las imágenes del diseño e inténtalo de nuevo.',
-        jsonHelp: 'JSON conserva portada, contraportada, capas e imágenes editables. PNG es una imagen plana.',
+        jsonExported: 'Diseño exportado.',
         jsonImportError: 'No se pudo importar el diseño JSON.',
         jsonImported: 'Diseño JSON importado en las dos superficies.',
         jsonImportPartialSave: 'La portada se guardó, pero falló la contraportada. Vuelve a importar el archivo para completar el guardado.',
@@ -3931,6 +3938,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         zoomOutLabel: 'Alejar',
         zoomInLabel: 'Acercar',
         zoomFitLabel: 'Ajustar a la ventana',
+        closeLabel: 'Cerrar',
       },
       studio: {
         basicModeLabel: 'Editor básico',
@@ -5852,7 +5860,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       },
       background: {
         label: 'Background',
-        solid: 'Solid color',
+        solid: 'Solid',
         gradient: 'Gradient',
         image: 'Image',
         gradientAngleLabel: 'Angle',
@@ -5934,6 +5942,9 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         backCanvasLabel: 'Back cover canvas',
         properties: 'Properties',
         layers: 'Layers',
+        manageLayers: 'Open layer manager',
+        canvasOptions: 'View and guides',
+        alignObjects: 'Align objects',
         emptyTitle: 'Nothing selected',
         emptyHint: 'Select an element on the canvas or in the layer list to edit its properties.',
         preview: 'Preview',
@@ -5967,7 +5978,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         exportPng: 'Export PNG',
         exportPngSuccess: 'PNG exported.',
         exportPngError: 'The PNG could not be exported. Check the design images and try again.',
-        jsonHelp: 'JSON keeps both editable covers, layers, and images. PNG is a flat image.',
+        jsonExported: 'Design exported.',
         jsonImportError: 'The editable JSON design could not be imported.',
         jsonImported: 'The JSON design was imported to both surfaces.',
         jsonImportPartialSave: 'The cover was saved, but the back cover failed. Import the file again to finish saving both surfaces.',
@@ -6011,6 +6022,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         zoomOutLabel: 'Zoom out',
         zoomInLabel: 'Zoom in',
         zoomFitLabel: 'Fit to window',
+        closeLabel: 'Close',
       },
       studio: {
         basicModeLabel: 'Basic editor',

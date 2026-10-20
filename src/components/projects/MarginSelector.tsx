@@ -118,7 +118,7 @@ export function MarginSelector({
               onClick={() => applyPreset('custom', effectiveCustom)}
               className={`text-left px-3 py-2 rounded-lg text-xs transition-colors ${
                 effectiveActivePresetKey === 'custom'
-                  ? 'bg-[var(--accent)]/20 text-[var(--accent-text)] font-semibold'
+                  ? 'bg-[var(--talent-button-selected-bg)] text-[var(--talent-button-selected-fg)] font-semibold'
                   : 'text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]'
               }`}
             >
@@ -136,7 +136,7 @@ export function MarginSelector({
                 onClick={() => applyPreset(key, preset)}
                 className={`text-left px-3 py-2 rounded-lg text-xs transition-colors ${
                   effectiveActivePresetKey === key
-                    ? 'bg-[var(--accent)]/20 text-[var(--accent-text)] font-semibold'
+                    ? 'bg-[var(--talent-button-selected-bg)] text-[var(--talent-button-selected-fg)] font-semibold'
                     : 'text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]'
                 }`}
               >

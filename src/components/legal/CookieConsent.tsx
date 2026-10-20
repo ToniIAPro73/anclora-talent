@@ -56,7 +56,7 @@ export function CookieConsent() {
         type="button"
         aria-label={en ? 'Cookie preferences' : 'Preferencias de cookies'}
         onClick={() => { setOpen(true); setSettings(true); }}
-        className="fixed bottom-5 left-5 z-40 hidden md:inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--accent)]/40 bg-[var(--surface-overlay)] text-[var(--accent-text)] shadow-2xl backdrop-blur transition hover:scale-105"
+        className="ac-button ac-button--ghost ac-button--compact ac-button--icon fixed bottom-5 left-5 z-40 hidden md:inline-flex h-11 w-11 items-center justify-center rounded-full"
       >
         <Cookie className="h-5 w-5" aria-hidden="true" />
       </button>
@@ -74,9 +74,9 @@ export function CookieConsent() {
                 <CookieRow title={en ? 'Marketing cookies' : 'Cookies de marketing'} description={en ? 'Reserved for relevant communications. They do not enable scripts that are not present.' : 'Reservadas para comunicaciones relevantes. No activan scripts inexistentes.'} checked={preferences.marketing} onChange={(marketing) => setPreferences((current) => ({ ...current, marketing }))} />
               </div>
               <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <button type="button" onClick={() => persist(defaults)} className="rounded-full px-5 py-2.5 text-sm font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)]">{en ? 'Reject optional' : 'Rechazar opcionales'}</button>
-                <button type="button" onClick={() => persist(preferences)} className="rounded-full border border-[var(--border-subtle)] bg-[var(--surface-panel)] px-5 py-2.5 text-sm font-semibold text-[var(--text-primary)] hover:border-[var(--accent)]">{en ? 'Save preferences' : 'Guardar preferencias'}</button>
-                <button type="button" onClick={() => persist({ ...defaults, analytics: true, marketing: true })} className="rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-black hover:opacity-90">{en ? 'Accept all' : 'Aceptar todas'}</button>
+                <button type="button" onClick={() => persist(defaults)} className="ac-button ac-button--ghost ac-button--compact">{en ? 'Reject optional' : 'Rechazar opcionales'}</button>
+                <button type="button" onClick={() => persist(preferences)} className="ac-button ac-button--secondary ac-button--compact">{en ? 'Save preferences' : 'Guardar preferencias'}</button>
+                <button type="button" onClick={() => persist({ ...defaults, analytics: true, marketing: true })} className="ac-button ac-button--primary ac-button--compact">{en ? 'Accept all' : 'Aceptar todas'}</button>
               </div>
             </div>
           </div>
@@ -103,21 +103,21 @@ export function CookieConsent() {
                 <button
                   type="button"
                   onClick={() => persist(defaults)}
-                  className="rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]"
+                  className="ac-button ac-button--ghost ac-button--compact"
                 >
                   {en ? 'Reject optional' : 'Rechazar opcionales'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setSettings(true)}
-                  className="rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-2 text-xs font-semibold text-[var(--text-primary)] transition hover:border-[var(--accent)]"
+                  className="ac-button ac-button--secondary ac-button--compact"
                 >
                   {en ? 'Settings' : 'Configuración'}
                 </button>
                 <button
                   type="button"
                   onClick={() => persist({ ...defaults, analytics: true, marketing: true })}
-                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-bold text-black shadow-sm transition hover:opacity-90"
+                  className="ac-button ac-button--primary ac-button--compact"
                 >
                   {en ? 'Accept all' : 'Aceptar todas'}
                 </button>

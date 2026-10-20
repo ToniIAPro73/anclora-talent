@@ -17,6 +17,17 @@ describe('CookieConsent', () => {
     expect(screen.getByRole('button', { name: /rechazar opcionales/i })).toBeInTheDocument();
   });
 
+  it('uses the shared theme-aware button variants for consent actions', () => {
+    render(<CookieConsent />);
+
+    expect(screen.getByRole('button', { name: /aceptar todas/i })).toHaveClass('ac-button--primary');
+    expect(screen.getByRole('button', { name: /configuración/i })).toHaveClass('ac-button--secondary');
+    expect(screen.getByRole('button', { name: /rechazar opcionales/i })).toHaveClass('ac-button--ghost');
+    for (const name of [/aceptar todas/i, /configuración/i, /rechazar opcionales/i]) {
+      expect(screen.getByRole('button', { name })).toHaveClass('ac-button', 'ac-button--compact');
+    }
+  });
+
   it('opens accessible settings dialog when settings button is clicked', () => {
     render(<CookieConsent />);
 

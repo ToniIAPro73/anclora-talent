@@ -204,7 +204,7 @@ export function FontSelector({
                 data-testid={`font-selector-category-${cat}-button`}
                 className={`h-6 shrink-0 rounded px-2 text-[11px] font-medium capitalize leading-none transition-colors ${
                   activeCategory === cat
-                    ? 'bg-[var(--accent)] text-black'
+                    ? 'bg-[var(--talent-button-selected-bg)] text-[var(--talent-button-selected-fg)]'
                     : 'bg-[var(--surface-soft)] text-[var(--text-secondary)] hover:bg-[var(--surface-highlight)]'
                 }`}
               >
@@ -229,7 +229,7 @@ export function FontSelector({
                   data-testid={`font-option-${font.family.replace(/\s+/g, '-').toLowerCase()}`}
                   className={`flex h-7 w-full items-center gap-2 rounded px-2 text-left text-xs transition-colors ${
                     selectedFont === font.family
-                      ? 'bg-[var(--accent)] font-semibold text-black'
+                      ? 'bg-[var(--talent-button-selected-bg)] font-semibold text-[var(--talent-button-selected-fg)]'
                       : index === activeIndex
                         ? 'bg-[var(--surface-highlight)] text-[var(--text-primary)]'
                         : 'text-[var(--text-primary)] hover:bg-[var(--surface-highlight)]'

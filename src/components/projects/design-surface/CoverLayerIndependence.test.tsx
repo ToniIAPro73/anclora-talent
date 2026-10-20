@@ -244,7 +244,6 @@ async function setupWithBinding(initial: DesignSurface = makeSurface()) {
 
 /** The top "Plantilla editorial" select is the single place a template is chosen. */
 const chooseTemplate = (id: string) => fireEvent.change(screen.getByTestId('cover-template-select'), { target: { value: id } });
-const activeCard = () => screen.getByTestId('cover-template-active-card');
 
 const textOf = (surface: DesignSurface, role: string) => surface.layers.find((l) => l.type === 'text' && l.role === role) as (DesignSurface['layers'][number] & { content: string; source: string; visible: boolean }) | undefined;
 
@@ -253,7 +252,7 @@ describe('applying a cover template', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
-  it('materializes every slot with the manuscript content and marks the template active', async () => {
+  it('materializes every slot with manuscript content without duplicating the template beside the canvas', async () => {
     const { surface } = await setupWithBinding();
     chooseTemplate(TEMPLATE_A.id);
 
@@ -262,8 +261,7 @@ describe('applying a cover template', () => {
     expect(textOf(surface(), 'subtitle')).toMatchObject({ content: 'Sistemas para pensar' });
     expect(textOf(surface(), 'author')).toMatchObject({ content: 'María Vega' });
     expect(surface().templateId).toBe(TEMPLATE_A.id);
-    expect(activeCard()).toHaveAttribute('data-template-id', TEMPLATE_A.id);
-    expect(screen.getAllByTestId('cover-template-active-card')).toHaveLength(1);
+    expect(screen.queryByTestId('cover-template-active-card')).not.toBeInTheDocument();
     expect(screen.getByTestId('cover-template-select')).toHaveValue(TEMPLATE_A.id);
   });
 
@@ -276,11 +274,11 @@ describe('applying a cover template', () => {
     chooseTemplate(TEMPLATE_B.id);
 
     expect(surface()).toBe(applied);
-    expect(activeCard()).toHaveAttribute('data-template-id', TEMPLATE_A.id);
+    expect(screen.queryByTestId('cover-template-active-card')).not.toBeInTheDocument();
     expect(screen.getByTestId('cover-template-select')).toHaveValue(TEMPLATE_A.id); // the select reverts too
   });
 
-  it('A -> B -> C -> A keeps the content and the layer identities; the active card follows', async () => {
+  it('A -> B -> C -> A keeps the content and layer identities without rendering a duplicate preview', async () => {
     const { surface } = await setupWithBinding();
     chooseTemplate(TEMPLATE_A.id);
     const ids = surface().layers.map((l) => l.id);
@@ -291,8 +289,8 @@ describe('applying a cover template', () => {
       expect(surface().layers.map((l) => l.id)).toEqual(ids);
       expect(surface().layers.map((l) => (l.type === 'text' ? l.content : ''))).toEqual(contentA);
       expect(surface().templateId).toBe(template.id);
-      expect(activeCard()).toHaveAttribute('data-template-id', template.id);
-      expect(screen.getByTestId('cover-template-active-name')).toHaveTextContent(template.name);
+      expect(screen.queryByTestId('cover-template-active-card')).not.toBeInTheDocument();
+      expect(screen.getByTestId('cover-template-select')).toHaveValue(template.id);
     }
   });
 

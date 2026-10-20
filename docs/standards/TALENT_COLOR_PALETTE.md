@@ -60,8 +60,10 @@ foreground oscuro `#050b12`/`#081019` (6.8:1) — nunca texto blanco sobre el az
 | `--text-muted` | `#7090A8` | Texto terciario/decorativo |
 | `--button-highlight-bg` | `var(--accent)` | Botón de acento |
 | `--button-highlight-fg` | `#050b12` | Texto sobre botón de acento (6.8:1) |
-| `--talent-button-primary-bg` | `linear-gradient(135deg,#5CB4E8 0%,#4A9FD8 52%,#3A88BE 100%)` | CTA primario |
-| `--talent-button-primary-fg` | `#081019` | Texto del CTA primario |
+| `--button-primary-bg` | `linear-gradient(135deg,#5CB4E8 0%,#4A9FD8 52%,#3A88BE 100%)` | CTA principal dark |
+| `--button-primary-fg` | `#081019` | Texto del CTA principal dark |
+| `--talent-button-selected-bg` | `#1E455C` | Selección/toggle activo dark |
+| `--talent-button-selected-fg` | `#EDF2F8` | Texto de selección dark |
 | `--premiumCopper` (marca) | `#C07860` | Borde de grupo Premium (uso puntual de marca, no acento UI) |
 
 ## Tokens de soporte (light diseñado)
@@ -74,7 +76,10 @@ foreground oscuro `#050b12`/`#081019` (6.8:1) — nunca texto blanco sobre el az
 | `--text-primary` | `#0C1820` | Texto principal light (18:1) |
 | `--text-secondary` | `#3A5068` | Texto secundario light (8.3:1) |
 | `--text-muted` | `#7898B0` | Texto terciario/decorativo |
-| `--button-primary-bg` | `#124a50` | Botón primario teal profundo (variante light real) |
+| `--button-primary-bg` | `#C7DFE1` | Botón primario teal-azulado claro y desaturado |
+| `--button-primary-fg` | `#12384A` | Texto navy sobre CTA teal-azulado (8.92:1) |
+| `--talent-button-selected-bg` | `#DCECF7` | Selección/toggle activo light |
+| `--talent-button-selected-fg` | `#12384A` | Texto de selección light (10.28:1) |
 
 ## Gradientes recomendados
 
@@ -86,10 +91,13 @@ radial-gradient(circle at left, rgba(28,46,64,0.2), transparent 28%),
 linear-gradient(180deg, #0C141E 0%, #111C28 48%, #0E1825 100%)
 ```
 
-### CTA primario (ambos temas)
+### CTA primario
 
 ```css
-linear-gradient(135deg, #5CB4E8 0%, #4A9FD8 52%, #3A88BE 100%)
+Dark: `linear-gradient(135deg, #5CB4E8 0%, #4A9FD8 52%, #3A88BE 100%)` con tinta `#081019`.
+
+Light: `#C7DFE1` con texto `#12384A`. Mantiene un matiz teal-azulado suave, evita verdes oscuros
+y reduce los grandes bloques azules saturados sobre las superficies claras.
 ```
 
 ### Glow azul
@@ -108,12 +116,14 @@ linear-gradient(180deg, #F2F7FC 0%, #FFFFFF 52%, #E8F0F8 100%)
 
 ## Reglas de uso
 
-- El **azul cielo `#4A9FD8`** se reserva para acciones importantes, foco, highlights y señal premium.
+- El **azul cielo `#4A9FD8`** se reserva para foco, highlights, enlaces y señal premium. Los CTA principales se adaptan al tema: degradado azul cielo con tinta navy en dark y teal-azulado claro con texto navy en light.
 - El **teal profundo** (`#124a50`, gradientes `rgba(18,74,80,…)`) sostiene profundidad y variantes
   secundarias; nunca compite con el acento como CTA.
 - El **navy** (`#0C141E`–`#1C2E40`) cierra el sistema en dark y evita que la app se sienta verde.
-- Texto sobre acento: siempre foreground oscuro (`#050b12`/`#081019`); texto blanco sobre
-  `#4A9FD8` no llega a 4.5:1 y está prohibido.
+- Texto sobre el acento cielo: siempre foreground oscuro (`#050b12`/`#081019`); texto blanco sobre
+  `#4A9FD8` no llega a 4.5:1 y está prohibido. El CTA light usa tinta navy sobre su fondo claro.
+- Los toggles y controles seleccionados usan tokens distintos del CTA principal para reducir su
+  peso visual y mantener clara la jerarquía de acciones.
 - En light, texto pequeño/iconos/enlaces de acento usan `--accent-text` (`#2C729F`).
 - El dark no debe caer en negro plano ni en gris neutro sin intención.
 - El light no debe usar blanco puro dominante salvo superficies concretas justificadas.
@@ -130,6 +140,11 @@ linear-gradient(180deg, #F2F7FC 0%, #FFFFFF 52%, #E8F0F8 100%)
 | dark: `--accent` sobre `--surface-canvas` | 6.38:1 |
 | dark: `--accent` sobre `--background` | 4.75:1 |
 | dark/light: `--button-highlight-fg` `#050b12` sobre `--accent` | 6.81:1 |
+| dark: texto `#081019` sobre cada parada del CTA `#5CB4E8`/`#4A9FD8`/`#3A88BE` | ≥4.96:1 |
+| light: texto `#12384A` sobre CTA `#C7DFE1` | 8.92:1 |
+| dark: selección `#EDF2F8` sobre `#1E455C` | 9.05:1 |
+| light: selección `#12384A` sobre `#DCECF7` | 10.28:1 |
+| dark/light: disabled `#8AA0B4`/`#526879` sobre `#162535`/`#E8F0F8` | ≥5.05:1 |
 | dark/light: `#081019` sobre `--accent-hover` | 8.33:1 |
 | light: `--text-primary` sobre `--surface` | 17.99:1 |
 | light: `--text-secondary` sobre `--surface` | 8.31:1 |

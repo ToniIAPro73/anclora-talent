@@ -11,10 +11,11 @@ describe('button styles', () => {
     expect(premiumPrimaryMintButton).toContain('ac-button--lg');
   });
 
-  test('keeps the dark product CTA as a system button with a local Talent modifier', () => {
+  test('maps the product CTA to the same theme-aware canonical primary variant', () => {
     expect(premiumPrimaryDarkButton).toContain('ac-button');
-    expect(premiumPrimaryDarkButton).toContain('ac-button--secondary');
-    expect(premiumPrimaryDarkButton).toContain('talent-button--dark');
+    expect(premiumPrimaryDarkButton).toContain('ac-button--primary');
+    expect(premiumPrimaryDarkButton).toContain('ac-button--lg');
+    expect(premiumPrimaryDarkButton).not.toContain('talent-button--dark');
   });
 
   test('keeps the neutral CTA on the canonical secondary button contract', () => {

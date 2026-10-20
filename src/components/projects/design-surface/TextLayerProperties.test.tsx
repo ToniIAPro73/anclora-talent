@@ -55,12 +55,17 @@ describe('TextLayerProperties', () => {
     expect(onChange).toHaveBeenCalledWith({ textAlign: 'justify' });
   });
 
-  test('text-transform buttons switch case handling', () => {
+  test('compact text-transform select switches all case handling options', () => {
     const onChange = vi.fn();
     render(<TextLayerProperties layer={makeLayer({ textTransform: 'none' })} copy={copy} onChange={onChange} />);
 
-    fireEvent.click(screen.getByTestId('text-layer-transform-uppercase-button'));
+    const select = screen.getByTestId('text-layer-transform-select');
+    expect(select).toHaveValue('none');
+    fireEvent.change(select, { target: { value: 'uppercase' } });
     expect(onChange).toHaveBeenCalledWith({ textTransform: 'uppercase' });
+    fireEvent.change(select, { target: { value: 'lowercase' } });
+    expect(onChange).toHaveBeenLastCalledWith({ textTransform: 'lowercase' });
+    expect(screen.queryByTestId('text-layer-transform-none-button')).not.toBeInTheDocument();
   });
 
   test('numeric fields (x/y/width/height/rotation) are all exposed and editable', () => {

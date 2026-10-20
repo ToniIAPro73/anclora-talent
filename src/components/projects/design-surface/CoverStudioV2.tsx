@@ -14,7 +14,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Download, Upload } from 'lucide-react';
+import { FileInput, FileOutput, ImageUp } from 'lucide-react';
 import type { AppMessages } from '@/lib/i18n/messages';
 import {
   applyOriginalPageBackground,
@@ -26,9 +26,7 @@ import { saveBackCoverDesignAction, saveCoverDesignAction, type SaveDesignSurfac
 import { rasterizeSourcePdfPage, resolveOriginPageNumber } from '@/lib/projects/pdf-page-rasterizer';
 import type { SemanticBinding } from '@/lib/projects/design-surface-templates';
 import { AdvancedCoverEditor } from './AdvancedCoverEditor';
-import { BasicCoverEditor } from './BasicCoverEditor';
 import { CoverOriginPrompt } from './CoverOriginPrompt';
-import type { SurfacePalette } from '@/lib/projects/design-surface-templates';
 import { Stepper, type Step } from '@/components/ui/Stepper';
 import { createCoverDesignPackage, parseCoverDesignPackage } from '@/lib/projects/cover-design-package';
 import { CoverPreflightPanel } from './CoverPreflightPanel';
@@ -77,8 +75,6 @@ export function CoverStudioV2({
   const [promptDismissed, setPromptDismissed] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [originalBackgroundSrc, setOriginalBackgroundSrc] = useState<string | undefined>(undefined);
-  const [mode, setMode] = useState<'basic' | 'professional'>('professional');
-  const [palette, setPalette] = useState<SurfacePalette>('teal');
   const [packageFeedback, setPackageFeedback] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
   const pngExporterRef = useRef<(() => string | null) | null>(null);
   const packageInputRef = useRef<HTMLInputElement>(null);
@@ -170,11 +166,11 @@ export function CoverStudioV2({
       anchor.download = `anclora-talent-${projectId}-design.json`;
       anchor.click();
       URL.revokeObjectURL(url);
-      setPackageFeedback({ kind: 'success', text: copy.workspace.jsonHelp });
+      setPackageFeedback({ kind: 'success', text: copy.workspace.jsonExported });
     } catch (error) {
       setPackageFeedback({ kind: 'error', text: error instanceof Error ? error.message : copy.workspace.jsonImportError });
     }
-  }, [companionSurface, copy.workspace.jsonHelp, copy.workspace.jsonImportError, projectId, surface, surfaceKind]);
+  }, [companionSurface, copy.workspace.jsonExported, copy.workspace.jsonImportError, projectId, surface, surfaceKind]);
 
   const registerPngExporter = useCallback((exporter: (() => string | null) | null) => {
     pngExporterRef.current = exporter;
@@ -184,22 +180,7 @@ export function CoverStudioV2({
     setPackageFeedback(null);
     try {
       let dataUrl: string | null = null;
-      if (mode === 'professional') {
-        dataUrl = pngExporterRef.current?.() ?? null;
-      } else {
-        await document.fonts?.ready;
-        const renderer = document.querySelector<HTMLElement>('[data-testid="design-surface-renderer"]');
-        if (renderer) {
-          const { toPng } = await import('html-to-image');
-          dataUrl = await toPng(renderer, {
-            width: surface.width,
-            height: surface.height,
-            canvasWidth: surface.width,
-            canvasHeight: surface.height,
-            pixelRatio: 1,
-          });
-        }
-      }
+      dataUrl = pngExporterRef.current?.() ?? null;
       if (!dataUrl) throw new Error('PNG renderer is not ready');
       const anchor = document.createElement('a');
       anchor.href = dataUrl;
@@ -209,11 +190,12 @@ export function CoverStudioV2({
     } catch {
       setPackageFeedback({ kind: 'error', text: copy.workspace.exportPngError });
     }
-  }, [copy.workspace.exportPngError, copy.workspace.exportPngSuccess, mode, projectId, surface.height, surface.width, surfaceKind]);
+  }, [copy.workspace.exportPngError, copy.workspace.exportPngSuccess, projectId, surfaceKind]);
 
   const handleImportPackage = useCallback(async (file?: File) => {
     if (!file) return;
     setPackageFeedback(null);
+    let saveAttempted = false;
     try {
       const imported = parseCoverDesignPackage(await file.text());
       // Drain any user edit queued before import so that its slower autosave
@@ -226,6 +208,7 @@ export function CoverStudioV2({
       setSurface(nextSurface);
       setCompanionSurface(nextCompanion);
       setSaveStatus('saving');
+      saveAttempted = true;
       const saveCover = await saveCoverDesignAction(projectId, imported.surfaces.cover);
       if (saveCover.status !== 'saved') throw new Error(`${copy.workspace.jsonImportError} ${saveCover.error}`);
       const saveBackCover = await saveBackCoverDesignAction(projectId, imported.surfaces['back-cover']);
@@ -236,7 +219,7 @@ export function CoverStudioV2({
       setSaveStatus('saved');
       setPackageFeedback({ kind: 'success', text: copy.workspace.jsonImported });
     } catch (error) {
-      setSaveStatus('error');
+      if (saveAttempted) setSaveStatus('error');
       setPackageFeedback({ kind: 'error', text: error instanceof Error ? error.message : copy.workspace.jsonImportError });
     } finally {
       if (packageInputRef.current) packageInputRef.current.value = '';
@@ -306,61 +289,41 @@ export function CoverStudioV2({
         />
       ) : (
         <>
-          <div className="cover-studio-mode-bar">
-            <div className="cover-studio-mode-switch" role="group" aria-label={copy.workspace.professionalModeLabel}>
-              <button type="button" className="ac-button ac-button--secondary ac-button--sm" data-testid="studio-mode-basic-button" aria-pressed={mode === 'basic'} onClick={() => setMode('basic')}>
-                {copy.workspace.basicModeLabel}
-              </button>
-              <button type="button" className="ac-button ac-button--secondary ac-button--sm" data-testid="studio-mode-professional-button" aria-label={copy.workspace.professionalModeLabel} title={copy.workspace.professionalModeLabel} aria-pressed={mode === 'professional'} onClick={() => setMode('professional')}>
-                <span aria-hidden="true">Pro</span>
-              </button>
-            </div>
-            <div className="cover-studio-package-actions">
-              <input
-                ref={packageInputRef}
-                type="file"
-                accept="application/json,.json"
-                className="sr-only"
-                aria-label={copy.workspace.importEditableJson}
-                data-testid="cover-package-input"
-                onChange={(event) => void handleImportPackage(event.currentTarget.files?.[0])}
-              />
-              <button type="button" className="ac-button ac-button--secondary ac-button--sm cover-studio-package-icon-button" data-testid="cover-package-import-button" aria-label={copy.workspace.importEditableJson} title={copy.workspace.importEditableJson} onClick={() => packageInputRef.current?.click()}>
-                <Upload aria-hidden="true" size={15} />
-                <span aria-hidden="true">JSON</span>
-              </button>
-              <button type="button" className="ac-button ac-button--secondary ac-button--sm cover-studio-package-icon-button" data-testid="cover-package-export-button" aria-label={copy.workspace.exportEditableJson} title={copy.workspace.exportEditableJson} onClick={() => void handleExportPackage()}>
-                <Download aria-hidden="true" size={15} />
-                <span aria-hidden="true">JSON</span>
-              </button>
-              <button type="button" className="ac-button ac-button--secondary ac-button--sm cover-studio-package-icon-button" data-testid="cover-png-export-button" aria-label={copy.workspace.exportPng} title={copy.workspace.exportPng} onClick={() => void handleExportPng()}>
-                <Download aria-hidden="true" size={15} />
-                <span aria-hidden="true">PNG</span>
-              </button>
-            </div>
-            {mode === 'basic' && (
-              <button type="button" className="ac-button ac-button--primary ac-button--sm" data-testid="basic-mode-save-final-button" onClick={() => void handleSaveFinal()}>
-                {saveStatus === 'saving' ? copy.studio.savingLabel : saveStatus === 'error' ? copy.studio.saveErrorLabel : surface.status === 'final' ? copy.studio.finalStatusLabel : copy.workspace.save}
-              </button>
-            )}
-            <p className="cover-package-help" data-testid="cover-package-help">{copy.workspace.jsonHelp}</p>
-          </div>
           {packageFeedback && <p data-testid="cover-package-feedback" className={`cover-package-feedback cover-package-feedback--${packageFeedback.kind}`} role={packageFeedback.kind === 'error' ? 'alert' : 'status'}>{packageFeedback.text}</p>}
-          {mode === 'basic' ? (
-            <BasicCoverEditor surface={surface} onChange={handleChange} copy={copy} palette={palette} onPaletteChange={setPalette} brandColors={brandColors} semanticBinding={semanticBinding} />
-          ) : (
-            <AdvancedCoverEditor
-              surface={surface}
-              onChange={handleChange}
-              copy={copy}
-              brandColors={brandColors}
-              semanticBinding={semanticBinding}
-              originalBackgroundSrc={originalBackgroundSrc}
-              saveStatus={saveStatus}
-              onSaveFinal={() => void handleSaveFinal()}
-              onPngExporterChange={registerPngExporter}
-            />
-          )}
+          <AdvancedCoverEditor
+            surface={surface}
+            onChange={handleChange}
+            copy={copy}
+            brandColors={brandColors}
+            semanticBinding={semanticBinding}
+            originalBackgroundSrc={originalBackgroundSrc}
+            saveStatus={saveStatus}
+            onSaveFinal={() => void handleSaveFinal()}
+            onPngExporterChange={registerPngExporter}
+            toolbarActions={(
+              <>
+                <input
+                  ref={packageInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="sr-only"
+                  aria-hidden="true"
+                  tabIndex={-1}
+                  data-testid="cover-package-input"
+                  onChange={(event) => void handleImportPackage(event.currentTarget.files?.[0])}
+                />
+                <button type="button" className="cover-toolbar-icon" data-testid="cover-package-import-button" aria-label={copy.workspace.importEditableJson} title={copy.workspace.importEditableJson} onClick={() => packageInputRef.current?.click()}>
+                  <FileInput aria-hidden="true" size={16} />
+                </button>
+                <button type="button" className="cover-toolbar-icon" data-testid="cover-package-export-button" aria-label={copy.workspace.exportEditableJson} title={copy.workspace.exportEditableJson} onClick={() => void handleExportPackage()}>
+                  <FileOutput aria-hidden="true" size={16} />
+                </button>
+                <button type="button" className="cover-toolbar-icon" data-testid="cover-png-export-button" aria-label={copy.workspace.exportPng} title={copy.workspace.exportPng} onClick={() => void handleExportPng()}>
+                  <ImageUp aria-hidden="true" size={16} />
+                </button>
+              </>
+            )}
+          />
           <CoverPreflightPanel surface={surface} locale={locale} copy={copy.workspace} />
           <CoverEditorialSystemPanel
             projectId={projectId}
