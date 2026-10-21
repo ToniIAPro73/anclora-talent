@@ -3,7 +3,7 @@
 > Este fichero se sobrescribe en cada entrega. El historial queda en Git.
 
 **Repositorio:** anclora-talent
-**Rama y revisión validada:** `development` @ `512dc60` + cambios locales de esta entrega
+**Rama y revisión validada:** `development` @ `7a35c49`
 **Entorno:** validación local focalizada. No se ha publicado ni desplegado. El contrato no declara `HOSTING_PROVIDER` ni `PRODUCTION_DEPLOY_BRANCH`.
 
 ## Cambios incluidos
