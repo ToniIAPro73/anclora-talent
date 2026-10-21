@@ -3594,6 +3594,11 @@ html[data-theme="light"] .cover-action-tooltip { border-color: #b9cbd9; backgrou
 .cover-prop-slider__track::-webkit-slider-thumb { width: 12px !important; height: 12px !important; }
 .cover-prop-slider__track::-moz-range-thumb { width: 12px !important; height: 12px !important; }
 
+.cover-prop-choice-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; width: 100%; }
+.cover-prop-choice-grid--fit { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cover-prop-choice-button { width: 100%; height: 32px; border-radius: 6px; }
+.cover-prop-choice-button svg { width: 16px; height: 16px; }
+
 .cover-prop-segmented { display: grid !important; width: 100%; min-width: 0; grid-template-columns: repeat(var(--cover-prop-segmented-columns, 3), minmax(0, 1fr)) !important; grid-auto-flow: unset; grid-auto-columns: unset; gap: 2px; padding: 1px !important; border-radius: 6px !important; }
 .cover-prop-segmented[data-columns="4"] { --cover-prop-segmented-columns: 4; }
 .cover-prop-segmented button { height: 28px !important; min-width: 0; min-height: 28px !important; padding: 2px 2px; white-space: nowrap; text-align: center; line-height: 1.15 !important; font-size: 10px !important; font-weight: 600; overflow-wrap: normal; }
@@ -3625,8 +3630,6 @@ html[data-theme="light"] .cover-action-tooltip { border-color: #b9cbd9; backgrou
 /* Property actions. Default = compact secondary action (content-sized, 28px); `--full` is for a primary action only. */
 .cover-prop-button { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; justify-self: start; width: auto; height: 28px !important; min-height: 0 !important; padding: 0 12px !important; font-size: 12px !important; white-space: nowrap; }
 .cover-prop-button { border-radius: 4px !important; }
-.cover-prop-icon-option { display: grid; place-items: center; padding: 0 !important; }
-.cover-prop-icon-option svg { width: 16px; height: 16px; }
 /* A row of content-sized property actions: each button is as wide as its label needs (never clipped or wrapped). */
 .cover-prop-actions { display: flex; flex-wrap: wrap; gap: 6px 8px; }
 .cover-prop-button--full { width: 100%; justify-self: stretch; }

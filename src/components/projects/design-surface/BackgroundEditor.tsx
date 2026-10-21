@@ -7,7 +7,7 @@
  */
 
 import { useRef } from 'react';
-import { Blend, Image, Maximize, PaintBucket, Plus, Ratio, Scan, SquareDashed, X } from 'lucide-react';
+import { Blend, Expand, Image, PaintBucket, Plus, Ratio, Shrink, SquareDashed, X } from 'lucide-react';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { BackgroundSpec } from '@/lib/projects/design-surface';
 import {
@@ -23,7 +23,7 @@ import {
 } from '@/lib/projects/design-surface-background';
 import { ColorPickerField } from './ColorPickerField';
 import { ContextualActionHint } from './ContextualActionHint';
-import { CompactNumberField, CompactSlider, PropertySection, SegmentedGroup } from './PropertyControls';
+import { CompactNumberField, CompactSlider, PropertySection } from './PropertyControls';
 
 type Copy = AppMessages['coverDesignSurface']['background'];
 type ColorPickerCopy = AppMessages['coverDesignSurface']['colorPicker'];
@@ -50,15 +50,15 @@ export function BackgroundEditor({ background, copy, colorPickerCopy, brandColor
     { kind: 'image', label: copy.image, Icon: Image },
   ] as const;
   const fitOptions = [
-    { fit: 'cover', label: copy.fitCover, Icon: Maximize },
-    { fit: 'contain', label: copy.fitContain, Icon: Scan },
+    { fit: 'cover', label: copy.fitCover, Icon: Expand },
+    { fit: 'contain', label: copy.fitContain, Icon: Shrink },
     { fit: 'original', label: copy.fitOriginal, Icon: Ratio },
   ] as const;
 
   return (
     <div className="cover-prop-stack" data-testid="background-editor">
       <PropertySection title={copy.label}>
-        <SegmentedGroup label={copy.label} columns={4}>
+        <div className="cover-prop-choice-grid" role="group" aria-label={copy.label}>
           {backgroundOptions.map(({ kind, label, Icon }) => (
             <button
               key={kind}
@@ -70,7 +70,7 @@ export function BackgroundEditor({ background, copy, colorPickerCopy, brandColor
                 else if (kind === 'gradient') onChange(background.kind === 'gradient' ? background : { kind: 'gradient', angle: 160, stops: [{ color: '#0b133f', offset: 0 }, { color: '#07252f', offset: 1 }] });
                 else onChange(background.kind === 'image' ? background : { kind: 'image', src: '', fit: 'cover', opacity: 1 });
               }}
-              className="cover-prop-text-button cover-prop-icon-option"
+              className="cover-toolbar-icon cover-prop-choice-button"
               data-active={background.kind === kind ? 'true' : 'false'}
               aria-label={label}
               title={label}
@@ -79,7 +79,7 @@ export function BackgroundEditor({ background, copy, colorPickerCopy, brandColor
               <Icon aria-hidden="true" />
             </button>
           ))}
-        </SegmentedGroup>
+        </div>
       {background.kind === 'solid' && (
         <ColorPickerField
           label={copy.solid}
@@ -169,14 +169,14 @@ export function BackgroundEditor({ background, copy, colorPickerCopy, brandColor
               event.target.value = '';
             }}
           />
-        <SegmentedGroup label={copy.fitLabel}>
+        <div className="cover-prop-choice-grid cover-prop-choice-grid--fit" role="group" aria-label={copy.fitLabel}>
           {fitOptions.map(({ fit, label, Icon }) => (
             <button
               key={fit}
               type="button"
               data-testid={`background-image-fit-${fit}-button`}
               onClick={() => onChange(setBackgroundFit(background, fit))}
-              className="cover-prop-text-button"
+              className="cover-toolbar-icon cover-prop-choice-button"
               data-active={background.fit === fit && !background.frame ? 'true' : 'false'}
               aria-label={label}
               title={label}
@@ -185,7 +185,7 @@ export function BackgroundEditor({ background, copy, colorPickerCopy, brandColor
               <Icon aria-hidden="true" />
             </button>
           ))}
-        </SegmentedGroup>
+        </div>
           {background.src && surfaceSize && natural && natural.width > 0 && (() => {
             const frame = resolveBackgroundFrame(background, natural, surfaceSize);
             const offCanvas = isBackgroundOffCanvas(frame, surfaceSize);

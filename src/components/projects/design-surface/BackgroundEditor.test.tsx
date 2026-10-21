@@ -18,6 +18,27 @@ describe('BackgroundEditor', () => {
     expect(css).toContain('white-space: nowrap');
   });
 
+  test('background type choices use separate tool-rail buttons with a selected stripe', () => {
+    render(<BackgroundEditor background={{ kind: 'image', src: '', fit: 'cover', opacity: 1 }} copy={copy.background} colorPickerCopy={copy.colorPicker} onChange={vi.fn()} onUploadFile={vi.fn()} />);
+    const group = screen.getByRole('group', { name: copy.background.label });
+    expect(group).toHaveClass('cover-prop-choice-grid');
+    expect(group).not.toHaveClass('cover-prop-segmented');
+    const selected = screen.getByTestId('background-kind-image-button');
+    expect(selected).toHaveClass('cover-toolbar-icon');
+    expect(selected).toHaveAttribute('data-active', 'true');
+    expect(selected).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('image fit choices are separated and use distinct representative icons', () => {
+    render(<BackgroundEditor background={{ kind: 'image', src: '', fit: 'cover', opacity: 1 }} copy={copy.background} colorPickerCopy={copy.colorPicker} onChange={vi.fn()} onUploadFile={vi.fn()} />);
+    const group = screen.getByRole('group', { name: copy.background.fitLabel });
+    expect(group).toHaveClass('cover-prop-choice-grid', 'cover-prop-choice-grid--fit');
+    expect(group).not.toHaveClass('cover-prop-segmented');
+    expect(screen.getByTestId('background-image-fit-cover-button').querySelector('svg')).toHaveClass('lucide-expand');
+    expect(screen.getByTestId('background-image-fit-contain-button').querySelector('svg')).toHaveClass('lucide-shrink');
+    expect(screen.getByTestId('background-image-fit-original-button').querySelector('svg')).toHaveClass('lucide-ratio');
+  });
+
   test('switching to gradient seeds a sensible two-stop default', () => {
     const onChange = vi.fn();
     const background: BackgroundSpec = { kind: 'solid', color: '#0b133f' };

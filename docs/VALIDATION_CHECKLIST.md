@@ -1,35 +1,31 @@
-# Checklist de validación — recuperación del selector de portada (2026-10-21)
+# Checklist de validación — botones de opciones de fondo de portada (2026-10-21)
 
 > Este fichero se sobrescribe en cada entrega. El historial queda en Git.
 
 **Repositorio:** anclora-talent
-
 **Rama:** development
 
 ## 1. Qué cambia
 
-- El estado inicial permite volver al editor sin seleccionar una opción de origen.
-- Las opciones de portada original, edición sobre la página original, plantilla y lienzo en blanco explican su efecto.
-- Los errores de lectura/rasterización del PDF se muestran como aviso recuperable, sin error de runtime ni cierre del selector.
-- Se añadieron copias en español e inglés.
+- Las opciones de tipo de fondo y de encuadre de imagen son botones separados.
+- El botón seleccionado reutiliza el fondo azul y la marca lateral de la barra de herramientas.
+- Rellenar, Ajustar y Original usan iconos distintos y mantienen sus etiquetas accesibles.
 
 ## 2. Verificaciones completadas
 
 | Comprobación | Método | Resultado |
 | --- | --- | --- |
-| Regresión focalizada | `npx vitest run src/components/projects/design-surface/CoverOriginPrompt.test.tsx src/components/projects/design-surface/CoverStudioV2.test.tsx src/lib/projects/pdf-page-rasterizer.test.ts` | PASS · 3 archivos, 26 pruebas |
+| Regresión focalizada | `npx vitest run src/components/projects/design-surface/BackgroundEditor.test.tsx` | PASS · 1 archivo, 10 pruebas |
+| ESLint focalizado | `npx eslint src/components/projects/design-surface/BackgroundEditor.tsx src/components/projects/design-surface/BackgroundEditor.test.tsx` | PASS |
 | TypeScript | `npx tsc --noEmit` | PASS |
-| ESLint focalizado | `npx eslint` sobre componentes, pruebas y mensajes afectados | PASS |
-| QA visual compartido | `anclora-visual-qa` + `agent-browser` en localhost con cuenta dedicada `e2e.auth@anclora-talent.test`; estado vacío en modo claro y oscuro, sin overlay de error | PASS |
-| Salida sin selección | `agent-browser`, botón “Volver al editor sin elegir” | PASS · se abrió el editor vacío |
-| Error PDF recuperable | Prueba de componente con rechazo `Invalid PDF structure` | PASS · alerta visible, opciones conservadas y sin rechazo sin capturar |
+| QA visual compartido | `agent-browser` en localhost con cuenta dedicada `e2e.auth@anclora-talent.test`, temas claro y oscuro | PASS · grupos separados y selección visible |
 | Integridad del diff | `git diff --check` | PASS |
 
-## 3. Límites de la comprobación
+## 3. Alcance
 
-- Se verificó la recuperación de interfaz simulando el rechazo de PDF.js. No se inspeccionó el PDF del proyecto mostrado en la captura, por lo que no se determinó por qué esos bytes concretos no son una estructura PDF válida.
-- La QA visual usó un proyecto dedicado en la base Docker local; no se usó una cuenta personal ni se borró la identidad QA.
+- La QA visual se realizó en un proyecto de la cuenta dedicada de QA sobre Docker local. No se usó una cuenta personal ni se borró la identidad de QA.
+- No se ejecutó la suite completa; el cambio afecta los controles del editor de fondo y se validó con el test focalizado.
 
-## 4. Decisión de promoción
+## 4. Promoción
 
-- No se solicita promoción en esta tarea. El cambio se publicará únicamente en `development`.
+- Esta entrega se limita a `development`; no se ha iniciado una promoción.
