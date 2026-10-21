@@ -22,8 +22,8 @@
 | ESLint focalizado en componentes y pruebas modificadas | PASS |
 | `git diff --check` | PASS |
 | Doctor del runtime visual compartido | PASS — navegador y motor disponibles |
-| Inspección visual de las rutas | NO EJECUTADA — `npm run dev` no arranca: Node 24 no resuelve el import nombrado `loadEnvConfig` de `@next/env` en `scripts/dev-runtime.mjs` |
-| Build de producción | NOT RUN — no requerido para este cambio localizado |
+| Inspección visual de portada y contraportada | PASS — `agent-browser` con `npm run dev:docker`, 1440×1000, cuenta QA dedicada; ambas rutas tienen contenido, sin overlay de error, zoom flotante ni paneles inferiores. Capturas: `artifacts/qa/cover-workspace-docker-final.png` y `artifacts/qa/back-cover-workspace-docker-final.png` |
+| Build de producción (`npm run build`) | PASS — compilación y generación de rutas completadas |
 | Validación de deployment | NOT RUN — contrato incompleto; faltan `HOSTING_PROVIDER` y `PRODUCTION_DEPLOY_BRANCH` |
 
 ## Pendiente de revisión de Toni
@@ -36,4 +36,4 @@
 
 ## Limitaciones conocidas
 
-La verificación visual automatizada quedó impedida por el fallo de arranque documentado arriba. El runtime visual sí está instalado y operativo. No se usó una cuenta personal ni se hicieron escrituras en la base de datos.
+La inspección visual se hizo con el runtime local Docker (`npm run dev:docker`) y la cuenta QA dedicada `e2e.auth@anclora-talent.test`; no se usó una cuenta personal ni se modificaron datos del proyecto.
