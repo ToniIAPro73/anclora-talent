@@ -187,6 +187,37 @@ describe('AdvancedCoverEditor', () => {
     expect(screen.queryByText(copy.workspace.canvasLabel)).not.toBeInTheDocument();
   });
 
+  it('uses a surface-specific label for the background import action', () => {
+    const cover = makeSurfaceWithTitle();
+    const { unmount } = render(<AdvancedCoverEditor surface={cover} onChange={vi.fn()} copy={copy} />);
+    expect(screen.getByTestId('cover-editor-import-button')).toHaveTextContent(copy.workspace.importCover);
+    unmount();
+
+    const backCover = makeSurfaceWithTitle();
+    backCover.surface = 'back-cover';
+    render(<AdvancedCoverEditor surface={backCover} onChange={vi.fn()} copy={copy} />);
+    expect(screen.getByTestId('cover-editor-import-button')).toHaveTextContent(copy.workspace.importBackCover);
+  });
+
+  it('keeps the properties heading and selected layer label in one compact header row', async () => {
+    const surface = makeSurfaceWithTitle();
+    render(<AdvancedCoverEditor surface={surface} onChange={vi.fn()} copy={copy} />);
+    await waitFor(() => expect(mocks.state.objects).toHaveLength(1));
+    fireEvent.click(screen.getByTestId(`layer-select-${surface.layers[0].id}`));
+
+    const header = screen.getByTestId('advanced-editor-properties-header');
+    expect(header).toContainElement(screen.getByRole('heading', { name: copy.workspace.properties }));
+    expect(header).toContainElement(screen.getByTestId('cover-properties-selection'));
+  });
+
+  it('styles active inspector toggles with the left rail accent treatment', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/app/globals.css'), 'utf8');
+    expect(css).toContain('.cover-prop-icon[data-active="true"]::before');
+    expect(css).toContain('.cover-prop-segmented button { height: 28px !important;');
+    expect(css).toContain('body:has([data-testid="cover-studio-v2"]) .talent-legal-footer { display: none; }');
+    expect(css).toContain('.cover-properties-body { flex: 1 1 0; min-height: 0; padding: 3px 10px 6px; overflow-y: auto;');
+  });
+
   it('marks selected canvas toggles with the same left accent language as the tool rail', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/app/globals.css'), 'utf8');
     expect(css).toContain('.cover-toolbar-icon[data-active="true"]::before');

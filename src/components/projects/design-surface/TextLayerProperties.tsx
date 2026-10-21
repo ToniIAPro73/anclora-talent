@@ -96,7 +96,7 @@ export function TextLayerProperties({ layer, copy, brandColors, onChange, metada
 
   return (
     <div className="cover-prop-stack" data-testid="text-layer-properties">
-      <PropertySection title={t.contentLabel}>
+      <PropertySection title={t.contentLabel} testId="text-layer-section-content">
         {canSyncFromMetadata && (
           <button
             type="button"
@@ -119,7 +119,7 @@ export function TextLayerProperties({ layer, copy, brandColors, onChange, metada
         />
       </PropertySection>
 
-      <PropertySection title={t.fontFamilyLabel}>
+      <PropertySection title={t.fontFamilyLabel} testId="text-layer-section-typography">
         <div className="cover-prop-row cover-prop-row--font">
           <FontSelector selectedFont={layer.fontFamily} onFontSelect={(fontFamily) => onChange({ fontFamily })} compact />
           <CompactNumberField
@@ -177,17 +177,17 @@ export function TextLayerProperties({ layer, copy, brandColors, onChange, metada
         </label>
       </PropertySection>
 
-      <PropertySection title={ws.sectionSpacing} defaultOpen={false}>
+      <PropertySection title={ws.sectionSpacing} defaultOpen={false} testId="text-layer-section-spacing">
         <CompactSlider label={t.lineHeightLabel} value={layer.lineHeight} min={0.8} max={3} step={0.05} onChange={(lineHeight) => onChange({ lineHeight })} display={(value) => value.toFixed(2)} testId="text-layer-line-height-slider" />
         <CompactSlider label={t.letterSpacingLabel} value={layer.letterSpacing} min={-100} max={1000} step={10} onChange={(letterSpacing) => onChange({ letterSpacing })} testId="text-layer-letter-spacing-slider" />
       </PropertySection>
 
-      <PropertySection title={ws.sectionAppearance} defaultOpen={false}>
+      <PropertySection title={ws.sectionAppearance} defaultOpen={false} testId="text-layer-section-appearance">
         <ColorPickerField label={t.colorLabel} value={layer.color} onChange={(color) => onChange({ color })} copy={copy.colorPicker} brandColors={brandColors} testId="text-layer-color" />
         <CompactSlider label={t.opacityLabel} value={Math.round(layer.opacity * 100)} min={0} max={100} step={1} onChange={(value) => onChange({ opacity: value / 100 })} display={(value) => `${value}%`} testId="text-layer-opacity-slider" />
       </PropertySection>
 
-      <PropertySection title={ws.sectionPosition}>
+      <PropertySection title={ws.sectionPosition} testId="text-layer-section-position">
         <div className="cover-prop-grid">
           <CompactNumberField label={t.xLabel} value={layer.x} onChange={(x) => onChange({ x })} testId="text-layer-x-input" />
           <CompactNumberField label={t.yLabel} value={layer.y} onChange={(y) => onChange({ y })} testId="text-layer-y-input" />

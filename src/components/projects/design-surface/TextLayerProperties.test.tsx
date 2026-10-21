@@ -19,6 +19,16 @@ describe('TextLayerProperties', () => {
     expect(onChange).toHaveBeenCalledWith({ content: 'Nuevo título' });
   });
 
+  test('keeps content, typography, and position open while spacing and appearance start collapsed', () => {
+    render(<TextLayerProperties layer={makeLayer()} copy={copy} onChange={vi.fn()} />);
+
+    expect(screen.getByTestId('text-layer-section-content')).toHaveAttribute('open');
+    expect(screen.getByTestId('text-layer-section-typography')).toHaveAttribute('open');
+    expect(screen.getByTestId('text-layer-section-position')).toHaveAttribute('open');
+    expect(screen.getByTestId('text-layer-section-spacing')).not.toHaveAttribute('open');
+    expect(screen.getByTestId('text-layer-section-appearance')).not.toHaveAttribute('open');
+  });
+
   test('bold toggle turns on from a non-bold weight', () => {
     const onChange = vi.fn();
     render(<TextLayerProperties layer={makeLayer({ fontWeight: 400 })} copy={copy} onChange={onChange} />);
@@ -33,6 +43,14 @@ describe('TextLayerProperties', () => {
 
     fireEvent.click(screen.getByTestId('text-layer-underline-button'));
     expect(onChange).toHaveBeenCalledWith({ textDecoration: 'underline' });
+  });
+
+  test('keeps bold and italic independently active at the same time', () => {
+    render(<TextLayerProperties layer={makeLayer({ fontWeight: 700, fontStyle: 'italic' })} copy={copy} onChange={vi.fn()} />);
+
+    expect(screen.getByTestId('text-layer-bold-button')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('text-layer-italic-button')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('text-layer-underline-button')).toHaveAttribute('aria-pressed', 'false');
   });
 
   test('exposes distinct text alignment controls including justify with pressed state', () => {

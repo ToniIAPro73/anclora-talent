@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Search, ChevronDown } from 'lucide-react';
 import { useGoogleFonts } from '@/hooks/use-google-fonts';
 import { Input } from '@/components/ui/input';
@@ -29,7 +29,7 @@ export function FontSelector({
     top?: number;
     bottom?: number;
     maxHeight: number;
-    listMaxHeight: number;
+    placement: 'up' | 'down';
   } | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -74,6 +74,45 @@ export function FontSelector({
     listRef.current?.querySelector<HTMLElement>('[data-active-option="true"]')?.scrollIntoView?.({ block: 'nearest' });
   }, [activeIndex, isOpen]);
 
+  const updateDropdownPosition = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const safeMargin = 8;
+    const gap = 6;
+    const preferredHeight = 340;
+    const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - safeMargin - gap);
+    const spaceAbove = Math.max(0, rect.top - safeMargin - gap);
+    const shouldOpenUp = spaceAbove >= preferredHeight && spaceBelow < preferredHeight
+      ? true
+      : spaceBelow >= preferredHeight && spaceAbove < preferredHeight
+        ? false
+        : spaceAbove > spaceBelow;
+    const availableHeight = shouldOpenUp ? spaceAbove : spaceBelow;
+    const maxHeight = Math.min(preferredHeight, availableHeight);
+    const maxWidth = Math.max(0, window.innerWidth - safeMargin * 2);
+    const preferredWidth = compact ? 280 : 300;
+    const width = Math.min(maxWidth, Math.max(rect.width, preferredWidth));
+    const left = Math.max(safeMargin, Math.min(rect.left, window.innerWidth - width - safeMargin));
+    const position = {
+      left,
+      width,
+      maxHeight,
+      placement: (shouldOpenUp ? 'up' : 'down') as 'up' | 'down',
+      ...(shouldOpenUp
+        ? { bottom: window.innerHeight - rect.top + gap }
+        : { top: rect.bottom + gap }),
+    };
+
+    setOpenUp(shouldOpenUp);
+    setDropdownPosition((current) => (
+      current && Object.keys(position).every((key) => current[key as keyof typeof current] === position[key as keyof typeof position])
+        ? current
+        : position
+    ));
+  }, [compact]);
+
   const handleSelectFont = (fontFamily: string) => {
     loadFont(fontFamily);
     onFontSelect(fontFamily);
@@ -83,6 +122,11 @@ export function FontSelector({
 
   useEffect(() => {
     if (!isOpen) return;
+    const updatePosition = () => updateDropdownPosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    window.visualViewport?.addEventListener('resize', updatePosition);
+    window.visualViewport?.addEventListener('scroll', updatePosition);
     const closeOnOutsidePointer = (event: PointerEvent) => {
       if (!containerRef.current?.contains(event.target as Node)) setIsOpen(false);
     };
@@ -92,41 +136,17 @@ export function FontSelector({
     document.addEventListener('pointerdown', closeOnOutsidePointer);
     document.addEventListener('keydown', closeOnEscape);
     return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+      window.visualViewport?.removeEventListener('resize', updatePosition);
+      window.visualViewport?.removeEventListener('scroll', updatePosition);
       document.removeEventListener('pointerdown', closeOnOutsidePointer);
       document.removeEventListener('keydown', closeOnEscape);
     };
-  }, [isOpen]);
+  }, [isOpen, updateDropdownPosition]);
 
   const handleOpenDropdown = () => {
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const spaceBelow = Math.max(0, window.innerHeight - rect.bottom);
-      const spaceAbove = Math.max(0, rect.top);
-
-      // Si hay más espacio arriba (y menos de 300px abajo), abrir hacia arriba
-      const shouldOpenUp = spaceAbove > spaceBelow;
-      if (shouldOpenUp) {
-        setOpenUp(true);
-      } else {
-        setOpenUp(false);
-      }
-      // The panel is a flex column (search + categories + list): only the
-      // list scrolls (flex-1 / min-h-0), so its height can never be eaten by
-      // the chrome above it and the last family is always reachable.
-      const available = Math.max(200, (shouldOpenUp ? spaceAbove : spaceBelow) - 16);
-      const maxHeight = Math.min(340, available);
-      const width = Math.min(Math.max(rect.width, 260), window.innerWidth - 16);
-      const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
-      setDropdownPosition({
-        left,
-        width,
-        maxHeight,
-        listMaxHeight: maxHeight,
-        ...(shouldOpenUp
-          ? { bottom: window.innerHeight - rect.top + 6 }
-          : { top: rect.bottom + 6 }),
-      });
-    }
+    updateDropdownPosition();
     setIsOpen(true);
   };
 
@@ -150,6 +170,7 @@ export function FontSelector({
         <div
           className="fixed z-[100] flex flex-col overflow-hidden rounded-lg border border-[var(--border-strong)] shadow-2xl"
           data-testid="font-selector-dropdown"
+          data-placement={dropdownPosition.placement}
           style={{
             left: dropdownPosition.left,
             width: dropdownPosition.width,
@@ -159,7 +180,7 @@ export function FontSelector({
             backgroundColor: 'var(--surface-elevated)',
           }}
         >
-          <div className="shrink-0 border-b border-[var(--border-subtle)] p-2">
+          <div className="font-selector-search-row shrink-0 border-b border-[var(--border-subtle)] p-2">
             <div className="relative">
               <Search className="pointer-events-none absolute right-2 top-1.5 h-3.5 w-3.5 text-[var(--text-tertiary)]" />
               <Input
@@ -183,14 +204,15 @@ export function FontSelector({
                     if (font) handleSelectFont(font.family);
                   }
                 }}
-                className="h-7 pl-2 pr-7 text-xs bg-[var(--surface-soft)] border-[var(--border-subtle)]"
+                className="font-selector-search-input h-7 pl-2 pr-7 text-xs bg-[var(--surface-soft)] border-[var(--border-subtle)]"
                 autoFocus
               />
             </div>
           </div>
 
           <div
-            className="flex shrink-0 gap-1 overflow-x-auto border-b border-[var(--border-subtle)] px-2 py-1.5"
+            className="font-selector-categories flex shrink-0 gap-1 overflow-x-auto border-b border-[var(--border-subtle)] px-2 py-1.5"
+            data-compact="true"
             data-testid="font-selector-categories"
           >
             {['all', ...categories].map((cat) => (
@@ -202,7 +224,7 @@ export function FontSelector({
                   setActiveIndex(0);
                 }}
                 data-testid={`font-selector-category-${cat}-button`}
-                className={`h-6 shrink-0 rounded px-2 text-[11px] font-medium capitalize leading-none transition-colors ${
+                className={`font-selector-category h-6 shrink-0 rounded px-2 text-[11px] font-medium capitalize leading-none transition-colors ${
                   activeCategory === cat
                     ? 'bg-[var(--talent-button-selected-bg)] text-[var(--talent-button-selected-fg)]'
                     : 'bg-[var(--surface-soft)] text-[var(--text-secondary)] hover:bg-[var(--surface-highlight)]'
@@ -213,7 +235,7 @@ export function FontSelector({
             ))}
           </div>
 
-          <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto p-1" data-testid="font-selector-list" role="listbox">
+          <div ref={listRef} className="font-selector-list min-h-0 flex-1 overflow-y-auto p-1" data-testid="font-selector-list" role="listbox">
             {displayedFonts.length === 0 ? (
               <div className="py-4 text-center text-xs text-[var(--text-secondary)]">No se encontraron fuentes</div>
             ) : (

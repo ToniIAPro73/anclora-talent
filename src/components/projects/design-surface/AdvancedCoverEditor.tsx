@@ -663,7 +663,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
             data-testid="cover-editor-import-button"
           >
             <ImageIcon className="h-4 w-4" />
-            {ws.importCover}
+            {surface.surface === 'back-cover' ? ws.importBackCover : ws.importCover}
           </button>
           {imageQualityWarning && <p className="cover-editor-quality-warning" data-testid="cover-editor-quality-warning">{imageQualityWarning}</p>}
           <section className="cover-layers-section" aria-label={ws.layers}>
@@ -880,7 +880,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
 
         {/* RIGHT: contextual properties */}
         <aside className="cover-properties-panel" data-testid="advanced-editor-properties-column">
-          <header className="cover-properties-header">
+          <header className="cover-properties-header" data-testid="advanced-editor-properties-header">
             <h2 className="cover-editor-properties-title">{ws.properties}</h2>
             {backgroundSelected && !selectedLayer && (
               <div className="cover-properties-selection" data-testid="cover-properties-selection">

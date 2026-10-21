@@ -1763,6 +1763,7 @@ export type AppMessages = {
       templates: string;
       viewAllTemplates: string;
       importCover: string;
+      importBackCover: string;
       lowResImageWarning: string;
       lowResCoverWarning: string;
       templateLabel: string;
@@ -3850,6 +3851,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         templates: 'Plantillas',
         viewAllTemplates: 'Ver todas',
         importCover: 'Importar portada',
+        importBackCover: 'Importar contraportada',
         lowResImageWarning: 'Resolución baja: {width} × {height}px. La imagen se ha importado igualmente.',
         lowResCoverWarning: 'Resolución baja: {width} × {height}px. La portada se ha importado igualmente.',
         templateLabel: 'Plantilla editorial',
@@ -5934,6 +5936,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         templates: 'Templates',
         viewAllTemplates: 'View all',
         importCover: 'Import cover',
+        importBackCover: 'Import back cover',
         lowResImageWarning: 'Low resolution: {width} × {height}px. The image was imported anyway.',
         lowResCoverWarning: 'Low resolution: {width} × {height}px. The cover was imported anyway.',
         templateLabel: 'Editorial template',
