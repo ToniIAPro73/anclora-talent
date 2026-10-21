@@ -29,6 +29,7 @@ import { AdvancedCoverEditor } from './AdvancedCoverEditor';
 import { CoverOriginPrompt } from './CoverOriginPrompt';
 import { Stepper, type Step } from '@/components/ui/Stepper';
 import { createCoverDesignPackage, parseCoverDesignSurfacePackage } from '@/lib/projects/cover-design-package';
+import { ContextualActionHint } from './ContextualActionHint';
 
 const AUTOSAVE_DEBOUNCE_MS = 1200;
 
@@ -303,9 +304,11 @@ export function CoverStudioV2({
                   data-testid="cover-package-input"
                   onChange={(event) => void handleImportPackage(event.currentTarget.files?.[0])}
                 />
-                <button type="button" className="cover-toolbar-icon" data-testid="cover-package-import-button" aria-label={copy.workspace.importEditableJson} title={copy.workspace.importEditableJson} onClick={() => packageInputRef.current?.click()}>
-                  <FileInput aria-hidden="true" size={16} />
-                </button>
+                <ContextualActionHint hint={surfaceKind === 'cover' ? copy.workspace.importCoverJsonHint : copy.workspace.importBackCoverJsonHint}>
+                  <button type="button" className="cover-toolbar-icon" data-testid="cover-package-import-button" aria-label={copy.workspace.importEditableJson} onClick={() => packageInputRef.current?.click()}>
+                    <FileInput aria-hidden="true" size={16} />
+                  </button>
+                </ContextualActionHint>
                 <button type="button" className="cover-toolbar-icon" data-testid="cover-package-export-button" aria-label={copy.workspace.exportEditableJson} title={copy.workspace.exportEditableJson} onClick={() => void handleExportPackage()}>
                   <FileOutput aria-hidden="true" size={16} />
                 </button>

@@ -69,6 +69,7 @@ import {
 } from '@/lib/projects/design-surface-background';
 import { COVER_TEMPLATES, BACK_COVER_TEMPLATES, type EditorialTemplate } from '@/lib/projects/cover-templates';
 import { applyTemplateToSurface, type SemanticBinding } from '@/lib/projects/design-surface-templates';
+import { ContextualActionHint } from './ContextualActionHint';
 
 export interface AdvancedCoverEditorProps {
   surface: DesignSurface;
@@ -670,15 +671,17 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
               event.target.value = '';
             }}
           />
-          <button
-            type="button"
-            className="ac-button ac-button--secondary ac-button--compact cover-editor-import"
-            onClick={() => coverInputRef.current?.click()}
-            data-testid="cover-editor-import-button"
-          >
-            <ImageIcon className="h-4 w-4" />
-            {surface.surface === 'back-cover' ? ws.importBackCover : ws.importCover}
-          </button>
+          <ContextualActionHint hint={surface.surface === 'back-cover' ? ws.importBackCoverHint : ws.importCoverHint}>
+            <button
+              type="button"
+              className="ac-button ac-button--secondary ac-button--compact cover-editor-import"
+              onClick={() => coverInputRef.current?.click()}
+              data-testid="cover-editor-import-button"
+            >
+              <ImageIcon className="h-4 w-4" />
+              {surface.surface === 'back-cover' ? ws.importBackCover : ws.importCover}
+            </button>
+          </ContextualActionHint>
           {imageQualityWarning && <p className="cover-editor-quality-warning" data-testid="cover-editor-quality-warning">{imageQualityWarning}</p>}
           <section className="cover-layers-section" aria-label={ws.layers}>
             <div className="cover-editor-layers-heading">

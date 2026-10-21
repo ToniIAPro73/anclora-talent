@@ -41,7 +41,9 @@ describe('BackgroundEditor', () => {
 
   test('background image upload button uses the shared Talent button style', () => {
     render(<BackgroundEditor background={{ kind: 'image', src: '', fit: 'cover', opacity: 1 }} copy={copy.background} colorPickerCopy={copy.colorPicker} onChange={vi.fn()} onUploadFile={vi.fn()} />);
-    expect(screen.getByTestId('background-image-upload-button')).toHaveClass('ac-button', 'ac-button--secondary', 'ac-button--compact');
+    const button = screen.getByTestId('background-image-upload-button');
+    expect(button).toHaveClass('ac-button', 'ac-button--secondary', 'ac-button--compact');
+    expect(document.getElementById(button.getAttribute('aria-describedby')!)).toHaveTextContent(copy.background.imageImportHint);
   });
 
   test('gradient: adding a color stop appends one, removing requires more than two remaining', () => {

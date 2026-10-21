@@ -1713,6 +1713,7 @@ export type AppMessages = {
       convertHint: string;
       layerSectionLabel: string;
       replaceImageLabel: string;
+      imageImportHint: string;
       offCanvasHint: string;
       grayscaleLabel: string;
     };
@@ -1765,6 +1766,10 @@ export type AppMessages = {
       viewAllTemplates: string;
       importCover: string;
       importBackCover: string;
+      importCoverHint: string;
+      importBackCoverHint: string;
+      importCoverJsonHint: string;
+      importBackCoverJsonHint: string;
       replaceImportedCoverConfirm: string;
       lowResImageWarning: string;
       lowResCoverWarning: string;
@@ -3803,6 +3808,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         convertHint: 'Convierte el fondo en una capa de imagen normal que puede ordenarse con el resto de elementos.',
         layerSectionLabel: 'Capa',
         replaceImageLabel: 'Sustituir imagen',
+        imageImportHint: 'Solo cambia la imagen de la capa de fondo. El resto de las capas se conserva sin modificar.',
         offCanvasHint: 'La imagen está fuera de la portada. Restablece el encuadre.',
         grayscaleLabel: 'Blanco y negro',
       },
@@ -3855,6 +3861,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         viewAllTemplates: 'Ver todas',
         importCover: 'Importar portada',
         importBackCover: 'Importar contraportada',
+        importCoverHint: 'Reemplaza el diseño de portada y elimina las capas actuales. La imagen importada quedará como una portada plana.',
+        importBackCoverHint: 'Reemplaza el diseño de contraportada y elimina las capas actuales. La imagen importada quedará como una contraportada plana.',
+        importCoverJsonHint: 'Importa solo la sección de portada de este JSON y reemplaza el diseño y las capas actuales. La contraportada no cambia.',
+        importBackCoverJsonHint: 'Importa solo la sección de contraportada de este JSON y reemplaza el diseño y las capas actuales. La portada no cambia.',
         replaceImportedCoverConfirm: 'Esto reemplazará el diseño actual por una imagen plana y eliminará sus capas editables. ¿Continuar?',
         lowResImageWarning: 'Resolución baja: {width} × {height}px. La imagen se ha importado igualmente.',
         lowResCoverWarning: 'Resolución baja: {width} × {height}px. La portada se ha importado igualmente.',
@@ -5890,6 +5900,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         convertHint: 'Turns the background into a normal image layer that can be ordered with the other elements.',
         layerSectionLabel: 'Layer',
         replaceImageLabel: 'Replace image',
+        imageImportHint: 'Only the background image changes. All other layers remain untouched.',
         offCanvasHint: 'The image is outside the cover. Reset the framing.',
         grayscaleLabel: 'Black and white',
       },
@@ -5942,6 +5953,10 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         viewAllTemplates: 'View all',
         importCover: 'Import cover',
         importBackCover: 'Import back cover',
+        importCoverHint: 'Replaces the cover design and removes its current layers. The imported image becomes a single flat cover.',
+        importBackCoverHint: 'Replaces the back-cover design and removes its current layers. The imported image becomes a single flat back cover.',
+        importCoverJsonHint: 'Imports only the cover section from this JSON and replaces the current design and layers. The back cover is unchanged.',
+        importBackCoverJsonHint: 'Imports only the back-cover section from this JSON and replaces the current design and layers. The cover is unchanged.',
         replaceImportedCoverConfirm: 'This will replace the current design with a flattened image and remove its editable layers. Continue?',
         lowResImageWarning: 'Low resolution: {width} × {height}px. The image was imported anyway.',
         lowResCoverWarning: 'Low resolution: {width} × {height}px. The cover was imported anyway.',

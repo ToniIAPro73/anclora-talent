@@ -3568,6 +3568,8 @@ html[data-theme="light"] .cover-workspace .cover-canvas-paper { outline-color: c
 .cover-prop-section__summary svg { transition: transform 0.15s; }
 .cover-prop-section:not([open]) .cover-prop-section__summary svg { transform: rotate(-90deg); }
 .cover-prop-section__body { display: grid; gap: 4px; padding: 0 0 5px; }
+.cover-action-hint { position: relative; display: inline-flex; min-width: 0; }
+.cover-action-tooltip { position: fixed; z-index: 9999; width: min(18rem, calc(100vw - 1.5rem)); padding: 6px 9px; border: 1px solid var(--border-strong); border-radius: 4px; background: var(--bg-strong); color: var(--text-primary); box-shadow: 0 6px 18px #0003; font-size: 11px; font-weight: 600; line-height: 1.35; white-space: normal; text-align: left; overflow-wrap: anywhere; pointer-events: none; }
 
 .cover-prop-row { display: flex; align-items: center; gap: 5px; min-width: 0; }
 .cover-prop-row--stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3px; }

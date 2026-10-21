@@ -22,6 +22,7 @@ import {
   type Size,
 } from '@/lib/projects/design-surface-background';
 import { ColorPickerField } from './ColorPickerField';
+import { ContextualActionHint } from './ContextualActionHint';
 import { CompactNumberField, CompactSlider, PropertySection, SegmentedGroup } from './PropertyControls';
 
 type Copy = AppMessages['coverDesignSurface']['background'];
@@ -162,14 +163,16 @@ export function BackgroundEditor({ background, copy, colorPickerCopy, brandColor
 
       {background.kind === 'image' && (
         <>
-          <button
-            type="button"
-            data-testid="background-image-upload-button"
-            onClick={() => fileInputRef.current?.click()}
-            className="ac-button ac-button--secondary ac-button--compact cover-prop-button"
-          >
-            {background.src ? copy.replaceImageLabel : copy.image}
-          </button>
+          <ContextualActionHint hint={copy.imageImportHint}>
+            <button
+              type="button"
+              data-testid="background-image-upload-button"
+              onClick={() => fileInputRef.current?.click()}
+              className="ac-button ac-button--secondary ac-button--compact cover-prop-button"
+            >
+              {background.src ? copy.replaceImageLabel : copy.image}
+            </button>
+          </ContextualActionHint>
           <input
             ref={fileInputRef}
             type="file"

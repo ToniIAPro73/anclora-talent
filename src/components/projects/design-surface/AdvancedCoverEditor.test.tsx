@@ -190,13 +190,17 @@ describe('AdvancedCoverEditor', () => {
   it('uses a surface-specific label for the background import action', () => {
     const cover = makeSurfaceWithTitle();
     const { unmount } = render(<AdvancedCoverEditor surface={cover} onChange={vi.fn()} copy={copy} />);
-    expect(screen.getByTestId('cover-editor-import-button')).toHaveTextContent(copy.workspace.importCover);
+    const coverImportButton = screen.getByTestId('cover-editor-import-button');
+    expect(coverImportButton).toHaveTextContent(copy.workspace.importCover);
+    expect(document.getElementById(coverImportButton.getAttribute('aria-describedby')!)).toHaveTextContent(copy.workspace.importCoverHint);
     unmount();
 
     const backCover = makeSurfaceWithTitle();
     backCover.surface = 'back-cover';
     render(<AdvancedCoverEditor surface={backCover} onChange={vi.fn()} copy={copy} />);
-    expect(screen.getByTestId('cover-editor-import-button')).toHaveTextContent(copy.workspace.importBackCover);
+    const backCoverImportButton = screen.getByTestId('cover-editor-import-button');
+    expect(backCoverImportButton).toHaveTextContent(copy.workspace.importBackCover);
+    expect(document.getElementById(backCoverImportButton.getAttribute('aria-describedby')!)).toHaveTextContent(copy.workspace.importBackCoverHint);
   });
 
   it('replaces the active composition with a flattened image after confirmation', async () => {

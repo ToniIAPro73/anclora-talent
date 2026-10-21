@@ -92,15 +92,35 @@ describe('CoverStudioV2', () => {
     expect(screen.queryByTestId('studio-mode-basic-button')).not.toBeInTheDocument();
     expect(screen.queryByTestId('studio-mode-professional-button')).not.toBeInTheDocument();
     const actions = screen.getByTestId('stub-editor-toolbar-actions');
-    expect(actions.querySelector('[data-testid="cover-package-import-button"]')).toHaveAccessibleName(copy.workspace.importEditableJson);
+    const importButton = actions.querySelector('[data-testid="cover-package-import-button"]')!;
+    expect(importButton).toHaveAccessibleName(copy.workspace.importEditableJson);
+    expect(document.getElementById(importButton.getAttribute('aria-describedby')!)).toHaveTextContent(copy.workspace.importCoverJsonHint);
     expect(actions.querySelector('[data-testid="cover-package-export-button"]')).toHaveAccessibleName(copy.workspace.exportEditableJson);
     expect(actions.querySelector('[data-testid="cover-png-export-button"]')).toHaveAccessibleName(copy.workspace.exportPng);
     expect(actions.querySelector('[data-testid="cover-package-import-button"] svg')).toHaveClass('lucide-file-input');
     expect(actions.querySelector('[data-testid="cover-package-export-button"] svg')).toHaveClass('lucide-file-output');
     expect(actions.querySelector('[data-testid="cover-png-export-button"] svg')).toHaveClass('lucide-image-up');
-    expect(actions).not.toHaveTextContent('JSON');
-    expect(actions).not.toHaveTextContent('PNG');
+    expect(importButton.textContent).toBe('');
+    expect(actions.querySelector('[data-testid="cover-package-export-button"]')?.textContent).toBe('');
+    expect(actions.querySelector('[data-testid="cover-png-export-button"]')?.textContent).toBe('');
     expect(screen.queryByTestId('cover-package-help')).not.toBeInTheDocument();
+  });
+
+  test('describes only the back-cover section when importing JSON in the back-cover editor', () => {
+    render(
+      <CoverStudioV2
+        surfaceKind="back-cover"
+        projectId="p-1"
+        initialSurface={makeNonEmptySurface('back-cover')}
+        companionSurface={makeNonEmptySurface('cover')}
+        sourceDocumentAssetId={null}
+        pageCount={null}
+        copy={copy}
+      />,
+    );
+
+    const importButton = screen.getByTestId('cover-package-import-button');
+    expect(document.getElementById(importButton.getAttribute('aria-describedby')!)).toHaveTextContent(copy.workspace.importBackCoverJsonHint);
   });
 
   test('does not render the lower preflight or collection panels after the editor', () => {
