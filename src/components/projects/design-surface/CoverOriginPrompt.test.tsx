@@ -15,6 +15,7 @@ describe('CoverOriginPrompt', () => {
         onEditAsBase={vi.fn()}
         onChooseTemplate={vi.fn()}
         onCreateFromScratch={vi.fn()}
+        onContinueEditing={vi.fn()}
       />,
     );
     expect(screen.queryByTestId('cover-origin-use-original-button')).not.toBeInTheDocument();
@@ -32,6 +33,7 @@ describe('CoverOriginPrompt', () => {
         onEditAsBase={vi.fn()}
         onChooseTemplate={vi.fn()}
         onCreateFromScratch={vi.fn()}
+        onContinueEditing={vi.fn()}
       />,
     );
     expect(screen.getByTestId('cover-origin-use-original-button')).toBeInTheDocument();
@@ -49,6 +51,7 @@ describe('CoverOriginPrompt', () => {
         onEditAsBase={vi.fn()}
         onChooseTemplate={vi.fn()}
         onCreateFromScratch={vi.fn()}
+        onContinueEditing={vi.fn()}
       />,
     );
 
@@ -57,6 +60,25 @@ describe('CoverOriginPrompt', () => {
     await waitFor(() => expect(screen.getByTestId('cover-origin-prompt-busy')).toBeInTheDocument());
     resolve();
     await waitFor(() => expect(screen.queryByTestId('cover-origin-prompt-busy')).not.toBeInTheDocument());
+  });
+
+  test('keeps the origin choices available and shows a recoverable alert when rasterizing the source fails', async () => {
+    render(
+      <CoverOriginPrompt
+        copy={copy}
+        hasOriginalAsset
+        onUseOriginal={() => Promise.reject(new Error('Invalid PDF structure'))}
+        onEditAsBase={vi.fn()}
+        onChooseTemplate={vi.fn()}
+        onCreateFromScratch={vi.fn()}
+        onContinueEditing={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('cover-origin-use-original-button'));
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.getByTestId('cover-origin-edit-as-base-button')).toBeInTheDocument();
   });
 
   test('choosing a template or starting from scratch calls the matching callback directly', () => {
@@ -70,11 +92,31 @@ describe('CoverOriginPrompt', () => {
         onEditAsBase={vi.fn()}
         onChooseTemplate={onChooseTemplate}
         onCreateFromScratch={onCreateFromScratch}
+        onContinueEditing={vi.fn()}
       />,
     );
     fireEvent.click(screen.getByTestId('cover-origin-choose-template-button'));
     fireEvent.click(screen.getByTestId('cover-origin-create-from-scratch-button'));
     expect(onChooseTemplate).toHaveBeenCalled();
     expect(onCreateFromScratch).toHaveBeenCalled();
+  });
+
+  test('continues to the editor without requiring an origin choice', () => {
+    const onContinueEditing = vi.fn();
+    render(
+      <CoverOriginPrompt
+        copy={copy}
+        hasOriginalAsset
+        onUseOriginal={vi.fn()}
+        onEditAsBase={vi.fn()}
+        onChooseTemplate={vi.fn()}
+        onCreateFromScratch={vi.fn()}
+        onContinueEditing={onContinueEditing}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('cover-origin-continue-without-choice-button'));
+
+    expect(onContinueEditing).toHaveBeenCalledOnce();
   });
 });

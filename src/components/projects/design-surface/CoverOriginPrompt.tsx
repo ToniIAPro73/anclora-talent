@@ -8,7 +8,7 @@
  */
 
 import { useState } from 'react';
-import { FileImage, LayoutTemplate, Sparkles } from 'lucide-react';
+import { ArrowLeft, FileImage, LayoutTemplate, Sparkles } from 'lucide-react';
 import type { AppMessages } from '@/lib/i18n/messages';
 
 type Copy = AppMessages['coverDesignSurface']['origin'];
@@ -20,6 +20,7 @@ export interface CoverOriginPromptProps {
   onEditAsBase: () => void | Promise<void>;
   onChooseTemplate: () => void;
   onCreateFromScratch: () => void;
+  onContinueEditing: () => void;
 }
 
 export function CoverOriginPrompt({
@@ -29,13 +30,18 @@ export function CoverOriginPrompt({
   onEditAsBase,
   onChooseTemplate,
   onCreateFromScratch,
+  onContinueEditing,
 }: CoverOriginPromptProps) {
   const [busy, setBusy] = useState<'use-original' | 'edit-original' | null>(null);
+  const [actionError, setActionError] = useState(false);
 
   const run = async (mode: 'use-original' | 'edit-original', action: () => void | Promise<void>) => {
     setBusy(mode);
+    setActionError(false);
     try {
       await action();
+    } catch {
+      setActionError(true);
     } finally {
       setBusy(null);
     }
@@ -46,6 +52,7 @@ export function CoverOriginPrompt({
       <h3 className="text-sm font-semibold">{copy.promptTitle}</h3>
 
       {busy && <p className="text-xs text-[var(--text-tertiary)]" data-testid="cover-origin-prompt-busy">{copy.rasterizingLabel}</p>}
+      {actionError && <p className="text-sm text-[var(--danger)]" role="alert">{copy.rasterizationError}</p>}
 
       <div className="grid gap-3 sm:grid-cols-2">
         {hasOriginalAsset && (
@@ -85,6 +92,7 @@ export function CoverOriginPrompt({
         >
           <Sparkles className="h-5 w-5" />
           <span className="text-sm font-semibold">{copy.chooseTemplateLabel}</span>
+            <span className="text-xs text-[var(--text-tertiary)]">{copy.chooseTemplateDescription}</span>
         </button>
 
         <button
@@ -95,8 +103,20 @@ export function CoverOriginPrompt({
           className="ac-button ac-button--ghost flex flex-col items-start gap-1 p-4 text-left"
         >
           <span className="text-sm font-semibold">{copy.createFromScratchLabel}</span>
+          <span className="text-xs text-[var(--text-tertiary)]">{copy.createFromScratchDescription}</span>
         </button>
       </div>
+
+      <button
+        type="button"
+        data-testid="cover-origin-continue-without-choice-button"
+        onClick={onContinueEditing}
+        disabled={busy !== null}
+        className="ac-button ac-button--ghost inline-flex items-center gap-2"
+      >
+        <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+        {copy.continueWithoutChoiceLabel}
+      </button>
     </div>
   );
 }

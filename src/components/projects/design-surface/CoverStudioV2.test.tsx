@@ -321,4 +321,22 @@ describe('CoverStudioV2', () => {
     await waitFor(() => expect(screen.queryByTestId('cover-origin-prompt')).not.toBeInTheDocument());
   });
 
+  test('opens the empty editor when continuing without choosing an origin', () => {
+    render(
+      <CoverStudioV2
+        surfaceKind="cover"
+        projectId="p-1"
+        initialSurface={makeEmptySurface()}
+        sourceDocumentAssetId={null}
+        pageCount={null}
+        copy={copy}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('cover-origin-continue-without-choice-button'));
+
+    expect(screen.queryByTestId('cover-origin-prompt')).not.toBeInTheDocument();
+    expect(screen.getByTestId('stub-advanced-editor')).toBeInTheDocument();
+  });
+
 });

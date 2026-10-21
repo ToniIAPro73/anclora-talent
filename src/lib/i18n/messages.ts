@@ -1832,8 +1832,12 @@ export type AppMessages = {
       createNewLabel: string;
       createNewDescription: string;
       chooseTemplateLabel: string;
+      chooseTemplateDescription: string;
       createFromScratchLabel: string;
+      createFromScratchDescription: string;
       rasterizingLabel: string;
+      rasterizationError: string;
+      continueWithoutChoiceLabel: string;
       resetToOriginalLabel: string;
       resetToOriginalConfirm: string;
       resetToTemplateConfirm: string;
@@ -3927,8 +3931,12 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         createNewLabel: 'Crear nueva',
         createNewDescription: 'Empieza desde cero o desde una plantilla, sin usar la página original.',
         chooseTemplateLabel: 'Elegir plantilla',
+        chooseTemplateDescription: 'Abre el editor para elegir un diseño de portada prediseñado.',
         createFromScratchLabel: 'Empezar en blanco',
+        createFromScratchDescription: 'Abre el editor con un lienzo vacío para diseñar la portada desde cero.',
         rasterizingLabel: 'Preparando la página original…',
+        rasterizationError: 'No se pudo leer el PDF original. Puedes continuar en el editor sin usar esa página o volver a intentarlo.',
+        continueWithoutChoiceLabel: 'Volver al editor sin elegir',
         resetToOriginalLabel: 'Restablecer a la portada original',
         resetToOriginalConfirm: 'Esto eliminará todos los elementos añadidos y volverá a la página original. ¿Continuar?',
         resetToTemplateConfirm: 'Esto reemplazará el diseño actual con la plantilla seleccionada. ¿Continuar?',
@@ -6019,8 +6027,12 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         createNewLabel: 'Create new',
         createNewDescription: 'Start from scratch or from a template, without using the original page.',
         chooseTemplateLabel: 'Choose a template',
+        chooseTemplateDescription: 'Open the editor to choose a ready-made cover design.',
         createFromScratchLabel: 'Start blank',
+        createFromScratchDescription: 'Open an empty canvas and design the cover from scratch.',
         rasterizingLabel: 'Preparing the original page…',
+        rasterizationError: 'The original PDF could not be read. You can continue in the editor without using that page or try again.',
+        continueWithoutChoiceLabel: 'Back to editor without choosing',
         resetToOriginalLabel: 'Reset to the original cover',
         resetToOriginalConfirm: 'This will remove every added element and revert to the original page. Continue?',
         resetToTemplateConfirm: 'This will replace the current design with the selected template. Continue?',

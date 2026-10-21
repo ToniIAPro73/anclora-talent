@@ -278,6 +278,7 @@ export function CoverStudioV2({
             setPromptDismissed(true);
           }}
           onCreateFromScratch={() => setPromptDismissed(true)}
+          onContinueEditing={() => setPromptDismissed(true)}
         />
       ) : (
         <>
