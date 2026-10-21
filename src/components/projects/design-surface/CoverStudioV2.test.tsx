@@ -103,6 +103,21 @@ describe('CoverStudioV2', () => {
     expect(screen.queryByTestId('cover-package-help')).not.toBeInTheDocument();
   });
 
+  test('does not render the lower preflight or collection panels after the editor', () => {
+    render(
+      <CoverStudioV2
+        surfaceKind="cover"
+        projectId="p-1"
+        initialSurface={makeNonEmptySurface()}
+        sourceDocumentAssetId={null}
+        pageCount={null}
+        copy={copy}
+      />,
+    );
+    expect(screen.queryByTestId('cover-preflight-panel')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('cover-editor-artifacts')).not.toBeInTheDocument();
+  });
+
   test('direct editor routes show the canonical eight-step workflow with the current surface active', () => {
     render(
       <CoverStudioV2

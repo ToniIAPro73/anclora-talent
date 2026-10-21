@@ -29,8 +29,6 @@ import { AdvancedCoverEditor } from './AdvancedCoverEditor';
 import { CoverOriginPrompt } from './CoverOriginPrompt';
 import { Stepper, type Step } from '@/components/ui/Stepper';
 import { createCoverDesignPackage, parseCoverDesignPackage } from '@/lib/projects/cover-design-package';
-import { CoverPreflightPanel } from './CoverPreflightPanel';
-import { CoverEditorialSystemPanel } from './CoverEditorialSystemPanel';
 
 const AUTOSAVE_DEBOUNCE_MS = 1200;
 
@@ -68,7 +66,6 @@ export function CoverStudioV2({
   semanticBinding,
   showWorkflowNavigation = false,
   workflowLabels,
-  locale = 'es',
 }: CoverStudioV2Props) {
   const [surface, setSurface] = useState<DesignSurface>(initialSurface);
   const [companionSurface, setCompanionSurface] = useState<DesignSurface>(initialCompanionSurface ?? createEmptyDesignSurface(surfaceKind === 'cover' ? 'back-cover' : 'cover'));
@@ -323,15 +320,6 @@ export function CoverStudioV2({
                 </button>
               </>
             )}
-          />
-          <CoverPreflightPanel surface={surface} locale={locale} copy={copy.workspace} />
-          <CoverEditorialSystemPanel
-            projectId={projectId}
-            surface={surface}
-            companionSurface={companionSurface}
-            locale={locale}
-            onChange={handleChange}
-            onCompanionChange={setCompanionSurface}
           />
         </>
       )}

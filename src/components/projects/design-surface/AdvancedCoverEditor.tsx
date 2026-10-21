@@ -525,7 +525,33 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
         </div>
 
         <div className="cover-workspace-toolbar__group cover-workspace-toolbar__actions">
-          {toolbarActions && <div className="cover-workspace-toolbar__group cover-workspace-toolbar__file-actions">{toolbarActions}</div>}
+          <div className="cover-workspace-toolbar__group cover-workspace-toolbar__file-actions">
+            <div className="cover-editor-history-controls" data-testid="cover-editor-history-controls" role="group" aria-label={copy.toolbar.undoLabel}>
+              <button
+                type="button"
+                data-testid="advanced-editor-undo-button"
+                onClick={() => canvasRef.current?.undo()}
+                disabled={!historyState.canUndo}
+                className="cover-toolbar-icon"
+                title={copy.toolbar.undoLabel}
+                aria-label={copy.toolbar.undoLabel}
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                data-testid="advanced-editor-redo-button"
+                onClick={() => canvasRef.current?.redo()}
+                disabled={!historyState.canRedo}
+                className="cover-toolbar-icon"
+                title={copy.toolbar.redoLabel}
+                aria-label={copy.toolbar.redoLabel}
+              >
+                <RotateCw className="h-4 w-4" />
+              </button>
+            </div>
+            {toolbarActions}
+          </div>
           <span className="cover-workspace-toolbar__select-wrap cover-workspace-toolbar__zoom">
             <select
               data-testid="advanced-editor-zoom-select"
@@ -630,30 +656,6 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
               event.target.value = '';
             }}
           />
-          <div className="cover-editor-history-controls" data-testid="cover-editor-history-controls" role="group" aria-label={copy.toolbar.undoLabel}>
-            <button
-              type="button"
-              data-testid="advanced-editor-undo-button"
-              onClick={() => canvasRef.current?.undo()}
-              disabled={!historyState.canUndo}
-              className="cover-toolbar-icon"
-              title={copy.toolbar.undoLabel}
-              aria-label={copy.toolbar.undoLabel}
-            >
-              <RotateCcw className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              data-testid="advanced-editor-redo-button"
-              onClick={() => canvasRef.current?.redo()}
-              disabled={!historyState.canRedo}
-              className="cover-toolbar-icon"
-              title={copy.toolbar.redoLabel}
-              aria-label={copy.toolbar.redoLabel}
-            >
-              <RotateCw className="h-4 w-4" />
-            </button>
-          </div>
           <button
             type="button"
             className="ac-button ac-button--secondary ac-button--compact cover-editor-import"
@@ -692,10 +694,6 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
             </div>
           </section>
           <div className="cover-canvas-header" data-testid="advanced-editor-canvas-tools">
-            <span className="cover-canvas-header__title">
-              {surface.surface === 'back-cover' ? ws.backCanvasLabel : ws.canvasLabel}
-              <small>{surface.width} × {surface.height} px</small>
-            </span>
             <div className="cover-canvas-tools">
             <div className="cover-canvas-tool-group" data-testid="advanced-editor-canvas-options-group" role="group" aria-label={ws.canvasOptions}>
               <span className="cover-canvas-tool-group__label">{ws.canvasOptions}</span>
@@ -878,18 +876,6 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
             </div>
           </div>
 
-          <div className="cover-editor-bottom-zoom">
-            <button type="button" data-testid="cover-canvas-zoom-out" onClick={() => applyZoom(zoom - 0.1)} title={ws.zoomOut} aria-label={ws.zoomOut}>
-              −
-            </button>
-            <span data-testid="advanced-editor-zoom-value">{Math.round(zoom * 100)}%</span>
-            <button type="button" data-testid="cover-canvas-zoom-in" onClick={() => applyZoom(zoom + 0.1)} title={ws.zoomIn} aria-label={ws.zoomIn}>
-              +
-            </button>
-            <button type="button" data-testid="cover-canvas-zoom-fit" onClick={fitToArea}>
-              {ws.fitToArea}
-            </button>
-          </div>
         </main>
 
         {/* RIGHT: contextual properties */}

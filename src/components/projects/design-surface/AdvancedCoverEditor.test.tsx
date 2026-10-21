@@ -178,12 +178,13 @@ describe('AdvancedCoverEditor', () => {
     expect(screen.getByTestId('advanced-editor-manage-layers')).toHaveFocus();
   });
 
-  it('shows the current surface dimensions in the relocated canvas heading', () => {
+  it('does not render a redundant canvas title or dimension label', () => {
     const surface = makeSurfaceWithTitle();
     surface.width = 512;
     surface.height = 768;
     render(<AdvancedCoverEditor surface={surface} onChange={vi.fn()} copy={copy} />);
-    expect(screen.getByText('512 × 768 px')).toBeInTheDocument();
+    expect(screen.queryByText('512 × 768 px')).not.toBeInTheDocument();
+    expect(screen.queryByText(copy.workspace.canvasLabel)).not.toBeInTheDocument();
   });
 
   it('marks selected canvas toggles with the same left accent language as the tool rail', () => {
@@ -205,14 +206,15 @@ describe('AdvancedCoverEditor', () => {
   });
 
   it('undo/redo start disabled with a freshly mounted surface', () => {
-    render(<AdvancedCoverEditor surface={makeSurfaceWithTitle()} onChange={vi.fn()} copy={copy} />);
+    render(<AdvancedCoverEditor surface={makeSurfaceWithTitle()} onChange={vi.fn()} copy={copy} toolbarActions={<button type="button" data-testid="cover-package-import-button">Import JSON</button>} />);
     expect(screen.getByTestId('advanced-editor-undo-button')).toBeDisabled();
     expect(screen.getByTestId('advanced-editor-redo-button')).toBeDisabled();
     expect(screen.getByTestId('advanced-editor-undo-button').textContent?.trim()).toBe('');
     expect(screen.getByTestId('advanced-editor-redo-button').textContent?.trim()).toBe('');
-    expect(screen.getByTestId('advanced-editor-undo-button').closest('[data-testid="advanced-editor-layers-column"]')).toBeInTheDocument();
-    expect(screen.getByTestId('advanced-editor-redo-button').closest('[data-testid="advanced-editor-layers-column"]')).toBeInTheDocument();
-    expect(screen.getByTestId('advanced-editor-layers-column').querySelector('[data-testid="cover-editor-history-controls"]')?.nextElementSibling).toBe(screen.getByTestId('cover-editor-import-button'));
+    const actions = screen.getByTestId('cover-package-import-button').closest('.cover-workspace-toolbar__file-actions');
+    expect(actions).toContainElement(screen.getByTestId('advanced-editor-undo-button'));
+    expect(actions).toContainElement(screen.getByTestId('advanced-editor-redo-button'));
+    expect(screen.getByTestId('advanced-editor-layers-column').querySelector('[data-testid="cover-editor-history-controls"]')).not.toBeInTheDocument();
   });
 
   it('selecting a layer in the layers panel shows its properties', async () => {

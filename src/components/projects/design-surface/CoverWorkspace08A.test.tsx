@@ -149,11 +149,12 @@ describe('COVER_EDITOR_08A Architectural Contract Gates', () => {
     expect(screen.getByTestId('cover-template-select')).toBeInTheDocument();
     expect(screen.queryByTestId('cover-templates-view-all-button')).not.toBeInTheDocument(); // no second gallery
 
-    // COVER_UI_05: Central canvas is mounted with bottom zoom controls
+    // COVER_UI_05: Central canvas has no obstructive overlay; zoom stays in the workspace toolbar.
     expect(screen.getByTestId('advanced-editor-canvas-column')).toBeInTheDocument();
-    expect(screen.getByTestId('cover-canvas-zoom-out')).toBeInTheDocument();
-    expect(screen.getByTestId('cover-canvas-zoom-in')).toBeInTheDocument();
-    expect(screen.getByTestId('cover-canvas-zoom-fit')).toBeInTheDocument();
+    expect(screen.queryByTestId('cover-canvas-zoom-out')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('cover-canvas-zoom-in')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('cover-canvas-zoom-fit')).not.toBeInTheDocument();
+    expect(screen.getByTestId('advanced-editor-zoom-select')).toBeInTheDocument();
 
     // COVER_UI_07 & COVER_UI_08: Right properties panel with layers list
     expect(screen.getByTestId('advanced-editor-properties-column')).toBeInTheDocument();
@@ -162,8 +163,8 @@ describe('COVER_EDITOR_08A Architectural Contract Gates', () => {
 
     // COVER_UI_09: Compact workspace toolbar keeps zoom/save; history is by import controls.
     expect(screen.getByTestId('cover-workspace-toolbar')).toBeInTheDocument();
-    expect(screen.getByTestId('advanced-editor-undo-button').closest('[data-testid="advanced-editor-layers-column"]')).toBeInTheDocument();
-    expect(screen.getByTestId('advanced-editor-redo-button').closest('[data-testid="advanced-editor-layers-column"]')).toBeInTheDocument();
+    expect(screen.getByTestId('advanced-editor-undo-button').closest('.cover-workspace-toolbar__file-actions')).toBeInTheDocument();
+    expect(screen.getByTestId('advanced-editor-redo-button').closest('.cover-workspace-toolbar__file-actions')).toBeInTheDocument();
     // The editor is edit-only: the one editorial preview is workflow step 5.
     expect(screen.queryByTestId('cover-editor-preview-button')).not.toBeInTheDocument();
     const saveButton = screen.getByTestId('studio-save-final-button');
@@ -326,7 +327,7 @@ describe('COVER_EDITOR_08A Architectural Contract Gates', () => {
     ];
     render(<AdvancedCoverEditor surface={surface} onChange={vi.fn()} copy={coverCopy} />);
 
-    expect(screen.getByText('Lienzo de contraportada')).toBeInTheDocument();
+    expect(screen.queryByText('Lienzo de contraportada')).not.toBeInTheDocument();
     expect(screen.queryByText('Lienzo de portada')).not.toBeInTheDocument();
     expect(screen.getByTestId('layer-name-background')).toHaveTextContent('Fondo de contraportada');
     const names = screen.getAllByTestId(/^layer-name-/).map((node) => node.textContent);
