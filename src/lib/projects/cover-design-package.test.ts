@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createEmptyDesignSurface, createDesignLayer } from './design-surface';
-import { createCoverDesignPackage, parseCoverDesignPackage } from './cover-design-package';
+import { createCoverDesignPackage, parseCoverDesignPackage, parseCoverDesignSurfacePackage } from './cover-design-package';
 
 function makePair() {
   const cover = createEmptyDesignSurface('cover');
@@ -20,6 +20,26 @@ describe('cover design package', () => {
     expect(parsed.surfaces['back-cover'].layers[0]).toMatchObject({ content: 'Back copy', x: 15 });
     expect(parsed.surfaces.cover.surface).toBe('cover');
     expect(parsed.surfaces['back-cover'].surface).toBe('back-cover');
+  });
+
+  it('imports only the requested surface from a full or partial package', async () => {
+    const pair = makePair();
+    const fullPackage = await createCoverDesignPackage(pair);
+    const backSurface = parseCoverDesignSurfacePackage(fullPackage, 'back-cover');
+    expect(backSurface.layers[0]).toMatchObject({ content: 'Back copy' });
+
+    const coverOnly = JSON.stringify({
+      format: 'anclora-talent-cover-design', schemaVersion: 1,
+      surfaces: { cover: pair.cover },
+    });
+    expect(parseCoverDesignSurfacePackage(coverOnly, 'cover').layers[0]).toMatchObject({ content: 'Cover title' });
+    expect(() => parseCoverDesignSurfacePackage(coverOnly, 'back-cover')).toThrow(/back-cover/);
+  });
+
+  it('does not validate or import an unrelated surface', () => {
+    const pair = makePair();
+    const payload = { format: 'anclora-talent-cover-design', schemaVersion: 1, surfaces: { cover: pair.cover, 'back-cover': { invalid: true } } };
+    expect(parseCoverDesignSurfacePackage(JSON.stringify(payload), 'cover').surface).toBe('cover');
   });
 
   it('embeds remote image assets into portable data URLs', async () => {

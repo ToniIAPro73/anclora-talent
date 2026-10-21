@@ -199,6 +199,40 @@ describe('AdvancedCoverEditor', () => {
     expect(screen.getByTestId('cover-editor-import-button')).toHaveTextContent(copy.workspace.importBackCover);
   });
 
+  it('replaces the active composition with a flattened image after confirmation', async () => {
+    const surface = makeSurfaceWithTitle();
+    const onChange = vi.fn();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    class FailedImageLoad {
+      onerror: (() => void) | null = null;
+      naturalWidth = 0;
+      naturalHeight = 0;
+      set src(_value: string) { this.onerror?.(); }
+    }
+    vi.stubGlobal('Image', FailedImageLoad);
+    render(<AdvancedCoverEditor surface={surface} onChange={onChange} copy={copy} />);
+
+    fireEvent.change(screen.getByTestId('cover-editor-import-file-input'), { target: { files: [new File(['image'], 'cover.png', { type: 'image/png' })] } });
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+      layers: [],
+      guides: [],
+      background: expect.objectContaining({ kind: 'image', fit: 'cover' }),
+    })));
+    expect(confirmSpy).toHaveBeenCalledWith(copy.workspace.replaceImportedCoverConfirm);
+    confirmSpy.mockRestore();
+    vi.unstubAllGlobals();
+  });
+
+  it('does not replace a composition when raster import confirmation is cancelled', async () => {
+    const onChange = vi.fn();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    render(<AdvancedCoverEditor surface={makeSurfaceWithTitle()} onChange={onChange} copy={copy} />);
+    fireEvent.change(screen.getByTestId('cover-editor-import-file-input'), { target: { files: [new File(['image'], 'cover.png', { type: 'image/png' })] } });
+    expect(confirmSpy).toHaveBeenCalledWith(copy.workspace.replaceImportedCoverConfirm);
+    expect(onChange).not.toHaveBeenCalled();
+    confirmSpy.mockRestore();
+  });
+
   it('keeps the properties heading and selected layer label in one compact header row', async () => {
     const surface = makeSurfaceWithTitle();
     render(<AdvancedCoverEditor surface={surface} onChange={vi.fn()} copy={copy} />);

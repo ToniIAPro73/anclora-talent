@@ -138,7 +138,7 @@ describe('CoverStudioV2', () => {
     expect(nav).toHaveTextContent('Contraportada');
   });
 
-  test('imports a validated JSON package into both saved surfaces', async () => {
+  test('imports only the active surface from a validated JSON package', async () => {
     const cover = makeNonEmptySurface('cover');
     const backCover = makeNonEmptySurface('back-cover');
     const firstTextLayer = backCover.layers[0];
@@ -162,7 +162,20 @@ describe('CoverStudioV2', () => {
     fireEvent.change(screen.getByTestId('cover-package-input'), { target: { files: [file] } });
     await waitFor(() => expect(screen.getByTestId('cover-package-feedback')).toHaveTextContent(copy.workspace.jsonImported));
     expect(saveCoverDesignAction).toHaveBeenCalledWith('p-1', expect.objectContaining({ surface: 'cover' }));
+    expect(saveBackCoverDesignAction).not.toHaveBeenCalled();
+  });
+
+  test('imports only the back-cover from a package and leaves the cover untouched', async () => {
+    const backCover = makeNonEmptySurface('back-cover');
+    const packageJson = JSON.stringify({ format: 'anclora-talent-cover-design', schemaVersion: 1, surfaces: { 'back-cover': backCover } });
+    const file = new File([packageJson], 'back-cover.json', { type: 'application/json' });
+    Object.defineProperty(file, 'text', { value: async () => packageJson });
+    render(<CoverStudioV2 surfaceKind="back-cover" projectId="p-1" initialSurface={makeNonEmptySurface('back-cover')} companionSurface={makeNonEmptySurface('cover')} sourceDocumentAssetId={null} pageCount={null} copy={copy} />);
+
+    fireEvent.change(screen.getByTestId('cover-package-input'), { target: { files: [file] } });
+    await waitFor(() => expect(screen.getByTestId('cover-package-feedback')).toHaveTextContent(copy.workspace.jsonImported));
     expect(saveBackCoverDesignAction).toHaveBeenCalledWith('p-1', expect.objectContaining({ surface: 'back-cover' }));
+    expect(saveCoverDesignAction).not.toHaveBeenCalled();
   });
 
   test('reports a file-read error without changing the save status', async () => {

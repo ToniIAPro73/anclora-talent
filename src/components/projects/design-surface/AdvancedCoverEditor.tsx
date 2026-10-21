@@ -397,13 +397,27 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
   }, [commitSurface, copy.workspace.lowResImageWarning, inspectImage, setSelectedLayerIds, surface.height, surface.layers.length, surface.width]);
 
   const handleImportCover = useCallback(async (file: File) => {
+    const current = latestSurfaceRef.current;
+    if (current.layers.length > 0 && !window.confirm(copy.workspace.replaceImportedCoverConfirm)) return;
     const src = await readFileAsDataUrl(file);
     const dimensions = await inspectImage(file);
     setImageQualityWarning(dimensions.width > 0 && (dimensions.width < 1200 || dimensions.height < 1800)
       ? copy.workspace.lowResCoverWarning.replace('{width}', String(dimensions.width)).replace('{height}', String(dimensions.height))
       : null);
-    commitSurface({ ...latestSurfaceRef.current, background: { kind: 'image', src, fit: 'cover', opacity: 1 }, originAssetId: null, originMode: 'blank' });
-  }, [commitSurface, copy.workspace.lowResCoverWarning, inspectImage]);
+    commitSurface({
+      ...latestSurfaceRef.current,
+      background: { kind: 'image', src, fit: 'cover', opacity: 1 },
+      layers: [],
+      guides: [],
+      safeArea: undefined,
+      isbnArea: undefined,
+      templateId: null,
+      originAssetId: null,
+      originMode: 'blank',
+    });
+    setSelectedLayerIds([]);
+    setBackgroundSelected(true);
+  }, [commitSurface, copy.workspace.lowResCoverWarning, copy.workspace.replaceImportedCoverConfirm, inspectImage, setSelectedLayerIds]);
 
   // The active template is the one the composition was actually built from (persisted on the
   // surface), not the last card clicked: cancelling the confirmation changes nothing.

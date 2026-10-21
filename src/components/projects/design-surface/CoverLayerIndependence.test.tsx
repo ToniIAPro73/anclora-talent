@@ -463,6 +463,17 @@ describe('editable background image', () => {
     expect(screen.getByTestId('layer-row-title')).toHaveAttribute('data-selected', 'true');
   });
 
+  it('clearing the background makes it transparent and preserves every foreground layer', async () => {
+    const { surface } = await setupWithBinding(surfaceWithImageBackground());
+    const layerIds = surface().layers.map((layer) => layer.id);
+
+    fireEvent.click(screen.getByTestId('layer-select-background'));
+    fireEvent.click(screen.getByTestId('background-kind-transparent-button'));
+
+    expect(surface().background).toEqual({ kind: 'transparent' });
+    expect(surface().layers.map((layer) => layer.id)).toEqual(layerIds);
+  });
+
   it('moving or scaling the background on the canvas stores one frame and leaves every layer untouched', async () => {
     const { surface } = await setupWithBinding(surfaceWithImageBackground());
     await waitFor(() => expect(backgroundObject()).toBeDefined());

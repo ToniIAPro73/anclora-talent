@@ -46,7 +46,17 @@ export function BackgroundEditor({ background, copy, colorPickerCopy, brandColor
   return (
     <div className="cover-prop-stack" data-testid="background-editor">
       <PropertySection title={copy.label}>
-        <SegmentedGroup label={copy.label}>
+        <SegmentedGroup label={copy.label} columns={4}>
+          <button
+            type="button"
+            data-testid="background-kind-transparent-button"
+            onClick={() => onChange({ kind: 'transparent' })}
+            className="cover-prop-text-button"
+            data-active={background.kind === 'transparent' ? 'true' : 'false'}
+            aria-pressed={background.kind === 'transparent'}
+          >
+            {copy.transparent}
+          </button>
           <button
             type="button"
             data-testid="background-kind-solid-button"
@@ -156,7 +166,7 @@ export function BackgroundEditor({ background, copy, colorPickerCopy, brandColor
             type="button"
             data-testid="background-image-upload-button"
             onClick={() => fileInputRef.current?.click()}
-            className="ac-button ac-button--secondary cover-prop-button"
+            className="ac-button ac-button--secondary ac-button--compact cover-prop-button"
           >
             {background.src ? copy.replaceImageLabel : copy.image}
           </button>

@@ -216,6 +216,16 @@ describe('isEmptyDesignSurface', () => {
     expect(isEmptyDesignSurface(surface)).toBe(false);
   });
 
+  it('is false for an intentional background-only design', () => {
+    const imageSurface = createEmptyDesignSurface('cover');
+    imageSurface.background = { kind: 'image', src: 'data:image/png;base64,AA==', fit: 'cover', opacity: 1 };
+    expect(isEmptyDesignSurface(imageSurface)).toBe(false);
+
+    const transparentSurface = createEmptyDesignSurface('cover');
+    transparentSurface.background = { kind: 'transparent' };
+    expect(isEmptyDesignSurface(transparentSurface)).toBe(false);
+  });
+
   it('is false once an origin choice has been made, even with no layers yet', () => {
     const surface = createEmptyDesignSurface('cover');
     surface.originMode = 'use-original';

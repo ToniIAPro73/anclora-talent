@@ -113,6 +113,7 @@ export interface BackgroundImageFrame {
 }
 
 export type BackgroundSpec =
+  | { kind: 'transparent' }
   | { kind: 'solid'; color: string }
   | { kind: 'gradient'; angle: number; stops: Array<{ color: string; offset: number }> }
   | {
@@ -201,7 +202,8 @@ export function isLegacySurfaceState(value: unknown): value is SurfaceState {
  * never reappears uninvited.
  */
 export function isEmptyDesignSurface(surface: DesignSurface): boolean {
-  return surface.layers.length === 0 && (surface.originMode ?? 'blank') === 'blank';
+  const isDefaultBackground = surface.background.kind === 'solid' && surface.background.color === DEFAULT_PALETTE_COLORS.obsidian.background;
+  return surface.layers.length === 0 && isDefaultBackground && (surface.originMode ?? 'blank') === 'blank';
 }
 
 /**

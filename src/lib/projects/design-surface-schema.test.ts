@@ -66,4 +66,10 @@ describe('parseDesignSurfacePayload', () => {
     ];
     expect(parseDesignSurfacePayload(surface).ok).toBe(true);
   });
+
+  it('accepts an explicitly transparent background', () => {
+    const surface = createEmptyDesignSurface('cover');
+    surface.background = { kind: 'transparent' };
+    expect(parseDesignSurfacePayload(surface).ok).toBe(true);
+  });
 });

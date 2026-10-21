@@ -62,4 +62,10 @@ describe('DesignSurfaceRenderer', () => {
     render(<DesignSurfaceRenderer surface={surface} />);
     expect(screen.getByTestId('design-surface-renderer-background-image')).toHaveAttribute('src', 'https://blob.example/bg.png');
   });
+
+  test('leaves the surface background clear when transparency is selected', () => {
+    const surface = makeSurface({ background: { kind: 'transparent' } });
+    render(<DesignSurfaceRenderer surface={surface} />);
+    expect(screen.getByTestId('design-surface-renderer').style.backgroundColor).toBe('');
+  });
 });

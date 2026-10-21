@@ -251,6 +251,7 @@ export async function applyBackgroundToCanvas(
 
   if (background.kind !== 'image' || !background.src) {
     canvas.backgroundImage = undefined;
+    canvas.backgroundColor = '';
     for (const object of existingBackgroundObjects()) canvas.remove(object);
     if (background.kind === 'solid') {
       canvas.backgroundColor = background.color;

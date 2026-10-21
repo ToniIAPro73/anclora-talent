@@ -13,7 +13,7 @@ describe('BackgroundEditor', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/app/globals.css'), 'utf8');
     const rule = css.match(/\.cover-prop-segmented\s*\{([^}]+)\}/)?.[1] ?? '';
     expect(rule).toContain('width: 100%');
-    expect(rule).toContain('repeat(3, minmax(0, 1fr))');
+    expect(rule).toContain('repeat(var(--cover-prop-segmented-columns, 3), minmax(0, 1fr))');
     expect(css).toContain('.cover-prop-segmented button {');
     expect(css).toContain('white-space: nowrap');
   });
@@ -29,6 +29,19 @@ describe('BackgroundEditor', () => {
     const call = onChange.mock.calls[0][0];
     expect(call.kind).toBe('gradient');
     expect(call.stops).toHaveLength(2);
+  });
+
+  test('selecting no background preserves the option to leave the canvas transparent', () => {
+    const onChange = vi.fn();
+    const background: BackgroundSpec = { kind: 'solid', color: '#0b133f' };
+    render(<BackgroundEditor background={background} copy={copy.background} colorPickerCopy={copy.colorPicker} onChange={onChange} onUploadFile={vi.fn()} />);
+    fireEvent.click(screen.getByTestId('background-kind-transparent-button'));
+    expect(onChange).toHaveBeenCalledWith({ kind: 'transparent' });
+  });
+
+  test('background image upload button uses the shared Talent button style', () => {
+    render(<BackgroundEditor background={{ kind: 'image', src: '', fit: 'cover', opacity: 1 }} copy={copy.background} colorPickerCopy={copy.colorPicker} onChange={vi.fn()} onUploadFile={vi.fn()} />);
+    expect(screen.getByTestId('background-image-upload-button')).toHaveClass('ac-button', 'ac-button--secondary', 'ac-button--compact');
   });
 
   test('gradient: adding a color stop appends one, removing requires more than two remaining', () => {

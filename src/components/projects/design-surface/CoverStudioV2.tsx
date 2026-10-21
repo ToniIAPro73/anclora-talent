@@ -28,7 +28,7 @@ import type { SemanticBinding } from '@/lib/projects/design-surface-templates';
 import { AdvancedCoverEditor } from './AdvancedCoverEditor';
 import { CoverOriginPrompt } from './CoverOriginPrompt';
 import { Stepper, type Step } from '@/components/ui/Stepper';
-import { createCoverDesignPackage, parseCoverDesignPackage } from '@/lib/projects/cover-design-package';
+import { createCoverDesignPackage, parseCoverDesignSurfacePackage } from '@/lib/projects/cover-design-package';
 
 const AUTOSAVE_DEBOUNCE_MS = 1200;
 
@@ -68,7 +68,7 @@ export function CoverStudioV2({
   workflowLabels,
 }: CoverStudioV2Props) {
   const [surface, setSurface] = useState<DesignSurface>(initialSurface);
-  const [companionSurface, setCompanionSurface] = useState<DesignSurface>(initialCompanionSurface ?? createEmptyDesignSurface(surfaceKind === 'cover' ? 'back-cover' : 'cover'));
+  const [companionSurface] = useState<DesignSurface>(initialCompanionSurface ?? createEmptyDesignSurface(surfaceKind === 'cover' ? 'back-cover' : 'cover'));
   const [promptDismissed, setPromptDismissed] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [originalBackgroundSrc, setOriginalBackgroundSrc] = useState<string | undefined>(undefined);
@@ -194,25 +194,19 @@ export function CoverStudioV2({
     setPackageFeedback(null);
     let saveAttempted = false;
     try {
-      const imported = parseCoverDesignPackage(await file.text());
+      const imported = parseCoverDesignSurfacePackage(await file.text(), surfaceKind);
       // Drain any user edit queued before import so that its slower autosave
       // cannot land after and overwrite the imported surfaces.
       if (debounceTimerRef.current) window.clearTimeout(debounceTimerRef.current);
       await flushSave();
       pendingSaveRef.current = null;
-      const nextSurface = surfaceKind === 'cover' ? imported.surfaces.cover : imported.surfaces['back-cover'];
-      const nextCompanion = surfaceKind === 'cover' ? imported.surfaces['back-cover'] : imported.surfaces.cover;
-      setSurface(nextSurface);
-      setCompanionSurface(nextCompanion);
+      setSurface(imported);
       setSaveStatus('saving');
       saveAttempted = true;
-      const saveCover = await saveCoverDesignAction(projectId, imported.surfaces.cover);
-      if (saveCover.status !== 'saved') throw new Error(`${copy.workspace.jsonImportError} ${saveCover.error}`);
-      const saveBackCover = await saveBackCoverDesignAction(projectId, imported.surfaces['back-cover']);
-      if (saveBackCover.status !== 'saved') {
-        setSaveStatus('error');
-        throw new Error(copy.workspace.jsonImportPartialSave);
-      }
+      const saveActiveSurface = surfaceKind === 'cover'
+        ? await saveCoverDesignAction(projectId, imported)
+        : await saveBackCoverDesignAction(projectId, imported);
+      if (saveActiveSurface.status !== 'saved') throw new Error(`${copy.workspace.jsonImportError} ${saveActiveSurface.error}`);
       setSaveStatus('saved');
       setPackageFeedback({ kind: 'success', text: copy.workspace.jsonImported });
     } catch (error) {
@@ -221,7 +215,7 @@ export function CoverStudioV2({
     } finally {
       if (packageInputRef.current) packageInputRef.current.value = '';
     }
-  }, [copy.workspace.jsonImportError, copy.workspace.jsonImportPartialSave, copy.workspace.jsonImported, flushSave, projectId, surfaceKind]);
+  }, [copy.workspace.jsonImportError, copy.workspace.jsonImported, flushSave, projectId, surfaceKind]);
 
   const originPageNumber = useMemo(() => resolveOriginPageNumber(surfaceKind, pageCount), [surfaceKind, pageCount]);
   const hasOriginalAsset = Boolean(sourceDocumentAssetId);

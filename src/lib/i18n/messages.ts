@@ -1689,6 +1689,7 @@ export type AppMessages = {
     };
     background: {
       label: string;
+      transparent: string;
       solid: string;
       gradient: string;
       image: string;
@@ -1764,6 +1765,7 @@ export type AppMessages = {
       viewAllTemplates: string;
       importCover: string;
       importBackCover: string;
+      replaceImportedCoverConfirm: string;
       lowResImageWarning: string;
       lowResCoverWarning: string;
       templateLabel: string;
@@ -3777,6 +3779,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       },
       background: {
         label: 'Fondo',
+        transparent: 'Sin fondo',
         solid: 'Sólido',
         gradient: 'Degradado',
         image: 'Imagen',
@@ -3852,6 +3855,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         viewAllTemplates: 'Ver todas',
         importCover: 'Importar portada',
         importBackCover: 'Importar contraportada',
+        replaceImportedCoverConfirm: 'Esto reemplazará el diseño actual por una imagen plana y eliminará sus capas editables. ¿Continuar?',
         lowResImageWarning: 'Resolución baja: {width} × {height}px. La imagen se ha importado igualmente.',
         lowResCoverWarning: 'Resolución baja: {width} × {height}px. La portada se ha importado igualmente.',
         templateLabel: 'Plantilla editorial',
@@ -3898,7 +3902,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         exportPngError: 'No se pudo exportar el PNG. Comprueba las imágenes del diseño e inténtalo de nuevo.',
         jsonExported: 'Diseño exportado.',
         jsonImportError: 'No se pudo importar el diseño JSON.',
-        jsonImported: 'Diseño JSON importado en las dos superficies.',
+        jsonImported: 'Diseño JSON importado en esta superficie.',
         jsonImportPartialSave: 'La portada se guardó, pero falló la contraportada. Vuelve a importar el archivo para completar el guardado.',
         preflightLabel: 'Revisión orientativa',
         preflightDisclaimer: 'Avisos orientativos; no certifican preparación para imprenta ni sustituyen un perfil de producción.',
@@ -5862,6 +5866,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
       },
       background: {
         label: 'Background',
+        transparent: 'No background',
         solid: 'Solid',
         gradient: 'Gradient',
         image: 'Image',
@@ -5937,6 +5942,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         viewAllTemplates: 'View all',
         importCover: 'Import cover',
         importBackCover: 'Import back cover',
+        replaceImportedCoverConfirm: 'This will replace the current design with a flattened image and remove its editable layers. Continue?',
         lowResImageWarning: 'Low resolution: {width} × {height}px. The image was imported anyway.',
         lowResCoverWarning: 'Low resolution: {width} × {height}px. The cover was imported anyway.',
         templateLabel: 'Editorial template',
@@ -5983,7 +5989,7 @@ export const appMessages: Record<UiLocale, AppMessages> = {
         exportPngError: 'The PNG could not be exported. Check the design images and try again.',
         jsonExported: 'Design exported.',
         jsonImportError: 'The editable JSON design could not be imported.',
-        jsonImported: 'The JSON design was imported to both surfaces.',
+        jsonImported: 'The JSON design was imported to this surface.',
         jsonImportPartialSave: 'The cover was saved, but the back cover failed. Import the file again to finish saving both surfaces.',
         preflightLabel: 'Advisory preflight',
         preflightDisclaimer: 'Advisory checks only; this is not print certification and does not replace a production profile.',

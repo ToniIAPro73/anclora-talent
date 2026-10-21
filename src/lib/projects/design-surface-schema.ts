@@ -83,6 +83,7 @@ const shapeLayerSchema = designLayerBaseSchema.extend({
 const designLayerSchema = z.discriminatedUnion('type', [textLayerSchema, imageLayerSchema, shapeLayerSchema]);
 
 const backgroundSpecSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('transparent') }),
   z.object({ kind: z.literal('solid'), color: z.string().min(1) }),
   z.object({
     kind: z.literal('gradient'),

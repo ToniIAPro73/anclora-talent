@@ -7,7 +7,7 @@
  * layer type shares one spacing system.
  */
 
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 
@@ -43,6 +43,7 @@ export function CompactNumberField({
   max,
   step,
   suffix,
+  suggestions,
 }: {
   label: string;
   value: number;
@@ -52,7 +53,18 @@ export function CompactNumberField({
   max?: number;
   step?: number;
   suffix?: string;
+  suggestions?: number[];
 }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(formatNumber(value));
+  const [lastValue, setLastValue] = useState(value);
+  const listId = suggestions?.length ? `${testId}-suggestions` : undefined;
+
+  if (value !== lastValue) {
+    setLastValue(value);
+    if (!editing) setDraft(formatNumber(value));
+  }
+
   return (
     <label className="cover-prop-field">
       <span className="cover-prop-field__label" title={label}>
@@ -62,18 +74,32 @@ export function CompactNumberField({
         type="number"
         className="cover-prop-input"
         data-testid={testId}
-        value={Number.isInteger(value) ? value : Number(value.toFixed(2))}
+        value={draft}
+        list={listId}
         min={min}
         max={max}
-        step={step}
+        onFocus={() => setEditing(true)}
         onChange={(event) => {
-          const parsed = Number(event.target.value);
+          const next = event.target.value;
+          setDraft(next);
+          if (!next.trim()) return;
+          const parsed = Number(next);
           if (Number.isFinite(parsed)) onChange(parsed);
         }}
+        onBlur={() => {
+          setEditing(false);
+          setDraft(formatNumber(value));
+        }}
+        step={step}
       />
+      {listId && <datalist id={listId}>{suggestions?.map((suggestion) => <option key={suggestion} value={suggestion} />)}</datalist>}
       {suffix ? <span className="cover-prop-field__suffix">{suffix}</span> : null}
     </label>
   );
+}
+
+function formatNumber(value: number): string {
+  return String(Number.isInteger(value) ? value : Number(value.toFixed(2)));
 }
 
 /** `Interlineado ━━●━━ 1.1` — label, slider and typed value in a single row. */

@@ -171,3 +171,35 @@ export function parseCoverDesignPackage(serialized: string): CoverDesignPackageV
     surfaces: { cover, 'back-cover': backCover },
   };
 }
+
+/** Parse only the surface requested by the active editor; companion data is intentionally ignored. */
+export function parseCoverDesignSurfacePackage(serialized: string, target: 'cover' | 'back-cover'): DesignSurface {
+  if (utf8Size(serialized) > MAX_COVER_DESIGN_PACKAGE_BYTES) throw new Error('The editable JSON file exceeds the 32 MB package limit.');
+  let input: unknown;
+  try {
+    input = JSON.parse(serialized);
+  } catch {
+    throw new Error('The file is not valid JSON.');
+  }
+  if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('The JSON file must contain an Anclora Talent cover design package.');
+  const record = input as Record<string, unknown>;
+  if (record.format !== COVER_DESIGN_PACKAGE_FORMAT) throw new Error('The JSON file format is not recognized as an Anclora Talent cover design.');
+  if (record.schemaVersion !== COVER_DESIGN_PACKAGE_VERSION) throw new Error(`Unsupported editable JSON version: ${String(record.schemaVersion)}.`);
+  const allowedRoot = new Set(['format', 'schemaVersion', 'surfaces']);
+  const unknownRoot = Object.keys(record).find((key) => !allowedRoot.has(key));
+  if (unknownRoot) throw new Error(`Unsupported package field: ${unknownRoot}.`);
+  if (!record.surfaces || typeof record.surfaces !== 'object' || Array.isArray(record.surfaces)) throw new Error('The package must contain the active surface.');
+  const surfaceRecord = record.surfaces as Record<string, unknown>;
+  const unknownSurface = Object.keys(surfaceRecord).find((key) => key !== 'cover' && key !== 'back-cover');
+  if (unknownSurface) throw new Error(`Unsupported surface: ${unknownSurface}.`);
+  if (!(target in surfaceRecord)) throw new Error(`The package does not contain the active ${target} surface.`);
+  const surface = validateSurface(surfaceRecord[target], target);
+  const sources = [
+    ...(surface.background.kind === 'image' ? [surface.background.src] : []),
+    ...surface.layers.filter((layer) => layer.type === 'image').map((layer) => layer.src),
+  ];
+  if (sources.some((src) => src && !src.startsWith('data:image/'))) {
+    throw new Error('This package contains a non-portable image reference. Import was stopped without changing the project.');
+  }
+  return surface;
+}
