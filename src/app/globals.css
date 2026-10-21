@@ -3374,6 +3374,7 @@ html[data-theme="light"] .cover-workspace {
 .cover-template-thumb { overflow: hidden; border-radius: 3px; box-shadow: 0 2px 8px rgb(0 0 0 / 35%); }
 .cover-editor-import { flex: 0 0 auto; width: 100%; height: 32px !important; min-height: 0 !important; padding: 0 10px !important; font-size: 12px !important; gap: 6px; }
 .cover-editor-quality-warning { margin: 0; padding: 8px 10px; border: 1px solid color-mix(in srgb, #f1cc77 45%, transparent); border-radius: 6px; background: color-mix(in srgb, #f1cc77 12%, transparent); color: #f1cc77; font-size: 11px; line-height: 1.4; }
+html[data-theme="light"] .cover-editor-quality-warning { border-color: #b7791f; background: #fff6df; color: #70420a; }
 
 /* ── Canvas ──────────────────────────────────────────────────────────── */
 .cover-canvas-area {
@@ -3570,6 +3571,7 @@ html[data-theme="light"] .cover-workspace .cover-canvas-paper { outline-color: c
 .cover-prop-section__body { display: grid; gap: 4px; padding: 0 0 5px; }
 .cover-action-hint { position: relative; display: inline-flex; min-width: 0; }
 .cover-action-tooltip { position: fixed; z-index: 9999; width: min(18rem, calc(100vw - 1.5rem)); padding: 6px 9px; border: 1px solid var(--border-strong); border-radius: 4px; background: var(--bg-strong); color: var(--text-primary); box-shadow: 0 6px 18px #0003; font-size: 11px; font-weight: 600; line-height: 1.35; white-space: normal; text-align: left; overflow-wrap: anywhere; pointer-events: none; }
+html[data-theme="light"] .cover-action-tooltip { border-color: #b9cbd9; background: #fffdf8; color: #0c1820; box-shadow: 0 6px 18px rgb(12 24 32 / 18%); }
 
 .cover-prop-row { display: flex; align-items: center; gap: 5px; min-width: 0; }
 .cover-prop-row--stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3px; }
@@ -3622,6 +3624,9 @@ html[data-theme="light"] .cover-workspace .cover-canvas-paper { outline-color: c
 .cover-prop-link:hover { text-decoration: underline; }
 /* Property actions. Default = compact secondary action (content-sized, 28px); `--full` is for a primary action only. */
 .cover-prop-button { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; justify-self: start; width: auto; height: 28px !important; min-height: 0 !important; padding: 0 12px !important; font-size: 12px !important; white-space: nowrap; }
+.cover-prop-button { border-radius: 4px !important; }
+.cover-prop-icon-option { display: grid; place-items: center; padding: 0 !important; }
+.cover-prop-icon-option svg { width: 16px; height: 16px; }
 /* A row of content-sized property actions: each button is as wide as its label needs (never clipped or wrapped). */
 .cover-prop-actions { display: flex; flex-wrap: wrap; gap: 6px 8px; }
 .cover-prop-button--full { width: 100%; justify-self: stretch; }

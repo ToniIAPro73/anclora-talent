@@ -7,7 +7,7 @@
  */
 
 import { useRef } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Blend, Image, Maximize, PaintBucket, Plus, Ratio, Scan, SquareDashed, X } from 'lucide-react';
 import type { AppMessages } from '@/lib/i18n/messages';
 import type { BackgroundSpec } from '@/lib/projects/design-surface';
 import {
@@ -43,59 +43,43 @@ export interface BackgroundEditorProps {
 
 export function BackgroundEditor({ background, copy, colorPickerCopy, brandColors, onChange, onUploadFile, surfaceSize, natural, onConvertToImage }: BackgroundEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const backgroundOptions = [
+    { kind: 'transparent', label: copy.transparent, Icon: SquareDashed },
+    { kind: 'solid', label: copy.solid, Icon: PaintBucket },
+    { kind: 'gradient', label: copy.gradient, Icon: Blend },
+    { kind: 'image', label: copy.image, Icon: Image },
+  ] as const;
+  const fitOptions = [
+    { fit: 'cover', label: copy.fitCover, Icon: Maximize },
+    { fit: 'contain', label: copy.fitContain, Icon: Scan },
+    { fit: 'original', label: copy.fitOriginal, Icon: Ratio },
+  ] as const;
 
   return (
     <div className="cover-prop-stack" data-testid="background-editor">
       <PropertySection title={copy.label}>
         <SegmentedGroup label={copy.label} columns={4}>
-          <button
-            type="button"
-            data-testid="background-kind-transparent-button"
-            onClick={() => onChange({ kind: 'transparent' })}
-            className="cover-prop-text-button"
-            data-active={background.kind === 'transparent' ? 'true' : 'false'}
-            aria-pressed={background.kind === 'transparent'}
-          >
-            {copy.transparent}
-          </button>
-          <button
-            type="button"
-            data-testid="background-kind-solid-button"
-            onClick={() => onChange({ kind: 'solid', color: background.kind === 'solid' ? background.color : '#0b133f' })}
-            className="cover-prop-text-button"
-            data-active={background.kind === 'solid' ? 'true' : 'false'}
-            aria-pressed={background.kind === 'solid'}
-          >
-            {copy.solid}
-          </button>
-          <button
-            type="button"
-            data-testid="background-kind-gradient-button"
-            onClick={() =>
-              onChange(
-                background.kind === 'gradient'
-                  ? background
-                  : { kind: 'gradient', angle: 160, stops: [{ color: '#0b133f', offset: 0 }, { color: '#07252f', offset: 1 }] },
-              )
-            }
-            className="cover-prop-text-button"
-            data-active={background.kind === 'gradient' ? 'true' : 'false'}
-            aria-pressed={background.kind === 'gradient'}
-          >
-            {copy.gradient}
-          </button>
-          <button
-            type="button"
-            data-testid="background-kind-image-button"
-            onClick={() => onChange(background.kind === 'image' ? background : { kind: 'image', src: '', fit: 'cover', opacity: 1 })}
-            className="cover-prop-text-button"
-            data-active={background.kind === 'image' ? 'true' : 'false'}
-            aria-pressed={background.kind === 'image'}
-          >
-            {copy.image}
-          </button>
+          {backgroundOptions.map(({ kind, label, Icon }) => (
+            <button
+              key={kind}
+              type="button"
+              data-testid={`background-kind-${kind}-button`}
+              onClick={() => {
+                if (kind === 'transparent') onChange({ kind: 'transparent' });
+                else if (kind === 'solid') onChange({ kind: 'solid', color: background.kind === 'solid' ? background.color : '#0b133f' });
+                else if (kind === 'gradient') onChange(background.kind === 'gradient' ? background : { kind: 'gradient', angle: 160, stops: [{ color: '#0b133f', offset: 0 }, { color: '#07252f', offset: 1 }] });
+                else onChange(background.kind === 'image' ? background : { kind: 'image', src: '', fit: 'cover', opacity: 1 });
+              }}
+              className="cover-prop-text-button cover-prop-icon-option"
+              data-active={background.kind === kind ? 'true' : 'false'}
+              aria-label={label}
+              title={label}
+              aria-pressed={background.kind === kind}
+            >
+              <Icon aria-hidden="true" />
+            </button>
+          ))}
         </SegmentedGroup>
-
       {background.kind === 'solid' && (
         <ColorPickerField
           label={copy.solid}
@@ -186,7 +170,7 @@ export function BackgroundEditor({ background, copy, colorPickerCopy, brandColor
             }}
           />
         <SegmentedGroup label={copy.fitLabel}>
-          {(['cover', 'contain', 'original'] as const).map((fit) => (
+          {fitOptions.map(({ fit, label, Icon }) => (
             <button
               key={fit}
               type="button"
@@ -194,9 +178,11 @@ export function BackgroundEditor({ background, copy, colorPickerCopy, brandColor
               onClick={() => onChange(setBackgroundFit(background, fit))}
               className="cover-prop-text-button"
               data-active={background.fit === fit && !background.frame ? 'true' : 'false'}
+              aria-label={label}
+              title={label}
               aria-pressed={background.fit === fit && !background.frame}
             >
-              {fit === 'cover' ? copy.fitCover : fit === 'contain' ? copy.fitContain : copy.fitOriginal}
+              <Icon aria-hidden="true" />
             </button>
           ))}
         </SegmentedGroup>
