@@ -449,10 +449,12 @@ Critical flows expose structured diagnostic events without sensitive content:
 ## 38. RELEASE STRATEGY
 
 For this specification-authoring execution, the user-selected release
-override is `development`-only: create the documentation commit, push it to
+override was `development`-only: create the documentation commit, push it to
 `origin/development`, wait for development CI, and do not dispatch promotion
-to staging, production or main. This development-only release policy remains
-active for later implementation phases unless explicitly changed by the user.
+to staging, production or main. This records that execution's scope and is not
+a standing restriction for later tasks. Current tasks follow the workspace
+review cycle: Toni validates in development before commit/push, reviews
+Preview, then uses `PROMOTE=FULL` to authorize promotion.
 
 Every meaningful batch or completed phase follows. A small microtask PASS remains local evidence and does not trigger release mechanics:
 
@@ -460,9 +462,11 @@ Every meaningful batch or completed phase follows. A small microtask PASS remain
 2. inspect `git diff` and accidental files;
 3. update roadmap status/evidence;
 4. create one coherent batch or phase-close commit on development;
-5. push development and wait for development CI PASS;
+5. after Toni's explicit development validation, commit and push development;
+   then wait for Toni's Preview review;
 6. record `PHASE`, `DEVELOPMENT_SHA` and `DEVELOPMENT_CI`;
-7. do not dispatch staging/production/main promotion unless the user explicitly changes this release override.
+7. promote staging/production/main only after Toni reviews Preview and supplies
+   `PROMOTE=FULL`; the full-chain workflow is asynchronous.
 
 No later phase starts while the previous phase is FAIL or BLOCKED. Do not create a commit or push for every trivial microtask. Functional execution is active after the authoring baseline.
 

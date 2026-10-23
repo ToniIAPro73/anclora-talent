@@ -2,6 +2,10 @@
 
 Repo status: DONE
 
+> Historical execution record: the `development`-only restriction below
+> applied to this P7 run and has expired. Later work follows the current
+> workspace review and promotion policy.
+
 Execution status: P7-M00 PASS; P7-M01 PASS under the active
 `development`-only release policy; P7-M02 PASS; P7-FINAL-GATE PASS.
 `G20` and staging/production/main validation are `NOT_APPLICABLE` for this

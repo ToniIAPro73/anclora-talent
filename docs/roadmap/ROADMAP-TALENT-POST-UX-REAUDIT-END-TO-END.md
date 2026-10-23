@@ -15,7 +15,7 @@ Phase detail authority: the linked `P*.md` files under [`talent-post-ux-reaudit/
 - No direct work on `staging`, `production` or `main`.
 - No force push and no history rewrite.
 - Production validation is read-only smoke; mutating E2E uses local, preview, staging or dedicated authorized fixtures.
-- Functional execution is active after the authoring baseline. Current policy permits commit and push only to `origin/development`; no promotion workflow runs unless explicitly requested later.
+- Functional execution is active after the authoring baseline. Keep changes local until Toni explicitly validates them in development; then commit and push to `origin/development`. After Toni reviews Preview, `PROMOTE=FULL` authorizes the asynchronous full-chain workflow.
 
 Small microtask PASS is local evidence only. It does not require commit or push. Accumulate related safe microtasks into a meaningful batch. Use commit/push at microphase closure, phase closure, or earlier only when integrity, security, migration or rollback risk requires a checkpoint. A batch must contain enough coherent change to justify CI; do not create release churn for one trivial edit.
 

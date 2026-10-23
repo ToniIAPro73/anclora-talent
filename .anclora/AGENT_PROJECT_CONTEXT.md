@@ -200,7 +200,7 @@ Essential operational invariants:
 - **Runtime & DB**: Read [`.anclora/PRODUCTION_RUNTIME.md`](PRODUCTION_RUNTIME.md). Local development connects to the Production database. Do not create development or ephemeral databases.
 - **Migrations**: Schema changes are authorized via `npm run db:push` (`SCHEMA_PUSH` strategy). Confirmations are not required; backward compatibility is preferred.
 - **QA Testing**: Locate, reuse, or create the persistent production QA user. Never delete it after testing.
-- **Git Flow**: Work directly on `development`. Do not create feature branches by default. Commit after validation and push to `origin/development`, then STOP by default. If the current user explicitly requests promotion, evaluate that new release operation under the workspace `Canonical Promotion Policy`; do not treat a prior mission-scoped `No promotion` instruction as permanent.
+- **Git Flow**: Work directly on `development`. Do not create feature branches by default. Keep changes local until Toni explicitly validates them in the development environment; only then commit and push to `origin/development`. Wait for Toni to review Preview. The exact `PROMOTE=FULL` token then authorizes one asynchronous full-chain workflow. Do not wait for or poll workflow/CI/deployment completion or verify branches hop by hop.
 - **Governance**: Elevation to AOS is required for multi-repo or constitutional changes.
 
 ## 9. Machine-Readable Bootstrap
