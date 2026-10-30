@@ -15,7 +15,7 @@ Plataforma premium para creación, edición y publicación de proyectos editoria
 <br />
 
 ![Anclora](https://img.shields.io/badge/Anclora-ecosystem-111827)
-![Categoría](https://img.shields.io/badge/categoría-Premium%20(pausado)-C07860)
+![Categoría](https://img.shields.io/badge/categoría-Premium-C07860)
 ![Idiomas](https://img.shields.io/badge/idiomas-ES%20%7C%20EN-047857)
 
 </div>
@@ -34,7 +34,7 @@ Anclora Talent es una plataforma premium para crear, editar y publicar proyectos
 | Campo | Valor |
 |---|---|
 | Categoría | Premium |
-| Estado | Pausado (desde 2026-08) |
+| Estado | Activo |
 | Acento de marca | `#4A9FD8` |
 | Tipografía | DM Sans |
 | Repositorio canónico | `anclora-talent` |

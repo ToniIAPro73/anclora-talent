@@ -60,7 +60,7 @@ Este contrato de branding no sustituye el contrato de propiedad intelectual y ma
 - `anclora-energyscan`
 - `anclora-guesthub` *(añadido 2026-08 como `anclora-syncxml`, verificado, estado `pre-mvp`; renombrado a GuestHub 2026-08)*
 - `anclora-groundsync` *(añadido 2026-08-03, verificado contra código real — app interna de operación, gobernada como producto independiente comparable a `anclora-impulso`)*
-- `anclora-talent` *(pausado, fuera de alcance activo desde 2026-08 — el contrato sigue aplicando por si se reactiva)*
+- `anclora-talent`
 - `anclora-private-estates`
 - `anclora-private-estates-landing` *(añadido 2026-08 — comparte identidad completa con `anclora-private-estates`)*
 
@@ -108,7 +108,7 @@ Al modificar la identidad de una app existente:
 |-----------|------|---------------|-----------|-------------|
 | Entidad Matriz | `anclora-group` | Plata monocromática | Georgia, serif | Portal corporativo y entidad matriz del ecosistema. Identidad exclusiva fuera de grupos. |
 | Interna | `anclora-advisor-ai`, `anclora-nexus`, `anclora-content-generator-ai`, `anclora-filestudio`, `anclora-fiscal`, `anclora-visionflow`, `anclora-linguo-cam`, `anclora-command-center` | Teal de tier Internal | Inter | Herramientas operativas internas. Command Center añadido por CHG-0019. |
-| Premium | `anclora-impulso`, `anclora-talent` *(pausado)*, `anclora-data-lab`, `anclora-energyscan`, `anclora-synergi`, `anclora-guesthub`, `anclora-groundsync` | Cobre rosado | DM Sans | Productos de valor añadido. |
+| Premium | `anclora-impulso`, `anclora-talent`, `anclora-data-lab`, `anclora-energyscan`, `anclora-synergi`, `anclora-guesthub`, `anclora-groundsync` | Cobre rosado | DM Sans | Productos de valor añadido. |
 | MicroSaaS | `anclora-tableextractor`, `anclora-cleansheet`, `anclora-purgedoc` | Cian (logo SaaS) | Por producto | Utilidades SaaS enfocadas. *(fila añadida 2026-09-25, CHG-0014)* |
 | Ultra Premium | `anclora-private-estates`, `anclora-private-estates-landing` | Oro pulido | Cardo + Inter + Fraunces | Marca de lujo inmobiliario. |
 | Portfolio | `anclora-portfolio`, `anclora-azure-bay-landing-page`, `anclora-portfolio-showcase`, `anclora-fiscal-showcase` | Logo: Oro Ultra Premium en `anclora-portfolio`, `anclora-azure-bay-landing` y `anclora-portfolio-showcase`; las showcases usan el logo de su app de origen (`anclora-fiscal-showcase` → Internal) *(CHG-0014)*. Tema: por proyecto | Por proyecto | Fuera de alcance de este contrato — ver `ANCLORA_PORTFOLIO_SHOWCASE_CONTRACT.md`. |
@@ -144,7 +144,7 @@ PLATA MONO (Entidad Matriz) → PLATA + color (internas) → COBRE (premium) →
 | `anclora-impulso` | `#FF6A00` naranja | 25° | Cobre |
 | `anclora-data-lab` | `#2DA078` esmeralda | 155° | Cobre |
 | `anclora-energyscan` | `#00DC82` verde energía | 155° | Cobre |
-| `anclora-talent` | `#4A9FD8` azul cielo *(pausado, fuera de alcance activo)* | 205° | Cobre |
+| `anclora-talent` | `#4A9FD8` azul cielo | 205° | Cobre |
 | `anclora-synergi` | `#8C5AB4` púrpura | 280° | Cobre |
 | `anclora-command-center` | `#6C63FF` violeta funcional + `#5FA8FF` azul luminoso | 245° | Teal de tier Internal (CHG-0019); acento funcional conservado |
 | `anclora-guesthub` *(renombrado de `anclora-syncxml` 2026-08)* | `#BFA46A` dorado apagado | 41° | Cobre |

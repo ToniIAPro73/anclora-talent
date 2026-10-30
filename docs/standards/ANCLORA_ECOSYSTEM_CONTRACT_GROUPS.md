@@ -79,7 +79,7 @@ Aplicaciones premium:
 - `anclora-synergi`
 - `anclora-data-lab`
 - `anclora-energyscan`
-- `anclora-talent` *(estado: pausado, fuera de alcance activo desde 2026-08 — ver `00-governance/registry/ecosystem-repos.json`)*
+- `anclora-talent` *(repositorio activo; estado en `00-governance/registry/ecosystem-repos.json`)*
 - `anclora-guesthub` *(añadida 2026-08 como `anclora-syncxml`, verificada contra código real, estado `pre-mvp`; renombrada a GuestHub 2026-08)*
 - `anclora-groundsync` *(añadida 2026-08-03, verificada contra código real — app interna de uso operativo pero gobernada como producto independiente, comparable a `anclora-impulso`; decisión explícita del cliente)*
 - `anclora-shiftimport` *(añadida 2026-10; producto Premium pre-MVP con superficie UI gobernada y consumidora del Design System)*
@@ -173,7 +173,7 @@ Documentos de apoyo no normativos:
 - `anclora-energyscan`
 - `anclora-guesthub`
 - `anclora-groundsync`
-- `anclora-talent` *(pausado — ver nota de estado arriba)*
+- `anclora-talent`
 - `anclora-private-estates`
 - `anclora-private-estates-landing`
 - `anclora-portfolio`

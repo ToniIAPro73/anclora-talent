@@ -86,7 +86,7 @@ Justificación: DM Sans aporta un carácter más redondo y accesible que Inter, 
 |-----|--------------|--------|
 | `anclora-impulso` | Sin fuente custom | Añadir DM Sans |
 | `anclora-data-lab` | Georgia, serif | Migrar a DM Sans. Georgia queda reservada para `anclora-group`. |
-| `anclora-talent` | Sin fuente custom *(pausado, fuera de alcance activo)* | Añadir DM Sans (si se reactiva) |
+| `anclora-talent` | Sin fuente custom | Añadir DM Sans |
 | `anclora-synergi` | Cardo (display) + Inter (body) | Eliminar Cardo (reservada para ultra premium). Migrar a DM Sans. |
 | `anclora-command-center` | Sin fuente custom | Añadir DM Sans |
 | `anclora-guesthub` *(añadido 2026-08 como `anclora-syncxml`; renombrado a GuestHub 2026-08)* | Pendiente de verificar fuente real — no auditado en esta sesión (solo se verificó color) | Confirmar/añadir DM Sans |
@@ -149,7 +149,7 @@ Justificación: Contraste serif (display) + sans-serif (body) clásico de marcas
 | `anclora-linguo-cam` | Interna | — (Inter ya presente, verificado 2026-08-02) | — |
 | `anclora-impulso` | Premium | DM Sans | — |
 | `anclora-data-lab` | Premium | DM Sans | Georgia |
-| `anclora-talent` | Premium *(pausado)* | DM Sans | — |
+| `anclora-talent` | Premium | DM Sans | — |
 | `anclora-synergi` | Premium | DM Sans | Cardo, Inter |
 | `anclora-command-center` | Premium | DM Sans | — |
 | `anclora-guesthub` | Premium | DM Sans *(pendiente de verificar estado real)* | Pendiente de auditoría |

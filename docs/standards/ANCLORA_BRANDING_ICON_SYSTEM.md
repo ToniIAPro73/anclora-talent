@@ -95,7 +95,7 @@ Ondas = mismo color que el borde. Esquema monocromático.
 | Interna | `anclora-linguo-cam` *(añadido 2026-08-02)* | Plata | `#619D4A` verde lima (gradiente `#2A4A1B`→`#E2F5DC`, verificado píxel a píxel sobre el PNG canónico) | Verde pastel claro (gradiente `#9FC792`→`#E7FFD4`, verificado píxel a píxel — interior claro, excepción frente al navy oscuro habitual del grupo) | 103° |
 | Premium | `anclora-impulso` | Cobre | `#FF6A00` naranja | `#1A1C2B` navy | 25° |
 | Premium | `anclora-data-lab` | Cobre | `#2DA078` esmeralda | `#12201C` navy verde | 155° |
-| Premium | `anclora-talent` *(pausado)* | Cobre | `#4A9FD8` azul cielo | `#141E28` navy azul | 205° |
+| Premium | `anclora-talent` | Cobre | `#4A9FD8` azul cielo | `#141E28` navy azul | 205° |
 | Premium | `anclora-synergi` | Cobre | `#8C5AB4` púrpura | `#1C162A` navy púrpura | 280° |
 | Internal | `anclora-command-center` | Teal | `#6C63FF` violeta funcional + `#5FA8FF` azul luminoso | `#1E1A2E` navy púrpura | 245° *(tier migrado por CHG-0019; acento funcional conservado)* |
 | Premium | `anclora-guesthub` *(añadido 2026-08 como `anclora-syncxml`; renombrado a GuestHub 2026-08)* | Cobre | `#BFA46A` dorado apagado | `#070A12` navy profundo *(inferido del fondo real del producto)* | 41° |
