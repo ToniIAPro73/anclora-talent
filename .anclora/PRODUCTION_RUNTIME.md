@@ -90,7 +90,7 @@ DATABASE_PROVIDER=Neon PostgreSQL + local Docker PostgreSQL
 DATABASE_RUNTIME_SCOPE=environment-specific
 
 LOCAL DEVELOPMENT + LOCAL E2E -> `npm run dev:docker` forces Docker; `npm run dev` uses Neon if reachable, then Docker
-VERCEL DEVELOPMENT/PREVIEW -> Neon environment configured in Vercel; Docker is never inspected or started
+VERCEL development/preview ENV-VAR SCOPES (variable scope, not an execution location) -> Neon environment configured in Vercel; Docker is never inspected or started
 PREVIEW/STAGING         -> Neon QA
 PRODUCTION              -> Neon production
 
@@ -257,7 +257,7 @@ QA_CREATE_IF_MISSING=true
 QA_DELETE_AFTER_TEST=false
 QA_CREATION_CONFIRMATION_REQUIRED=false
 QA_PERSISTENT_IDENTITY=e2e.auth@anclora-talent.test
-QA_DATABASE_SCOPE=local Docker for `dev:docker`; canonical Neon for Vercel Development/Preview
+QA_DATABASE_SCOPE=local Docker for `dev:docker`; canonical Neon for the Vercel development/preview environment-variable scopes
 QA_DATA_ISOLATION_MODEL=USER_OWNED_PROJECTS
 QA_CREDENTIAL_SOURCE=.env.local:E2E_AUTH_PASSWORD
 QA_USER_BOOTSTRAP_STATUS=READY_DOCKER_BLOCKED_NEON_QUOTA
