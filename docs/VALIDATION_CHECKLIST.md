@@ -1,4 +1,4 @@
-# Checklist de validación — Talent como repositorio activo (2026-10-30)
+# Checklist de validación — arreglo del CI de development (2026-10-30)
 
 > Se sobrescribe en cada entrega; el historial queda en Git.
 
@@ -7,17 +7,21 @@
 **Datos:** no se usaron ni modificaron datos de aplicación.
 
 ## 1. Qué cambia
-- `README.md`: la categoría y el estado dejan de indicar "pausado" y pasan a "Activo" (decisión de Toni, 2026-10-30).
-- Cinco copias de contratos en `docs/standards/` se refrescan desde Vault (retiran la marca "pausado" de Talent).
-- Sin cambios de código, dependencias ni despliegue.
+- `AdvancedCoverEditor.tsx`: el botón de cerrar el diálogo de capas recibe `data-testid="advanced-editor-layers-dialog-close"` (contrato de cobertura de testids).
+- `dashboard-light-contract.test.ts`: los tokens del botón primario del tema claro se alinean con `globals.css` (`#C7DFE1` / `#12384A`, definidos a propósito en el commit `512dc60`); el test se había quedado desfasado.
+- Sin cambios de estilo, de lógica ni de dependencias.
 
 ## 2. Ya comprobado por el agente
 | Comprobación | Resultado |
 | --- | --- |
-| Copias idénticas a las de Vault; `aos-adopt inspect` sin deriva; `git diff --check` | PASS |
+| `testid-coverage-contract` y `dashboard-light-contract` | PASS |
+| Suite completa de vitest | 2031 PASS; 2 timeouts de 5 s por carga local (`extract-structure-profile.contract`, `projects/import/route`) que aislados pasan (14/14) |
+| `eslint` de los ficheros tocados, `npm run build` | PASS |
 
 ## 3. NOT_RUN
-Tests, lint, build y E2E de la aplicación: el diff es solo documentación. El CI de este repositorio ya fallaba antes (`testid-coverage-contract` en `AdvancedCoverEditor.tsx:961` y `dashboard-light-contract`); no se ha tocado.
+| Prueba | Motivo |
+| --- | --- |
+| Gate de EPUB (EPUBCheck) | No hay Java Runtime real en este Mac; el paso corre en CI. |
 
 ## 4. Para Toni
-Sin pasos manuales. Bloqueante: no.
+Revisar que el CI de `development` queda en verde. Bloqueante: no.

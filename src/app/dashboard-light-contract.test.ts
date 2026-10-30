@@ -18,8 +18,8 @@ const premiumContract = readFileSync(
 
 describe('light theme dashboard contract', () => {
   test('defines real light-mode button variants instead of reusing dark ones', () => {
-    expect(globalsCss).toContain('--button-primary-bg: #124a50;');
-    expect(globalsCss).toContain('--button-primary-fg: #fffdf8;');
+    expect(globalsCss).toContain('--button-primary-bg: #C7DFE1;');
+    expect(globalsCss).toContain('--button-primary-fg: #12384A;');
     expect(globalsCss).toContain('--button-secondary-bg: rgba(255, 253, 248, 0.92);');
   });
 

@@ -958,7 +958,7 @@ export function AdvancedCoverEditor({ surface, onChange, copy, brandColors, orig
           <section ref={layersDialogRef} className="cover-layers-dialog" role="dialog" aria-modal="true" aria-label={ws.layers}>
             <header className="cover-layers-dialog__header">
               <h2>{ws.layers}</h2>
-              <button ref={closeLayersDialogButtonRef} type="button" className="cover-toolbar-icon" aria-label={copy.toolbar.closeLabel} title={copy.toolbar.closeLabel} onClick={() => setLayersDialogOpen(false)}>
+              <button ref={closeLayersDialogButtonRef} type="button" data-testid="advanced-editor-layers-dialog-close" className="cover-toolbar-icon" aria-label={copy.toolbar.closeLabel} title={copy.toolbar.closeLabel} onClick={() => setLayersDialogOpen(false)}>
                 <X className="h-4 w-4" />
               </button>
             </header>
